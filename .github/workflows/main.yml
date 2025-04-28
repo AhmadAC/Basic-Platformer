@@ -43,7 +43,7 @@ jobs:
       #    (This step now requires main.spec to exist)
       - name: Build with PyInstaller
         run: |
-          pyinstaller main.spec --onefile --noconfirm --log-level INFO
+          run: pyinstaller main.spec --noconfirm --log-level INFO
 
       # 5. Upload the artifact (the generated .exe file)
       - name: Upload Windows Build Artifact
