@@ -17,7 +17,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
 
         # --- Load Animations ---
-        self.animations = load_all_player_animations(asset_folder='characters/player1')
+        self.animations = load_all_player_animations(relative_asset_folder='characters/player1')
         if self.animations is None:
             print("Player Init Error: Failed to load critical animations.")
             self.image = pygame.Surface((30, 40)).convert_alpha(); self.image.fill(C.RED)
