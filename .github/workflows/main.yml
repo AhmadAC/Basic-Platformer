@@ -26,7 +26,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5 # Use latest version
         with:
-          python-version: '3.9' # Specify your desired Python version (e.g., 3.9, 3.10, 3.11)
+          # --- CHANGE THIS LINE ---
+          python-version: '3.11' # Use the Python version you are using
+          # ------------------------
 
       # 3. Install dependencies
       - name: Install dependencies
@@ -38,12 +40,9 @@ jobs:
           # pip install -r requirements.txt
 
       # 4. Build the executable using PyInstaller and the spec file
+      #    (This step now requires main.spec to exist)
       - name: Build with PyInstaller
         run: |
-          # Run PyInstaller using your main.spec configuration
-          # The --onefile flag might be redundant if specified in the spec, but ensures it
-          # The --noconfirm flag prevents prompts if output folder exists
-          # The --log-level INFO provides reasonable build output
           pyinstaller main.spec --onefile --noconfirm --log-level INFO
 
       # 5. Upload the artifact (the generated .exe file)
