@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
   # Runs on pushes targeting the main branch (optional)
-  # push:
-  #   branches: [ "main" ]
+  push:
+    branches: [ "main" ]
 
   # Runs when a new release is published on GitHub
   release:
