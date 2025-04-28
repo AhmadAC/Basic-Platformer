@@ -39,7 +39,7 @@ class Enemy(pygame.sprite.Sprite):
         print(f"Initializing Enemy instance with color: {chosen_color} (Path: {chosen_folder_path})") # Debug print
 
         # --- Load Animations using the chosen folder ---
-        self.animations = load_all_player_animations(asset_folder=chosen_folder_path)
+        self.animations = load_all_player_animations(relative_asset_folde=chosen_folder_path)
         if self.animations is None: # Check if loading failed critically (e.g., missing idle)
             print(f"CRITICAL Enemy Init Error: Failed loading animations from {chosen_folder_path}. Check path and idle animation.")
             # Create minimal placeholder to avoid crashing game init entirely
@@ -510,7 +510,7 @@ class Enemy(pygame.sprite.Sprite):
         print(f"Initializing Enemy instance with color: {chosen_color} (Path: {chosen_folder_path})") # Debug print
 
         # --- Load Animations using the chosen folder ---
-        self.animations = load_all_player_animations(asset_folder=chosen_folder_path)
+        self.animations = load_all_player_animations(relative_asset_folder=chosen_folder_path)
         if self.animations is None: # Check if loading failed critically (e.g., missing idle)
             print(f"CRITICAL Enemy Init Error: Failed loading animations from {chosen_folder_path}. Check path and idle animation.")
             # Create minimal placeholder to avoid crashing game init entirely
