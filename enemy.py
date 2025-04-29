@@ -327,28 +327,56 @@ class Enemy(pygame.sprite.Sprite):
 
 
     def check_platform_collisions(self, direction, platforms):
-        """ Resolves collisions with solid platforms. """
+        """ Resolves collisions with solid platforms and bounces off horizontally. """ # Updated docstring
         collided_sprites = pygame.sprite.spritecollide(self, platforms, False)
         for plat in collided_sprites:
             if direction == 'x':
-                # Resolve horizontal collision
-                if self.vel.x > 0: self.rect.right = plat.rect.left
-                elif self.vel.x < 0: self.rect.left = plat.rect.right
-                self.vel.x = 0 # Stop horizontal movement
+                # Store the original velocity before adjusting position
+                original_vel_x = self.vel.x
+
+                # Resolve horizontal collision by adjusting position
+                if original_vel_x > 0: # Moving right, hit left side of platform
+                    self.rect.right = plat.rect.left
+                elif original_vel_x < 0: # Moving left, hit right side of platform
+                    self.rect.left = plat.rect.right
+
+                # --- MODIFICATION START ---
+                # Instead of stopping, reverse the horizontal velocity to bounce
+                self.vel.x *= -1
+                # Flip the facing direction immediately
+                self.facing_right = not self.facing_right
+                # --- MODIFICATION END ---
+
+                # Update internal position based on the adjusted rect
+                self.pos.x = self.rect.centerx
+
                 # If patrolling, hitting a wall should trigger finding a new target
-                if self.ai_state == 'patrolling': self.set_new_patrol_target()
+                # (This existing logic is good and should remain)
+                if self.ai_state == 'patrolling':
+                    self.set_new_patrol_target()
+
             elif direction == 'y':
-                # Resolve vertical collision
+                # Resolve vertical collision (no changes needed here for bouncing)
                 if self.vel.y > 0: # Moving Down
                     # Check if enemy was above platform before moving
                     previous_bottom = self.pos.y - self.vel.y
                     if previous_bottom <= plat.rect.top + 1: # +1 tolerance
-                         self.rect.bottom = plat.rect.top; self.on_ground = True; self.vel.y = 0
+                         self.rect.bottom = plat.rect.top
+                         self.on_ground = True
+                         self.vel.y = 0
+                         # Update internal position after adjustment
+                         self.pos.y = self.rect.bottom
                 elif self.vel.y < 0: # Moving Up
                     # Check if enemy was below platform before moving
                     previous_top = (self.pos.y - self.rect.height) - self.vel.y
                     if previous_top >= plat.rect.bottom - 1: # -1 tolerance
-                         self.rect.top = plat.rect.bottom; self.vel.y = 0
+                         self.rect.top = plat.rect.bottom
+                         self.vel.y = 0
+                         # Update internal position after adjustment
+                         self.pos.y = self.rect.bottom # Use bottom for consistency
+
+        # Important: Ensure position is updated even if no collision occurred
+        # This is handled after the x and y checks in the main update() loop already.
 
 
     def check_character_collision(self, direction, player):
