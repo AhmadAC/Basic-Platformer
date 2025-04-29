@@ -38,9 +38,10 @@ try:
     SCREEN_WIDTH = initial_width; SCREEN_HEIGHT = initial_height
     fullscreen = False # Start windowed
     flags = pygame.RESIZABLE | pygame.DOUBLEBUF
-    if fullscreen:
-        flags = pygame.FULLSCREEN | pygame.DOUBLEBUF
-        SCREEN_WIDTH = monitor_width; SCREEN_HEIGHT = monitor_height
+    # If you want to START fullscreen, set fullscreen=True and uncomment below
+    # if fullscreen:
+    #     flags = pygame.FULLSCREEN | pygame.DOUBLEBUF
+    #     SCREEN_WIDTH = monitor_width; SCREEN_HEIGHT = monitor_height
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags)
     print(f"Initial window: {SCREEN_WIDTH}x{SCREEN_HEIGHT} {'(Fullscreen)' if fullscreen else '(Windowed)'}")
 except Exception as e:
@@ -130,8 +131,12 @@ def spawn_chest(platforms, collectibles, all_draw_sprites):
         chest_spawn_y = chosen_platform.rect.top # Chest bottom rests on platform top
 
         try:
-            new_chest = Chest(chest_spawn_x, chest_spawn_y)
-            if new_chest._valid_init:
+            # Ensure Chest class takes x, y for midbottom or adjust accordingly
+            new_chest = Chest(chest_spawn_x, chest_spawn_y) # This might need adjustment based on Chest init
+            if hasattr(new_chest, 'rect'): # Adjust position after creation if needed
+                 new_chest.rect.midbottom = (chest_spawn_x, chest_spawn_y)
+
+            if hasattr(new_chest,'_valid_init') and new_chest._valid_init: # Check if chest initialized correctly
                 print(f"Chest spawned successfully at ({int(new_chest.rect.centerx)}, {int(new_chest.rect.bottom)}) on platform {chosen_platform.rect}.")
                 all_draw_sprites.add(new_chest)
                 collectibles.add(new_chest)
@@ -153,7 +158,6 @@ current_chest = spawn_chest(platform_sprites, collectible_sprites, all_sprites)
 camera_offset_x = 0; camera_offset_y = 0
 
 # --- UI Constants ---
-# Remove PLAYER_HEALTH_BAR_SCREEN_Y as we calculate dynamically
 HEALTH_BAR_OFFSET_ABOVE = 8 # Pixels above sprite's effective 'head'
 
 # --- Game Loop ---
@@ -182,21 +186,18 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 running = False
-            # Toggle Fullscreen (F)
-            if event.key == pygame.K_f:
-                 fullscreen = not fullscreen
-                 try:
-                     if fullscreen:
-                         info = pygame.display.Info(); SCREEN_WIDTH = info.current_w; SCREEN_HEIGHT = info.current_h
-                         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN | pygame.DOUBLEBUF)
-                         print(f"Switched to Fullscreen: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
-                     else:
-                         SCREEN_WIDTH = initial_width; SCREEN_HEIGHT = initial_height # Revert to initial size
-                         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE | pygame.DOUBLEBUF)
-                         print(f"Switched to Windowed: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
-                 except pygame.error as e:
-                      print(f"Error changing display mode: {e}")
-                      fullscreen = not fullscreen # Revert flag if failed
+
+            # <<< --- MODIFIED 'F' KEY LOGIC --- >>>
+            if event.key == pygame.K_f: # Heal Player to Full
+                 # Check if player exists and has the heal method
+                 if player and hasattr(player, 'heal_to_full') and callable(player.heal_to_full):
+                     if not player.is_dead:
+                          print("Debug: Healing Player to Full (F pressed)")
+                          player.heal_to_full() # Call the player's heal method
+                 else:
+                     print("Warning: Player object or heal_to_full method not found.")
+            # <<< --- END OF MODIFIED 'F' KEY LOGIC --- >>>
+
             # Debug Keys
             if event.key == pygame.K_h: # Damage Player
                  if not player.is_dead:
@@ -257,7 +258,6 @@ while running:
     min_cam_x = 0; max_cam_x = max(0, level_pixel_width - SCREEN_WIDTH)
     camera_offset_x = max(min_cam_x, min(target_camera_x, max_cam_x))
 
-    # Camera Y: Keep ground level towards bottom third, clamp boundaries
     world_view_top_target = ground_level_y - SCREEN_HEIGHT * (2/3)
     min_cam_y = 0; max_cam_y = max(0, (ground_level_y + ground_platform_height) - SCREEN_HEIGHT)
     clamped_target_y = max(min_cam_y, min(world_view_top_target, max_cam_y))
@@ -268,104 +268,53 @@ while running:
     # --- Drawing ---
     screen.fill(C.LIGHT_BLUE)
 
-    # Draw all sprites adjusted by camera offset with basic culling
-    screen_bounds = screen.get_rect().inflate(100, 100) # Cull slightly outside view
+    screen_bounds = screen.get_rect().inflate(100, 100)
     for sprite in all_sprites:
         if hasattr(sprite, 'image') and hasattr(sprite, 'rect'):
             try:
-                # Calculate screen position
                 screen_x = sprite.rect.left - int(camera_offset_x)
                 screen_y = sprite.rect.top - int(camera_offset_y)
-
-                # Culling Check
                 sprite_screen_rect = pygame.Rect(screen_x, screen_y, sprite.rect.width, sprite.rect.height)
                 if not screen_bounds.colliderect(sprite_screen_rect): continue
-
-                # Draw Sprite
                 screen.blit(sprite.image, (screen_x, screen_y))
 
                 # --- Health Bar Drawing Logic ---
-                # Check conditions for drawing health bar
                 if hasattr(sprite, 'current_health') and hasattr(sprite, 'max_health') and \
                    hasattr(sprite, 'is_dead') and not sprite.is_dead and sprite.current_health < sprite.max_health:
-
-                    bar_w = C.HEALTH_BAR_WIDTH
-                    bar_h = C.HEALTH_BAR_HEIGHT
-
-                    # <<< START OF FINAL HEALTH BAR POSITIONING >>>
-
-                    # Calculate horizontal center position above the sprite
+                    bar_w = C.HEALTH_BAR_WIDTH; bar_h = C.HEALTH_BAR_HEIGHT
                     bar_x = screen_x + (sprite.rect.width / 2) - (bar_w / 2)
-
-                    # Determine the reference height (use standard_height if available)
                     ref_height = sprite.standard_height if hasattr(sprite, 'standard_height') else sprite.rect.height
-
-                    # Calculate the screen Y coordinate of the sprite's *visual* bottom edge
-                    # This accounts for the current animation frame's height
                     screen_visual_bottom_y = screen_y + sprite.rect.height
-
-                    # Calculate bar_y: Start from visual bottom, go up by standard height,
-                    # then up by bar height, then up by the offset gap.
                     bar_y = screen_visual_bottom_y - ref_height - bar_h - HEALTH_BAR_OFFSET_ABOVE
-
-                    # Clamp bar_y to prevent going off the top of the screen
                     bar_y = max(0, bar_y)
-
-                    # Draw the health bar using the ui helper function
                     ui.draw_health_bar(screen, bar_x, bar_y, bar_w, bar_h, sprite.current_health, sprite.max_health)
 
-                    # <<< END OF FINAL HEALTH BAR POSITIONING >>>
-
-            except AttributeError as e: pass # Ignore missing attributes silently
+            except AttributeError as e: pass
             except Exception as e: print(f"Error drawing sprite {sprite}: {e}")
 
-    # --- Draw Debug Info (Optional, AFTER all sprites) ---
+    # --- Draw Debug Info (Optional) ---
     # if debug_font:
     #     try:
     #         debug_texts = []
-    #         # Player Info
-    #         p_state = player.state if hasattr(player,'state') else 'N/A'
-    #         p_hp = f"{player.current_health}/{player.max_health}" if hasattr(player,'current_health') else 'N/A'
-    #         p_pos = f"({int(player.pos.x)}, {int(player.pos.y)})" if hasattr(player,'pos') else 'N/A'
-    #         p_vel = f"({player.vel.x:.1f}, {player.vel.y:.1f})" if hasattr(player,'vel') else 'N/A'
-    #         p_ground = f"G:{player.on_ground}" if hasattr(player,'on_ground') else ''
-    #         p_hit = f"Hit:{player.is_taking_hit}" if hasattr(player,'is_taking_hit') else ''
-    #         debug_texts.append(f"P: {p_state} HP:{p_hp} {p_hit}")
-    #         debug_texts.append(f" Pos:{p_pos} Vel:{p_vel} {p_ground}")
-
-    #         # Enemy Info
+    #         p_state = player.state if hasattr(player,'state') else 'N/A'; p_hp = f"{player.current_health}/{player.max_health}" if hasattr(player,'current_health') else 'N/A'; p_pos = f"({int(player.pos.x)}, {int(player.pos.y)})" if hasattr(player,'pos') else 'N/A'; p_vel = f"({player.vel.x:.1f}, {player.vel.y:.1f})" if hasattr(player,'vel') else 'N/A'; p_ground = f"G:{player.on_ground}" if hasattr(player,'on_ground') else ''; p_hit = f"Hit:{player.is_taking_hit}" if hasattr(player,'is_taking_hit') else ''
+    #         debug_texts.append(f"P: {p_state} HP:{p_hp} {p_hit}"); debug_texts.append(f" Pos:{p_pos} Vel:{p_vel} {p_ground}")
     #         for i, enemy in enumerate(enemy_list):
-    #             if i >= 2: break
+    #             if i >= 2: break;
     #             if not enemy.alive(): continue
-    #             e_state = enemy.state if hasattr(enemy,'state') else 'N/A'
-    #             e_ai = f"({enemy.ai_state})" if hasattr(enemy,'ai_state') else ''
-    #             e_hp = f"{enemy.current_health}/{enemy.max_health}" if hasattr(enemy,'current_health') else 'N/A'
-    #             e_hit = f"Hit:{enemy.is_taking_hit}" if hasattr(enemy,'is_taking_hit') else ''
+    #             e_state = enemy.state if hasattr(enemy,'state') else 'N/A'; e_ai = f"({enemy.ai_state})" if hasattr(enemy,'ai_state') else ''; e_hp = f"{enemy.current_health}/{enemy.max_health}" if hasattr(enemy,'current_health') else 'N/A'; e_hit = f"Hit:{enemy.is_taking_hit}" if hasattr(enemy,'is_taking_hit') else ''
     #             try: dist = math.hypot(player.pos.x - enemy.pos.x, player.pos.y - enemy.pos.y)
     #             except AttributeError: dist = -1
     #             debug_texts.append(f" E{i+1}({enemy.color_name}):{e_state}{e_ai} HP:{e_hp} D:{dist:.0f} {e_hit}")
-
-    #         # General Info
-    #         cam_pos = f"Cam:({int(camera_offset_x)}, {int(camera_offset_y)})"
-    #         sprites_count = f"Sprites:{len(all_sprites)}"
-    #         chest_status = f"Chest:{'Active' if current_chest and current_chest.alive() else 'None'}"
-    #         fps = f"FPS: {clock.get_fps():.1f}"
+    #         cam_pos = f"Cam:({int(camera_offset_x)}, {int(camera_offset_y)})"; sprites_count = f"Sprites:{len(all_sprites)}"; chest_status = f"Chest:{'Active' if current_chest and current_chest.alive() else 'None'}"; fps = f"FPS: {clock.get_fps():.1f}"
     #         debug_texts.append(f"{cam_pos} {sprites_count} {chest_status} {fps}")
-
-    #         # Render Debug Texts
-    #         y_offset = 5 # Start near top left
+    #         y_offset = 5
     #         for text in debug_texts:
     #             if not text: continue
     #             text_surface = debug_font.render(text, True, C.BLACK)
-    #             text_bg = pygame.Surface((text_surface.get_width() + 4, text_surface.get_height() + 2), pygame.SRCALPHA)
-    #             text_bg.fill((211, 211, 211, 180))
-    #             text_bg.blit(text_surface, (2, 1))
-    #             screen.blit(text_bg, (5, y_offset))
-    #             y_offset += text_bg.get_height() + 1
-    #     except Exception as e:
-    #         print(f"Error drawing debug info: {e}")
+    #             text_bg = pygame.Surface((text_surface.get_width() + 4, text_surface.get_height() + 2), pygame.SRCALPHA); text_bg.fill((211, 211, 211, 180))
+    #             text_bg.blit(text_surface, (2, 1)); screen.blit(text_bg, (5, y_offset)); y_offset += text_bg.get_height() + 1
+    #     except Exception as e: print(f"Error drawing debug info: {e}")
 
-    # --- Update Display ---
     pygame.display.flip()
 
 # --- Cleanup ---
