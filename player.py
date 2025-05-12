@@ -18,7 +18,17 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.player_id = player_id
 
-        asset_folder = 'characters/player1'
+        # Determine asset folder based on player_id
+        if self.player_id == 1:
+            asset_folder = 'characters/player1'
+        elif self.player_id == 2:
+            asset_folder = 'characters/player2' # Player 2 uses its own asset folder
+        else:
+            # Fallback for any other player_id, or could raise an error
+            print(f"Warning: Player {self.player_id} has an unrecognized ID. Defaulting to player1 assets.")
+            asset_folder = 'characters/player1'
+
+        print(f"Player {self.player_id} attempting to load animations from: {asset_folder}") # Debug print
         self.animations = load_all_player_animations(relative_asset_folder=asset_folder)
 
         if self.animations is None:

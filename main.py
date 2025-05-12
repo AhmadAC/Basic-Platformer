@@ -1,4 +1,5 @@
 # merged_main.py
+# Run this code
 # -*- coding: utf-8 -*-
 import pygame
 import sys
@@ -303,17 +304,17 @@ def draw_platformer_scene(target_screen, current_time_ticks):
         if player2 and hasattr(player2, '_valid_init') and player2._valid_init:
             p2_hud_x = WIDTH - (getattr(C, 'HEALTH_BAR_WIDTH', 50) * 2) - 120
             ui.draw_player_hud(target_screen, p2_hud_x, 10, player2, 2)
-    if debug_font and clock :
-        try:
-            fps_text = f"FPS: {clock.get_fps():.1f}"; debug_texts = [fps_text]
-            if camera: debug_texts.append(f"Cam:({int(camera.camera_rect.x)}, {int(camera.camera_rect.y)})")
-            y_offset = 5
-            for text_line in debug_texts:
-                text_surface = debug_font.render(text_line, True, getattr(C,'BLACK',(0,0,0)))
-                bg_surface = pygame.Surface((text_surface.get_width()+4, text_surface.get_height()+2), pygame.SRCALPHA)
-                bg_surface.fill((200,200,200,180)); bg_surface.blit(text_surface, (2,1))
-                target_screen.blit(bg_surface, (WIDTH - bg_surface.get_width() - 5, y_offset)); y_offset += bg_surface.get_height() + 2
-        except Exception as e: print(f"Error drawing debug/FPS: {e}")
+    # if debug_font and clock :
+    #     try:
+    #         fps_text = f"FPS: {clock.get_fps():.1f}"; debug_texts = [fps_text]
+    #         if camera: debug_texts.append(f"Cam:({int(camera.camera_rect.x)}, {int(camera.camera_rect.y)})")
+    #         y_offset = 5
+    #         for text_line in debug_texts:
+    #             text_surface = debug_font.render(text_line, True, getattr(C,'BLACK',(0,0,0)))
+    #             bg_surface = pygame.Surface((text_surface.get_width()+4, text_surface.get_height()+2), pygame.SRCALPHA)
+    #             bg_surface.fill((200,200,200,180)); bg_surface.blit(text_surface, (2,1))
+    #             target_screen.blit(bg_surface, (WIDTH - bg_surface.get_width() - 5, y_offset)); y_offset += bg_surface.get_height() + 2
+    #     except Exception as e: print(f"Error drawing debug/FPS: {e}")
 
 def update_camera_platformer(target_focus=None, target2_focus=None):
     global camera
