@@ -3,6 +3,7 @@
 camera.py
 Defines the Camera class for managing the game's viewport.
 """
+# version 1.00000.1
 import pygame
 
 class Camera:

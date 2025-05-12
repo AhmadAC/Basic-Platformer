@@ -4,6 +4,7 @@
 Defines collectible items like Chests.
 Uses resource_path helper for PyInstaller compatibility.
 """
+# version 1.00000.1
 import pygame
 import os
 import sys # Needed for resource_path logic (imported via assets)

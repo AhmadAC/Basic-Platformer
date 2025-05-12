@@ -4,6 +4,7 @@ Handles loading game assets, primarily animations.
 Uses a helper function `resource_path` to work correctly
 both locally and when packaged by PyInstaller (--onedir).
 """
+# version 1.00000.1
 import pygame
 import os
 import sys

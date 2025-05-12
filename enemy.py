@@ -5,6 +5,7 @@ Defines the Enemy class (CPU player clone).
 Handles AI-driven movement, animations mirroring player, states, and interactions.
 Each instance randomly selects a color variant for its animations.
 """
+# version 1.00000.1
 import pygame
 import random
 import math
