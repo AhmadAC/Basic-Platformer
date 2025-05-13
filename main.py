@@ -1,4 +1,4 @@
-# merged_main.py
+# main.py
 # Run this code
 # -*- coding: utf-8 -*-
 import pygame
@@ -24,9 +24,9 @@ except ImportError:
 # --- Platformer Imports ---
 try:
     import constants as C
-    from player import Player # Player class should have self_inflict_damage, reset_state, etc.
+    from player import Player 
     from enemy import Enemy
-    from tiles import Platform, Ladder, Lava # Ensure Platform is imported if used in fallback
+    from tiles import Platform, Ladder, Lava 
     from camera import Camera
     try:
         from items import Chest
@@ -43,7 +43,8 @@ except ImportError as e:
 except Exception as e:
     print(f"FATAL: Error during platformer module import: {e}")
     sys.exit(1)
-
+    
+os.environ['SDL_VIDEO_WINDOW_POS'] = '0,0'
 # --- Pygame Init ---
 pygame.init()
 pygame.font.init()
@@ -92,13 +93,13 @@ player1, player2, camera, current_chest = None, None, None, None
 platform_sprites, ladder_sprites, hazard_sprites, enemy_sprites, collectible_sprites, all_sprites = \
     pygame.sprite.Group(), pygame.sprite.Group(), pygame.sprite.Group(), \
     pygame.sprite.Group(), pygame.sprite.Group(), pygame.sprite.Group()
-enemy_list = [] # Holds Enemy instances for easier access than sprite group
+enemy_list = [] 
 level_pixel_width, level_pixel_height = WIDTH, HEIGHT
 ground_level_y, ground_platform_height = HEIGHT - 40, 40
 player1_spawn_pos, player2_spawn_pos = (100, HEIGHT - 80), (150, HEIGHT - 80)
-enemy_spawns_data = [] # Initialize as empty list globally, populated by level loader
+enemy_spawns_data = [] 
 
-# --- Helper Functions (Network - kept as is) ---
+# --- Helper Functions (Network) ---
 def get_local_ip():
     best_ip = '127.0.0.1'
     try:
@@ -107,7 +108,6 @@ def get_local_ip():
     except Exception:
         try: best_ip = socket.gethostbyname(socket.gethostname())
         except Exception: best_ip = '127.0.0.1'
-    print(f"Detected local IP: {best_ip}")
     return best_ip
 
 def encode_data(data):
@@ -121,7 +121,7 @@ def decode_data_stream(byte_buffer):
         message, remaining_buffer = remaining_buffer.split(b'\n', 1)
         if not message: continue
         try: decoded_objects.append(json.loads(message.decode('utf-8')))
-        except Exception: continue # Potential for partial JSON, log if becomes problematic
+        except Exception: continue 
     return decoded_objects, remaining_buffer
 
 # --- Platformer Specific Helper Functions ---
@@ -136,6 +136,7 @@ def initialize_platformer_elements(for_game_mode="unknown"):
     if player1: player1.kill(); player1 = None
     if player2: player2.kill(); player2 = None
     if current_chest: current_chest.kill(); current_chest = None
+    for sprite in all_sprites: sprite.kill() 
     all_sprites.empty(); platform_sprites.empty(); ladder_sprites.empty(); hazard_sprites.empty()
     enemy_sprites.empty(); collectible_sprites.empty(); enemy_list.clear()
 
@@ -147,15 +148,18 @@ def initialize_platformer_elements(for_game_mode="unknown"):
         
         enemy_spawns_data = enemy_spawns_data_list 
         
-        platform_sprites.add(platform_data_group); ladder_sprites.add(ladder_data_group)
-        hazard_sprites.add(hazard_data_group); player1_spawn_pos = p1_spawn_tuple
+        platform_sprites.add(platform_data_group.sprites()) 
+        ladder_sprites.add(ladder_data_group.sprites())
+        hazard_sprites.add(hazard_data_group.sprites())
+        player1_spawn_pos = p1_spawn_tuple
         player2_spawn_pos = (p1_spawn_tuple[0] + 60, p1_spawn_tuple[1]) 
-        level_pixel_width = lvl_width_pixels; level_pixel_height = HEIGHT 
+        level_pixel_width = lvl_width_pixels; 
+        level_pixel_height = HEIGHT 
         ground_level_y = ground_y_coord; ground_platform_height = ground_h_pixels
         print("Level geometry loaded.")
     except Exception as e: print(f"CRITICAL ERROR loading level: {e}"); traceback.print_exc(); return False
 
-    all_sprites.add(platform_sprites, ladder_sprites, hazard_sprites)
+    all_sprites.add(platform_sprites.sprites(), ladder_sprites.sprites(), hazard_sprites.sprites())
 
     if for_game_mode in ["host", "couch_play", "single_player"]: 
         print("Initializing player 1..."); player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1)
@@ -178,34 +182,39 @@ def initialize_platformer_elements(for_game_mode="unknown"):
         if not player2._valid_init: print("CRITICAL: P2 (local client) init failed."); return False
         all_sprites.add(player2); print("P2 (local client) initialized.")
 
-    enemy_list.clear(); print(f"Spawning {len(enemy_spawns_data)} enemies...") 
+    enemy_list.clear() 
+    print(f"Spawning {len(enemy_spawns_data)} enemies...") 
     for i, spawn_data in enumerate(enemy_spawns_data): 
         try:
             enemy = Enemy(spawn_data['pos'][0], spawn_data['pos'][1], spawn_data.get('patrol'), enemy_id=i)
-            if enemy._valid_init: all_sprites.add(enemy); enemy_sprites.add(enemy); enemy_list.append(enemy)
-            else: print(f"Error: Enemy {i} init failed.")
-        except Exception as e: print(f"Error spawning enemy {i}: {e}")
+            if enemy._valid_init: 
+                all_sprites.add(enemy)
+                enemy_sprites.add(enemy)
+                enemy_list.append(enemy)
+            else: print(f"Error: Enemy {i} at {spawn_data['pos']} init failed.")
+        except Exception as e: print(f"Error spawning enemy {i} at {spawn_data['pos']}: {e}")
     print(f"Enemies spawned: {len(enemy_list)}")
 
     current_chest = spawn_chest_platformer() 
-    if current_chest: all_sprites.add(current_chest); collectible_sprites.add(current_chest)
+    if current_chest: 
+        all_sprites.add(current_chest)
+        collectible_sprites.add(current_chest)
     
     camera = Camera(level_pixel_width, level_pixel_height, WIDTH, HEIGHT)
     return True
 
 def spawn_chest_platformer():
-    global platform_sprites, collectible_sprites, all_sprites, ground_level_y, Chest, current_chest
-    if Chest is None: print("Chest class not available."); return None
-    if current_chest and current_chest.alive(): current_chest.kill()
+    global platform_sprites, collectible_sprites, all_sprites, ground_level_y, Chest
+    if Chest is None: return None
     try:
         valid_plats = [p for p in platform_sprites if p.rect.top < ground_level_y - 50 and p.rect.width > 50]
         if not valid_plats: valid_plats = list(platform_sprites) 
-        if not valid_plats: print("No platforms to spawn chest on."); return None
+        if not valid_plats: print("No valid platforms to spawn chest on."); return None
         
         chosen_platform = random.choice(valid_plats)
         cx = random.randint(chosen_platform.rect.left + 20, chosen_platform.rect.right - 20)
         cy = chosen_platform.rect.top 
-        new_chest = Chest(cx, cy)
+        new_chest = Chest(cx, cy) 
         if hasattr(new_chest, '_valid_init') and new_chest._valid_init:
             print(f"Chest object created at ({int(new_chest.rect.centerx)}, {int(new_chest.rect.bottom)}).")
             return new_chest
@@ -214,15 +223,31 @@ def spawn_chest_platformer():
     return None
 
 def reset_platformer_game_state():
-    global player1, player2, enemy_list, current_chest, player1_spawn_pos, player2_spawn_pos, all_sprites, collectible_sprites
+    global player1, player2, enemy_list, current_chest, player1_spawn_pos, player2_spawn_pos, all_sprites, enemy_sprites, collectible_sprites
     print("\n--- Resetting Platformer Game State ---")
-    if player1 and hasattr(player1, 'reset_state'): player1.reset_state(player1_spawn_pos); print("P1 Reset")
-    if player2 and hasattr(player2, 'reset_state'): player2.reset_state(player2_spawn_pos); print("P2 Reset")
+
+    if player1 and hasattr(player1, 'reset_state'): 
+        player1.reset_state(player1_spawn_pos)
+        if not player1.alive() and player1._valid_init: all_sprites.add(player1)
+        print("P1 Reset")
+    if player2 and hasattr(player2, 'reset_state'): 
+        player2.reset_state(player2_spawn_pos)
+        if not player2.alive() and player2._valid_init: all_sprites.add(player2)
+        print("P2 Reset")
     
     for enemy in enemy_list: 
-        if hasattr(enemy, 'reset'): enemy.reset()
-    print(f"{len(enemy_list)} enemies reset.")
+        if hasattr(enemy, 'reset'): 
+            enemy.reset()
+            if enemy._valid_init:
+                if not enemy.alive(): 
+                    all_sprites.add(enemy)
+                    enemy_sprites.add(enemy)
+                else: 
+                    all_sprites.add(enemy) 
+                    enemy_sprites.add(enemy)
+    print(f"{len(enemy_list)} enemies processed for reset.")
     
+    if current_chest and current_chest.alive(): current_chest.kill()
     current_chest = spawn_chest_platformer() 
     if current_chest:
         all_sprites.add(current_chest) 
@@ -246,8 +271,16 @@ def get_platformer_network_state():
         state['chest'] = {'pos': (current_chest.rect.centerx, current_chest.rect.centery), 
                           'is_collected': getattr(current_chest, 'is_collected', False)}
     
-    p1_dead = not (player1 and hasattr(player1, 'is_dead') and not player1.is_dead and player1._valid_init)
-    state['game_over'] = p1_dead 
+    p1_truly_gone = True 
+    if player1 and player1._valid_init:
+        if player1.alive(): 
+            if hasattr(player1, 'is_dead') and player1.is_dead:
+                if hasattr(player1, 'death_animation_finished') and not player1.death_animation_finished:
+                    p1_truly_gone = False 
+            else: 
+                p1_truly_gone = False
+        
+    state['game_over'] = p1_truly_gone 
     return state
 
 def set_platformer_network_state(network_state):
@@ -255,58 +288,53 @@ def set_platformer_network_state(network_state):
     
     if player1 and 'p1' in network_state and network_state['p1'] and hasattr(player1, 'set_network_data'):
         player1.set_network_data(network_state['p1'])
+        if player1._valid_init and not player1.alive(): all_sprites.add(player1) 
     if player2 and 'p2' in network_state and network_state['p2'] and hasattr(player2, 'set_network_data'):
         player2.set_network_data(network_state['p2'])
+        if player2._valid_init and not player2.alive(): all_sprites.add(player2) 
 
     if 'enemies' in network_state:
         received_enemy_data_map = network_state['enemies']
-        current_enemy_map = {str(enemy.enemy_id): enemy for enemy in enemy_list if hasattr(enemy, 'enemy_id')}
+        current_client_enemies_map = {str(enemy.enemy_id): enemy for enemy in enemy_list if hasattr(enemy, 'enemy_id')}
 
-        for enemy_id_str, enemy_data in received_enemy_data_map.items():
-            if enemy_data.get('_valid_init', False): 
-                if enemy_id_str in current_enemy_map:
-                    enemy = current_enemy_map[enemy_id_str]
-                    if hasattr(enemy, 'set_network_data'): enemy.set_network_data(enemy_data)
+        for enemy_id_str, enemy_data_from_server in received_enemy_data_map.items():
+            enemy_id_int = int(enemy_id_str) 
+            if enemy_data_from_server.get('_valid_init', False): 
+                if enemy_id_str in current_client_enemies_map: 
+                    client_enemy = current_client_enemies_map[enemy_id_str]
+                    if hasattr(client_enemy, 'set_network_data'): 
+                        client_enemy.set_network_data(enemy_data_from_server)
+                        if not client_enemy.alive() and client_enemy._valid_init : 
+                            all_sprites.add(client_enemy)
+                            enemy_sprites.add(client_enemy)
                 else: 
-                    print(f"Client: Attempting to create new enemy {enemy_id_str} from server state.")
+                    print(f"Client: Creating new enemy {enemy_id_str} from server state.")
                     try:
-                        spawn_pos_e = enemy_data.get('pos', (0,0)) 
-                        # Get patrol data if available (from original spawn data or if server sends it)
-                        # This assumes enemy_spawns_data is populated and IDs match index, which might be fragile.
-                        # A better approach is for server to send all necessary init data if enemy is new.
-                        patrol_area_e = None
-                        try: # Try to get patrol area from original spawn data if ID is an int index
-                            original_spawn_info = enemy_spawns_data[int(enemy_id_str)]
-                            patrol_area_e = original_spawn_info.get('patrol')
-                        except (IndexError, ValueError, TypeError):
-                            pass # No original patrol data found or ID not an index
-
-                        new_enemy = Enemy(spawn_pos_e[0], spawn_pos_e[1], patrol_area=patrol_area_e, enemy_id=int(enemy_id_str))
-                        
-                        # Set color if server sent it and Enemy can handle it (Enemy.__init__ currently randomizes color)
-                        # To ensure color consistency, Enemy would need to accept color_name in __init__ or have a method.
-                        # For now, new_enemy on client will have a random color.
-                        # If enemy_data['color_name'] exists, it could be used by a modified Enemy class.
-
+                        spawn_pos_e = enemy_data_from_server.get('pos', (0,0)) 
+                        patrol_area_e = None 
+                        color_name_e = enemy_data_from_server.get('color_name') 
+                        matching_spawn_data = next((sd for sd_idx, sd in enumerate(enemy_spawns_data) if sd_idx == enemy_id_int), None)
+                        if matching_spawn_data: patrol_area_e = matching_spawn_data.get('patrol')
+                        new_enemy = Enemy(spawn_pos_e[0], spawn_pos_e[1], 
+                                          patrol_area=patrol_area_e, 
+                                          enemy_id=enemy_id_int) 
                         if new_enemy._valid_init:
-                            new_enemy.set_network_data(enemy_data) 
+                            new_enemy.set_network_data(enemy_data_from_server) 
                             all_sprites.add(new_enemy); enemy_sprites.add(new_enemy); enemy_list.append(new_enemy)
-                        else:
-                            print(f"Client: Failed to initialize new enemy {enemy_id_str} from server.")
-                    except Exception as e:
-                        print(f"Client: Error creating new enemy {enemy_id_str}: {e}")
-            elif enemy_id_str in current_enemy_map: 
-                enemy_to_remove = current_enemy_map[enemy_id_str]
+                        else: print(f"Client: Failed to initialize new enemy {enemy_id_str} from server.")
+                    except Exception as e: print(f"Client: Error creating new enemy {enemy_id_str}: {e}")
+            elif enemy_id_str in current_client_enemies_map: 
+                enemy_to_remove = current_client_enemies_map[enemy_id_str]
                 if enemy_to_remove.alive(): enemy_to_remove.kill()
                 if enemy_to_remove in enemy_list: enemy_list.remove(enemy_to_remove)
 
-        client_only_enemy_ids = set(current_enemy_map.keys()) - set(received_enemy_data_map.keys())
-        for gone_enemy_id_str in client_only_enemy_ids:
-            if gone_enemy_id_str in current_enemy_map: # Check if it wasn't already removed
-                enemy_to_remove = current_enemy_map[gone_enemy_id_str]
+        server_enemy_ids = set(received_enemy_data_map.keys())
+        client_enemy_ids_to_remove = set(current_client_enemies_map.keys()) - server_enemy_ids
+        for removed_id_str in client_enemy_ids_to_remove:
+            if removed_id_str in current_client_enemies_map:
+                enemy_to_remove = current_client_enemies_map[removed_id_str]
                 if enemy_to_remove.alive(): enemy_to_remove.kill()
                 if enemy_to_remove in enemy_list: enemy_list.remove(enemy_to_remove)
-
 
     if 'chest' in network_state:
         chest_data = network_state['chest']
@@ -318,25 +346,17 @@ def set_platformer_network_state(network_state):
                 if not current_chest or not current_chest.alive(): 
                     if current_chest: current_chest.kill() 
                     try:
-                        # Chest constructor expects x, y as midbottom. Server sends center x, center y.
-                        # Estimate midbottom y. A Chest.set_pos_center(x,y) would be cleaner.
-                        # Assuming Chest.image.get_height() is roughly constant or known.
-                        # For simplicity, using a typical height.
-                        temp_chest_height_approx = 30 # From Chest placeholder, or actual if known
+                        temp_chest_height_approx = getattr(Chest(0,0).image, 'get_height', lambda: 30)() 
                         chest_spawn_x_mid = chest_pos_center[0]
                         chest_spawn_y_bottom = chest_pos_center[1] + temp_chest_height_approx / 2
-                        
-                        new_chest = Chest(chest_spawn_x_mid, chest_spawn_y_bottom) # x is effectively mid, y is bottom
-
+                        new_chest = Chest(chest_spawn_x_mid, chest_spawn_y_bottom)
                         if hasattr(new_chest, '_valid_init') and new_chest._valid_init:
-                             # new_chest.rect.center = chest_pos_center # Fine-tune position if needed after init
                              all_sprites.add(new_chest); collectible_sprites.add(new_chest)
                              current_chest = new_chest
                              if hasattr(current_chest, 'is_collected'): current_chest.is_collected = False 
                         else: current_chest = None; print("Client: Failed to init chest from net.")
                     except Exception as e: print(f"Client: Error creating chest from net: {e}"); current_chest = None
                 elif current_chest: 
-                    # current_chest.rect.center = chest_pos_center # Sync position if already exists
                     if hasattr(current_chest, 'is_collected'): current_chest.is_collected = False
         elif not network_state.get('chest'): 
             if current_chest and current_chest.alive(): current_chest.kill(); current_chest = None
@@ -347,11 +367,11 @@ def draw_platformer_scene(target_screen, current_time_ticks):
     target_screen.fill(getattr(C, 'LIGHT_BLUE', (135, 206, 235)))
     if camera:
         for entity in all_sprites: 
-            if hasattr(entity, 'image') and hasattr(entity, 'rect'):
+            if entity.alive() and hasattr(entity, 'image') and hasattr(entity, 'rect'): 
                  target_screen.blit(entity.image, camera.apply(entity.rect))
         
         for enemy in enemy_list: 
-            if enemy._valid_init and not enemy.is_dead and hasattr(enemy, 'current_health') and hasattr(enemy, 'max_health'):
+            if enemy.alive() and enemy._valid_init and not enemy.is_dead and hasattr(enemy, 'current_health') and hasattr(enemy, 'max_health'):
                 enemy_screen_rect = camera.apply(enemy.rect)
                 bar_w = getattr(C, 'HEALTH_BAR_WIDTH', 50); bar_h = getattr(C, 'HEALTH_BAR_HEIGHT', 8)
                 bar_x = enemy_screen_rect.centerx - bar_w / 2
@@ -362,23 +382,19 @@ def draw_platformer_scene(target_screen, current_time_ticks):
         all_sprites.draw(target_screen) 
 
     if hasattr(ui, 'draw_player_hud'):
-        if player1 and hasattr(player1, '_valid_init') and player1._valid_init: 
+        if player1 and player1.alive() and hasattr(player1, '_valid_init') and player1._valid_init: 
             ui.draw_player_hud(target_screen, 10, 10, player1, 1)
-        if player2 and hasattr(player2, '_valid_init') and player2._valid_init: 
+        if player2 and player2.alive() and hasattr(player2, '_valid_init') and player2._valid_init: 
             p2_hud_x = WIDTH - (getattr(C, 'HEALTH_BAR_WIDTH', 50) * 2) - 120 
             ui.draw_player_hud(target_screen, p2_hud_x, 10, player2, 2)
             
-    # Debug Text (Optional)
-    # if debug_font and clock :
-    # ... (debug drawing code remains the same) ...
-
 def update_camera_platformer(target_focus=None, target2_focus=None):
     global camera
     if not camera: return
     actual_target = None
-    if target_focus and hasattr(target_focus, '_valid_init') and target_focus._valid_init and hasattr(target_focus, 'is_dead') and not target_focus.is_dead:
+    if target_focus and target_focus.alive() and hasattr(target_focus, '_valid_init') and target_focus._valid_init and hasattr(target_focus, 'is_dead') and not target_focus.is_dead:
         actual_target = target_focus
-    elif target2_focus and hasattr(target2_focus, '_valid_init') and target2_focus._valid_init and hasattr(target2_focus, 'is_dead') and not target2_focus.is_dead:
+    elif target2_focus and target2_focus.alive() and hasattr(target2_focus, '_valid_init') and target2_focus._valid_init and hasattr(target2_focus, 'is_dead') and not target2_focus.is_dead:
         actual_target = target2_focus
     
     if actual_target: camera.update(actual_target)
@@ -387,7 +403,6 @@ def update_camera_platformer(target_focus=None, target2_focus=None):
 # --- Server Functions ---
 def broadcast_presence(server_lan_ip):
     global app_running, server_udp_socket, SERVICE_NAME, SERVER_PORT_TCP, DISCOVERY_PORT_UDP, BROADCAST_INTERVAL_S
-    print(f"Starting presence broadcast on UDP port {DISCOVERY_PORT_UDP}")
     broadcast_message_dict = {"service": SERVICE_NAME, "tcp_ip": server_lan_ip, "tcp_port": SERVER_PORT_TCP}
     broadcast_message_bytes = encode_data(broadcast_message_dict) 
     if not broadcast_message_bytes: print("Error: Could not encode broadcast message."); return
@@ -397,13 +412,11 @@ def broadcast_presence(server_lan_ip):
         server_udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1); server_udp_socket.settimeout(0.5)
     except socket.error as e: print(f"Error creating UDP broadcast socket: {e}"); server_udp_socket = None; return
     broadcast_address = ('<broadcast>', DISCOVERY_PORT_UDP)
-    print(f"Broadcasting service '{SERVICE_NAME}' for {server_lan_ip}:{SERVER_PORT_TCP}...")
     while app_running:
         try: server_udp_socket.sendto(broadcast_message_bytes[:-1], broadcast_address) 
         except socket.error: pass 
         except Exception as e: print(f"Unexpected error during broadcast send: {e}")
         time.sleep(BROADCAST_INTERVAL_S)
-    print("Stopping presence broadcast.")
     if server_udp_socket: server_udp_socket.close(); server_udp_socket = None
 
 def handle_client_connection(conn, addr):
@@ -412,7 +425,7 @@ def handle_client_connection(conn, addr):
     partial_data_from_client = b""
     while app_running:
         with client_lock: 
-            if client_connection is not conn: print(f"Handler for {addr}: Connection is no longer active. Exiting thread."); break
+            if client_connection is not conn: break
         try:
             chunk = conn.recv(BUFFER_SIZE)
             if not chunk: print(f"Client {addr} disconnected (received empty data)."); break
@@ -429,7 +442,6 @@ def handle_client_connection(conn, addr):
         except Exception as e: 
              if app_running: print(f"Unexpected error handling client {addr}: {e}"); traceback.print_exc(); break
     
-    print(f"Stopping client handler for {addr}.")
     with client_lock:
         if client_connection is conn: 
             client_connection = None
@@ -447,7 +459,7 @@ def run_server_mode():
         return 
     
     pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: R)")
-    server_lan_ip = get_local_ip(); print(f"Server LAN IP: {server_lan_ip}")
+    server_lan_ip = get_local_ip()
     p1_key_map = {
         'left': pygame.K_a, 'right': pygame.K_d, 'up': pygame.K_w, 'down': pygame.K_s,
         'attack1': pygame.K_v, 'attack2': pygame.K_b, 'dash': pygame.K_LSHIFT,
@@ -497,8 +509,12 @@ def run_server_mode():
         dt_sec = clock.tick(C.FPS) / 1000.0; now_ticks = pygame.time.get_ticks()
         p1_events = pygame.event.get(); keys_p1 = pygame.key.get_pressed()
         
-        p1_is_effectively_dead = not (player1 and player1._valid_init and not player1.is_dead)
-        game_over_check = p1_is_effectively_dead 
+        game_over_for_p2_reset_request = False 
+        if player1 and player1._valid_init:
+            if player1.is_dead and (not player1.alive() or (hasattr(player1, 'death_animation_finished') and player1.death_animation_finished)):
+                game_over_for_p2_reset_request = True
+        else: game_over_for_p2_reset_request = True
+        
         reset_now = False
 
         for event in p1_events:
@@ -512,7 +528,9 @@ def run_server_mode():
                     except pygame.error as e: print(f"Resize error: {e}")
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: server_running_game = False 
-                if event.key == pygame.K_r and game_over_check : reset_now = True
+                if event.key == pygame.K_r: # MODIFIED: Allow reset anytime by P1
+                    print("DEBUG: 'R' key pressed (Server Mode) - unconditional P1 reset requested.")
+                    reset_now = True
                 if event.key == pygame.K_h and player1 and player1._valid_init and hasattr(player1, 'self_inflict_damage'):
                     player1.self_inflict_damage(getattr(C, 'PLAYER_SELF_DAMAGE', 10))
                 if event.key == pygame.K_g and player1 and player1._valid_init and hasattr(player1, 'heal_to_full'):
@@ -538,45 +556,39 @@ def run_server_mode():
         if client_was_disconnected: print("Client disconnected signal received."); server_running_game = False; break 
         
         if player2 and player2._valid_init and remote_p2_input_copy and hasattr(player2, 'handle_network_input'):
-            player2.handle_network_input(remote_p2_input_copy) # Server updates P2 based on network input
+            player2.handle_network_input(remote_p2_input_copy)
 
-        if reset_now or (reset_req_p2 and game_over_check): 
+        # MODIFIED: P1 pressing 'R' always resets. P2 can request reset if P1 is game over.
+        if reset_now or (reset_req_p2 and game_over_for_p2_reset_request): 
+            print("DEBUG: Triggering reset_platformer_game_state() in Server Mode.")
             reset_platformer_game_state()
             if camera: camera.set_pos(0,0); 
-            game_over_check = False; reset_req_p2 = False; reset_now = False
-
-        if not game_over_check:
-            try:
-                other_players_for_p1 = [p for p in [player2] if p and p._valid_init and p is not player1]
-                other_players_for_p2 = [p for p in [player1] if p and p._valid_init and p is not player2]
-
-                if player1 and player1._valid_init: # P1 updates fully
-                    player1.update(dt_sec, platform_sprites, ladder_sprites, hazard_sprites, other_players_for_p1, enemy_list)
-                
-                if player2 and player2._valid_init: # P2 also updates its physics/state based on (network) inputs
-                    player2.update(dt_sec, platform_sprites, ladder_sprites, hazard_sprites, other_players_for_p2, enemy_list)
-                
-                active_players = [p for p in [player1, player2] if p and p._valid_init and not p.is_dead]
-                # enemy_sprites.update calls enemy.update for each enemy in the group.
-                # The Enemy class's update method needs `players_list` (which is `active_players` here)
-                # `platforms`, and `hazards`.
-                for enemy_instance in enemy_list: # Iterate actual instances
-                    if enemy_instance._valid_init and not enemy_instance.is_dead:
-                        enemy_instance.update(dt_sec, active_players, platform_sprites, hazard_sprites)
-                
-                collectible_sprites.update(dt_sec) 
-                if Chest and current_chest and current_chest.alive():
-                    # Check P1 collection
-                    if player1 and player1._valid_init and not player1.is_dead and pygame.sprite.collide_rect(player1, current_chest):
-                         current_chest.collect(player1); current_chest = None 
-                    # Check P2 collection (if P1 didn't get it first)
-                    elif player2 and player2._valid_init and not player2.is_dead and current_chest and current_chest.alive() and pygame.sprite.collide_rect(player2, current_chest):
-                         current_chest.collect(player2); current_chest = None
-            except Exception as e: print(f"Server update error: {e}"); traceback.print_exc(); server_running_game=False; break
+            reset_req_p2 = False; reset_now = False
+        
+        if player1 and player1._valid_init: 
+            other_players_for_p1 = [p for p in [player2] if p and p._valid_init and p.alive() and p is not player1]
+            player1.update(dt_sec, platform_sprites, ladder_sprites, hazard_sprites, other_players_for_p1, enemy_list)
+        
+        if player2 and player2._valid_init: 
+            other_players_for_p2 = [p for p in [player1] if p and p._valid_init and p.alive() and p is not player2]
+            player2.update(dt_sec, platform_sprites, ladder_sprites, hazard_sprites, other_players_for_p2, enemy_list)
+        
+        active_players_for_enemies = [p for p in [player1, player2] if p and p._valid_init and not p.is_dead and p.alive()]
+        for enemy_instance in enemy_list:
+            if enemy_instance._valid_init: 
+                enemy_instance.update(dt_sec, active_players_for_enemies, platform_sprites, hazard_sprites)
+        
+        collectible_sprites.update(dt_sec) 
+        if Chest and current_chest and current_chest.alive():
+            if player1 and player1._valid_init and not player1.is_dead and player1.alive() and pygame.sprite.collide_rect(player1, current_chest):
+                 current_chest.collect(player1); current_chest = None 
+            elif player2 and player2._valid_init and not player2.is_dead and player2.alive() and \
+                 current_chest and current_chest.alive() and pygame.sprite.collide_rect(player2, current_chest):
+                 current_chest.collect(player2); current_chest = None
         
         update_camera_platformer(player1, player2) 
         
-        if client_connection:
+        if client_connection: 
             net_state = get_platformer_network_state()
             encoded_state = encode_data(net_state)
             if encoded_state:
@@ -589,15 +601,12 @@ def run_server_mode():
 
     print("Exiting server game loop.")
     app_running = False 
-    
     temp_conn_to_close = None
     with client_lock: 
-        temp_conn_to_close = client_connection
-        client_connection = None 
+        temp_conn_to_close = client_connection; client_connection = None 
     if temp_conn_to_close:
         try: temp_conn_to_close.shutdown(socket.SHUT_RDWR); temp_conn_to_close.close()
         except: pass 
-        
     if server_tcp_socket: server_tcp_socket.close(); server_tcp_socket = None
     if broadcast_thread and broadcast_thread.is_alive(): broadcast_thread.join(0.2) 
     if client_handler_thread and client_handler_thread.is_alive(): client_handler_thread.join(0.2)
@@ -654,7 +663,9 @@ def run_client_mode(target_ip_port=None):
         dt_sec = clock.tick(C.FPS) / 1000.0; now_ticks = pygame.time.get_ticks()
         
         client_input_actions = {'action_reset': False, 'action_self_harm': False, 'action_heal': False} 
-        game_over_from_server = last_received_server_state.get('game_over', False) if last_received_server_state else False
+        game_over_from_server = False
+        if last_received_server_state and 'game_over' in last_received_server_state:
+            game_over_from_server = last_received_server_state['game_over']
         
         client_events = pygame.event.get(); keys_client = pygame.key.get_pressed()
         for event in client_events:
@@ -668,7 +679,8 @@ def run_client_mode(target_ip_port=None):
                     except pygame.error as e: print(f"Resize error: {e}")
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: client_running_game = False 
-                if game_over_from_server and event.key == pygame.K_RETURN: client_input_actions['action_reset'] = True
+                if event.key == pygame.K_RETURN and game_over_from_server : # Client requests reset if server says game over
+                    client_input_actions['action_reset'] = True
                 if event.key == pygame.K_h: client_input_actions['action_self_harm'] = True 
                 if event.key == pygame.K_g: client_input_actions['action_heal'] = True 
 
@@ -700,17 +712,19 @@ def run_client_mode(target_ip_port=None):
                     print(f"Client recv error: {e}"); client_running_game=False; break
             except Exception as e: print(f"Client data processing error: {e}"); traceback.print_exc(); client_running_game=False; break
         
-        # Client-side updates for purely visual/local things (e.g., chest animation)
-        collectible_sprites.update(dt_sec) # Chest animation
-        # Player characters and enemies are updated via set_platformer_network_state
+        if player1 and player1.alive() and player1._valid_init: player1.animate() 
+        if player2 and player2.alive() and player2._valid_init: player2.animate() 
+        for enemy_instance in enemy_list: 
+            if enemy_instance.alive() and enemy_instance._valid_init:
+                enemy_instance.animate()
+
+        collectible_sprites.update(dt_sec) 
 
         cam_target_client = None 
-        if last_received_server_state:
-            p1_data = last_received_server_state.get('p1'); p2_data = last_received_server_state.get('p2')
-            if p2_data and not p2_data.get('is_dead', True) and player2 and player2._valid_init:
-                cam_target_client = player2
-            elif p1_data and not p1_data.get('is_dead', True) and player1 and player1._valid_init:
-                cam_target_client = player1
+        if player2 and player2.alive() and player2._valid_init and not player2.is_dead :
+            cam_target_client = player2
+        elif player1 and player1.alive() and player1._valid_init and not player1.is_dead:
+            cam_target_client = player1
         
         if cam_target_client: camera.update(cam_target_client)
         else: camera.static_update() 
@@ -751,7 +765,7 @@ def run_couch_play_mode():
         dt_sec = clock.tick(getattr(C, 'FPS', 60)) / 1000.0; now_ticks = pygame.time.get_ticks()
         events = pygame.event.get(); keys = pygame.key.get_pressed()
         reset_now_couch = False
-
+        
         for event in events:
             if event.type == pygame.QUIT: couch_running_game = False; app_running = False; break
             if event.type == pygame.VIDEORESIZE:
@@ -763,9 +777,10 @@ def run_couch_play_mode():
                     except pygame.error as e: print(f"Resize error: {e}")
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: couch_running_game = False; break 
-                # Q for character swap was removed for now as it's complex.
                 
-                if event.key == pygame.K_r: reset_now_couch = True 
+                if event.key == pygame.K_r: # MODIFIED: Allow reset anytime
+                    print("DEBUG: 'R' key pressed (Couch Mode) - unconditional reset requested.")
+                    reset_now_couch = True 
                 
                 if event.key == pygame.K_h and player1 and player1._valid_init and hasattr(player1, 'self_inflict_damage'):
                     player1.self_inflict_damage(getattr(C, 'PLAYER_SELF_DAMAGE', 10))
@@ -785,31 +800,30 @@ def run_couch_play_mode():
             player2.handle_mapped_input(keys, events, p2_key_map)
 
         if reset_now_couch:
+            print("DEBUG: Triggering reset_platformer_game_state() in Couch Mode.")
             reset_platformer_game_state()
             if camera: camera.set_pos(0,0); 
             reset_now_couch = False
         
-        try:
-            other_players_for_p1 = [p for p in [player2] if p and p._valid_init and p is not player1]
-            other_players_for_p2 = [p for p in [player1] if p and p._valid_init and p is not player2]
-
-            if player1 and player1._valid_init: 
-                player1.update(dt_sec, platform_sprites, ladder_sprites, hazard_sprites, other_players_for_p1, enemy_list)
-            if player2 and player2._valid_init: 
-                player2.update(dt_sec, platform_sprites, ladder_sprites, hazard_sprites, other_players_for_p2, enemy_list)
-            
-            active_players_couch = [p for p in [player1, player2] if p and p._valid_init and not p.is_dead]
-            for enemy_instance in enemy_list: # Iterate actual instances
-                if enemy_instance._valid_init and not enemy_instance.is_dead:
-                    enemy_instance.update(dt_sec, active_players_couch, platform_sprites, hazard_sprites)
-            
-            collectible_sprites.update(dt_sec)
-            if Chest and current_chest and current_chest.alive():
-                if player1 and player1._valid_init and not player1.is_dead and pygame.sprite.collide_rect(player1, current_chest):
-                    current_chest.collect(player1); current_chest = None
-                elif player2 and player2._valid_init and not player2.is_dead and current_chest and current_chest.alive() and pygame.sprite.collide_rect(player2, current_chest):
-                    current_chest.collect(player2); current_chest = None
-        except Exception as e: print(f"Couch update error: {e}"); traceback.print_exc(); couch_running_game=False; break
+        if player1 and player1._valid_init: 
+            other_players_for_p1 = [p for p in [player2] if p and p._valid_init and p.alive() and p is not player1]
+            player1.update(dt_sec, platform_sprites, ladder_sprites, hazard_sprites, other_players_for_p1, enemy_list)
+        if player2 and player2._valid_init: 
+            other_players_for_p2 = [p for p in [player1] if p and p._valid_init and p.alive() and p is not player2]
+            player2.update(dt_sec, platform_sprites, ladder_sprites, hazard_sprites, other_players_for_p2, enemy_list)
+        
+        active_players_for_enemies = [p for p in [player1, player2] if p and p._valid_init and not p.is_dead and p.alive()]
+        for enemy_instance in enemy_list: 
+            if enemy_instance._valid_init: 
+                enemy_instance.update(dt_sec, active_players_for_enemies, platform_sprites, hazard_sprites)
+        
+        collectible_sprites.update(dt_sec)
+        if Chest and current_chest and current_chest.alive():
+            if player1 and player1._valid_init and not player1.is_dead and player1.alive() and pygame.sprite.collide_rect(player1, current_chest):
+                current_chest.collect(player1); current_chest = None
+            elif player2 and player2._valid_init and not player2.is_dead and player2.alive() and \
+                 current_chest and current_chest.alive() and pygame.sprite.collide_rect(player2, current_chest):
+                current_chest.collect(player2); current_chest = None
         
         update_camera_platformer(player1, player2) 
         try: draw_platformer_scene(screen, now_ticks)
@@ -821,7 +835,6 @@ def get_server_id_input(screen_surf, font_prompt, font_input, font_info, clock_o
     global app_running, SCRAP_INITIALIZED, PYPERCLIP_AVAILABLE, WIDTH, HEIGHT
     input_text = ""; input_active = True; cursor_visible = True; last_cursor_toggle = time.time()
     input_rect = pygame.Rect(WIDTH // 4, HEIGHT // 2 - 10, WIDTH // 2, 50)
-    print("Prompting for Server IP Address (or IP:Port)...")
     pygame.key.set_repeat(500, 50); paste_info_msg = None; paste_msg_start_time = 0
     while input_active and app_running:
         current_time = time.time()
@@ -857,8 +870,7 @@ def get_server_id_input(screen_surf, font_prompt, font_input, font_info, clock_o
                             if isinstance(cb_data, str): pasted_content = cb_data.replace('\x00', '').strip()
                             if pasted_content: paste_method_used = "pyperclip"
                         except Exception as e_pyperclip: print(f"pyperclip paste error: {e_pyperclip}")
-                    
-                    if pasted_content: input_text += pasted_content; print(f"Pasted via {paste_method_used}.")
+                    if pasted_content: input_text += pasted_content
                     else: paste_info_msg = "Paste Failed/Empty"; paste_msg_start_time = current_time
                 elif event.unicode.isalnum() or event.unicode in ['.', ':', '-']: input_text += event.unicode 
         
@@ -867,41 +879,29 @@ def get_server_id_input(screen_surf, font_prompt, font_input, font_info, clock_o
         screen_surf.blit(prompt_surf, prompt_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 60)))
         info_surf = font_info.render("(Enter=Confirm, Esc=Cancel, Ctrl+V=Paste)", True, C.GREY) 
         screen_surf.blit(info_surf, info_surf.get_rect(center=(WIDTH // 2, HEIGHT - 40)))
-        
         pygame.draw.rect(screen_surf, C.GREY, input_rect, border_radius=5) 
         pygame.draw.rect(screen_surf, C.WHITE, input_rect, 2, border_radius=5) 
-        
         text_surf = font_input.render(input_text, True, C.BLACK) 
         text_rect_render = text_surf.get_rect(midleft=(input_rect.left + 10, input_rect.centery))
-        
         clip_render_area = input_rect.inflate(-12, -12) 
         if text_rect_render.right > clip_render_area.right : text_rect_render.right = clip_render_area.right 
-        
-        screen_surf.set_clip(clip_render_area) 
-        screen_surf.blit(text_surf, text_rect_render)
-        screen_surf.set_clip(None) 
-        
+        screen_surf.set_clip(clip_render_area); screen_surf.blit(text_surf, text_rect_render); screen_surf.set_clip(None) 
         if cursor_visible: 
             cursor_x_pos = text_rect_render.right + 2
             if cursor_x_pos < clip_render_area.left + 2: cursor_x_pos = clip_render_area.left + 2
             if cursor_x_pos > clip_render_area.right -1: cursor_x_pos = clip_render_area.right -1
             pygame.draw.line(screen_surf, C.BLACK, (cursor_x_pos, input_rect.top + 5), (cursor_x_pos, input_rect.bottom - 5), 2)
-            
         if paste_info_msg and current_time - paste_msg_start_time < 2.0: 
             msg_s = font_info.render(paste_info_msg, True, C.RED); screen_surf.blit(msg_s, msg_s.get_rect(center=(WIDTH//2, input_rect.bottom+30)))
         elif paste_info_msg: paste_info_msg = None 
-            
         pygame.display.flip(); clock_obj.tick(30)
-        
     pygame.key.set_repeat(0,0) 
     return input_text.strip() if input_text is not None else None
 
 def find_server(screen_surf, font_small_obj, font_large_obj):
     global app_running, clock, WIDTH, HEIGHT, SERVICE_NAME, DISCOVERY_PORT_UDP, CLIENT_SEARCH_TIMEOUT_S, BUFFER_SIZE
-    print(f"Searching LAN for '{SERVICE_NAME}' on UDP port {DISCOVERY_PORT_UDP}...")
     pygame.display.set_caption("Platformer - Searching LAN...")
     search_text_surf = font_large_obj.render("Searching for server on LAN...", True, C.WHITE)
-    
     listen_socket, found_server_ip, found_server_port = None, None, None
     try:
         listen_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -912,9 +912,7 @@ def find_server(screen_surf, font_small_obj, font_large_obj):
         screen_surf.fill(C.BLACK); err1 = font_small_obj.render(f"Error: Cannot listen on UDP {DISCOVERY_PORT_UDP}.", True, C.RED)
         screen_surf.blit(err1, err1.get_rect(center=(WIDTH//2, HEIGHT // 2))); pygame.display.flip(); time.sleep(4)
         return None, None 
-        
     start_time, my_ip = time.time(), get_local_ip() 
-    
     while time.time() - start_time < CLIENT_SEARCH_TIMEOUT_S and app_running:
         for event in pygame.event.get(): 
              if event.type == pygame.QUIT: app_running = False; break
@@ -926,64 +924,48 @@ def find_server(screen_surf, font_small_obj, font_large_obj):
                     except pygame.error as e: print(f"Resize error: {e}")
              if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: print("Search cancelled by user."); app_running = False; break 
         if not app_running: break
-        
         screen_surf.fill(C.BLACK); screen_surf.blit(search_text_surf, search_text_surf.get_rect(center=(WIDTH//2, HEIGHT//2))); pygame.display.flip(); clock.tick(10)
-        
         try:
             data, addr = listen_socket.recvfrom(BUFFER_SIZE)
             if addr[0] == my_ip: continue 
-            
             decoded_msgs, _ = decode_data_stream(data + b'\n') 
             if not decoded_msgs: continue; message = decoded_msgs[0] 
-            
             if (message and message.get("service") == SERVICE_NAME and 
-                isinstance(message.get("tcp_ip"), str) and 
-                isinstance(message.get("tcp_port"), int)):
+                isinstance(message.get("tcp_ip"), str) and isinstance(message.get("tcp_port"), int)):
                 ip, port = message["tcp_ip"], message["tcp_port"]
                 print(f"Found server: {ip}:{port} from {addr[0]}"); found_server_ip, found_server_port = ip, port; break 
         except socket.timeout: continue 
         except Exception as e: print(f"Error processing UDP broadcast: {e}")
-            
     if listen_socket: listen_socket.close() 
-    
     if not found_server_ip and app_running: 
         print(f"No server found for '{SERVICE_NAME}'.")
         screen_surf.fill(C.BLACK); fail1 = font_large_obj.render("Server Not Found!", True, C.RED)
         screen_surf.blit(fail1, fail1.get_rect(center=(WIDTH//2, HEIGHT//2))); pygame.display.flip(); time.sleep(3)
-        
     return found_server_ip, found_server_port
-
 
 def show_main_menu():
     global screen, clock, font_small, font_medium, font_large, app_running, WIDTH, HEIGHT
     button_width, button_height, spacing = 350, 55, 20; title_button_gap = 60
     title_color = C.WHITE; btn_txt_color = C.WHITE; btn_color = C.BLUE; btn_hover = C.GREEN
-    
     title_surf = font_large.render("Platformer Adventure LAN", True, title_color)
-    
     buttons_data = { 
         "host": {"text": "Host Game (Online)", "action": "host"}, 
         "join_lan": {"text": "Join Game (LAN)", "action": "join_lan"},
         "join_internet": {"text": "Join Game (Internet)", "action": "join_internet"}, 
         "couch_play": {"text": "Couch Play (Local)", "action": "couch_play"},
-        "quit": {"text": "Quit Game", "action": "quit"}
-    }
-    
+        "quit": {"text": "Quit Game", "action": "quit"}}
     _title_rect_cache = None 
     def update_button_geometries_menu(): 
         nonlocal _title_rect_cache 
         _title_rect_cache = title_surf.get_rect(center=(WIDTH // 2, HEIGHT // 4))
         current_y_pos = _title_rect_cache.bottom + title_button_gap
         for key, props_dict in buttons_data.items():
-            props_dict["rect"] = pygame.Rect(0,0,button_width,button_height)
-            props_dict["rect"].centerx = WIDTH // 2
+            props_dict["rect"] = pygame.Rect(0,0,button_width,button_height); props_dict["rect"].centerx = WIDTH // 2
             props_dict["rect"].top = current_y_pos
             props_dict["text_surf"] = font_medium.render(props_dict["text"], True, btn_txt_color)
             props_dict["text_rect"] = props_dict["text_surf"].get_rect(center=props_dict["rect"].center)
             current_y_pos += button_height + spacing
-            
     update_button_geometries_menu() 
-    
     selected_option_menu = None
     while selected_option_menu is None and app_running:
         mouse_pos_menu = pygame.mouse.get_pos(); events_menu = pygame.event.get()
@@ -999,19 +981,14 @@ def show_main_menu():
             if event_m.type == pygame.KEYDOWN and event_m.key == pygame.K_ESCAPE: app_running = False; selected_option_menu = "quit"
             if event_m.type == pygame.MOUSEBUTTONDOWN and event_m.button == 1: 
                 for props_m in buttons_data.values(): 
-                    if props_m["rect"].collidepoint(mouse_pos_menu): 
-                        selected_option_menu = props_m["action"]; break 
-                        
+                    if props_m["rect"].collidepoint(mouse_pos_menu): selected_option_menu = props_m["action"]; break 
         screen.fill(C.BLACK) 
         if _title_rect_cache: screen.blit(title_surf, _title_rect_cache) 
-        
         for props_m in buttons_data.values(): 
             hover_m = props_m["rect"].collidepoint(mouse_pos_menu)
             pygame.draw.rect(screen, btn_hover if hover_m else btn_color, props_m["rect"], border_radius=8)
             screen.blit(props_m["text_surf"], props_m["text_rect"]) 
-            
         pygame.display.flip(); clock.tick(30) 
-        
     return selected_option_menu
 
 # --- Main Execution ---
@@ -1028,10 +1005,7 @@ if __name__ == "__main__":
         
         if menu_choice == "quit": app_running = False; break 
         if not app_running: break 
-
-        _app_running_before_mode = app_running 
-        app_running = True # Reset for the mode, mode can set it to False to quit to menu
-
+        app_running = True 
         if menu_choice == "host": run_server_mode()
         elif menu_choice == "join_lan": run_client_mode() 
         elif menu_choice == "join_internet":
@@ -1039,12 +1013,6 @@ if __name__ == "__main__":
             if target_ip and app_running: run_client_mode(target_ip_port=target_ip)
         elif menu_choice == "couch_play": run_couch_play_mode()
         
-        # If a game mode wants to quit the entire app, it should set global app_running to False.
-        # If it just finishes (or sets its local _running_game to False), app_running remains True
-        # (or its state before the mode was called), and the main menu loop continues.
-        # The current setup is that modes run until they finish or user Escapes, then return to menu.
-        # `app_running` is the global flag for the whole application.
-
     print("Exiting application gracefully.")
     pygame.quit()
     try: 
