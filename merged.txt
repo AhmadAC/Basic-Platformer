@@ -2382,41 +2382,82 @@ if __name__ == "__main__":
 """
 Defines the Player class, handling movement, animations, states, and interactions.
 """
-# version 1.00000.5 (addressing lava freeze and death state physics)
+# version 1.00000.6 (refining death physics, print limiter, lava freeze)
 import pygame
 import os
 import sys
 import math
+import time # For PrintLimiter
 
 # Import necessary components from other modules
 import constants as C # Use constants with C. prefix
 from assets import load_all_player_animations # Import the animation loader
 from tiles import Lava # Import Lava for type checking in hazard collision
 
+# --- Print Limiter Utility ---
+class PrintLimiter:
+    def __init__(self, default_limit=5, default_period=2.0):
+        self.counts = {}
+        self.timestamps = {}
+        self.default_limit = default_limit
+        self.default_period = default_period
+        self.globally_suppressed = {}
+
+    def can_print(self, message_key, limit=None, period=None):
+        limit = limit if limit is not None else self.default_limit
+        period = period if period is not None else self.default_period
+        current_time = time.time()
+        
+        if message_key not in self.timestamps:
+            self.timestamps[message_key] = current_time
+            self.counts[message_key] = 0
+            self.globally_suppressed[message_key] = False
+
+        if current_time - self.timestamps[message_key] > period:
+            self.timestamps[message_key] = current_time
+            self.counts[message_key] = 0
+            self.globally_suppressed[message_key] = False
+
+        if self.counts[message_key] < limit:
+            self.counts[message_key] += 1
+            return True
+        elif not self.globally_suppressed[message_key]:
+            print(f"[PrintLimiter] Suppressing further prints for '{message_key}' for {period:.1f}s (limit: {limit})")
+            self.globally_suppressed[message_key] = True
+            return False
+        return False
+
 class Player(pygame.sprite.Sprite):
+    # Class-level limiter for messages that might be common across instances or general warnings
+    print_limiter = PrintLimiter(default_limit=3, default_period=5.0)
+
     def __init__(self, start_x, start_y, player_id=1):
         super().__init__()
         self.player_id = player_id
         self._valid_init = True 
+        # self.instance_print_limiter = PrintLimiter(default_limit=5, default_period=2.0) # Per-instance if needed
 
         if self.player_id == 1: asset_folder = 'characters/player1'
         elif self.player_id == 2: asset_folder = 'characters/player2'
         else:
-            print(f"Warning: Player {self.player_id} has an unrecognized ID. Defaulting to player1 assets.")
             asset_folder = 'characters/player1'
+            if Player.print_limiter.can_print(f"player_unrecognized_id_{self.player_id}"):
+                print(f"Warning: Player {self.player_id} has an unrecognized ID. Defaulting to player1 assets.")
 
         self.animations = load_all_player_animations(relative_asset_folder=asset_folder)
 
         if self.animations is None:
-            print(f"Player {self.player_id} Init Error: Failed to load critical animations from {asset_folder}.")
+            print(f"CRITICAL Player {self.player_id} Init Error: Failed to load critical animations from {asset_folder}.")
             self.image = pygame.Surface((30, 40)).convert_alpha(); self.image.fill(C.RED)
             self.rect = self.image.get_rect(midbottom=(start_x, start_y))
             self.is_dead = True; self._valid_init = False; return
 
         try: self.standard_height = self.animations['idle'][0].get_height()
         except (KeyError, IndexError, TypeError):
-            print(f"Warning Player {self.player_id}: Could not get player idle animation height, using default.")
             self.standard_height = 60
+            if Player.print_limiter.can_print(f"player_{self.player_id}_idle_height_warning"):
+                print(f"Warning Player {self.player_id}: Could not get player idle animation height, using default {self.standard_height}.")
+
 
         self._last_facing = True; self._last_state_for_debug = "init"
         self.state = 'idle'; self.current_frame = 0
@@ -2427,7 +2468,7 @@ class Player(pygame.sprite.Sprite):
         else:
             self.image = pygame.Surface((30,40)); self.image.fill(C.RED)
             print(f"CRITICAL Player {self.player_id}: Missing or empty 'idle' animation during init.")
-            self._valid_init = False
+            self._valid_init = False; return
 
         self.rect = self.image.get_rect(midbottom=(start_x, start_y))
         self.pos = pygame.math.Vector2(start_x, start_y)
@@ -2443,11 +2484,11 @@ class Player(pygame.sprite.Sprite):
         self.wall_climb_timer = 0; self.wall_climb_duration = getattr(C, 'PLAYER_WALL_CLIMB_DURATION', 500)
         self.can_wall_jump = False
         self.is_taking_hit = False; self.hit_timer = 0
-        self.hit_duration = getattr(C, 'PLAYER_HIT_STUN_DURATION', 300) # Stun duration
-        self.hit_cooldown = getattr(C, 'PLAYER_HIT_COOLDOWN', 600)   # Invincibility duration
+        self.hit_duration = getattr(C, 'PLAYER_HIT_STUN_DURATION', 300) 
+        self.hit_cooldown = getattr(C, 'PLAYER_HIT_COOLDOWN', 600)   
         self.is_dead = False; self.state_timer = 0
         self.max_health = C.PLAYER_MAX_HEALTH; self.current_health = self.max_health
-        self.attack_hitbox = pygame.Rect(0, 0, 45, 30)
+        self.attack_hitbox = pygame.Rect(0, 0, 45, 30) 
 
         self.is_trying_to_move_left = False; self.is_trying_to_move_right = False
         self.is_holding_climb_ability_key = False; self.is_holding_crouch_ability_key = False
@@ -2471,7 +2512,8 @@ class Player(pygame.sprite.Sprite):
                            not (self.is_dead and not self.death_animation_finished and new_state != 'death')
 
         if can_change_state:
-            # print(f"DEBUG Player {self.player_id}: Set State from '{self.state}' to '{new_state}' (Original req: '{original_new_state_request}')")
+            if Player.print_limiter.can_print(f"player_{self.player_id}_set_state", limit=10, period=1.0):
+                print(f"DEBUG Player {self.player_id}: Set State from '{self.state}' to '{new_state}' (Original req: '{original_new_state_request}')")
             self._last_state_for_debug = new_state
             if 'attack' not in new_state and self.is_attacking: self.is_attacking = False; self.attack_type = 0
             if new_state != 'hit': self.is_taking_hit = False
@@ -2506,33 +2548,26 @@ class Player(pygame.sprite.Sprite):
                     self.attack_duration = num_frames * base_frame_duration if num_frames > 0 else 300
                 if new_state in ['attack_nm', 'attack2_nm', 'attack_combo_nm', 'crouch_attack']: self.vel.x = 0
             elif new_state == 'hit':
-                 # print(f"DEBUG Player {self.player_id}: Entering 'hit' state. Vel BEFORE modification: ({self.vel.x:.2f}, {self.vel.y:.2f})")
+                 if Player.print_limiter.can_print(f"player_{self.player_id}_enter_hit_state"):
+                    print(f"DEBUG Player {self.player_id}: Entering 'hit' state. Vel BEFORE modification: ({self.vel.x:.2f}, {self.vel.y:.2f})")
                  self.is_taking_hit = True; self.hit_timer = self.state_timer
-                 # Generic knockback if not overridden by specific hazard collision (like lava)
-                 # Lava's bounce is applied in check_hazard_collisions *before* take_damage calls this.
-                 # This ensures lava bounce takes precedence.
-                 if not self.on_ground and self.vel.y > -abs(C.PLAYER_JUMP_STRENGTH * 0.5): # If not already strongly bouncing up
+                 if not self.on_ground and self.vel.y > -abs(C.PLAYER_JUMP_STRENGTH * 0.5): 
                     self.vel.x *= -0.3 
                     self.vel.y = C.PLAYER_JUMP_STRENGTH * 0.4 
                  self.is_attacking = False; self.attack_type = 0
-                 # print(f"DEBUG Player {self.player_id}: Set state to 'hit'. Vel AFTER modification (if any): ({self.vel.x:.2f}, {self.vel.y:.2f})")
+                 # if Player.print_limiter.can_print(f"player_{self.player_id}_set_hit_state_vel"):
+                 #    print(f"DEBUG Player {self.player_id}: Set state to 'hit'. Vel AFTER modification (if any): ({self.vel.x:.2f}, {self.vel.y:.2f})")
             elif new_state == 'death' or new_state == 'death_nm':
-                 print(f"DEBUG Player {self.player_id}: Entering 'death' state. Vel BEFORE zeroing: ({self.vel.x:.2f}, {self.vel.y:.2f})")
-                 self.is_dead = True
-                 self.vel.x = 0  # Stop horizontal motion
-                 # If player was moving upwards significantly, give a slight downward nudge or reset to a small fall
-                 if self.vel.y < -1: # Was moving upwards
-                     self.vel.y = 1 # Start a gentle fall
-                 # Else, if already falling or on ground, vel.y might already be positive or 0.
+                 if Player.print_limiter.can_print(f"player_{self.player_id}_enter_death_state"):
+                    print(f"DEBUG Player {self.player_id}: Entering 'death' state. Vel BEFORE: ({self.vel.x:.2f}, {self.vel.y:.2f})")
+                 self.is_dead = True; self.vel.x = 0
+                 if self.vel.y < -1: self.vel.y = 1 # Prevent flying up, start gentle fall
                  self.acc.x = 0
-                 # Keep gravity acting on the player, unless they are already on ground
-                 if not self.on_ground:
-                     self.acc.y = C.PLAYER_GRAVITY 
-                 else:
-                     self.vel.y = 0 # Ensure no bounce if died on ground
-                     self.acc.y = 0 # No further vertical acc if on ground dead
+                 if not self.on_ground: self.acc.y = C.PLAYER_GRAVITY 
+                 else: self.vel.y = 0; self.acc.y = 0 
                  self.death_animation_finished = False 
-                 print(f"DEBUG Player {self.player_id}: In 'death' state. Final vel: ({self.vel.x:.2f}, {self.vel.y:.2f}), Acc: ({self.acc.x:.2f}, {self.acc.y:.2f})")
+                 if Player.print_limiter.can_print(f"player_{self.player_id}_in_death_state_vel"):
+                    print(f"DEBUG Player {self.player_id}: In 'death' state. Final vel: ({self.vel.x:.2f}, {self.vel.y:.2f}), Acc: ({self.acc.x:.2f}, {self.acc.y:.2f})")
             elif new_state == 'wall_climb':
                  self.wall_climb_timer = self.state_timer; self.vel.y = C.PLAYER_WALL_CLIMB_SPEED
             elif new_state == 'wall_slide' or new_state == 'wall_hang': self.wall_climb_timer = 0
@@ -2541,8 +2576,6 @@ class Player(pygame.sprite.Sprite):
         elif not self.is_dead: self._last_state_for_debug = self.state
 
     def animate(self):
-        # ... (animate method remains largely the same as your previous version) ...
-        # Key part for player death:
         if not self._valid_init or not hasattr(self, 'animations') or not self.animations: return
         if not self.alive(): return 
 
@@ -2552,7 +2585,6 @@ class Player(pygame.sprite.Sprite):
         if self.is_dead: 
             state_key = 'death_nm' if abs(self.vel.x) < 0.5 and abs(self.vel.y) < 1.0 and 'death_nm' in self.animations else 'death'
             if state_key not in self.animations or not self.animations[state_key]: state_key = 'death'
-        # ... (other state_key logic) ...
         elif self.is_attacking:
             if self.attack_type == 1: state_key = 'attack' if moving_intended_by_input else 'attack_nm'
             elif self.attack_type == 2: state_key = 'attack2' if moving_intended_by_input else 'attack2_nm'
@@ -2602,12 +2634,11 @@ class Player(pygame.sprite.Sprite):
                 self.last_anim_update = now; self.current_frame = (self.current_frame + 1)
                 if self.current_frame >= len(animation):
                     if self.is_dead: 
-                        # print(f"DEBUG Player {self.player_id}: Death Animation FINISHED.")
+                        if Player.print_limiter.can_print(f"player_{self.player_id}_death_anim_done"):
+                            print(f"DEBUG Player {self.player_id}: Death Animation FINISHED.")
                         self.current_frame = len(animation) - 1 
                         self.death_animation_finished = True
-                        # For player, self.kill() is usually handled by game over logic in main.py
-                        # If you want the player sprite to disappear on its own:
-                        # if self.alive(): self.kill()
+                        # Player doesn't self.kill() here; main game loop handles game over/removal
                         return 
                     
                     non_looping_states = [
@@ -2621,7 +2652,8 @@ class Player(pygame.sprite.Sprite):
                          elif current_s == 'jump_fall_trans': next_s = 'fall'
                          elif current_s == 'hit': 
                              next_s = 'fall' if not self.on_ground and not self.on_ladder else 'idle'
-                             print(f"DEBUG Player {self.player_id}: 'hit' animation finished. Transitioning to: {next_s}. On_ground: {self.on_ground}, On_ladder: {self.on_ladder}, VelY: {self.vel.y:.2f}")
+                             if Player.print_limiter.can_print(f"player_{self.player_id}_hit_anim_done"):
+                                print(f"DEBUG Player {self.player_id}: 'hit' animation finished. Transitioning to: {next_s}. On_ground: {self.on_ground}, VelY: {self.vel.y:.2f}")
                          elif current_s == 'turn': next_s = 'run' if is_input_moving else 'idle'
                          elif 'attack' in current_s:
                               self.is_attacking = False; self.attack_type = 0
@@ -2669,8 +2701,8 @@ class Player(pygame.sprite.Sprite):
 
         if not self._valid_init or input_blocked_by_state :
             self.acc.x = 0
-            # if input_blocked_by_state: # Kept for debugging if needed
-                # print(f"DEBUG Player {self.player_id}: Input processing SKIPPED. is_dead={self.is_dead}, is_taking_hit={self.is_taking_hit}, hit_stun_active={(self.is_taking_hit and now - self.hit_timer < self.hit_duration)}")
+            # if input_blocked_by_state and Player.print_limiter.can_print(f"player_{self.player_id}_input_skip"):
+                # print(f"DEBUG Player {self.player_id}: Input processing SKIPPED. is_dead={self.is_dead}, is_taking_hit={self.is_taking_hit}, stun_active={(self.is_taking_hit and now - self.hit_timer < self.hit_duration)}")
             return
 
         self.is_trying_to_move_left = keys[key_config['left']]
@@ -2806,35 +2838,31 @@ class Player(pygame.sprite.Sprite):
     def update(self, dt, platforms, ladders, hazards, other_players_list, enemies_list):
         if not self._valid_init: return
         
-        if self.is_dead: # Player is dead
-            if self.alive() and hasattr(self, 'animate'): # and death animation not finished / sprite not killed
-                # Apply simplified physics for a dead, falling body
-                if not self.death_animation_finished: # Only apply physics if death anim isn't "logically" done
+        if self.is_dead: 
+            if self.alive() and hasattr(self, 'animate'): 
+                if not self.death_animation_finished: 
                     if not self.on_ground: 
-                        self.vel.y += self.acc.y # acc.y should be C.PLAYER_GRAVITY if set in death state
+                        self.vel.y += self.acc.y 
                         self.vel.y = min(self.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18))
-                        
                         self.pos.y += self.vel.y
                         self.rect.bottom = round(self.pos.y)
-                        
                         self.on_ground = False 
                         for plat in pygame.sprite.spritecollide(self, platforms, False):
-                            # Simplified landing check for dead body
                             if self.vel.y > 0 and self.rect.bottom > plat.rect.top and (self.pos.y - self.vel.y) <= plat.rect.top + 1:
                                 self.rect.bottom = plat.rect.top
                                 self.on_ground = True; self.vel.y = 0; self.acc.y = 0 
-                                self.pos.y = self.rect.bottom
-                                break 
+                                self.pos.y = self.rect.bottom; break 
                 self.animate() 
-            return # No further updates for dead player beyond animation and simple fall
+            return 
 
         now = pygame.time.get_ticks()
         if self.is_taking_hit and now - self.hit_timer > self.hit_cooldown:
-            if self.state == 'hit': # If cooldown ends while still in hit animation, transition out
-                print(f"DEBUG Player {self.player_id}: Hit COOLDOWN ended during 'hit' state. Transitioning. VelY: {self.vel.y:.2f}")
-                self.is_taking_hit = False # Allow taking damage again
-                self.set_state('fall' if not self.on_ground else 'idle') # Force transition
-            else: # Cooldown ended, but already transitioned out of 'hit' state normally
+            if self.state == 'hit': 
+                if Player.print_limiter.can_print(f"player_{self.player_id}_hit_cooldown_end_in_hit"):
+                    print(f"DEBUG Player {self.player_id}: Hit COOLDOWN ended during 'hit' state. Transitioning. VelY: {self.vel.y:.2f}")
+                self.is_taking_hit = False 
+                self.set_state('fall' if not self.on_ground else 'idle') 
+            else: 
                 self.is_taking_hit = False
         
         self.check_ladder_collisions(ladders)
@@ -2973,7 +3001,8 @@ class Player(pygame.sprite.Sprite):
         for hazard in hazards: 
             if isinstance(hazard, Lava) and hazard.rect.collidepoint(feet_check_point):
                 if not damaged_this_frame: 
-                    # print(f"DEBUG Player {self.player_id}: Touched LAVA at {feet_check_point}. Player rect: {self.rect}, Lava rect: {hazard.rect}. Current state: {self.state}, VelY: {self.vel.y:.2f}")
+                    if Player.print_limiter.can_print(f"player_{self.player_id}_lava_touch"):
+                        print(f"DEBUG Player {self.player_id}: Touched LAVA at {feet_check_point}. Player rect: {self.rect}, Lava rect: {hazard.rect}. Current state: {self.state}, VelY: {self.vel.y:.2f}")
                     self.take_damage(C.LAVA_DAMAGE) 
                     damaged_this_frame = True 
                     if not self.is_dead: 
@@ -2982,7 +3011,8 @@ class Player(pygame.sprite.Sprite):
                          self.vel.x = -push_dir * getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7) * 0.5 
                          self.on_ground = False 
                          self.on_ladder = False 
-                         # print(f"DEBUG Player {self.player_id}: Bounced from LAVA. New vel: ({self.vel.x:.2f}, {self.vel.y:.2f}). State after take_damage will be '{self.state}'")
+                         if Player.print_limiter.can_print(f"player_{self.player_id}_lava_bounce"):
+                            print(f"DEBUG Player {self.player_id}: Bounced from LAVA. New vel: ({self.vel.x:.2f}, {self.vel.y:.2f}). State after take_damage will be '{self.state}'")
                     break 
 
     def check_attack_collisions(self, targets_list):
@@ -3001,7 +3031,7 @@ class Player(pygame.sprite.Sprite):
                     can_be_damaged = False
             if can_be_damaged and self.attack_hitbox.colliderect(target.rect):
                 if hasattr(target, 'take_damage') and callable(target.take_damage):
-                    damage_to_deal = C.PLAYER_ATTACK1_DAMAGE # Default
+                    damage_to_deal = C.PLAYER_ATTACK1_DAMAGE 
                     if self.attack_type == 1: damage_to_deal = C.PLAYER_ATTACK1_DAMAGE
                     elif self.attack_type == 2: damage_to_deal = C.PLAYER_ATTACK2_DAMAGE
                     elif self.attack_type == 3: damage_to_deal = C.PLAYER_COMBO_ATTACK_DAMAGE
@@ -3010,23 +3040,31 @@ class Player(pygame.sprite.Sprite):
 
     def take_damage(self, amount):
         now = pygame.time.get_ticks()
-        # print(f"DEBUG Player {self.player_id}: take_damage({amount}) called. HP: {self.current_health}, is_dead: {self.is_dead}, alive: {self.alive()}, is_taking_hit: {self.is_taking_hit}")
+        if Player.print_limiter.can_print(f"player_{self.player_id}_take_damage_call", limit=10, period=1.0):
+            print(f"DEBUG Player {self.player_id}: take_damage({amount}) called. HP: {self.current_health}, is_dead: {self.is_dead}, alive: {self.alive()}, is_taking_hit: {self.is_taking_hit}")
+        
         if not self._valid_init or self.is_dead or not self.alive() or \
            (self.is_taking_hit and now - self.hit_timer < self.hit_cooldown): 
-            # print(f"DEBUG Player {self.player_id}: Damage IGNORED.")
+            if Player.print_limiter.can_print(f"player_{self.player_id}_damage_ignored", limit=3, period=1.0):
+                print(f"DEBUG Player {self.player_id}: Damage IGNORED. Conditions: is_dead={self.is_dead}, alive={self.alive()}, is_taking_hit={self.is_taking_hit}, cooldown_active={(self.is_taking_hit and now - self.hit_timer < self.hit_cooldown)}")
             return
 
+        if Player.print_limiter.can_print(f"player_{self.player_id}_damage_details", limit=10, period=1.0):
+            print(f"DEBUG Player {self.player_id}: Taking {amount} damage. Old HP: {self.current_health}")
         self.current_health -= amount
         self.current_health = max(0, self.current_health)
-        # print(f"DEBUG Player {self.player_id}: New HP: {self.current_health}/{self.max_health}")
+        if Player.print_limiter.can_print(f"player_{self.player_id}_health_update", limit=10, period=1.0):
+            print(f"DEBUG Player {self.player_id}: New HP: {self.current_health}/{self.max_health}")
 
         if self.current_health <= 0:
             if not self.is_dead: 
-                # print(f"DEBUG Player {self.player_id}: Health <= 0. Setting state to death.")
+                if Player.print_limiter.can_print(f"player_{self.player_id}_setting_death"):
+                    print(f"DEBUG Player {self.player_id}: Health <= 0. Setting state to death.")
                 self.set_state('death') 
         else: 
             if not (self.state == 'hit' and now - self.state_timer < self.hit_duration):
-                 # print(f"DEBUG Player {self.player_id}: Setting state to 'hit' after taking damage.")
+                 if Player.print_limiter.can_print(f"player_{self.player_id}_setting_hit_after_damage"):
+                    print(f"DEBUG Player {self.player_id}: Setting state to 'hit' after taking damage.")
                  self.set_state('hit') 
 
     def self_inflict_damage(self, amount):
@@ -3044,7 +3082,9 @@ class Player(pygame.sprite.Sprite):
         if self.state == 'hit': self.set_state('idle')
 
     def reset_state(self, spawn_pos):
-        if not self._valid_init: return
+        if not self._valid_init: 
+            print(f"Player {self.player_id} cannot reset, _valid_init is False.")
+            return
         print(f"Player {self.player_id}: RESETTING STATE to spawn {spawn_pos}")
         self.pos = pygame.math.Vector2(spawn_pos[0], spawn_pos[1])
         self.rect.midbottom = (round(self.pos.x), round(self.pos.y))
@@ -3065,7 +3105,8 @@ class Player(pygame.sprite.Sprite):
                 'is_attacking': self.is_attacking, 'attack_type': self.attack_type,
                 'current_frame': self.current_frame, 'last_anim_update': self.last_anim_update,
                 'player_id': self.player_id, '_valid_init': self._valid_init,
-                'death_animation_finished': self.death_animation_finished}
+                'death_animation_finished': self.death_animation_finished
+               }
 
     def set_network_data(self, data): 
         if data is None: return

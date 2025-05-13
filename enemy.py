@@ -43,25 +43,23 @@ class PrintLimiter:
             self.counts[message_key] += 1
             return True
         elif not self.globally_suppressed[message_key]: # Only print suppression message once per period
-            print(f"[PrintLimiter] Suppressing further prints for '{message_key}' for {period:.1f}s (limit: {limit})")
+            # print(f"[PrintLimiter] Suppressing further prints for '{message_key}' for {period:.1f}s (limit: {limit})") # Keep this commented for less console noise
             self.globally_suppressed[message_key] = True
             return False
         return False
 
 class Enemy(pygame.sprite.Sprite):
-    print_limiter = PrintLimiter(default_limit=5, default_period=2.0) # Class-level limiter for shared messages
+    print_limiter = PrintLimiter(default_limit=3, default_period=2.0) # Class-level limiter for shared messages
 
     def __init__(self, start_x, start_y, patrol_area=None, enemy_id=None):
         super().__init__()
         self.spawn_pos = pygame.math.Vector2(start_x, start_y)
         self.patrol_area = patrol_area
         self.enemy_id = enemy_id
-        # self.instance_print_limiter = PrintLimiter(default_limit=3, default_period=1.5) # Per-instance limiter if needed
 
         character_base_folder = 'characters'
         available_colors = ['cyan', 'green', 'pink', 'purple', 'red', 'yellow']
         if not available_colors:
-             # Use class-level limiter for this general warning
              if Enemy.print_limiter.can_print("enemy_init_no_colors"):
                 print("ERROR: No enemy colors defined in Enemy.__init__!")
              available_colors = ['player1']
@@ -84,34 +82,40 @@ class Enemy(pygame.sprite.Sprite):
         initial_anim = self.animations.get('idle')
         if not initial_anim:
              if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_idle_missing"):
-                print(f"Warning Enemy {self.enemy_id} ({self.color_name}): Idle animation missing, using first available.")
+                print(f"Warning Enemy {self.enemy_id} ({self.color_name}): Idle animation missing or empty, using first available.")
              first_key = next(iter(self.animations), None)
-             initial_anim = self.animations.get(first_key) if first_key else None
+             initial_anim = self.animations.get(first_key) if first_key and self.animations.get(first_key) else None
+        
         self.image = initial_anim[0] if initial_anim else pygame.Surface((30, 40)).convert_alpha()
         if not initial_anim: self.image.fill(C.BLUE)
 
         self.rect = self.image.get_rect(midbottom=(start_x, start_y))
         self.pos = pygame.math.Vector2(start_x, start_y); self.vel = pygame.math.Vector2(0, 0)
-        self.acc = pygame.math.Vector2(0, getattr(C, 'PLAYER_GRAVITY', 0.8)) # Enemies use same gravity as player for now
+        self.acc = pygame.math.Vector2(0, getattr(C, 'PLAYER_GRAVITY', 0.8))
         self.facing_right = random.choice([True, False]); self.on_ground = False
         self.on_ladder = False; self.can_grab_ladder = False; self.touching_wall = 0
         self.is_crouching = False; self.is_dashing = False; self.is_rolling = False
         self.is_sliding = False; self.can_wall_jump = False; self.wall_climb_timer = 0
-        self.is_attacking = False; self.attack_timer = 0; self.attack_duration = 300
-        self.attack_type = 0; self.attack_cooldown_timer = 0
+        
+        self.is_attacking = False; self.attack_timer = 0
+        self.attack_duration = getattr(C, 'ENEMY_ATTACK_STATE_DURATION', 
+                                   getattr(C, 'CHARACTER_ATTACK_STATE_DURATION', 500))
+        
+        self.attack_type = 0
+        self.attack_cooldown_timer = 0 
+        self.post_attack_pause_timer = 0 
+        self.post_attack_pause_duration = getattr(C, 'ENEMY_POST_ATTACK_PAUSE_DURATION', 200) 
+
         self.is_taking_hit = False; self.hit_timer = 0; self.hit_duration = getattr(C, 'ENEMY_HIT_STUN_DURATION', 300)
         self.hit_cooldown = getattr(C, 'ENEMY_HIT_COOLDOWN', 500)
         self.is_dead = False; self.state_timer = 0
         self.max_health = getattr(C, 'ENEMY_MAX_HEALTH', 100); self.current_health = self.max_health
         self.ai_state = 'patrolling'; self.patrol_target_x = start_x
         self.set_new_patrol_target()
-        self.attack_hitbox = pygame.Rect(0, 0, 50, 35) # Consider making size configurable via C
-        try: self.standard_height = self.animations['idle'][0].get_height()
+        self.attack_hitbox = pygame.Rect(0, 0, 50, 35)
+        try: self.standard_height = self.animations['idle'][0].get_height() if self.animations.get('idle') else 60
         except (KeyError, IndexError, TypeError):
-            # if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_idle_height_warn"):
-            # print(f"Warning Enemy {self.enemy_id} ({self.color_name}): Could not get idle anim height, using default.")
             self.standard_height = 60
-
         self.death_animation_finished = False
 
 
@@ -127,8 +131,10 @@ class Enemy(pygame.sprite.Sprite):
 
     def set_state(self, new_state):
         if not self._valid_init: return
+        
         anim_state = new_state
         valid_anim_states = ['idle', 'run', 'attack', 'attack_nm', 'hit', 'death', 'death_nm', 'fall']
+        
         if new_state not in valid_anim_states:
             if new_state in ['chasing', 'patrolling']: anim_state = 'run' if abs(self.vel.x) > 0.1 else 'idle'
             elif 'attack' in new_state: anim_state = new_state
@@ -136,128 +142,149 @@ class Enemy(pygame.sprite.Sprite):
 
         if anim_state not in self.animations or not self.animations[anim_state]:
              if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_anim_missing_{anim_state}"):
-                print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Animation for state '{anim_state}' (orig: {new_state}) missing. Falling back to idle.")
+                print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Animation for state '{anim_state}' (orig logic: {new_state}) missing/empty. Falling back to idle.")
              anim_state = 'idle'
              if 'idle' not in self.animations or not self.animations['idle']:
                  if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_critical_idle_missing"):
-                    print(f"DEBUG CRITICAL Enemy {self.enemy_id} ({self.color_name}): Cannot find valid idle animation.")
+                    print(f"DEBUG CRITICAL Enemy {self.enemy_id} ({self.color_name}): Cannot find valid idle animation. Halting state change.")
                  return
 
         if (self.state != new_state or new_state == 'death') and \
            not (self.is_dead and not self.death_animation_finished and new_state != 'death'):
-            if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_set_state", limit=20, period=5.0): # Allow more state changes to be printed
-                print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Set State from '{self.state}' to '{new_state}'")
+            
+            if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_set_state", limit=50, period=5.0):
+                print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Set Logical State from '{self.state}' to '{new_state}' (Anim key: '{anim_state}')")
+            
             self._last_state_for_debug = new_state
+            
             if 'attack' not in new_state: self.is_attacking = False; self.attack_type = 0
             if new_state != 'hit': self.is_taking_hit = False
 
             self.state = new_state
-            self.current_frame = 0; self.last_anim_update = pygame.time.get_ticks(); self.state_timer = pygame.time.get_ticks()
+            self.current_frame = 0
+            current_ticks = pygame.time.get_ticks() # Get current time once
+            self.last_anim_update = current_ticks
+            self.state_timer = current_ticks       # General state timer
 
             if 'attack' in new_state:
-                self.is_attacking = True; self.attack_type = 1 # Default, can be overridden by specific attack logic
-                anim = self.animations.get(anim_state)
-                self.attack_duration = len(anim) * getattr(C, 'ANIM_FRAME_DURATION', 100) if anim else 400
-                self.vel.x = 0
+                self.is_attacking = True
+                self.attack_type = 1 
+                self.attack_timer = current_ticks # *** MODIFICATION: Directly set attack_timer ***
+                # self.attack_duration is already set in __init__ from constants.
+                self.vel.x = 0 
+                if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_attack_state_init"):
+                    print(f"DEBUG Enemy {self.enemy_id}: Entered attack state. Duration: {self.attack_duration}ms. Attack Timer starts at: {self.attack_timer}")
+
             elif new_state == 'hit':
                  self.is_taking_hit = True; self.hit_timer = self.state_timer
-                 self.vel.x *= -0.5 # Dampen horizontal
-                 self.vel.y = getattr(C, 'ENEMY_HIT_BOUNCE_Y', getattr(C, 'PLAYER_JUMP_STRENGTH', -10) * 0.3) # configurable bounce
-                 self.is_attacking = False
+                 self.vel.x *= -0.5
+                 self.vel.y = getattr(C, 'ENEMY_HIT_BOUNCE_Y', getattr(C, 'PLAYER_JUMP_STRENGTH', -10) * 0.3)
+                 self.is_attacking = False 
             elif new_state == 'death':
                  if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_entering_death_state"):
                     print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): In set_state('death'). is_dead=True, current_health={self.current_health}")
-                 self.is_dead = True; self.vel.x = 0; self.vel.y = 0 # Stop movement
-                 self.acc.xy = 0, 0 # Stop all acceleration including gravity
+                 self.is_dead = True; self.vel.x = 0; self.vel.y = 0
+                 self.acc.xy = 0, 0
+                 self.current_health = 0
                  self.death_animation_finished = False
             
-            if self.alive() or new_state == 'death': self.animate()
-        elif not self.is_dead: self._last_state_for_debug = self.state
-
+            if self.alive() or new_state == 'death':
+                self.animate() 
+        elif not self.is_dead:
+             self._last_state_for_debug = self.state
 
     def animate(self):
         if not self._valid_init or not hasattr(self, 'animations') or not self.animations: return
-        if not self.alive(): return
+        if not self.alive() and not (self.is_dead and not self.death_animation_finished): return
 
         now = pygame.time.get_ticks()
         anim_frame_duration = getattr(C, 'ANIM_FRAME_DURATION', 100)
 
         state_key = self.state
         if self.is_dead:
-            state_key = 'death_nm' if abs(self.vel.x) < 0.1 and abs(self.vel.y) < 0.1 and 'death_nm' in self.animations and self.animations['death_nm'] else 'death'
-            if state_key not in self.animations or not self.animations[state_key]: state_key = 'death' # Fallback if death_nm is missing
-            # if not self.death_animation_finished and Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_anim_dead", limit=60, period=1.0): # Print frequently during death anim
-            #      print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Animate - IS DEAD. Key: {state_key}, Finished: {self.death_animation_finished}, Frame: {self.current_frame}")
-        elif self.state == 'patrolling' or self.state == 'chasing':
+            state_key = 'death_nm' if abs(self.vel.x) < 0.1 and abs(self.vel.y) < 0.1 and \
+                                     'death_nm' in self.animations and self.animations['death_nm'] \
+                                  else 'death'
+            if state_key not in self.animations or not self.animations[state_key]: state_key = 'death'
+        elif self.post_attack_pause_timer > 0 and now < self.post_attack_pause_timer: 
+            state_key = 'idle' 
+        elif self.state in ['patrolling', 'chasing']:
              state_key = 'run' if abs(self.vel.x) > 0.5 else 'idle'
-        elif self.is_attacking: state_key = 'attack_nm' if 'attack_nm' in self.animations and self.animations['attack_nm'] else 'attack'
-        elif self.is_taking_hit: state_key = 'hit'
-        elif not self.on_ground: state_key = 'fall' if 'fall' in self.animations and self.animations['fall'] else 'idle'
-        else: state_key = 'idle'
+        elif self.is_attacking: 
+            state_key = 'attack_nm' if 'attack_nm' in self.animations and self.animations['attack_nm'] else 'attack'
+        elif self.is_taking_hit:
+            state_key = 'hit'
+        elif not self.on_ground:
+            state_key = 'fall' if 'fall' in self.animations and self.animations['fall'] else 'idle'
 
-        if state_key not in self.animations or not self.animations[state_key]: state_key = 'idle'
-        animation = self.animations.get(state_key)
-        if not animation:
-             if hasattr(self, 'image') and self.image: self.image.fill(C.BLUE); return
+        if state_key not in self.animations or not self.animations[state_key]:
+            state_key = 'idle'
+        
+        animation_frames = self.animations.get(state_key)
+        if not animation_frames:
+             if hasattr(self, 'image') and self.image: self.image.fill(C.BLUE)
+             return
 
         if not self.death_animation_finished:
             if now - self.last_anim_update > anim_frame_duration:
                 self.last_anim_update = now
-                self.current_frame = (self.current_frame + 1)
-                if self.current_frame >= len(animation):
+                self.current_frame += 1
+                if self.current_frame >= len(animation_frames):
                     if self.is_dead:
-                        # if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_death_anim_finish"):
-                        #    print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Death animation sequence FINISHED.")
-                        self.current_frame = len(animation) - 1 
-                        self.death_animation_finished = True    
-                        base_image_of_frame = animation[self.current_frame] # Update to last frame before killing
+                        self.current_frame = len(animation_frames) - 1
+                        self.death_animation_finished = True
+                        base_image_of_frame = animation_frames[self.current_frame]
                         image_to_render = base_image_of_frame.copy()
                         if not self.facing_right: image_to_render = pygame.transform.flip(image_to_render, True, False)
                         old_midbottom = self.rect.midbottom
                         self.image = image_to_render
                         self.rect = self.image.get_rect(midbottom=old_midbottom)
-                        
-                        # if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_killing_sprite"):
-                        #    print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): death_animation_finished set to True. Now killing.")
-                        if self.alive(): self.kill()
-                        # if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_killed_status"):
-                        #    print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): kill() called. Sprite alive status: {self.alive()}")
                         return 
                     elif self.state == 'hit':
                         self.set_state('idle'); return
-                    else: self.current_frame = 0
-                if self.current_frame >= len(animation) and not self.is_dead : self.current_frame = 0
+                    else: 
+                        self.current_frame = 0
+                if self.current_frame >= len(animation_frames) and not self.is_dead : self.current_frame = 0
         
-        if not self.alive(): return
+        if self.is_dead and self.death_animation_finished and not self.alive(): 
+            return
 
-        if not animation or self.current_frame < 0 or self.current_frame >= len(animation):
-            self.current_frame = 0
-            if not animation:
+        if not animation_frames or self.current_frame < 0 or self.current_frame >= len(animation_frames):
+            self.current_frame = 0 
+            if not animation_frames:
                  if hasattr(self, 'image') and self.image: self.image.fill(C.BLUE); return
 
-        base_image_of_frame = animation[self.current_frame]
+        base_image_of_frame = animation_frames[self.current_frame]
         image_to_render = base_image_of_frame.copy()
         current_facing_is_right = self.facing_right
         if not current_facing_is_right: image_to_render = pygame.transform.flip(image_to_render, True, False)
-        old_midbottom = self.rect.midbottom
-        self.image = image_to_render
-        self.rect = self.image.get_rect(midbottom=old_midbottom)
-        self._last_facing = current_facing_is_right
+        
+        if self.image is not image_to_render or self._last_facing != current_facing_is_right:
+            old_midbottom = self.rect.midbottom
+            self.image = image_to_render
+            self.rect = self.image.get_rect(midbottom=old_midbottom)
+            self._last_facing = current_facing_is_right
 
     def ai_update(self, players_list):
         now = pygame.time.get_ticks()
+        
+        if self.post_attack_pause_timer > 0 and now < self.post_attack_pause_timer:
+            self.acc.x = 0 
+            if self.state != 'idle': self.set_state('idle') 
+            return 
+
         if not self._valid_init or self.is_dead or not self.alive() or \
            (self.is_taking_hit and now - self.hit_timer < self.hit_cooldown):
             self.acc.x = 0; return
 
         target_player_for_ai = None; min_dist_sq = float('inf')
         for p_candidate in players_list:
-            is_targetable = p_candidate and p_candidate._valid_init and hasattr(p_candidate, 'pos') and hasattr(p_candidate, 'rect')
+            is_targetable = p_candidate and p_candidate._valid_init and hasattr(p_candidate, 'pos') and \
+                            hasattr(p_candidate, 'rect') and p_candidate.alive()
             if is_targetable:
                 if hasattr(p_candidate, 'is_dead') and p_candidate.is_dead:
-                    if hasattr(p_candidate, 'death_animation_finished') and p_candidate.death_animation_finished:
-                        is_targetable = False # Player's death animation is done, not a target
-                    # else: player is dying but animation not finished, could still be a "target" briefly if desired
+                    is_targetable = False 
+                
                 if is_targetable:
                     dist_sq = (p_candidate.pos.x - self.pos.x)**2 + (p_candidate.pos.y - self.pos.y)**2
                     if dist_sq < min_dist_sq:
@@ -265,7 +292,7 @@ class Enemy(pygame.sprite.Sprite):
         
         if not target_player_for_ai:
             self.ai_state = 'patrolling'
-            if self.state != 'patrolling': self.set_state('patrolling')
+            if self.state != 'patrolling' and self.state != 'idle': self.set_state('patrolling')
             if abs(self.pos.x - self.patrol_target_x) < 10: self.set_new_patrol_target()
             target_facing_right_patrol = (self.patrol_target_x > self.pos.x)
             enemy_accel_patrol = getattr(C, 'ENEMY_ACCEL', 0.4)
@@ -275,90 +302,120 @@ class Enemy(pygame.sprite.Sprite):
             return
 
         dist_to_player = math.sqrt(min_dist_sq)
-        enemy_attack_cooldown = getattr(C, 'ENEMY_ATTACK_COOLDOWN', 1500)
-        enemy_attack_range = getattr(C, 'ENEMY_ATTACK_RANGE', 60)
-        enemy_accel = getattr(C, 'ENEMY_ACCEL', 0.4)
-        can_attack_now = now - self.attack_cooldown_timer > enemy_attack_cooldown
+        enemy_attack_cooldown_val = getattr(C, 'ENEMY_ATTACK_COOLDOWN', 1500)
+        enemy_attack_range_val = getattr(C, 'ENEMY_ATTACK_RANGE', 60)
+        enemy_detection_range_val = getattr(C, 'ENEMY_DETECTION_RANGE', 0)
+        enemy_accel_val = getattr(C, 'ENEMY_ACCEL', 0.4)
+        
+        can_attack_now = now - self.attack_cooldown_timer > enemy_attack_cooldown_val
         y_diff = abs(target_player_for_ai.rect.centery - self.rect.centery)
-        line_of_sight_vertical_check = y_diff < self.rect.height * 2.0
-        player_in_range_for_attack = dist_to_player < enemy_attack_range and line_of_sight_vertical_check
-        chase_detection_radius = self.rect.width * 3.0
-        player_detected_for_chase = dist_to_player < chase_detection_radius
+        line_of_sight_vertical_check = y_diff < self.rect.height * 1.0 
+        
+        player_in_range_for_attack = dist_to_player < enemy_attack_range_val and line_of_sight_vertical_check
+        player_detected_for_chase = dist_to_player < enemy_detection_range_val and line_of_sight_vertical_check
 
-        if self.is_attacking and now - self.attack_timer > self.attack_duration:
+        if self.is_attacking and now - self.attack_timer >= self.attack_duration:
              self.is_attacking = False; self.attack_type = 0
-             self.attack_cooldown_timer = now; self.set_state('idle'); return
+             self.attack_cooldown_timer = now 
+             self.post_attack_pause_timer = now + self.post_attack_pause_duration
+             if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_post_attack_pause_start"):
+                 print(f"DEBUG Enemy {self.enemy_id}: Attack finished. AttackTimer: {self.attack_timer}, Duration: {self.attack_duration}, Now: {now}. Starting post-attack pause until {self.post_attack_pause_timer}")
+             self.set_state('idle') 
+             self.acc.x = 0 
+             return 
 
-        if self.is_attacking: self.acc.x = 0; return
+        if self.is_attacking:
+            self.acc.x = 0; return
 
         target_acc_x = 0; target_facing_right = self.facing_right
         if player_in_range_for_attack and can_attack_now:
-            self.ai_state = 'attacking'; target_facing_right = (target_player_for_ai.pos.x > self.pos.x)
+            self.ai_state = 'attacking'
+            target_facing_right = (target_player_for_ai.pos.x > self.pos.x)
             self.facing_right = target_facing_right
-            self.set_state('attack_nm' if 'attack_nm' in self.animations else 'attack'); return
+            self.set_state('attack_nm' if 'attack_nm' in self.animations else 'attack')
+            return
         elif player_detected_for_chase:
-            self.ai_state = 'chasing'; target_facing_right = (target_player_for_ai.pos.x > self.pos.x)
-            target_acc_x = enemy_accel * (1 if target_facing_right else -1)
+            self.ai_state = 'chasing'
+            target_facing_right = (target_player_for_ai.pos.x > self.pos.x)
+            target_acc_x = enemy_accel_val * (1 if target_facing_right else -1)
             if self.state != 'chasing': self.set_state('chasing')
-        else:
+        else: 
             self.ai_state = 'patrolling'
             if self.state != 'patrolling': self.set_state('patrolling')
             if abs(self.pos.x - self.patrol_target_x) < 10: self.set_new_patrol_target()
             target_facing_right = (self.patrol_target_x > self.pos.x)
-            target_acc_x = enemy_accel * 0.7 * (1 if target_facing_right else -1)
+            target_acc_x = enemy_accel_val * 0.7 * (1 if target_facing_right else -1)
 
         self.acc.x = target_acc_x
         if not self.is_attacking and self.facing_right != target_facing_right:
              self.facing_right = target_facing_right
 
+
     def update(self, dt, players_list, platforms, hazards):
         if not self._valid_init: return
-        if self.is_dead and not self.alive(): return
-        if self.is_dead and self.alive(): self.animate(); return
+        if self.is_dead and not self.alive() and self.death_animation_finished: return
+        if self.is_dead and self.alive(): 
+            self.animate()
+            return
 
         now = pygame.time.get_ticks()
         if self.is_taking_hit and now - self.hit_timer > self.hit_cooldown:
             self.is_taking_hit = False
+        
+        if self.post_attack_pause_timer > 0 and now >= self.post_attack_pause_timer:
+            self.post_attack_pause_timer = 0
+            if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_post_attack_pause_end"):
+                 print(f"DEBUG Enemy {self.enemy_id}: Post-attack pause ended.")
+
 
         self.ai_update(players_list)
 
         if not self.is_dead: 
-            player_gravity = getattr(C, 'PLAYER_GRAVITY', 0.7)
-            enemy_friction_constant = getattr(C, 'ENEMY_FRICTION', -0.12)
-            enemy_run_speed_limit = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5)
-            terminal_velocity_y = getattr(C, 'TERMINAL_VELOCITY_Y', 18) 
+            if not (self.post_attack_pause_timer > 0 and now < self.post_attack_pause_timer):
+                player_gravity = getattr(C, 'PLAYER_GRAVITY', 0.7)
+                enemy_friction_constant = getattr(C, 'ENEMY_FRICTION', -0.12)
+                enemy_run_speed_limit = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5)
+                terminal_velocity_y = getattr(C, 'TERMINAL_VELOCITY_Y', 18) 
 
-            self.vel.y += player_gravity; self.vel.x += self.acc.x
-            apply_friction_flag = self.on_ground and self.acc.x == 0
-            if apply_friction_flag:
-                friction_force = self.vel.x * enemy_friction_constant
-                if abs(self.vel.x) > 0.1: self.vel.x += friction_force
-                else: self.vel.x = 0
+                self.vel.y += player_gravity
+                self.vel.x += self.acc.x 
 
-            self.vel.x = max(-enemy_run_speed_limit, min(enemy_run_speed_limit, self.vel.x))
-            self.vel.y = min(self.vel.y, terminal_velocity_y); self.on_ground = False
+                apply_friction_flag = self.on_ground and self.acc.x == 0
+                if apply_friction_flag:
+                    friction_force = self.vel.x * enemy_friction_constant
+                    if abs(self.vel.x) > 0.1: self.vel.x += friction_force
+                    else: self.vel.x = 0
 
-            self.pos.x += self.vel.x; self.rect.centerx = round(self.pos.x)
+                self.vel.x = max(-enemy_run_speed_limit, min(enemy_run_speed_limit, self.vel.x))
+                self.vel.y = min(self.vel.y, terminal_velocity_y)
+            else: 
+                if self.on_ground: self.vel.x *= 0.8 
+            
+            self.on_ground = False
+
+            self.pos.x += self.vel.x
+            self.rect.centerx = round(self.pos.x)
             self.check_platform_collisions('x', platforms)
             
             collided_x_with_any_player = False
             for p_target in players_list:
-                if p_target and p_target._valid_init and not p_target.is_dead and p_target.alive(): # Check alive for player
+                if p_target and p_target._valid_init and not p_target.is_dead and p_target.alive():
                     if self.check_character_collision('x', p_target): collided_x_with_any_player = True
             
-            self.pos.y += self.vel.y; self.rect.bottom = round(self.pos.y)
+            self.pos.y += self.vel.y
+            self.rect.bottom = round(self.pos.y)
             self.check_platform_collisions('y', platforms)
 
             if not collided_x_with_any_player:
                 for p_target_y in players_list:
-                    if p_target_y and p_target_y._valid_init and not p_target_y.is_dead and p_target_y.alive(): # Check alive for player
+                     if p_target_y and p_target_y._valid_init and not p_target_y.is_dead and p_target_y.alive():
                         self.check_character_collision('y', p_target_y)
 
             self.pos.x = self.rect.centerx; self.pos.y = self.rect.bottom
 
-            if self.is_attacking:
+            if self.is_attacking: 
                 for p_attack_target in players_list:
-                    if p_attack_target and p_attack_target._valid_init and not p_attack_target.is_dead and p_attack_target.alive(): # Check alive
+                    if p_attack_target and p_attack_target._valid_init and not p_attack_target.is_dead and p_attack_target.alive():
                         self.check_attack_collisions(p_attack_target)
             
             self.check_hazard_collisions(hazards)
@@ -374,27 +431,35 @@ class Enemy(pygame.sprite.Sprite):
                 self.vel.x = 0
                 if self.ai_state == 'patrolling': self.set_new_patrol_target()
             elif direction == 'y':
-                if self.vel.y > 0 and self.rect.bottom > plat.rect.top and (self.pos.y - self.vel.y) <= plat.rect.top + 1:
-                     self.rect.bottom = plat.rect.top; self.on_ground = True; self.vel.y = 0
-                elif self.vel.y < 0 and self.rect.top < plat.rect.bottom and (self.pos.y - self.rect.height - self.vel.y) >= plat.rect.bottom -1 :
-                     self.rect.top = plat.rect.bottom; self.vel.y = 0
+                if self.vel.y > 0:
+                    if self.rect.bottom > plat.rect.top and (self.pos.y - self.vel.y) <= plat.rect.top + 1:
+                         self.rect.bottom = plat.rect.top; self.on_ground = True; self.vel.y = 0
+                elif self.vel.y < 0:
+                    if self.rect.top < plat.rect.bottom and (self.pos.y - self.rect.height - self.vel.y) >= plat.rect.bottom -1 :
+                         self.rect.top = plat.rect.bottom; self.vel.y = 0
 
-    def check_character_collision(self, direction, player_obj):
+
+    def check_character_collision(self, direction, player_obj): 
         if not (player_obj and player_obj._valid_init and not player_obj.is_dead and player_obj.alive()): return False
         if not self._valid_init or self.is_dead: return False
+
         collision_occurred = False
         if self.rect.colliderect(player_obj.rect):
-            collision_occurred = True; bounce_vel = getattr(C, 'CHARACTER_BOUNCE_VELOCITY', 2.5)
+            collision_occurred = True
+            bounce_vel = getattr(C, 'CHARACTER_BOUNCE_VELOCITY', 2.5)
+            
             if direction == 'x':
                 push_dir = -1 if self.rect.centerx < player_obj.rect.centerx else 1
                 if push_dir == -1: self.rect.right = player_obj.rect.left
                 else: self.rect.left = player_obj.rect.right
                 self.vel.x = push_dir * bounce_vel
                 if hasattr(player_obj, 'vel'): player_obj.vel.x = -push_dir * bounce_vel
-                if hasattr(player_obj, 'pos'): player_obj.pos.x += -push_dir * 2; player_obj.rect.centerx = round(player_obj.pos.x)
+                if hasattr(player_obj, 'pos') and hasattr(player_obj, 'rect'): 
+                    player_obj.pos.x += (-push_dir * 2) 
+                    player_obj.rect.centerx = round(player_obj.pos.x)
                 self.pos.x = self.rect.centerx
             elif direction == 'y':
-                 if self.vel.y > 0 and self.rect.bottom > player_obj.rect.top and self.rect.centery < player_obj.rect.centery:
+                 if self.vel.y > 0 and self.rect.bottom > player_obj.rect.top and self.rect.centery < player_obj.rect.centery :
                     self.rect.bottom = player_obj.rect.top; self.on_ground = True; self.vel.y = 0
                  elif self.vel.y < 0 and self.rect.top < player_obj.rect.bottom and self.rect.centery > player_obj.rect.centery:
                     self.rect.top = player_obj.rect.bottom; self.vel.y = 0
@@ -405,73 +470,75 @@ class Enemy(pygame.sprite.Sprite):
         now = pygame.time.get_ticks()
         if not self._valid_init or self.is_dead or not self.alive() or \
            (self.is_taking_hit and now - self.hit_timer < self.hit_cooldown): return
-        lava_damage = getattr(C, 'LAVA_DAMAGE', 50); player_jump_strength = getattr(C, 'PLAYER_JUMP_STRENGTH', -15)
+
+        lava_damage = getattr(C, 'LAVA_DAMAGE', 50)
+        player_jump_strength = getattr(C, 'PLAYER_JUMP_STRENGTH', -15)
+        
         damaged_this_frame = False
         for hazard in pygame.sprite.spritecollide(self, hazards, False):
-            check_point = (self.rect.centerx, self.rect.bottom - 1)
+            check_point = (self.rect.centerx, self.rect.bottom - 1) 
             if isinstance(hazard, Lava) and hazard.rect.collidepoint(check_point) and not damaged_this_frame:
                 self.take_damage(lava_damage); damaged_this_frame = True
                 if not self.is_dead:
                      self.vel.y = player_jump_strength * 0.3
-                     self.vel.x = -(1 if self.rect.centerx < hazard.rect.centerx else -1) * 4
+                     push_dir_from_hazard = 1 if self.rect.centerx < hazard.rect.centerx else -1
+                     self.vel.x = -push_dir_from_hazard * 4 
                      self.on_ground = False
                 break
 
-    def check_attack_collisions(self, player_obj):
+    def check_attack_collisions(self, player_obj): 
         if not (player_obj and player_obj._valid_init and not player_obj.is_dead and player_obj.alive()): return
         if not self._valid_init or not self.is_attacking or self.is_dead or not self.alive(): return
-        now = pygame.time.get_ticks(); player_invincible = False
+
+        now = pygame.time.get_ticks()
+        player_invincible = False
         if hasattr(player_obj, 'is_taking_hit') and player_obj.is_taking_hit and \
            hasattr(player_obj, 'hit_timer') and hasattr(player_obj, 'hit_cooldown') and \
-           now - player_obj.hit_timer < player_obj.hit_cooldown: player_invincible = True
+           now - player_obj.hit_timer < player_obj.hit_cooldown:
+            player_invincible = True
         if player_invincible: return
+
         if self.facing_right: self.attack_hitbox.midleft = self.rect.midright
         else: self.attack_hitbox.midright = self.rect.midleft
         self.attack_hitbox.centery = self.rect.centery
-        if self.attack_hitbox.colliderect(player_obj.rect) and hasattr(player_obj, 'take_damage'):
-            player_obj.take_damage(getattr(C, 'ENEMY_ATTACK_DAMAGE', 10))
+        
+        if self.attack_hitbox.colliderect(player_obj.rect):
+            if hasattr(player_obj, 'take_damage') and callable(player_obj.take_damage):
+                player_obj.take_damage(getattr(C, 'ENEMY_ATTACK_DAMAGE', 10))
+
 
     def take_damage(self, amount):
-        if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_take_damage", limit=10, period=2.0):
-            print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): take_damage({amount}) called. HP: {self.current_health}, is_dead: {self.is_dead}, alive: {self.alive()}")
         now = pygame.time.get_ticks()
         if not self._valid_init or self.is_dead or not self.alive() or \
            (self.is_taking_hit and now - self.hit_timer < self.hit_cooldown):
-            if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_damage_ignored", limit=3, period=2.0):
-                print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Take damage ignored. Conditions: is_dead={self.is_dead}, alive={self.alive()}, is_taking_hit={self.is_taking_hit}, cooldown_active={(self.is_taking_hit and now - self.hit_timer < self.hit_cooldown)}")
             return
-
-        if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_damage_details", limit=10, period=2.0):
-            print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Took {amount} damage. Old Health: {self.current_health}")
+        
         self.current_health -= amount
         self.current_health = max(0, self.current_health)
-        if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_health_update", limit=10, period=2.0):
-            print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): New Health: {self.current_health}/{self.max_health}")
-
+        
         if self.current_health <= 0:
             if not self.is_dead:
-                if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_setting_death"):
-                    print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Health <= 0. Setting state to death.")
                 self.set_state('death')
-        else:
-             if not (self.is_taking_hit and now - self.hit_timer < self.hit_duration): # Stun duration check
-                if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_setting_hit"):
-                    print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Setting state to hit.")
+        else: 
+             if not (self.is_taking_hit and now - self.hit_timer < self.hit_duration): 
                 self.set_state('hit')
+
 
     def reset(self):
         if not self._valid_init: return
-        self.pos = self.spawn_pos.copy(); self.vel.xy = 0,0; self.acc.xy = 0, getattr(C, 'PLAYER_GRAVITY', 0.7)
-        self.current_health = self.max_health; self.is_dead = False; self.is_taking_hit = False
+        
+        self.pos = self.spawn_pos.copy(); self.vel.xy = 0,0
+        self.acc.xy = 0, getattr(C, 'PLAYER_GRAVITY', 0.7)
+        self.current_health = self.max_health
+        self.is_dead = False; self.is_taking_hit = False
         self.is_attacking = False; self.attack_type = 0; self.attack_cooldown_timer = 0
+        self.post_attack_pause_timer = 0 
         self.facing_right = random.choice([True, False]); self.on_ground = False
         self.death_animation_finished = False
         self.rect.midbottom = (round(self.pos.x), round(self.pos.y))
         if hasattr(self.image, 'get_alpha') and self.image.get_alpha() is not None and self.image.get_alpha() < 255:
             self.image.set_alpha(255)
         self.set_state('idle'); self.ai_state = 'patrolling'; self.set_new_patrol_target()
-        # print(f"DEBUG Enemy {self.enemy_id} ({self.color_name}): Reset complete. Alive: {self.alive()}")
-
 
     def get_network_data(self):
         return {
@@ -481,22 +548,24 @@ class Enemy(pygame.sprite.Sprite):
             'is_dead': self.is_dead, 'is_attacking': self.is_attacking, 'attack_type': self.attack_type,
             'enemy_id': self.enemy_id, 'color_name': self.color_name,
             '_valid_init': self._valid_init,
-            'death_animation_finished': self.death_animation_finished
+            'death_animation_finished': self.death_animation_finished,
+            'post_attack_pause_timer': self.post_attack_pause_timer 
         }
 
     def set_network_data(self, data):
         if data is None: return
         self._valid_init = data.get('_valid_init', self._valid_init)
         if not self._valid_init:
-            if self.alive(): self.kill(); return
+            if self.alive(): self.kill(); return 
         self.pos.x, self.pos.y = data.get('pos', (self.pos.x, self.pos.y))
         self.vel.x, self.vel.y = data.get('vel', (self.vel.x, self.vel.y))
-        new_state = data.get('state', self.state)
+        new_logical_state = data.get('state', self.state)
         self.is_attacking = data.get('is_attacking', self.is_attacking)
         self.attack_type = data.get('attack_type', self.attack_type)
         self.death_animation_finished = data.get('death_animation_finished', self.death_animation_finished)
-        
+        self.post_attack_pause_timer = data.get('post_attack_pause_timer', self.post_attack_pause_timer)
         new_is_dead = data.get('is_dead', self.is_dead)
+        
         if new_is_dead and not self.is_dead:
             self.is_dead = True; self.current_health = 0
             self.set_state('death')
@@ -506,8 +575,8 @@ class Enemy(pygame.sprite.Sprite):
         else:
             self.is_dead = new_is_dead
 
-        if self.state != new_state and not (self.is_dead and new_state in ['death', 'death_nm']):
-             self.set_state(new_state)
+        if self.state != new_logical_state and not (self.is_dead and new_logical_state in ['death', 'death_nm']):
+             self.set_state(new_logical_state)
         else:
             self.current_frame = data.get('current_frame', self.current_frame)
             self.last_anim_update = data.get('last_anim_update', self.last_anim_update)
@@ -517,6 +586,7 @@ class Enemy(pygame.sprite.Sprite):
         if new_health < self.current_health and not self.is_taking_hit and not self.is_dead:
             if new_health > 0: self.set_state('hit')
         self.current_health = new_health
-        
         self.rect.midbottom = (round(self.pos.x), round(self.pos.y))
-        if self._valid_init and self.alive(): self.animate()
+        
+        if self._valid_init and (self.alive() or (self.is_dead and not self.death_animation_finished)):
+             self.animate()
