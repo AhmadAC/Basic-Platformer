@@ -40,6 +40,14 @@ PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER = 1.5 # Attack 2 frames last 50% longer
 # the visual animation takes 6 * 80 = 480ms. You might want the attack state to last this long.
 CHARACTER_ATTACK_STATE_DURATION = 480 # ms (Example: 6 frames * 80ms/frame = 480ms)
 
+# --- Projectile Constants ---
+FIREBALL_DAMAGE = 50
+FIREBALL_SPEED = 9  # Pixels per frame/update; adjust for desired speed
+FIREBALL_COOLDOWN = 750  # Milliseconds
+FIREBALL_LIFESPAN = 2500  # Milliseconds (how long it lives if it hits nothing)
+FIREBALL_SPRITE_PATH = "characters/weapons/fire.gif" # Relative path to your gif
+FIREBALL_DIMENSIONS = (61, 58) # Width, Height of the fireball GIF
+
 # --- Enemy Constants ---
 ENEMY_MAX_HEALTH = 80
 ENEMY_RUN_SPEED_LIMIT = 5 # Give enemy its own speed limit
