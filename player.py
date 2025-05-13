@@ -438,9 +438,17 @@ class Player(pygame.sprite.Sprite):
                      elif self.is_holding_climb_ability_key and abs(self.vel.x) < 1.0 and not wall_climb_expired and 'wall_climb' in self.animations:
                          self.set_state('wall_climb'); self.can_wall_jump = False
                      else:
-                         hang_state = 'wall_hang' if ('wall_hang' in self.animations and self.animations['wall_hang']) else 'wall_slide'
-                         self.set_state(hang_state)
-                         if self.state == hang_state: self.vel.y = C.PLAYER_WALL_SLIDE_SPEED * 0.1
+                         # Original logic for choosing between wall_hang and wall_slide:
+                         # hang_state = 'wall_hang' if ('wall_hang' in self.animations and self.animations['wall_hang']) else 'wall_slide'
+                         # self.set_state(hang_state)
+                         # # Apply special hang velocity ONLY if wall_hang was chosen AND successfully set
+                         # if hang_state == 'wall_hang' and self.state == 'wall_hang': 
+                         #     self.vel.y = C.PLAYER_WALL_SLIDE_SPEED * 0.1 
+                         
+                         # DEBUG: Disabled wall hanging. Player will transition to 'wall_slide' instead.
+                         # The special velocity reduction for 'wall_hang' is not applied.
+                         # 'wall_slide' will use its normal gravity/speed mechanics.
+                         self.set_state('wall_slide')
                          self.can_wall_jump = True
                  elif self.vel.y > 1.0 and self.state not in ['jump','jump_fall_trans']: 
                       self.set_state('fall' if 'fall' in self.animations else 'idle')
