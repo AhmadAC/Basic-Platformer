@@ -1,6 +1,8 @@
+########## START OF FILE: enemy.py ##########
+
 # enemy.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.8 (Removed debug prints, final cleanup)
+## version 1.0.0.9 (Added stomp kill mechanic)
 """
 Defines the Enemy class, a CPU-controlled character.
 Handles AI-driven movement (via enemy_ai_handler), animations, states,
@@ -97,12 +99,22 @@ class Enemy(pygame.sprite.Sprite):
         try: self.standard_height = self.animations['idle'][0].get_height() if self.animations.get('idle') else 60
         except (KeyError, IndexError, TypeError): self.standard_height = 60 
 
+        # Stomp death attributes
+        self.is_stomp_dying = False
+        self.stomp_death_start_time = 0
+        self.original_stomp_death_image = None
+        self.original_stomp_facing_right = True
+
 
     def set_state(self, new_state: str):
         if not self._valid_init: return 
         
+        # If being stomp-killed, visual state is handled by is_stomp_dying in animate()
+        if self.is_stomp_dying and new_state != 'stomp_death': # Allow setting to 'stomp_death' if needed by logic
+            return
+
         animation_key_to_validate = new_state 
-        valid_direct_animation_states = ['idle', 'run', 'attack', 'attack_nm', 'hit', 'death', 'death_nm', 'fall']
+        valid_direct_animation_states = ['idle', 'run', 'attack', 'attack_nm', 'hit', 'death', 'death_nm', 'fall', 'stomp_death']
         
         if new_state not in valid_direct_animation_states: 
             if new_state in ['chasing', 'patrolling']:
@@ -112,7 +124,10 @@ class Enemy(pygame.sprite.Sprite):
             else: 
                 animation_key_to_validate = 'idle'
 
-        if animation_key_to_validate not in self.animations or not self.animations[animation_key_to_validate]:
+        # For stomp_death, there's no dedicated animation sheet, it's procedural
+        if new_state == 'stomp_death':
+            pass # No animation frames to validate for stomp_death
+        elif animation_key_to_validate not in self.animations or not self.animations[animation_key_to_validate]:
             if Enemy.print_limiter.can_print(f"enemy_{self.enemy_id}_set_state_anim_miss_{animation_key_to_validate}"): # Use unique key
                 print(f"Enemy Warning (ID: {self.enemy_id}): Animation for key '{animation_key_to_validate}' (from logical: '{new_state}') missing. Trying 'idle'.")
             animation_key_to_validate = 'idle' 
@@ -121,8 +136,8 @@ class Enemy(pygame.sprite.Sprite):
                     print(f"Enemy CRITICAL (ID: {self.enemy_id}): Cannot find valid 'idle' animation. Halting state change for '{new_state}'.")
                  return 
 
-        can_change_state_now = (self.state != new_state or new_state == 'death') and \
-                               not (self.is_dead and not self.death_animation_finished and new_state != 'death')
+        can_change_state_now = (self.state != new_state or new_state in ['death', 'stomp_death']) and \
+                               not (self.is_dead and not self.death_animation_finished and new_state not in ['death', 'stomp_death'])
 
         if can_change_state_now:
             self._last_state_for_debug = new_state # Keep if still useful for your own debugging
@@ -143,10 +158,12 @@ class Enemy(pygame.sprite.Sprite):
                  self.vel.x *= -0.5 
                  self.vel.y = getattr(C, 'ENEMY_HIT_BOUNCE_Y', getattr(C, 'PLAYER_JUMP_STRENGTH', -10) * 0.3)
                  self.is_attacking = False 
-            elif new_state == 'death': 
+            elif new_state == 'death' or new_state == 'stomp_death': 
                  self.is_dead = True; self.vel.x = 0; self.vel.y = 0 
                  self.acc.xy = 0, 0; self.current_health = 0 
                  self.death_animation_finished = False 
+                 if new_state == 'stomp_death' and not self.is_stomp_dying: # Ensure stomp flags are set if directly setting this state
+                     self.stomp_kill() # This will correctly initialize stomp death
             
             self.animate() 
         elif not self.is_dead: 
@@ -154,14 +171,53 @@ class Enemy(pygame.sprite.Sprite):
 
     def animate(self):
         if not self._valid_init or not hasattr(self, 'animations') or not self.animations: return
-        if not self.alive() and not (self.is_dead and not self.death_animation_finished): return
+        # Allow animation if alive() OR if is_dead and death animation not finished (covers normal and stomp death)
+        if not (self.alive() or (self.is_dead and not self.death_animation_finished)):
+            return
 
         current_time_ms = pygame.time.get_ticks()
         animation_frame_duration_ms = getattr(C, 'ANIM_FRAME_DURATION', 100) 
 
+        if self.is_stomp_dying:
+            if not self.original_stomp_death_image:
+                self.death_animation_finished = True
+                self.is_stomp_dying = False
+                # if self.alive(): self.kill() # Let external logic handle kill based on death_animation_finished
+                return
+
+            elapsed_time = current_time_ms - self.stomp_death_start_time
+            stomp_death_total_duration = getattr(C, 'ENEMY_STOMP_DEATH_DURATION', 500)
+            scale_factor = 0.0
+
+            if elapsed_time >= stomp_death_total_duration:
+                self.death_animation_finished = True
+                self.is_stomp_dying = False
+            else:
+                scale_factor = 1.0 - (elapsed_time / stomp_death_total_duration)
+            
+            scale_factor = max(0.0, min(1.0, scale_factor))
+
+            original_width = self.original_stomp_death_image.get_width()
+            original_height = self.original_stomp_death_image.get_height()
+            new_height = int(original_height * scale_factor)
+
+            if new_height <= 1: # Make it effectively invisible or 1px high
+                self.image = pygame.Surface((original_width, 1), pygame.SRCALPHA)
+                self.image.fill((0,0,0,0)) # Transparent
+                if not self.death_animation_finished: # Ensure flags are set if shrink makes it disappear early
+                    self.death_animation_finished = True
+                    self.is_stomp_dying = False
+            else:
+                self.image = pygame.transform.scale(self.original_stomp_death_image, (original_width, new_height))
+            
+            old_midbottom = self.rect.midbottom
+            self.rect = self.image.get_rect(midbottom=old_midbottom)
+            # self._last_facing_right is not strictly needed here as stomp image is fixed.
+            return # Stomp death animation overrides other animation logic
+
         determined_animation_key = 'idle' 
 
-        if self.is_dead:
+        if self.is_dead: # Regular death (not stomp)
             determined_animation_key = 'death_nm' if abs(self.vel.x) < 0.1 and abs(self.vel.y) < 0.1 and \
                                      self.animations.get('death_nm') else 'death'
             if not self.animations.get(determined_animation_key):
@@ -201,7 +257,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.current_frame += 1 
                 
                 if self.current_frame >= len(current_animation_frames_list): 
-                    if self.is_dead: 
+                    if self.is_dead: # Regular death animation finished
                         self.current_frame = len(current_animation_frames_list) - 1 
                         self.death_animation_finished = True
                         final_death_image_surface = current_animation_frames_list[self.current_frame]
@@ -238,6 +294,25 @@ class Enemy(pygame.sprite.Sprite):
             self.rect = self.image.get_rect(midbottom=old_enemy_midbottom_pos) 
             self._last_facing_right = current_facing_is_right_for_anim 
 
+    def stomp_kill(self):
+        if self.is_dead or self.is_stomp_dying:
+            return
+        # print(f"DEBUG Enemy {self.enemy_id}: Stomp kill initiated.")
+        self.current_health = 0
+        self.is_dead = True 
+        self.is_stomp_dying = True
+        self.stomp_death_start_time = pygame.time.get_ticks()
+        
+        # Capture current visual state for scaling
+        # self.animate() # Ensure self.image is up-to-date before copying (might be risky if animate has side effects)
+        # Best to rely on self.image being set from previous frame's animate call.
+        self.original_stomp_death_image = self.image.copy() 
+        self.original_stomp_facing_right = self.facing_right
+        
+        self.vel.xy = 0,0 
+        self.acc.xy = 0,0 
+        # No self.set_state('stomp_death') needed if animate() checks self.is_stomp_dying first.
+        # self.state remains as is, or can be set to a generic 'dying' if needed.
 
     def _ai_update(self, players_list_for_targeting):
         enemy_ai_update(self, players_list_for_targeting)
@@ -256,9 +331,14 @@ class Enemy(pygame.sprite.Sprite):
 
 
     def update(self, dt_sec, players_list_for_logic, platforms_group, hazards_group):
-        if not self._valid_init: return 
+        if not self._valid_init: return
         
-        if self.is_dead and self.alive(): 
+        if self.is_stomp_dying:
+            self.animate() # Handles scaling and sets death_animation_finished
+            # Removal from groups is handled by main game loop when death_animation_finished is true
+            return
+
+        if self.is_dead and self.alive(): # Regular death (not stomp)
             if not self.death_animation_finished: 
                 if not self.on_ground: 
                     self.vel.y += self.acc.y 
@@ -275,7 +355,7 @@ class Enemy(pygame.sprite.Sprite):
             self.animate() 
             return 
 
-        if self.is_dead and self.death_animation_finished:
+        if self.is_dead and self.death_animation_finished: # Fully dead (stomp or regular)
             if self.alive(): self.kill() 
             return
 
@@ -432,5 +512,13 @@ class Enemy(pygame.sprite.Sprite):
         set_enemy_new_patrol_target(self) 
         if hasattr(self.image, 'get_alpha') and self.image.get_alpha() is not None and \
            self.image.get_alpha() < 255:
-            self.image.set_alpha(255) 
+            self.image.set_alpha(255)
+        
+        # Reset stomp death attributes
+        self.is_stomp_dying = False
+        self.stomp_death_start_time = 0
+        self.original_stomp_death_image = None
+        self.original_stomp_facing_right = self.facing_right
+
         self.set_state('idle')
+########## END OF FILE: enemy.py ##########

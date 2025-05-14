@@ -19,6 +19,8 @@ PLAYER_WALL_CLIMB_SPEED = -4
 PLAYER_LADDER_CLIMB_SPEED = 3
 PLAYER_MAX_HEALTH = 100
 CHARACTER_BOUNCE_VELOCITY = 2.5 # Pixels per frame push back on collision
+PLAYER_STOMP_BOUNCE_STRENGTH = -8.0 # Upwards velocity after stomping an enemy
+PLAYER_STOMP_LAND_ON_ENEMY_GRACE_PX = 8 # Pixel grace for landing on enemy's head for stomp <--- ADD THIS LINE (or ensure it exists)
 
 # --- Animation ---
 ANIM_FRAME_DURATION = 80 # ms per frame for most animations

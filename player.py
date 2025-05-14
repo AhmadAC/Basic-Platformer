@@ -3,7 +3,7 @@
 # player.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0000000.1
+## version 1.0.0.1 (Added stomp functionality)
 Defines the Player class, handling core attributes, physics, animation,
 and state transitions. Delegates input, combat, and network handling
 to respective handler modules for improved organization.
@@ -18,6 +18,7 @@ from utils import PrintLimiter # Use the shared PrintLimiter from utils.py
 import constants as C # Game constants
 from assets import load_all_player_animations # For loading player sprites
 from tiles import Lava # For type checking in hazard collision
+from enemy import Enemy # For type checking in stomp
 
 # Import handler modules that contain functions operating on the Player instance
 from player_input_handler import process_player_input_logic
@@ -610,7 +611,7 @@ class Player(pygame.sprite.Sprite):
         should_apply_gravity_this_frame = not (
             self.on_ladder or self.state == 'wall_hang' or
             (self.state == 'wall_climb' and self.vel.y <= C.PLAYER_WALL_CLIMB_SPEED + 0.1) or # If actively climbing up
-            self.is_dashing # Dashing is purely horizontal, no gravity
+            self.is_dashing # Dashing is purely horizontal
         )
         if should_apply_gravity_this_frame:
             self.vel.y += self.acc.y # self.acc.y is usually C.PLAYER_GRAVITY
@@ -739,7 +740,7 @@ class Player(pygame.sprite.Sprite):
                     # Check if player was above or at platform's top edge in the previous frame (approximately)
                     # This helps ensure landing only happens when coming from above.
                     if self.rect.bottom > platform_sprite.rect.top and \
-                       (self.pos.y - self.vel.y) <= platform_sprite.rect.top + 1: # pos.y is bottom, vel.y is positive
+                       (self.pos.y - self.vel.y) <= platform_sprite.rect.top + C.PLAYER_STOMP_LAND_ON_ENEMY_GRACE_PX: # pos.y is bottom, vel.y is positive
                         self.rect.bottom = platform_sprite.rect.top # Align player's bottom with platform's top
                         if not self.on_ground: # If this is the frame the player lands
                             self.can_wall_jump=False; self.wall_climb_timer=0 # Reset wall abilities upon landing
@@ -795,6 +796,7 @@ class Player(pygame.sprite.Sprite):
         """
         Handles collisions between this player and other characters (players, enemies).
         Applies a simple push-back effect to both colliding characters.
+        Handles stomp mechanic if player lands on an enemy.
 
         Args:
             direction (str): The axis of collision to check ('x' or 'y').
@@ -817,6 +819,36 @@ class Player(pygame.sprite.Sprite):
 
             if self.rect.colliderect(other_char_sprite.rect): # If a collision is detected
                 a_character_collision_occurred_this_frame = True
+                
+                # --- Stomp Mechanic (check before generic character collision resolution) ---
+                is_enemy_and_stompable = isinstance(other_char_sprite, Enemy) and \
+                                         not other_char_sprite.is_dead and \
+                                         not getattr(other_char_sprite, 'is_stomp_dying', False)
+
+                if is_enemy_and_stompable and direction == 'y' and self.vel.y > 0.5: # Player is falling/jumping downwards
+                    # Stomp condition: Player's bottom is near the enemy's top
+                    player_bottom_vs_enemy_top_diff = self.rect.bottom - other_char_sprite.rect.top
+                    
+                    # Check if player's bottom edge is within a small grace area of the enemy's top edge
+                    # and player's previous bottom edge was above or at the enemy's top edge.
+                    # This ensures the player is landing ON TOP, not just brushing past vertically.
+                    previous_player_bottom = self.pos.y - self.vel.y 
+                    
+                    if (previous_player_bottom <= other_char_sprite.rect.top + C.PLAYER_STOMP_LAND_ON_ENEMY_GRACE_PX and \
+                        player_bottom_vs_enemy_top_diff >= 0 and \
+                        player_bottom_vs_enemy_top_diff < other_char_sprite.rect.height * 0.33): # Landed within top third
+                        
+                        if hasattr(other_char_sprite, 'stomp_kill') and callable(other_char_sprite.stomp_kill):
+                            other_char_sprite.stomp_kill()
+                            self.vel.y = C.PLAYER_STOMP_BOUNCE_STRENGTH # Player bounces off
+                            self.on_ground = False # Player is in the air after bounce
+                            self.set_state('jump') # Optional: Could use a specific bounce animation if available
+                            # Player position might need slight adjustment to ensure clear bounce
+                            self.rect.bottom = other_char_sprite.rect.top -1 # Place player slightly above enemy
+                            self.pos.y = self.rect.bottom 
+                        return True # Stomp occurred, no further collision checks for this interaction
+
+                # --- Generic Character Collision (if not a stomp) ---
                 bounce_velocity_on_char_collision = getattr(C, 'CHARACTER_BOUNCE_VELOCITY', 2.5) # From constants
                 
                 if direction == 'x': # --- Horizontal Character Collision ---

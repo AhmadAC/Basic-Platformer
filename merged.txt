@@ -433,6 +433,8 @@ class Camera:
 
 ########## START OF FILE: client_logic.py ##########
 
+########## START OF FILE: client_logic.py ##########
+
 # client_logic.py
 # -*- coding: utf-8 -*-
 """
@@ -474,6 +476,7 @@ def find_server_on_lan(screen: pygame.Surface, fonts: dict,
     Displays a "Searching..." message on the screen.
     Returns (found_server_ip, found_server_port) or (None, None) if not found or cancelled.
     """
+    print("DEBUG Client (find_server_on_lan): Starting LAN server search.") # DEBUG
     pygame.display.set_caption("Platformer - Searching for Server on LAN...")
     current_width, current_height = screen.get_size()
     search_text_surf = fonts.get("large", pygame.font.Font(None, 30)).render( # Fallback font
@@ -489,6 +492,7 @@ def find_server_on_lan(screen: pygame.Surface, fonts: dict,
         # Bind to all available interfaces on the specified discovery port
         listen_socket.bind(('', client_state_obj.discovery_port_udp)) 
         listen_socket.settimeout(0.5) # Non-blocking recvfrom
+        print(f"DEBUG Client (find_server_on_lan): UDP listen socket bound to port {client_state_obj.discovery_port_udp}.") # DEBUG
     except socket.error as e:
         print(f"Client Error: Failed to bind UDP listen socket on port {client_state_obj.discovery_port_udp}: {e}")
         screen.fill(C.BLACK)
@@ -501,7 +505,7 @@ def find_server_on_lan(screen: pygame.Surface, fonts: dict,
 
     start_search_time = time.time()
     client_local_ip = get_local_ip() 
-    print(f"Client searching for LAN servers (Service: '{client_state_obj.service_name}'). My IP: {client_local_ip}. Timeout: {client_state_obj.client_search_timeout_s}s.")
+    print(f"DEBUG Client (find_server_on_lan): Searching for LAN servers (Service: '{client_state_obj.service_name}'). My IP: {client_local_ip}. Timeout: {client_state_obj.client_search_timeout_s}s.") # DEBUG
 
     # Loop for the duration of the search timeout or until app quits/server found
     while time.time() - start_search_time < client_state_obj.client_search_timeout_s and \
@@ -517,7 +521,7 @@ def find_server_on_lan(screen: pygame.Surface, fonts: dict,
                     search_text_surf = fonts.get("large", pygame.font.Font(None,30)).render(
                         "Searching for server on LAN...", True, C.WHITE) # Re-render if size changes
              if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                 print("Client: LAN server search cancelled by user."); 
+                 print("DEBUG Client (find_server_on_lan): LAN server search cancelled by user.");  # DEBUG
                  if listen_socket: listen_socket.close()
                  return None, None # Exit search and return to menu
         if not client_state_obj.app_running: break
@@ -531,12 +535,12 @@ def find_server_on_lan(screen: pygame.Surface, fonts: dict,
         raw_udp_data, decoded_udp_message = None, None
         try:
             raw_udp_data, sender_address = listen_socket.recvfrom(client_state_obj.buffer_size)
-            # Attempt to decode the received UDP packet
+            # print(f"DEBUG Client (find_server_on_lan): Received UDP data from {sender_address}: {raw_udp_data[:60]}...") # DEBUG - noisy
             decoded_messages_list, _ = decode_data_stream(raw_udp_data)
-            if not decoded_messages_list: continue # No valid JSON message in packet
+            if not decoded_messages_list: continue 
             
-            decoded_udp_message = decoded_messages_list[0] # Use the first valid message
-            # Check if the message matches the expected service
+            decoded_udp_message = decoded_messages_list[0] 
+            # print(f"DEBUG Client (find_server_on_lan): Decoded UDP message: {decoded_udp_message}") # DEBUG
             if (isinstance(decoded_udp_message, dict) and
                 decoded_udp_message.get("service") == client_state_obj.service_name and
                 isinstance(decoded_udp_message.get("tcp_ip"), str) and
@@ -544,26 +548,25 @@ def find_server_on_lan(screen: pygame.Surface, fonts: dict,
                 
                 server_ip = decoded_udp_message["tcp_ip"]
                 server_port = decoded_udp_message["tcp_port"]
-                print(f"Client: Found server '{client_state_obj.service_name}' at {server_ip}:{server_port} (Broadcast from: {sender_address[0]})")
+                print(f"DEBUG Client (find_server_on_lan): Found server '{client_state_obj.service_name}' at {server_ip}:{server_port}") # DEBUG
                 found_server_ip, found_server_port = server_ip, server_port
-                # break # Found server, exit search loop (already handled by not found_server_ip in while condition)
         except socket.timeout:
-            continue # No broadcast received in this interval
+            continue 
         except Exception as e:
             print(f"Client: Error processing received UDP broadcast: {e}")
             traceback.print_exc()
 
-    if listen_socket: listen_socket.close() # Clean up listening socket
+    if listen_socket: listen_socket.close() 
 
-    if not found_server_ip and client_state_obj.app_running: # If search timed out and app still running
-        print(f"Client: No server found for '{client_state_obj.service_name}' after timeout.")
+    if not found_server_ip and client_state_obj.app_running: 
+        print(f"DEBUG Client (find_server_on_lan): No server found for '{client_state_obj.service_name}' after timeout.") # DEBUG
         screen.fill(C.BLACK)
         if fonts.get("large"):
             fail_surf = fonts["large"].render("Server Not Found!", True, C.RED)
             screen.blit(fail_surf, fail_surf.get_rect(center=(current_width//2, current_height//2)))
-        pygame.display.flip(); time.sleep(3) # Display message briefly
+        pygame.display.flip(); time.sleep(3) 
     elif not client_state_obj.app_running:
-        print("Client: LAN server search aborted because application is quitting.")
+        print("DEBUG Client (find_server_on_lan): LAN server search aborted because application is quitting.") # DEBUG
         
     return found_server_ip, found_server_port
 
@@ -575,58 +578,59 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     Main function to run the game in client mode.
     Connects to a server (either specified or found via LAN) and synchronizes game state.
     """
-    client_state_obj.app_running = True # Ensure flag is set for this mode
+    print("DEBUG Client (run_client_mode): Entering client mode.") # DEBUG
+    client_state_obj.app_running = True 
     current_width, current_height = screen.get_size()
     
-    server_ip_to_connect, server_port_to_connect = None, C.SERVER_PORT_TCP # Default port
+    server_ip_to_connect, server_port_to_connect = None, C.SERVER_PORT_TCP 
 
-    if target_ip_port_str: # Direct IP connection specified
+    if target_ip_port_str: 
+        print(f"DEBUG Client (run_client_mode): Direct IP specified: {target_ip_port_str}") # DEBUG
         ip_parts = target_ip_port_str.rsplit(':', 1)
         server_ip_to_connect = ip_parts[0]
-        if len(ip_parts) > 1: # If port is also specified
+        if len(ip_parts) > 1: 
             try: server_port_to_connect = int(ip_parts[1])
             except ValueError: 
                 print(f"Client Warning: Invalid port in '{target_ip_port_str}'. Using default {C.SERVER_PORT_TCP}.")
-    else: # No direct IP, attempt LAN Discovery
+    else: 
+        print("DEBUG Client (run_client_mode): No direct IP, attempting LAN discovery.") # DEBUG
         server_ip_to_connect, found_server_port = find_server_on_lan(screen, fonts, clock, client_state_obj)
         if found_server_port: server_port_to_connect = found_server_port
 
-    if not server_ip_to_connect: # If no server found or specified
-        print("Client: Exiting client mode (no server target).")
-        return # Return to main menu
-    if not client_state_obj.app_running: # If app was closed during server search/input
-        print("Client: Exiting client mode (application closed).")
+    if not server_ip_to_connect: 
+        print("DEBUG Client (run_client_mode): Exiting client mode (no server target).") # DEBUG
+        return 
+    if not client_state_obj.app_running: 
+        print("DEBUG Client (run_client_mode): Exiting client mode (application closed).") # DEBUG
         return
 
-    # --- Attempt to Connect to Server ---
-    if client_state_obj.client_tcp_socket: # Close any pre-existing socket
+    if client_state_obj.client_tcp_socket: 
         try: client_state_obj.client_tcp_socket.close()
         except: pass
     client_state_obj.client_tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     connection_succeeded, connection_error_msg = False, "Unknown Connection Error"
     try:
-        print(f"Client: Attempting to connect to server at {server_ip_to_connect}:{server_port_to_connect}...")
+        print(f"DEBUG Client (run_client_mode): Attempting to connect to server at {server_ip_to_connect}:{server_port_to_connect}...") # DEBUG
         pygame.display.set_caption(f"Platformer - Connecting to {server_ip_to_connect}...")
-        screen.fill(C.BLACK) # Display "Connecting..."
+        screen.fill(C.BLACK) 
         if fonts.get("large"):
             conn_text_surf = fonts["large"].render(f"Connecting...", True, C.WHITE)
             screen.blit(conn_text_surf, conn_text_surf.get_rect(center=(current_width//2, current_height//2)))
         pygame.display.flip()
 
-        client_state_obj.client_tcp_socket.settimeout(10.0) # Timeout for connection attempt
+        client_state_obj.client_tcp_socket.settimeout(10.0) 
         client_state_obj.client_tcp_socket.connect((server_ip_to_connect, server_port_to_connect))
-        # Set to non-blocking for game loop (very short timeout for recv)
         client_state_obj.client_tcp_socket.settimeout(0.05) 
-        print("Client: TCP Connection to server successful!")
+        print("DEBUG Client (run_client_mode): TCP Connection to server successful!") # DEBUG
         connection_succeeded = True
     except socket.timeout: connection_error_msg = "Connection Timed Out"
     except socket.error as e: connection_error_msg = f"Connection Error ({e.strerror if hasattr(e, 'strerror') else e})"
     except Exception as e: connection_error_msg = f"Unexpected Connection Error: {e}"
 
     if not connection_succeeded:
-        print(f"Client: Failed to connect to server: {connection_error_msg}")
-        screen.fill(C.BLACK) # Display connection failed message
+        print(f"DEBUG Client (run_client_mode): Failed to connect to server: {connection_error_msg}") # DEBUG
+        screen.fill(C.BLACK) 
         if fonts.get("large"):
             fail_text_surf = fonts["large"].render(f"Connection Failed", True, C.RED)
             screen.blit(fail_text_surf, fail_text_surf.get_rect(center=(current_width//2, current_height//2 - 30)))
@@ -636,15 +640,17 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         pygame.display.flip(); time.sleep(3)
         if client_state_obj.client_tcp_socket: client_state_obj.client_tcp_socket.close()
         client_state_obj.client_tcp_socket = None
-        return # Return to main menu
+        return 
 
     pygame.display.set_caption("Platformer - CLIENT (You are P2: WASD+VB | Self-Harm: H | Heal: G | Reset: Enter)")
     
-    # --- Client Game Loop ---
-    p2_controlled_by_client = game_elements_ref.get("player2") # Local player on this client
-    p1_remote_on_client = game_elements_ref.get("player1")     # Remote player (host)
+    p2_controlled_by_client = game_elements_ref.get("player2") 
+    p1_remote_on_client = game_elements_ref.get("player1")     
+    print(f"DEBUG Client (run_client_mode): P1 (remote) instance: {p1_remote_on_client}, P2 (local) instance: {p2_controlled_by_client}") # DEBUG
+    if p1_remote_on_client: print(f"DEBUG Client: P1 Valid: {p1_remote_on_client._valid_init}, P1 Pos: {p1_remote_on_client.pos if hasattr(p1_remote_on_client, 'pos') else 'N/A'}") # DEBUG
+    if p2_controlled_by_client: print(f"DEBUG Client: P2 Valid: {p2_controlled_by_client._valid_init}, P2 Pos: {p2_controlled_by_client.pos if hasattr(p2_controlled_by_client, 'pos') else 'N/A'}") # DEBUG
+
     
-    # Key mapping for client's local player (P2)
     p2_client_key_map = { 
         'left': pygame.K_a, 'right': pygame.K_d, 'up': pygame.K_w, 'down': pygame.K_s,
         'attack1': pygame.K_v, 'attack2': pygame.K_b, 'dash': pygame.K_LSHIFT,
@@ -652,22 +658,19 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     }
 
     client_game_active = True
-    client_state_obj.server_state_buffer = b"" # Reset buffer for server data
-    client_state_obj.last_received_server_state = None # Reset last known server state
+    client_state_obj.server_state_buffer = b"" 
+    client_state_obj.last_received_server_state = None 
 
     while client_game_active and client_state_obj.app_running:
-        dt_sec = clock.tick(C.FPS) / 1000.0 # Delta time
+        dt_sec = clock.tick(C.FPS) / 1000.0 
         now_ticks_client = pygame.time.get_ticks()
 
-        # Prepare client-side actions (like reset request)
         client_initiated_actions = {'action_reset': False, 'action_self_harm': False, 'action_heal': False}
-        # Check game_over state from last server update to enable/disable reset from client
         server_indicated_game_over = False
         if client_state_obj.last_received_server_state and \
            'game_over' in client_state_obj.last_received_server_state:
             server_indicated_game_over = client_state_obj.last_received_server_state['game_over']
 
-        # Handle Pygame events for client input and window management
         pygame_events_client = pygame.event.get()
         keys_pressed_client = pygame.key.get_pressed()
         for event in pygame_events_client:
@@ -676,59 +679,60 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 if not screen.get_flags() & pygame.FULLSCREEN:
                     current_width,current_height=max(320,event.w),max(240,event.h)
                     screen=pygame.display.set_mode((current_width,current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
-                    if game_elements_ref.get("camera"): # Update camera screen size
+                    if game_elements_ref.get("camera"): 
                         game_elements_ref["camera"].screen_width = current_width
                         game_elements_ref["camera"].screen_height = current_height
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE: client_game_active = False # Exit client game to main menu
-                # Client (P2) can request reset with Enter if server indicated game_over (P1 is down)
+                if event.key == pygame.K_ESCAPE: client_game_active = False 
                 if event.key == pygame.K_RETURN and server_indicated_game_over :
                     client_initiated_actions['action_reset'] = True
-                # Client debug keys for their player (P2)
                 if event.key == pygame.K_h: client_initiated_actions['action_self_harm'] = True
                 if event.key == pygame.K_g: client_initiated_actions['action_heal'] = True
         
         if not client_state_obj.app_running or not client_game_active: break
 
-        # Prepare P2's input state (local client player) to send to server
         p2_input_state_for_server = {}
         if p2_controlled_by_client and hasattr(p2_controlled_by_client, 'get_input_state_for_network'):
              p2_input_state_for_server = p2_controlled_by_client.get_input_state_for_network(
                  keys_pressed_client, pygame_events_client, p2_client_key_map
              )
-        p2_input_state_for_server.update(client_initiated_actions) # Add special actions like reset
+        p2_input_state_for_server.update(client_initiated_actions) 
 
-        # Send local player's input to server
         if client_state_obj.client_tcp_socket:
             client_input_payload = {"input": p2_input_state_for_server}
             encoded_client_payload = encode_data(client_input_payload)
             if encoded_client_payload:
                 try:
+                    # print(f"DEBUG Client: Sending input to server: {client_input_payload}") # DEBUG - noisy
                     client_state_obj.client_tcp_socket.sendall(encoded_client_payload)
                 except socket.error as e:
                     print(f"Client: Send to server failed: {e}. Server might have disconnected.")
                     client_game_active = False; break 
-            # else: print("Client Error: Failed to encode input payload for server.")
         
-        # Receive game state from server
         if client_state_obj.client_tcp_socket:
             try:
                 server_data_chunk = client_state_obj.client_tcp_socket.recv(client_state_obj.buffer_size * 2) 
-                if not server_data_chunk: # Server disconnected
-                    print("Client: Server disconnected (received empty data from recv).")
+                if not server_data_chunk: 
+                    print("DEBUG Client: Server disconnected (received empty data from recv).") # DEBUG
                     client_game_active = False; break
                 
+                # print(f"DEBUG Client: Received chunk from server: {server_data_chunk[:100]}...") # DEBUG - noisy
                 client_state_obj.server_state_buffer += server_data_chunk
-                # Process buffer for complete game state messages
                 decoded_server_states, client_state_obj.server_state_buffer = \
                     decode_data_stream(client_state_obj.server_state_buffer)
                 
-                if decoded_server_states: # If one or more complete states received
-                    client_state_obj.last_received_server_state = decoded_server_states[-1] # Use the latest one
-                    # Apply the received state to local game elements, client is P2
+                if decoded_server_states: 
+                    client_state_obj.last_received_server_state = decoded_server_states[-1] 
+                    # print(f"DEBUG Client: Received new game state. P1 pos: {client_state_obj.last_received_server_state.get('p1', {}).get('pos')}, P2 pos: {client_state_obj.last_received_server_state.get('p2', {}).get('pos')}") # DEBUG
                     set_network_game_state(client_state_obj.last_received_server_state, game_elements_ref, client_player_id=2)
+                    # After state update, verify player instances
+                    # p1_after_update = game_elements_ref.get("player1")
+                    # p2_after_update = game_elements_ref.get("player2")
+                    # if p1_after_update: print(f"DEBUG Client: P1 after state update. Pos: {p1_after_update.pos if hasattr(p1_after_update, 'pos') else 'N/A'}, Valid: {p1_after_update._valid_init}, Alive: {p1_after_update.alive() if hasattr(p1_after_update, 'alive') else 'N/A'}") # DEBUG
+                    # if p2_after_update: print(f"DEBUG Client: P2 after state update. Pos: {p2_after_update.pos if hasattr(p2_after_update, 'pos') else 'N/A'}, Valid: {p2_after_update._valid_init}, Alive: {p2_after_update.alive() if hasattr(p2_after_update, 'alive') else 'N/A'}") # DEBUG
+
             
-            except socket.timeout: pass # Normal for non-blocking socket, no data this tick
+            except socket.timeout: pass 
             except socket.error as e:
                 print(f"Client: Recv error from server: {e}. Server might have disconnected.")
                 client_game_active = False; break
@@ -736,53 +740,42 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 print(f"Client: Error processing data from server: {e}"); traceback.print_exc()
                 client_game_active = False; break
 
-        # --- Client-Side Updates (mostly visual, based on server state) ---
-        # Animate Player 1 (remote, state driven by server)
         if p1_remote_on_client and p1_remote_on_client.alive() and p1_remote_on_client._valid_init and \
            hasattr(p1_remote_on_client, 'animate'):
             p1_remote_on_client.animate() 
 
-        # Animate Player 2 (local client's player)
-        # Its state is primarily set by server, but local animation gives responsiveness.
         if p2_controlled_by_client and p2_controlled_by_client.alive() and \
            p2_controlled_by_client._valid_init and hasattr(p2_controlled_by_client, 'animate'):
             p2_controlled_by_client.animate() 
 
-        # Animate enemies based on their state from server
         for enemy_client in game_elements_ref.get("enemy_list", []):
             if enemy_client.alive() and enemy_client._valid_init and hasattr(enemy_client, 'animate'):
                 enemy_client.animate()
-            # Visual cleanup for enemies whose death animation finished locally
             if enemy_client.is_dead and hasattr(enemy_client, 'death_animation_finished') and \
                enemy_client.death_animation_finished and enemy_client.alive():
                 if hasattr(Enemy, 'print_limiter') and Enemy.print_limiter.can_print(f"client_killing_enemy_{enemy_client.enemy_id}"):
                      print(f"Client: Visually removing enemy {enemy_client.enemy_id} as death anim finished.")
                 enemy_client.kill() 
 
-        # Animate projectiles (state driven by server)
         for proj_client in game_elements_ref.get("projectile_sprites", pygame.sprite.Group()):
             if proj_client.alive() and hasattr(proj_client, 'animate'):
                 proj_client.animate() 
 
-        # Update collectibles (e.g., Chest animations)
         game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec)
 
-        # Update camera: Client's camera focuses on their own player (P2)
         client_camera = game_elements_ref.get("camera")
         if client_camera:
-            # Prioritize local P2, fallback to remote P1 if P2 is dead/invalid
             camera_focus_target_client = None
             if p2_controlled_by_client and p2_controlled_by_client.alive() and \
                p2_controlled_by_client._valid_init and not p2_controlled_by_client.is_dead :
                 camera_focus_target_client = p2_controlled_by_client
             elif p1_remote_on_client and p1_remote_on_client.alive() and \
                  p1_remote_on_client._valid_init and not p1_remote_on_client.is_dead:
-                camera_focus_target_client = p1_remote_on_client # Fallback if P2 is out
+                camera_focus_target_client = p1_remote_on_client 
             
             if camera_focus_target_client: client_camera.update(camera_focus_target_client)
-            else: client_camera.static_update() # No valid target
+            else: client_camera.static_update() 
             
-        # Draw the client's view of the game scene
         try:
             draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_client)
         except Exception as e:
@@ -790,16 +783,17 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             client_game_active=False; break
         pygame.display.flip()
 
-    # --- End of Client Game Loop ---
-    print("Client: Exiting active game loop.")
+    print("DEBUG Client: Exiting active game loop.") # DEBUG
     if client_state_obj.client_tcp_socket:
-        print("Client: Closing TCP socket to server.")
+        print("DEBUG Client: Closing TCP socket to server.") # DEBUG
         try: client_state_obj.client_tcp_socket.shutdown(socket.SHUT_RDWR)
         except: pass
         try: client_state_obj.client_tcp_socket.close()
         except: pass
         client_state_obj.client_tcp_socket = None
-    print("Client mode finished and returned to caller.")
+    print("DEBUG Client: Client mode finished and returned to caller.") # DEBUG
+
+########## END OF FILE: client_logic.py ##########
 
 ########## START OF FILE: constants.py ##########
 
@@ -1965,6 +1959,8 @@ def set_enemy_network_data(enemy, network_data):
 
 ########## START OF FILE: game_setup.py ##########
 
+########## START OF FILE: game_setup.py ##########
+
 # game_setup.py
 # -*- coding: utf-8 -*-
 """
@@ -1986,7 +1982,7 @@ def initialize_game_elements(current_width, current_height, for_game_mode="unkno
     Initializes all platformer game elements for a given mode.
     Returns a dictionary containing all initialized game objects and parameters.
     """
-    print(f"Initializing platformer elements for mode: {for_game_mode}...")
+    print(f"DEBUG GameSetup: Initializing elements. Mode: '{for_game_mode}', Screen: {current_width}x{current_height}") # DEBUG
 
     platform_sprites = pygame.sprite.Group()
     ladder_sprites = pygame.sprite.Group()
@@ -1997,7 +1993,7 @@ def initialize_game_elements(current_width, current_height, for_game_mode="unkno
     all_sprites = existing_sprites_groups.get('all_sprites') if existing_sprites_groups else pygame.sprite.Group()
 
     # Clear sprite groups passed in or newly created
-    # Use .get() for players/chest in case they weren't initialized in a previous run
+    print(f"DEBUG GameSetup: Clearing existing sprite groups...") # DEBUG
     player1_to_kill = existing_sprites_groups.get('player1')
     if player1_to_kill and hasattr(player1_to_kill, 'kill'):
         player1_to_kill.kill()
@@ -2010,7 +2006,7 @@ def initialize_game_elements(current_width, current_height, for_game_mode="unkno
     if current_chest_to_kill and hasattr(current_chest_to_kill, 'kill'):
         current_chest_to_kill.kill()
     
-    for sprite_group in [platform_sprites, ladder_sprites, hazard_sprites, enemy_sprites, collectible_sprites, projectile_sprites, all_sprites]:
+    for i, sprite_group in enumerate([platform_sprites, ladder_sprites, hazard_sprites, enemy_sprites, collectible_sprites, projectile_sprites, all_sprites]):
         if sprite_group is not None: 
             for sprite in sprite_group: 
                  if hasattr(sprite, 'kill'): sprite.kill()
@@ -2018,7 +2014,7 @@ def initialize_game_elements(current_width, current_height, for_game_mode="unkno
             
     enemy_list = []
 
-    print("Loading level data via LevelLoader...")
+    print("DEBUG GameSetup: Loading level data via LevelLoader...") # DEBUG
     try:
         platform_data_group, ladder_data_group, hazard_data_group, local_enemy_spawns_data_list, \
         p1_spawn_tuple, lvl_total_width_pixels, lvl_min_y_abs, lvl_max_y_abs, \
@@ -2041,46 +2037,45 @@ def initialize_game_elements(current_width, current_height, for_game_mode="unkno
         level_pixel_width = lvl_total_width_pixels
         ground_level_y = main_ground_y_reference
         ground_platform_height = main_ground_height_reference
-        print(f"Level geometry loaded. Width: {level_pixel_width}, MinY: {lvl_min_y_abs}, MaxY: {lvl_max_y_abs}")
+        print(f"DEBUG GameSetup: Level geometry loaded. Width: {level_pixel_width}, MinY: {lvl_min_y_abs}, MaxY: {lvl_max_y_abs}, P1 Spawn: {player1_spawn_pos}, P2 Spawn: {player2_spawn_pos}") # DEBUG
     except Exception as e:
         print(f"CRITICAL ERROR loading level: {e}")
         traceback.print_exc()
         return None
 
     all_sprites.add(platform_sprites.sprites(), ladder_sprites.sprites(), hazard_sprites.sprites())
-    player1, player2 = None, None
+    player1, player2 = None, None # Initialize to None
 
-    if for_game_mode in ["host", "couch_play", "single_player"]:
-        print("Initializing player 1...")
-        player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1)
-        if not player1._valid_init: print("CRITICAL: P1 init failed."); return None
-        all_sprites.add(player1)
-        print("P1 initialized.")
-
-    if for_game_mode == "couch_play":
-        print("Initializing player 2 (couch)...")
-        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2)
-        if not player2._valid_init: print("CRITICAL: P2 (couch) init failed."); return None
-        all_sprites.add(player2)
-        print("P2 (couch) initialized.")
-    elif for_game_mode == "host": 
-        print("Initializing player 2 (remote placeholder for host)...")
-        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2)
-        if not player2._valid_init: print("CRITICAL: P2 (remote placeholder) init failed."); return None
-        all_sprites.add(player2)
-        print("P2 (remote placeholder) initialized.")
-    elif for_game_mode == "client": 
-        print("Initializing player 1 (remote placeholder for client)...")
-        player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1)
-        if not player1._valid_init: print("CRITICAL: P1 (remote placeholder) init failed."); return None
-        all_sprites.add(player1)
-        print("P1 (remote placeholder) initialized.")
+    # --- Player Initialization ---
+    # Create Player 1 if mode is host, couch, single_player, or any client mode (as placeholder)
+    if for_game_mode in ["host", "couch_play", "single_player", "join_lan", "join_ip"]:
+        p1_role = "local"
+        if for_game_mode in ["join_lan", "join_ip"]:
+            p1_role = "remote placeholder for client"
         
-        print("Initializing player 2 (local client)...")
+        print(f"DEBUG GameSetup: Initializing player 1 ({p1_role}) for mode '{for_game_mode}' at {player1_spawn_pos}...")
+        player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1)
+        if not player1._valid_init: 
+            print(f"CRITICAL GameSetup: P1 ({p1_role}) init failed.")
+            return None
+        all_sprites.add(player1)
+        print(f"DEBUG GameSetup: P1 ({p1_role}) initialized. Instance: {player1}, Valid: {player1._valid_init}, Pos: {player1.pos if hasattr(player1, 'pos') else 'N/A'}")
+
+    # Create Player 2 if mode is couch, host (as placeholder), or any client mode (as local player)
+    if for_game_mode in ["couch_play", "host", "join_lan", "join_ip"]:
+        p2_role = "unknown"
+        if for_game_mode == "couch_play": p2_role = "local (couch)"
+        elif for_game_mode == "host": p2_role = "remote placeholder for host"
+        elif for_game_mode in ["join_lan", "join_ip"]: p2_role = "local client"
+
+        print(f"DEBUG GameSetup: Initializing player 2 ({p2_role}) for mode '{for_game_mode}' at {player2_spawn_pos}...")
         player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2)
-        if not player2._valid_init: print("CRITICAL: P2 (local client) init failed."); return None
+        if not player2._valid_init: 
+            print(f"CRITICAL GameSetup: P2 ({p2_role}) init failed.")
+            return None
         all_sprites.add(player2)
-        print("P2 (local client) initialized.")
+        print(f"DEBUG GameSetup: P2 ({p2_role}) initialized. Instance: {player2}, Valid: {player2._valid_init}, Pos: {player2.pos if hasattr(player2, 'pos') else 'N/A'}")
+
 
     if player1 and hasattr(player1, 'set_projectile_group_references'):
         player1.set_projectile_group_references(projectile_sprites, all_sprites)
@@ -2088,7 +2083,7 @@ def initialize_game_elements(current_width, current_height, for_game_mode="unkno
         player2.set_projectile_group_references(projectile_sprites, all_sprites)
 
     if for_game_mode in ["host", "couch_play", "single_player"]: 
-        print(f"Spawning {len(local_enemy_spawns_data_list)} enemies (server/local)...")
+        print(f"DEBUG GameSetup: Spawning {len(local_enemy_spawns_data_list)} enemies (server/local)...") # DEBUG
         for i, spawn_data_item in enumerate(local_enemy_spawns_data_list):
             try:
                 patrol_rect_data = spawn_data_item.get('patrol')
@@ -2102,25 +2097,24 @@ def initialize_game_elements(current_width, current_height, for_game_mode="unkno
                     all_sprites.add(enemy); enemy_sprites.add(enemy); enemy_list.append(enemy)
                 else: print(f"Error: Enemy {i} at {spawn_data_item['pos']} init failed.")
             except Exception as e: print(f"Error spawning enemy {i} at {spawn_data_item.get('pos', 'N/A')}: {e}")
-        print(f"Enemies spawned: {len(enemy_list)}")
+        print(f"DEBUG GameSetup: Enemies spawned: {len(enemy_list)}") # DEBUG
     
     current_chest = None
     if Chest and for_game_mode in ["host", "couch_play", "single_player"]:
-        # Pass all platform_sprites, spawn_chest will filter by platform_type
         current_chest = spawn_chest(platform_sprites, main_ground_y_reference) 
         if current_chest:
             all_sprites.add(current_chest)
             collectible_sprites.add(current_chest)
-            # game_elements["current_chest"] will be updated with this return value in main.py
-        # else:
-            # game_elements["current_chest"] = None # Explicitly ensure it's None if spawn failed
+            print(f"DEBUG GameSetup: Chest spawned at {current_chest.rect.topleft if current_chest else 'N/A'}") # DEBUG
+        else:
+            print(f"DEBUG GameSetup: Chest NOT spawned.") # DEBUG
 
     camera_instance = Camera(level_pixel_width, lvl_min_y_abs, lvl_max_y_abs, current_width, current_height)
-    print(f"Camera initialized with: LvlW={level_pixel_width}, LvlMinY={lvl_min_y_abs}, LvlMaxY={lvl_max_y_abs}, ScreenW={current_width}, ScreenH={current_height}")
+    print(f"DEBUG GameSetup: Camera initialized. LvlW={level_pixel_width}, LvlTopY={lvl_min_y_abs}, LvlBotY={lvl_max_y_abs}, ScreenWH= {current_width}x{current_height}") # DEBUG
 
-    return {
+    game_elements_dict = {
         "player1": player1, "player2": player2, "camera": camera_instance,
-        "current_chest": current_chest, # current_chest from this scope
+        "current_chest": current_chest, 
         "enemy_list": enemy_list,
         "platform_sprites": platform_sprites, "ladder_sprites": ladder_sprites,
         "hazard_sprites": hazard_sprites, "enemy_sprites": enemy_sprites,
@@ -2135,6 +2129,10 @@ def initialize_game_elements(current_width, current_height, for_game_mode="unkno
         "player2_spawn_pos": player2_spawn_pos,
         "enemy_spawns_data_cache": local_enemy_spawns_data_list 
     }
+    print(f"DEBUG GameSetup: initialize_game_elements returning. P1: {player1}, P2: {player2}") # DEBUG
+    if player1: print(f"DEBUG GameSetup: P1 in all_sprites: {player1 in all_sprites}") #DEBUG
+    if player2: print(f"DEBUG GameSetup: P2 in all_sprites: {player2 in all_sprites}") #DEBUG
+    return game_elements_dict
 
 def spawn_chest(all_platform_sprites_group, main_ground_y_surface_level):
     """
@@ -2198,6 +2196,10 @@ def spawn_chest(all_platform_sprites_group, main_ground_y_surface_level):
         traceback.print_exc()
     return None
 
+########## END OF FILE: game_setup.py ##########
+
+########## START OF FILE: game_state_manager.py ##########
+
 ########## START OF FILE: game_state_manager.py ##########
 
 # game_state_manager.py
@@ -2218,7 +2220,7 @@ import constants as C # Added for fallback color C.BLUE
 
 def reset_game_state(game_elements):
     """Resets the state of players, enemies, and collectibles."""
-    print("\n--- Resetting Platformer Game State ---")
+    print("DEBUG GSM: --- Resetting Platformer Game State ---") # DEBUG
     player1 = game_elements.get("player1")
     player2 = game_elements.get("player2")
     enemy_list = game_elements.get("enemy_list", [])
@@ -2232,13 +2234,15 @@ def reset_game_state(game_elements):
     camera = game_elements.get("camera")
 
     if player1 and hasattr(player1, 'reset_state'):
+        print(f"DEBUG GSM: Resetting P1 at {player1_spawn_pos}") # DEBUG
         player1.reset_state(player1_spawn_pos)
         if not player1.alive() and player1._valid_init: all_sprites.add(player1) # Ensure in group
-        print("P1 Reset")
+        print("DEBUG GSM: P1 Reset complete.") # DEBUG
     if player2 and hasattr(player2, 'reset_state'):
+        print(f"DEBUG GSM: Resetting P2 at {player2_spawn_pos}") # DEBUG
         player2.reset_state(player2_spawn_pos)
         if not player2.alive() and player2._valid_init: all_sprites.add(player2) # Ensure in group
-        print("P2 Reset")
+        print("DEBUG GSM: P2 Reset complete.") # DEBUG
 
     for enemy_instance in enemy_list:
         if hasattr(enemy_instance, 'reset'):
@@ -2246,31 +2250,37 @@ def reset_game_state(game_elements):
             if enemy_instance._valid_init and not enemy_instance.alive(): # If reset somehow made it not alive but valid
                 all_sprites.add(enemy_instance) # Re-add to ensure it's drawn/updated if it revives
                 enemy_sprites.add(enemy_instance)
-    print(f"{len(enemy_list)} enemies processed for reset.")
+    print(f"DEBUG GSM: {len(enemy_list)} enemies processed for reset.") # DEBUG
 
     if projectile_sprites:
         for proj in projectile_sprites: proj.kill()
         projectile_sprites.empty()
+        print("DEBUG GSM: Projectiles cleared.") # DEBUG
+
 
     if current_chest and current_chest.alive(): current_chest.kill()
+    print(f"DEBUG GSM: Existing chest killed (if any).") # DEBUG
+
 
     new_chest = spawn_chest(game_elements.get("platform_sprites"), game_elements.get("ground_level_y"))
     if new_chest:
         all_sprites.add(new_chest)
         collectible_sprites.add(new_chest)
         game_elements["current_chest"] = new_chest # Update the reference in game_elements
-        print("Chest respawned.")
+        print("DEBUG GSM: Chest respawned.") # DEBUG
     else:
         game_elements["current_chest"] = None # Ensure it's None if spawn fails
-        print("Failed to respawn chest or Chest class not available.")
+        print("DEBUG GSM: Failed to respawn chest or Chest class not available.") # DEBUG
 
     if camera: camera.set_pos(0,0) # Reset camera position to default
+    print("DEBUG GSM: Camera position reset.") # DEBUG
 
-    print("--- Game State Reset Finished ---\n")
+    print("DEBUG GSM: --- Game State Reset Finished ---\n") # DEBUG
     return new_chest # Return the new chest so main can update its reference if needed
 
 def get_network_game_state(game_elements):
     """Gathers all relevant game state for network transmission."""
+    # print("DEBUG GSM (get_network_game_state): Gathering state...") # DEBUG
     player1 = game_elements.get("player1")
     player2 = game_elements.get("player2")
     enemy_list = game_elements.get("enemy_list", [])
@@ -2281,8 +2291,11 @@ def get_network_game_state(game_elements):
 
     if player1 and hasattr(player1, 'get_network_data'):
         state['p1'] = player1.get_network_data()
+        # print(f"DEBUG GSM (get_network_game_state): P1 data: {state['p1']}") # DEBUG
     if player2 and hasattr(player2, 'get_network_data'):
         state['p2'] = player2.get_network_data()
+        # print(f"DEBUG GSM (get_network_game_state): P2 data: {state['p2']}") # DEBUG
+
 
     # Include enemies that are alive or in the process of dying (animation not finished)
     for enemy in enemy_list:
@@ -2308,7 +2321,7 @@ def get_network_game_state(game_elements):
     state['game_over'] = p1_truly_gone # True if P1 is invalid OR dead AND death animation finished
 
     state['projectiles'] = [proj.get_network_data() for proj in projectile_sprites if hasattr(proj, 'get_network_data')]
-
+    # print(f"DEBUG GSM (get_network_game_state): Final state to send (P1 Pos: {state['p1'].get('pos') if state['p1'] else 'N/A'}, P2 Pos: {state['p2'].get('pos') if state['p2'] else 'N/A'}, Num Enemies: {len(state['enemies'])})") # DEBUG
     return state
 
 def set_network_game_state(network_state_data, game_elements, client_player_id=None): # client_player_id kept for potential future use
@@ -2317,10 +2330,18 @@ def set_network_game_state(network_state_data, game_elements, client_player_id=N
     On the client, this updates both remote players and the client's own player
     to reflect the server's authoritative state.
     """
+    # print(f"DEBUG GSM (set_network_game_state): Applying network state. Client ID: {client_player_id}") # DEBUG
+    # if network_state_data: # DEBUG
+        # print(f"DEBUG GSM (set_network_game_state): Received P1 data: {network_state_data.get('p1')}") # DEBUG
+        # print(f"DEBUG GSM (set_network_game_state): Received P2 data: {network_state_data.get('p2')}") # DEBUG
+    # else: # DEBUG
+        # print("DEBUG GSM (set_network_game_state): network_state_data is None.") # DEBUG
+        # return # DEBUG
+
     player1 = game_elements.get("player1")
     player2 = game_elements.get("player2")
-    enemy_list = game_elements.get("enemy_list", []) # This list will be modified
-    current_chest = game_elements.get("current_chest") # This reference will be updated
+    enemy_list = game_elements.get("enemy_list", []) 
+    current_chest = game_elements.get("current_chest") 
     all_sprites = game_elements.get("all_sprites")
     enemy_sprites = game_elements.get("enemy_sprites")
     collectible_sprites = game_elements.get("collectible_sprites")
@@ -2329,49 +2350,58 @@ def set_network_game_state(network_state_data, game_elements, client_player_id=N
 
 
     # Update Player 1 state from network data
-    # On the client, player1 is the remote (host) player.
     if player1 and 'p1' in network_state_data and network_state_data['p1'] and hasattr(player1, 'set_network_data'):
-        player1.set_network_data(network_state_data['p1'])
-        # If player1 became valid & alive due to network state, and isn't in groups, ensure it's added.
-        # The set_network_data itself handles killing the sprite if _valid_init becomes false.
+        # print(f"DEBUG GSM (set_network_game_state): Applying state to P1. Current P1 valid: {player1._valid_init}, alive: {player1.alive() if hasattr(player1, 'alive') else 'N/A'}") # DEBUG
+        p1_data = network_state_data['p1']
+        # print(f"DEBUG GSM (set_network_game_state): P1 network data being applied: pos={p1_data.get('pos')}, state={p1_data.get('state')}, valid={p1_data.get('_valid_init')}") # DEBUG
+        player1.set_network_data(p1_data)
+        # print(f"DEBUG GSM (set_network_game_state): P1 after set_network_data. Valid: {player1._valid_init}, Alive: {player1.alive()}, Pos: {player1.pos if hasattr(player1, 'pos') else 'N/A'}") # DEBUG
         if player1._valid_init and not player1.is_dead and not player1.alive():
+             # print(f"DEBUG GSM (set_network_game_state): P1 became valid/alive but not in all_sprites. Adding.") # DEBUG
              all_sprites.add(player1)
+        # elif not player1._valid_init and player1.alive(): # Should be handled by player1.set_network_data
+            # print(f"DEBUG GSM (set_network_game_state): P1 became INvalid but IS in all_sprites. kill() should have been called.") #DEBUG
 
     # Update Player 2 state from network data
-    # On the client, player2 is the client's own player. Its state should also be synced from the server.
     if player2 and 'p2' in network_state_data and network_state_data['p2'] and hasattr(player2, 'set_network_data'):
-        player2.set_network_data(network_state_data['p2'])
-        # If player2 became valid & alive due to network state, and isn't in groups, ensure it's added.
+        # print(f"DEBUG GSM (set_network_game_state): Applying state to P2. Current P2 valid: {player2._valid_init}, alive: {player2.alive() if hasattr(player2, 'alive') else 'N/A'}") # DEBUG
+        p2_data = network_state_data['p2']
+        # print(f"DEBUG GSM (set_network_game_state): P2 network data being applied: pos={p2_data.get('pos')}, state={p2_data.get('state')}, valid={p2_data.get('_valid_init')}") # DEBUG
+        player2.set_network_data(p2_data)
+        # print(f"DEBUG GSM (set_network_game_state): P2 after set_network_data. Valid: {player2._valid_init}, Alive: {player2.alive()}, Pos: {player2.pos if hasattr(player2, 'pos') else 'N/A'}") # DEBUG
         if player2._valid_init and not player2.is_dead and not player2.alive():
+             # print(f"DEBUG GSM (set_network_game_state): P2 became valid/alive but not in all_sprites. Adding.") # DEBUG
              all_sprites.add(player2)
+        # elif not player2._valid_init and player2.alive(): # Should be handled by player2.set_network_data
+            # print(f"DEBUG GSM (set_network_game_state): P2 became INvalid but IS in all_sprites. kill() should have been called.") #DEBUG
+
 
     # Enemy state synchronization (critical for clients)
     if 'enemies' in network_state_data:
         received_enemy_data_map = network_state_data['enemies']
-        # Build a map of current enemies on the client for quick lookup
+        # print(f"DEBUG GSM (set_network_game_state): Syncing {len(received_enemy_data_map)} enemies from network.") # DEBUG
         current_client_enemies_map = {str(enemy.enemy_id): enemy for enemy in enemy_list if hasattr(enemy, 'enemy_id')}
 
-        # Update existing enemies or create new ones based on server state
         for enemy_id_str, enemy_data_from_server in received_enemy_data_map.items():
             enemy_id_int = int(enemy_id_str)
+            # print(f"DEBUG GSM (set_network_game_state): Processing enemy ID {enemy_id_str} from network. Data: {enemy_data_from_server.get('pos')}, valid: {enemy_data_from_server.get('_valid_init')}") # DEBUG
 
-            if enemy_data_from_server.get('_valid_init', False): # Server says this enemy should exist and is valid
-                if enemy_id_str in current_client_enemies_map: # Enemy already exists on client
+            if enemy_data_from_server.get('_valid_init', False): 
+                if enemy_id_str in current_client_enemies_map: 
                     client_enemy = current_client_enemies_map[enemy_id_str]
+                    # print(f"DEBUG GSM (set_network_game_state): Updating existing enemy ID {enemy_id_str}.") # DEBUG
                     if hasattr(client_enemy, 'set_network_data'):
                         client_enemy.set_network_data(enemy_data_from_server)
-                        # Ensure it's in sprite groups if it became alive/valid again or is dying
                         if client_enemy._valid_init and not client_enemy.alive():
                             if (client_enemy.is_dead and not client_enemy.death_animation_finished) or \
                                (not client_enemy.is_dead):
+                                 # print(f"DEBUG GSM (set_network_game_state): Re-adding enemy {enemy_id_str} to sprite groups.") # DEBUG
                                  all_sprites.add(client_enemy); enemy_sprites.add(client_enemy)
-                else: # Enemy is new to this client, create it
+                else: 
+                    # print(f"DEBUG GSM (set_network_game_state): Creating NEW enemy ID {enemy_id_str}.") # DEBUG
                     try:
-                        # Use cached spawn data for original position and patrol, then apply server state
-                        spawn_pos_e_default = enemy_data_from_server.get('pos', (0,0)) # Fallback pos from server
+                        spawn_pos_e_default = enemy_data_from_server.get('pos', (0,0)) 
                         patrol_area_e_obj = None
-
-                        # Try to get original spawn data from cache
                         if enemy_id_int < len(enemy_spawns_data_cache):
                             original_spawn_info = enemy_spawns_data_cache[enemy_id_int]
                             spawn_pos_e_default = original_spawn_info.get('pos', spawn_pos_e_default)
@@ -2384,11 +2414,13 @@ def set_network_game_state(network_state_data, game_elements, client_player_id=N
 
                         new_enemy_instance = Enemy(spawn_pos_e_default[0], spawn_pos_e_default[1],
                                              patrol_area=patrol_area_e_obj, enemy_id=enemy_id_int)
+                        # print(f"DEBUG GSM (set_network_game_state): New enemy {enemy_id_str} created. Valid: {new_enemy_instance._valid_init}") # DEBUG
 
-                        # Apply server's color_name and reload animations if different
+
                         if new_enemy_instance._valid_init:
                             server_color_name = enemy_data_from_server.get('color_name')
                             if server_color_name and hasattr(new_enemy_instance, 'color_name') and new_enemy_instance.color_name != server_color_name:
+                                # print(f"DEBUG GSM (set_network_game_state): Enemy {enemy_id_str} color mismatch (local '{new_enemy_instance.color_name}', net '{server_color_name}'). Reloading animations.") # DEBUG
                                 new_enemy_instance.color_name = server_color_name
                                 enemy_asset_folder = os.path.join('characters', server_color_name)
                                 new_enemy_instance.animations = load_all_player_animations(
@@ -2410,17 +2442,23 @@ def set_network_game_state(network_state_data, game_elements, client_player_id=N
                                             new_enemy_instance.image = pygame.Surface((30, 40)).convert_alpha()
                                             new_enemy_instance.image.fill(C.BLUE)
                                     new_enemy_instance.rect = new_enemy_instance.image.get_rect(midbottom=(spawn_pos_e_default[0], spawn_pos_e_default[1]))
+                                # print(f"DEBUG GSM (set_network_game_state): Enemy {enemy_id_str} animations reloaded. New valid: {new_enemy_instance._valid_init}") # DEBUG
+
 
                         if new_enemy_instance._valid_init:
                             new_enemy_instance.set_network_data(enemy_data_from_server)
                             all_sprites.add(new_enemy_instance); enemy_sprites.add(new_enemy_instance)
                             enemy_list.append(new_enemy_instance)
+                            # print(f"DEBUG GSM (set_network_game_state): New enemy {enemy_id_str} added to lists and groups.") # DEBUG
+                        # else: # DEBUG
+                            # print(f"DEBUG GSM (set_network_game_state): New enemy {enemy_id_str} was NOT valid after creation/color sync.") # DEBUG
                     except Exception as e:
                         print(f"Client: Error creating new instance of enemy {enemy_id_str}: {e}")
                         traceback.print_exc()
 
-            elif enemy_id_str in current_client_enemies_map:
+            elif enemy_id_str in current_client_enemies_map: # Server says enemy invalid, but client has it
                 enemy_to_remove = current_client_enemies_map[enemy_id_str]
+                # print(f"DEBUG GSM (set_network_game_state): Server marked enemy {enemy_id_str} as invalid. Removing from client.") # DEBUG
                 if enemy_to_remove.alive(): enemy_to_remove.kill()
                 if enemy_to_remove in enemy_list: enemy_list.remove(enemy_to_remove)
 
@@ -2429,6 +2467,7 @@ def set_network_game_state(network_state_data, game_elements, client_player_id=N
         for removed_id_str_fully in client_enemy_ids_to_remove_fully:
             if removed_id_str_fully in current_client_enemies_map:
                 enemy_to_remove_fully = current_client_enemies_map[removed_id_str_fully]
+                # print(f"DEBUG GSM (set_network_game_state): Enemy {removed_id_str_fully} not in server message. Removing from client.") # DEBUG
                 if enemy_to_remove_fully.alive(): enemy_to_remove_fully.kill()
                 if enemy_to_remove_fully in enemy_list: enemy_list.remove(enemy_to_remove_fully)
 
@@ -2436,23 +2475,24 @@ def set_network_game_state(network_state_data, game_elements, client_player_id=N
     # Chest state synchronization
     if 'chest' in network_state_data:
         chest_data_from_server = network_state_data['chest']
-        if chest_data_from_server and Chest is not None: # Chest exists on server side
+        # print(f"DEBUG GSM (set_network_game_state): Chest data from server: {chest_data_from_server}") # DEBUG
+        if chest_data_from_server and Chest is not None: 
             chest_pos_center_server = chest_data_from_server.get('pos')
             chest_is_collected_server = chest_data_from_server.get('is_collected', False)
 
-            if chest_is_collected_server: # Server says chest is collected
+            if chest_is_collected_server: 
                 if current_chest and current_chest.alive(): current_chest.kill()
-                game_elements["current_chest"] = None # Update main game_elements reference
-            elif chest_pos_center_server: # Chest exists and is not collected on server
-                if not current_chest or not current_chest.alive(): # Client needs to create/respawn chest visually
-                    if current_chest: current_chest.kill() # Clean up old one if any ghost remains
+                game_elements["current_chest"] = None 
+                # print(f"DEBUG GSM (set_network_game_state): Server says chest collected. Cleared local chest.") # DEBUG
+            elif chest_pos_center_server: 
+                if not current_chest or not current_chest.alive(): 
+                    # print(f"DEBUG GSM (set_network_game_state): Client needs to create chest at {chest_pos_center_server}.") # DEBUG
+                    if current_chest: current_chest.kill() 
                     try:
                         temp_chest_surf_for_height = Chest(0,0).image
                         temp_chest_height_approx = temp_chest_surf_for_height.get_height() if temp_chest_surf_for_height else 30
-
                         chest_spawn_x_midbottom = chest_pos_center_server[0]
                         chest_spawn_y_midbottom = chest_pos_center_server[1] + temp_chest_height_approx / 2
-
                         new_chest_instance_client = Chest(chest_spawn_x_midbottom, chest_spawn_y_midbottom)
                         if hasattr(new_chest_instance_client, '_valid_init') and new_chest_instance_client._valid_init:
                             all_sprites.add(new_chest_instance_client)
@@ -2460,35 +2500,45 @@ def set_network_game_state(network_state_data, game_elements, client_player_id=N
                             game_elements["current_chest"] = new_chest_instance_client
                             if hasattr(game_elements["current_chest"], 'is_collected'):
                                 game_elements["current_chest"].is_collected = False
+                            # print(f"DEBUG GSM (set_network_game_state): New client chest created: {new_chest_instance_client}") # DEBUG
                         else:
                             game_elements["current_chest"] = None
+                            # print(f"DEBUG GSM (set_network_game_state): New client chest FAILED init.") # DEBUG
                     except Exception as e:
+                        # print(f"DEBUG GSM (set_network_game_state): Exception creating client chest: {e}") # DEBUG
                         game_elements["current_chest"] = None
-                elif current_chest:
+                elif current_chest: # Client has a chest, server has one uncollected - ensure local not marked collected
+                    # print(f"DEBUG GSM (set_network_game_state): Client and server both have uncollected chest. Ensuring local is_collected is False.") # DEBUG
                     if hasattr(current_chest, 'is_collected'):
                         current_chest.is_collected = False
 
-        elif not network_state_data.get('chest'):
+        elif not network_state_data.get('chest'): # Server says no chest
             if current_chest and current_chest.alive(): current_chest.kill()
             game_elements["current_chest"] = None
+            # print(f"DEBUG GSM (set_network_game_state): Server says NO chest. Cleared local chest.") # DEBUG
 
 
     # Projectile state synchronization
     if 'projectiles' in network_state_data:
         received_proj_data_map = {p_data['id']: p_data for p_data in network_state_data.get('projectiles', []) if 'id' in p_data}
+        # print(f"DEBUG GSM (set_network_game_state): Syncing {len(received_proj_data_map)} projectiles from network.") # DEBUG
         current_client_proj_map = {p.projectile_id: p for p in projectile_sprites if hasattr(p, 'projectile_id')}
 
         for proj_id_server, proj_data_server in received_proj_data_map.items():
+            # print(f"DEBUG GSM (set_network_game_state): Processing projectile ID {proj_id_server} from network. Pos: {proj_data_server.get('pos')}") # DEBUG
             if proj_id_server in current_client_proj_map:
                 existing_proj_client = current_client_proj_map[proj_id_server]
                 if hasattr(existing_proj_client, 'set_network_data'):
                     existing_proj_client.set_network_data(proj_data_server)
-            else:
+            else: # New projectile for this client
                 owner_instance_client = None
                 owner_id_from_server = proj_data_server.get('owner_id')
                 if owner_id_from_server is not None:
                     if owner_id_from_server == 1 and player1: owner_instance_client = player1
                     elif owner_id_from_server == 2 and player2: owner_instance_client = player2
+                
+                # print(f"DEBUG GSM (set_network_game_state): Attempting to create new projectile {proj_id_server}. Owner ID: {owner_id_from_server}, Owner instance client-side: {owner_instance_client}") # DEBUG
+
 
                 if owner_instance_client and 'pos' in proj_data_server and 'vel' in proj_data_server:
                     direction_vec_server = pygame.math.Vector2(proj_data_server['vel'])
@@ -2503,14 +2553,25 @@ def set_network_game_state(network_state_data, game_elements, client_player_id=N
                             new_proj_client.set_network_data(proj_data_server)
                         projectile_sprites.add(new_proj_client)
                         all_sprites.add(new_proj_client)
+                        # print(f"DEBUG GSM (set_network_game_state): New projectile {proj_id_server} created and added.") # DEBUG
                     except Exception as e:
+                        print(f"DEBUG GSM (set_network_game_state): Error creating new projectile {proj_id_server}: {e}") # DEBUG
                         traceback.print_exc()
+                # else: # DEBUG
+                    # print(f"DEBUG GSM (set_network_game_state): Cannot create projectile {proj_id_server} - owner missing or data incomplete.") # DEBUG
+
 
         client_proj_ids_to_remove = set(current_client_proj_map.keys()) - set(received_proj_data_map.keys())
         for removed_proj_id_client in client_proj_ids_to_remove:
             if removed_proj_id_client in current_client_proj_map:
                 proj_to_kill_client = current_client_proj_map[removed_proj_id_client]
+                # print(f"DEBUG GSM (set_network_game_state): Projectile {removed_proj_id_client} not in server message. Removing from client.") # DEBUG
                 if proj_to_kill_client.alive(): proj_to_kill_client.kill()
+    # print(f"DEBUG GSM (set_network_game_state): Network state application finished. P1 alive: {player1.alive() if player1 else 'N/A'}, P2 alive: {player2.alive() if player2 else 'N/A'}") # DEBUG
+
+########## END OF FILE: game_state_manager.py ##########
+
+########## START OF FILE: game_ui.py ##########
 
 ########## START OF FILE: game_ui.py ##########
 
@@ -2595,7 +2656,15 @@ def draw_player_hud(surface: pygame.Surface, x: int, y: int,
                     hud_font_obj: Optional[pygame.font.Font]):
     if not player_instance or not hasattr(player_instance, 'current_health') or \
        not hasattr(player_instance, 'max_health'):
+        # print(f"DEBUG UI (draw_player_hud): P{player_number} instance invalid or no health attributes. Skipping HUD.") # DEBUG
         return
+
+    # DEBUG: Print player instance details for HUD
+    # if hasattr(player_instance, 'player_id'):
+    #     print(f"DEBUG UI (draw_player_hud): Drawing HUD for P{player_number} (ID: {player_instance.player_id}). Valid: {getattr(player_instance, '_valid_init', 'N/A')}, Alive: {player_instance.alive() if hasattr(player_instance, 'alive') else 'N/A'}, Pos: {getattr(player_instance, 'pos', 'N/A')}") # DEBUG
+    # else:
+    #     print(f"DEBUG UI (draw_player_hud): Drawing HUD for P{player_number}. Instance has no player_id.") # DEBUG
+
 
     player_label_text = f"P{player_number}"
     label_height_offset = 0 
@@ -2610,6 +2679,7 @@ def draw_player_hud(surface: pygame.Surface, x: int, y: int,
             print(f"UI Warning: Could not render HUD label for P{player_number}: {e}")
             label_height_offset = getattr(hud_font_obj, 'get_height', lambda: 20)() # Fallback height
     else: 
+        # print(f"DEBUG UI (draw_player_hud): No HUD font for P{player_number} label.") # DEBUG
         label_height_offset = 0 
 
     health_bar_pos_x = x
@@ -2630,6 +2700,8 @@ def draw_player_hud(surface: pygame.Surface, x: int, y: int,
             surface.blit(health_text_surface, (health_text_pos_x, health_text_pos_y))
         except Exception as e: 
             print(f"UI Warning: Could not render HUD health text for P{player_number}: {e}")
+    # else:
+        # print(f"DEBUG UI (draw_player_hud): No HUD font for P{player_number} health text.") # DEBUG
 
 
 # --- Main Game Scene Drawing Function ---
@@ -2637,6 +2709,7 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface,
                                      game_elements: Dict[str, Any], 
                                      fonts: Dict[str, Optional[pygame.font.Font]], 
                                      current_game_time_ticks: int): 
+    # print(f"DEBUG UI (draw_scene): Frame {current_game_time_ticks // (1000//C.FPS if C.FPS > 0 else 16)}") # DEBUG frame number
     camera_instance = game_elements.get("camera")
     all_sprites_group = game_elements.get("all_sprites") 
     enemy_list_for_health_bars = game_elements.get("enemy_list", [])
@@ -2652,9 +2725,26 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface,
     screen_surface.fill(bg_color) 
 
     if camera_instance and all_sprites_group:
+        # print(f"DEBUG UI (draw_scene): Camera Pos: {camera_instance.get_pos()}, Num All Sprites: {len(all_sprites_group)}") # DEBUG
+        drawn_p1 = False
+        drawn_p2 = False
         for entity_sprite in all_sprites_group: 
             if entity_sprite.alive() and hasattr(entity_sprite, 'image') and hasattr(entity_sprite, 'rect'):
-                 screen_surface.blit(entity_sprite.image, camera_instance.apply(entity_sprite.rect))
+                 applied_rect = camera_instance.apply(entity_sprite.rect)
+                 # DEBUG Player specific draw info
+                 if entity_sprite is player1_instance:
+                     # print(f"DEBUG UI (draw_scene): Drawing P1 (ID {getattr(entity_sprite, 'player_id', 'N/A')}). Alive: {entity_sprite.alive()}, Valid: {getattr(entity_sprite, '_valid_init', 'N/A')}. World Rect: {entity_sprite.rect}, Screen Rect: {applied_rect}, Image Size: {entity_sprite.image.get_size() if entity_sprite.image else 'No Image'}") # DEBUG
+                     drawn_p1 = True
+                 elif entity_sprite is player2_instance:
+                     # print(f"DEBUG UI (draw_scene): Drawing P2 (ID {getattr(entity_sprite, 'player_id', 'N/A')}). Alive: {entity_sprite.alive()}, Valid: {getattr(entity_sprite, '_valid_init', 'N/A')}. World Rect: {entity_sprite.rect}, Screen Rect: {applied_rect}, Image Size: {entity_sprite.image.get_size() if entity_sprite.image else 'No Image'}") # DEBUG
+                     drawn_p2 = True
+
+                 screen_surface.blit(entity_sprite.image, applied_rect)
+        # if player1_instance and not drawn_p1:
+            # print(f"DEBUG UI (draw_scene): P1 instance exists but was NOT drawn from all_sprites. Alive: {player1_instance.alive() if hasattr(player1_instance, 'alive') else 'N/A'}, Valid: {getattr(player1_instance, '_valid_init', 'N/A')}") # DEBUG
+        # if player2_instance and not drawn_p2:
+            # print(f"DEBUG UI (draw_scene): P2 instance exists but was NOT drawn from all_sprites. Alive: {player2_instance.alive() if hasattr(player2_instance, 'alive') else 'N/A'}, Valid: {getattr(player2_instance, '_valid_init', 'N/A')}") # DEBUG
+
         
         for enemy_sprite in enemy_list_for_health_bars:
             if enemy_sprite.alive() and getattr(enemy_sprite, '_valid_init', False) and not \
@@ -2672,15 +2762,27 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface,
                                 health_bar_width_enemy, health_bar_height_enemy, 
                                 enemy_sprite.current_health, enemy_sprite.max_health)
     elif all_sprites_group: 
+        # print(f"DEBUG UI (draw_scene): No camera, using all_sprites.draw(). Num All Sprites: {len(all_sprites_group)}") # DEBUG
         all_sprites_group.draw(screen_surface) # Fallback if no camera
 
     if player1_instance and getattr(player1_instance, '_valid_init', False) and player1_instance.alive():
+        # print(f"DEBUG UI (draw_scene): P1 is valid and alive for HUD. HP: {player1_instance.current_health}") # DEBUG
         draw_player_hud(screen_surface, 10, 10, player1_instance, 1, font_for_hud)
+    # elif player1_instance:
+        # print(f"DEBUG UI (draw_scene): P1 instance exists for HUD but is not valid or not alive. Valid: {getattr(player1_instance, '_valid_init', 'N/A')}, Alive: {player1_instance.alive() if hasattr(player1_instance, 'alive') else 'N/A'}") # DEBUG
+    # else:
+        # print(f"DEBUG UI (draw_scene): P1 instance is None for HUD.") # DEBUG
+
     
     if player2_instance and getattr(player2_instance, '_valid_init', False) and player2_instance.alive():
+        # print(f"DEBUG UI (draw_scene): P2 is valid and alive for HUD. HP: {player2_instance.current_health}") # DEBUG
         p2_hud_estimated_width = getattr(C, 'HUD_HEALTH_BAR_WIDTH', getattr(C, 'HEALTH_BAR_WIDTH',50)*2) + 120 
         p2_hud_pos_x = current_screen_width - p2_hud_estimated_width - 10 
         draw_player_hud(screen_surface, p2_hud_pos_x, 10, player2_instance, 2, font_for_hud)
+    # elif player2_instance:
+        # print(f"DEBUG UI (draw_scene): P2 instance exists for HUD but is not valid or not alive. Valid: {getattr(player2_instance, '_valid_init', 'N/A')}, Alive: {player2_instance.alive() if hasattr(player2_instance, 'alive') else 'N/A'}") # DEBUG
+    # else:
+        # print(f"DEBUG UI (draw_scene): P2 instance is None for HUD.") # DEBUG
 
 
 # --- Main Menu Function ---
@@ -2938,6 +3040,7 @@ def get_server_ip_input_dialog(screen_surface: pygame.Surface, clock_obj: pygame
     pygame.key.set_repeat(0,0) # Disable key repeat when dialog closes
     
     return current_input_text.strip() if current_input_text is not None else None
+########## END OF FILE: game_ui.py ##########
 
 ########## START OF FILE: items.py ##########
 
@@ -3661,6 +3764,8 @@ def decode_data_stream(byte_buffer):
 
 ########## START OF FILE: player.py ##########
 
+########## START OF FILE: player.py ##########
+
 # player.py
 # -*- coding: utf-8 -*-
 """
@@ -3700,6 +3805,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.player_id = player_id
         self._valid_init = True # Flag to indicate if initialization was successful
+        print(f"DEBUG Player (init P{self.player_id}): Initializing at ({start_x}, {start_y})") # DEBUG
 
         # --- Determine Asset Folder based on Player ID ---
         if self.player_id == 1: asset_folder_path = 'characters/player1'
@@ -3709,6 +3815,7 @@ class Player(pygame.sprite.Sprite):
             if Player.print_limiter.can_print(f"player_init_unrecognized_id_{self.player_id}"):
                 print(f"Player Info ({self.player_id}): Unrecognized ID. Defaulting to player1 assets from '{asset_folder_path}'.")
         
+        print(f"DEBUG Player (init P{self.player_id}): Asset folder path: '{asset_folder_path}'") # DEBUG
         # --- Load Animations ---
         self.animations = load_all_player_animations(relative_asset_folder=asset_folder_path)
         if self.animations is None: # Critical failure if essential animations (like idle) are missing
@@ -3718,7 +3825,13 @@ class Player(pygame.sprite.Sprite):
             self.image.fill(C.RED) # Red indicates error
             self.rect = self.image.get_rect(midbottom=(start_x, start_y))
             self.is_dead = True; self._valid_init = False # Mark as invalid and stop further initialization
+            print(f"DEBUG Player (init P{self.player_id}): Animation load FAILED. _valid_init set to False.") # DEBUG
             return
+
+        print(f"DEBUG Player (init P{self.player_id}): Animations loaded. Number of animation states: {len(self.animations)}") # DEBUG
+        if 'idle' not in self.animations or not self.animations['idle']: # DEBUG
+            print(f"DEBUG Player (init P{self.player_id}): CRITICAL - 'idle' animation missing after load_all_player_animations returned non-None.") # DEBUG
+
 
         # --- Initialize Core Attributes ---
         # Standard height (from idle animation, used for some calculations)
@@ -3739,12 +3852,14 @@ class Player(pygame.sprite.Sprite):
         idle_animation_frames = self.animations.get('idle')
         if idle_animation_frames and len(idle_animation_frames) > 0:
             self.image = idle_animation_frames[0]
+            print(f"DEBUG Player (init P{self.player_id}): Initial image set from 'idle' animation, frame 0. Image size: {self.image.get_size()}") # DEBUG
         else: # Fallback if idle animation is missing (should be caught by load_all_player_animations)
             self.image = pygame.Surface((30,40)); self.image.fill(C.RED) # Error placeholder
             print(f"CRITICAL Player Init Error ({self.player_id}): 'idle' animation missing or empty after loader. Player invalid.")
             self._valid_init = False; return
 
         self.rect = self.image.get_rect(midbottom=(start_x, start_y)) # Player's collision rectangle
+        print(f"DEBUG Player (init P{self.player_id}): Initial rect: {self.rect}") # DEBUG
         
         # Physics and Movement Attributes
         self.pos = pygame.math.Vector2(start_x, start_y) # Precise position (floating point)
@@ -3800,6 +3915,7 @@ class Player(pygame.sprite.Sprite):
         self.fireball_key = None 
         if self.player_id == 1: self.fireball_key = getattr(C, 'P1_FIREBALL_KEY', pygame.K_1)
         elif self.player_id == 2: self.fireball_key = getattr(C, 'P2_FIREBALL_KEY', pygame.K_0)
+        print(f"DEBUG Player (init P{self.player_id}): Init completed. _valid_init: {self._valid_init}") # DEBUG
 
 
     def set_projectile_group_references(self, projectile_group: pygame.sprite.Group, 
@@ -3849,8 +3965,7 @@ class Player(pygame.sprite.Sprite):
                                not (self.is_dead and self.death_animation_finished and new_state != 'death')
 
         if can_change_state_now:
-            # if Player.print_limiter.can_print(f"player_set_state_transition_log_{self.player_id}", limit=50, period=2.0):
-            #     print(f"DEBUG Player ({self.player_id}): Set State: '{self.state}' -> '{new_state}' (Requested: '{original_new_state_request}')")
+            # print(f"DEBUG Player ({self.player_id}): Set State: '{self.state}' -> '{new_state}' (Req: '{original_new_state_request}'). Pos: {self.pos.x:.1f},{self.pos.y:.1f}, Vel: {self.vel.x:.1f},{self.vel.y:.1f}") # DEBUG
             self._last_state_for_debug = new_state # Update debug tracker
             
             # --- Reset flags for states the player is exiting ---
@@ -3930,8 +4045,11 @@ class Player(pygame.sprite.Sprite):
         Handles animation looping, transitions at the end of non-looping animations,
         and image flipping.
         """
-        if not self._valid_init or not hasattr(self, 'animations') or not self.animations: return
+        if not self._valid_init or not hasattr(self, 'animations') or not self.animations:
+            # print(f"DEBUG Player (animate P{self.player_id}): Animation skipped. Valid: {self._valid_init}, HasAnims: {hasattr(self, 'animations')}, AnimsOK: {bool(self.animations if hasattr(self, 'animations') else False)}") # DEBUG
+            return
         if not self.alive(): # Don't animate if sprite is not in any groups (e.g., after self.kill())
+            # print(f"DEBUG Player (animate P{self.player_id}): Animation skipped, player not alive (not in groups).") # DEBUG
             return 
 
         current_time_ms = pygame.time.get_ticks()
@@ -3996,6 +4114,7 @@ class Player(pygame.sprite.Sprite):
         
         # Final fallback if the derived animation_key_to_use is invalid or missing
         if animation_key_to_use not in self.animations or not self.animations[animation_key_to_use]: 
+            # print(f"DEBUG Player (animate P{self.player_id}): Anim key '{animation_key_to_use}' for state '{self.state}' not found or empty. Falling back to 'idle'.") # DEBUG
             animation_key_to_use = 'idle' # Default to 'idle' animation
         
         current_animation_frames_list = self.animations.get(animation_key_to_use)
@@ -4005,6 +4124,8 @@ class Player(pygame.sprite.Sprite):
             if Player.print_limiter.can_print(f"player_animate_no_frames_{self.player_id}_{animation_key_to_use}"):
                 print(f"CRITICAL Player Animate Error ({self.player_id}): No frames found for anim key '{animation_key_to_use}' (Logical state: {self.state})")
             return
+        
+        # print(f"DEBUG Player (animate P{self.player_id}): Using anim key '{animation_key_to_use}', state '{self.state}', {len(current_animation_frames_list)} frames. Current frame idx: {self.current_frame}") # DEBUG - Can be noisy
 
         # Determine frame duration (e.g., Attack 2 might be slower, having longer frame durations)
         ms_per_frame_for_current_anim = C.ANIM_FRAME_DURATION
@@ -4093,6 +4214,7 @@ class Player(pygame.sprite.Sprite):
         # --- Get the actual image surface for the current animation frame ---
         # Handle cases where animation frames might be empty (though asset loader should prevent this)
         if not current_animation_frames_list or self.current_frame < 0 or self.current_frame >= len(current_animation_frames_list):
+            # print(f"DEBUG Player (animate P{self.player_id}): Invalid frame index ({self.current_frame}) or empty frame list for anim '{animation_key_to_use}'. Resetting to 0.") # DEBUG
             self.current_frame = 0 # Reset frame index to prevent crash
             if not current_animation_frames_list: # Still no frames (major issue)
                 if hasattr(self, 'image') and self.image: self.image.fill(C.RED) # Error placeholder
@@ -4110,6 +4232,7 @@ class Player(pygame.sprite.Sprite):
             self.image = image_for_this_frame # Set the new image
             self.rect = self.image.get_rect(midbottom=old_player_midbottom_pos) # Re-anchor rect
             self._last_facing_right = self.facing_right # Update tracking of last facing direction
+            # print(f"DEBUG Player (animate P{self.player_id}): Image updated. New image size: {self.image.get_size()}, Rect: {self.rect}") # DEBUG
 
 
     # --- Input Handling Methods (delegate to player_input_handler) ---
@@ -4183,6 +4306,7 @@ class Player(pygame.sprite.Sprite):
             other_players_sprite_list (list): List of other Player sprites for character collision.
             enemies_sprite_list (list): List of Enemy sprites for character and attack collision.
         """
+        # print(f"DEBUG Player (update P{self.player_id}): Start of update. Pos: {self.pos.x:.1f},{self.pos.y:.1f}, Vel: {self.vel.x:.1f},{self.vel.y:.1f}, State: {self.state}, Valid: {self._valid_init}, Alive: {self.alive()}") # DEBUG - Very noisy
         if not self._valid_init: return # Do nothing if player initialization failed
         
         # --- Handle Death State Separately ---
@@ -4346,6 +4470,7 @@ class Player(pygame.sprite.Sprite):
         # --- Final Animation Update for the Frame ---
         # This ensures the player's visual representation matches their current state and facing direction.
         self.animate()
+        # print(f"DEBUG Player (update P{self.player_id}): End of update. Pos: {self.pos.x:.1f},{self.pos.y:.1f}, Rect: {self.rect}, Image: {self.image.get_size() if self.image else 'NoImg'}") # DEBUG - Very Noisy
 
 
     def check_platform_collisions(self, direction: str, platforms_group: pygame.sprite.Group):
@@ -4543,12 +4668,24 @@ class Player(pygame.sprite.Sprite):
         Args:
             spawn_position_tuple (tuple): (x, y) coordinates for the player's midbottom.
         """
+        print(f"DEBUG Player (reset_state P{self.player_id}): Resetting state to spawn at {spawn_position_tuple}. Current valid: {self._valid_init}") # DEBUG
         if not self._valid_init: 
-            # If player was never validly initialized (e.g., critical asset loading failure),
-            # a reset might not be meaningful or could cause further errors.
             # if Player.print_limiter.can_print(f"player_reset_fail_invalid_init_{self.player_id}"):
             #     print(f"Player Warning ({self.player_id}): Cannot reset, _valid_init is False.")
-            return
+            # Try to re-validate if possible, might be risky if assets truly failed
+            asset_folder_path = 'characters/player1' if self.player_id == 1 else 'characters/player2'
+            self.animations = load_all_player_animations(relative_asset_folder=asset_folder_path)
+            if self.animations is not None:
+                self._valid_init = True
+                idle_animation_frames = self.animations.get('idle')
+                if idle_animation_frames and len(idle_animation_frames) > 0:
+                    self.image = idle_animation_frames[0]
+                else:
+                    self.image = pygame.Surface((30,40)); self.image.fill(C.RED)
+                print(f"DEBUG Player (reset_state P{self.player_id}): Re-attempted animation load. New _valid_init: {self._valid_init}") # DEBUG
+            else:
+                print(f"DEBUG Player (reset_state P{self.player_id}): Re-animation load FAILED. Still invalid.") # DEBUG
+                return
         
         # print(f"Player Info ({self.player_id}): RESETTING state to spawn at {spawn_position_tuple}")
         # Reset position and physics
@@ -4577,6 +4714,9 @@ class Player(pygame.sprite.Sprite):
             self.image.set_alpha(255) # Make fully opaque
         
         self.set_state('idle') # Set to a neutral, stable initial state
+        print(f"DEBUG Player (reset_state P{self.player_id}): Reset complete. Pos: {self.pos}, HP: {self.current_health}") # DEBUG
+
+########## END OF FILE: player.py ##########
 
 ########## START OF FILE: player_combat_handler.py ##########
 
@@ -5096,6 +5236,8 @@ def process_player_input_logic(player, keys_pressed, pygame_events, key_config_m
 
 ########## START OF FILE: player_network_handler.py ##########
 
+########## START OF FILE: player_network_handler.py ##########
+
 # player_network_handler.py
 # -*- coding: utf-8 -*-
 """
@@ -5149,6 +5291,7 @@ def get_player_network_data(player):
         'fireball_aim_x': player.fireball_last_input_dir.x, 
         'fireball_aim_y': player.fireball_last_input_dir.y
     }
+    # print(f"DEBUG PNH (get_player_network_data) for P{player.player_id}: pos={data['pos']}, valid={data['_valid_init']}, alive (instance): {player.alive() if hasattr(player, 'alive') else 'N/A'}") # DEBUG
     return data
 
 def set_player_network_data(player, network_data): 
@@ -5161,43 +5304,54 @@ def set_player_network_data(player, network_data):
         player (Player): The player instance to be updated.
         network_data (dict): The dictionary of player state received over the network.
     """
-    if network_data is None: return # No data to apply
-    
-    # Critical: Update _valid_init first. If player becomes invalid, stop further processing.
-    player._valid_init = network_data.get('_valid_init', player._valid_init)
-    if not player._valid_init:
-        if player.alive(): # If player was in sprite groups
-            player.kill()  # Remove from all groups
-        return # No further updates if player is marked invalid
+    if network_data is None:
+        # print(f"DEBUG PNH (set_player_network_data) for P{player.player_id}: Received None network_data. No update.") # DEBUG
+        return
 
-    # --- Update position and velocity directly from network ---
+    # print(f"DEBUG PNH (set_player_network_data) for P{player.player_id}: Applying network data. Current valid: {player._valid_init}, alive: {player.alive() if hasattr(player, 'alive') else 'N/A'}. Net valid: {network_data.get('_valid_init')}, Net pos: {network_data.get('pos')}") # DEBUG
+    
+    player_id_from_data = network_data.get('player_id', 'Unknown') # For logging
+
+    # Critical: Update _valid_init first.
+    new_valid_init = network_data.get('_valid_init', player._valid_init)
+    if player._valid_init != new_valid_init:
+        # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: _valid_init changed from {player._valid_init} to {new_valid_init}") # DEBUG
+        player._valid_init = new_valid_init
+    
+    if not player._valid_init:
+        if player.alive(): 
+            # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: Player became invalid, killing sprite.") # DEBUG
+            player.kill()  
+        return 
+
     pos_data = network_data.get('pos')
-    if pos_data: player.pos.x, player.pos.y = pos_data
+    if pos_data: 
+        # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: Old Pos: {player.pos}, New Net Pos: {pos_data}") # DEBUG
+        player.pos.x, player.pos.y = pos_data
     
     vel_data = network_data.get('vel')
     if vel_data: player.vel.x, player.vel.y = vel_data
     
     player.facing_right = network_data.get('facing_right', player.facing_right)
     
-    # --- Update health and death status ---
     player.current_health = network_data.get('current_health', player.current_health)
     new_is_dead_from_net = network_data.get('is_dead', player.is_dead)
     player.death_animation_finished = network_data.get('death_animation_finished', player.death_animation_finished)
 
-    # --- Handle transitions related to death status ---
-    if new_is_dead_from_net and not player.is_dead: # Player was alive, now network says dead
+    if new_is_dead_from_net and not player.is_dead: 
+        # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: Transitioning to DEAD from network.") # DEBUG
         player.is_dead = True
-        player.current_health = 0 # Ensure health is consistent with death
-        player.set_state('death') # Trigger death state logic (animation, physics changes)
-    elif not new_is_dead_from_net and player.is_dead: # Player was dead, now network says alive (e.g., reset)
+        player.current_health = 0 
+        player.set_state('death') 
+    elif not new_is_dead_from_net and player.is_dead: 
+        # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: Transitioning to ALIVE from network (was dead).") # DEBUG
         player.is_dead = False
-        player.death_animation_finished = False # Reset this flag
-        if player.state in ['death', 'death_nm']: # If stuck in a death animation state
-            player.set_state('idle') # Transition to a neutral, alive state
-    else: # No change in is_dead status, or already matches
-        player.is_dead = new_is_dead_from_net # Ensure local matches network
+        player.death_animation_finished = False 
+        if player.state in ['death', 'death_nm']: 
+            player.set_state('idle') 
+    else: 
+        player.is_dead = new_is_dead_from_net 
 
-    # --- Update combat and action states ---
     player.is_attacking = network_data.get('is_attacking', player.is_attacking)
     player.attack_type = network_data.get('attack_type', player.attack_type)
     player.is_crouching = network_data.get('is_crouching', player.is_crouching)
@@ -5206,41 +5360,38 @@ def set_player_network_data(player, network_data):
     player.is_sliding = network_data.get('is_sliding', player.is_sliding)
     player.on_ladder = network_data.get('on_ladder', player.on_ladder)
     
-    # Hit stun state: if network says player is taking a hit, reflect that
     new_is_taking_hit_from_net = network_data.get('is_taking_hit', player.is_taking_hit)
-    if new_is_taking_hit_from_net and not player.is_taking_hit: # Start of hit stun
+    if new_is_taking_hit_from_net and not player.is_taking_hit: 
         player.is_taking_hit = True
-        player.hit_timer = pygame.time.get_ticks() # Reset hit timer for local cooldown visual/logic
-        if player.state != 'hit' and not player.is_dead : player.set_state('hit') # Trigger hit anim if not already
-    elif not new_is_taking_hit_from_net and player.is_taking_hit: # End of hit stun by network
+        player.hit_timer = pygame.time.get_ticks() 
+        if player.state != 'hit' and not player.is_dead : player.set_state('hit') 
+    elif not new_is_taking_hit_from_net and player.is_taking_hit: 
         player.is_taking_hit = False
-        if player.state == 'hit' and not player.is_dead : player.set_state('idle') # Transition out of hit anim
+        if player.state == 'hit' and not player.is_dead : player.set_state('idle') 
 
-
-    # --- Update logical state and animation frame ---
     new_logical_state_from_net = network_data.get('state', player.state)
-    # Apply new state if different, carefully avoiding re-triggering death anim if already in it
     if player.state != new_logical_state_from_net and \
        not (player.is_dead and new_logical_state_from_net in ['death', 'death_nm']):
+         # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: Setting state from '{player.state}' to '{new_logical_state_from_net}'") # DEBUG
          player.set_state(new_logical_state_from_net)
-    else: # If state is the same, or it's a death state, just sync animation details
+    else: 
         player.current_frame = network_data.get('current_frame', player.current_frame)
         player.last_anim_update = network_data.get('last_anim_update', player.last_anim_update)
     
-    # Update fireball aim direction from network data
     fb_aim_x_net = network_data.get('fireball_aim_x')
     fb_aim_y_net = network_data.get('fireball_aim_y')
     if fb_aim_x_net is not None and fb_aim_y_net is not None:
         player.fireball_last_input_dir.x = float(fb_aim_x_net)
         player.fireball_last_input_dir.y = float(fb_aim_y_net)
     
-    # --- Finalize visual position and trigger animation update ---
     player.rect.midbottom = (round(player.pos.x), round(player.pos.y))
+    # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: Updated rect.midbottom to {player.rect.midbottom}") # DEBUG
     
-    # Ensure animation is updated if player is valid and part of the game world
-    # (alive() checks if the sprite is in any groups)
     if player._valid_init and player.alive(): 
+        # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: Player valid and alive, calling animate().") # DEBUG
         player.animate()
+    # else: # DEBUG
+        # print(f"DEBUG PNH (set_player_network_data) for P{player_id_from_data}: Player NOT valid or NOT alive. Valid: {player._valid_init}, Alive: {player.alive() if hasattr(player, 'alive') else 'N/A'}. Skipping animate.") # DEBUG
 
 
 def handle_player_network_input(player, received_input_data_dict): 
@@ -5253,35 +5404,30 @@ def handle_player_network_input(player, received_input_data_dict):
         player (Player): The player instance whose actions are being driven by network input.
         received_input_data_dict (dict): The input state dictionary from the client.
     """
+    # print(f"DEBUG PNH (handle_player_network_input) for P{player.player_id}: Processing input: {received_input_data_dict}") # DEBUG
     if not player._valid_init or player.is_dead or not player.alive():
-        # Cannot process input if player is invalid, dead, or not in game world
+        # print(f"DEBUG PNH (handle_player_network_input) for P{player.player_id}: Input ignored, player not valid/alive. Valid: {player._valid_init}, Dead: {player.is_dead}, Alive: {player.alive() if hasattr(player,'alive') else 'N/A'}") # DEBUG
         return
 
-    player.acc.x = 0 # Reset acceleration, it will be set based on network input
+    player.acc.x = 0 
     
-    # --- Movement intentions from network ---
     intends_move_left_net = received_input_data_dict.get('left_held', False)
     intends_move_right_net = received_input_data_dict.get('right_held', False)
     
-    # --- Update fireball aim from network input immediately ---
-    # This ensures server has the latest aim for when a fireball is requested.
     net_fireball_aim_x = received_input_data_dict.get('fireball_aim_x')
     net_fireball_aim_y = received_input_data_dict.get('fireball_aim_y')
     if net_fireball_aim_x is not None and net_fireball_aim_y is not None:
-        # Only update if there's an active aim signal from client to avoid overriding default
         if float(net_fireball_aim_x) != 0.0 or float(net_fireball_aim_y) != 0.0:
             player.fireball_last_input_dir.x = float(net_fireball_aim_x)
             player.fireball_last_input_dir.y = float(net_fireball_aim_y)
     
-    # --- Determine facing and acceleration based on network input ---
-    # Check if player can currently control horizontal movement (not in specific states)
     can_control_horizontal_via_net = not (
         player.is_dashing or player.is_rolling or player.is_sliding or player.on_ladder or
         (player.is_attacking and player.state in ['attack_nm','attack2_nm','attack_combo_nm','crouch_attack']) or
         player.state in ['turn','hit','death','death_nm','wall_climb','wall_climb_nm','wall_hang']
     )
     
-    new_facing_direction_net = player.facing_right # Assume current facing
+    new_facing_direction_net = player.facing_right 
     if can_control_horizontal_via_net:
         if intends_move_left_net and not intends_move_right_net:
             player.acc.x = -C.PLAYER_ACCEL
@@ -5290,47 +5436,38 @@ def handle_player_network_input(player, received_input_data_dict):
             player.acc.x = C.PLAYER_ACCEL
             new_facing_direction_net = True
             
-    # If on ground and should turn based on new facing direction from network input
     if player.on_ground and player.state in ['idle', 'run'] and not player.is_attacking and \
        player.facing_right != new_facing_direction_net:
         player.facing_right = new_facing_direction_net
-        player.set_state('turn') # Initiate turn animation
-    else: # Apply facing direction directly if not turning or if state doesn't allow turn anim
+        player.set_state('turn') 
+    else: 
         player.facing_right = new_facing_direction_net
     
-    # --- Check for event-based actions from network input ---
-    # These are typically "pressed_event" flags sent by the client.
     can_perform_action_net = not player.is_attacking and not player.is_dashing and \
                              not player.is_rolling and not player.is_sliding and \
                              not player.on_ladder and player.state not in ['turn','hit']
     
-    # Attacks based on client's button press events
     if received_input_data_dict.get('attack1_pressed_event', False) and can_perform_action_net:
-        player.attack_type = 4 if player.is_crouching else 1 # Crouching overrides
+        player.attack_type = 4 if player.is_crouching else 1 
         attack_anim_key_net = 'crouch_attack' if player.is_crouching else \
                               ('attack' if (intends_move_left_net or intends_move_right_net) else 'attack_nm')
         player.set_state(attack_anim_key_net)
     
     if received_input_data_dict.get('attack2_pressed_event', False) and can_perform_action_net:
-        # Server-side combo validation would be complex here without more state.
-        # For now, assume client sends intent for attack2 or crouch attack.
         player.attack_type = 4 if player.is_crouching else 2 
         attack2_anim_key_net = 'crouch_attack' if player.is_crouching else \
                                ('attack2' if (intends_move_left_net or intends_move_right_net) else 'attack2_nm')
         player.set_state(attack2_anim_key_net)
 
-    # Fireball action from network
     if received_input_data_dict.get('fireball_pressed_event', False) and can_perform_action_net:
-        if hasattr(player, 'fire_fireball'): # Player class should have this method
-             player.fire_fireball() # Delegates to player_combat_handler.fire_player_fireball
+        if hasattr(player, 'fire_fireball'): 
+             player.fire_fireball() 
 
-    # Movement abilities based on client's intent flags/events
     if received_input_data_dict.get('jump_intent', False) and can_perform_action_net and not player.is_crouching:
-         if player.on_ground: # Basic jump from ground (server validates context)
+         if player.on_ground: 
              player.vel.y = C.PLAYER_JUMP_STRENGTH
              player.set_state('jump')
-             player.on_ground = False # Server sets this authoritatively
-         # Server would need to validate more complex jumps (wall, ladder) based on its own state.
+             player.on_ground = False 
 
     if received_input_data_dict.get('dash_pressed_event', False) and player.on_ground and \
        can_perform_action_net and not player.is_crouching:
@@ -5340,14 +5477,10 @@ def handle_player_network_input(player, received_input_data_dict):
        can_perform_action_net and not player.is_crouching:
         player.set_state('roll')
     
-    # Note on Crouch/Slide from network:
-    # Client sends 'down_held'. Server needs to interpret this with context (e.g., if running for slide).
-    # The current logic mainly sets player.acc.x and facing. More complex state changes like
-    # initiating slide or crouch based purely on network 'down_held' would require
-    # the server to replicate parts of the local input processing logic, which can be tricky.
-    # Typically, the server's `player.update()` and its collision/state logic would naturally
-    # handle transitions into crouch or slide if `player.is_holding_crouch_ability_key` (from net) is true
-    # and other conditions (like being on ground) are met by the server's authoritative state.
+    # Set player's intention flags based on network input for server-side update logic
+    player.is_holding_crouch_ability_key = received_input_data_dict.get('down_held', False)
+    player.is_holding_climb_ability_key = received_input_data_dict.get('up_held', False)
+    # print(f"DEBUG PNH (handle_player_network_input) for P{player.player_id}: Accel.x set to {player.acc.x}, FacingRight: {player.facing_right}") # DEBUG
 
 
 def get_player_input_state_for_network(player, current_pygame_keys, current_pygame_events, key_map):
@@ -5365,27 +5498,23 @@ def get_player_input_state_for_network(player, current_pygame_keys, current_pyga
         dict: A dictionary representing the player's input state.
     """
     input_state_dict = {
-        # Held keys (booleans)
         'left_held': bool(current_pygame_keys[key_map['left']]),
         'right_held': bool(current_pygame_keys[key_map['right']]),
         'up_held': bool(current_pygame_keys[key_map['up']]),
         'down_held': bool(current_pygame_keys[key_map['down']]),
         
-        # Event-based presses (booleans, true if event occurred this frame)
         'attack1_pressed_event': False, 
         'attack2_pressed_event': False,
         'dash_pressed_event': False, 
         'roll_pressed_event': False,
         'interact_pressed_event': False, 
-        'jump_intent': False, # 'up_held' can also indicate climb, 'jump_intent' is for actual jump press
+        'jump_intent': False, 
         'fireball_pressed_event': False,
         
-        # Send current aim direction for fireball
         'fireball_aim_x': player.fireball_last_input_dir.x, 
         'fireball_aim_y': player.fireball_last_input_dir.y
     }
     
-    # Check Pygame events for key presses (KEYDOWN)
     for event in current_pygame_events:
         if event.type == pygame.KEYDOWN:
             if event.key == key_map.get('attack1'): input_state_dict["attack1_pressed_event"] = True
@@ -5393,13 +5522,15 @@ def get_player_input_state_for_network(player, current_pygame_keys, current_pyga
             if event.key == key_map.get('dash'): input_state_dict["dash_pressed_event"] = True
             if event.key == key_map.get('roll'): input_state_dict["roll_pressed_event"] = True
             if event.key == key_map.get('interact'): input_state_dict["interact_pressed_event"] = True
-            if event.key == key_map.get('up'): input_state_dict["jump_intent"] = True # Jump is an event
+            if event.key == key_map.get('up'): input_state_dict["jump_intent"] = True 
             
-            # Check for player-specific fireball key press
             if player.fireball_key and event.key == player.fireball_key:
                 input_state_dict['fireball_pressed_event'] = True
                 
+    # print(f"DEBUG PNH (get_player_input_state_for_network) for P{player.player_id}: Generated input state: {input_state_dict}") # DEBUG
     return input_state_dict
+
+########## END OF FILE: player_network_handler.py ##########
 
 ########## START OF FILE: projectiles.py ##########
 
@@ -5521,6 +5652,8 @@ class Fireball(pygame.sprite.Sprite):
 
 ########## START OF FILE: server_logic.py ##########
 
+########## START OF FILE: server_logic.py ##########
+
 # server_logic.py
 # -*- coding: utf-8 -*-
 """
@@ -5598,14 +5731,14 @@ def broadcast_presence_thread(server_state_obj: ServerState):
         return
     
     broadcast_address = ('<broadcast>', server_state_obj.discovery_port_udp)
-    print(f"Server broadcasting presence: {broadcast_message_dict} to {broadcast_address} (LAN IP: {current_lan_ip})")
+    print(f"DEBUG Server (broadcast_presence_thread): Broadcasting presence: {broadcast_message_dict} to {broadcast_address} (LAN IP: {current_lan_ip})") # DEBUG
 
     while server_state_obj.app_running:
         try:
             server_state_obj.server_udp_socket.sendto(broadcast_message_bytes, broadcast_address)
-        except socket.error:
-            # Errors during send can happen (e.g., network interface down briefly).
-            # Log them if they become persistent, but often can be ignored for broadcasts.
+            # print(f"DEBUG Server (broadcast_presence_thread): Broadcast sent.") # DEBUG - can be very noisy
+        except socket.error as sock_err:
+            print(f"DEBUG Server (broadcast_presence_thread): Socket error during broadcast send: {sock_err}") # DEBUG
             pass 
         except Exception as e:
             print(f"Server Warning: Unexpected error during broadcast send: {e}")
@@ -5619,7 +5752,7 @@ def broadcast_presence_thread(server_state_obj: ServerState):
     if server_state_obj.server_udp_socket:
         server_state_obj.server_udp_socket.close()
         server_state_obj.server_udp_socket = None
-    print("Server broadcast thread stopped.")
+    print("DEBUG Server (broadcast_presence_thread): Broadcast thread stopped.") # DEBUG
 
 
 def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj: ServerState):
@@ -5627,59 +5760,57 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
     Thread function to handle receiving data from a single connected client.
     Updates the server_state_obj.client_input_buffer with the latest client input.
     """
-    print(f"Server: Client connected from {addr}. Handler thread started.")
+    print(f"DEBUG Server (handle_client_connection_thread): Client connected from {addr}. Handler thread started.") # DEBUG
     conn.settimeout(1.0) # Use a timeout for recv to keep the loop responsive
     partial_data_from_client = b"" # Buffer for accumulating partial messages
 
     while server_state_obj.app_running:
         with client_lock: # Synchronize access to shared server state
             if server_state_obj.client_connection is not conn:
-                # If this connection is no longer the active one (e.g., server reset or new client)
-                print(f"Server Handler ({addr}): Stale connection. Exiting thread.")
+                print(f"DEBUG Server Handler ({addr}): Stale connection. Exiting thread.") # DEBUG
                 break 
         try:
             chunk = conn.recv(server_state_obj.buffer_size)
-            if not chunk: # Client disconnected gracefully (sent empty data)
-                print(f"Server Handler ({addr}): Client disconnected (received empty data).")
+            if not chunk: 
+                print(f"DEBUG Server Handler ({addr}): Client disconnected (received empty data).") # DEBUG
                 break
             
+            # print(f"DEBUG Server Handler ({addr}): Received chunk: {chunk[:60]}...") # DEBUG - can be noisy
             partial_data_from_client += chunk
-            # Process the accumulated buffer for complete JSON messages
             decoded_inputs, partial_data_from_client = decode_data_stream(partial_data_from_client)
 
             if decoded_inputs:
-                last_input_data = decoded_inputs[-1] # Use the most recent complete input message
+                last_input_data = decoded_inputs[-1] 
+                # print(f"DEBUG Server Handler ({addr}): Decoded client input: {last_input_data}") # DEBUG
                 if "input" in last_input_data:
                     with client_lock:
-                        # Ensure this thread is still handling the primary client connection
                         if server_state_obj.client_connection is conn: 
                             server_state_obj.client_input_buffer = last_input_data["input"]
+                            # print(f"DEBUG Server Handler ({addr}): Updated client_input_buffer: {server_state_obj.client_input_buffer}") # DEBUG
         except socket.timeout:
-            continue # No data received within timeout, normal, just loop again
+            continue 
         except socket.error as e:
             if server_state_obj.app_running:
-                print(f"Server Handler ({addr}): Socket error: {e}. Assuming disconnect.")
-            break # Exit on socket errors
+                print(f"DEBUG Server Handler ({addr}): Socket error: {e}. Assuming disconnect.") # DEBUG
+            break 
         except Exception as e:
             if server_state_obj.app_running:
-                print(f"Server Handler ({addr}): Unexpected error: {e}")
+                print(f"DEBUG Server Handler ({addr}): Unexpected error: {e}") # DEBUG
                 traceback.print_exc()
             break
 
-    # Cleanup logic when the loop exits (client disconnected or app shutting down)
     with client_lock:
-        if server_state_obj.client_connection is conn: # If this thread was for the active connection
-            print(f"Server Handler ({addr}): Closing active connection from handler.")
-            server_state_obj.client_connection = None # Clear the active connection
-            # Signal to the main server loop that the client has disconnected
+        if server_state_obj.client_connection is conn: 
+            print(f"DEBUG Server Handler ({addr}): Closing active connection from handler.") # DEBUG
+            server_state_obj.client_connection = None 
             server_state_obj.client_input_buffer = {"disconnect": True} 
     try:
-        conn.shutdown(socket.SHUT_RDWR) # Gracefully shut down send/receive
-    except: pass # Ignore errors if already closed or problematic
+        conn.shutdown(socket.SHUT_RDWR) 
+    except: pass 
     try:
-        conn.close() # Close the socket
+        conn.close() 
     except: pass
-    print(f"Server: Client handler for {addr} finished.")
+    print(f"DEBUG Server: Client handler for {addr} finished.") # DEBUG
 
 
 def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock, 
@@ -5688,23 +5819,23 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     Main function to run the game in server mode.
     Manages client connections, game loop, and state synchronization.
     """
+    print("DEBUG Server: Entering run_server_mode.") # DEBUG
     pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: R)")
     
-    # Initialize server state (app_running should be true if entering this mode)
-    server_state_obj.app_running = True # Explicitly set for this mode's duration if needed
+    server_state_obj.app_running = True 
     current_width, current_height = screen.get_size()
 
-    # Start LAN broadcast thread
     if server_state_obj.broadcast_thread and server_state_obj.broadcast_thread.is_alive():
-        print("Server Warning: Broadcast thread already running. This might indicate an issue.")
+        print("DEBUG Server: Broadcast thread already running (normal if re-entering server mode without full app restart).") # DEBUG
     else:
+        print("DEBUG Server: Starting broadcast thread.") # DEBUG
         server_state_obj.broadcast_thread = threading.Thread(
             target=broadcast_presence_thread, args=(server_state_obj,), daemon=True
         )
         server_state_obj.broadcast_thread.start()
 
-    # Setup TCP listening socket
-    if server_state_obj.server_tcp_socket: # Close if one exists from a previous unclean exit
+    if server_state_obj.server_tcp_socket: 
+        print("DEBUG Server: Closing existing TCP socket before creating new one.") # DEBUG
         try: server_state_obj.server_tcp_socket.close()
         except: pass
     
@@ -5712,69 +5843,62 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     server_state_obj.server_tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
         server_state_obj.server_tcp_socket.bind((C.SERVER_IP_BIND, server_state_obj.server_port_tcp))
-        server_state_obj.server_tcp_socket.listen(1) # Listen for one client
-        server_state_obj.server_tcp_socket.settimeout(1.0) # Non-blocking accept
-        print(f"Server listening on {C.SERVER_IP_BIND}:{server_state_obj.server_port_tcp}")
+        server_state_obj.server_tcp_socket.listen(1) 
+        server_state_obj.server_tcp_socket.settimeout(1.0) 
+        print(f"DEBUG Server: Listening on {C.SERVER_IP_BIND}:{server_state_obj.server_port_tcp}") # DEBUG
     except socket.error as e:
         print(f"FATAL SERVER ERROR: Failed to bind/listen TCP socket: {e}")
-        # server_state_obj.app_running = False # This would quit the whole app
-        return # Cannot run server mode, return to main menu
+        return 
 
-    # --- Wait for Client Connection ---
-    print("Server: Waiting for Player 2 to connect...")
-    temp_client_conn_obj = None # To hold the newly accepted connection
+    print("DEBUG Server: Waiting for Player 2 to connect...") # DEBUG
+    temp_client_conn_obj = None 
     while temp_client_conn_obj is None and server_state_obj.app_running:
-        # Pygame event handling while waiting (Quit, Resize, Escape)
         for event in pygame.event.get():
             if event.type == pygame.QUIT: server_state_obj.app_running = False; break
             if event.type == pygame.VIDEORESIZE:
                 if not screen.get_flags() & pygame.FULLSCREEN:
                     current_width, current_height = max(320,event.w), max(240,event.h)
                     screen = pygame.display.set_mode((current_width, current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
-                    if game_elements_ref.get("camera"): # Update camera screen size
+                    if game_elements_ref.get("camera"): 
                         game_elements_ref["camera"].screen_width = current_width
                         game_elements_ref["camera"].screen_height = current_height
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                server_state_obj.app_running = False; break # Or just exit server mode
+                server_state_obj.app_running = False; break 
         if not server_state_obj.app_running: break
         
-        # Display "Waiting for P2" message
         screen.fill(C.BLACK)
         if fonts.get("large"):
             wait_text_surf = fonts["large"].render("Waiting for P2...", True, C.WHITE)
             screen.blit(wait_text_surf, wait_text_surf.get_rect(center=(current_width//2, current_height//2)))
         pygame.display.flip()
-        clock.tick(10) # Low FPS while waiting
+        clock.tick(10) 
 
         try:
             temp_client_conn_obj, temp_client_addr_tuple = server_state_obj.server_tcp_socket.accept()
-            # Client connected
             with client_lock:
-                 if server_state_obj.client_connection: # If an old client handler is somehow still linked
-                     print("Server Warning: Closing pre-existing client connection before new one.")
+                 if server_state_obj.client_connection: 
+                     print("DEBUG Server: Closing pre-existing client connection before new one.") # DEBUG
                      try: server_state_obj.client_connection.close()
                      except: pass
                  server_state_obj.client_connection = temp_client_conn_obj
                  server_state_obj.client_address = temp_client_addr_tuple
-                 server_state_obj.client_input_buffer = {} # Reset buffer for new client
+                 server_state_obj.client_input_buffer = {} 
+                 print(f"DEBUG Server: Accepted connection from {temp_client_addr_tuple}") # DEBUG
         except socket.timeout:
-            continue # No connection yet, keep waiting
+            continue 
         except Exception as e:
             if server_state_obj.app_running:
-                print(f"Server Error during client accept: {e}")
-            # server_state_obj.app_running = False # Critical error if accept fails unexpectedly
-            break # Exit waiting loop
+                print(f"DEBUG Server: Error during client accept: {e}") # DEBUG
+            break 
     
     if not server_state_obj.app_running or server_state_obj.client_connection is None:
-        print("Server: Exiting wait loop (no client connected or app closed).")
-        # server_state_obj.app_running = False # Signal main app to stop if this is a critical failure path for the mode
-        return # Return to main menu
+        print("DEBUG Server: Exiting wait loop (no client connected or app closed).") # DEBUG
+        return 
 
-    # Start client handler thread for the new connection
-    print(f"Server: Client {server_state_obj.client_address} connected. Starting game...")
+    print(f"DEBUG Server: Client {server_state_obj.client_address} connected. Starting game...") # DEBUG
     if server_state_obj.client_handler_thread and server_state_obj.client_handler_thread.is_alive():
-        print("Server Warning: Previous client handler thread still alive. Attempting to join (may hang).")
-        server_state_obj.client_handler_thread.join(timeout=0.2) # Try to clean up
+        print("DEBUG Server: Previous client handler thread still alive. Attempting to join.") # DEBUG
+        server_state_obj.client_handler_thread.join(timeout=0.2) 
     
     server_state_obj.client_handler_thread = threading.Thread(
         target=handle_client_connection_thread, 
@@ -5782,11 +5906,15 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         daemon=True
     )
     server_state_obj.client_handler_thread.start()
+    print("DEBUG Server: Client handler thread started.") # DEBUG
 
-    # --- Server Game Loop (runs after client connects) ---
-    p1 = game_elements_ref.get("player1") # Host player
-    p2 = game_elements_ref.get("player2") # Remote player (server simulates)
-    p1_key_map_config = { # Player 1 (host) key bindings
+    p1 = game_elements_ref.get("player1") 
+    p2 = game_elements_ref.get("player2") 
+    if p1: print(f"DEBUG Server: P1 instance from game_elements: {p1}, Valid: {p1._valid_init if p1 else 'N/A'}") # DEBUG
+    if p2: print(f"DEBUG Server: P2 instance from game_elements: {p2}, Valid: {p2._valid_init if p2 else 'N/A'}") # DEBUG
+
+
+    p1_key_map_config = { 
         'left': pygame.K_a, 'right': pygame.K_d, 'up': pygame.K_w, 'down': pygame.K_s,
         'attack1': pygame.K_v, 'attack2': pygame.K_b, 'dash': pygame.K_LSHIFT,
         'roll': pygame.K_LCTRL, 'interact': pygame.K_e
@@ -5794,22 +5922,20 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     
     server_game_active = True
     while server_game_active and server_state_obj.app_running:
-        dt_sec = clock.tick(C.FPS) / 1000.0 # Delta time for physics
+        dt_sec = clock.tick(C.FPS) / 1000.0 
         now_ticks_server = pygame.time.get_ticks() 
         
         pygame_events = pygame.event.get()
         keys_pressed_p1 = pygame.key.get_pressed()
 
-        # Check if P1 is "truly gone" for reset logic (P2 can request reset if P1 is out)
         is_p1_game_over_for_reset = False
         if p1 and p1._valid_init:
             if p1.is_dead and (not p1.alive() or (hasattr(p1, 'death_animation_finished') and p1.death_animation_finished)):
                 is_p1_game_over_for_reset = True
-        else: # P1 invalid also counts for this check
+        else: 
             is_p1_game_over_for_reset = True
 
         host_requested_reset = False
-        # Handle server-side events (Quit, Resize, Host debug keys)
         for event in pygame_events:
             if event.type == pygame.QUIT: server_game_active = False; server_state_obj.app_running = False; break
             if event.type == pygame.VIDEORESIZE:
@@ -5820,76 +5946,67 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                         game_elements_ref["camera"].screen_width = current_width
                         game_elements_ref["camera"].screen_height = current_height
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE: server_game_active = False # Exit server game to main menu
+                if event.key == pygame.K_ESCAPE: server_game_active = False 
                 if event.key == pygame.K_r: host_requested_reset = True
-                if p1 and p1._valid_init: # Host debug actions for P1
+                if p1 and p1._valid_init: 
                     if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'): p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'): p1.heal_to_full()
         
         if not server_state_obj.app_running or not server_game_active: break
 
-        # Handle P1 input (local host player)
         if p1 and p1._valid_init and not p1.is_dead:
             if hasattr(p1, 'handle_mapped_input'):
                 p1.handle_mapped_input(keys_pressed_p1, pygame_events, p1_key_map_config)
 
-        # Process P2 input received from client_handler_thread
         p2_network_input, client_disconnected_signal, p2_requested_reset = None, False, False
-        with client_lock: # Access shared input buffer
+        with client_lock: 
             if server_state_obj.client_input_buffer:
                 buffered_input = server_state_obj.client_input_buffer
+                # print(f"DEBUG Server: Processing client_input_buffer: {buffered_input}") # DEBUG
                 if buffered_input.get("disconnect"): client_disconnected_signal = True
                 elif buffered_input.get("action_reset", False): p2_requested_reset = True
-                # Handle P2 debug actions initiated by client
                 elif p2 and p2._valid_init:
                     if buffered_input.get("action_self_harm", False) and hasattr(p2, 'self_inflict_damage'):
                         p2.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     elif buffered_input.get("action_heal", False) and hasattr(p2, 'heal_to_full'):
                         p2.heal_to_full()
-                else: # Standard player inputs from P2
+                else: 
                     p2_network_input = buffered_input.copy()
-                server_state_obj.client_input_buffer = {} # Clear buffer after processing
+                server_state_obj.client_input_buffer = {} 
 
         if client_disconnected_signal:
-            print("Server: Client disconnected signal received in main loop.")
-            server_game_active = False # Stop game loop
-            break # Exit to cleanup
+            print("DEBUG Server: Client disconnected signal received in main loop.") # DEBUG
+            server_game_active = False 
+            break 
 
         if p2 and p2._valid_init and p2_network_input and hasattr(p2, 'handle_network_input'):
-            p2.handle_network_input(p2_network_input) # Update P2 based on network input
+            # print(f"DEBUG Server: Handling P2 network input: {p2_network_input}") # DEBUG
+            p2.handle_network_input(p2_network_input) 
 
-        # Handle game reset requests
         if host_requested_reset or (p2_requested_reset and is_p1_game_over_for_reset):
-            print("Server: Game state reset triggered.")
+            print("DEBUG Server: Game state reset triggered.") # DEBUG
             game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
 
-
-        # --- Server-authoritative game logic updates ---
-        # Update Player 1
         if p1 and p1._valid_init:
             other_players_for_p1_update = [char for char in [p2] if char and char._valid_init and char.alive() and char is not p1]
             p1.update(dt_sec, game_elements_ref["platform_sprites"], game_elements_ref["ladder_sprites"], 
                       game_elements_ref["hazard_sprites"], other_players_for_p1_update, game_elements_ref["enemy_list"])
 
-        # Update Player 2 (server simulates its state based on processed network input)
         if p2 and p2._valid_init:
             other_players_for_p2_update = [char for char in [p1] if char and char._valid_init and char.alive() and char is not p2]
             p2.update(dt_sec, game_elements_ref["platform_sprites"], game_elements_ref["ladder_sprites"], 
                       game_elements_ref["hazard_sprites"], other_players_for_p2_update, game_elements_ref["enemy_list"])
 
-        # Update Enemies
         active_players_for_enemy_ai = [char for char in [p1, p2] if char and char._valid_init and not char.is_dead and char.alive()]
-        for enemy in list(game_elements_ref.get("enemy_list", [])): # Iterate copy for safe removal
+        for enemy in list(game_elements_ref.get("enemy_list", [])): 
             if enemy._valid_init:
                 enemy.update(dt_sec, active_players_for_enemy_ai, game_elements_ref["platform_sprites"], game_elements_ref["hazard_sprites"])
                 if enemy.is_dead and hasattr(enemy, 'death_animation_finished') and \
                    enemy.death_animation_finished and enemy.alive():
                     if hasattr(Enemy, 'print_limiter') and Enemy.print_limiter.can_print(f"server_killing_enemy_{enemy.enemy_id}"):
                          print(f"Server: Auto-killing enemy {enemy.enemy_id} as death anim finished.")
-                    enemy.kill() # Removes from all groups it's in
-            # else: if enemy.alive(): enemy.kill() # Should be handled by init checks
-
-        # Update Projectiles
+                    enemy.kill() 
+            
         hittable_characters_server_group = pygame.sprite.Group()
         if p1 and p1.alive() and p1._valid_init: hittable_characters_server_group.add(p1)
         if p2 and p2.alive() and p2._valid_init: hittable_characters_server_group.add(p2)
@@ -5898,10 +6015,9 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 hittable_characters_server_group.add(enemy_inst_proj)
         game_elements_ref.get("projectile_sprites", pygame.sprite.Group()).update(dt_sec, game_elements_ref["platform_sprites"], hittable_characters_server_group)
         
-        # Update Collectibles (e.g., Chests' animations, server handles collection logic)
         game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec)
         server_current_chest = game_elements_ref.get("current_chest")
-        if server_current_chest and server_current_chest.alive(): # Check if Chest class is available via C.Chest or items.Chest
+        if server_current_chest and server_current_chest.alive(): 
             player_who_collected_chest = None
             if p1 and p1._valid_init and not p1.is_dead and p1.alive() and pygame.sprite.collide_rect(p1, server_current_chest):
                 player_who_collected_chest = p1
@@ -5909,35 +6025,32 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 player_who_collected_chest = p2
             
             if player_who_collected_chest:
-                server_current_chest.collect(player_who_collected_chest) # collect() should call self.kill()
-                game_elements_ref["current_chest"] = None # Mark as collected on server
+                server_current_chest.collect(player_who_collected_chest) 
+                game_elements_ref["current_chest"] = None 
         
-        # Update Camera (Server typically focuses on P1 or an overview)
         server_camera = game_elements_ref.get("camera")
         if server_camera:
-            # Prioritize P1, then P2 if P1 is dead/invalid for camera focus
             camera_focus_target = None
             if p1 and p1.alive() and p1._valid_init and not p1.is_dead: camera_focus_target = p1
             elif p2 and p2.alive() and p2._valid_init and not p2.is_dead: camera_focus_target = p2
             
             if camera_focus_target: server_camera.update(camera_focus_target)
-            else: server_camera.static_update() # No valid target, camera stays
+            else: server_camera.static_update() 
 
-        # Send current game state to the client
-        if server_state_obj.client_connection: # Check if client is still connected
+        if server_state_obj.client_connection: 
             network_state_to_send = get_network_game_state(game_elements_ref)
+            # print(f"DEBUG Server: State to send: P1 pos {network_state_to_send.get('p1', {}).get('pos')}, P2 pos {network_state_to_send.get('p2', {}).get('pos')}") # DEBUG
             encoded_game_state = encode_data(network_state_to_send)
             if encoded_game_state:
                 try:
                     server_state_obj.client_connection.sendall(encoded_game_state)
                 except socket.error as e:
-                    print(f"Server: Send failed to client: {e}. Client likely disconnected.")
-                    server_game_active = False # Stop game loop
-                    with client_lock: server_state_obj.client_connection = None # Mark as no active connection
-                    break # Exit game loop
-            # else: print("Server Error: Failed to encode game state for sending.")
+                    print(f"DEBUG Server: Send failed to client: {e}. Client likely disconnected.") # DEBUG
+                    server_game_active = False 
+                    with client_lock: server_state_obj.client_connection = None 
+                    break 
+            # else: print("DEBUG Server Error: Failed to encode game state for sending.") # DEBUG
         
-        # Draw the server's view of the game scene
         try:
             draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_server)
         except Exception as e:
@@ -5945,34 +6058,28 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             server_game_active = False; break
         pygame.display.flip()
 
-    # --- End of Server Game Loop ---
-    print("Server: Exiting active game loop.")
-    # server_state_obj.app_running remains True if returning to menu, False if quitting app.
-    # If only this game mode ends, threads might need specific signals if they aren't daemon or
-    # if their loops don't naturally end with server_game_active.
-    # Current broadcast thread checks app_running. Client handler also checks app_running.
-
-    # Cleanup client connection if it was still marked active when loop exited
+    print("DEBUG Server: Exiting active game loop.") # DEBUG
+    
     connection_to_close_at_server_exit = None
     with client_lock:
         if server_state_obj.client_connection:
             connection_to_close_at_server_exit = server_state_obj.client_connection
-            server_state_obj.client_connection = None # Nullify global reference
+            server_state_obj.client_connection = None 
     if connection_to_close_at_server_exit:
-        print("Server: Mode exit cleanup - closing client connection.")
+        print("DEBUG Server: Mode exit cleanup - closing client connection.") # DEBUG
         try:
             connection_to_close_at_server_exit.shutdown(socket.SHUT_RDWR)
             connection_to_close_at_server_exit.close()
-        except: pass # Ignore errors during this cleanup
+        except: pass 
 
-    # TCP listening socket is closed when the server_state_obj is destroyed or when main.py decides.
-    # If run_server_mode can be re-entered, the socket should be closed here to allow rebinding.
     if server_state_obj.server_tcp_socket:
-        print("Server: Closing main TCP listening socket.")
+        print("DEBUG Server: Closing main TCP listening socket.") # DEBUG
         server_state_obj.server_tcp_socket.close()
         server_state_obj.server_tcp_socket = None
     
-    print("Server mode finished and returned to caller.")
+    print("DEBUG Server: Server mode finished and returned to caller.") # DEBUG
+
+########## END OF FILE: server_logic.py ##########
 
 ########## START OF FILE: tiles.py ##########
 
