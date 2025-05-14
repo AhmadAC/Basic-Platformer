@@ -4,6 +4,7 @@
 Defines the Player class, handling movement, animations, states, and interactions.
 """
 # version 1.00000.8 (fixed length_sq typo)
+
 import pygame
 import os
 import sys
