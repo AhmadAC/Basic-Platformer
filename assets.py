@@ -1,242 +1,258 @@
+# assets.py
 # -*- coding: utf-8 -*-
+## version 1.0.0.3 (Changed constants import style for diagnostics)
 """
-Handles loading game assets, primarily animations.
-Uses a helper function `resource_path` to work correctly
-both locally and when packaged by PyInstaller (--onedir).
+Handles loading game assets, primarily animations from GIF files.
+Includes a helper function `resource_path` to ensure correct asset pathing
+both during local development and when the game is packaged by PyInstaller (especially --onedir).
 """
-# version 1.00000.1
 import pygame
 import os
 import sys
-from PIL import Image
-import numpy as np # Pillow might use this
+from PIL import Image # Pillow library for GIF processing
+from typing import Dict, List, Optional # For type hinting
 
-# Import constants (specifically colors for placeholders)
+# --- Import Constants (specifically colors for placeholder images) ---
+# Attempting a different import style for diagnostics
 try:
-    from constants import RED, BLACK, BLUE
+    import constants # Import the whole module
+    RED = constants.RED
+    BLACK = constants.BLACK
+    BLUE = constants.BLUE
+    YELLOW = constants.YELLOW
 except ImportError:
-    # Provide fallback colors if constants cannot be imported (e.g., during spec generation)
-    print("Warning: Failed to import constants. Using fallback colors.")
+    print("Assets Warning: Failed to import 'constants' (using 'import constants'). Using fallback colors.")
     RED = (255, 0, 0)
     BLACK = (0, 0, 0)
     BLUE = (0, 0, 255)
+    YELLOW = (255, 255, 0)
+except AttributeError as e:
+    # This block will catch if 'constants' was imported but one of the specific color names is missing.
+    print(f"Assets Warning: Imported 'constants' but an attribute is missing: {e}. Using fallback colors.")
+    RED = (255, 0, 0)
+    BLACK = (0, 0, 0)
+    BLUE = (0, 0, 255)
+    YELLOW = (255, 255, 0)
+except Exception as e_general_import: # Catch any other unexpected error during constants import
+    print(f"Assets CRITICAL: Unexpected error importing 'constants': {e_general_import}. Using fallback colors.")
+    RED = (255, 0, 0)
+    BLACK = (0, 0, 0)
+    BLUE = (0, 0, 255)
+    YELLOW = (255, 255, 0)
+
 
 # --- Helper Function for PyInstaller Compatibility ---
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        # For --onedir, _MEIPASS usually points to the executable's directory
-        base_path = sys._MEIPASS
-        # print(f"Running from PyInstaller bundle: _MEIPASS={base_path}") # Debug print
-    except AttributeError:
-        # _MEIPASS attribute not found, running in normal Python environment
-        # Assume assets are relative to the main script or project root.
-        # Using os.path.abspath(".") assumes you run your script from the project root.
-        # If assets.py is not in the root, adjust accordingly, e.g.:
-        # base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) # If assets.py is in a 'src' subdir
-        base_path = os.path.abspath(".")
-        # print(f"Running locally: base_path={base_path}") # Debug print
+def resource_path(relative_path: str) -> str:
+    """ 
+    Get the absolute path to a resource, works for development and for PyInstaller.
+    When running as a PyInstaller bundle (especially --onedir or --onefile),
+    assets are often bundled relative to sys._MEIPASS.
 
-    full_path = os.path.join(base_path, relative_path)
-    # print(f"Resolved path for '{relative_path}': {full_path}") # Debug print
-    return full_path
+    Args:
+        relative_path (str): The path to the resource relative to the project root
+                             (or where assets are expected to be found).
+
+    Returns:
+        str: The absolute path to the resource.
+    """
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    full_asset_path = os.path.join(base_path, relative_path)
+    return full_asset_path
 # ----------------------------------------------------
 
-# Asset Loading (Modified to use resource_path implicitly via load_all_player_animations)
-def load_gif_frames(full_path_filename):
-    """Loads frames from a GIF file using Pillow and converts them to Pygame Surfaces.
-       Expects the *full, resolved path* to the file."""
-    frames = []
+
+# --- GIF Loading Function ---
+def load_gif_frames(full_path_to_gif_file: str) -> List[pygame.Surface]:
+    """
+    Loads all frames from a GIF file using the Pillow library and converts them
+    into a list of Pygame Surface objects. Handles transparency.
+    """
+    loaded_frames: List[pygame.Surface] = []
     try:
-        # Use Pillow to open the GIF using the provided full path
-        pil_gif = Image.open(full_path_filename)
-        frame_num = 0
-        while True:
+        pil_gif_image = Image.open(full_path_to_gif_file)
+        frame_index = 0
+        while True: 
             try:
-                # Seek to the next frame
-                pil_gif.seek(frame_num)
-                current_pil_frame = pil_gif.copy()
-                rgba_frame = current_pil_frame.convert('RGBA') # Ensure RGBA for transparency
-                frame_data = rgba_frame.tobytes()
-                frame_size = rgba_frame.size
-                frame_mode = rgba_frame.mode # Should be RGBA now
-
-                # Create Pygame surface from RGBA data
-                surface = pygame.image.frombuffer(frame_data, frame_size, "RGBA")
-                surface = surface.convert_alpha() # Ensure optimal format for Pygame
-
-                frames.append(surface)
-                frame_num += 1
-
+                pil_gif_image.seek(frame_index) 
+                current_pil_frame = pil_gif_image.copy()
+                rgba_pil_frame = current_pil_frame.convert('RGBA') 
+                frame_pixel_data = rgba_pil_frame.tobytes() 
+                frame_dimensions = rgba_pil_frame.size     
+                pygame_surface_frame = pygame.image.frombuffer(frame_pixel_data, frame_dimensions, "RGBA")
+                pygame_surface_frame = pygame_surface_frame.convert_alpha() 
+                loaded_frames.append(pygame_surface_frame)
+                frame_index += 1
             except EOFError:
-                # Reached the end of the GIF frames
-                break
-            except Exception as e:
-                print(f"Error processing frame {frame_num} in {full_path_filename}: {e}")
-                frame_num += 1 # Try next frame even if one fails
+                break # End of frames
+            except Exception as e_frame: 
+                print(f"Assets Error: Processing frame {frame_index} in '{full_path_to_gif_file}': {e_frame}")
+                frame_index += 1 # Try next frame
 
-        if not frames:
-             print(f"Error: No frames loaded from {full_path_filename}. Creating placeholder.")
-             placeholder = pygame.Surface((30, 40)).convert_alpha()
-             placeholder.fill(RED)
-             pygame.draw.rect(placeholder, BLACK, placeholder.get_rect(), 1)
-             return [placeholder]
-        return frames
+        if not loaded_frames: 
+             print(f"Assets Error: No frames loaded from '{full_path_to_gif_file}'. Creating a RED placeholder.")
+             placeholder_surface = pygame.Surface((30, 40)).convert_alpha()
+             placeholder_surface.fill(RED) # Use RED from constants or fallback
+             pygame.draw.rect(placeholder_surface, BLACK, placeholder_surface.get_rect(), 1) # Use BLACK
+             return [placeholder_surface] 
+        
+        return loaded_frames
 
     except FileNotFoundError:
-        print(f"Error: GIF file not found at resolved path: {full_path_filename}")
-        placeholder = pygame.Surface((30, 40)).convert_alpha()
-        placeholder.fill(RED)
-        pygame.draw.rect(placeholder, BLACK, placeholder.get_rect(), 1)
-        return [placeholder]
-    except Exception as e:
-        print(f"Error loading GIF {full_path_filename} with Pillow: {e}")
-        placeholder = pygame.Surface((30, 40)).convert_alpha()
-        placeholder.fill(RED)
-        pygame.draw.rect(placeholder, BLACK, placeholder.get_rect(), 2)
-        return [placeholder]
+        print(f"Assets Error: GIF file not found at resolved path: '{full_path_to_gif_file}'")
+    except Exception as e_load: 
+        print(f"Assets Error: Loading GIF '{full_path_to_gif_file}' with Pillow: {e_load}")
+    
+    # Fallback placeholder if any error occurs during loading
+    placeholder_surface_on_error = pygame.Surface((30, 40)).convert_alpha()
+    placeholder_surface_on_error.fill(RED) # Use RED
+    pygame.draw.rect(placeholder_surface_on_error, BLACK, placeholder_surface_on_error.get_rect(), 2) # Use BLACK
+    return [placeholder_surface_on_error]
 
-# --- Modified function to use resource_path ---
-def load_all_player_animations(relative_asset_folder='characters/player1'):
-    """Loads all animations for the player/enemy using the defined map.
-       Uses resource_path to find the assets correctly."""
-    animations = {}
-    # Define the animation mapping (can be reused by Enemy if needed)
-    anim_files_map = {
+
+# --- Player/Enemy Animation Loading Function ---
+def load_all_player_animations(relative_asset_folder: str = 'characters/player1') -> Optional[Dict[str, List[pygame.Surface]]]:
+    """
+    Loads all defined animations for a character.
+    """
+    animations_dict: Dict[str, List[pygame.Surface]] = {}
+    animation_filenames_map = {
         'attack': '__Attack.gif', 'attack2': '__Attack2.gif', 'attack_combo': '__AttackCombo2hit.gif',
         'attack_nm': '__AttackNoMovement.gif', 'attack2_nm': '__Attack2NoMovement.gif',
-        'attack_combo_nm': '__AttackComboNoMovement.gif', 'crouch': '__Crouch.gif',
-        'crouch_trans': '__CrouchTransition.gif', 'crouch_walk': '__CrouchWalk.gif',
-        'crouch_attack': '__CrouchAttack.gif', 'dash': '__Dash.gif', 'death': '__Death.gif',
-        'death_nm': '__DeathNoMovement.gif', 'fall': '__Fall.gif', 'hit': '__Hit.gif',
-        'idle': '__Idle.gif', 'jump': '__Jump.gif', 'jump_fall_trans': '__JumpFallInbetween.gif',
-        'roll': '__Roll.gif', 'run': '__Run.gif', 'slide': '__SlideAll.gif',
-        'slide_trans_start': '__SlideTransitionStart.gif', 'slide_trans_end': '__SlideTransitionEnd.gif',
-        'turn': '__TurnAround.gif', 'wall_climb': '__WallClimb.gif',
-        'wall_climb_nm': '__WallClimbNoMovement.gif', 'wall_hang': '__WallHang.gif',
-        'wall_slide': '__WallSlide.gif',
-        # Add 'ladder_idle' and 'ladder_climb' if you have those GIFs (currently not used)
+        'attack_combo_nm': '__AttackComboNoMovement.gif', 
+        'crouch': '__Crouch.gif', 'crouch_trans': '__CrouchTransition.gif', 
+        'crouch_walk': '__CrouchWalk.gif', 'crouch_attack': '__CrouchAttack.gif', 
+        'dash': '__Dash.gif', 
+        'death': '__Death.gif', 'death_nm': '__DeathNoMovement.gif', 
+        'fall': '__Fall.gif', 'hit': '__Hit.gif', 'idle': '__Idle.gif', 
+        'jump': '__Jump.gif', 'jump_fall_trans': '__JumpFallInbetween.gif',
+        'roll': '__Roll.gif', 'run': '__Run.gif', 
+        'slide': '__SlideAll.gif', 'slide_trans_start': '__SlideTransitionStart.gif', 
+        'slide_trans_end': '__SlideTransitionEnd.gif',
+        'turn': '__TurnAround.gif', 
+        'wall_climb': '__WallClimb.gif', 'wall_climb_nm': '__WallClimbNoMovement.gif', 
+        'wall_hang': '__WallHang.gif', 'wall_slide': '__WallSlide.gif',
     }
 
-    print(f"Attempting to load animations from relative folder: '{relative_asset_folder}'")
-    missing_files_details = [] # Store tuples of (name, expected_relative_path, resolved_path)
+    print(f"Assets Info: Attempting to load animations from relative folder: '{relative_asset_folder}'")
+    missing_files_log: List[tuple[str, str, str]] = [] 
 
-    # Determine the base path once
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".") # Or adjust as needed for your local structure
+    for anim_state_name, gif_filename in animation_filenames_map.items():
+         relative_path_to_gif = os.path.join(relative_asset_folder, gif_filename)
+         absolute_gif_path = resource_path(relative_path_to_gif)
 
-    print(f"Using base path for assets: {base_path}")
+         if not os.path.exists(absolute_gif_path):
+             missing_files_log.append(
+                 (anim_state_name, relative_path_to_gif, absolute_gif_path)
+             )
+             animations_dict[anim_state_name] = [] # Mark as missing for later placeholder generation
+             continue
 
-    for name, filename in anim_files_map.items():
-         # Construct the relative path first (for reporting)
-         relative_path_to_file = os.path.join(relative_asset_folder, filename)
-         # Use resource_path to get the full, absolute path
-         full_path = resource_path(relative_path_to_file)
+         loaded_animation_frames = load_gif_frames(absolute_gif_path)
+         animations_dict[anim_state_name] = loaded_animation_frames
 
-         # Check existence using the *full* path
-         if not os.path.exists(full_path):
-             missing_files_details.append((name, relative_path_to_file, full_path))
-             animations[name] = [] # Mark as missing
-             continue # Skip loading if file doesn't exist
+         # Check if load_gif_frames returned its RED placeholder due to an internal error
+         if not animations_dict[anim_state_name] or \
+            (len(animations_dict[anim_state_name]) == 1 and \
+             animations_dict[anim_state_name][0].get_size() == (30,40) and \
+             animations_dict[anim_state_name][0].get_at((0,0)) == RED): # RED from constants/fallback
+             print(f"Assets Warning: Failed to load frames for state '{anim_state_name}' from existing file '{absolute_gif_path}'. RED Placeholder used.")
 
-         # Load using the full path
-         loaded_frames = load_gif_frames(full_path)
-         animations[name] = loaded_frames
-
-         if not animations[name]: # load_gif_frames returns placeholder on failure
-             print(f"Warning: Failed to load frames for state '{name}' from existing file '{full_path}'. Placeholder used.")
-             # Placeholder already created by load_gif_frames if loading failed after finding file
-         #else:
-             # print(f"Successfully loaded {len(animations[name])} frames for '{name}' from '{full_path}'") # Verbose success
-
-    if missing_files_details:
-        print("\n--- Missing Animation Files ---")
-        for name, rel_path, res_path in missing_files_details:
+    if missing_files_log:
+        print("\n--- Assets: Missing Animation Files Detected ---")
+        try: base_path_for_log = sys._MEIPASS
+        except AttributeError: base_path_for_log = os.path.abspath(".")
+        
+        for name, rel_path, res_path in missing_files_log:
             print(f"- State '{name}': Expected relative path: '{rel_path}', Resolved path checked: '{res_path}'")
-        print(f"(Base path used: {base_path})")
-        print("-----------------------------\n")
-        print("Ensure these files exist relative to your script/executable OR")
-        print("Ensure PyInstaller's '--add-data' or spec file 'datas' includes the asset folder correctly.")
+        print(f"(Asset loading base path used by resource_path: '{base_path_for_log}')")
+        print("--------------------------------------------\n")
 
-    # Critical check for idle animation (using the placeholder if it failed)
-    if 'idle' not in animations or not animations['idle'] or animations['idle'][0].get_size() == (30, 40): # Check if it's a placeholder
-        is_missing = 'idle' not in animations or not animations['idle']
-        is_placeholder = not is_missing and animations['idle'][0].get_size() == (30, 40) # Basic placeholder check
+    # Check for critical 'idle' animation
+    idle_anim_is_missing_or_placeholder = (
+        'idle' not in animations_dict or 
+        not animations_dict['idle'] or 
+        (len(animations_dict['idle']) == 1 and 
+         animations_dict['idle'][0].get_size() == (30,40) and 
+         animations_dict['idle'][0].get_at((0,0)) == RED) # RED from constants/fallback
+    )
 
-        if is_missing:
-            print("CRITICAL ERROR: Idle animation state not found in map or file missing entirely.")
-        elif is_placeholder:
-             print(f"CRITICAL ERROR: Idle animation failed to load from '{resource_path(os.path.join(relative_asset_folder, anim_files_map['idle']))}'. Using placeholder.")
+    if idle_anim_is_missing_or_placeholder:
+        idle_file_rel_path = os.path.join(relative_asset_folder, animation_filenames_map.get('idle', '__Idle.gif'))
+        idle_file_abs_path_checked = resource_path(idle_file_rel_path)
+        if 'idle' not in animations_dict or not animations_dict['idle']: 
+            print(f"CRITICAL Assets Error: 'idle' animation file ('{idle_file_rel_path}') not found or empty. Checked: '{idle_file_abs_path_checked}'.")
+        else: # It's the RED placeholder
+            print(f"CRITICAL Assets Error: 'idle' animation failed to load correctly (is RED placeholder) from '{idle_file_abs_path_checked}'.")
+        print("Assets: Returning None due to critical 'idle' animation failure.")
+        return None
 
-        # Create a minimal dummy animation to prevent crashes during init elsewhere ONLY if it's truly absent
-        if is_missing:
-            placeholder = pygame.Surface((30, 40)).convert_alpha(); placeholder.fill(RED)
-            animations['idle'] = [placeholder] # Ensure 'idle' key exists
-        # The calling function should still check for this failure state
-        # Returning None might be too drastic if only idle failed but others loaded
-        # Let's return the animations dict but signal the caller to check idle specifically.
-        # Or, make it return None to force a halt. Let's return None for safety.
-        print("Returning None due to critical idle animation failure.")
-        return None # Indicate critical failure
+    # Provide blue placeholders for other missing/failed non-critical animations
+    for anim_name_check in animation_filenames_map:
+        if anim_name_check == 'idle': continue # Already handled
 
-    # Provide placeholders for any *other* missing/failed animations AFTER checking idle
-    for name in anim_files_map:
-        if name == 'idle': continue # Already handled
+        animation_is_missing_or_placeholder = (
+            anim_name_check not in animations_dict or 
+            not animations_dict[anim_name_check] or 
+            (len(animations_dict[anim_name_check]) == 1 and 
+             animations_dict[anim_name_check][0].get_size() == (30,40) and 
+             animations_dict[anim_name_check][0].get_at((0,0)) == RED) # RED from constants/fallback
+        )
 
-        if name not in animations or not animations[name] or animations[name][0].get_size() == (30, 40):
-            if name not in animations or not animations[name]:
-                 print(f"Warning: Animation state '{name}' was missing. Providing placeholder.")
-            else: # It exists but must be a placeholder from load_gif_frames
-                 print(f"Warning: Animation state '{name}' failed during loading. Using placeholder.")
+        if animation_is_missing_or_placeholder:
+            if anim_name_check not in animations_dict or not animations_dict[anim_name_check]:
+                 # This case means the file was missing (missing_files_log handled the print)
+                 # and animations_dict[anim_name_check] was set to []
+                 print(f"Assets Warning: Animation state '{anim_name_check}' (file missing). Providing a BLUE placeholder.")
+            else: # This case means file existed but load_gif_frames returned the RED placeholder
+                 print(f"Assets Warning: Animation state '{anim_name_check}' (load failed, is RED placeholder). Using a BLUE placeholder.")
 
-            # Create a different placeholder for non-idle missing animations
-            placeholder = pygame.Surface((30, 40)).convert_alpha(); placeholder.fill(BLUE)
-            pygame.draw.line(placeholder, RED, (0,0), (30,40), 2); pygame.draw.line(placeholder, RED, (0,40), (30,0), 2)
-            animations[name] = [placeholder] # Ensure the key exists with the placeholder
+            blue_placeholder = pygame.Surface((30, 40)).convert_alpha()
+            blue_placeholder.fill(BLUE) # BLUE from constants/fallback
+            pygame.draw.line(blue_placeholder, RED, (0,0), (30,40), 2) # RED for cross
+            pygame.draw.line(blue_placeholder, RED, (0,40), (30,0), 2)
+            animations_dict[anim_name_check] = [blue_placeholder]
 
-    print(f"Finished loading animations. {len(animations)} animation states processed.")
-    return animations
+    print(f"Assets Info: Finished loading animations. {len(animations_dict)} animation states processed for '{relative_asset_folder}'.")
+    return animations_dict
 # ------------------------------------------
 
-# Example Usage (if you run this file directly for testing)
+
+# --- Example Usage (if assets.py is run directly for testing) ---
 if __name__ == "__main__":
-    print("Running asset loader directly for testing...")
-    pygame.init() # Pygame needed for surface creation
+    print("Running assets.py directly for testing...")
+    # Pygame init is needed for Surface creation, even for tests not drawing to screen
+    pygame.init() 
+    # Note: If constants.py is in the same dir, 'import constants' should work here.
+    # If it fails here too, the problem is more fundamental with constants.py visibility.
 
-    # --- Determine where the script thinks the 'characters' folder should be ---
-    # This assumes your project structure is like:
-    # project_root/
-    #   assets.py
-    #   constants.py
-    #   main.py (or similar)
-    #   characters/
-    #     player1/
-    #       __Idle.gif
-    #       ...
-    # If assets.py is in a subdirectory, adjust the relative path passed.
-    test_asset_folder = 'characters/player1'
-    print(f"\nTesting load_all_player_animations with relative folder: '{test_asset_folder}'")
-    loaded_animations = load_all_player_animations(test_asset_folder)
+    print("\n--- Testing resource_path ---")
+    test_relative_path = 'characters/player1/__Idle.gif' 
+    resolved_test_path = resource_path(test_relative_path)
+    print(f"Resolved path for '{test_relative_path}': {resolved_test_path}")
+    print(f"Does it exist? {os.path.exists(resolved_test_path)}")
 
-    if loaded_animations:
-        print(f"\nSuccessfully loaded animation data.")
-        # print("Loaded states:", list(loaded_animations.keys()))
-        # Example: Check frames for 'idle'
-        if 'idle' in loaded_animations and loaded_animations['idle']:
-            print(f"Idle animation loaded with {len(loaded_animations['idle'])} frames.")
-            # Check if it's a placeholder
-            if loaded_animations['idle'][0].get_width() == 30 and loaded_animations['idle'][0].get_height() == 40:
-                 if loaded_animations['idle'][0].get_at((0,0)) == RED:
-                     print("WARNING: Idle animation appears to be a RED placeholder!")
-                 elif loaded_animations['idle'][0].get_at((0,0)) == BLUE:
-                     print("WARNING: Idle animation appears to be a BLUE placeholder!")
+    test_character_asset_folder = 'characters/player1' 
+    print(f"\n--- Testing load_all_player_animations with relative folder: '{test_character_asset_folder}' ---")
+    
+    loaded_player_animations = load_all_player_animations(relative_asset_folder=test_character_asset_folder)
 
+    if loaded_player_animations:
+        print(f"\nAssets Test: Successfully loaded animation data dictionary.")
+        if 'idle' in loaded_player_animations and loaded_player_animations['idle']:
+            print(f"Idle animation loaded with {len(loaded_player_animations['idle'])} frames.")
+            first_idle_frame = loaded_player_animations['idle'][0]
+            if first_idle_frame.get_size() == (30, 40): # Standard placeholder size
+                 # Check color using the RED defined at the top of this file (either from constants or fallback)
+                 if first_idle_frame.get_at((0,0)) == RED: 
+                     print("Assets Test WARNING: 'idle' animation appears to be the RED (load failure) placeholder!")
+                 elif first_idle_frame.get_at((0,0)) == BLUE: # BLUE defined at top
+                     print("Assets Test WARNING: 'idle' animation appears to be a BLUE (non-critical missing) placeholder! (This shouldn't happen for idle due to critical check)")
         else:
-            print("Idle animation missing or empty in returned dictionary.")
+            print("Assets Test ERROR: 'idle' animation missing or empty in the returned dictionary (after critical check).")
     else:
-        print("\nAnimation loading failed (returned None), likely due to critical idle animation issue.")
+        print("\nAssets Test: Animation loading failed (load_all_player_animations returned None). Likely due to critical 'idle' animation issue.")
 
     pygame.quit()
