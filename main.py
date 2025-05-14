@@ -1052,7 +1052,6 @@ def show_main_menu():
     buttons_data = { 
         "host": {"text": "Host Game (Online)", "action": "host"}, 
         "join_lan": {"text": "Join Game (LAN)", "action": "join_lan"},
-        "join_internet": {"text": "Join Game (Internet)", "action": "join_internet"}, 
         "couch_play": {"text": "Couch Play (Local)", "action": "couch_play"},
         "quit": {"text": "Quit Game", "action": "quit"}}
     _title_rect_cache = None 
@@ -1110,9 +1109,6 @@ if __name__ == "__main__":
         
         if menu_choice == "host": run_server_mode()
         elif menu_choice == "join_lan": run_client_mode() 
-        elif menu_choice == "join_internet": 
-            target_ip = get_server_id_input(screen, font_medium, font_medium, font_small, clock)
-            if target_ip and app_running: run_client_mode(target_ip_port=target_ip)
         elif menu_choice == "couch_play": run_couch_play_mode()
         
     print("Exiting application gracefully.")
