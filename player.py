@@ -1,3 +1,5 @@
+########## START OF FILE: player.py ##########
+
 # player.py
 # -*- coding: utf-8 -*-
 """
@@ -37,6 +39,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.player_id = player_id
         self._valid_init = True # Flag to indicate if initialization was successful
+        print(f"DEBUG Player (init P{self.player_id}): Initializing at ({start_x}, {start_y})") # DEBUG
 
         # --- Determine Asset Folder based on Player ID ---
         if self.player_id == 1: asset_folder_path = 'characters/player1'
@@ -46,6 +49,7 @@ class Player(pygame.sprite.Sprite):
             if Player.print_limiter.can_print(f"player_init_unrecognized_id_{self.player_id}"):
                 print(f"Player Info ({self.player_id}): Unrecognized ID. Defaulting to player1 assets from '{asset_folder_path}'.")
         
+        print(f"DEBUG Player (init P{self.player_id}): Asset folder path: '{asset_folder_path}'") # DEBUG
         # --- Load Animations ---
         self.animations = load_all_player_animations(relative_asset_folder=asset_folder_path)
         if self.animations is None: # Critical failure if essential animations (like idle) are missing
@@ -55,7 +59,13 @@ class Player(pygame.sprite.Sprite):
             self.image.fill(C.RED) # Red indicates error
             self.rect = self.image.get_rect(midbottom=(start_x, start_y))
             self.is_dead = True; self._valid_init = False # Mark as invalid and stop further initialization
+            print(f"DEBUG Player (init P{self.player_id}): Animation load FAILED. _valid_init set to False.") # DEBUG
             return
+
+        print(f"DEBUG Player (init P{self.player_id}): Animations loaded. Number of animation states: {len(self.animations)}") # DEBUG
+        if 'idle' not in self.animations or not self.animations['idle']: # DEBUG
+            print(f"DEBUG Player (init P{self.player_id}): CRITICAL - 'idle' animation missing after load_all_player_animations returned non-None.") # DEBUG
+
 
         # --- Initialize Core Attributes ---
         # Standard height (from idle animation, used for some calculations)
@@ -76,12 +86,14 @@ class Player(pygame.sprite.Sprite):
         idle_animation_frames = self.animations.get('idle')
         if idle_animation_frames and len(idle_animation_frames) > 0:
             self.image = idle_animation_frames[0]
+            print(f"DEBUG Player (init P{self.player_id}): Initial image set from 'idle' animation, frame 0. Image size: {self.image.get_size()}") # DEBUG
         else: # Fallback if idle animation is missing (should be caught by load_all_player_animations)
             self.image = pygame.Surface((30,40)); self.image.fill(C.RED) # Error placeholder
             print(f"CRITICAL Player Init Error ({self.player_id}): 'idle' animation missing or empty after loader. Player invalid.")
             self._valid_init = False; return
 
         self.rect = self.image.get_rect(midbottom=(start_x, start_y)) # Player's collision rectangle
+        print(f"DEBUG Player (init P{self.player_id}): Initial rect: {self.rect}") # DEBUG
         
         # Physics and Movement Attributes
         self.pos = pygame.math.Vector2(start_x, start_y) # Precise position (floating point)
@@ -137,6 +149,7 @@ class Player(pygame.sprite.Sprite):
         self.fireball_key = None 
         if self.player_id == 1: self.fireball_key = getattr(C, 'P1_FIREBALL_KEY', pygame.K_1)
         elif self.player_id == 2: self.fireball_key = getattr(C, 'P2_FIREBALL_KEY', pygame.K_0)
+        print(f"DEBUG Player (init P{self.player_id}): Init completed. _valid_init: {self._valid_init}") # DEBUG
 
 
     def set_projectile_group_references(self, projectile_group: pygame.sprite.Group, 
@@ -186,8 +199,7 @@ class Player(pygame.sprite.Sprite):
                                not (self.is_dead and self.death_animation_finished and new_state != 'death')
 
         if can_change_state_now:
-            # if Player.print_limiter.can_print(f"player_set_state_transition_log_{self.player_id}", limit=50, period=2.0):
-            #     print(f"DEBUG Player ({self.player_id}): Set State: '{self.state}' -> '{new_state}' (Requested: '{original_new_state_request}')")
+            # print(f"DEBUG Player ({self.player_id}): Set State: '{self.state}' -> '{new_state}' (Req: '{original_new_state_request}'). Pos: {self.pos.x:.1f},{self.pos.y:.1f}, Vel: {self.vel.x:.1f},{self.vel.y:.1f}") # DEBUG
             self._last_state_for_debug = new_state # Update debug tracker
             
             # --- Reset flags for states the player is exiting ---
@@ -267,8 +279,11 @@ class Player(pygame.sprite.Sprite):
         Handles animation looping, transitions at the end of non-looping animations,
         and image flipping.
         """
-        if not self._valid_init or not hasattr(self, 'animations') or not self.animations: return
+        if not self._valid_init or not hasattr(self, 'animations') or not self.animations:
+            # print(f"DEBUG Player (animate P{self.player_id}): Animation skipped. Valid: {self._valid_init}, HasAnims: {hasattr(self, 'animations')}, AnimsOK: {bool(self.animations if hasattr(self, 'animations') else False)}") # DEBUG
+            return
         if not self.alive(): # Don't animate if sprite is not in any groups (e.g., after self.kill())
+            # print(f"DEBUG Player (animate P{self.player_id}): Animation skipped, player not alive (not in groups).") # DEBUG
             return 
 
         current_time_ms = pygame.time.get_ticks()
@@ -333,6 +348,7 @@ class Player(pygame.sprite.Sprite):
         
         # Final fallback if the derived animation_key_to_use is invalid or missing
         if animation_key_to_use not in self.animations or not self.animations[animation_key_to_use]: 
+            # print(f"DEBUG Player (animate P{self.player_id}): Anim key '{animation_key_to_use}' for state '{self.state}' not found or empty. Falling back to 'idle'.") # DEBUG
             animation_key_to_use = 'idle' # Default to 'idle' animation
         
         current_animation_frames_list = self.animations.get(animation_key_to_use)
@@ -342,6 +358,8 @@ class Player(pygame.sprite.Sprite):
             if Player.print_limiter.can_print(f"player_animate_no_frames_{self.player_id}_{animation_key_to_use}"):
                 print(f"CRITICAL Player Animate Error ({self.player_id}): No frames found for anim key '{animation_key_to_use}' (Logical state: {self.state})")
             return
+        
+        # print(f"DEBUG Player (animate P{self.player_id}): Using anim key '{animation_key_to_use}', state '{self.state}', {len(current_animation_frames_list)} frames. Current frame idx: {self.current_frame}") # DEBUG - Can be noisy
 
         # Determine frame duration (e.g., Attack 2 might be slower, having longer frame durations)
         ms_per_frame_for_current_anim = C.ANIM_FRAME_DURATION
@@ -430,6 +448,7 @@ class Player(pygame.sprite.Sprite):
         # --- Get the actual image surface for the current animation frame ---
         # Handle cases where animation frames might be empty (though asset loader should prevent this)
         if not current_animation_frames_list or self.current_frame < 0 or self.current_frame >= len(current_animation_frames_list):
+            # print(f"DEBUG Player (animate P{self.player_id}): Invalid frame index ({self.current_frame}) or empty frame list for anim '{animation_key_to_use}'. Resetting to 0.") # DEBUG
             self.current_frame = 0 # Reset frame index to prevent crash
             if not current_animation_frames_list: # Still no frames (major issue)
                 if hasattr(self, 'image') and self.image: self.image.fill(C.RED) # Error placeholder
@@ -447,6 +466,7 @@ class Player(pygame.sprite.Sprite):
             self.image = image_for_this_frame # Set the new image
             self.rect = self.image.get_rect(midbottom=old_player_midbottom_pos) # Re-anchor rect
             self._last_facing_right = self.facing_right # Update tracking of last facing direction
+            # print(f"DEBUG Player (animate P{self.player_id}): Image updated. New image size: {self.image.get_size()}, Rect: {self.rect}") # DEBUG
 
 
     # --- Input Handling Methods (delegate to player_input_handler) ---
@@ -520,6 +540,7 @@ class Player(pygame.sprite.Sprite):
             other_players_sprite_list (list): List of other Player sprites for character collision.
             enemies_sprite_list (list): List of Enemy sprites for character and attack collision.
         """
+        # print(f"DEBUG Player (update P{self.player_id}): Start of update. Pos: {self.pos.x:.1f},{self.pos.y:.1f}, Vel: {self.vel.x:.1f},{self.vel.y:.1f}, State: {self.state}, Valid: {self._valid_init}, Alive: {self.alive()}") # DEBUG - Very noisy
         if not self._valid_init: return # Do nothing if player initialization failed
         
         # --- Handle Death State Separately ---
@@ -683,6 +704,7 @@ class Player(pygame.sprite.Sprite):
         # --- Final Animation Update for the Frame ---
         # This ensures the player's visual representation matches their current state and facing direction.
         self.animate()
+        # print(f"DEBUG Player (update P{self.player_id}): End of update. Pos: {self.pos.x:.1f},{self.pos.y:.1f}, Rect: {self.rect}, Image: {self.image.get_size() if self.image else 'NoImg'}") # DEBUG - Very Noisy
 
 
     def check_platform_collisions(self, direction: str, platforms_group: pygame.sprite.Group):
@@ -880,12 +902,24 @@ class Player(pygame.sprite.Sprite):
         Args:
             spawn_position_tuple (tuple): (x, y) coordinates for the player's midbottom.
         """
+        print(f"DEBUG Player (reset_state P{self.player_id}): Resetting state to spawn at {spawn_position_tuple}. Current valid: {self._valid_init}") # DEBUG
         if not self._valid_init: 
-            # If player was never validly initialized (e.g., critical asset loading failure),
-            # a reset might not be meaningful or could cause further errors.
             # if Player.print_limiter.can_print(f"player_reset_fail_invalid_init_{self.player_id}"):
             #     print(f"Player Warning ({self.player_id}): Cannot reset, _valid_init is False.")
-            return
+            # Try to re-validate if possible, might be risky if assets truly failed
+            asset_folder_path = 'characters/player1' if self.player_id == 1 else 'characters/player2'
+            self.animations = load_all_player_animations(relative_asset_folder=asset_folder_path)
+            if self.animations is not None:
+                self._valid_init = True
+                idle_animation_frames = self.animations.get('idle')
+                if idle_animation_frames and len(idle_animation_frames) > 0:
+                    self.image = idle_animation_frames[0]
+                else:
+                    self.image = pygame.Surface((30,40)); self.image.fill(C.RED)
+                print(f"DEBUG Player (reset_state P{self.player_id}): Re-attempted animation load. New _valid_init: {self._valid_init}") # DEBUG
+            else:
+                print(f"DEBUG Player (reset_state P{self.player_id}): Re-animation load FAILED. Still invalid.") # DEBUG
+                return
         
         # print(f"Player Info ({self.player_id}): RESETTING state to spawn at {spawn_position_tuple}")
         # Reset position and physics
@@ -914,3 +948,6 @@ class Player(pygame.sprite.Sprite):
             self.image.set_alpha(255) # Make fully opaque
         
         self.set_state('idle') # Set to a neutral, stable initial state
+        print(f"DEBUG Player (reset_state P{self.player_id}): Reset complete. Pos: {self.pos}, HP: {self.current_health}") # DEBUG
+
+########## END OF FILE: player.py ##########

@@ -1,3 +1,5 @@
+########## START OF FILE: game_ui.py ##########
+
 # ui.py
 # -*- coding: utf-8 -*-
 ## version 1.0.0.3 (Added default_input_text to get_server_ip_input_dialog)
@@ -79,7 +81,15 @@ def draw_player_hud(surface: pygame.Surface, x: int, y: int,
                     hud_font_obj: Optional[pygame.font.Font]):
     if not player_instance or not hasattr(player_instance, 'current_health') or \
        not hasattr(player_instance, 'max_health'):
+        # print(f"DEBUG UI (draw_player_hud): P{player_number} instance invalid or no health attributes. Skipping HUD.") # DEBUG
         return
+
+    # DEBUG: Print player instance details for HUD
+    # if hasattr(player_instance, 'player_id'):
+    #     print(f"DEBUG UI (draw_player_hud): Drawing HUD for P{player_number} (ID: {player_instance.player_id}). Valid: {getattr(player_instance, '_valid_init', 'N/A')}, Alive: {player_instance.alive() if hasattr(player_instance, 'alive') else 'N/A'}, Pos: {getattr(player_instance, 'pos', 'N/A')}") # DEBUG
+    # else:
+    #     print(f"DEBUG UI (draw_player_hud): Drawing HUD for P{player_number}. Instance has no player_id.") # DEBUG
+
 
     player_label_text = f"P{player_number}"
     label_height_offset = 0 
@@ -94,6 +104,7 @@ def draw_player_hud(surface: pygame.Surface, x: int, y: int,
             print(f"UI Warning: Could not render HUD label for P{player_number}: {e}")
             label_height_offset = getattr(hud_font_obj, 'get_height', lambda: 20)() # Fallback height
     else: 
+        # print(f"DEBUG UI (draw_player_hud): No HUD font for P{player_number} label.") # DEBUG
         label_height_offset = 0 
 
     health_bar_pos_x = x
@@ -114,6 +125,8 @@ def draw_player_hud(surface: pygame.Surface, x: int, y: int,
             surface.blit(health_text_surface, (health_text_pos_x, health_text_pos_y))
         except Exception as e: 
             print(f"UI Warning: Could not render HUD health text for P{player_number}: {e}")
+    # else:
+        # print(f"DEBUG UI (draw_player_hud): No HUD font for P{player_number} health text.") # DEBUG
 
 
 # --- Main Game Scene Drawing Function ---
@@ -121,6 +134,7 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface,
                                      game_elements: Dict[str, Any], 
                                      fonts: Dict[str, Optional[pygame.font.Font]], 
                                      current_game_time_ticks: int): 
+    # print(f"DEBUG UI (draw_scene): Frame {current_game_time_ticks // (1000//C.FPS if C.FPS > 0 else 16)}") # DEBUG frame number
     camera_instance = game_elements.get("camera")
     all_sprites_group = game_elements.get("all_sprites") 
     enemy_list_for_health_bars = game_elements.get("enemy_list", [])
@@ -136,9 +150,26 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface,
     screen_surface.fill(bg_color) 
 
     if camera_instance and all_sprites_group:
+        # print(f"DEBUG UI (draw_scene): Camera Pos: {camera_instance.get_pos()}, Num All Sprites: {len(all_sprites_group)}") # DEBUG
+        drawn_p1 = False
+        drawn_p2 = False
         for entity_sprite in all_sprites_group: 
             if entity_sprite.alive() and hasattr(entity_sprite, 'image') and hasattr(entity_sprite, 'rect'):
-                 screen_surface.blit(entity_sprite.image, camera_instance.apply(entity_sprite.rect))
+                 applied_rect = camera_instance.apply(entity_sprite.rect)
+                 # DEBUG Player specific draw info
+                 if entity_sprite is player1_instance:
+                     # print(f"DEBUG UI (draw_scene): Drawing P1 (ID {getattr(entity_sprite, 'player_id', 'N/A')}). Alive: {entity_sprite.alive()}, Valid: {getattr(entity_sprite, '_valid_init', 'N/A')}. World Rect: {entity_sprite.rect}, Screen Rect: {applied_rect}, Image Size: {entity_sprite.image.get_size() if entity_sprite.image else 'No Image'}") # DEBUG
+                     drawn_p1 = True
+                 elif entity_sprite is player2_instance:
+                     # print(f"DEBUG UI (draw_scene): Drawing P2 (ID {getattr(entity_sprite, 'player_id', 'N/A')}). Alive: {entity_sprite.alive()}, Valid: {getattr(entity_sprite, '_valid_init', 'N/A')}. World Rect: {entity_sprite.rect}, Screen Rect: {applied_rect}, Image Size: {entity_sprite.image.get_size() if entity_sprite.image else 'No Image'}") # DEBUG
+                     drawn_p2 = True
+
+                 screen_surface.blit(entity_sprite.image, applied_rect)
+        # if player1_instance and not drawn_p1:
+            # print(f"DEBUG UI (draw_scene): P1 instance exists but was NOT drawn from all_sprites. Alive: {player1_instance.alive() if hasattr(player1_instance, 'alive') else 'N/A'}, Valid: {getattr(player1_instance, '_valid_init', 'N/A')}") # DEBUG
+        # if player2_instance and not drawn_p2:
+            # print(f"DEBUG UI (draw_scene): P2 instance exists but was NOT drawn from all_sprites. Alive: {player2_instance.alive() if hasattr(player2_instance, 'alive') else 'N/A'}, Valid: {getattr(player2_instance, '_valid_init', 'N/A')}") # DEBUG
+
         
         for enemy_sprite in enemy_list_for_health_bars:
             if enemy_sprite.alive() and getattr(enemy_sprite, '_valid_init', False) and not \
@@ -156,15 +187,27 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface,
                                 health_bar_width_enemy, health_bar_height_enemy, 
                                 enemy_sprite.current_health, enemy_sprite.max_health)
     elif all_sprites_group: 
+        # print(f"DEBUG UI (draw_scene): No camera, using all_sprites.draw(). Num All Sprites: {len(all_sprites_group)}") # DEBUG
         all_sprites_group.draw(screen_surface) # Fallback if no camera
 
     if player1_instance and getattr(player1_instance, '_valid_init', False) and player1_instance.alive():
+        # print(f"DEBUG UI (draw_scene): P1 is valid and alive for HUD. HP: {player1_instance.current_health}") # DEBUG
         draw_player_hud(screen_surface, 10, 10, player1_instance, 1, font_for_hud)
+    # elif player1_instance:
+        # print(f"DEBUG UI (draw_scene): P1 instance exists for HUD but is not valid or not alive. Valid: {getattr(player1_instance, '_valid_init', 'N/A')}, Alive: {player1_instance.alive() if hasattr(player1_instance, 'alive') else 'N/A'}") # DEBUG
+    # else:
+        # print(f"DEBUG UI (draw_scene): P1 instance is None for HUD.") # DEBUG
+
     
     if player2_instance and getattr(player2_instance, '_valid_init', False) and player2_instance.alive():
+        # print(f"DEBUG UI (draw_scene): P2 is valid and alive for HUD. HP: {player2_instance.current_health}") # DEBUG
         p2_hud_estimated_width = getattr(C, 'HUD_HEALTH_BAR_WIDTH', getattr(C, 'HEALTH_BAR_WIDTH',50)*2) + 120 
         p2_hud_pos_x = current_screen_width - p2_hud_estimated_width - 10 
         draw_player_hud(screen_surface, p2_hud_pos_x, 10, player2_instance, 2, font_for_hud)
+    # elif player2_instance:
+        # print(f"DEBUG UI (draw_scene): P2 instance exists for HUD but is not valid or not alive. Valid: {getattr(player2_instance, '_valid_init', 'N/A')}, Alive: {player2_instance.alive() if hasattr(player2_instance, 'alive') else 'N/A'}") # DEBUG
+    # else:
+        # print(f"DEBUG UI (draw_scene): P2 instance is None for HUD.") # DEBUG
 
 
 # --- Main Menu Function ---
@@ -422,3 +465,4 @@ def get_server_ip_input_dialog(screen_surface: pygame.Surface, clock_obj: pygame
     pygame.key.set_repeat(0,0) # Disable key repeat when dialog closes
     
     return current_input_text.strip() if current_input_text is not None else None
+########## END OF FILE: game_ui.py ##########
