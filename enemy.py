@@ -186,7 +186,7 @@ class Enemy(pygame.sprite.Sprite):
                 return
 
             elapsed_time = current_time_ms - self.stomp_death_start_time
-            stomp_death_total_duration = getattr(C, 'ENEMY_STOMP_DEATH_DURATION', 500)
+            stomp_death_total_duration = getattr(C, 'ENEMY_STOMP_DEATH_DURATION', 300)
             scale_factor = 0.0
 
             if elapsed_time >= stomp_death_total_duration:
