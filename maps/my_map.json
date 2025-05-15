@@ -1,0 +1,15 @@
+{
+    "map_name_for_function": "my_map",
+    "map_width_tiles": 30,
+    "map_height_tiles": 20,
+    "grid_size": 40,
+    "background_color": [
+        173,
+        216,
+        230
+    ],
+    "placed_objects": [],
+    "camera_offset_x": 0,
+    "camera_offset_y": 0,
+    "show_grid": true
+}
