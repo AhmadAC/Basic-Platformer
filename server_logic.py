@@ -1,9 +1,7 @@
-########## START OF FILE: server_logic.py ##########
-
 # server_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0000000.1
+version 1.0.0.2 (Changed reset key from R to Q)
 Handles server-side game logic, connection management, and broadcasting.
 """
 import pygame
@@ -82,23 +80,20 @@ def broadcast_presence_thread(server_state_obj: ServerState):
     while server_state_obj.app_running:
         try:
             server_state_obj.server_udp_socket.sendto(broadcast_message_bytes, broadcast_address)
-            # print(f"DEBUG Server (broadcast_presence_thread): Broadcast sent.") # DEBUG - can be very noisy
         except socket.error as sock_err:
-            print(f"DEBUG Server (broadcast_presence_thread): Socket error during broadcast send: {sock_err}") # DEBUG
+            # print(f"DEBUG Server (broadcast_presence_thread): Socket error during broadcast send: {sock_err}") # DEBUG - Can be noisy
             pass 
         except Exception as e:
             print(f"Server Warning: Unexpected error during broadcast send: {e}")
         
-        # Sleep for the broadcast interval, checking app_running periodically for a timely exit
-        for _ in range(int(server_state_obj.broadcast_interval_s * 10)): # e.g., check every 100ms
+        for _ in range(int(server_state_obj.broadcast_interval_s * 10)): 
             if not server_state_obj.app_running: break
             time.sleep(0.1)
             
-    # Cleanup UDP socket when the thread stops
     if server_state_obj.server_udp_socket:
         server_state_obj.server_udp_socket.close()
         server_state_obj.server_udp_socket = None
-    print("DEBUG Server (broadcast_presence_thread): Broadcast thread stopped.") # DEBUG
+    print("DEBUG Server (broadcast_presence_thread): Broadcast thread stopped.") 
 
 
 def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj: ServerState):
@@ -106,48 +101,45 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
     Thread function to handle receiving data from a single connected client.
     Updates the server_state_obj.client_input_buffer with the latest client input.
     """
-    print(f"DEBUG Server (handle_client_connection_thread): Client connected from {addr}. Handler thread started.") # DEBUG
-    conn.settimeout(1.0) # Use a timeout for recv to keep the loop responsive
-    partial_data_from_client = b"" # Buffer for accumulating partial messages
+    print(f"DEBUG Server (handle_client_connection_thread): Client connected from {addr}. Handler thread started.") 
+    conn.settimeout(1.0) 
+    partial_data_from_client = b"" 
 
     while server_state_obj.app_running:
-        with client_lock: # Synchronize access to shared server state
+        with client_lock: 
             if server_state_obj.client_connection is not conn:
-                print(f"DEBUG Server Handler ({addr}): Stale connection. Exiting thread.") # DEBUG
+                print(f"DEBUG Server Handler ({addr}): Stale connection. Exiting thread.") 
                 break 
         try:
             chunk = conn.recv(server_state_obj.buffer_size)
             if not chunk: 
-                print(f"DEBUG Server Handler ({addr}): Client disconnected (received empty data).") # DEBUG
+                print(f"DEBUG Server Handler ({addr}): Client disconnected (received empty data).") 
                 break
             
-            # print(f"DEBUG Server Handler ({addr}): Received chunk: {chunk[:60]}...") # DEBUG - can be noisy
             partial_data_from_client += chunk
             decoded_inputs, partial_data_from_client = decode_data_stream(partial_data_from_client)
 
             if decoded_inputs:
                 last_input_data = decoded_inputs[-1] 
-                # print(f"DEBUG Server Handler ({addr}): Decoded client input: {last_input_data}") # DEBUG
                 if "input" in last_input_data:
                     with client_lock:
                         if server_state_obj.client_connection is conn: 
                             server_state_obj.client_input_buffer = last_input_data["input"]
-                            # print(f"DEBUG Server Handler ({addr}): Updated client_input_buffer: {server_state_obj.client_input_buffer}") # DEBUG
         except socket.timeout:
             continue 
         except socket.error as e:
             if server_state_obj.app_running:
-                print(f"DEBUG Server Handler ({addr}): Socket error: {e}. Assuming disconnect.") # DEBUG
+                print(f"DEBUG Server Handler ({addr}): Socket error: {e}. Assuming disconnect.") 
             break 
         except Exception as e:
             if server_state_obj.app_running:
-                print(f"DEBUG Server Handler ({addr}): Unexpected error: {e}") # DEBUG
+                print(f"DEBUG Server Handler ({addr}): Unexpected error: {e}") 
                 traceback.print_exc()
             break
 
     with client_lock:
         if server_state_obj.client_connection is conn: 
-            print(f"DEBUG Server Handler ({addr}): Closing active connection from handler.") # DEBUG
+            print(f"DEBUG Server Handler ({addr}): Closing active connection from handler.") 
             server_state_obj.client_connection = None 
             server_state_obj.client_input_buffer = {"disconnect": True} 
     try:
@@ -156,7 +148,7 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
     try:
         conn.close() 
     except: pass
-    print(f"DEBUG Server: Client handler for {addr} finished.") # DEBUG
+    print(f"DEBUG Server: Client handler for {addr} finished.") 
 
 
 def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock, 
@@ -165,23 +157,23 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     Main function to run the game in server mode.
     Manages client connections, game loop, and state synchronization.
     """
-    print("DEBUG Server: Entering run_server_mode.") # DEBUG
-    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: R)")
+    print("DEBUG Server: Entering run_server_mode.") 
+    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: Q)") # Updated caption
     
     server_state_obj.app_running = True 
     current_width, current_height = screen.get_size()
 
     if server_state_obj.broadcast_thread and server_state_obj.broadcast_thread.is_alive():
-        print("DEBUG Server: Broadcast thread already running (normal if re-entering server mode without full app restart).") # DEBUG
+        print("DEBUG Server: Broadcast thread already running (normal if re-entering server mode without full app restart).") 
     else:
-        print("DEBUG Server: Starting broadcast thread.") # DEBUG
+        print("DEBUG Server: Starting broadcast thread.") 
         server_state_obj.broadcast_thread = threading.Thread(
             target=broadcast_presence_thread, args=(server_state_obj,), daemon=True
         )
         server_state_obj.broadcast_thread.start()
 
     if server_state_obj.server_tcp_socket: 
-        print("DEBUG Server: Closing existing TCP socket before creating new one.") # DEBUG
+        print("DEBUG Server: Closing existing TCP socket before creating new one.") 
         try: server_state_obj.server_tcp_socket.close()
         except: pass
     
@@ -191,12 +183,12 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         server_state_obj.server_tcp_socket.bind((C.SERVER_IP_BIND, server_state_obj.server_port_tcp))
         server_state_obj.server_tcp_socket.listen(1) 
         server_state_obj.server_tcp_socket.settimeout(1.0) 
-        print(f"DEBUG Server: Listening on {C.SERVER_IP_BIND}:{server_state_obj.server_port_tcp}") # DEBUG
+        print(f"DEBUG Server: Listening on {C.SERVER_IP_BIND}:{server_state_obj.server_port_tcp}") 
     except socket.error as e:
         print(f"FATAL SERVER ERROR: Failed to bind/listen TCP socket: {e}")
         return 
 
-    print("DEBUG Server: Waiting for Player 2 to connect...") # DEBUG
+    print("DEBUG Server: Waiting for Player 2 to connect...") 
     temp_client_conn_obj = None 
     while temp_client_conn_obj is None and server_state_obj.app_running:
         for event in pygame.event.get():
@@ -223,27 +215,27 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             temp_client_conn_obj, temp_client_addr_tuple = server_state_obj.server_tcp_socket.accept()
             with client_lock:
                  if server_state_obj.client_connection: 
-                     print("DEBUG Server: Closing pre-existing client connection before new one.") # DEBUG
+                     print("DEBUG Server: Closing pre-existing client connection before new one.") 
                      try: server_state_obj.client_connection.close()
                      except: pass
                  server_state_obj.client_connection = temp_client_conn_obj
                  server_state_obj.client_address = temp_client_addr_tuple
                  server_state_obj.client_input_buffer = {} 
-                 print(f"DEBUG Server: Accepted connection from {temp_client_addr_tuple}") # DEBUG
+                 print(f"DEBUG Server: Accepted connection from {temp_client_addr_tuple}") 
         except socket.timeout:
             continue 
         except Exception as e:
             if server_state_obj.app_running:
-                print(f"DEBUG Server: Error during client accept: {e}") # DEBUG
+                print(f"DEBUG Server: Error during client accept: {e}") 
             break 
     
     if not server_state_obj.app_running or server_state_obj.client_connection is None:
-        print("DEBUG Server: Exiting wait loop (no client connected or app closed).") # DEBUG
+        print("DEBUG Server: Exiting wait loop (no client connected or app closed).") 
         return 
 
-    print(f"DEBUG Server: Client {server_state_obj.client_address} connected. Starting game...") # DEBUG
+    print(f"DEBUG Server: Client {server_state_obj.client_address} connected. Starting game...") 
     if server_state_obj.client_handler_thread and server_state_obj.client_handler_thread.is_alive():
-        print("DEBUG Server: Previous client handler thread still alive. Attempting to join.") # DEBUG
+        print("DEBUG Server: Previous client handler thread still alive. Attempting to join.") 
         server_state_obj.client_handler_thread.join(timeout=0.2) 
     
     server_state_obj.client_handler_thread = threading.Thread(
@@ -252,12 +244,12 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         daemon=True
     )
     server_state_obj.client_handler_thread.start()
-    print("DEBUG Server: Client handler thread started.") # DEBUG
+    print("DEBUG Server: Client handler thread started.") 
 
     p1 = game_elements_ref.get("player1") 
     p2 = game_elements_ref.get("player2") 
-    if p1: print(f"DEBUG Server: P1 instance from game_elements: {p1}, Valid: {p1._valid_init if p1 else 'N/A'}") # DEBUG
-    if p2: print(f"DEBUG Server: P2 instance from game_elements: {p2}, Valid: {p2._valid_init if p2 else 'N/A'}") # DEBUG
+    if p1: print(f"DEBUG Server: P1 instance from game_elements: {p1}, Valid: {p1._valid_init if p1 else 'N/A'}") 
+    if p2: print(f"DEBUG Server: P2 instance from game_elements: {p2}, Valid: {p2._valid_init if p2 else 'N/A'}") 
 
 
     p1_key_map_config = { 
@@ -293,7 +285,8 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                         game_elements_ref["camera"].screen_height = current_height
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: server_game_active = False 
-                if event.key == pygame.K_r: host_requested_reset = True
+                # MODIFIED: Changed reset key from K_r to K_q
+                if event.key == pygame.K_q: host_requested_reset = True
                 if p1 and p1._valid_init: 
                     if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'): p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'): p1.heal_to_full()
@@ -308,7 +301,6 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         with client_lock: 
             if server_state_obj.client_input_buffer:
                 buffered_input = server_state_obj.client_input_buffer
-                # print(f"DEBUG Server: Processing client_input_buffer: {buffered_input}") # DEBUG
                 if buffered_input.get("disconnect"): client_disconnected_signal = True
                 elif buffered_input.get("action_reset", False): p2_requested_reset = True
                 elif p2 and p2._valid_init:
@@ -321,16 +313,15 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 server_state_obj.client_input_buffer = {} 
 
         if client_disconnected_signal:
-            print("DEBUG Server: Client disconnected signal received in main loop.") # DEBUG
+            print("DEBUG Server: Client disconnected signal received in main loop.") 
             server_game_active = False 
             break 
 
         if p2 and p2._valid_init and p2_network_input and hasattr(p2, 'handle_network_input'):
-            # print(f"DEBUG Server: Handling P2 network input: {p2_network_input}") # DEBUG
             p2.handle_network_input(p2_network_input) 
 
         if host_requested_reset or (p2_requested_reset and is_p1_game_over_for_reset):
-            print("DEBUG Server: Game state reset triggered.") # DEBUG
+            print("DEBUG Server: Game state reset triggered by 'Q' key or client request.") # Updated message
             game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
 
         if p1 and p1._valid_init:
@@ -385,17 +376,15 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 
         if server_state_obj.client_connection: 
             network_state_to_send = get_network_game_state(game_elements_ref)
-            # print(f"DEBUG Server: State to send: P1 pos {network_state_to_send.get('p1', {}).get('pos')}, P2 pos {network_state_to_send.get('p2', {}).get('pos')}") # DEBUG
             encoded_game_state = encode_data(network_state_to_send)
             if encoded_game_state:
                 try:
                     server_state_obj.client_connection.sendall(encoded_game_state)
                 except socket.error as e:
-                    print(f"DEBUG Server: Send failed to client: {e}. Client likely disconnected.") # DEBUG
+                    print(f"DEBUG Server: Send failed to client: {e}. Client likely disconnected.") 
                     server_game_active = False 
                     with client_lock: server_state_obj.client_connection = None 
                     break 
-            # else: print("DEBUG Server Error: Failed to encode game state for sending.") # DEBUG
         
         try:
             draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_server)
@@ -404,7 +393,7 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             server_game_active = False; break
         pygame.display.flip()
 
-    print("DEBUG Server: Exiting active game loop.") # DEBUG
+    print("DEBUG Server: Exiting active game loop.") 
     
     connection_to_close_at_server_exit = None
     with client_lock:
@@ -412,17 +401,15 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             connection_to_close_at_server_exit = server_state_obj.client_connection
             server_state_obj.client_connection = None 
     if connection_to_close_at_server_exit:
-        print("DEBUG Server: Mode exit cleanup - closing client connection.") # DEBUG
+        print("DEBUG Server: Mode exit cleanup - closing client connection.") 
         try:
             connection_to_close_at_server_exit.shutdown(socket.SHUT_RDWR)
             connection_to_close_at_server_exit.close()
         except: pass 
 
     if server_state_obj.server_tcp_socket:
-        print("DEBUG Server: Closing main TCP listening socket.") # DEBUG
+        print("DEBUG Server: Closing main TCP listening socket.") 
         server_state_obj.server_tcp_socket.close()
         server_state_obj.server_tcp_socket = None
     
-    print("DEBUG Server: Server mode finished and returned to caller.") # DEBUG
-
-########## END OF FILE: server_logic.py ##########
+    print("DEBUG Server: Server mode finished and returned to caller.") 

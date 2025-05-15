@@ -1,10 +1,8 @@
-########## START OF FILE: game_setup.py ##########
-
 # game_setup.py
 # -*- coding: utf-8 -*-
 """
 Handles initialization of game elements, levels, and entities.
-version 1.0.0.5 (Chest spawning restricted to 'ledge' platform_type)
+version 1.0.0.7 (Added debug prints for projectile group assignment)
 """
 import pygame
 import random
@@ -12,227 +10,270 @@ import traceback
 import constants as C
 from player import Player
 from enemy import Enemy
-from items import Chest # Ensure Chest is importable
-import levels as LevelLoader
+from items import Chest 
+import levels as LevelLoader 
 from camera import Camera
+from typing import Dict, Optional, Any, Tuple, List 
+import importlib 
 
-def initialize_game_elements(current_width, current_height, for_game_mode="unknown", existing_sprites_groups=None):
-    """
-    Initializes all platformer game elements for a given mode.
-    Returns a dictionary containing all initialized game objects and parameters.
-    """
-    print(f"DEBUG GameSetup: Initializing elements. Mode: '{for_game_mode}', Screen: {current_width}x{current_height}") # DEBUG
+DEFAULT_LEVEL_MODULE_NAME = "level_default" 
+
+def initialize_game_elements(current_width: int, current_height: int, 
+                             for_game_mode: str = "unknown", 
+                             existing_sprites_groups: Optional[Dict[str, Any]] = None,
+                             map_module_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    print(f"DEBUG GameSetup: Initializing elements. Mode: '{for_game_mode}', Screen: {current_width}x{current_height}, Requested Map: '{map_module_name}'")
 
     platform_sprites = pygame.sprite.Group()
     ladder_sprites = pygame.sprite.Group()
     hazard_sprites = pygame.sprite.Group()
     enemy_sprites = pygame.sprite.Group()
     collectible_sprites = pygame.sprite.Group()
-    projectile_sprites = existing_sprites_groups.get('projectile_sprites') if existing_sprites_groups else pygame.sprite.Group()
-    all_sprites = existing_sprites_groups.get('all_sprites') if existing_sprites_groups else pygame.sprite.Group()
-
-    # Clear sprite groups passed in or newly created
-    print(f"DEBUG GameSetup: Clearing existing sprite groups...") # DEBUG
-    player1_to_kill = existing_sprites_groups.get('player1')
-    if player1_to_kill and hasattr(player1_to_kill, 'kill'):
-        player1_to_kill.kill()
     
-    player2_to_kill = existing_sprites_groups.get('player2')
-    if player2_to_kill and hasattr(player2_to_kill, 'kill'):
-        player2_to_kill.kill()
+    # Ensure projectile_sprites and all_sprites are always valid groups
+    # If they are passed in and are None, re-initialize them.
+    projectile_sprites_from_existing = existing_sprites_groups.get('projectile_sprites') if existing_sprites_groups else None
+    all_sprites_from_existing = existing_sprites_groups.get('all_sprites') if existing_sprites_groups else None
 
-    current_chest_to_kill = existing_sprites_groups.get('current_chest')
-    if current_chest_to_kill and hasattr(current_chest_to_kill, 'kill'):
-        current_chest_to_kill.kill()
+    projectile_sprites = projectile_sprites_from_existing if isinstance(projectile_sprites_from_existing, pygame.sprite.Group) else pygame.sprite.Group()
+    all_sprites = all_sprites_from_existing if isinstance(all_sprites_from_existing, pygame.sprite.Group) else pygame.sprite.Group()
     
-    for i, sprite_group in enumerate([platform_sprites, ladder_sprites, hazard_sprites, enemy_sprites, collectible_sprites, projectile_sprites, all_sprites]):
-        if sprite_group is not None: 
-            for sprite in sprite_group: 
-                 if hasattr(sprite, 'kill'): sprite.kill()
-            sprite_group.empty()
+    print(f"DEBUG GameSetup: Initial projectile_sprites: {projectile_sprites} (Count: {len(projectile_sprites.sprites())})")
+    print(f"DEBUG GameSetup: Initial all_sprites: {all_sprites} (Count: {len(all_sprites.sprites())})")
+
+
+    print("DEBUG GameSetup: Clearing sprite groups (except projectile_sprites and all_sprites initially)...")
+    player1_to_kill = existing_sprites_groups.get('player1') if existing_sprites_groups else None
+    if player1_to_kill and hasattr(player1_to_kill, 'kill'): player1_to_kill.kill()
+    player2_to_kill = existing_sprites_groups.get('player2') if existing_sprites_groups else None
+    if player2_to_kill and hasattr(player2_to_kill, 'kill'): player2_to_kill.kill()
+    current_chest_to_kill = existing_sprites_groups.get('current_chest') if existing_sprites_groups else None
+    if current_chest_to_kill and hasattr(current_chest_to_kill, 'kill'): current_chest_to_kill.kill()
+    
+    # Empty groups that are definitely re-populated by level load or enemy spawn
+    for group in [platform_sprites, ladder_sprites, hazard_sprites, enemy_sprites, collectible_sprites]:
+        if group is not None: group.empty()
+    
+    # Selectively empty all_sprites and projectile_sprites to remove old game objects
+    # but keep the group instances themselves if they were passed in.
+    if all_sprites_from_existing: # if all_sprites was passed in
+        for sprite in all_sprites.sprites(): # Remove all existing sprites from it
+            if sprite not in [player1_to_kill, player2_to_kill, current_chest_to_kill]: # Avoid double kill
+                 # Be careful here if other persistent sprites are needed across modes
+                 if not isinstance(sprite, Player): # Don't kill player instances again if they were in all_sprites
+                    sprite.kill() 
+    else: # all_sprites was not passed in or was None, so it's a fresh group, no need to empty.
+        pass
+    
+    if projectile_sprites_from_existing: # if projectile_sprites was passed in
+        projectile_sprites.empty() # Clear any old projectiles
+    else: # projectile_sprites was not passed in or was None, fresh group.
+        pass
+
+    print(f"DEBUG GameSetup: After clearing, projectile_sprites: {projectile_sprites} (Count: {len(projectile_sprites.sprites())})")
+    print(f"DEBUG GameSetup: After clearing, all_sprites: {all_sprites} (Count: {len(all_sprites.sprites())})")
+
             
-    enemy_list = []
+    enemy_list: List[Enemy] = [] 
 
-    print("DEBUG GameSetup: Loading level data via LevelLoader...") # DEBUG
+    level_data_loaded_successfully = False
+    target_map_name_for_load = map_module_name if map_module_name else DEFAULT_LEVEL_MODULE_NAME
+    safe_map_name_for_func = target_map_name_for_load.replace('-', '_').replace(' ', '_')
+    expected_level_load_func_name = f"load_map_{safe_map_name_for_func}"
+    
+    print(f"DEBUG GameSetup: Attempting to load map module 'maps.{target_map_name_for_load}' and call function '{expected_level_load_func_name}'")
+
+    level_background_color = C.LIGHT_BLUE # Default
+    local_enemy_spawns_data_list = [] 
+    collectible_spawns_data_list = []
+    player1_spawn_pos = (100, current_height - (C.TILE_SIZE * 2)) 
+    player2_spawn_pos = (150, current_height - (C.TILE_SIZE * 2)) 
+    level_pixel_width = current_width
+    lvl_min_y_abs = 0
+    lvl_max_y_abs = current_height
+    ground_level_y = current_height - C.TILE_SIZE
+    ground_platform_height = C.TILE_SIZE
+
+
     try:
-        platform_data_group, ladder_data_group, hazard_data_group, local_enemy_spawns_data_list, \
-        p1_spawn_tuple, lvl_total_width_pixels, lvl_min_y_abs, lvl_max_y_abs, \
-        main_ground_y_reference, main_ground_height_reference = \
-            LevelLoader.load_map_cpu(current_width, current_height) # Using load_map_cpu as default
+        map_module = importlib.import_module(f"maps.{target_map_name_for_load}")
+        load_level_function = getattr(map_module, expected_level_load_func_name)
+        level_data_tuple = load_level_function(current_width, current_height)
+        
+        if level_data_tuple and len(level_data_tuple) >= 11:
+            (platform_data_group, ladder_data_group, hazard_data_group, 
+             local_enemy_spawns_data_list_loaded, collectible_spawns_data_list_loaded, p1_spawn_tuple, 
+             lvl_total_width_pixels_loaded, lvl_min_y_abs_loaded, lvl_max_y_abs_loaded, 
+             main_ground_y_reference_loaded, main_ground_height_reference_loaded, 
+             *optional_bg_color_list) = level_data_tuple
 
-        platform_sprites.add(platform_data_group.sprites())
-        ladder_sprites.add(ladder_data_group.sprites())
-        hazard_sprites.add(hazard_data_group.sprites())
-        
-        player1_spawn_pos = p1_spawn_tuple
-        p2_spawn_x = p1_spawn_tuple[0] + C.TILE_SIZE * 1.5
-        # Ensure P2 spawn is within the playable horizontal area
-        if p2_spawn_x + (C.TILE_SIZE / 2) > lvl_total_width_pixels - C.TILE_SIZE: 
-            p2_spawn_x = lvl_total_width_pixels - C.TILE_SIZE * 2.5 
-        if p2_spawn_x - (C.TILE_SIZE / 2) < C.TILE_SIZE:
-            p2_spawn_x = C.TILE_SIZE * 2.5
-        player2_spawn_pos = (p2_spawn_x, p1_spawn_tuple[1])
-        
-        level_pixel_width = lvl_total_width_pixels
-        ground_level_y = main_ground_y_reference
-        ground_platform_height = main_ground_height_reference
-        print(f"DEBUG GameSetup: Level geometry loaded. Width: {level_pixel_width}, MinY: {lvl_min_y_abs}, MaxY: {lvl_max_y_abs}, P1 Spawn: {player1_spawn_pos}, P2 Spawn: {player2_spawn_pos}") # DEBUG
+            platform_sprites.add(platform_data_group.sprites() if platform_data_group else [])
+            ladder_sprites.add(ladder_data_group.sprites() if ladder_data_group else [])
+            hazard_sprites.add(hazard_data_group.sprites() if hazard_data_group else [])
+            
+            local_enemy_spawns_data_list = local_enemy_spawns_data_list_loaded if local_enemy_spawns_data_list_loaded else []
+            collectible_spawns_data_list = collectible_spawns_data_list_loaded if collectible_spawns_data_list_loaded else []
+
+            player1_spawn_pos = p1_spawn_tuple
+            p2_spawn_x = p1_spawn_tuple[0] + C.TILE_SIZE * 1.5
+            if p2_spawn_x + (C.TILE_SIZE / 2) > lvl_total_width_pixels_loaded - C.TILE_SIZE: 
+                p2_spawn_x = lvl_total_width_pixels_loaded - C.TILE_SIZE * 2.5 
+            if p2_spawn_x - (C.TILE_SIZE / 2) < C.TILE_SIZE:
+                p2_spawn_x = C.TILE_SIZE * 2.5
+            player2_spawn_pos = (p2_spawn_x, p1_spawn_tuple[1])
+            
+            level_pixel_width = lvl_total_width_pixels_loaded
+            lvl_min_y_abs = lvl_min_y_abs_loaded
+            lvl_max_y_abs = lvl_max_y_abs_loaded
+            ground_level_y = main_ground_y_reference_loaded
+            ground_platform_height = main_ground_height_reference_loaded
+            
+            if optional_bg_color_list and isinstance(optional_bg_color_list[0], (tuple, list)) and len(optional_bg_color_list[0]) == 3:
+                level_background_color = optional_bg_color_list[0]
+                
+            print(f"DEBUG GameSetup: Level geometry loaded. Width: {level_pixel_width}, MinY: {lvl_min_y_abs}, MaxY: {lvl_max_y_abs}, P1 Spawn: {player1_spawn_pos}, P2 Spawn: {player2_spawn_pos}, BG Color: {level_background_color}")
+            level_data_loaded_successfully = True
+        else:
+            print(f"CRITICAL GameSetup Error: Map '{target_map_name_for_load}' function '{expected_level_load_func_name}' did not return enough data elements.")
+
+    except ImportError:
+        print(f"CRITICAL GameSetup Error: Could not import map module 'maps.{target_map_name_for_load}'."); traceback.print_exc()
+    except AttributeError:
+        print(f"CRITICAL GameSetup Error: Map module 'maps.{target_map_name_for_load}' no func '{expected_level_load_func_name}'."); traceback.print_exc()
     except Exception as e:
-        print(f"CRITICAL ERROR loading level: {e}")
-        traceback.print_exc()
-        return None
+        print(f"CRITICAL GameSetup Error: Unexpected error loading map '{target_map_name_for_load}': {e}"); traceback.print_exc()
 
+    if not level_data_loaded_successfully:
+        if target_map_name_for_load != DEFAULT_LEVEL_MODULE_NAME:
+            print(f"GAME_SETUP Warning: Failed to load map '{target_map_name_for_load}'. Trying default '{DEFAULT_LEVEL_MODULE_NAME}'.")
+            return initialize_game_elements(current_width, current_height, for_game_mode, existing_sprites_groups, DEFAULT_LEVEL_MODULE_NAME)
+        else:
+            print(f"GAME_SETUP FATAL: Default map '{DEFAULT_LEVEL_MODULE_NAME}' also failed. Cannot proceed."); return None
+
+    # Add newly loaded map sprites to the main all_sprites group
     all_sprites.add(platform_sprites.sprites(), ladder_sprites.sprites(), hazard_sprites.sprites())
-    player1, player2 = None, None # Initialize to None
+    
+    player1, player2 = None, None 
 
-    # --- Player Initialization ---
-    # Create Player 1 if mode is host, couch, single_player, or any client mode (as placeholder)
-    if for_game_mode in ["host", "couch_play", "single_player", "join_lan", "join_ip"]:
-        p1_role = "local"
-        if for_game_mode in ["join_lan", "join_ip"]:
-            p1_role = "remote placeholder for client"
-        
-        print(f"DEBUG GameSetup: Initializing player 1 ({p1_role}) for mode '{for_game_mode}' at {player1_spawn_pos}...")
-        player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1)
-        if not player1._valid_init: 
-            print(f"CRITICAL GameSetup: P1 ({p1_role}) init failed.")
-            return None
+    if for_game_mode in ["host", "couch_play", "join_lan", "join_ip"]:
+        p1_id_val = "p1_host" if for_game_mode == "host" else \
+                 "p1_couch" if for_game_mode == "couch_play" else \
+                 "p1_client_ph" # Placeholder ID for client's local P1 representation
+        player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1) # Use int 1 for P1
+        if not player1._valid_init: print(f"CRITICAL GameSetup: P1 init failed."); return None
         all_sprites.add(player1)
-        print(f"DEBUG GameSetup: P1 ({p1_role}) initialized. Instance: {player1}, Valid: {player1._valid_init}, Pos: {player1.pos if hasattr(player1, 'pos') else 'N/A'}")
 
-    # Create Player 2 if mode is couch, host (as placeholder), or any client mode (as local player)
-    if for_game_mode in ["couch_play", "host", "join_lan", "join_ip"]:
-        p2_role = "unknown"
-        if for_game_mode == "couch_play": p2_role = "local (couch)"
-        elif for_game_mode == "host": p2_role = "remote placeholder for host"
-        elif for_game_mode in ["join_lan", "join_ip"]: p2_role = "local client"
-
-        print(f"DEBUG GameSetup: Initializing player 2 ({p2_role}) for mode '{for_game_mode}' at {player2_spawn_pos}...")
-        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2)
-        if not player2._valid_init: 
-            print(f"CRITICAL GameSetup: P2 ({p2_role}) init failed.")
-            return None
+    if for_game_mode == "couch_play":
+        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) # Use int 2 for P2
+        if not player2._valid_init: print(f"CRITICAL GameSetup: P2 (couch) init failed."); return None
         all_sprites.add(player2)
-        print(f"DEBUG GameSetup: P2 ({p2_role}) initialized. Instance: {player2}, Valid: {player2._valid_init}, Pos: {player2.pos if hasattr(player2, 'pos') else 'N/A'}")
+    elif for_game_mode in ["join_lan", "join_ip"]: 
+        # For client, P2 is the locally controlled player. P1 is remote.
+        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) # Use int 2 for P2
+        if not player2._valid_init: print(f"CRITICAL GameSetup: P2 (client) init failed."); return None
+        all_sprites.add(player2)
 
-
-    if player1 and hasattr(player1, 'set_projectile_group_references'):
+    print(f"DEBUG GameSetup: Before setting proj groups for P1: projectile_sprites is {('set' if projectile_sprites is not None else 'None')}, all_sprites is {('set' if all_sprites is not None else 'None')}")
+    if player1 and hasattr(player1, 'set_projectile_group_references'): 
         player1.set_projectile_group_references(projectile_sprites, all_sprites)
-    if player2 and hasattr(player2, 'set_projectile_group_references'):
+    
+    print(f"DEBUG GameSetup: Before setting proj groups for P2: projectile_sprites is {('set' if projectile_sprites is not None else 'None')}, all_sprites is {('set' if all_sprites is not None else 'None')}")
+    if player2 and hasattr(player2, 'set_projectile_group_references'): 
         player2.set_projectile_group_references(projectile_sprites, all_sprites)
 
-    if for_game_mode in ["host", "couch_play", "single_player"]: 
-        print(f"DEBUG GameSetup: Spawning {len(local_enemy_spawns_data_list)} enemies (server/local)...") # DEBUG
-        for i, spawn_data_item in enumerate(local_enemy_spawns_data_list):
+
+    if (for_game_mode == "host" or for_game_mode == "couch_play") and local_enemy_spawns_data_list:
+        print(f"DEBUG GameSetup: Spawning {len(local_enemy_spawns_data_list)} enemies...")
+        from enemy import Enemy # Keep import local if only used here
+        for i, spawn_info in enumerate(local_enemy_spawns_data_list):
             try:
-                patrol_rect_data = spawn_data_item.get('patrol')
-                patrol_rect_obj = None
-                if patrol_rect_data:
-                    try: patrol_rect_obj = pygame.Rect(patrol_rect_data)
-                    except TypeError: print(f"Warning: Invalid patrol data for enemy {i}: {patrol_rect_data}")
-                
-                enemy = Enemy(spawn_data_item['pos'][0], spawn_data_item['pos'][1], patrol_area=patrol_rect_obj, enemy_id=i)
-                if enemy._valid_init:
+                patrol_rect = pygame.Rect(spawn_info['patrol']) if spawn_info.get('patrol') else None
+                # Ensure Enemy constructor uses correct parameter for color
+                # Assuming Enemy takes 'start_x', 'start_y', 'patrol_area', 'enemy_id'
+                # and 'color_name' is handled internally or via another param.
+                # The current Enemy constructor takes 'start_x, start_y, patrol_area=None, enemy_id=None'
+                # It seems enemy color is chosen randomly inside Enemy.__init__
+                enemy = Enemy(start_x=spawn_info['pos'][0], start_y=spawn_info['pos'][1], 
+                              patrol_area=patrol_rect, enemy_id=i) # Pass index as ID
+                if enemy._valid_init: 
                     all_sprites.add(enemy); enemy_sprites.add(enemy); enemy_list.append(enemy)
-                else: print(f"Error: Enemy {i} at {spawn_data_item['pos']} init failed.")
-            except Exception as e: print(f"Error spawning enemy {i} at {spawn_data_item.get('pos', 'N/A')}: {e}")
-        print(f"DEBUG GameSetup: Enemies spawned: {len(enemy_list)}") # DEBUG
+                else:
+                    print(f"Warning GameSetup: Enemy {i} at {spawn_info['pos']} failed _valid_init.")
+            except Exception as e: print(f"Error spawning enemy {i} with data {spawn_info}: {e}"); traceback.print_exc()
     
     current_chest = None
-    if Chest and for_game_mode in ["host", "couch_play", "single_player"]:
-        current_chest = spawn_chest(platform_sprites, main_ground_y_reference) 
-        if current_chest:
-            all_sprites.add(current_chest)
-            collectible_sprites.add(current_chest)
-            print(f"DEBUG GameSetup: Chest spawned at {current_chest.rect.topleft if current_chest else 'N/A'}") # DEBUG
-        else:
-            print(f"DEBUG GameSetup: Chest NOT spawned.") # DEBUG
+    if Chest and (for_game_mode == "host" or for_game_mode == "couch_play"): 
+        if collectible_spawns_data_list:
+            for item_data in collectible_spawns_data_list:
+                if item_data.get('type') == 'chest':
+                    try:
+                        chest_midbottom_x, chest_midbottom_y = item_data['pos']
+                        current_chest = Chest(chest_midbottom_x, chest_midbottom_y) 
+                        if current_chest._valid_init:
+                            all_sprites.add(current_chest); collectible_sprites.add(current_chest)
+                            print(f"DEBUG GameSetup: Chest spawned from level data at {current_chest.rect.topleft}")
+                            break 
+                        else: print(f"Warning GameSetup: Chest from level data at {item_data['pos']} failed _valid_init.")
+                    except Exception as e: print(f"Error spawning chest from level data: {e}")
+        
+        if not current_chest: 
+            print("DEBUG GameSetup: No chest from level data, attempting random spawn on ledge...")
+            current_chest = spawn_chest(platform_sprites, ground_level_y) 
+            if current_chest:
+                all_sprites.add(current_chest); collectible_sprites.add(current_chest)
+                print(f"DEBUG GameSetup: Random chest spawned at {current_chest.rect.topleft}")
+            else: print("DEBUG GameSetup: Random chest spawn also failed or returned None.")
+
 
     camera_instance = Camera(level_pixel_width, lvl_min_y_abs, lvl_max_y_abs, current_width, current_height)
-    print(f"DEBUG GameSetup: Camera initialized. LvlW={level_pixel_width}, LvlTopY={lvl_min_y_abs}, LvlBotY={lvl_max_y_abs}, ScreenWH= {current_width}x{current_height}") # DEBUG
+
+    print(f"DEBUG GameSetup: Final counts before return - AllSprites: {len(all_sprites.sprites())}, Projectiles: {len(projectile_sprites.sprites())}")
 
     game_elements_dict = {
         "player1": player1, "player2": player2, "camera": camera_instance,
-        "current_chest": current_chest, 
-        "enemy_list": enemy_list,
+        "current_chest": current_chest, "enemy_list": enemy_list,
         "platform_sprites": platform_sprites, "ladder_sprites": ladder_sprites,
         "hazard_sprites": hazard_sprites, "enemy_sprites": enemy_sprites,
         "collectible_sprites": collectible_sprites, "projectile_sprites": projectile_sprites,
         "all_sprites": all_sprites,
-        "level_pixel_width": level_pixel_width, 
-        "level_min_y_absolute": lvl_min_y_abs,
-        "level_max_y_absolute": lvl_max_y_abs,
-        "ground_level_y": ground_level_y,
+        "level_pixel_width": level_pixel_width, "level_min_y_absolute": lvl_min_y_abs,
+        "level_max_y_absolute": lvl_max_y_abs, "ground_level_y": ground_level_y,
         "ground_platform_height": ground_platform_height,
-        "player1_spawn_pos": player1_spawn_pos, 
-        "player2_spawn_pos": player2_spawn_pos,
-        "enemy_spawns_data_cache": local_enemy_spawns_data_list 
+        "player1_spawn_pos": player1_spawn_pos, "player2_spawn_pos": player2_spawn_pos,
+        "enemy_spawns_data_cache": local_enemy_spawns_data_list, 
+        "level_background_color": level_background_color
     }
-    print(f"DEBUG GameSetup: initialize_game_elements returning. P1: {player1}, P2: {player2}") # DEBUG
-    if player1: print(f"DEBUG GameSetup: P1 in all_sprites: {player1 in all_sprites}") #DEBUG
-    if player2: print(f"DEBUG GameSetup: P2 in all_sprites: {player2 in all_sprites}") #DEBUG
     return game_elements_dict
 
-def spawn_chest(all_platform_sprites_group, main_ground_y_surface_level):
+# RENAMED FUNCTION from spawn_chest_on_ledge to spawn_chest
+def spawn_chest(all_platform_sprites_group: pygame.sprite.Group, main_ground_y_surface_level: int) -> Optional[Chest]:
     """
-    Spawns a chest ONLY on platforms explicitly marked as 'ledge' (platform_type="ledge").
-    Tries to pick a ledge within a reasonable vertical band if possible.
+    Spawns a chest ONLY on platforms explicitly marked as 'ledge'.
     """
-    if Chest is None: 
-        print("Warning: Chest class not available for spawning.")
-        return None
+    if Chest is None: print("Warning GS (spawn_chest): Chest class is None, cannot spawn."); return None
     try:
-        # Filter for platforms that are specifically designated as ledges and are wide enough
-        ledge_platforms = [
-            p for p in all_platform_sprites_group
-            if hasattr(p, 'platform_type') and p.platform_type == "ledge" and p.rect.width > C.TILE_SIZE * 1.25
-        ]
-
-        if not ledge_platforms:
-            print("Warning: No 'ledge' type platforms found to spawn chest on. Chest will not spawn.")
-            return None
-
-        candidate_platforms = []
-        # Tier 1: Ledges within a moderate vertical band around the main ground.
-        # This encourages chests to spawn in more accessible/central areas.
+        ledge_platforms = [p for p in all_platform_sprites_group if hasattr(p, 'platform_type') and p.platform_type == "ledge" and p.rect.width > C.TILE_SIZE * 1.25]
+        if not ledge_platforms: print("Warning GS (spawn_chest): No 'ledge' platforms for chest."); return None
+        
         moderate_y_min = main_ground_y_surface_level - C.TILE_SIZE * 4 
         moderate_y_max = main_ground_y_surface_level + C.TILE_SIZE * 1 
-        candidate_platforms = [
-            p for p in ledge_platforms # Start with already filtered ledge_platforms
-            if moderate_y_min <= p.rect.top <= moderate_y_max
-        ]
-
-        # Tier 2: If no Tier 1, use any available ledge_platform.
-        if not candidate_platforms:
-            candidate_platforms = list(ledge_platforms) 
-            # This ensures we still use a ledge if none were in the "moderate" band.
-
-        if not candidate_platforms: # Should not happen if ledge_platforms was not empty
-            print("Error: No suitable 'ledge' platforms remained after tiering. Chest will not spawn.")
-            return None
+        candidate_platforms = [p for p in ledge_platforms if moderate_y_min <= p.rect.top <= moderate_y_max]
+        if not candidate_platforms: candidate_platforms = list(ledge_platforms)
+        if not candidate_platforms: print("Warning GS (spawn_chest): No suitable candidate ledges."); return None
 
         chosen_platform = random.choice(candidate_platforms)
-        
-        # Ensure chest spawns within platform horizontal bounds, slightly inset
-        chest_inset = C.TILE_SIZE * 0.5 
-        min_cx = chosen_platform.rect.left + chest_inset
-        max_cx = chosen_platform.rect.right - chest_inset
-        
-        # If platform is too narrow for inset, place in center
+        inset = C.TILE_SIZE * 0.5 
+        min_cx, max_cx = chosen_platform.rect.left + inset, chosen_platform.rect.right - inset
         cx = random.randint(int(min_cx), int(max_cx)) if min_cx < max_cx else chosen_platform.rect.centerx
-        # Chest constructor expects midbottom X,Y. Spawn with bottom of chest at the top surface of the platform.
         cy = chosen_platform.rect.top 
         
-        new_chest = Chest(cx, cy) # Chest's rect will be anchored midbottom=(cx, cy)
+        print(f"DEBUG GS (spawn_chest): Attempting to spawn chest at calculated pos: ({cx},{cy}) on platform {chosen_platform.rect}")
+        new_chest = Chest(cx, cy) # Chest constructor expects midbottom X, Y for its rect.bottom
         if hasattr(new_chest, '_valid_init') and new_chest._valid_init:
-            platform_info = f"'{chosen_platform.platform_type}' platform (Color: {chosen_platform.color if hasattr(chosen_platform, 'color') else 'N/A'})"
-            print(f"Chest object created on {platform_info} at y={chosen_platform.rect.top}. Chest midbottom: ({int(new_chest.rect.midbottom[0])}, {int(new_chest.rect.midbottom[1])}).")
+            print(f"DEBUG GS (spawn_chest): Chest spawned on ledge at {new_chest.rect.midbottom}")
             return new_chest
         else:
-            print("Failed to initialize new chest object (invalid init after creation).")
+            print(f"Warning GS (spawn_chest): New chest created at ({cx},{cy}) failed _valid_init.")
     except Exception as e:
-        print(f"Error creating new chest object: {e}")
-        traceback.print_exc()
+        print(f"Error in spawn_chest: {e}"); traceback.print_exc()
     return None
-
-########## END OF FILE: game_setup.py ##########

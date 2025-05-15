@@ -1,7 +1,7 @@
 # couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0000000.1
+version 1.0.0.2 (Changed reset key from R to Q)
 Handles the game logic for the local couch co-op (two players on one machine) mode.
 """
 import pygame
@@ -27,7 +27,7 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         app_status_obj: An object (like main's AppStatus) with an 'app_running' attribute
                         to signal if the whole application should quit.
     """
-    pygame.display.set_caption("Platformer - Couch Co-op (P1:WASD+VB, P2:IJKL+OP | Harm:H,N | Heal:G,M | Reset:R)")
+    pygame.display.set_caption("Platformer - Couch Co-op (P1:WASD+VB, P2:IJKL+OP | Harm:H,N | Heal:G,M | Reset:Q)") # Updated caption
     current_width, current_height = screen.get_size()
 
     # Get player instances from the game_elements dictionary
@@ -43,102 +43,88 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     p2_key_map_config = {
         'left': pygame.K_j, 'right': pygame.K_l, 'up': pygame.K_i, 'down': pygame.K_k,
         'attack1': pygame.K_o, 'attack2': pygame.K_p, 
-        'dash': pygame.K_SEMICOLON, # Example: often RSHIFT for P2, or a nearby key
-        'roll': pygame.K_QUOTE,   # Example: often RCTRL for P2, or a nearby key
+        'dash': pygame.K_SEMICOLON, 
+        'roll': pygame.K_QUOTE,   
         'interact': pygame.K_BACKSLASH 
     }
 
     couch_game_active = True
     while couch_game_active and app_status_obj.app_running:
-        dt_sec = clock.tick(C.FPS) / 1000.0 # Delta time for physics consistency
-        now_ticks_couch = pygame.time.get_ticks() # For time-based logic if any
+        dt_sec = clock.tick(C.FPS) / 1000.0 
+        now_ticks_couch = pygame.time.get_ticks() 
         
-        pygame_events = pygame.event.get() # Get all events once per frame
-        keys_pressed = pygame.key.get_pressed() # Get all held keys once per frame
+        pygame_events = pygame.event.get() 
+        keys_pressed = pygame.key.get_pressed() 
         
         host_requested_reset_couch = False
 
-        # Handle global events (Quit, Resize, Escape, Reset, Debug keys)
         for event in pygame_events:
             if event.type == pygame.QUIT:
                 couch_game_active = False
-                app_status_obj.app_running = False # Signal entire application to quit
+                app_status_obj.app_running = False 
                 break
             if event.type == pygame.VIDEORESIZE:
-                if not screen.get_flags() & pygame.FULLSCREEN: # Handle window resize
+                if not screen.get_flags() & pygame.FULLSCREEN: 
                     current_width, current_height = max(320,event.w), max(240,event.h)
                     screen = pygame.display.set_mode((current_width,current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
-                    if game_elements_ref.get("camera"): # Update camera's screen dimensions
+                    if game_elements_ref.get("camera"): 
                         game_elements_ref["camera"].screen_width = current_width
                         game_elements_ref["camera"].screen_height = current_height
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    couch_game_active = False # Exit couch mode to main menu
+                    couch_game_active = False 
                     break
-                if event.key == pygame.K_r: # Reset game state
+                # MODIFIED: Changed reset key from K_r to K_q
+                if event.key == pygame.K_q: 
                     host_requested_reset_couch = True
                 
-                # Player 1 debug keys
                 if p1 and p1._valid_init:
                     if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'):
                         p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'):
                         p1.heal_to_full()
                 
-                # Player 2 debug keys
                 if p2 and p2._valid_init:
-                    if event.key == pygame.K_n and hasattr(p2, 'self_inflict_damage'): # 'N' for P2 self-harm
+                    if event.key == pygame.K_n and hasattr(p2, 'self_inflict_damage'): 
                         p2.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
-                    if event.key == pygame.K_m and hasattr(p2, 'heal_to_full'): # 'M' for P2 heal
+                    if event.key == pygame.K_m and hasattr(p2, 'heal_to_full'): 
                         p2.heal_to_full()
         
         if not app_status_obj.app_running or not couch_game_active: break
 
-        # Handle inputs for both local players
-        if p1 and p1._valid_init and not p1.is_dead: # Only process input if P1 is valid and not dead
+        if p1 and p1._valid_init and not p1.is_dead: 
             if hasattr(p1, 'handle_mapped_input'):
                 p1.handle_mapped_input(keys_pressed, pygame_events, p1_key_map_config)
         
-        if p2 and p2._valid_init and not p2.is_dead: # Only process input if P2 is valid and not dead
+        if p2 and p2._valid_init and not p2.is_dead: 
             if hasattr(p2, 'handle_mapped_input'):
                 p2.handle_mapped_input(keys_pressed, pygame_events, p2_key_map_config)
 
-        # If reset was requested, trigger it
         if host_requested_reset_couch:
-            print("Couch Play: Game state reset triggered.")
-            # reset_game_state returns the new chest instance (or None)
+            print("Couch Play: Game state reset triggered by 'Q' key.") # Updated message
             game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
 
-        # --- Local Authoritative Game Logic Updates ---
-        # Update Player 1
         if p1 and p1._valid_init:
-            # List of other players for P1's collision/interaction checks
             other_players_for_p1_update = [char for char in [p2] if char and char._valid_init and char.alive() and char is not p1]
             p1.update(dt_sec, game_elements_ref["platform_sprites"], game_elements_ref["ladder_sprites"], 
                       game_elements_ref["hazard_sprites"], other_players_for_p1_update, game_elements_ref["enemy_list"])
         
-        # Update Player 2
         if p2 and p2._valid_init:
             other_players_for_p2_update = [char for char in [p1] if char and char._valid_init and char.alive() and char is not p2]
             p2.update(dt_sec, game_elements_ref["platform_sprites"], game_elements_ref["ladder_sprites"], 
                       game_elements_ref["hazard_sprites"], other_players_for_p2_update, game_elements_ref["enemy_list"])
 
-        # Update Enemies
-        # Enemies target any active player
         active_players_for_enemy_ai_couch = [char for char in [p1, p2] if char and char._valid_init and not char.is_dead and char.alive()]
-        for enemy_couch in list(game_elements_ref.get("enemy_list", [])): # Iterate copy for safe removal
+        for enemy_couch in list(game_elements_ref.get("enemy_list", [])): 
             if enemy_couch._valid_init:
                 enemy_couch.update(dt_sec, active_players_for_enemy_ai_couch, 
                                    game_elements_ref["platform_sprites"], game_elements_ref["hazard_sprites"])
-                # If enemy's death animation finishes, remove it
                 if enemy_couch.is_dead and hasattr(enemy_couch, 'death_animation_finished') and \
                    enemy_couch.death_animation_finished and enemy_couch.alive():
                     if hasattr(Enemy, 'print_limiter') and Enemy.print_limiter.can_print(f"couch_killing_enemy_{enemy_couch.enemy_id}"):
                          print(f"Couch Play: Auto-killing enemy {enemy_couch.enemy_id} as death anim finished.")
-                    enemy_couch.kill() # Removes from all sprite groups it's in
-            # else: if enemy_couch.alive(): enemy_couch.kill() # Should be handled by init checks
-
-        # Update Projectiles (collision against players and enemies)
+                    enemy_couch.kill() 
+            
         hittable_characters_couch_group = pygame.sprite.Group()
         if p1 and p1.alive() and p1._valid_init: hittable_characters_couch_group.add(p1)
         if p2 and p2.alive() and p2._valid_init: hittable_characters_couch_group.add(p2)
@@ -149,28 +135,23 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             dt_sec, game_elements_ref["platform_sprites"], hittable_characters_couch_group
         )
         
-        # Update Collectibles (e.g., Chest animations, and collection logic)
         game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec)
         couch_current_chest = game_elements_ref.get("current_chest")
-        if Chest and couch_current_chest and couch_current_chest.alive(): # Check Chest class exists
+        if Chest and couch_current_chest and couch_current_chest.alive(): 
             player_who_collected_chest_couch = None
-            # Check P1 collision with chest
             if p1 and p1._valid_init and not p1.is_dead and p1.alive() and \
                pygame.sprite.collide_rect(p1, couch_current_chest):
                 player_who_collected_chest_couch = p1
-            # Check P2 collision with chest (only if P1 didn't collect it this frame)
             elif p2 and p2._valid_init and not p2.is_dead and p2.alive() and \
                  pygame.sprite.collide_rect(p2, couch_current_chest):
                 player_who_collected_chest_couch = p2
             
             if player_who_collected_chest_couch:
-                couch_current_chest.collect(player_who_collected_chest_couch) # collect() should call self.kill()
-                game_elements_ref["current_chest"] = None # Mark as collected
+                couch_current_chest.collect(player_who_collected_chest_couch) 
+                game_elements_ref["current_chest"] = None 
         
-        # Update Camera
         couch_camera = game_elements_ref.get("camera")
         if couch_camera:
-            # Simple camera focus: prioritize P1, then P2 if P1 is dead/invalid, or static if both out.
             camera_focus_target_couch = None
             if p1 and p1.alive() and p1._valid_init and not p1.is_dead:
                 camera_focus_target_couch = p1
@@ -178,17 +159,13 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 camera_focus_target_couch = p2
             
             if camera_focus_target_couch: couch_camera.update(camera_focus_target_couch)
-            else: couch_camera.static_update() # No valid target, camera remains static
+            else: couch_camera.static_update() 
 
-        # Draw the game scene
         try:
             draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_couch)
         except Exception as e:
             print(f"Couch Play draw error: {e}"); traceback.print_exc()
-            couch_game_active=False; break # Exit on critical draw error
+            couch_game_active=False; break 
         pygame.display.flip()
 
-    # --- End of Couch Play Game Loop ---
     print("Exiting Couch Play mode.")
-    # app_status_obj.app_running will be False if QUIT was pressed, otherwise True.
-    # No network connections or threads to clean up in couch mode.

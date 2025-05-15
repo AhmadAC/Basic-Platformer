@@ -1,7 +1,7 @@
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.10 (Refined debug logs, ensure C is from constants)
+## version 1.0.0.11 (Allow Esc to quit from editor menu)
 Level Editor for the Platformer Game (Pygame Only).
 Allows creating, loading, and saving game levels visually.
 """
@@ -169,27 +169,32 @@ def editor_main():
                         print(f"DEBUG MAIN: Screen resized to {editor_screen.get_size()}")
                     except pygame.error as e_resize:
                         print(f"ERROR MAIN: Pygame error on resize to {current_screen_width}x{current_screen_height}: {e_resize}")
-                        # Potentially try to fall back to a default size or handle gracefully
                     layout_needs_recalc = True
                     editor_state.set_status_message(f"Resized to {event.w}x{event.h}", 2.0)
                 
+                # Let handle_global_events deal with QUIT, which might prompt for unsaved changes
                 if not editor_event_handlers.handle_global_events(event, editor_state, editor_screen):
-                    print("DEBUG MAIN: handle_global_events returned False. Setting running=False.")
-                    running = False; break
-                if not running: break 
+                    print("DEBUG MAIN: handle_global_events returned False (QUIT). Setting running=False.")
+                    running = False; break 
+                if not running: break
 
                 # --- MODAL DIALOG EVENT PROCESSING ---
                 if editor_state.active_dialog_type:
                     editor_event_handlers.handle_dialog_events(event, editor_state)
-                    # If dialog was closed (active_dialog_type became None or changed)
-                    if editor_state.active_dialog_type != previous_dialog_type:
+                    if editor_state.active_dialog_type != previous_dialog_type: # Dialog closed or changed
                         print(f"DEBUG MAIN: Dialog type changed from '{previous_dialog_type}' to '{editor_state.active_dialog_type}' after handle_dialog_events.")
-                        # If mode also changed, it was likely due to a dialog callback
-                        if editor_state.current_editor_mode != previous_mode:
+                        if editor_state.current_editor_mode != previous_mode: # Mode changed via dialog callback
                             print(f"DEBUG MAIN: Mode changed (likely via dialog callback) from '{previous_mode}' to '{editor_state.current_editor_mode}'. Triggering layout recalc.")
                             layout_needs_recalc = True
                 else: # No active dialog, process mode-specific events
                     if editor_state.current_editor_mode == "menu":
+                        # Add Escape key handling for quitting from the menu
+                        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                            print("DEBUG MAIN: Escape pressed in menu. Posting QUIT event.")
+                            pygame.event.post(pygame.event.Event(pygame.QUIT)) # This will be caught by handle_global_events
+                            # The handle_global_events will then manage unsaved changes dialog if needed
+                            continue # Skip other menu event handling for this frame
+
                         editor_event_handlers.handle_menu_events(event, editor_state, editor_screen)
                     elif editor_state.current_editor_mode == "editing_map":
                         editor_event_handlers.handle_editing_map_events(
@@ -198,7 +203,6 @@ def editor_main():
                             editor_screen
                         )
                 
-                # Check if mode changed from any event handler (dialog or mode-specific)
                 if editor_state.current_editor_mode != previous_mode:
                     print(f"DEBUG MAIN: Mode changed from '{previous_mode}' to '{editor_state.current_editor_mode}' after specific event handlers. Triggering layout recalc.")
                     layout_needs_recalc = True
@@ -211,14 +215,13 @@ def editor_main():
                 )
                 print(f"DEBUG MAIN: New Layout after recalc - Menu={menu_section_rect}, Assets={asset_palette_section_rect}, Map={map_view_section_rect}")
                 
-                # If in editing mode and map surface exists, adjust camera to new view bounds
                 if editor_state.current_editor_mode == "editing_map" and editor_state.map_content_surface:
                     map_px_w = editor_state.get_map_pixel_width()
                     map_px_h = editor_state.get_map_pixel_height()
                     view_w = map_view_section_rect.width
                     view_h = map_view_section_rect.height
                     
-                    if view_w > 0 and view_h > 0 : # Ensure view rect has positive dimensions
+                    if view_w > 0 and view_h > 0 : 
                         max_cam_x = max(0, map_px_w - view_w)
                         max_cam_y = max(0, map_px_h - view_h)
                         
@@ -230,37 +233,34 @@ def editor_main():
                     else:
                         print(f"Warning MAIN: Map view rect has zero or negative W/H ({view_w}x{view_h}) after layout recalc. Camera not adjusted.")
 
-
-            # --- Drawing ---
-            editor_screen.fill(ED_CONFIG.C.DARK_GRAY) # Use ED_CONFIG.C for constants
+            editor_screen.fill(ED_CONFIG.C.DARK_GRAY) 
 
             if editor_state.current_editor_mode == "menu":
                 editor_drawing.draw_menu_ui(editor_screen, editor_state, menu_section_rect, fonts, mouse_pos)
-                # Draw placeholder for map area in menu mode
                 placeholder_rect = pygame.Rect(
                     menu_section_rect.right + ED_CONFIG.SECTION_PADDING, 
                     ED_CONFIG.SECTION_PADDING,
                     current_screen_width - menu_section_rect.right - ED_CONFIG.SECTION_PADDING * 2,
                     current_screen_height - ED_CONFIG.SECTION_PADDING * 2
                 )
-                if placeholder_rect.width > 10 and placeholder_rect.height > 10: # Only draw if reasonably sized
-                    pygame.draw.rect(editor_screen, (20,20,20), placeholder_rect) # Darker placeholder bg
+                if placeholder_rect.width > 10 and placeholder_rect.height > 10: 
+                    pygame.draw.rect(editor_screen, (20,20,20), placeholder_rect) 
                     font_large = fonts.get("large")
                     if font_large:
-                        ph_text = font_large.render("Map Editor Area", True, (60,60,60)) # Dim text
+                        ph_text = font_large.render("Map Editor Area", True, (60,60,60)) 
                         editor_screen.blit(ph_text, ph_text.get_rect(center=placeholder_rect.center))
 
             elif editor_state.current_editor_mode == "editing_map":
                 editor_drawing.draw_asset_palette_ui(editor_screen, editor_state, asset_palette_section_rect, fonts, mouse_pos)
                 editor_drawing.draw_map_view_ui(editor_screen, editor_state, map_view_section_rect, fonts, mouse_pos)
             
-            if editor_state.active_dialog_type: # Draw dialogs on top of everything else
+            if editor_state.active_dialog_type: 
                 editor_ui.draw_active_dialog(editor_screen, editor_state, fonts)
 
-            font_tooltip = fonts.get("tooltip") # Use specific tooltip font from ED_CONFIG
+            font_tooltip = fonts.get("tooltip") 
             if font_tooltip: editor_ui.draw_tooltip(editor_screen, editor_state, font_tooltip)
             
-            font_small = fonts.get("small") # Use specific small font
+            font_small = fonts.get("small") 
             if font_small: editor_ui.draw_status_message(editor_screen, editor_state, font_small)
 
             pygame.display.flip()
