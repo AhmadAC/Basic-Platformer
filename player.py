@@ -1,7 +1,7 @@
 # player.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.2 (Refactored into modular handlers, wall collision fix integrated)
+## version 1.0.0.3 (Standardized pos/rect sync to midbottom, refined wall collision re-check)
 Defines the Player class, handling core attributes.
 Delegates state, animation, physics, collisions, input, combat, and network handling
 to respective handler modules.
@@ -18,7 +18,7 @@ from assets import load_all_player_animations
 # Import NEW handler functions
 from player_state_handler import set_player_state
 from player_animation_handler import update_player_animation
-from player_movement_physics import update_player_core_logic # This now contains the main update loop logic
+from player_movement_physics import update_player_core_logic
 from player_collision_handler import (
     check_player_platform_collisions,
     check_player_ladder_collisions,
@@ -26,7 +26,7 @@ from player_collision_handler import (
     check_player_hazard_collisions
 )
 
-# Import EXISTING handler functions (these were already external calls)
+# Import EXISTING handler functions
 from player_input_handler import process_player_input_logic
 from player_combat_handler import (fire_player_fireball, check_player_attack_collisions, 
                                    player_take_damage, player_self_inflict_damage, player_heal_to_full)
@@ -41,8 +41,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.player_id = player_id
         self._valid_init = True
-        # print(f"DEBUG Player (init P{self.player_id}): Initializing at ({start_x}, {start_y})")
-
+        
         asset_folder = 'characters/player1' if self.player_id == 1 else 'characters/player2'
         if self.player_id not in [1, 2]:
             if Player.print_limiter.can_print(f"player_init_unrecognized_id_{self.player_id}"):
@@ -53,6 +52,7 @@ class Player(pygame.sprite.Sprite):
             print(f"CRITICAL Player Init Error ({self.player_id}): Failed to load critical animations. Player invalid.")
             self.image = pygame.Surface((30, 40)).convert_alpha(); self.image.fill(C.RED)
             self.rect = self.image.get_rect(midbottom=(start_x, start_y))
+            self.pos = pygame.math.Vector2(self.rect.midbottom) # Store midbottom
             self.is_dead = True; self._valid_init = False; return
 
         try: self.standard_height = self.animations['idle'][0].get_height()
@@ -68,10 +68,13 @@ class Player(pygame.sprite.Sprite):
         if idle_frames and len(idle_frames) > 0: self.image = idle_frames[0]
         else:
             self.image = pygame.Surface((30,40)); self.image.fill(C.RED)
+            self.rect = self.image.get_rect(midbottom=(start_x, start_y)) # Set rect before pos
+            self.pos = pygame.math.Vector2(self.rect.midbottom)      # Store midbottom
             self._valid_init = False; return
+            
         self.rect = self.image.get_rect(midbottom=(start_x, start_y))
+        self.pos = pygame.math.Vector2(self.rect.midbottom) # Store midbottom as float Vector2
         
-        self.pos = pygame.math.Vector2(start_x, start_y)
         self.vel = pygame.math.Vector2(0, 0)
         self.acc = pygame.math.Vector2(0, C.PLAYER_GRAVITY)
         self.facing_right = True
@@ -115,14 +118,12 @@ class Player(pygame.sprite.Sprite):
         self.fireball_key = None 
         if self.player_id == 1: self.fireball_key = getattr(C, 'P1_FIREBALL_KEY', pygame.K_1)
         elif self.player_id == 2: self.fireball_key = getattr(C, 'P2_FIREBALL_KEY', pygame.K_0)
-        # print(f"DEBUG Player (init P{self.player_id}): Init completed. _valid_init: {self._valid_init}")
 
     def set_projectile_group_references(self, projectile_group: pygame.sprite.Group, 
                                         all_sprites_group: pygame.sprite.Group):
         self.projectile_sprites_group = projectile_group
         self.all_sprites_group = all_sprites_group
 
-    # --- Delegated Methods ---
     def set_state(self, new_state: str):
         set_player_state(self, new_state)
 
@@ -167,7 +168,6 @@ class Player(pygame.sprite.Sprite):
     def get_input_state_for_network(self, keys_state, events, key_map):
         return get_player_input_state_for_network(self, keys_state, events, key_map)
 
-    # --- Collision Check Delegations ---
     def check_platform_collisions(self, direction: str, platforms_group: pygame.sprite.Group):
         check_player_platform_collisions(self, direction, platforms_group)
 
@@ -175,20 +175,17 @@ class Player(pygame.sprite.Sprite):
         check_player_ladder_collisions(self, ladders_group)
 
     def check_character_collisions(self, direction: str, characters_list: list):
-        # This method will return a boolean, so capture it if needed in update_player_core_logic
         return check_player_character_collisions(self, direction, characters_list)
         
     def check_hazard_collisions(self, hazards_group: pygame.sprite.Group):
         check_player_hazard_collisions(self, hazards_group)
 
-    # --- Core Update Method ---
     def update(self, dt_sec, platforms_group, ladders_group, hazards_group, 
                other_players_sprite_list, enemies_sprite_list):
         update_player_core_logic(self, dt_sec, platforms_group, ladders_group, hazards_group,
                                  other_players_sprite_list, enemies_sprite_list)
 
     def reset_state(self, spawn_position_tuple: tuple):
-        # print(f"DEBUG Player (reset_state P{self.player_id}): Resetting state. Current valid: {self._valid_init}")
         if not self._valid_init: 
             asset_folder = 'characters/player1' if self.player_id == 1 else 'characters/player2'
             self.animations = load_all_player_animations(relative_asset_folder=asset_folder)
@@ -197,9 +194,12 @@ class Player(pygame.sprite.Sprite):
                 idle_frames = self.animations.get('idle')
                 if idle_frames and len(idle_frames) > 0: self.image = idle_frames[0]
                 else: self.image = pygame.Surface((30,40)); self.image.fill(C.RED)
+                # Update rect and pos based on new image for potentially invalid player
+                self.rect = self.image.get_rect(midbottom=spawn_position_tuple)
+                self.pos = pygame.math.Vector2(self.rect.midbottom)
             else: return
         
-        self.pos = pygame.math.Vector2(spawn_position_tuple[0], spawn_position_tuple[1])
+        self.pos = pygame.math.Vector2(spawn_position_tuple) # spawn_position_tuple is already (midbottom_x, midbottom_y)
         self.rect.midbottom = (round(self.pos.x), round(self.pos.y))
         self.vel = pygame.math.Vector2(0, 0)
         self.acc = pygame.math.Vector2(0, C.PLAYER_GRAVITY if hasattr(C, 'PLAYER_GRAVITY') else 0.7)
@@ -219,4 +219,3 @@ class Player(pygame.sprite.Sprite):
             self.image.set_alpha(255)
         
         set_player_state(self, 'idle')
-        # print(f"DEBUG Player (reset_state P{self.player_id}): Reset complete. Pos: {self.pos}, HP: {self.current_health}")

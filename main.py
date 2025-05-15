@@ -1,24 +1,37 @@
 # main.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.6 (Safer global game_elements defaults)
+## version 1.0.0.7 (Integrated logger.py)
 import sys
 import os
 import pygame
 import traceback 
-from typing import Dict, Optional, Any # Ensure these are imported for type hints
+from typing import Dict, Optional, Any
+
+# --- Logger Setup ---
+try:
+    import logger # Import your new logger module
+    logger.info("MAIN: Application starting.") # First log from main
+except ImportError:
+    # Fallback basic print if logger fails, though it shouldn't if in same dir
+    print("FATAL MAIN: logger.py not found. Exiting.")
+    sys.exit(1)
+except Exception as e:
+    print(f"FATAL MAIN: Error importing logger: {e}")
+    sys.exit(1)
+
 
 # --- Pyperclip Check ---
 PYPERCLIP_AVAILABLE_MAIN = False
 try:
     import pyperclip
     PYPERCLIP_AVAILABLE_MAIN = True
-    print("Pyperclip library found and imported successfully for main.")
+    logger.info("Pyperclip library found and imported successfully for main.")
 except ImportError:
-    print("Main: Pyperclip library not found (pip install pyperclip). Paste in UI may be limited.")
+    logger.warning("Main: Pyperclip library not found (pip install pyperclip). Paste in UI may be limited.")
 
 # --- Platformer Game Module Imports ---
 try:
-    import constants as C # This should make C available globally in this module
+    import constants as C 
     from camera import Camera
     from items import Chest
     from game_setup import initialize_game_elements 
@@ -27,13 +40,13 @@ try:
     from couch_play_logic import run_couch_play_mode
     import game_ui 
 
-    print("Platformer modules imported successfully.")
+    logger.info("Platformer modules imported successfully.")
 except ImportError as e:
-    print(f"FATAL MAIN: Failed to import a required platformer module: {e}")
+    logger.critical(f"FATAL MAIN: Failed to import a required platformer module: {e}")
     traceback.print_exc()
     sys.exit(1)
 except Exception as e:
-    print(f"FATAL MAIN: An unexpected error occurred during platformer module imports: {e}")
+    logger.critical(f"FATAL MAIN: An unexpected error occurred during platformer module imports: {e}")
     traceback.print_exc()
     sys.exit(1)
 
@@ -47,20 +60,19 @@ class AppStatus:
         self.app_running = True
 
 # --- Display Setup ---
-# These need to be defined before game_elements if game_elements uses WIDTH, HEIGHT
 try:
     display_info = pygame.display.Info()
     monitor_width = display_info.current_w
     monitor_height = display_info.current_h
     initial_width = max(800, min(1600, monitor_width * 3 // 4))
     initial_height = max(600, min(900, monitor_height * 3 // 4))
-    WIDTH_MAIN, HEIGHT_MAIN = initial_width, initial_height # Use different names to avoid conflict if C also has WIDTH/HEIGHT
+    WIDTH_MAIN, HEIGHT_MAIN = initial_width, initial_height 
     screen_flags = pygame.RESIZABLE | pygame.DOUBLEBUF
     screen = pygame.display.set_mode((WIDTH_MAIN, HEIGHT_MAIN), screen_flags)
     pygame.display.set_caption("Platformer Adventure LAN")
-    print(f"Initial window dimensions: {WIDTH_MAIN}x{HEIGHT_MAIN}")
+    logger.info(f"Initial window dimensions: {WIDTH_MAIN}x{HEIGHT_MAIN}")
 except Exception as e:
-    print(f"FATAL MAIN: Error setting up Pygame display: {e}")
+    logger.critical(f"FATAL MAIN: Error setting up Pygame display: {e}")
     pygame.quit()
     sys.exit(1)
 
@@ -70,54 +82,36 @@ try:
     if pygame.display.get_init(): 
         pygame.scrap.init() 
         SCRAP_INITIALIZED_MAIN = pygame.scrap.get_init()
-        if SCRAP_INITIALIZED_MAIN: print("Main: pygame.scrap clipboard module initialized successfully.")
-        else: print("Main Warning: pygame.scrap.init() called but pygame.scrap.get_init() returned False.")
-    else: print("Main Warning: Display not initialized before pygame.scrap.init() attempt.")
-except AttributeError: print("Main Warning: pygame.scrap module not found or available on this system.")
-except pygame.error as e: print(f"Main Warning: pygame.scrap module could not be initialized: {e}")
-except Exception as e: print(f"Main Warning: An unexpected error occurred during pygame.scrap init: {e}")
+        if SCRAP_INITIALIZED_MAIN: logger.info("Main: pygame.scrap clipboard module initialized successfully.")
+        else: logger.warning("Main Warning: pygame.scrap.init() called but pygame.scrap.get_init() returned False.")
+    else: logger.warning("Main Warning: Display not initialized before pygame.scrap.init() attempt.")
+except AttributeError: logger.warning("Main Warning: pygame.scrap module not found or available on this system.")
+except pygame.error as e: logger.warning(f"Main Warning: pygame.scrap module could not be initialized: {e}")
+except Exception as e: logger.warning(f"Main Warning: An unexpected error occurred during pygame.scrap init: {e}")
 
 
-# --- Global Game Variables ---
-# These are placeholders; initialize_game_elements will populate them correctly.
-# Avoid direct use of C.X here if C might not be fully "ready" for complex constants,
-# though basic color tuples and TILE_SIZE should be fine after a successful import.
-# The main thing is that initialize_game_elements will use C properly from within its scope.
-_TILE_SIZE_DEFAULT = 40 # A hardcoded fallback if C.TILE_SIZE access fails globally
+_TILE_SIZE_DEFAULT = 40 
 _LIGHT_BLUE_DEFAULT = (173, 216, 230)
-
 game_elements: Dict[str, Any] = {
-    "player1": None, "player2": None, "camera": None,
-    "current_chest": None, "enemy_list": [],
-    "platform_sprites": pygame.sprite.Group(),
-    "ladder_sprites": pygame.sprite.Group(),
-    "hazard_sprites": pygame.sprite.Group(),
-    "enemy_sprites": pygame.sprite.Group(),
-    "collectible_sprites": pygame.sprite.Group(),
-    "projectile_sprites": pygame.sprite.Group(),
-    "all_sprites": pygame.sprite.Group(),
-    
-    # These defaults are less critical as initialize_game_elements recalculates them based on loaded level.
-    "level_pixel_width": WIDTH_MAIN, 
-    "level_min_y_absolute": 0, 
-    "level_max_y_absolute": HEIGHT_MAIN,
+    "player1": None, "player2": None, "camera": None, "current_chest": None, "enemy_list": [],
+    "platform_sprites": pygame.sprite.Group(), "ladder_sprites": pygame.sprite.Group(),
+    "hazard_sprites": pygame.sprite.Group(), "enemy_sprites": pygame.sprite.Group(),
+    "collectible_sprites": pygame.sprite.Group(), "projectile_sprites": pygame.sprite.Group(),
+    "all_sprites": pygame.sprite.Group(), "level_pixel_width": WIDTH_MAIN, 
+    "level_min_y_absolute": 0, "level_max_y_absolute": HEIGHT_MAIN,
     "ground_level_y": HEIGHT_MAIN - getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT),
     "ground_platform_height": getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT),
     "player1_spawn_pos": (100, HEIGHT_MAIN - (getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT) * 2)),
     "player2_spawn_pos": (150, HEIGHT_MAIN - (getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT) * 2)),
-    "enemy_spawns_data_cache": [],
-    "level_background_color": getattr(C, 'LIGHT_BLUE', _LIGHT_BLUE_DEFAULT)
+    "enemy_spawns_data_cache": [], "level_background_color": getattr(C, 'LIGHT_BLUE', _LIGHT_BLUE_DEFAULT)
 }
 
-# --- Main Execution ---
 if __name__ == "__main__":
-    print("MAIN: Starting __main__ execution block.")
+    logger.info("MAIN: Starting __main__ execution block.")
     main_clock = pygame.time.Clock()
     app_status = AppStatus()
 
-    fonts: Dict[str, Optional[pygame.font.Font]] = {
-        "small": None, "medium": None, "large": None, "debug": None
-    }
+    fonts: Dict[str, Optional[pygame.font.Font]] = {"small": None, "medium": None, "large": None, "debug": None}
     try:
         fonts["small"] = pygame.font.Font(None, 28)
         fonts["medium"] = pygame.font.Font(None, 36)
@@ -125,37 +119,37 @@ if __name__ == "__main__":
         fonts["debug"] = pygame.font.Font(None, 20)
         if any(f is None for f in fonts.values()):
             raise pygame.error("One or more default fonts failed to load after init.")
-        print("MAIN: Fonts loaded successfully.")
+        logger.info("MAIN: Fonts loaded successfully.")
     except pygame.error as e:
-        print(f"FATAL MAIN: Font loading error: {e}. Ensure Pygame font module is working.")
+        logger.critical(f"FATAL MAIN: Font loading error: {e}. Ensure Pygame font module is working.")
         app_status.app_running = False 
     except Exception as e:
-        print(f"FATAL MAIN: Unexpected error during font loading: {e}")
+        logger.critical(f"FATAL MAIN: Unexpected error during font loading: {e}")
         app_status.app_running = False
 
-    # --- Main Application Loop ---
     while app_status.app_running:
         current_screen_width, current_screen_height = screen.get_size()
         pygame.display.set_caption("Platformer Adventure - Main Menu")
         
-        print("\nMAIN: Showing main menu...")
+        logger.info("\nMAIN: Showing main menu...") # Add newline for better log readability
         menu_choice = game_ui.show_main_menu(screen, main_clock, fonts, app_status)
-        print(f"MAIN: Main menu choice: '{menu_choice}'")
+        logger.info(f"MAIN: Main menu choice: '{menu_choice}'")
         
         if not app_status.app_running or menu_choice == "quit":
             app_status.app_running = False; break 
 
         map_to_load_for_game: Optional[str] = None 
         if menu_choice in ["couch_play", "host"]:
-            print(f"MAIN: Mode '{menu_choice}' requires map selection. Opening map dialog...")
+            logger.info(f"MAIN: Mode '{menu_choice}' requires map selection. Opening map dialog...")
             map_to_load_for_game = game_ui.select_map_dialog(screen, main_clock, fonts, app_status)
-            if not app_status.app_running: print("MAIN: App quit during map selection."); break 
+            if not app_status.app_running: logger.info("MAIN: App quit during map selection."); break 
             if map_to_load_for_game is None:
-                print("MAIN: Map selection cancelled/no maps. Returning to main menu."); continue 
-            print(f"MAIN: Map selected for '{menu_choice}': '{map_to_load_for_game}'")
+                logger.info("MAIN: Map selection cancelled/no maps. Returning to main menu."); continue 
+            logger.info(f"MAIN: Map selected for '{menu_choice}': '{map_to_load_for_game}'")
         
-        print(f"MAIN: Initializing game elements for mode '{menu_choice}' with map '{map_to_load_for_game if map_to_load_for_game else 'Default/Server-defined'}'...")
-        initialized_elements = initialize_game_elements(
+        logger.info(f"MAIN: Initializing game elements for mode '{menu_choice}' with map '{map_to_load_for_game if map_to_load_for_game else 'Default/Server-defined'}'...")
+        # Pass logger to initialize_game_elements if it also needs to log
+        initialized_elements = initialize_game_elements( 
             current_screen_width, current_screen_height, 
             for_game_mode=menu_choice,
             existing_sprites_groups={ 
@@ -163,11 +157,11 @@ if __name__ == "__main__":
                 "player1": game_elements.get("player1"), "player2": game_elements.get("player2"),
                 "current_chest": game_elements.get("current_chest")
             },
-            map_module_name=map_to_load_for_game 
+            map_module_name=map_to_load_for_game
         )
 
         if initialized_elements is None:
-            print(f"Main Error: Failed to initialize game elements for mode '{menu_choice}' (Map: '{map_to_load_for_game}'). Returning to menu.")
+            logger.error(f"Main Error: Failed to initialize game elements for mode '{menu_choice}' (Map: '{map_to_load_for_game}'). Returning to menu.")
             screen.fill(getattr(C, 'BLACK', (0,0,0))) 
             if fonts.get("medium"):
                 err_msg_surf = fonts["medium"].render(f"Error starting {menu_choice} mode.", True, getattr(C, 'RED', (255,0,0)))
@@ -184,36 +178,36 @@ if __name__ == "__main__":
                  cam_instance.screen_width, cam_instance.screen_height = current_screen_width, current_screen_height
                  if hasattr(cam_instance, 'camera_rect'):
                     cam_instance.camera_rect.width, cam_instance.camera_rect.height = current_screen_width, current_screen_height
-            print(f"MAIN: Camera screen dimensions updated to {current_screen_width}x{current_screen_height}")
+            logger.info(f"MAIN: Camera screen dimensions updated to {current_screen_width}x{current_screen_height}")
 
-        print(f"MAIN: Launching game mode: '{menu_choice}'")
+        logger.info(f"MAIN: Launching game mode: '{menu_choice}'")
         if menu_choice == "host":
             server_state = ServerState(); server_state.app_running = app_status.app_running 
-            run_server_mode(screen, main_clock, fonts, game_elements, server_state)
+            run_server_mode(screen, main_clock, fonts, game_elements, server_state) # Pass logger if needed
             app_status.app_running = server_state.app_running
         elif menu_choice == "join_lan":
             client_state = ClientState(); client_state.app_running = app_status.app_running
-            run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=None)
+            run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=None) # Pass logger
             app_status.app_running = client_state.app_running
         elif menu_choice == "join_ip":
-            print("MAIN: Requesting IP input for 'join_ip' mode...")
+            logger.info("MAIN: Requesting IP input for 'join_ip' mode...")
             target_ip_input = game_ui.get_server_ip_input_dialog(screen, main_clock, fonts, app_status, default_input_text="127.0.0.1:5555")
-            print(f"MAIN: IP input dialog returned: '{target_ip_input}'")
+            logger.info(f"MAIN: IP input dialog returned: '{target_ip_input}'")
             if target_ip_input and app_status.app_running: 
                 client_state = ClientState(); client_state.app_running = app_status.app_running
-                run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=target_ip_input)
+                run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=target_ip_input) # Pass logger
                 app_status.app_running = client_state.app_running
-            elif not app_status.app_running: print("MAIN: IP input cancelled or app quit during dialog.")
-            else: print("MAIN: No IP entered. Returning to main menu.")
+            elif not app_status.app_running: logger.info("MAIN: IP input cancelled or app quit during dialog.")
+            else: logger.info("MAIN: No IP entered. Returning to main menu.")
         elif menu_choice == "couch_play":
-            run_couch_play_mode(screen, main_clock, fonts, game_elements, app_status)
+            run_couch_play_mode(screen, main_clock, fonts, game_elements, app_status) # Pass logger
         
-        print(f"MAIN: Returned from game mode '{menu_choice}'. App running: {app_status.app_running}")
+        logger.info(f"MAIN: Returned from game mode '{menu_choice}'. App running: {app_status.app_running}")
 
-    print("MAIN: Exiting application loop gracefully.")
+    logger.info("MAIN: Exiting application loop gracefully.")
     pygame.quit()
     if SCRAP_INITIALIZED_MAIN and pygame.scrap.get_init():
-        try: pygame.scrap.quit(); print("Main: pygame.scrap quit successfully.")
-        except Exception as e: print(f"Main Warning: Error during pygame.scrap.quit(): {e}")
-    print("MAIN: Application terminated.")
+        try: pygame.scrap.quit(); logger.info("Main: pygame.scrap quit successfully.")
+        except Exception as e: logger.warning(f"Main Warning: Error during pygame.scrap.quit(): {e}")
+    logger.info("MAIN: Application terminated.")
     sys.exit(0)
