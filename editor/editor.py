@@ -1,7 +1,7 @@
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.18 (Modular event handlers and updates)
+## version 1.0.0.19 (Added Rename Map functionality and menu event handler)
 Level Editor for the Platformer Game (Pygame Only).
 Allows creating, loading, and saving game levels visually.
 """
@@ -15,7 +15,7 @@ import logging
 
 # --- Logger Setup ---
 logger = None
-log_file_path_for_error_msg = "Not determined" 
+log_file_path_for_error_msg = "Not determined"
 try:
     current_script_dir = os.path.dirname(os.path.abspath(__file__))
     logs_dir = os.path.join(current_script_dir, 'logs')
@@ -27,7 +27,7 @@ try:
     else:
         print(f"Logs directory already exists at: {logs_dir}")
 
-    log_file_path_for_error_msg = os.path.join(logs_dir, 'editor_debug.log') 
+    log_file_path_for_error_msg = os.path.join(logs_dir, 'editor_debug.log')
     print(f"Attempting to configure logging to file: {log_file_path_for_error_msg}")
 
     for handler in logging.root.handlers[:]:
@@ -66,7 +66,7 @@ try:
     else:
         logger.debug(f"Project root '{project_root}' already in sys.path.")
 
-    import constants as C_imported 
+    import constants as C_imported
     logger.info(f"Successfully imported 'constants as C_imported'. TILE_SIZE: {getattr(C_imported, 'TILE_SIZE', 'NOT FOUND')}")
 
 except ImportError as e_imp:
@@ -83,7 +83,7 @@ except Exception as e_gen_imp:
 # --- Editor module imports ---
 try:
     import editor_config as ED_CONFIG
-    from editor_state import EditorState 
+    from editor_state import EditorState
     import editor_ui
     import editor_assets
     import editor_map_utils
@@ -91,8 +91,8 @@ try:
     # Import the new handler and update modules
     from editor_handlers_global import handle_global_events
     from editor_handlers_dialog import handle_dialog_events
-    from editor_handlers_menu import handle_menu_events
-    from editor_handlers_map_editing import handle_editing_map_events 
+    from editor_handlers_menu import handle_menu_events, start_rename_map_flow # Import new function
+    from editor_handlers_map_editing import handle_editing_map_events
     from editor_updates import update_continuous_camera_pan, update_asset_palette_scroll_momentum
     logger.debug("Successfully imported all editor-specific modules including new handlers.")
 except ImportError as e_editor_mod:
@@ -126,8 +126,8 @@ def editor_main():
         logger.info(f"Editor screen created: {editor_screen.get_size()}")
         pygame.display.set_caption("Platformer Level Editor - Menu")
         editor_clock = pygame.time.Clock()
-        editor_state = EditorState() 
-        editor_assets.load_editor_palette_assets(editor_state) 
+        editor_state = EditorState()
+        editor_assets.load_editor_palette_assets(editor_state)
 
         fonts: Dict[str, Optional[pygame.font.Font]] = ED_CONFIG.FONT_CONFIG
         if not fonts.get("small") or not fonts.get("medium") or not fonts.get("large"):
@@ -138,11 +138,11 @@ def editor_main():
         def calculate_layout_rects(screen_width: int, screen_height: int, current_mode: str) -> Tuple[pygame.Rect, pygame.Rect, pygame.Rect]:
             menu_rect = pygame.Rect(ED_CONFIG.SECTION_PADDING, ED_CONFIG.SECTION_PADDING,
                                      ED_CONFIG.MENU_SECTION_WIDTH, screen_height - (ED_CONFIG.SECTION_PADDING * 2))
-            menu_rect.width = max(ED_CONFIG.BUTTON_WIDTH_STANDARD + ED_CONFIG.SECTION_PADDING * 2, menu_rect.width) 
-            menu_rect.height = max(menu_rect.height, ED_CONFIG.MENU_SECTION_HEIGHT) 
+            menu_rect.width = max(ED_CONFIG.BUTTON_WIDTH_STANDARD + ED_CONFIG.SECTION_PADDING * 2, menu_rect.width)
+            menu_rect.height = max(menu_rect.height, ED_CONFIG.MENU_SECTION_HEIGHT)
 
             asset_palette_rect = pygame.Rect(ED_CONFIG.SECTION_PADDING, ED_CONFIG.SECTION_PADDING,
-                                            ED_CONFIG.ASSET_PALETTE_SECTION_WIDTH, screen_height - (ED_CONFIG.SECTION_PADDING * 2)) 
+                                            ED_CONFIG.ASSET_PALETTE_SECTION_WIDTH, screen_height - (ED_CONFIG.SECTION_PADDING * 2))
             map_view_x_start = ED_CONFIG.SECTION_PADDING
             map_view_width_available = screen_width - (ED_CONFIG.SECTION_PADDING * 2)
 
@@ -172,7 +172,7 @@ def editor_main():
         while running:
             loop_count += 1
             dt = editor_clock.tick(ED_CONFIG.C.FPS if hasattr(ED_CONFIG.C, 'FPS') else 60) / 1000.0
-            dt = min(dt, 0.1) 
+            dt = min(dt, 0.1)
 
             mouse_pos = pygame.mouse.get_pos()
             events = pygame.event.get()
@@ -185,15 +185,15 @@ def editor_main():
             # --- Continuous Updates (called every frame) ---
             if editor_state.current_editor_mode == "editing_map" and not editor_state.active_dialog_type:
                 update_continuous_camera_pan(editor_state, map_view_section_rect, mouse_pos, dt)
-                
+
                 asset_list_visible_height = (
-                    asset_palette_section_rect.height 
-                    - ED_CONFIG.MINIMAP_AREA_HEIGHT 
-                    - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2) 
+                    asset_palette_section_rect.height
+                    - ED_CONFIG.MINIMAP_AREA_HEIGHT
+                    - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2)
                 )
                 update_asset_palette_scroll_momentum(
                     editor_state,
-                    dt, 
+                    dt,
                     asset_list_visible_height,
                     editor_state.total_asset_palette_content_height
                 )
@@ -202,27 +202,27 @@ def editor_main():
 
             # --- Event Processing ---
             for event_idx, event in enumerate(events):
-                if event.type == pygame.VIDEORESIZE: 
+                if event.type == pygame.VIDEORESIZE:
                     logger.info(f"VIDEORESIZE event to {event.w}x{event.h}")
                     current_screen_width, current_screen_height = event.w, event.h
-                    try: 
+                    try:
                         editor_screen = pygame.display.set_mode((current_screen_width, current_screen_height), pygame.RESIZABLE)
-                    except pygame.error as e_resize: 
+                    except pygame.error as e_resize:
                         logger.error(f"Pygame error on resize to {current_screen_width}x{current_screen_height}: {e_resize}", exc_info=True)
                     layout_needs_recalc = True
                     editor_state.set_status_message(f"Resized to {event.w}x{event.h}", 2.0)
-                    editor_state.minimap_needs_regeneration = True 
-                
-                if not handle_global_events(event, editor_state, editor_screen): 
+                    editor_state.minimap_needs_regeneration = True
+
+                if not handle_global_events(event, editor_state, editor_screen):
                     logger.info("handle_global_events returned False (QUIT). Setting running=False.")
                     running = False; break
-                if not running: break 
+                if not running: break
 
                 if editor_state.active_dialog_type:
                     handle_dialog_events(event, editor_state)
-                    if editor_state.active_dialog_type != previous_dialog_type: 
+                    if editor_state.active_dialog_type != previous_dialog_type:
                         logger.debug(f"Dialog type changed from '{previous_dialog_type}' to '{editor_state.active_dialog_type}' after handle_dialog_events.")
-                        if editor_state.current_editor_mode != previous_mode: 
+                        if editor_state.current_editor_mode != previous_mode:
                             logger.debug(f"Mode changed (likely via dialog callback) from '{previous_mode}' to '{editor_state.current_editor_mode}'. Triggering layout recalc.")
                             layout_needs_recalc = True
                 else: # No active dialog
@@ -230,15 +230,15 @@ def editor_main():
                         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                             logger.info("Escape pressed in menu. Posting QUIT event.")
                             pygame.event.post(pygame.event.Event(pygame.QUIT))
-                            continue 
-                        handle_menu_events(event, editor_state, editor_screen)
+                            continue
+                        handle_menu_events(event, editor_state, editor_screen) # This will now handle the rename button click too
                     elif editor_state.current_editor_mode == "editing_map":
                         handle_editing_map_events(event, editor_state, asset_palette_section_rect, map_view_section_rect, editor_screen)
-                
-                if editor_state.current_editor_mode != previous_mode: 
+
+                if editor_state.current_editor_mode != previous_mode:
                     logger.debug(f"Mode changed from '{previous_mode}' to '{editor_state.current_editor_mode}' after specific event handlers. Triggering layout recalc.")
                     layout_needs_recalc = True
-            if not running: break 
+            if not running: break
             # --- End Event Processing ---
 
 
@@ -252,12 +252,12 @@ def editor_main():
                 not pygame.key.get_pressed()[pygame.K_w] and not pygame.key.get_pressed()[pygame.K_s] :
 
                 cam_vx, cam_vy = editor_state.camera_momentum_pan
-                damping_this_frame = ED_CONFIG.CAMERA_MOMENTUM_DAMPING_FACTOR ** (dt * 60.0) 
+                damping_this_frame = ED_CONFIG.CAMERA_MOMENTUM_DAMPING_FACTOR ** (dt * 60.0)
                 cam_vx *= damping_this_frame
                 cam_vy *= damping_this_frame
                 editor_state.camera_offset_x += cam_vx * dt
                 editor_state.camera_offset_y += cam_vy * dt
-                
+
                 max_cam_x = max(0, editor_state.get_map_pixel_width() - map_view_section_rect.width)
                 max_cam_y = max(0, editor_state.get_map_pixel_height() - map_view_section_rect.height)
                 boundary_hit = False
@@ -269,7 +269,7 @@ def editor_main():
                     editor_state.camera_offset_y = 0; cam_vy = 0; boundary_hit = True
                 elif editor_state.camera_offset_y >= max_cam_y:
                     editor_state.camera_offset_y = max_cam_y; cam_vy = 0; boundary_hit = True
-                
+
                 editor_state.camera_offset_x = int(editor_state.camera_offset_x)
                 editor_state.camera_offset_y = int(editor_state.camera_offset_y)
 
@@ -278,7 +278,7 @@ def editor_main():
                 else:
                     editor_state.camera_momentum_pan = (cam_vx, cam_vy)
             # --- End Camera Momentum ---
-            
+
             if layout_needs_recalc:
                 logger.debug(f"Recalculating layout. Current Mode: '{editor_state.current_editor_mode}', Screen: {current_screen_width}x{current_screen_height}")
                 menu_section_rect, asset_palette_section_rect, map_view_section_rect = calculate_layout_rects(
@@ -295,11 +295,11 @@ def editor_main():
                         editor_state.camera_offset_y = max(0,min(editor_state.camera_offset_y,max_cy))
                         if prev_cx!=editor_state.camera_offset_x or prev_cy!=editor_state.camera_offset_y:
                             logger.debug(f"Camera clamped after resize/layout from ({prev_cx},{prev_cy}) to ({editor_state.camera_offset_x},{editor_state.camera_offset_y}). Max: ({max_cx},{max_cy})")
-                    else: 
+                    else:
                         logger.warning(f"Map view rect zero/negative W/H ({view_w}x{view_h}). Camera not adjusted.")
 
             # --- Drawing ---
-            editor_screen.fill(ED_CONFIG.C.DARK_GRAY if hasattr(ED_CONFIG.C, 'DARK_GRAY') else (50,50,50)) 
+            editor_screen.fill(ED_CONFIG.C.DARK_GRAY if hasattr(ED_CONFIG.C, 'DARK_GRAY') else (50,50,50))
 
             if editor_state.current_editor_mode == "menu":
                 editor_drawing.draw_menu_ui(editor_screen, editor_state, menu_section_rect, fonts, mouse_pos)
@@ -309,24 +309,24 @@ def editor_main():
                 if ph_rect.width > 10 and ph_rect.height > 10:
                     pygame.draw.rect(editor_screen, (20,20,20), ph_rect)
                     f_large = fonts.get("large");
-                    if f_large: 
-                        editor_screen.blit(f_large.render("Map Editor Area",True,(60,60,60)), 
+                    if f_large:
+                        editor_screen.blit(f_large.render("Map Editor Area",True,(60,60,60)),
                                            f_large.render("Map Editor Area",True,(60,60,60)).get_rect(center=ph_rect.center))
             elif editor_state.current_editor_mode == "editing_map":
                 editor_drawing.draw_asset_palette_ui(editor_screen, editor_state, asset_palette_section_rect, fonts, mouse_pos, map_view_section_rect)
                 editor_drawing.draw_map_view_ui(editor_screen, editor_state, map_view_section_rect, fonts, mouse_pos)
 
-            if editor_state.active_dialog_type: 
+            if editor_state.active_dialog_type:
                 editor_ui.draw_active_dialog(editor_screen, editor_state, fonts)
-            
+
             f_tooltip = fonts.get("tooltip");
-            if f_tooltip: 
+            if f_tooltip:
                 editor_ui.draw_tooltip(editor_screen, editor_state, f_tooltip)
-            
+
             f_small = fonts.get("small");
-            if f_small: 
+            if f_small:
                 editor_ui.draw_status_message(editor_screen, editor_state, f_small)
-            
+
             pygame.display.flip()
             # --- End Drawing ---
 
@@ -343,5 +343,5 @@ def editor_main():
         sys.exit()
 
 if __name__ == "__main__":
-    print("--- editor.py execution started (__name__ == '__main__') ---") 
+    print("--- editor.py execution started (__name__ == '__main__') ---")
     editor_main()

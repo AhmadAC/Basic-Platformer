@@ -1,7 +1,7 @@
 # editor_map_utils.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.8 (Added delete_map_files utility)
+## version 1.0.1.0 (Optimized Python export for platforms, refactored merging logic)
 Utility functions for map operations in the Level Editor,
 including initializing new maps, saving/loading editor-specific
 map data (JSON), and exporting maps to game-compatible Python scripts.
@@ -12,15 +12,15 @@ import os
 import json
 import traceback
 from typing import Optional, Dict, List, Tuple, Any
-import logging 
+import logging
 
 import editor_config as ED_CONFIG
 from editor_state import EditorState
 
 import constants as C
-from tiles import Platform, Ladder, Lava
+from tiles import Platform, Ladder, Lava # Assuming Ladder might be used later
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 
 def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
@@ -100,7 +100,7 @@ def save_map_to_json(editor_state: EditorState) -> bool:
             "world_y": world_y,
             "game_type_id": game_id
         }
-        if override_color: 
+        if override_color:
             s_obj["override_color"] = list(override_color)
 
         serializable_objects.append(s_obj)
@@ -124,6 +124,9 @@ def save_map_to_json(editor_state: EditorState) -> bool:
         success_msg = f"Editor data saved to: {json_filename}"
         logger.info(success_msg)
         editor_state.set_status_message(success_msg)
+        # unsaved_changes is typically set to False after a successful PY export,
+        # but for JSON save, it often implies intermediate work.
+        # If JSON save should also clear unsaved_changes, add: editor_state.unsaved_changes = False
         return True
     except IOError as e:
         error_msg = f"IOError saving map to JSON '{json_filepath}': {e}"
@@ -189,36 +192,42 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
             else:
                 logger.warning(f"Asset key '{asset_key}' from loaded object (JSON type: '{game_type_id_from_json}') "
                                f"not found in current ED_CONFIG.EDITOR_PALETTE_ASSETS. Object at ({world_x},{world_y}) skipped.")
-        
+
         corrected_objects: List[Dict[str, Any]] = []
         lava_coords_to_check = set()
         corrections_made = False
 
         for obj in temp_placed_objects_from_json:
             if obj.get("game_type_id") == "hazard_lava":
-                if obj.get("world_x") is not None and obj.get("world_y") is not None: 
+                if obj.get("world_x") is not None and obj.get("world_y") is not None:
                     lava_coords_to_check.add((obj["world_x"], obj["world_y"]))
-        
+
         logger.debug(f"Auto-correction: Found {len(lava_coords_to_check)} lava coordinates for checking: {lava_coords_to_check}")
 
         for obj in temp_placed_objects_from_json:
             obj_wx, obj_wy = obj.get("world_x"), obj.get("world_y")
             obj_game_type_id = obj.get("game_type_id", "")
-            
+
+            # Define solid platform types more centrally if possible (e.g., in ED_CONFIG)
+            solid_platform_game_types = {
+                "platform_wall_gray", "platform_ledge_green",
+                # Add half-tile game_type_ids if they are considered solid for this check
+            }
+            # More robust check for half-tiles based on naming convention
             is_solid_platform_game_type = (
-                obj_game_type_id == "platform_wall_gray" or
-                ("platform_wall_gray_" in obj_game_type_id and "_half" in obj_game_type_id) or
-                obj_game_type_id == "platform_ledge_green" or
-                ("platform_ledge_green_" in obj_game_type_id and "_half" in obj_game_type_id)
+                obj_game_type_id in solid_platform_game_types or
+                ( ("platform_wall_gray_" in obj_game_type_id or "platform_ledge_green_" in obj_game_type_id) and
+                  "_half" in obj_game_type_id )
             )
-            
+
+
             if is_solid_platform_game_type and obj_wx is not None and obj_wy is not None and (obj_wx, obj_wy) in lava_coords_to_check:
                 logger.info(f"Auto-correcting: Removing solid platform '{obj.get('asset_editor_key')}' ({obj_game_type_id}) "
                             f"at lava location ({obj_wx},{obj_wy}).")
                 corrections_made = True
             else:
                 corrected_objects.append(obj)
-        
+
         editor_state.placed_objects = corrected_objects
         if corrections_made:
             editor_state.unsaved_changes = True
@@ -233,12 +242,12 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
         editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
 
         editor_state.recreate_map_content_surface()
-        if not corrections_made: 
-            editor_state.unsaved_changes = False 
-        
+        if not corrections_made:
+            editor_state.unsaved_changes = False
+
         success_msg = f"Map '{editor_state.map_name_for_function}' loaded from {os.path.basename(json_filepath)}."
         if corrections_made: success_msg += " (Auto-corrected)"
-        
+
         logger.info(f"{success_msg}. unsaved_changes={editor_state.unsaved_changes}, current_map_filename='{editor_state.current_map_filename}'")
         editor_state.set_status_message(success_msg)
         return True
@@ -253,6 +262,127 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
 
     editor_state.set_status_message(error_msg, 4)
     return False
+
+
+def _merge_rect_objects(objects_raw: List[Dict[str, Any]], class_name_for_export: str, sprite_group_name: str) -> List[str]:
+    """
+    Merges list of raw rectangular objects (like platforms, ladders) into larger blocks.
+    Objects must have 'x', 'y', 'w', 'h', 'color', 'type' (for platforms), 'merged' keys.
+    'type' key is specific to platforms ('wall' or 'ledge'). For others, it might be a generic type or not used in sorting.
+    """
+    if not objects_raw:
+        return [f"    # No {class_name_for_export.lower()}s placed."]
+
+    # Create a working copy and ensure all 'merged' flags are False initially
+    # (though they should be from creation)
+    working_objects = [obj.copy() for obj in objects_raw]
+    for obj in working_objects: # Ensure 'merged' key exists and is False
+        obj['merged'] = False
+
+    # 1. Horizontal Merging
+    horizontal_strips: List[Dict[str, Any]] = []
+    # Sort for horizontal merging: by visual type, color, y-coordinate, height, then x-coordinate
+    # The 'type' field is specific to platforms ('wall'/'ledge'). For generic objects, this part of key might be constant.
+    key_func_horizontal = lambda p: (p.get('type', ''), p['color'], p['y'], p['h'], p['x'])
+    
+    # Sort the copied list
+    sorted_objects_for_horizontal_merge = sorted(working_objects, key=key_func_horizontal)
+    
+    for i, p_base in enumerate(sorted_objects_for_horizontal_merge):
+        if p_base['merged']:
+            continue
+
+        current_strip = p_base.copy() # This will be the start of a new strip
+        p_base['merged'] = True # Mark the original (in sorted_objects_for_horizontal_merge) as merged
+        
+        # Try to extend this strip to the right
+        for j in range(i + 1, len(sorted_objects_for_horizontal_merge)):
+            p_next = sorted_objects_for_horizontal_merge[j]
+            if p_next['merged']:
+                continue
+            
+            # Check for contiguity and same properties
+            if (p_next.get('type', '') == current_strip.get('type', '') and
+                p_next['color'] == current_strip['color'] and
+                p_next['y'] == current_strip['y'] and
+                p_next['h'] == current_strip['h'] and
+                p_next['x'] == current_strip['x'] + current_strip['w']):
+                
+                current_strip['w'] += p_next['w']
+                p_next['merged'] = True # Mark the original as merged
+            # If properties change (type, color, y, h), then p_next cannot be part of current_strip's row
+            elif (p_next.get('type', '') != current_strip.get('type', '') or
+                  p_next['color'] != current_strip['color'] or
+                  p_next['y'] != current_strip['y'] or
+                  p_next['h'] != current_strip['h']):
+                  break # Moved to a new group that cannot be merged with current_strip's row
+            # If x is not contiguous, it's a gap, so current_strip ends here for this row.
+            # p_next will start a new strip if not yet merged.
+            elif p_next['x'] != current_strip['x'] + current_strip['w']:
+                break
+
+
+        horizontal_strips.append(current_strip) # Add the finalized horizontal strip
+
+    # 2. Vertical Merging
+    final_blocks_data: List[Dict[str, Any]] = []
+    # For vertical merging, strips must have 'merged' flag reset or use a new list of dicts
+    strips_to_merge = [strip.copy() for strip in horizontal_strips]
+    for strip in strips_to_merge:
+        strip['merged'] = False
+
+    # Sort for vertical merging: by visual type, color, x-coordinate, width, then y-coordinate
+    key_func_vertical = lambda s: (s.get('type', ''), s['color'], s['x'], s['w'], s['y'])
+    sorted_strips_for_vertical_merge = sorted(strips_to_merge, key=key_func_vertical)
+    
+    for i, s_base in enumerate(sorted_strips_for_vertical_merge):
+        if s_base['merged']:
+            continue
+
+        current_block = s_base.copy() # Start of a new block
+        s_base['merged'] = True # Mark original (in sorted_strips_for_vertical_merge)
+        
+        # Try to extend this block downwards
+        for j in range(i + 1, len(sorted_strips_for_vertical_merge)):
+            s_next = sorted_strips_for_vertical_merge[j]
+            if s_next['merged']:
+                continue
+
+            if (s_next.get('type', '') == current_block.get('type', '') and
+                s_next['color'] == current_block['color'] and
+                s_next['x'] == current_block['x'] and
+                s_next['w'] == current_block['w'] and
+                s_next['y'] == current_block['y'] + current_block['h']):
+
+                current_block['h'] += s_next['h']
+                s_next['merged'] = True # Mark original
+            elif (s_next.get('type', '') != current_block.get('type', '') or
+                  s_next['color'] != current_block['color'] or
+                  s_next['x'] != current_block['x'] or
+                  s_next['w'] != current_block['w']):
+                  break # Moved to a new group that cannot be merged with current_block's column
+            elif s_next['y'] != current_block['y'] + current_block['h']:
+                break # Gap in y
+
+        final_blocks_data.append(current_block)
+    
+    # 3. Generate code lines
+    code_lines = []
+    if not final_blocks_data:
+         return [f"    # No {class_name_for_export.lower()} objects placed (empty after merge attempt)."]
+
+
+    for block in final_blocks_data:
+        if class_name_for_export == "Platform":
+            # Platforms have a specific 'platform_type' argument in their constructor
+            code_lines.append(f"    {sprite_group_name}.add({class_name_for_export}({block['x']}, {block['y']}, {block['w']}, {block['h']}, {block['color']}, platform_type='{block['type']}'))")
+        else:
+            # Generic constructor for other types like Ladder (assuming same signature pattern)
+            code_lines.append(f"    {sprite_group_name}.add({class_name_for_export}({block['x']}, {block['y']}, {block['w']}, {block['h']}, {block['color']}))")
+            
+    if not code_lines: # Should be redundant given the final_blocks_data check, but as a safeguard
+        return [f"    # No {class_name_for_export.lower()}s placed."]
+    return code_lines
 
 
 def export_map_to_game_python_script(editor_state: EditorState) -> bool:
@@ -279,11 +409,12 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     function_name = f"load_map_{editor_state.map_name_for_function}"
     logger.debug(f"Exporting to function '{function_name}' in file '{editor_state.current_map_filename}'")
 
-    platforms_code_lines = []
-    ladders_code_lines = []
-    hazards_code_lines = []
-    enemy_spawns_code_lines = []
-    collectible_spawns_code_lines = []
+    # --- Data collection for export ---
+    platform_objects_raw: List[Dict[str, Any]] = []
+    # ladder_objects_raw: List[Dict[str, Any]] = [] # If ladders were to be merged
+    hazards_code_lines: List[str] = []
+    enemy_spawns_code_lines: List[str] = []
+    collectible_spawns_code_lines: List[str] = []
 
     default_spawn_tile_x = editor_state.map_width_tiles // 2
     default_spawn_tile_y = editor_state.map_height_tiles // 2
@@ -293,15 +424,15 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
 
     all_placed_world_rects_for_bounds: List[pygame.Rect] = []
     logger.debug(f"Processing {len(editor_state.placed_objects)} objects for .py export.")
-    
+
     lava_occupied_coords = set()
-    for obj_data in editor_state.placed_objects:
-        if obj_data.get("game_type_id") == "hazard_lava":
-            world_x = obj_data.get("world_x")
-            world_y = obj_data.get("world_y")
+    for obj_data_lava_check in editor_state.placed_objects:
+        if obj_data_lava_check.get("game_type_id") == "hazard_lava":
+            world_x = obj_data_lava_check.get("world_x")
+            world_y = obj_data_lava_check.get("world_y")
             if world_x is not None and world_y is not None:
                 lava_occupied_coords.add((world_x, world_y))
-    logger.debug(f"Export: Identified {len(lava_occupied_coords)} lava-occupied coordinates: {lava_occupied_coords}")
+    logger.debug(f"Export: Identified {len(lava_occupied_coords)} lava-occupied coordinates for check: {lava_occupied_coords}")
 
     for i, obj_data in enumerate(editor_state.placed_objects):
         game_type_id = obj_data.get("game_type_id")
@@ -318,9 +449,9 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         if not asset_palette_entry:
             logger.warning(f"Asset key '{asset_editor_key}' not in palette. Skipping object export for obj: {obj_data}")
             continue
-        
-        obj_w_px, obj_h_px = ts, ts 
-        default_color_tuple = getattr(C, 'MAGENTA', (255,0,255)) 
+
+        obj_w_px, obj_h_px = ts, ts
+        default_color_tuple = getattr(C, 'MAGENTA', (255,0,255))
 
         if asset_palette_entry.get("surface_params_dims_color"):
             w, h, c = asset_palette_entry["surface_params_dims_color"]
@@ -331,9 +462,9 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             default_color_tuple = asset_palette_entry.get("base_color_tuple", default_color_tuple)
             if half_type in ["left", "right"]: obj_w_px = ts // 2; obj_h_px = ts
             elif half_type in ["top", "bottom"]: obj_w_px = ts; obj_h_px = ts // 2
-        elif asset_palette_entry.get("original_size_pixels"): 
+        elif asset_palette_entry.get("original_size_pixels"):
              obj_w_px, obj_h_px = asset_palette_entry["original_size_pixels"]
-        
+
         current_color_tuple = override_color if override_color else default_color_tuple
         current_color_str = f"({current_color_tuple[0]},{current_color_tuple[1]},{current_color_tuple[2]})" if isinstance(current_color_tuple, (list, tuple)) else str(current_color_tuple)
 
@@ -342,32 +473,29 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             half_type = asset_palette_entry.get("half_type")
             if half_type == "right": export_x = world_x + ts // 2
             elif half_type == "bottom": export_y = world_y + ts // 2
-        
+
         current_obj_rect = pygame.Rect(export_x, export_y, obj_w_px, obj_h_px)
         all_placed_world_rects_for_bounds.append(current_obj_rect)
 
-        is_platform_type = (
-            game_type_id == "platform_wall_gray" or
-            ("platform_wall_gray_" in game_type_id and "_half" in game_type_id) or
-            game_type_id == "platform_ledge_green" or
-            ("platform_ledge_green_" in game_type_id and "_half" in game_type_id)
-        )
+        # Define platform types more centrally if possible (e.g., in ED_CONFIG)
+        platform_game_type_keywords = {"platform_wall_gray", "platform_ledge_green"}
+        is_platform_type = any(keyword in game_type_id for keyword in platform_game_type_keywords)
 
-        if is_platform_type and (world_x, world_y) in lava_occupied_coords:
+
+        if is_platform_type and (world_x, world_y) in lava_occupied_coords: # Check original tile coords
             logger.info(f"Export: Skipping platform '{game_type_id}' at ({world_x},{world_y}) because it's occupied by lava.")
-            continue 
+            continue
 
-        if game_type_id == "platform_wall_gray" or "platform_wall_gray_" in game_type_id and "_half" in game_type_id:
-            platforms_code_lines.append(f"    platforms.add(Platform({export_x}, {export_y}, {obj_w_px}, {obj_h_px}, {current_color_str}, platform_type='wall'))")
-        elif game_type_id == "platform_ledge_green" or "platform_ledge_green_" in game_type_id and "_half" in game_type_id:
-            if game_type_id == "platform_ledge_green": 
-                 platforms_code_lines.append(f"    platforms.add(Platform({export_x}, {export_y}, {obj_w_px}, {obj_h_px}, {current_color_str}, platform_type='ledge'))")
-            else: 
-                 platforms_code_lines.append(f"    platforms.add(Platform({export_x}, {export_y}, {obj_w_px}, {obj_h_px}, {current_color_str}, platform_type='ledge'))")
+        if "platform_wall_gray" in game_type_id or "platform_ledge_green" in game_type_id:
+            platform_export_type = 'ledge' if "ledge" in game_type_id else 'wall'
+            platform_objects_raw.append({
+                'x': export_x, 'y': export_y, 'w': obj_w_px, 'h': obj_h_px,
+                'color': current_color_str, 'type': platform_export_type
+            })
         elif game_type_id == "hazard_lava":
             hazards_code_lines.append(f"    hazards.add(Lava({export_x}, {export_y}, {obj_w_px}, {obj_h_px}, {current_color_str}))")
         elif game_type_id == "player1_spawn":
-            spawn_mid_x = world_x + obj_w_px // 2 
+            spawn_mid_x = world_x + obj_w_px // 2
             spawn_bottom_y = world_y + obj_h_px
             player1_spawn_str = f"player1_spawn = ({spawn_mid_x}, {spawn_bottom_y})"
         elif "enemy" in game_type_id:
@@ -379,16 +507,28 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             chest_spawn_x_midbottom = world_x + obj_w_px // 2
             chest_spawn_y_midbottom = world_y + obj_h_px
             collectible_spawns_code_lines.append(f"    collectible_spawns_data.append({{'type': 'chest', 'pos': ({chest_spawn_x_midbottom}, {chest_spawn_y_midbottom})}})")
+        # Add ladder handling here if they become mergeable entities
+        # elif game_type_id == "ladder":
+        #     ladder_objects_raw.append(...)
         else:
-            if not game_type_id.startswith("tool_"): 
+            if not game_type_id.startswith("tool_"):
                 logger.warning(f"Unknown game_type_id '{game_type_id}' for object at ({world_x},{world_y}). Not exported to .py.")
 
+    # --- Merging and Code Generation ---
+    platforms_code_lines = _merge_rect_objects(platform_objects_raw, "Platform", "platforms")
+    ladders_code_lines = [f"    # No ladders placed."] # Placeholder for now, adapt if ladders are added
+    # hazards_code_lines are already populated directly
+    # enemy_spawns_code_lines are already populated
+    # collectible_spawns_code_lines are already populated
+
     platforms_code_str = "\n".join(platforms_code_lines)
-    ladders_code_str = "\n".join(ladders_code_lines)
-    hazards_code_str = "\n".join(hazards_code_lines)
-    enemy_spawns_code_str = "\n".join(enemy_spawns_code_lines)
-    collectible_spawns_code_str = "\n".join(collectible_spawns_code_lines)
-    logger.debug(f"Generated code lines - Platforms: {len(platforms_code_lines)}, Hazards: {len(hazards_code_lines)}, Enemies: {len(enemy_spawns_code_lines)}, Collectibles: {len(collectible_spawns_code_lines)}")
+    ladders_code_str = "\n".join(ladders_code_lines) # Will be "# No ladders placed." for now
+    hazards_code_str = "\n".join(hazards_code_lines) if hazards_code_lines else "    # No hazards placed."
+    enemy_spawns_code_str = "\n".join(enemy_spawns_code_lines) if enemy_spawns_code_lines else "    # No enemy spawns defined."
+    collectible_spawns_code_str = "\n".join(collectible_spawns_code_lines) if collectible_spawns_code_lines else "    # No collectible spawns defined."
+
+    logger.debug(f"Generated code lines - Platforms (merged): {len(platforms_code_lines)}, Hazards: {len(hazards_code_lines)}, Enemies: {len(enemy_spawns_code_lines)}, Collectibles: {len(collectible_spawns_code_lines)}")
+
 
     if not all_placed_world_rects_for_bounds:
         logger.debug("No objects placed, using editor map dimensions for export boundaries.")
@@ -403,20 +543,20 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     padding_px = C.TILE_SIZE * 2
     game_map_total_width_pixels = int(max(ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, (map_max_x_content - map_min_x_content) + 2 * padding_px))
     game_level_min_y_absolute = int(map_min_y_content - padding_px)
-    game_level_max_y_absolute = int(map_max_y_content + padding_px)
-    game_main_ground_y_reference = int(map_max_y_content)
-    game_main_ground_height_reference = int(C.TILE_SIZE)
+    game_level_max_y_absolute = int(map_max_y_content) # Remove padding for the bottom extent
+    game_main_ground_y_reference = int(map_max_y_content) # Or a more sophisticated calculation if needed
+    game_main_ground_height_reference = int(C.TILE_SIZE) # Or based on typical ground tile height
 
     if game_level_min_y_absolute >= game_level_max_y_absolute:
         logger.warning(f"Calculated min_y_abs ({game_level_min_y_absolute}) >= max_y_abs ({game_level_max_y_absolute}). Adjusting max_y_abs.")
-        game_level_max_y_absolute = game_level_min_y_absolute + C.TILE_SIZE * 5
+        game_level_max_y_absolute = game_level_min_y_absolute + C.TILE_SIZE * 5 # Ensure some height
 
     logger.debug(f"Export boundaries - TotalWidthPx: {game_map_total_width_pixels}, MinYAbs: {game_level_min_y_absolute}, MaxYAbs: {game_level_max_y_absolute}")
 
     script_content = f"""# Level: {editor_state.map_name_for_function}
-# Generated by Platformer Level Editor
+# Generated by Platformer Level Editor (Optimized Export)
 import pygame
-from tiles import Platform, Ladder, Lava 
+from tiles import Platform, Ladder, Lava
 import constants as C
 
 LEVEL_SPECIFIC_BACKGROUND_COLOR = {editor_state.background_color}
@@ -427,19 +567,19 @@ def {function_name}(initial_screen_width, initial_screen_height):
     \"\"\"
     print(f"Loading map: {function_name}...")
     platforms = pygame.sprite.Group()
-    ladders = pygame.sprite.Group() 
+    ladders = pygame.sprite.Group()
     hazards = pygame.sprite.Group()
     enemy_spawns_data = []
     collectible_spawns_data = []
 
     {player1_spawn_str}
 
-    # --- Placed Objects ---
-{platforms_code_str if platforms_code_str else "    # No platforms placed."}
-{ladders_code_str if ladders_code_str else "    # No ladders placed."}
-{hazards_code_str if hazards_code_str else "    # No hazards placed."}
-{enemy_spawns_code_str if enemy_spawns_code_str else "    # No enemy spawns defined."}
-{collectible_spawns_code_str if collectible_spawns_code_str else "    # No collectible spawns defined."}
+    # --- Placed Objects (merged where possible) ---
+{platforms_code_str}
+{ladders_code_str}
+{hazards_code_str}
+{enemy_spawns_code_str}
+{collectible_spawns_code_str}
 
     # --- Level Dimensions for Game Camera & Boundaries ---
     map_total_width_pixels = {game_map_total_width_pixels}
@@ -450,11 +590,16 @@ def {function_name}(initial_screen_width, initial_screen_height):
 
     _boundary_thickness = C.TILE_SIZE * 2
     _boundary_wall_height = level_max_y_absolute - level_min_y_absolute + (2 * _boundary_thickness)
-    _boundary_color = getattr(C, 'DARK_GRAY', (50,50,50)) 
+    _boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))
 
+    # Boundary platforms are added after all content platforms.
+    # Top boundary (ceiling)
     platforms.add(Platform(0, level_min_y_absolute - _boundary_thickness, map_total_width_pixels, _boundary_thickness, _boundary_color, platform_type="boundary_wall_top"))
+    # Bottom boundary (floor/kill plane)
     platforms.add(Platform(0, level_max_y_absolute, map_total_width_pixels, _boundary_thickness, _boundary_color, platform_type="boundary_wall_bottom"))
+    # Left boundary
     platforms.add(Platform(-_boundary_thickness, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, _boundary_color, platform_type="boundary_wall_left"))
+    # Right boundary
     platforms.add(Platform(map_total_width_pixels, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, _boundary_color, platform_type="boundary_wall_right"))
 
     print(f"Map '{function_name}' loaded with: {{len(platforms)}} platforms, {{len(ladders)}} ladders, {{len(hazards)}} hazards.")
@@ -487,6 +632,7 @@ def {function_name}(initial_screen_width, initial_screen_height):
     editor_state.set_status_message(error_msg, 4)
     return False
 
+
 def delete_map_files(editor_state: EditorState, json_filepath: str) -> bool:
     logger.info(f"Attempting to delete map files for: {json_filepath}")
     if not json_filepath.endswith(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
@@ -501,46 +647,57 @@ def delete_map_files(editor_state: EditorState, json_filepath: str) -> bool:
 
     deleted_json = False
     deleted_py = False
-    action_performed = False # To track if we even tried to delete existing files
+    action_performed_json = False
+    action_performed_py = False
 
     try:
         if os.path.exists(json_filepath):
-            action_performed = True
+            action_performed_json = True
             os.remove(json_filepath)
             logger.info(f"Deleted editor map file: {json_filepath}")
             deleted_json = True
         else:
             logger.warning(f"Editor map file not found for deletion: {json_filepath}")
     except OSError as e:
-        action_performed = True
+        action_performed_json = True # Attempt was made
         msg = f"Error deleting editor map file '{json_filepath}': {e}"
         logger.error(msg, exc_info=True)
         editor_state.set_status_message(msg, 4)
-        # Don't return yet, try to delete .py too
+        # Continue to attempt .py deletion
 
     try:
         if os.path.exists(py_filepath):
-            action_performed = True
+            action_performed_py = True
             os.remove(py_filepath)
             logger.info(f"Deleted game level file: {py_filepath}")
             deleted_py = True
         else:
             logger.warning(f"Game level file not found for deletion: {py_filepath}")
     except OSError as e:
-        action_performed = True
+        action_performed_py = True # Attempt was made
         msg = f"Error deleting game level file '{py_filepath}': {e}"
         logger.error(msg, exc_info=True)
+        # If JSON deletion succeeded, this error might overwrite the status.
+        # Prioritize showing an error if one occurs.
         editor_state.set_status_message(msg, 4)
 
-    if deleted_json or deleted_py:
-        editor_state.set_status_message(f"Map '{map_name_base}' files deleted (JSON: {deleted_json}, PY: {deleted_py}).", 3)
+
+    if deleted_json and deleted_py:
+        editor_state.set_status_message(f"Map '{map_name_base}' JSON and PY files deleted.", 3)
         return True
-    elif not action_performed and not os.path.exists(json_filepath) and not os.path.exists(py_filepath): # Files were already gone
-        editor_state.set_status_message(f"Map '{map_name_base}' files already gone or not found.", 2)
-        return True 
-    elif action_performed and not deleted_json and not deleted_py: # Attempted but failed for both
-        editor_state.set_status_message(f"Failed to delete any files for map '{map_name_base}'. Check logs.", 4)
+    elif deleted_json:
+        editor_state.set_status_message(f"Map '{map_name_base}' JSON file deleted. PY not found or failed to delete.", 3)
+        return True # Still counts as partial success if JSON was the primary target
+    elif deleted_py:
+         editor_state.set_status_message(f"Map '{map_name_base}' PY file deleted. JSON not found or failed to delete.", 3)
+         return True # Still counts as partial success
+    elif not action_performed_json and not action_performed_py: # No files found to attempt deletion
+        editor_state.set_status_message(f"Map '{map_name_base}' files not found.", 2)
+        return True # Technically successful as the state (no files) is achieved
+    elif (action_performed_json and not deleted_json) or \
+         (action_performed_py and not deleted_py): # An attempt was made but failed
+        editor_state.set_status_message(f"Failed to delete one or more files for map '{map_name_base}'. Check logs.", 4)
         return False
-    else: # No action performed, but one or both files might still exist if only one deletion was attempted and failed
-        editor_state.set_status_message(f"No files found or action taken for map '{map_name_base}'.", 3)
+    else: # Should not be reached if logic above is complete
+        editor_state.set_status_message(f"Deletion status unclear for map '{map_name_base}'.", 3)
         return False

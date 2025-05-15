@@ -283,7 +283,7 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
         if font_medium:
             screen_w, screen_h = screen.get_size()
             screen.fill(getattr(C, 'BLACK', (0,0,0)))
-            msg_surf = font_medium.render(f"No Maps Found in '{C.MAPS_DIR}/' folder.", True, getattr(C, 'RED', (255,0,0)))
+            msg_surf = font_medium.render(f"No Maps Found in '{MAPS_DIRECTORY_GAME_UI}/' folder.", True, getattr(C, 'RED', (255,0,0)))
             screen.blit(msg_surf, msg_surf.get_rect(center=(screen_w//2, screen_h//2)))
             pygame.display.flip()
             pygame.time.wait(2500) 
@@ -308,15 +308,29 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
     button_spacing = 10
     button_width_factor = 0.6 
     
+    # Define colors
     color_white = getattr(C, 'WHITE', (255,255,255))
     color_black = getattr(C, 'BLACK', (0,0,0))
-    color_blue = getattr(C, 'BLUE', (0,0,255))
-    color_green = getattr(C, 'GREEN', (0,255,0))
     color_gray = getattr(C, 'GRAY', (128,128,128))
+    
+    # Button specific colors
+    color_button_normal_bg = getattr(C, 'BLUE', (0,0,255))
+    color_button_hover_bg = (70, 70, 220)  # A custom hover color for normal items
+    color_button_selected_bg = getattr(C, 'GREEN', (0,255,0))
+    color_button_selected_hover_bg = (70, 220, 70) # A custom hover color for selected items
+    
+    color_text_normal = color_white
+    color_text_selected = color_black
+
 
     while dialog_active and app_status.app_running:
         screen_w, screen_h = screen.get_size()
         mouse_pos = pygame.mouse.get_pos()
+
+        # Calculate title surface and rect once per frame for consistency
+        # This ensures click detection and drawing use the same positions
+        frame_title_surf = font_title.render("Select a Map", True, color_white)
+        frame_title_rect = frame_title_surf.get_rect(center=(screen_w // 2, screen_h * 0.15))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -326,7 +340,7 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
                     dialog_active = False; return None 
                 elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
                     if 0 <= selected_index < len(map_module_names):
-                        print(f"GAME_UI: Map selected: {map_module_names[selected_index]}")
+                        print(f"GAME_UI: Map selected by keyboard: {map_module_names[selected_index]}")
                         return map_module_names[selected_index]
                 elif event.key == pygame.K_UP:
                     selected_index = (selected_index - 1 + len(map_module_names)) % len(map_module_names)
@@ -342,67 +356,83 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
                     selected_index = current_page * maps_per_page
             
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                start_idx = current_page * maps_per_page
-                end_idx = min(start_idx + maps_per_page, len(map_module_names))
-                visible_maps_on_page = map_module_names[start_idx:end_idx]
+                # Determine visible maps for click check
+                _start_idx_click = current_page * maps_per_page
+                _end_idx_click = min(_start_idx_click + maps_per_page, len(map_module_names))
+                _visible_maps_on_page_click = map_module_names[_start_idx_click:_end_idx_click]
 
-                title_surf = font_title.render("Select a Map", True, color_white)
-                title_rect = title_surf.get_rect(center=(screen_w // 2, screen_h * 0.15))
-                current_btn_y = title_rect.bottom + 40
+                # Use the frame_title_rect for consistent positioning
+                _current_btn_y_click = frame_title_rect.bottom + 60 # Crucial: Same offset as drawing
 
-                for i, map_name in enumerate(visible_maps_on_page):
-                    actual_map_index = start_idx + i
-                    item_rect = pygame.Rect(0, 0, screen_w * button_width_factor, button_height)
-                    item_rect.centerx = screen_w // 2
-                    item_rect.top = current_btn_y
-                    if item_rect.collidepoint(mouse_pos):
+                for i, map_name in enumerate(_visible_maps_on_page_click):
+                    item_rect_click = pygame.Rect(0, 0, screen_w * button_width_factor, button_height)
+                    item_rect_click.centerx = screen_w // 2
+                    item_rect_click.top = _current_btn_y_click
+                    if item_rect_click.collidepoint(mouse_pos):
                         print(f"GAME_UI: Map selected by click: {map_name}")
+                        # Update selected_index to reflect mouse click for visual consistency if needed, then return
+                        selected_index = _start_idx_click + i 
                         return map_name 
-                    current_btn_y += button_height + button_spacing
+                    _current_btn_y_click += button_height + button_spacing
         
         if not app_status.app_running: break
 
         screen.fill(color_black)
         
-        title_surf = font_title.render("Select a Map to Play", True, color_white)
-        title_rect = title_surf.get_rect(center=(screen_w // 2, screen_h * 0.15))
-        screen.blit(title_surf, title_rect)
+        # Draw the consistent title
+        screen.blit(frame_title_surf, frame_title_rect)
 
+        # Draw instruction text (anchored to the consistent title rect)
         instr_text = "Use UP/DOWN Arrows, Enter to Select. PgUp/PgDn or LEFT/RIGHT for pages. ESC to cancel."
         instr_surf = font_instr.render(instr_text, True, color_gray)
-        instr_rect = instr_surf.get_rect(center=(screen_w // 2, title_rect.bottom + 20))
+        instr_rect = instr_surf.get_rect(center=(screen_w // 2, frame_title_rect.bottom + 20))
         screen.blit(instr_surf, instr_rect)
         
-        start_idx = current_page * maps_per_page
-        end_idx = min(start_idx + maps_per_page, len(map_module_names))
-        visible_maps_on_page = map_module_names[start_idx:end_idx]
+        # Determine visible maps for drawing
+        start_idx_draw = current_page * maps_per_page
+        end_idx_draw = min(start_idx_draw + maps_per_page, len(map_module_names))
+        visible_maps_on_page_draw = map_module_names[start_idx_draw:end_idx_draw]
 
-        current_btn_y = title_rect.bottom + 60 
+        # Start drawing map items (buttons)
+        current_btn_y_draw = frame_title_rect.bottom + 60 # Crucial: Same offset as click check
 
-        for i, map_name in enumerate(visible_maps_on_page):
-            actual_map_index = start_idx + i 
+        for i, map_name in enumerate(visible_maps_on_page_draw):
+            actual_map_index = start_idx_draw + i 
             
             item_text = f"{map_name}"
-            item_color = color_white
-            bg_color = color_blue
+            
+            # Create rect for the current item
+            item_rect_draw = pygame.Rect(0, 0, screen_w * button_width_factor, button_height)
+            item_rect_draw.centerx = screen_w // 2
+            item_rect_draw.top = current_btn_y_draw
+            
+            is_keyboard_selected = (actual_map_index == selected_index)
+            is_mouse_hovered = item_rect_draw.collidepoint(mouse_pos)
 
-            if actual_map_index == selected_index:
-                item_color = color_black 
-                bg_color = color_green   
+            current_bg_color = color_button_normal_bg
+            current_text_color = color_text_normal
+
+            if is_keyboard_selected:
+                current_text_color = color_text_selected
+                if is_mouse_hovered:
+                    current_bg_color = color_button_selected_hover_bg
+                else:
+                    current_bg_color = color_button_selected_bg
+            elif is_mouse_hovered: # Not keyboard selected, but mouse is over it
+                current_bg_color = color_button_hover_bg
+                # current_text_color remains color_text_normal
             
-            item_surf = font_item.render(item_text, True, item_color)
+            # Draw the button background
+            pygame.draw.rect(screen, current_bg_color, item_rect_draw, border_radius=5)
+            # Draw the button border
+            pygame.draw.rect(screen, color_white, item_rect_draw, 1, border_radius=5) 
             
-            item_rect = pygame.Rect(0, 0, screen_w * button_width_factor, button_height)
-            item_rect.centerx = screen_w // 2
-            item_rect.top = current_btn_y
-            
-            pygame.draw.rect(screen, bg_color, item_rect, border_radius=5)
-            pygame.draw.rect(screen, color_white, item_rect, 1, border_radius=5) 
-            
-            text_rect = item_surf.get_rect(center=item_rect.center)
+            # Render and blit the text
+            item_surf = font_item.render(item_text, True, current_text_color)
+            text_rect = item_surf.get_rect(center=item_rect_draw.center)
             screen.blit(item_surf, text_rect)
             
-            current_btn_y += button_height + button_spacing
+            current_btn_y_draw += button_height + button_spacing
 
         if max_pages > 1:
             page_text = f"Page {current_page + 1} of {max_pages}"

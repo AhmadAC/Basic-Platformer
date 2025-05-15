@@ -9,7 +9,7 @@
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.18 (Modular event handlers and updates)
+## version 1.0.0.20 (Adapted for main.py integration)
 Level Editor for the Platformer Game (Pygame Only).
 Allows creating, loading, and saving game levels visually.
 """
@@ -20,23 +20,24 @@ from typing import Tuple, Dict, Optional, Any, List, Callable
 import traceback
 import math
 import logging
+import editor_drawing
 
 # --- Logger Setup ---
 logger = None
-log_file_path_for_error_msg = "Not determined" 
+log_file_path_for_error_msg = "Not determined"
 try:
     current_script_dir = os.path.dirname(os.path.abspath(__file__))
     logs_dir = os.path.join(current_script_dir, 'logs')
 
     if not os.path.exists(logs_dir):
-        print(f"Attempting to create logs directory: {logs_dir}")
+        # print(f"Attempting to create logs directory: {logs_dir}") # Reduced console spam
         os.makedirs(logs_dir)
-        print(f"Logs directory created (or already existed at {logs_dir}).")
-    else:
-        print(f"Logs directory already exists at: {logs_dir}")
+        # print(f"Logs directory created (or already existed at {logs_dir}).")
+    # else: # Reduced console spam
+        # print(f"Logs directory already exists at: {logs_dir}")
 
-    log_file_path_for_error_msg = os.path.join(logs_dir, 'editor_debug.log') 
-    print(f"Attempting to configure logging to file: {log_file_path_for_error_msg}")
+    log_file_path_for_error_msg = os.path.join(logs_dir, 'editor_debug.log')
+    # print(f"Attempting to configure logging to file: {log_file_path_for_error_msg}")
 
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
@@ -47,10 +48,11 @@ try:
         handlers=[
             logging.FileHandler(log_file_path_for_error_msg, mode='w'),
         ],
+        force=True # Added force=True for reliability in re-configuration
     )
     logger = logging.getLogger(__name__)
     logger.info("Editor session started. Logging initialized successfully to file.")
-    print(f"LOGGING INITIALIZED. Log file should be at: {log_file_path_for_error_msg}")
+    # print(f"LOGGING INITIALIZED. Log file should be at: {log_file_path_for_error_msg}")
 
 except Exception as e_log:
     print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -60,7 +62,7 @@ except Exception as e_log:
     print(f"Log file might not be created due to this error.")
     print(f"Attempted log file path was: {log_file_path_for_error_msg}")
     print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    logging.basicConfig(level=logging.DEBUG, format='CONSOLE LOG (File log failed): %(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='CONSOLE LOG (File log failed): %(asctime)s - %(levelname)s - %(message)s', force=True)
     logger = logging.getLogger(__name__)
     logger.error("File logging setup failed. Switched to console logging only for this session.")
 # --- End Logger Setup ---
@@ -70,87 +72,98 @@ try:
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
-        logger.debug(f"Added project root '{project_root}' to sys.path.")
-    else:
-        logger.debug(f"Project root '{project_root}' already in sys.path.")
+        if logger: logger.debug(f"Added project root '{project_root}' to sys.path.")
+    # else: # Reduced console spam
+        # if logger: logger.debug(f"Project root '{project_root}' already in sys.path.")
 
-    import constants as C_imported 
-    logger.info(f"Successfully imported 'constants as C_imported'. TILE_SIZE: {getattr(C_imported, 'TILE_SIZE', 'NOT FOUND')}")
+    import constants as C_imported
+    if logger: logger.info(f"Successfully imported 'constants as C_imported'. TILE_SIZE: {getattr(C_imported, 'TILE_SIZE', 'NOT FOUND')}")
 
 except ImportError as e_imp:
-    logger.critical(f"Failed to import 'constants'. Error: {e_imp}", exc_info=True)
-    logger.critical(f"Current sys.path: {sys.path}")
-    logger.critical(f"Calculated project_root: {project_root if 'project_root' in locals() else 'Not calculated'}")
+    if logger:
+        logger.critical(f"Failed to import 'constants'. Error: {e_imp}", exc_info=True)
+        logger.critical(f"Current sys.path: {sys.path}")
+        logger.critical(f"Calculated project_root: {project_root if 'project_root' in locals() else 'Not calculated'}")
     print("ERROR: Could not import 'constants.py'. Ensure it is in the project root directory, one level above the 'editor' directory.")
-    sys.exit("ImportError for constants.py")
+    # sys.exit("ImportError for constants.py") # Don't sys.exit from module level
+    raise # Re-raise to indicate failure to load module
 except Exception as e_gen_imp:
-    logger.critical(f"An unexpected error occurred during constants import: {e_gen_imp}", exc_info=True)
-    sys.exit("Generic error during constants import.")
+    if logger: logger.critical(f"An unexpected error occurred during constants import: {e_gen_imp}", exc_info=True)
+    # sys.exit("Generic error during constants import.") # Don't sys.exit
+    raise # Re-raise
 # --- End sys.path modification and constants import ---
 
 # --- Editor module imports ---
 try:
     import editor_config as ED_CONFIG
-    from editor_state import EditorState 
+    from editor_state import EditorState
     import editor_ui
     import editor_assets
     import editor_map_utils
-    import editor_drawing
-    # Import the new handler and update modules
     from editor_handlers_global import handle_global_events
     from editor_handlers_dialog import handle_dialog_events
-    from editor_handlers_menu import handle_menu_events
-    from editor_handlers_map_editing import handle_editing_map_events 
+    from editor_handlers_menu import handle_menu_events # Removed start_rename_map_flow as it's likely internal to handler
+    from editor_handlers_map_editing import handle_editing_map_events
     from editor_updates import update_continuous_camera_pan, update_asset_palette_scroll_momentum
-    logger.debug("Successfully imported all editor-specific modules including new handlers.")
+    if logger: logger.debug("Successfully imported all editor-specific modules.")
 except ImportError as e_editor_mod:
-    logger.critical(f"Failed to import an editor-specific module. Error: {e_editor_mod}", exc_info=True)
+    if logger: logger.critical(f"Failed to import an editor-specific module. Error: {e_editor_mod}", exc_info=True)
     print(f"ERROR: Failed to import an editor module. Check sys.path and module names. Current sys.path: {sys.path}")
-    sys.exit("ImportError for editor module - exiting.")
+    # sys.exit("ImportError for editor module - exiting.") # Don't sys.exit
+    raise # Re-raise
 # --- End Editor module imports ---
 
 
-def editor_main():
-    logger.info("editor_main() started.")
+# This is the main entry point when called from main.py
+def run_editor_loop(main_screen_surface: pygame.Surface, 
+                    main_clock_obj: pygame.time.Clock, 
+                    main_fonts_dict: Dict[str, Optional[pygame.font.Font]], # Currently unused by editor, uses its own
+                    main_app_status_obj: Any, # Expected to have an 'app_running' attribute
+                    game_maps_dir_path: str):
+    
+    if logger: logger.info("run_editor_loop() started.")
+    
     try:
-        pygame.init()
-        logger.debug("pygame.init() called.")
+        # Pygame and font initialization are typically handled by main.py
+        # but calling them again is safe.
+        pygame.init() 
+        if logger: logger.debug("pygame.init() called (or re-called).")
         if not pygame.font.get_init():
-            logger.debug("pygame.font not initialized, calling pygame.font.init()")
+            if logger: logger.debug("pygame.font not initialized, calling pygame.font.init()")
             pygame.font.init()
         if not pygame.font.get_init():
-             logger.critical("pygame.font.init() failed after explicit call! Fonts will not work.")
-        else:
-            logger.debug("pygame.font.init() confirmed or already initialized.")
+             if logger: logger.critical("pygame.font.init() failed after explicit call! Fonts will not work.")
+        # else: # Reduced console spam
+            # if logger: logger.debug("pygame.font.init() confirmed or already initialized.")
 
-        if not editor_map_utils.ensure_maps_directory_exists():
-            logger.critical("Maps directory issue. Exiting.")
-            pygame.quit(); sys.exit(1)
+        # Ensure maps directory exists using the path from main.py
+        # IMPORTANT: Assumes editor_map_utils.ensure_maps_directory_exists is modified to take a path
+        if not editor_map_utils.ensure_maps_directory_exists(game_maps_dir_path):
+            if logger: logger.critical(f"Maps directory '{game_maps_dir_path}' issue. Exiting editor loop.")
+            # Don't quit pygame or sys.exit, just return
+            return
 
-        editor_screen = pygame.display.set_mode(
-            (ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT),
-            pygame.RESIZABLE
-        )
-        logger.info(f"Editor screen created: {editor_screen.get_size()}")
-        pygame.display.set_caption("Platformer Level Editor - Menu")
-        editor_clock = pygame.time.Clock()
-        editor_state = EditorState() 
-        editor_assets.load_editor_palette_assets(editor_state) 
+        pygame.display.set_caption("Platformer Level Editor - Menu") # Editor sets its own caption
+        
+        # IMPORTANT: Assumes EditorState is modified to accept game_maps_dir_path
+        editor_state = EditorState(game_maps_dir_path) # Pass the maps directory path
+        editor_assets.load_editor_palette_assets(editor_state)
 
+        # Editor uses its own font configuration
         fonts: Dict[str, Optional[pygame.font.Font]] = ED_CONFIG.FONT_CONFIG
         if not fonts.get("small") or not fonts.get("medium") or not fonts.get("large"):
-            logger.critical("Essential editor fonts (small, medium, or large) are None. Exiting.")
-            pygame.quit(); sys.exit(1)
-        logger.debug(f"Fonts from ED_CONFIG.FONT_CONFIG loaded: small={fonts['small'] is not None}, medium={fonts['medium'] is not None}, large={fonts['large'] is not None}, tooltip={fonts['tooltip'] is not None}")
+            if logger: logger.critical("Essential editor fonts (small, medium, or large) are None. Exiting editor loop.")
+            return 
+        if logger: logger.debug(f"Fonts from ED_CONFIG.FONT_CONFIG loaded: small={fonts['small'] is not None}, medium={fonts['medium'] is not None}, large={fonts['large'] is not None}, tooltip={fonts['tooltip'] is not None}")
 
         def calculate_layout_rects(screen_width: int, screen_height: int, current_mode: str) -> Tuple[pygame.Rect, pygame.Rect, pygame.Rect]:
             menu_rect = pygame.Rect(ED_CONFIG.SECTION_PADDING, ED_CONFIG.SECTION_PADDING,
                                      ED_CONFIG.MENU_SECTION_WIDTH, screen_height - (ED_CONFIG.SECTION_PADDING * 2))
-            menu_rect.width = max(ED_CONFIG.BUTTON_WIDTH_STANDARD + ED_CONFIG.SECTION_PADDING * 2, menu_rect.width) 
-            menu_rect.height = max(menu_rect.height, ED_CONFIG.MENU_SECTION_HEIGHT) 
+            menu_rect.width = max(ED_CONFIG.BUTTON_WIDTH_STANDARD + ED_CONFIG.SECTION_PADDING * 2, menu_rect.width)
+            menu_rect.height = max(menu_rect.height, ED_CONFIG.MENU_SECTION_HEIGHT)
 
             asset_palette_rect = pygame.Rect(ED_CONFIG.SECTION_PADDING, ED_CONFIG.SECTION_PADDING,
-                                            ED_CONFIG.ASSET_PALETTE_SECTION_WIDTH, screen_height - (ED_CONFIG.SECTION_PADDING * 2)) 
+                                            ED_CONFIG.ASSET_PALETTE_SECTION_WIDTH, screen_height - (ED_CONFIG.SECTION_PADDING * 2))
             map_view_x_start = ED_CONFIG.SECTION_PADDING
             map_view_width_available = screen_width - (ED_CONFIG.SECTION_PADDING * 2)
 
@@ -158,7 +171,7 @@ def editor_main():
                 map_view_x_start = menu_rect.right + ED_CONFIG.SECTION_PADDING
                 map_view_width_available = screen_width - map_view_x_start - ED_CONFIG.SECTION_PADDING
             elif current_mode == "editing_map":
-                asset_palette_rect.left = ED_CONFIG.SECTION_PADDING
+                asset_palette_rect.left = ED_CONFIG.SECTION_PADDING # Ensure it's on the left
                 map_view_x_start = asset_palette_rect.right + ED_CONFIG.SECTION_PADDING
                 map_view_width_available = screen_width - map_view_x_start - ED_CONFIG.SECTION_PADDING
 
@@ -168,19 +181,18 @@ def editor_main():
             map_view_rect.height = max(map_view_rect.height, ED_CONFIG.DEFAULT_GRID_SIZE * 10)
             return menu_rect, asset_palette_rect, map_view_rect
 
-        current_screen_width, current_screen_height = editor_screen.get_size()
+        current_screen_width, current_screen_height = main_screen_surface.get_size()
         menu_section_rect, asset_palette_section_rect, map_view_section_rect = calculate_layout_rects(
             current_screen_width, current_screen_height, editor_state.current_editor_mode
         )
-        logger.debug(f"Initial Layout - Menu={menu_section_rect}, Assets={asset_palette_section_rect}, Map={map_view_section_rect}")
+        if logger: logger.debug(f"Initial Layout - Menu={menu_section_rect}, Assets={asset_palette_section_rect}, Map={map_view_section_rect}")
 
-        running = True
-        logger.info("Entering main loop.")
-        loop_count = 0
-        while running:
-            loop_count += 1
-            dt = editor_clock.tick(ED_CONFIG.C.FPS if hasattr(ED_CONFIG.C, 'FPS') else 60) / 1000.0
-            dt = min(dt, 0.1) 
+        running_editor_locally = True # Local control for the editor's loop
+        if logger: logger.info("Entering editor's main loop.")
+        
+        while running_editor_locally and main_app_status_obj.app_running:
+            dt = main_clock_obj.tick(ED_CONFIG.C.FPS if hasattr(ED_CONFIG.C, 'FPS') else 60) / 1000.0
+            dt = min(dt, 0.1) # Cap dt
 
             mouse_pos = pygame.mouse.get_pos()
             events = pygame.event.get()
@@ -190,82 +202,87 @@ def editor_main():
             previous_dialog_type = editor_state.active_dialog_type
             layout_needs_recalc = False
 
-            # --- Continuous Updates (called every frame) ---
+            # --- Continuous Updates ---
             if editor_state.current_editor_mode == "editing_map" and not editor_state.active_dialog_type:
                 update_continuous_camera_pan(editor_state, map_view_section_rect, mouse_pos, dt)
-                
                 asset_list_visible_height = (
-                    asset_palette_section_rect.height 
-                    - ED_CONFIG.MINIMAP_AREA_HEIGHT 
-                    - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2) 
+                    asset_palette_section_rect.height
+                    - ED_CONFIG.MINIMAP_AREA_HEIGHT
+                    - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2) # Approx title height
                 )
                 update_asset_palette_scroll_momentum(
                     editor_state,
-                    dt, 
+                    dt,
                     asset_list_visible_height,
                     editor_state.total_asset_palette_content_height
                 )
-            # --- End Continuous Updates ---
-
 
             # --- Event Processing ---
-            for event_idx, event in enumerate(events):
-                if event.type == pygame.VIDEORESIZE: 
-                    logger.info(f"VIDEORESIZE event to {event.w}x{event.h}")
+            for event in events:
+                if event.type == pygame.VIDEORESIZE:
+                    if logger: logger.info(f"EDITOR: VIDEORESIZE event to {event.w}x{event.h}")
                     current_screen_width, current_screen_height = event.w, event.h
-                    try: 
-                        editor_screen = pygame.display.set_mode((current_screen_width, current_screen_height), pygame.RESIZABLE)
-                    except pygame.error as e_resize: 
-                        logger.error(f"Pygame error on resize to {current_screen_width}x{current_screen_height}: {e_resize}", exc_info=True)
+                    # main_screen_surface is already resized by Pygame internally when main.py's screen is resizable.
+                    # No need to call pygame.display.set_mode() here again.
                     layout_needs_recalc = True
                     editor_state.set_status_message(f"Resized to {event.w}x{event.h}", 2.0)
-                    editor_state.minimap_needs_regeneration = True 
+                    editor_state.minimap_needs_regeneration = True
                 
-                if not handle_global_events(event, editor_state, editor_screen): 
-                    logger.info("handle_global_events returned False (QUIT). Setting running=False.")
-                    running = False; break
-                if not running: break 
+                # Pass main_app_status_obj to global event handler if it needs to set app_running = False
+                # For now, assume handle_global_events only returns True/False for local editor loop.
+                # If handle_global_events needs to signal a full app quit, it should directly modify main_app_status_obj.app_running
+                if not handle_global_events(event, editor_state, main_screen_surface): # Removed , main_app_status_obj
+                    if logger: logger.info("handle_global_events returned False (QUIT). Setting running_editor_locally=False.")
+                    running_editor_locally = False
+                    # If it's a QUIT event, it might be good for handle_global_events to also set main_app_status_obj.app_running = False
+                    if event.type == pygame.QUIT:
+                         main_app_status_obj.app_running = False # Ensure main app also knows
+                    break 
+                if not running_editor_locally or not main_app_status_obj.app_running: break
+
 
                 if editor_state.active_dialog_type:
-                    handle_dialog_events(event, editor_state)
-                    if editor_state.active_dialog_type != previous_dialog_type: 
-                        logger.debug(f"Dialog type changed from '{previous_dialog_type}' to '{editor_state.active_dialog_type}' after handle_dialog_events.")
-                        if editor_state.current_editor_mode != previous_mode: 
-                            logger.debug(f"Mode changed (likely via dialog callback) from '{previous_mode}' to '{editor_state.current_editor_mode}'. Triggering layout recalc.")
+                    handle_dialog_events(event, editor_state) # This might change editor_state.current_editor_mode
+                    if editor_state.active_dialog_type != previous_dialog_type:
+                        if logger: logger.debug(f"Dialog type changed from '{previous_dialog_type}' to '{editor_state.active_dialog_type}' after handle_dialog_events.")
+                        if editor_state.current_editor_mode != previous_mode:
+                            if logger: logger.debug(f"Mode changed (likely via dialog callback) from '{previous_mode}' to '{editor_state.current_editor_mode}'. Triggering layout recalc.")
                             layout_needs_recalc = True
                 else: # No active dialog
                     if editor_state.current_editor_mode == "menu":
                         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                            logger.info("Escape pressed in menu. Posting QUIT event.")
-                            pygame.event.post(pygame.event.Event(pygame.QUIT))
-                            continue 
-                        handle_menu_events(event, editor_state, editor_screen)
+                            if logger: logger.info("Escape pressed in editor menu. Exiting editor.")
+                            running_editor_locally = False # Exit editor, return to main menu
+                            # Not posting QUIT, as that might shut down the whole app.
+                            # Main.py will decide if Esc from editor's menu quits the app.
+                            continue
+                        handle_menu_events(event, editor_state, main_screen_surface)
                     elif editor_state.current_editor_mode == "editing_map":
-                        handle_editing_map_events(event, editor_state, asset_palette_section_rect, map_view_section_rect, editor_screen)
-                
-                if editor_state.current_editor_mode != previous_mode: 
-                    logger.debug(f"Mode changed from '{previous_mode}' to '{editor_state.current_editor_mode}' after specific event handlers. Triggering layout recalc.")
+                        handle_editing_map_events(event, editor_state, asset_palette_section_rect, map_view_section_rect, main_screen_surface)
+
+                if editor_state.current_editor_mode != previous_mode:
+                    if logger: logger.debug(f"Mode changed from '{previous_mode}' to '{editor_state.current_editor_mode}' after specific event handlers. Triggering layout recalc.")
                     layout_needs_recalc = True
-            if not running: break 
+            
+            if not running_editor_locally or not main_app_status_obj.app_running: break
             # --- End Event Processing ---
 
-
-            # --- Camera Momentum (if not handled by direct input/edge scroll) ---
+            # --- Camera Momentum --- (logic seems fine, uses editor_state and dt)
             if editor_state.current_editor_mode == "editing_map" and \
                not editor_state.active_dialog_type and \
                not editor_state.is_mouse_over_map_view and \
                (abs(editor_state.camera_momentum_pan[0]) > ED_CONFIG.CAMERA_MOMENTUM_MIN_SPEED_THRESHOLD or \
                 abs(editor_state.camera_momentum_pan[1]) > ED_CONFIG.CAMERA_MOMENTUM_MIN_SPEED_THRESHOLD) and \
-                not pygame.key.get_pressed()[pygame.K_a] and not pygame.key.get_pressed()[pygame.K_d] and \
-                not pygame.key.get_pressed()[pygame.K_w] and not pygame.key.get_pressed()[pygame.K_s] :
+                not (pygame.key.get_pressed()[pygame.K_a] or pygame.key.get_pressed()[pygame.K_d] or \
+                     pygame.key.get_pressed()[pygame.K_w] or pygame.key.get_pressed()[pygame.K_s]) :
 
                 cam_vx, cam_vy = editor_state.camera_momentum_pan
-                damping_this_frame = ED_CONFIG.CAMERA_MOMENTUM_DAMPING_FACTOR ** (dt * 60.0) 
+                damping_this_frame = ED_CONFIG.CAMERA_MOMENTUM_DAMPING_FACTOR ** (dt * 60.0) # Frame-rate independent damping
                 cam_vx *= damping_this_frame
                 cam_vy *= damping_this_frame
-                editor_state.camera_offset_x += cam_vx * dt
-                editor_state.camera_offset_y += cam_vy * dt
-                
+                editor_state.camera_offset_x += cam_vx * dt * ED_CONFIG.CAMERA_KEY_PAN_SPEED # Apply speed factor if momentum is in pixels/sec
+                editor_state.camera_offset_y += cam_vy * dt * ED_CONFIG.CAMERA_KEY_PAN_SPEED
+
                 max_cam_x = max(0, editor_state.get_map_pixel_width() - map_view_section_rect.width)
                 max_cam_y = max(0, editor_state.get_map_pixel_height() - map_view_section_rect.height)
                 boundary_hit = False
@@ -277,7 +294,7 @@ def editor_main():
                     editor_state.camera_offset_y = 0; cam_vy = 0; boundary_hit = True
                 elif editor_state.camera_offset_y >= max_cam_y:
                     editor_state.camera_offset_y = max_cam_y; cam_vy = 0; boundary_hit = True
-                
+
                 editor_state.camera_offset_x = int(editor_state.camera_offset_x)
                 editor_state.camera_offset_y = int(editor_state.camera_offset_y)
 
@@ -285,74 +302,103 @@ def editor_main():
                     editor_state.camera_momentum_pan = (0.0, 0.0)
                 else:
                     editor_state.camera_momentum_pan = (cam_vx, cam_vy)
-            # --- End Camera Momentum ---
-            
+
             if layout_needs_recalc:
-                logger.debug(f"Recalculating layout. Current Mode: '{editor_state.current_editor_mode}', Screen: {current_screen_width}x{current_screen_height}")
+                if logger: logger.debug(f"Recalculating layout. Current Mode: '{editor_state.current_editor_mode}', Screen: {current_screen_width}x{current_screen_height}")
                 menu_section_rect, asset_palette_section_rect, map_view_section_rect = calculate_layout_rects(
                     current_screen_width, current_screen_height, editor_state.current_editor_mode
                 )
-                logger.debug(f"New Layout - Menu={menu_section_rect}, Assets={asset_palette_section_rect}, Map={map_view_section_rect}")
+                if logger: logger.debug(f"New Layout - Menu={menu_section_rect}, Assets={asset_palette_section_rect}, Map={map_view_section_rect}")
                 if editor_state.current_editor_mode == "editing_map" and editor_state.map_content_surface:
                     map_px_w = editor_state.get_map_pixel_width(); map_px_h = editor_state.get_map_pixel_height()
                     view_w = map_view_section_rect.width; view_h = map_view_section_rect.height
-                    if view_w > 0 and view_h > 0 :
+                    if view_w > 0 and view_h > 0 : # Prevent division by zero or negative rects
                         max_cx = max(0, map_px_w - view_w); max_cy = max(0, map_px_h - view_h)
                         prev_cx, prev_cy = editor_state.camera_offset_x, editor_state.camera_offset_y
                         editor_state.camera_offset_x = max(0,min(editor_state.camera_offset_x,max_cx))
                         editor_state.camera_offset_y = max(0,min(editor_state.camera_offset_y,max_cy))
                         if prev_cx!=editor_state.camera_offset_x or prev_cy!=editor_state.camera_offset_y:
-                            logger.debug(f"Camera clamped after resize/layout from ({prev_cx},{prev_cy}) to ({editor_state.camera_offset_x},{editor_state.camera_offset_y}). Max: ({max_cx},{max_cy})")
-                    else: 
-                        logger.warning(f"Map view rect zero/negative W/H ({view_w}x{view_h}). Camera not adjusted.")
+                             if logger: logger.debug(f"Camera clamped after resize/layout from ({prev_cx},{prev_cy}) to ({editor_state.camera_offset_x},{editor_state.camera_offset_y}). Max: ({max_cx},{max_cy})")
+                    # else: # Reduced console spam
+                        # if logger: logger.warning(f"Map view rect zero/negative W/H ({view_w}x{view_h}). Camera not adjusted.")
+
 
             # --- Drawing ---
-            editor_screen.fill(ED_CONFIG.C.DARK_GRAY if hasattr(ED_CONFIG.C, 'DARK_GRAY') else (50,50,50)) 
+            main_screen_surface.fill(ED_CONFIG.C.DARK_GRAY if hasattr(ED_CONFIG.C, 'DARK_GRAY') else (50,50,50))
 
             if editor_state.current_editor_mode == "menu":
-                editor_drawing.draw_menu_ui(editor_screen, editor_state, menu_section_rect, fonts, mouse_pos)
+                editor_drawing.draw_menu_ui(main_screen_surface, editor_state, menu_section_rect, fonts, mouse_pos)
+                # Placeholder for map area when in menu
                 ph_rect = pygame.Rect(menu_section_rect.right + ED_CONFIG.SECTION_PADDING, ED_CONFIG.SECTION_PADDING,
                                       current_screen_width - menu_section_rect.right - ED_CONFIG.SECTION_PADDING*2,
                                       current_screen_height - ED_CONFIG.SECTION_PADDING*2)
-                if ph_rect.width > 10 and ph_rect.height > 10:
-                    pygame.draw.rect(editor_screen, (20,20,20), ph_rect)
-                    f_large = fonts.get("large");
-                    if f_large: 
-                        editor_screen.blit(f_large.render("Map Editor Area",True,(60,60,60)), 
-                                           f_large.render("Map Editor Area",True,(60,60,60)).get_rect(center=ph_rect.center))
+                if ph_rect.width > 10 and ph_rect.height > 10: # Draw only if reasonably sized
+                    pygame.draw.rect(main_screen_surface, (20,20,20), ph_rect)
+                    f_large = fonts.get("large")
+                    if f_large:
+                        text_surf = f_large.render("Map Editor Area",True,(60,60,60))
+                        main_screen_surface.blit(text_surf, text_surf.get_rect(center=ph_rect.center))
             elif editor_state.current_editor_mode == "editing_map":
-                editor_drawing.draw_asset_palette_ui(editor_screen, editor_state, asset_palette_section_rect, fonts, mouse_pos, map_view_section_rect)
-                editor_drawing.draw_map_view_ui(editor_screen, editor_state, map_view_section_rect, fonts, mouse_pos)
+                editor_drawing.draw_asset_palette_ui(main_screen_surface, editor_state, asset_palette_section_rect, fonts, mouse_pos, map_view_section_rect)
+                editor_drawing.draw_map_view_ui(main_screen_surface, editor_state, map_view_section_rect, fonts, mouse_pos)
 
-            if editor_state.active_dialog_type: 
-                editor_ui.draw_active_dialog(editor_screen, editor_state, fonts)
-            
-            f_tooltip = fonts.get("tooltip");
-            if f_tooltip: 
-                editor_ui.draw_tooltip(editor_screen, editor_state, f_tooltip)
-            
-            f_small = fonts.get("small");
-            if f_small: 
-                editor_ui.draw_status_message(editor_screen, editor_state, f_small)
-            
+            if editor_state.active_dialog_type:
+                editor_ui.draw_active_dialog(main_screen_surface, editor_state, fonts)
+
+            f_tooltip = fonts.get("tooltip")
+            if f_tooltip:
+                editor_ui.draw_tooltip(main_screen_surface, editor_state, f_tooltip)
+
+            f_small = fonts.get("small")
+            if f_small:
+                editor_ui.draw_status_message(main_screen_surface, editor_state, f_small)
+
             pygame.display.flip()
             # --- End Drawing ---
 
     except Exception as e:
-        if logger: logger.critical(f"CRITICAL ERROR in editor_main: {e}", exc_info=True)
-        else: print(f"CRITICAL ERROR in editor_main (logger not available): {e}")
+        if logger: logger.critical(f"CRITICAL ERROR in run_editor_loop: {e}", exc_info=True)
+        else: print(f"CRITICAL ERROR in run_editor_loop (logger not available): {e}")
         traceback.print_exc()
+        # Optionally, signal main app to quit on critical editor error
+        # main_app_status_obj.app_running = False
     finally:
-        if logger: logger.info("Exiting editor_main. Calling pygame.quit().")
-        else: print("Exiting editor_main. Calling pygame.quit().")
-        pygame.quit()
-        if logger: logger.info("Editor session ended.")
-        else: print("Editor session ended.")
-        sys.exit()
+        # DO NOT call pygame.quit() or sys.exit() here. Main.py handles that.
+        if logger: logger.info("Exiting run_editor_loop.")
+        # Reset Pygame caption back to something generic or let main.py handle it
+        # pygame.display.set_caption("Platformer Adventure LAN") # main.py will do this
 
-if __name__ == "__main__":
-    print("--- editor.py execution started (__name__ == '__main__') ---") 
-    editor_main()
+# The if __name__ == "__main__": block is removed as this script is now a module.
+# If you want to test the editor independently, you can create a separate test_editor.py
+# or temporarily re-add it for testing:
+#
+# if __name__ == "__main__":
+#     print("--- editor.py execution started (__name__ == '__main__') for testing ---")
+#     # Minimal setup for standalone testing
+#     pygame.init()
+#     pygame.font.init()
+#     screen_test = pygame.display.set_mode((ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT), pygame.RESIZABLE)
+#     clock_test = pygame.time.Clock()
+#     class TestAppStatus: app_running = True
+#     app_status_test = TestAppStatus()
+#     maps_dir_test = os.path.join(project_root, "maps") # Adjust if needed
+#     if not os.path.exists(maps_dir_test): os.makedirs(maps_dir_test)
+# 
+#     # Ensure logger is set up if not already
+#     if logger is None:
+#          logging.basicConfig(level=logging.DEBUG, format='TEST CONSOLE: %(asctime)s - %(levelname)s - %(message)s')
+#          logger = logging.getLogger(__name__)
+#          logger.info("Logger re-initialized for standalone test.")
+#
+#     try:
+#         run_editor_loop(screen_test, clock_test, {}, app_status_test, maps_dir_test)
+#     except Exception as e_test:
+#         if logger: logger.critical(f"Error during standalone test: {e_test}", exc_info=True)
+#         else: print(f"Error during standalone test: {e_test}")
+#     finally:
+#         pygame.quit()
+#         if logger: logger.info("Standalone test finished.")
+#         sys.exit()
 
 ########## START OF FILE: editor_assets.py ##########
 
@@ -648,7 +694,7 @@ ASSET_PALETTE_BOTTOM_OVERHANG_PX = 72
 ASSET_PALETTE_TOOLTIP_TEXT_V_OFFSET = 2
 
 # --- Asset Palette Scroll ---
-ASSET_PALETTE_SCROLL_KICK_MULTIPLIER = 250.0  # Speed (pixels/sec like) added on mouse wheel tick
+ASSET_PALETTE_SCROLL_KICK_MULTIPLIER = 2000.0  # Speed (pixels/sec like) added on mouse wheel tick (WAS 250.0)
 ASSET_PALETTE_FLING_DAMPING_FACTOR = 0.92     # Closer to 1.0 = longer fling (e.g., 0.9 means 10% speed loss per frame)
 ASSET_PALETTE_FLING_MIN_SPEED_THRESHOLD = 50 # Momentum (pixels/sec) below which fling stops
 ASSET_PALETTE_MAX_MOMENTUM = 2000.0          # Max scroll speed (pixels/sec)
@@ -676,18 +722,18 @@ TS = getattr(C, 'TILE_SIZE', 32)
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "player1_spawn": {
         "source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn",
-        "tooltip": "P1 Spawn", "category": "spawn"
+        "tooltip": "P1", "category": "spawn"
     },
     "player2_spawn": {
         "source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn",
-        "tooltip": "P2 Spawn", "category": "spawn"
+        "tooltip": "P2", "category": "spawn"
     },
-    "enemy_cyan": {"source_file": "characters/cyan/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (Cyan)", "category": "enemy"},
-    "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "tooltip": "Enemy (Green)", "category": "enemy"},
-    "enemy_pink": { "source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "tooltip": "Enemy (Pink)", "category": "enemy"},
-    "enemy_purple": { "source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "tooltip": "Enemy (Purple)", "category": "enemy"},
-    "enemy_red": { "source_file": "characters/red/__Idle.gif", "game_type_id": "enemy_red", "tooltip": "Enemy (Red)", "category": "enemy"},
-    "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "tooltip": "Enemy (Yellow)", "category": "enemy"},
+    "enemy_cyan": {"source_file": "characters/cyan/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "", "category": "enemy"},
+    "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "tooltip": "", "category": "enemy"},
+    "enemy_pink": { "source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "tooltip": "", "category": "enemy"},
+    "enemy_purple": { "source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "tooltip": "", "category": "enemy"},
+    "enemy_red": { "source_file": "characters/red/__Idle.gif", "game_type_id": "enemy_red", "tooltip": "", "category": "enemy"},
+    "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "tooltip": "", "category": "enemy"},
     "chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "tooltip": "Chest", "category": "item"},
     "platform_wall_gray": {"surface_params": (TS, TS, getattr(C, 'GRAY', (128,128,128))), "colorable": True, "game_type_id": "platform_wall_gray", "tooltip": "Wall (Gray)", "category": "tile"},
     "platform_wall_gray_2x2_placer": {"icon_type": "2x2_placer", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "places_asset_key": "platform_wall_gray", "game_type_id": "tool_wall_2x2_placer", "tooltip": "Wall 2x2 (Gray)", "category": "tool"},
@@ -752,7 +798,7 @@ except Exception as e_font:
 # editor_drawing.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.17 (Adjusted menu for delete button)
+## version 1.0.0.18 (Added menu button for Rename Map)
 Contains functions for drawing the different sections and elements
 of the Platformer Level Editor UI using Pygame.
 """
@@ -779,12 +825,12 @@ def draw_menu_ui(surface: pygame.Surface, editor_state: EditorState, menu_sectio
 
         button_w = ED_CONFIG.BUTTON_WIDTH_STANDARD
         button_h = ED_CONFIG.BUTTON_HEIGHT_STANDARD
-        spacing = 15 # Reduced spacing slightly to fit new button
-        num_buttons = 4 # New total
+        spacing = 12 # Adjusted spacing to fit new button
+        num_buttons = 5 # New total (New, Load, Rename, Delete, Quit)
         total_button_h = (num_buttons * button_h) + ((num_buttons - 1) * spacing)
         title_h_approx = title_font.get_height() if title_font else 40
-        content_start_y = menu_section_rect.top + title_h_approx + 30 
-        
+        content_start_y = menu_section_rect.top + title_h_approx + 30
+
         # Adjust start_y if menu height is fixed or allow dynamic centering
         if menu_section_rect.height < total_button_h + (content_start_y - menu_section_rect.top) + 20 : # check if content overflows
              start_y = content_start_y # Start from top if no room to center
@@ -802,9 +848,10 @@ def draw_menu_ui(surface: pygame.Surface, editor_state: EditorState, menu_sectio
         if button_font:
             rect_params = [
                 (start_y, "menu_new_map", "New Map"),
-                (start_y + button_h + spacing, "menu_load_map", "Load Map (.json)"),
-                (start_y + 2 * (button_h + spacing), "menu_delete_map", "Delete Map"),
-                (start_y + 3 * (button_h + spacing), "menu_quit", "Quit Editor")
+                (start_y + button_h + spacing, "menu_load_map", "Load Map"),
+                (start_y + 2 * (button_h + spacing), "menu_rename_map", "Rename Map"), # Added Rename Map button
+                (start_y + 3 * (button_h + spacing), "menu_delete_map", "Delete Map"),
+                (start_y + 4 * (button_h + spacing), "menu_quit", "Quit Editor")
             ]
             for top_y, key, text in rect_params:
                 btn_r = pygame.Rect(0,0,button_w,button_h)
@@ -844,7 +891,7 @@ def _regenerate_minimap_surface(editor_state: EditorState, available_width: int,
 
     minimap_content_surf = pygame.Surface((map_px_w, map_px_h))
     minimap_content_surf.fill(editor_state.background_color)
-    
+
     ts = editor_state.grid_size
     for obj in editor_state.placed_objects:
         asset_key = obj.get("asset_editor_key")
@@ -855,20 +902,20 @@ def _regenerate_minimap_surface(editor_state: EditorState, available_width: int,
         if not asset_palette_info: continue
 
         obj_color_override = obj.get("override_color")
-        
-        final_color_for_minimap_obj = getattr(ED_CONFIG.C, "LIGHT_GRAY", (200,200,200)) 
+
+        final_color_for_minimap_obj = getattr(ED_CONFIG.C, "LIGHT_GRAY", (200,200,200))
         is_colorable = asset_palette_info.get("colorable", False)
 
         if is_colorable and obj_color_override:
             final_color_for_minimap_obj = obj_color_override
         elif asset_palette_info.get("surface_params_dims_color"):
             final_color_for_minimap_obj = asset_palette_info["surface_params_dims_color"][2]
-        elif asset_palette_info.get("base_color_tuple"): 
+        elif asset_palette_info.get("base_color_tuple"):
             final_color_for_minimap_obj = asset_palette_info["base_color_tuple"]
 
-        draw_w, draw_h = ts, ts 
+        draw_w, draw_h = ts, ts
         draw_x, draw_y = world_x, world_y
-        
+
         original_dims = asset_palette_info.get("original_size_pixels")
         if original_dims:
             draw_w, draw_h = original_dims[0], original_dims[1]
@@ -879,22 +926,28 @@ def _regenerate_minimap_surface(editor_state: EditorState, available_width: int,
             elif half_type == "right": draw_x = world_x + ts // 2; draw_w = ts // 2
             elif half_type == "top": draw_h = ts // 2
             elif half_type == "bottom": draw_y = world_y + ts // 2; draw_h = ts // 2
-        
+
         obj_rect_on_map = pygame.Rect(draw_x, draw_y, draw_w, draw_h)
-        
+
         if asset_palette_info.get("surface_params_dims_color") or \
            asset_palette_info.get("render_mode") == "half_tile" or \
-           (is_colorable and obj_color_override): 
+           (is_colorable and obj_color_override):
             try:
                 pygame.draw.rect(minimap_content_surf, final_color_for_minimap_obj, obj_rect_on_map)
             except TypeError:
                  pygame.draw.rect(minimap_content_surf, getattr(ED_CONFIG.C, "MAGENTA", (255,0,255)), obj_rect_on_map)
         elif asset_palette_info.get("image"):
-            pass
+            # For images on minimap, you might want to draw a simplified representation
+            # or skip them if they are too detailed or slow to render at small scale.
+            # For now, let's draw a colored rect if no simple color is available.
+            if not (is_colorable and obj_color_override) and \
+               not asset_palette_info.get("surface_params_dims_color") and \
+               not asset_palette_info.get("base_color_tuple"):
+                pygame.draw.rect(minimap_content_surf, getattr(ED_CONFIG.C, "GRAY", (128,128,128)), obj_rect_on_map)
 
 
-    if editor_state.show_grid: 
-        grid_color_minimap = (50,50,50) 
+    if editor_state.show_grid:
+        grid_color_minimap = (50,50,50)
         for x_coord in range(0, map_px_w, ts):
             pygame.draw.line(minimap_content_surf, grid_color_minimap, (x_coord,0), (x_coord, map_px_h))
         for y_coord in range(0, map_px_h, ts):
@@ -938,9 +991,9 @@ def _draw_minimap(surface: pygame.Surface, editor_state: EditorState, palette_se
     if editor_state.minimap_surface:
         minimap_blit_x = minimap_outer_rect.left + (minimap_outer_rect.width - editor_state.minimap_surface.get_width()) // 2
         minimap_blit_y = minimap_outer_rect.top + (minimap_outer_rect.height - editor_state.minimap_surface.get_height()) // 2
-        
+
         actual_minimap_screen_rect = editor_state.minimap_surface.get_rect(topleft=(minimap_blit_x, minimap_blit_y))
-        editor_state.minimap_rect_in_palette = actual_minimap_screen_rect 
+        editor_state.minimap_rect_in_palette = actual_minimap_screen_rect
 
         surface.blit(editor_state.minimap_surface, actual_minimap_screen_rect.topleft)
         pygame.draw.rect(surface, ED_CONFIG.MINIMAP_BORDER_COLOR, actual_minimap_screen_rect, 1)
@@ -967,23 +1020,23 @@ def _draw_minimap(surface: pygame.Surface, editor_state: EditorState, palette_se
 
 def _draw_single_palette_item(scroll_surf: pygame.Surface,
                               editor_state: EditorState,
-                              palette_section_rect: pygame.Rect, 
+                              palette_section_rect: pygame.Rect,
                               asset_key: str, asset_data: Dict[str, Any],
-                              item_x: int, item_y_on_scroll: int, 
+                              item_x: int, item_y_on_scroll: int,
                               tip_font: Optional[pygame.font.Font],
-                              mouse_pos: Tuple[int, int]) -> int: 
+                              mouse_pos: Tuple[int, int]) -> int:
     img = asset_data.get("image")
     tooltip_text = asset_data.get("tooltip", asset_key)
     if not img: return 0
 
     scrollable_content_y_start_on_screen = palette_section_rect.top + ED_CONFIG.MINIMAP_AREA_HEIGHT
     item_rect_on_screen = pygame.Rect(
-        palette_section_rect.left + item_x, 
+        palette_section_rect.left + item_x,
         scrollable_content_y_start_on_screen + item_y_on_scroll - int(editor_state.asset_palette_scroll_y), # scroll_y is float
         img.get_width(), img.get_height()
     )
     editor_state.ui_elements_rects['asset_palette_items'][asset_key] = item_rect_on_screen
-    
+
     asset_list_visible_area_on_screen = pygame.Rect(
         palette_section_rect.left,
         scrollable_content_y_start_on_screen,
@@ -1002,7 +1055,7 @@ def _draw_single_palette_item(scroll_surf: pygame.Surface,
         select_b_r = pygame.Rect(item_x - 3, item_y_on_scroll - 3, img.get_width() + 6, img.get_height() + 6)
         pygame.draw.rect(scroll_surf, ED_CONFIG.C.YELLOW, select_b_r, 2, border_radius=3) # type: ignore
 
-    scroll_surf.blit(img, (item_x, item_y_on_scroll)) 
+    scroll_surf.blit(img, (item_x, item_y_on_scroll))
     current_item_total_height = img.get_height()
 
     if tip_font:
@@ -1022,7 +1075,7 @@ def draw_asset_palette_ui(surface: pygame.Surface, editor_state: EditorState, pa
         scrollable_assets_y_start = palette_section_rect.top + ED_CONFIG.MINIMAP_AREA_HEIGHT
         scrollable_assets_height = palette_section_rect.height - ED_CONFIG.MINIMAP_AREA_HEIGHT \
                                    - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2) # type: ignore
-                                   
+
         scrollable_assets_rect_on_screen = pygame.Rect(
             palette_section_rect.left, scrollable_assets_y_start,
             palette_section_rect.width, scrollable_assets_height
@@ -1081,24 +1134,24 @@ def draw_asset_palette_ui(surface: pygame.Surface, editor_state: EditorState, pa
                     item_h = _draw_single_palette_item(scroll_surf, editor_state, palette_section_rect, asset_key, asset_data, ED_CONFIG.ASSET_PALETTE_ITEM_PADDING, current_y_on_scroll_surf, tip_font, mouse_pos)
                     current_y_on_scroll_surf += item_h + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING
                 if assets_in_category_tuples: current_y_on_scroll_surf += ED_CONFIG.ASSET_PALETTE_ITEM_PADDING
-            
+
             # Blit the scrollable surface with the current scroll_y offset
             surface.blit(scroll_surf, scrollable_assets_rect_on_screen.topleft,
                         (0, int(editor_state.asset_palette_scroll_y), scrollable_assets_rect_on_screen.width, scrollable_assets_rect_on_screen.height)) # scroll_y is float
-        
+
         pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'GRAY', (128,128,128)), scrollable_assets_rect_on_screen, 1)
 
         btn_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
         if btn_font:
             btn_h = ED_CONFIG.BUTTON_HEIGHT_STANDARD*0.8
             cp_btn_r = pygame.Rect(palette_section_rect.left+ED_CONFIG.ASSET_PALETTE_ITEM_PADDING,
-                                   palette_section_rect.bottom-btn_h-ED_CONFIG.ASSET_PALETTE_ITEM_PADDING, 
+                                   palette_section_rect.bottom-btn_h-ED_CONFIG.ASSET_PALETTE_ITEM_PADDING,
                                    palette_section_rect.width-ED_CONFIG.ASSET_PALETTE_ITEM_PADDING*2, int(btn_h))
             editor_state.ui_elements_rects["palette_bg_color_button"] = cp_btn_r
             bg_lum = sum(editor_state.background_color)/3
             txt_col = getattr(ED_CONFIG.C, 'BLACK', (0,0,0)) if bg_lum > 192 else getattr(ED_CONFIG.C, 'WHITE', (255,255,255)) # type: ignore
             draw_button(surface,cp_btn_r,"BG Color",btn_font,mouse_pos,text_color=txt_col,button_color_normal=editor_state.background_color,button_color_hover=pygame.Color(editor_state.background_color).lerp(getattr(ED_CONFIG.C, 'WHITE', (255,255,255)),0.3),border_color=getattr(ED_CONFIG.C, 'BLACK', (0,0,0))) # type: ignore
-        
+
         pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'DARK_GRAY', (50,50,50)), palette_section_rect, 2)
     except Exception as e:
         print(f"ERROR DRAW: draw_asset_palette_ui: {e}")
@@ -1127,8 +1180,8 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
             if not asset_palette_info:
                 pygame.draw.rect(editor_state.map_content_surface, getattr(ED_CONFIG.C, 'RED', (255,0,0)), (world_x,world_y,ts,ts),1)
                 continue
-            
-            image_to_draw_from_palette = asset_palette_info.get("image") 
+
+            image_to_draw_from_palette = asset_palette_info.get("image")
             override_color = obj.get("override_color")
             final_image_for_map = None
 
@@ -1140,7 +1193,7 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
                 if color_to_use:
                     temp_half_surf = pygame.Surface((ts, ts), pygame.SRCALPHA); temp_half_surf.fill((0,0,0,0))
                     half_type = asset_palette_info.get("half_type", "left")
-                    rect_to_draw = pygame.Rect(0,0,0,0) 
+                    rect_to_draw = pygame.Rect(0,0,0,0)
                     if half_type == "left": rect_to_draw = pygame.Rect(0, 0, ts // 2, ts)
                     elif half_type == "right": rect_to_draw = pygame.Rect(ts // 2, 0, ts // 2, ts)
                     elif half_type == "top": rect_to_draw = pygame.Rect(0, 0, ts, ts // 2)
@@ -1152,19 +1205,19 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
                 color_to_use = current_color if current_color else default_color_from_def
                 temp_param_surf = pygame.Surface((w,h)); temp_param_surf.fill(color_to_use) # type: ignore
                 final_image_for_map = temp_param_surf
-            elif image_to_draw_from_palette : 
-                if current_color: 
+            elif image_to_draw_from_palette :
+                if current_color:
                     tinted_surf = image_to_draw_from_palette.copy()
                     color_surface = pygame.Surface(tinted_surf.get_size(), pygame.SRCALPHA)
-                    color_surface.fill((*current_color, 128)) 
+                    color_surface.fill((*current_color, 128))
                     tinted_surf.blit(color_surface, (0,0), special_flags=pygame.BLEND_RGBA_MULT) # type: ignore
                     final_image_for_map = tinted_surf
                 else:
-                    final_image_for_map = image_to_draw_from_palette 
-            
+                    final_image_for_map = image_to_draw_from_palette
+
             if final_image_for_map:
                 editor_state.map_content_surface.blit(final_image_for_map, (world_x, world_y))
-            else: 
+            else:
                  pygame.draw.rect(editor_state.map_content_surface, getattr(ED_CONFIG.C, 'MAGENTA', (255,0,255)), (world_x,world_y,ts,ts),1)
 
         if editor_state.show_grid:
@@ -1173,17 +1226,17 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
         surface.blit(editor_state.map_content_surface, map_view_rect.topleft, (int(editor_state.camera_offset_x), int(editor_state.camera_offset_y), map_view_rect.width, map_view_rect.height))
         pygame.draw.rect(surface, ED_CONFIG.MAP_VIEW_BORDER_COLOR, map_view_rect, 2)
 
-        if editor_state.selected_asset_image_for_cursor: 
+        if editor_state.selected_asset_image_for_cursor:
             img = editor_state.selected_asset_image_for_cursor
-            pos_on_screen = img.get_rect(center=mouse_pos).topleft 
+            pos_on_screen = img.get_rect(center=mouse_pos).topleft
             if map_view_rect.collidepoint(mouse_pos):
                 world_mx = mouse_pos[0]-map_view_rect.left+editor_state.camera_offset_x
                 world_my = mouse_pos[1]-map_view_rect.top+editor_state.camera_offset_y
                 grid_wx = (world_mx//editor_state.grid_size)*editor_state.grid_size
                 grid_wy = (world_my//editor_state.grid_size)*editor_state.grid_size
                 pos_on_screen = (grid_wx-int(editor_state.camera_offset_x)+map_view_rect.left, grid_wy-int(editor_state.camera_offset_y)+map_view_rect.top)
-            
-            clip_orig = surface.get_clip(); surface.set_clip(map_view_rect) 
+
+            clip_orig = surface.get_clip(); surface.set_clip(map_view_rect)
             surface.blit(img,pos_on_screen); surface.set_clip(clip_orig)
 
         _draw_map_view_info_text(surface, editor_state, map_view_rect, fonts, mouse_pos)
@@ -1195,23 +1248,23 @@ def _draw_map_view_info_text(surface: pygame.Surface, editor_state: EditorState,
                              fonts: Dict[str, Optional[pygame.font.Font]], general_mouse_pos: Tuple[int, int]):
     info_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
     if not info_font: return
-    
+
     coords_text_str = f"Cam:({int(editor_state.camera_offset_x)},{int(editor_state.camera_offset_y)})"
     if map_view_rect.collidepoint(general_mouse_pos):
         world_mx = general_mouse_pos[0]-map_view_rect.left+editor_state.camera_offset_x
         world_my = general_mouse_pos[1]-map_view_rect.top+editor_state.camera_offset_y
         tx,ty = world_mx//editor_state.grid_size, world_my//editor_state.grid_size
         coords_text_str += f" MouseW:({int(world_mx)},{int(world_my)}) Tile:({tx},{ty})"
-    
+
     coords_surf = info_font.render(coords_text_str,True,getattr(ED_CONFIG.C, 'WHITE', (255,255,255)))
     coords_x_pos = map_view_rect.left + 5
-    
-    coords_y_pos = map_view_rect.top - coords_surf.get_height() - 4 
-    if coords_y_pos < 5: 
-        coords_y_pos = map_view_rect.bottom + 4 
+
+    coords_y_pos = map_view_rect.top - coords_surf.get_height() - 4
+    if coords_y_pos < 5:
+        coords_y_pos = map_view_rect.bottom + 4
         if coords_y_pos + coords_surf.get_height() > surface.get_height() - 5:
             coords_y_pos = surface.get_height() - 5 - coords_surf.get_height()
-            
+
     surface.blit(coords_surf, (coords_x_pos, coords_y_pos))
 
 def draw_grid_on_map_surface(map_content_surface: pygame.Surface, editor_state: EditorState):
@@ -1743,6 +1796,7 @@ def handle_editing_map_events(event: pygame.event.Event, editor_state: EditorSta
 # -*- coding: utf-8 -*-
 """
 Handles Pygame events for the main menu of the editor.
+Ensures correct filename handling for rename operations.
 """
 import pygame
 import os
@@ -1751,12 +1805,160 @@ from typing import Optional
 
 import editor_config as ED_CONFIG
 from editor_state import EditorState
-from editor_ui import start_text_input_dialog, start_file_load_dialog # color_picker dialog not used in menu
+from editor_ui import start_text_input_dialog, start_file_load_dialog
 from editor_map_utils import (init_new_map_state, save_map_to_json,
                               load_map_from_json, export_map_to_game_python_script,
                               delete_map_files)
 
 logger = logging.getLogger(__name__)
+
+# --- Callbacks for the rename dialogs ---
+def _handle_rename_get_new_name(new_name_str: str, old_base_filename_no_ext: str, editor_state: EditorState):
+    """
+    Called when the user confirms the new name in the text input dialog.
+    old_base_filename_no_ext is the original filename without path and without .json extension (e.g., "my_map")
+    """
+    logger.info(f"Attempting to rename '{old_base_filename_no_ext}' to '{new_name_str}'")
+    new_name_str = new_name_str.strip()
+
+    if not new_name_str or new_name_str == old_base_filename_no_ext:
+        editor_state.set_status_message("Rename cancelled or name unchanged/empty.", 2)
+        logger.info("Rename cancelled: name unchanged or empty.")
+        return
+
+    # Basic validation for new_name_str
+    invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+    if any(char in new_name_str for char in invalid_chars):
+        editor_state.set_status_message("New name contains invalid characters.", 3)
+        logger.warning(f"Invalid new name provided: '{new_name_str}'")
+        # Re-open dialog for new name
+        start_text_input_dialog(
+            editor_state,
+            prompt=f"Invalid name. New name for '{old_base_filename_no_ext}':",
+            default_text=new_name_str, # Keep the invalid text for user to correct
+            on_confirm=lambda new_val: _handle_rename_get_new_name(new_val, old_base_filename_no_ext, editor_state),
+            on_cancel=lambda: editor_state.set_status_message("Rename cancelled.", 1),
+            is_initially_selected=True # Re-select the text
+        )
+        return
+
+    # Construct full paths for old and new files
+    old_json_filename = old_base_filename_no_ext + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
+    old_py_filename = old_base_filename_no_ext + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
+
+    old_full_path_json = os.path.join(ED_CONFIG.MAPS_DIRECTORY, old_json_filename)
+    old_full_path_py = os.path.join(ED_CONFIG.MAPS_DIRECTORY, old_py_filename)
+
+    new_json_filename = new_name_str + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
+    new_py_filename = new_name_str + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
+
+    new_full_path_json = os.path.join(ED_CONFIG.MAPS_DIRECTORY, new_json_filename)
+    new_full_path_py = os.path.join(ED_CONFIG.MAPS_DIRECTORY, new_py_filename)
+
+
+    if not os.path.exists(old_full_path_json):
+        editor_state.set_status_message(f"Error: Original map JSON '{old_json_filename}' not found.", 3)
+        logger.error(f"Original map JSON for rename not found: {old_full_path_json}")
+        return
+
+    # Check if new filenames already exist (excluding the old ones if name is just case change)
+    if os.path.normcase(old_full_path_json) != os.path.normcase(new_full_path_json) and os.path.exists(new_full_path_json):
+        editor_state.set_status_message(f"Error: JSON file '{new_json_filename}' already exists.", 3)
+        logger.warning(f"Target JSON rename path already exists: {new_full_path_json}")
+        start_text_input_dialog(
+            editor_state,
+            prompt=f"Name '{new_name_str}' (JSON) exists. New name for '{old_base_filename_no_ext}':",
+            default_text=new_name_str,
+            on_confirm=lambda new_val: _handle_rename_get_new_name(new_val, old_base_filename_no_ext, editor_state),
+            on_cancel=lambda: editor_state.set_status_message("Rename cancelled.", 1),
+            is_initially_selected=True # Re-select the text
+        )
+        return
+
+    if os.path.normcase(old_full_path_py) != os.path.normcase(new_full_path_py) and os.path.exists(new_full_path_py):
+        editor_state.set_status_message(f"Error: Python file '{new_py_filename}' already exists.", 3)
+        logger.warning(f"Target PY rename path already exists: {new_full_path_py}")
+        start_text_input_dialog(
+            editor_state,
+            prompt=f"Name '{new_name_str}' (PY) exists. New name for '{old_base_filename_no_ext}':",
+            default_text=new_name_str,
+            on_confirm=lambda new_val: _handle_rename_get_new_name(new_val, old_base_filename_no_ext, editor_state),
+            on_cancel=lambda: editor_state.set_status_message("Rename cancelled.", 1),
+            is_initially_selected=True # Re-select the text
+        )
+        return
+
+    try:
+        # Rename JSON file
+        os.rename(old_full_path_json, new_full_path_json)
+        logger.info(f"Successfully renamed '{old_full_path_json}' to '{new_full_path_json}'")
+
+        # Rename corresponding PY file if it exists
+        if os.path.exists(old_full_path_py):
+            os.rename(old_full_path_py, new_full_path_py)
+            logger.info(f"Successfully renamed '{old_full_path_py}' to '{new_full_path_py}'")
+        else:
+            logger.info(f"Original PY file '{old_full_path_py}' not found, skipping its rename.")
+
+        editor_state.set_status_message(f"Map '{old_base_filename_no_ext}' renamed to '{new_name_str}'.", 3)
+
+        # If the currently loaded map was renamed
+        if editor_state.current_loaded_map_path and \
+           os.path.normpath(editor_state.current_loaded_map_path) == os.path.normpath(old_full_path_json):
+            editor_state.current_loaded_map_path = new_full_path_json
+            editor_state.current_map_filename = new_py_filename # Update to new .py filename
+            editor_state.map_name_for_function = new_name_str # This should be the base name
+            if editor_state.current_editor_mode == "editing_map":
+                pygame.display.set_caption(f"Editor - {editor_state.map_name_for_function}.py")
+            logger.info(f"Updated current_loaded_map_path to new name: {new_full_path_json}")
+
+    except OSError as e:
+        editor_state.set_status_message(f"Error renaming map: {e}", 4)
+        logger.error(f"OSError during rename: {e}", exc_info=True)
+    finally:
+        editor_state.active_dialog_type = None # Ensure dialog is closed
+
+def _handle_rename_select_map(selected_path_from_dialog: str, editor_state: EditorState):
+    """
+    Called when the user selects a map to rename from the file dialog.
+    selected_path_from_dialog is the path to the file (e.g., "maps/my_map.json")
+    """
+    logger.info(f"Map selected for rename (path from dialog): '{selected_path_from_dialog}'")
+
+    if not selected_path_from_dialog:
+        editor_state.set_status_message("Rename cancelled: No map selected.", 1)
+        logger.info("Rename cancelled: no map selected from dialog.")
+        return
+
+    # Get the actual filename (e.g., "my_map.json") from the path
+    filename_with_ext = os.path.basename(selected_path_from_dialog)
+
+    # Get the name without the .json extension for the prompt and default text
+    base_name_no_ext = os.path.splitext(filename_with_ext)[0]
+
+    start_text_input_dialog(
+        editor_state,
+        prompt=f"Enter new name for '{base_name_no_ext}':",      # Use just the base name (e.g., 'yes')
+        default_text=base_name_no_ext,                          # Use just the base name (e.g., 'yes')
+        # Pass the original base name (without extension) to the next step
+        on_confirm=lambda new_name: _handle_rename_get_new_name(new_name, base_name_no_ext, editor_state),
+        on_cancel=lambda: editor_state.set_status_message("Rename cancelled.", 1),
+        is_initially_selected=True
+    )
+
+def start_rename_map_flow(editor_state: EditorState):
+    """
+    Initiates the map renaming process by showing the file selection dialog.
+    """
+    logger.info("Starting rename map flow.")
+    start_file_load_dialog(
+        editor_state,
+        # The 'path_from_dialog' lambda parameter will receive the full path from the file dialog
+        on_confirm=lambda path_from_dialog: _handle_rename_select_map(path_from_dialog, editor_state),
+        on_cancel=lambda: editor_state.set_status_message("Rename map cancelled.", 1),
+        prompt_override="Select Map to Rename",
+        file_extension=ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION # Ensure we list .json files
+    )
 
 def handle_menu_events(event: pygame.event.Event, editor_state: EditorState, main_screen: pygame.Surface):
     """
@@ -1770,69 +1972,97 @@ def handle_menu_events(event: pygame.event.Event, editor_state: EditorState, mai
             logger.info("Menu: 'New Map' button clicked.")
             def on_new_map_name(name:str):
                 name=name.strip()
-                if not name: 
+                if not name:
                     editor_state.set_status_message("Map name empty.",3)
                     start_text_input_dialog(editor_state,"Name:","",on_new_map_name,lambda:None, is_initially_selected=True)
                     return
-                editor_state.map_name_for_function_input=name
+                # Basic validation for new map name (similar to rename)
+                invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+                if any(char in name for char in invalid_chars):
+                    editor_state.set_status_message("Map name contains invalid characters.", 3)
+                    logger.warning(f"Invalid new map name provided: '{name}'")
+                    start_text_input_dialog(editor_state, "Invalid Name. New Map Name:", name, on_new_map_name, lambda: None, is_initially_selected=True)
+                    return
+
+                # Check if map already exists
+                potential_json_path = os.path.join(ED_CONFIG.MAPS_DIRECTORY, name + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION)
+                potential_py_path = os.path.join(ED_CONFIG.MAPS_DIRECTORY, name + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION)
+                if os.path.exists(potential_json_path) or os.path.exists(potential_py_path):
+                    editor_state.set_status_message(f"Map '{name}' already exists.", 3)
+                    logger.warning(f"Attempt to create new map with existing name: '{name}'")
+                    start_text_input_dialog(editor_state, f"Name '{name}' exists. New Map Name:", name, on_new_map_name, lambda:None, is_initially_selected=True)
+                    return
+
+                editor_state.map_name_for_function_input=name # Store the validated name
                 def on_map_size(size_str:str):
                     try:
                         w,h=map(int,size_str.replace(" ","").split(','))
-                        if not(w>0 and h>0): raise ValueError("Dims>0")
+                        # Assuming MAX_MAP_WIDTH_TILES and MAX_MAP_HEIGHT_TILES are defined in ED_CONFIG
+                        max_w = getattr(ED_CONFIG, "MAX_MAP_WIDTH_TILES", 500) 
+                        max_h = getattr(ED_CONFIG, "MAX_MAP_HEIGHT_TILES", 500)
+                        if not(w>0 and h>0 and w <= max_w and h <= max_h):
+                             raise ValueError(f"Dims must be >0 and <= max ({max_w}x{max_h})")
                         init_new_map_state(editor_state,editor_state.map_name_for_function_input,w,h)
                         if save_map_to_json(editor_state)and export_map_to_game_python_script(editor_state):
                             editor_state.set_status_message(f"Map '{editor_state.map_name_for_function}' auto-saved.",3)
                             pygame.display.set_caption(f"Editor - {editor_state.map_name_for_function}.py")
-                        else: 
+                        else:
                             editor_state.set_status_message(f"Auto-save fail for '{editor_state.map_name_for_function}'.",4)
                             editor_state.unsaved_changes=True
                             pygame.display.set_caption(f"Editor - {editor_state.map_name_for_function}.py*")
                         editor_state.current_editor_mode="editing_map"
-                    except Exception as e: 
+                    except Exception as e:
                         editor_state.set_status_message(f"Invalid size:{e}",3.5)
                         start_text_input_dialog(editor_state,"Size (W,H):",f"{ED_CONFIG.DEFAULT_MAP_WIDTH_TILES},{ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES}",on_map_size,lambda:None, is_initially_selected=True)
                 start_text_input_dialog(editor_state,"Size (W,H):",f"{ED_CONFIG.DEFAULT_MAP_WIDTH_TILES},{ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES}",on_map_size,lambda:None, is_initially_selected=True)
             start_text_input_dialog(editor_state,"New Map Name:","my_map",on_new_map_name,lambda:None, is_initially_selected=True)
-        
+
         elif ui_rects.get("menu_load_map",pygame.Rect(0,0,0,0)).collidepoint(mouse_pos):
             logger.info("Menu: 'Load Map' button clicked.")
-            def on_file_sel(fp:str):
-                if load_map_from_json(editor_state,fp): 
+            def on_file_sel(path_from_dialog:str): # path_from_dialog is the full path (e.g., "maps/ok.json")
+                # load_map_from_json expects the full path, so path_from_dialog is used directly.
+                logger.debug(f"Attempting to load map from: {path_from_dialog}")
+                if load_map_from_json(editor_state, path_from_dialog):
                     editor_state.current_editor_mode="editing_map"
                     pygame.display.set_caption(f"Editor - {editor_state.map_name_for_function}.py")
+                else:
+                    logger.error(f"Failed to load map from {path_from_dialog}")
+                    # Status message is set within load_map_from_json on failure
             start_file_load_dialog(editor_state,on_confirm=on_file_sel,on_cancel=lambda:None)
+
+        elif ui_rects.get("menu_rename_map", pygame.Rect(0,0,0,0)).collidepoint(mouse_pos):
+            logger.info("Menu: 'Rename Map' button clicked.")
+            start_rename_map_flow(editor_state) # This flow correctly handles paths now
 
         elif ui_rects.get("menu_delete_map", pygame.Rect(0,0,0,0)).collidepoint(mouse_pos):
             logger.info("Menu: 'Delete Map' button clicked.")
-            def on_delete_file_selected(filepath_to_delete: str):
-                if filepath_to_delete:
-                    map_name_to_delete = os.path.basename(filepath_to_delete).replace(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION, "")
-                    logger.info(f"Attempting direct deletion of map: {map_name_to_delete} ({filepath_to_delete})")
-                    
-                    if delete_map_files(editor_state, filepath_to_delete):
+            def on_delete_file_selected(path_from_dialog: str): # path_from_dialog is full path e.g., "maps/ok.json"
+                if path_from_dialog:
+                    # delete_map_files expects the full path to the .json file
+                    map_name_to_delete = os.path.splitext(os.path.basename(path_from_dialog))[0]
+                    logger.info(f"Attempting deletion of map: {map_name_to_delete} (Path: {path_from_dialog})")
+
+                    if delete_map_files(editor_state, path_from_dialog):
                         editor_state.set_status_message(f"Map '{map_name_to_delete}' deleted.", 3)
-                        # If current map was deleted, reset context (but stay in menu)
-                        # The map context being reset ensures no lingering data of the deleted map.
-                        # If editor was in 'editing_map' mode for the deleted map, it should have been handled
-                        # by the callback of the dialog that led to this point.
-                        # Here, we are already in 'menu' mode.
-                        # Check if the active map data matches the deleted one, if so, clear it.
-                        current_map_base_name = ""
-                        if editor_state.current_map_filename:
-                             current_map_base_name = os.path.basename(editor_state.current_map_filename).replace(ED_CONFIG.GAME_LEVEL_FILE_EXTENSION, "")
+                        current_map_base_name_if_loaded = ""
+                        if editor_state.current_loaded_map_path:
+                             current_map_base_name_if_loaded = os.path.splitext(os.path.basename(editor_state.current_loaded_map_path))[0]
 
                         if editor_state.map_name_for_function == map_name_to_delete or \
-                           current_map_base_name == map_name_to_delete:
+                           current_map_base_name_if_loaded == map_name_to_delete:
                             logger.info(f"Map '{map_name_to_delete}' which might have been active was deleted. Resetting map context.")
-                            editor_state.reset_map_context() 
-                            # No need to change editor_mode here, as we are already in menu.
+                            editor_state.reset_map_context()
+                            if editor_state.current_editor_mode == "editing_map":
+                                editor_state.current_editor_mode = "menu"
+                                pygame.display.set_caption("Platformer Level Editor - Menu")
                 else:
                     editor_state.set_status_message("No map selected for deletion.", 2)
-            
-            start_file_load_dialog(editor_state, 
-                                   prompt_override="Select Map to PERMANENTLY DELETE", 
-                                   on_confirm=on_delete_file_selected, 
-                                   on_cancel=lambda: editor_state.set_status_message("Delete operation cancelled.", 2))
+
+            start_file_load_dialog(editor_state,
+                                   prompt_override="Select Map to PERMANENTLY DELETE",
+                                   on_confirm=on_delete_file_selected,
+                                   on_cancel=lambda: editor_state.set_status_message("Delete operation cancelled.", 2),
+                                   file_extension=ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION)
 
         elif ui_rects.get("menu_quit",pygame.Rect(0,0,0,0)).collidepoint(mouse_pos):
             logger.info("Menu: 'Quit' button clicked.")
@@ -2609,14 +2839,14 @@ class EditorState:
 # editor_ui.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.8 (Added text highlight and delete map dialog support)
+## version 1.0.0.10 (Ensured start_file_load_dialog populates list with basenames only)
 Pygame-based UI functions for the Level Editor.
 Includes buttons, input dialogs, color pickers, and tooltips.
 """
 import pygame
 import os
 from typing import Optional, Dict, Tuple, Any, Callable, List
-import traceback 
+import traceback
 
 import editor_config as ED_CONFIG
 from editor_state import EditorState
@@ -2641,7 +2871,7 @@ def draw_button(surface: pygame.Surface,
     current_text_color = text_color
 
     if not is_active:
-        current_button_color = tuple(int(c * 0.67) for c in button_color_normal) 
+        current_button_color = tuple(int(c * 0.67) for c in button_color_normal)
         current_text_color = tuple(int(c * 0.67) for c in text_color)
     elif is_hovered:
         current_button_color = button_color_hover
@@ -2656,7 +2886,16 @@ def draw_button(surface: pygame.Surface,
             text_rect = text_surf.get_rect(center=rect.center)
             surface.blit(text_surf, text_rect)
         else:
-            print(f"Warning UI_DRAW: draw_button called with no font for text '{text}'")
+            # Use a default font if None is provided, or log a more prominent warning
+            try:
+                default_font = pygame.font.Font(None, 24) # Example default
+                text_surf = default_font.render(text, True, current_text_color)
+                text_rect = text_surf.get_rect(center=rect.center)
+                surface.blit(text_surf, text_rect)
+                print(f"Warning UI_DRAW: draw_button called with no font for text '{text}'. Used default font.")
+            except Exception as font_e:
+                 print(f"CRITICAL UI_DRAW: draw_button no font for '{text}' AND default font failed: {font_e}")
+
     except Exception as e:
         print(f"ERROR UI_DRAW: Exception in draw_button for '{text}': {e}")
         traceback.print_exc()
@@ -2675,8 +2914,8 @@ def draw_tooltip(surface: pygame.Surface,
             )
             bg_rect = text_rect.inflate(ED_CONFIG.TOOLTIP_PADDING * 2, ED_CONFIG.TOOLTIP_PADDING * 2)
 
-            bg_rect.clamp_ip(surface.get_rect()) 
-            text_rect.clamp_ip(bg_rect.inflate(-ED_CONFIG.TOOLTIP_PADDING, -ED_CONFIG.TOOLTIP_PADDING)) 
+            bg_rect.clamp_ip(surface.get_rect())
+            text_rect.clamp_ip(bg_rect.inflate(-ED_CONFIG.TOOLTIP_PADDING, -ED_CONFIG.TOOLTIP_PADDING))
 
             pygame.draw.rect(surface, ED_CONFIG.TOOLTIP_BG_COLOR, bg_rect, border_radius=3)
             pygame.draw.rect(surface, ED_CONFIG.BUTTON_COLOR_BORDER, bg_rect, 1, border_radius=3)
@@ -2688,7 +2927,7 @@ def draw_tooltip(surface: pygame.Surface,
 def draw_status_message(surface: pygame.Surface, editor_state: EditorState, font: Optional[pygame.font.Font]):
     if editor_state.status_message and font:
         try:
-            message_surf = font.render(editor_state.status_message, True, getattr(ED_CONFIG.C, 'YELLOW', (255,255,0))) 
+            message_surf = font.render(editor_state.status_message, True, getattr(ED_CONFIG.C, 'YELLOW', (255,255,0)))
             message_rect = message_surf.get_rect(centerx=surface.get_width() // 2,
                                                   bottom=surface.get_height() - 10)
             bg_padding = 5
@@ -2697,7 +2936,7 @@ def draw_status_message(surface: pygame.Surface, editor_state: EditorState, font
             message_rect.clamp_ip(bg_rect)
 
             s = pygame.Surface(bg_rect.size, pygame.SRCALPHA)
-            s.fill((50, 50, 50, 180)) 
+            s.fill((50, 50, 50, 180))
             surface.blit(s, bg_rect.topleft)
             surface.blit(message_surf, message_rect)
         except Exception as e:
@@ -2710,23 +2949,23 @@ def start_text_input_dialog(editor_state: EditorState,
                             default_text: str = "",
                             on_confirm: Optional[Callable[[str], None]] = None,
                             on_cancel: Optional[Callable[[], None]] = None,
-                            is_initially_selected: bool = True): # New parameter
+                            is_initially_selected: bool = True):
     print(f"DEBUG UI_DIALOG: start_text_input_dialog. Prompt: '{prompt}', Default: '{default_text}', Selected: {is_initially_selected}")
     editor_state.active_dialog_type = "text_input"
     editor_state.dialog_prompt_message = prompt
     editor_state.dialog_input_text = default_text
-    editor_state.dialog_input_default = default_text 
-    editor_state.dialog_input_text_selected = is_initially_selected # Set the flag
+    editor_state.dialog_input_default = default_text
+    editor_state.dialog_input_text_selected = is_initially_selected
     editor_state.dialog_callback_confirm = on_confirm
     editor_state.dialog_callback_cancel = on_cancel
-    editor_state.dialog_rect = None 
+    editor_state.dialog_rect = None
 
 def start_color_picker_dialog(editor_state: EditorState,
                               on_confirm: Optional[Callable[[Tuple[int,int,int]], None]] = None,
                               on_cancel: Optional[Callable[[], None]] = None):
-    print(f"DEBUG UI_DIALOG: start_color_picker_dialog.") 
+    print(f"DEBUG UI_DIALOG: start_color_picker_dialog.")
     editor_state.active_dialog_type = "color_picker"
-    editor_state.dialog_prompt_message = "Select Background Color (Esc to Cancel)" # Or make generic
+    editor_state.dialog_prompt_message = "Select Background Color (Esc to Cancel)"
     editor_state.color_picker_rects.clear()
 
     cols = ED_CONFIG.COLOR_PICKER_COLS
@@ -2734,7 +2973,7 @@ def start_color_picker_dialog(editor_state: EditorState,
     padding = ED_CONFIG.COLOR_PICKER_PADDING
 
     start_x_in_dialog = padding * 2
-    current_y_in_dialog = 50 
+    current_y_in_dialog = 50
     current_x_in_dialog = start_x_in_dialog
     idx = 0
     for name in ED_CONFIG.COLOR_PICKER_PRESETS.keys():
@@ -2748,20 +2987,23 @@ def start_color_picker_dialog(editor_state: EditorState,
 
     editor_state.dialog_callback_confirm = on_confirm
     editor_state.dialog_callback_cancel = on_cancel
-    editor_state.dialog_rect = None 
+    editor_state.dialog_rect = None
 
 def start_file_load_dialog(editor_state: EditorState,
                            on_confirm: Optional[Callable[[str], None]] = None,
                            on_cancel: Optional[Callable[[], None]] = None,
                            initial_path: str = ED_CONFIG.MAPS_DIRECTORY,
                            file_extension: str = ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION,
-                           prompt_override: Optional[str] = None): # New parameter
+                           prompt_override: Optional[str] = None):
     print(f"DEBUG UI_DIALOG: start_file_load_dialog. Path: '{initial_path}', Ext: '{file_extension}', Prompt: '{prompt_override}'")
     editor_state.active_dialog_type = "file_load"
     if prompt_override:
         editor_state.dialog_prompt_message = prompt_override
     else:
-        editor_state.dialog_prompt_message = f"Select Map to Load (from ./{initial_path})"
+        # Use os.path.normpath to clean up the path for display if needed
+        display_path = os.path.normpath(initial_path)
+        editor_state.dialog_prompt_message = f"Select Map to Load (from ./{display_path})"
+
     editor_state.dialog_input_text = ""
     editor_state.dialog_file_list = []
     editor_state.dialog_file_scroll_y = 0
@@ -2786,10 +3028,14 @@ def start_file_load_dialog(editor_state: EditorState,
             return
 
     try:
-        for item in os.listdir(initial_path):
-            if item.endswith(file_extension) and os.path.isfile(os.path.join(initial_path, item)):
-                editor_state.dialog_file_list.append(item)
+        # Ensure we are appending only the basename
+        for item_name in os.listdir(initial_path):
+            # Check if it's a file and has the correct extension
+            if item_name.endswith(file_extension) and os.path.isfile(os.path.join(initial_path, item_name)):
+                # item_name is already the basename as returned by os.listdir()
+                editor_state.dialog_file_list.append(item_name)
         editor_state.dialog_file_list.sort()
+        print(f"DEBUG UI_DIALOG: Populated dialog_file_list: {editor_state.dialog_file_list}") # Debug print
     except OSError as e:
         err_msg = f"Error listing files in '{initial_path}': {e}"
         editor_state.set_status_message(err_msg, 3)
@@ -2799,7 +3045,7 @@ def start_file_load_dialog(editor_state: EditorState,
         return
 
     if not editor_state.dialog_file_list:
-        editor_state.set_status_message(f"No '{file_extension}' files found in ./{initial_path}", 2.5)
+        editor_state.set_status_message(f"No '{file_extension}' files found in ./{os.path.normpath(initial_path)}", 2.5)
 
     editor_state.dialog_callback_confirm = on_confirm
     editor_state.dialog_callback_cancel = on_cancel
@@ -2832,7 +3078,7 @@ def draw_active_dialog(surface: pygame.Surface, editor_state: EditorState, fonts
         editor_state.dialog_rect = current_dialog_rect
 
         pygame.draw.rect(surface, ED_CONFIG.DIALOG_BG_COLOR, current_dialog_rect, border_radius=5)
-        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), current_dialog_rect, 2, border_radius=5) 
+        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), current_dialog_rect, 2, border_radius=5)
 
         prompt_font = fonts.get("medium") or ED_CONFIG.FONT_CONFIG.get("medium")
         if prompt_font and editor_state.dialog_prompt_message:
@@ -2852,46 +3098,44 @@ def draw_active_dialog(surface: pygame.Surface, editor_state: EditorState, fonts
         traceback.print_exc()
         error_font = fonts.get("small")
         if error_font and editor_state.dialog_rect:
-            err_surf = error_font.render(f"Dialog Error! See console.", True, getattr(ED_CONFIG.C, 'RED', (255,0,0))) 
+            err_surf = error_font.render(f"Dialog Error! See console.", True, getattr(ED_CONFIG.C, 'RED', (255,0,0)))
             surface.blit(err_surf, err_surf.get_rect(center=editor_state.dialog_rect.center))
 
 
 def _draw_text_input_content(surface: pygame.Surface, editor_state: EditorState, dialog_rect: pygame.Rect, fonts: Dict[str, Optional[pygame.font.Font]]):
     input_box_rect = pygame.Rect(0, 0, dialog_rect.width - 40, 40)
     input_box_rect.center = dialog_rect.centerx, dialog_rect.centery + 10
-    editor_state.ui_elements_rects['dialog_text_input_box'] = input_box_rect # Store for event handling
+    editor_state.ui_elements_rects['dialog_text_input_box'] = input_box_rect
 
     pygame.draw.rect(surface, ED_CONFIG.DIALOG_INPUT_BOX_COLOR, input_box_rect)
-    pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), input_box_rect, 2) 
+    pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), input_box_rect, 2)
 
     text_font = fonts.get("medium") or ED_CONFIG.FONT_CONFIG.get("medium")
     current_text_to_render = str(editor_state.dialog_input_text) if editor_state.dialog_input_text is not None else ""
 
     if text_font:
-        # Draw highlight if text is selected
         if editor_state.dialog_input_text_selected:
-            text_surf_for_highlight = text_font.render(current_text_to_render, True, ED_CONFIG.DIALOG_INPUT_TEXT_COLOR) # Render once for width
+            text_surf_for_highlight = text_font.render(current_text_to_render, True, ED_CONFIG.DIALOG_INPUT_TEXT_COLOR)
             highlight_width = text_surf_for_highlight.get_width()
             highlight_height = text_surf_for_highlight.get_height()
-            
-            text_padding_x = 6 
+
+            text_padding_x = 6
             highlight_rect = pygame.Rect(
                 input_box_rect.left + text_padding_x,
                 input_box_rect.centery - highlight_height // 2,
                 highlight_width,
                 highlight_height
             )
-            # Clip highlight to be within the input box's drawable area
-            clip_area_for_highlight = input_box_rect.inflate(-text_padding_x*2, -8) # Padded area
+            clip_area_for_highlight = input_box_rect.inflate(-text_padding_x*2, -8)
             highlight_rect = highlight_rect.clip(clip_area_for_highlight)
-            
+
             pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'LIGHT_BLUE', (173,216,230)), highlight_rect)
 
 
         input_text_surf = text_font.render(current_text_to_render, True, ED_CONFIG.DIALOG_INPUT_TEXT_COLOR)
-        text_clip_area_rect = input_box_rect.inflate(-12, -12) # Area where text is visible
+        text_clip_area_rect = input_box_rect.inflate(-12, -12)
         text_surf_width = input_text_surf.get_width()
-        blit_area = None # For scrolling text if too long
+        blit_area = None
         text_draw_pos_on_surface_x = text_clip_area_rect.left
 
         if text_surf_width > text_clip_area_rect.width:
@@ -2901,46 +3145,45 @@ def _draw_text_input_content(surface: pygame.Surface, editor_state: EditorState,
 
         blit_destination_topleft = (text_draw_pos_on_surface_x,
                                     text_clip_area_rect.top + (text_clip_area_rect.height - input_text_surf.get_height()) // 2)
-        
+
         original_clip = surface.get_clip()
         surface.set_clip(text_clip_area_rect)
         surface.blit(input_text_surf, blit_destination_topleft, area=blit_area)
         surface.set_clip(original_clip)
 
-        # Draw cursor if text is not selected
         if not editor_state.dialog_input_text_selected:
-            if blit_area: # Text is scrolled
+            if blit_area:
                 cursor_render_x = text_clip_area_rect.right -1
-            else: # Text fits or is shorter
+            else:
                 cursor_render_x = text_clip_area_rect.left + input_text_surf.get_width() + 1
-            
+
             cursor_render_x = max(text_clip_area_rect.left, min(cursor_render_x, text_clip_area_rect.right -1))
 
-            if int(pygame.time.get_ticks() / 500) % 2 == 0: # Blinking cursor
+            if int(pygame.time.get_ticks() / 500) % 2 == 0:
                  pygame.draw.line(surface, ED_CONFIG.DIALOG_CURSOR_COLOR,
                                  (cursor_render_x, input_box_rect.top + 5),
                                  (cursor_render_x, input_box_rect.bottom - 5), 2)
 
     info_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
     if info_font:
-        info_surf = info_font.render("Enter: Confirm, Esc: Cancel", True, getattr(ED_CONFIG.C, 'LIGHT_GRAY', (200,200,200))) 
+        info_surf = info_font.render("Enter: Confirm, Esc: Cancel", True, getattr(ED_CONFIG.C, 'LIGHT_GRAY', (200,200,200)))
         surface.blit(info_surf, info_surf.get_rect(midbottom=(dialog_rect.centerx, dialog_rect.bottom - 10)))
 
 def _draw_color_picker_content(surface: pygame.Surface, editor_state: EditorState, dialog_rect: pygame.Rect, fonts: Dict[str, Optional[pygame.font.Font]]):
     mouse_pos_dialog = pygame.mouse.get_pos()
-    default_fallback_color = (255, 0, 255) 
+    default_fallback_color = (255, 0, 255)
 
     for name, swatch_rect_relative in editor_state.color_picker_rects.items():
         absolute_swatch_rect = swatch_rect_relative.move(dialog_rect.left, dialog_rect.top)
-        
+
         magenta_default = getattr(ED_CONFIG.C, 'MAGENTA', default_fallback_color)
         color_val = ED_CONFIG.COLOR_PICKER_PRESETS.get(name, magenta_default)
 
         pygame.draw.rect(surface, color_val, absolute_swatch_rect)
-        border_col = getattr(ED_CONFIG.C, 'BLACK', (0,0,0)) 
+        border_col = getattr(ED_CONFIG.C, 'BLACK', (0,0,0))
         border_w = 1
         if absolute_swatch_rect.collidepoint(mouse_pos_dialog):
-            border_col = getattr(ED_CONFIG, 'COLOR_PICKER_HOVER_BORDER_COLOR', getattr(ED_CONFIG.C, 'YELLOW', (255,255,0))) 
+            border_col = getattr(ED_CONFIG, 'COLOR_PICKER_HOVER_BORDER_COLOR', getattr(ED_CONFIG.C, 'YELLOW', (255,255,0)))
             border_w = 3
         pygame.draw.rect(surface, border_col, absolute_swatch_rect, border_w)
 
@@ -2954,15 +3197,15 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
 
     list_area_rect = pygame.Rect(dialog_rect.left + 10, list_area_y_start, dialog_rect.width - 20, list_area_height)
     pygame.draw.rect(surface, ED_CONFIG.DIALOG_INPUT_BOX_COLOR, list_area_rect)
-    pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), list_area_rect, 1) 
+    pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), list_area_rect, 1)
 
     item_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
     item_line_height = (item_font.get_height() + 6) if item_font else 22
 
-    if 'dialog_file_item_rects' not in editor_state.ui_elements_rects: # Ensure it exists
+    if 'dialog_file_item_rects' not in editor_state.ui_elements_rects:
         editor_state.ui_elements_rects['dialog_file_item_rects'] = []
     else:
-        editor_state.ui_elements_rects['dialog_file_item_rects'].clear() # Clear for fresh drawing
+        editor_state.ui_elements_rects['dialog_file_item_rects'].clear()
 
     list_clip_rect = list_area_rect.inflate(-8, -8)
     total_content_height_pixels = len(editor_state.dialog_file_list) * item_line_height
@@ -2972,7 +3215,7 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
         scrollbar_width_drawn = 15
         scrollbar_track_rect = pygame.Rect(list_clip_rect.right + 2, list_clip_rect.top,
                                           scrollbar_width_drawn, list_clip_rect.height)
-        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'DARK_GRAY', (50,50,50)), scrollbar_track_rect) 
+        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'DARK_GRAY', (50,50,50)), scrollbar_track_rect)
         handle_height_ratio = min(1.0, list_clip_rect.height / total_content_height_pixels if total_content_height_pixels > 0 else 1.0)
         handle_height = max(20, scrollbar_track_rect.height * handle_height_ratio)
         scrollable_content_outside_view = max(0, total_content_height_pixels - list_clip_rect.height)
@@ -2981,7 +3224,7 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
         scrollbar_handle_rect = pygame.Rect(scrollbar_track_rect.left,
                                             scrollbar_track_rect.top + handle_y_pos_on_track,
                                             scrollbar_width_drawn, handle_height)
-        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'GRAY', (128,128,128)), scrollbar_handle_rect, border_radius=3) 
+        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'GRAY', (128,128,128)), scrollbar_handle_rect, border_radius=3)
         editor_state.ui_elements_rects['file_dialog_scrollbar_handle'] = scrollbar_handle_rect
         editor_state.ui_elements_rects['file_dialog_scrollbar_area'] = scrollbar_track_rect
 
@@ -2990,7 +3233,7 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
     surface.set_clip(list_clip_rect)
     current_y_offset_in_clip_rect = 0
 
-    for i, filename in enumerate(editor_state.dialog_file_list):
+    for i, filename in enumerate(editor_state.dialog_file_list): # filename here is already basename
         item_draw_y_on_surface = list_clip_rect.top + current_y_offset_in_clip_rect - editor_state.dialog_file_scroll_y
         item_full_rect_on_screen = pygame.Rect(list_clip_rect.left, item_draw_y_on_surface,
                                            list_item_text_render_width, item_line_height)
@@ -2999,13 +3242,13 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
                 {"text": filename, "rect": item_full_rect_on_screen, "index": i}
             )
             if item_font:
-                text_color = getattr(ED_CONFIG.C, 'BLACK', (0,0,0)) 
+                text_color = getattr(ED_CONFIG.C, 'BLACK', (0,0,0))
                 bg_color_item = ED_CONFIG.DIALOG_INPUT_BOX_COLOR
                 if editor_state.dialog_selected_file_index == i:
-                    bg_color_item = getattr(ED_CONFIG.C, 'BLUE', (0,0,255)) 
-                    text_color = getattr(ED_CONFIG.C, 'WHITE', (255,255,255)) 
+                    bg_color_item = getattr(ED_CONFIG.C, 'BLUE', (0,0,255))
+                    text_color = getattr(ED_CONFIG.C, 'WHITE', (255,255,255))
                 pygame.draw.rect(surface, bg_color_item, item_full_rect_on_screen)
-                text_surf = item_font.render(filename, True, text_color)
+                text_surf = item_font.render(filename, True, text_color) # Render the basename
                 text_draw_pos = (item_full_rect_on_screen.left + 5,
                                  item_full_rect_on_screen.centery - text_surf.get_height() // 2)
                 surface.blit(text_surf, text_draw_pos)
@@ -3017,11 +3260,12 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
         btn_width = ED_CONFIG.BUTTON_WIDTH_STANDARD // 2 - 15
         btn_height = ED_CONFIG.BUTTON_HEIGHT_STANDARD // 2 + 5
         buttons_y_pos = list_area_rect.bottom + 10
-        
-        # Determine button text based on prompt (a bit of a hack, better if dialog had a 'purpose' flag)
+
         ok_text = "Load"
-        if "delete" in editor_state.dialog_prompt_message.lower():
-            ok_text = "Select" # For delete, the file dialog is just for selection
+        if editor_state.dialog_prompt_message:
+            prompt_lower = editor_state.dialog_prompt_message.lower()
+            if "delete" in prompt_lower or "rename" in prompt_lower: # Combined condition
+                ok_text = "Select"
 
         ok_button_rect = pygame.Rect(dialog_rect.centerx - btn_width - 5, buttons_y_pos, btn_width, btn_height)
         cancel_button_rect = pygame.Rect(dialog_rect.centerx + 5, buttons_y_pos, btn_width, btn_height)
@@ -3098,8 +3342,9 @@ def update_continuous_camera_pan(editor_state: EditorState, map_view_rect: pygam
            (abs(editor_state.mouse_velocity_map_view[0]) > ED_CONFIG.CAMERA_MOMENTUM_MIN_SPEED_THRESHOLD or \
             abs(editor_state.mouse_velocity_map_view[1]) > ED_CONFIG.CAMERA_MOMENTUM_MIN_SPEED_THRESHOLD) :
             
-            fling_vx = -editor_state.mouse_velocity_map_view[0] * ED_CONFIG.CAMERA_MOMENTUM_INITIAL_MULTIPLIER
-            fling_vy = -editor_state.mouse_velocity_map_view[1] * ED_CONFIG.CAMERA_MOMENTUM_INITIAL_MULTIPLIER
+            # Changed: Removed negative sign to make camera pan in direction of swipe
+            fling_vx = editor_state.mouse_velocity_map_view[0] * ED_CONFIG.CAMERA_MOMENTUM_INITIAL_MULTIPLIER
+            fling_vy = editor_state.mouse_velocity_map_view[1] * ED_CONFIG.CAMERA_MOMENTUM_INITIAL_MULTIPLIER
             editor_state.camera_momentum_pan = (fling_vx, fling_vy)
             logger.debug(f"Mouse exited map view. Initiated camera fling with momentum: ({fling_vx:.2f}, {fling_vy:.2f}) based on mouse velocity {editor_state.mouse_velocity_map_view}")
         
