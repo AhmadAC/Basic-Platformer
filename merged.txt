@@ -869,6 +869,7 @@ DARK_GRAY = (50, 50, 50)
 LIGHT_GRAY = (200, 200, 200) 
 LIGHT_BLUE = (173, 216, 230)
 ORANGE_RED = (255, 69, 0)
+MAGENTA = (255, 0, 255)
 
 # --- UI ---
 HEALTH_BAR_WIDTH = 50
@@ -898,7 +899,7 @@ TERMINAL_VELOCITY_Y = 18
 # couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0000000.1
+version 1.0.0.2 (Changed reset key from R to Q)
 Handles the game logic for the local couch co-op (two players on one machine) mode.
 """
 import pygame
@@ -924,7 +925,7 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         app_status_obj: An object (like main's AppStatus) with an 'app_running' attribute
                         to signal if the whole application should quit.
     """
-    pygame.display.set_caption("Platformer - Couch Co-op (P1:WASD+VB, P2:IJKL+OP | Harm:H,N | Heal:G,M | Reset:R)")
+    pygame.display.set_caption("Platformer - Couch Co-op (P1:WASD+VB, P2:IJKL+OP | Harm:H,N | Heal:G,M | Reset:Q)") # Updated caption
     current_width, current_height = screen.get_size()
 
     # Get player instances from the game_elements dictionary
@@ -940,102 +941,88 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     p2_key_map_config = {
         'left': pygame.K_j, 'right': pygame.K_l, 'up': pygame.K_i, 'down': pygame.K_k,
         'attack1': pygame.K_o, 'attack2': pygame.K_p, 
-        'dash': pygame.K_SEMICOLON, # Example: often RSHIFT for P2, or a nearby key
-        'roll': pygame.K_QUOTE,   # Example: often RCTRL for P2, or a nearby key
+        'dash': pygame.K_SEMICOLON, 
+        'roll': pygame.K_QUOTE,   
         'interact': pygame.K_BACKSLASH 
     }
 
     couch_game_active = True
     while couch_game_active and app_status_obj.app_running:
-        dt_sec = clock.tick(C.FPS) / 1000.0 # Delta time for physics consistency
-        now_ticks_couch = pygame.time.get_ticks() # For time-based logic if any
+        dt_sec = clock.tick(C.FPS) / 1000.0 
+        now_ticks_couch = pygame.time.get_ticks() 
         
-        pygame_events = pygame.event.get() # Get all events once per frame
-        keys_pressed = pygame.key.get_pressed() # Get all held keys once per frame
+        pygame_events = pygame.event.get() 
+        keys_pressed = pygame.key.get_pressed() 
         
         host_requested_reset_couch = False
 
-        # Handle global events (Quit, Resize, Escape, Reset, Debug keys)
         for event in pygame_events:
             if event.type == pygame.QUIT:
                 couch_game_active = False
-                app_status_obj.app_running = False # Signal entire application to quit
+                app_status_obj.app_running = False 
                 break
             if event.type == pygame.VIDEORESIZE:
-                if not screen.get_flags() & pygame.FULLSCREEN: # Handle window resize
+                if not screen.get_flags() & pygame.FULLSCREEN: 
                     current_width, current_height = max(320,event.w), max(240,event.h)
                     screen = pygame.display.set_mode((current_width,current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
-                    if game_elements_ref.get("camera"): # Update camera's screen dimensions
+                    if game_elements_ref.get("camera"): 
                         game_elements_ref["camera"].screen_width = current_width
                         game_elements_ref["camera"].screen_height = current_height
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    couch_game_active = False # Exit couch mode to main menu
+                    couch_game_active = False 
                     break
-                if event.key == pygame.K_r: # Reset game state
+                # MODIFIED: Changed reset key from K_r to K_q
+                if event.key == pygame.K_q: 
                     host_requested_reset_couch = True
                 
-                # Player 1 debug keys
                 if p1 and p1._valid_init:
                     if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'):
                         p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'):
                         p1.heal_to_full()
                 
-                # Player 2 debug keys
                 if p2 and p2._valid_init:
-                    if event.key == pygame.K_n and hasattr(p2, 'self_inflict_damage'): # 'N' for P2 self-harm
+                    if event.key == pygame.K_n and hasattr(p2, 'self_inflict_damage'): 
                         p2.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
-                    if event.key == pygame.K_m and hasattr(p2, 'heal_to_full'): # 'M' for P2 heal
+                    if event.key == pygame.K_m and hasattr(p2, 'heal_to_full'): 
                         p2.heal_to_full()
         
         if not app_status_obj.app_running or not couch_game_active: break
 
-        # Handle inputs for both local players
-        if p1 and p1._valid_init and not p1.is_dead: # Only process input if P1 is valid and not dead
+        if p1 and p1._valid_init and not p1.is_dead: 
             if hasattr(p1, 'handle_mapped_input'):
                 p1.handle_mapped_input(keys_pressed, pygame_events, p1_key_map_config)
         
-        if p2 and p2._valid_init and not p2.is_dead: # Only process input if P2 is valid and not dead
+        if p2 and p2._valid_init and not p2.is_dead: 
             if hasattr(p2, 'handle_mapped_input'):
                 p2.handle_mapped_input(keys_pressed, pygame_events, p2_key_map_config)
 
-        # If reset was requested, trigger it
         if host_requested_reset_couch:
-            print("Couch Play: Game state reset triggered.")
-            # reset_game_state returns the new chest instance (or None)
+            print("Couch Play: Game state reset triggered by 'Q' key.") # Updated message
             game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
 
-        # --- Local Authoritative Game Logic Updates ---
-        # Update Player 1
         if p1 and p1._valid_init:
-            # List of other players for P1's collision/interaction checks
             other_players_for_p1_update = [char for char in [p2] if char and char._valid_init and char.alive() and char is not p1]
             p1.update(dt_sec, game_elements_ref["platform_sprites"], game_elements_ref["ladder_sprites"], 
                       game_elements_ref["hazard_sprites"], other_players_for_p1_update, game_elements_ref["enemy_list"])
         
-        # Update Player 2
         if p2 and p2._valid_init:
             other_players_for_p2_update = [char for char in [p1] if char and char._valid_init and char.alive() and char is not p2]
             p2.update(dt_sec, game_elements_ref["platform_sprites"], game_elements_ref["ladder_sprites"], 
                       game_elements_ref["hazard_sprites"], other_players_for_p2_update, game_elements_ref["enemy_list"])
 
-        # Update Enemies
-        # Enemies target any active player
         active_players_for_enemy_ai_couch = [char for char in [p1, p2] if char and char._valid_init and not char.is_dead and char.alive()]
-        for enemy_couch in list(game_elements_ref.get("enemy_list", [])): # Iterate copy for safe removal
+        for enemy_couch in list(game_elements_ref.get("enemy_list", [])): 
             if enemy_couch._valid_init:
                 enemy_couch.update(dt_sec, active_players_for_enemy_ai_couch, 
                                    game_elements_ref["platform_sprites"], game_elements_ref["hazard_sprites"])
-                # If enemy's death animation finishes, remove it
                 if enemy_couch.is_dead and hasattr(enemy_couch, 'death_animation_finished') and \
                    enemy_couch.death_animation_finished and enemy_couch.alive():
                     if hasattr(Enemy, 'print_limiter') and Enemy.print_limiter.can_print(f"couch_killing_enemy_{enemy_couch.enemy_id}"):
                          print(f"Couch Play: Auto-killing enemy {enemy_couch.enemy_id} as death anim finished.")
-                    enemy_couch.kill() # Removes from all sprite groups it's in
-            # else: if enemy_couch.alive(): enemy_couch.kill() # Should be handled by init checks
-
-        # Update Projectiles (collision against players and enemies)
+                    enemy_couch.kill() 
+            
         hittable_characters_couch_group = pygame.sprite.Group()
         if p1 and p1.alive() and p1._valid_init: hittable_characters_couch_group.add(p1)
         if p2 and p2.alive() and p2._valid_init: hittable_characters_couch_group.add(p2)
@@ -1046,28 +1033,23 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             dt_sec, game_elements_ref["platform_sprites"], hittable_characters_couch_group
         )
         
-        # Update Collectibles (e.g., Chest animations, and collection logic)
         game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec)
         couch_current_chest = game_elements_ref.get("current_chest")
-        if Chest and couch_current_chest and couch_current_chest.alive(): # Check Chest class exists
+        if Chest and couch_current_chest and couch_current_chest.alive(): 
             player_who_collected_chest_couch = None
-            # Check P1 collision with chest
             if p1 and p1._valid_init and not p1.is_dead and p1.alive() and \
                pygame.sprite.collide_rect(p1, couch_current_chest):
                 player_who_collected_chest_couch = p1
-            # Check P2 collision with chest (only if P1 didn't collect it this frame)
             elif p2 and p2._valid_init and not p2.is_dead and p2.alive() and \
                  pygame.sprite.collide_rect(p2, couch_current_chest):
                 player_who_collected_chest_couch = p2
             
             if player_who_collected_chest_couch:
-                couch_current_chest.collect(player_who_collected_chest_couch) # collect() should call self.kill()
-                game_elements_ref["current_chest"] = None # Mark as collected
+                couch_current_chest.collect(player_who_collected_chest_couch) 
+                game_elements_ref["current_chest"] = None 
         
-        # Update Camera
         couch_camera = game_elements_ref.get("camera")
         if couch_camera:
-            # Simple camera focus: prioritize P1, then P2 if P1 is dead/invalid, or static if both out.
             camera_focus_target_couch = None
             if p1 and p1.alive() and p1._valid_init and not p1.is_dead:
                 camera_focus_target_couch = p1
@@ -1075,20 +1057,16 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 camera_focus_target_couch = p2
             
             if camera_focus_target_couch: couch_camera.update(camera_focus_target_couch)
-            else: couch_camera.static_update() # No valid target, camera remains static
+            else: couch_camera.static_update() 
 
-        # Draw the game scene
         try:
             draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_couch)
         except Exception as e:
             print(f"Couch Play draw error: {e}"); traceback.print_exc()
-            couch_game_active=False; break # Exit on critical draw error
+            couch_game_active=False; break 
         pygame.display.flip()
 
-    # --- End of Couch Play Game Loop ---
     print("Exiting Couch Play mode.")
-    # app_status_obj.app_running will be False if QUIT was pressed, otherwise True.
-    # No network connections or threads to clean up in couch mode.
 
 ########## START OF FILE: editor\__init__.py ##########
 
@@ -1099,7 +1077,7 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.10 (Refined debug logs, ensure C is from constants)
+## version 1.0.0.11 (Allow Esc to quit from editor menu)
 Level Editor for the Platformer Game (Pygame Only).
 Allows creating, loading, and saving game levels visually.
 """
@@ -1267,27 +1245,32 @@ def editor_main():
                         print(f"DEBUG MAIN: Screen resized to {editor_screen.get_size()}")
                     except pygame.error as e_resize:
                         print(f"ERROR MAIN: Pygame error on resize to {current_screen_width}x{current_screen_height}: {e_resize}")
-                        # Potentially try to fall back to a default size or handle gracefully
                     layout_needs_recalc = True
                     editor_state.set_status_message(f"Resized to {event.w}x{event.h}", 2.0)
                 
+                # Let handle_global_events deal with QUIT, which might prompt for unsaved changes
                 if not editor_event_handlers.handle_global_events(event, editor_state, editor_screen):
-                    print("DEBUG MAIN: handle_global_events returned False. Setting running=False.")
-                    running = False; break
-                if not running: break 
+                    print("DEBUG MAIN: handle_global_events returned False (QUIT). Setting running=False.")
+                    running = False; break 
+                if not running: break
 
                 # --- MODAL DIALOG EVENT PROCESSING ---
                 if editor_state.active_dialog_type:
                     editor_event_handlers.handle_dialog_events(event, editor_state)
-                    # If dialog was closed (active_dialog_type became None or changed)
-                    if editor_state.active_dialog_type != previous_dialog_type:
+                    if editor_state.active_dialog_type != previous_dialog_type: # Dialog closed or changed
                         print(f"DEBUG MAIN: Dialog type changed from '{previous_dialog_type}' to '{editor_state.active_dialog_type}' after handle_dialog_events.")
-                        # If mode also changed, it was likely due to a dialog callback
-                        if editor_state.current_editor_mode != previous_mode:
+                        if editor_state.current_editor_mode != previous_mode: # Mode changed via dialog callback
                             print(f"DEBUG MAIN: Mode changed (likely via dialog callback) from '{previous_mode}' to '{editor_state.current_editor_mode}'. Triggering layout recalc.")
                             layout_needs_recalc = True
                 else: # No active dialog, process mode-specific events
                     if editor_state.current_editor_mode == "menu":
+                        # Add Escape key handling for quitting from the menu
+                        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                            print("DEBUG MAIN: Escape pressed in menu. Posting QUIT event.")
+                            pygame.event.post(pygame.event.Event(pygame.QUIT)) # This will be caught by handle_global_events
+                            # The handle_global_events will then manage unsaved changes dialog if needed
+                            continue # Skip other menu event handling for this frame
+
                         editor_event_handlers.handle_menu_events(event, editor_state, editor_screen)
                     elif editor_state.current_editor_mode == "editing_map":
                         editor_event_handlers.handle_editing_map_events(
@@ -1296,7 +1279,6 @@ def editor_main():
                             editor_screen
                         )
                 
-                # Check if mode changed from any event handler (dialog or mode-specific)
                 if editor_state.current_editor_mode != previous_mode:
                     print(f"DEBUG MAIN: Mode changed from '{previous_mode}' to '{editor_state.current_editor_mode}' after specific event handlers. Triggering layout recalc.")
                     layout_needs_recalc = True
@@ -1309,14 +1291,13 @@ def editor_main():
                 )
                 print(f"DEBUG MAIN: New Layout after recalc - Menu={menu_section_rect}, Assets={asset_palette_section_rect}, Map={map_view_section_rect}")
                 
-                # If in editing mode and map surface exists, adjust camera to new view bounds
                 if editor_state.current_editor_mode == "editing_map" and editor_state.map_content_surface:
                     map_px_w = editor_state.get_map_pixel_width()
                     map_px_h = editor_state.get_map_pixel_height()
                     view_w = map_view_section_rect.width
                     view_h = map_view_section_rect.height
                     
-                    if view_w > 0 and view_h > 0 : # Ensure view rect has positive dimensions
+                    if view_w > 0 and view_h > 0 : 
                         max_cam_x = max(0, map_px_w - view_w)
                         max_cam_y = max(0, map_px_h - view_h)
                         
@@ -1328,37 +1309,34 @@ def editor_main():
                     else:
                         print(f"Warning MAIN: Map view rect has zero or negative W/H ({view_w}x{view_h}) after layout recalc. Camera not adjusted.")
 
-
-            # --- Drawing ---
-            editor_screen.fill(ED_CONFIG.C.DARK_GRAY) # Use ED_CONFIG.C for constants
+            editor_screen.fill(ED_CONFIG.C.DARK_GRAY) 
 
             if editor_state.current_editor_mode == "menu":
                 editor_drawing.draw_menu_ui(editor_screen, editor_state, menu_section_rect, fonts, mouse_pos)
-                # Draw placeholder for map area in menu mode
                 placeholder_rect = pygame.Rect(
                     menu_section_rect.right + ED_CONFIG.SECTION_PADDING, 
                     ED_CONFIG.SECTION_PADDING,
                     current_screen_width - menu_section_rect.right - ED_CONFIG.SECTION_PADDING * 2,
                     current_screen_height - ED_CONFIG.SECTION_PADDING * 2
                 )
-                if placeholder_rect.width > 10 and placeholder_rect.height > 10: # Only draw if reasonably sized
-                    pygame.draw.rect(editor_screen, (20,20,20), placeholder_rect) # Darker placeholder bg
+                if placeholder_rect.width > 10 and placeholder_rect.height > 10: 
+                    pygame.draw.rect(editor_screen, (20,20,20), placeholder_rect) 
                     font_large = fonts.get("large")
                     if font_large:
-                        ph_text = font_large.render("Map Editor Area", True, (60,60,60)) # Dim text
+                        ph_text = font_large.render("Map Editor Area", True, (60,60,60)) 
                         editor_screen.blit(ph_text, ph_text.get_rect(center=placeholder_rect.center))
 
             elif editor_state.current_editor_mode == "editing_map":
                 editor_drawing.draw_asset_palette_ui(editor_screen, editor_state, asset_palette_section_rect, fonts, mouse_pos)
                 editor_drawing.draw_map_view_ui(editor_screen, editor_state, map_view_section_rect, fonts, mouse_pos)
             
-            if editor_state.active_dialog_type: # Draw dialogs on top of everything else
+            if editor_state.active_dialog_type: 
                 editor_ui.draw_active_dialog(editor_screen, editor_state, fonts)
 
-            font_tooltip = fonts.get("tooltip") # Use specific tooltip font from ED_CONFIG
+            font_tooltip = fonts.get("tooltip") 
             if font_tooltip: editor_ui.draw_tooltip(editor_screen, editor_state, font_tooltip)
             
-            font_small = fonts.get("small") # Use specific small font
+            font_small = fonts.get("small") 
             if font_small: editor_ui.draw_status_message(editor_screen, editor_state, font_small)
 
             pygame.display.flip()
@@ -1566,19 +1544,19 @@ def _calculate_asset_palette_total_height(editor_state: EditorState):
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.4 (Added typing imports for Optional, Dict)
+## version 1.0.0.5 (Added MAGENTA to FallbackConstants)
 Configuration constants for the Platformer Level Editor.
 """
 import pygame
 import sys
 import os
-import traceback 
+import traceback
 from typing import Dict, Optional, Tuple, Any # ADDED Optional, Dict, Tuple, Any for type hints
 
 # --- Add parent directory to sys.path ---
 # (sys.path manipulation and constants import remains the same)
-current_dir = os.path.dirname(os.path.abspath(__file__)) 
-parent_dir = os.path.dirname(current_dir)                 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
 print(f"DEBUG CONFIG: current_dir (editor_config.py location): {current_dir}")
 print(f"DEBUG CONFIG: parent_dir (project root attempt): {parent_dir}")
 
@@ -1589,16 +1567,17 @@ else:
     print(f"DEBUG CONFIG: '{parent_dir}' already in sys.path.")
 
 try:
-    import constants as C 
+    import constants as C
     print(f"DEBUG CONFIG: Successfully imported 'constants as C'. TILE_SIZE: {C.TILE_SIZE if hasattr(C, 'TILE_SIZE') else 'NOT FOUND'}")
 except ImportError as e:
     print(f"CRITICAL CONFIG ERROR: Failed to import 'constants as C' from '{parent_dir}'. Error: {e}")
     print(f"DEBUG CONFIG: sys.path was: {sys.path}")
-    class FallbackConstants: 
+    class FallbackConstants:
         TILE_SIZE = 32; WHITE = (255,255,255); BLACK = (0,0,0); RED = (255,0,0); GREEN = (0,255,0)
         BLUE = (0,0,255); GRAY = (128,128,128); DARK_GRAY = (50,50,50); YELLOW = (255,255,0)
         LIGHT_BLUE = (173,216,230); DARK_GREEN = (0,100,0); ORANGE_RED = (255,69,0)
         LIGHT_GRAY = (200,200,200); FPS = 60
+        MAGENTA = (255, 0, 255)  # <--- ADDED MAGENTA HERE
     C = FallbackConstants()
     print("CRITICAL CONFIG ERROR: Using fallback constants. Editor functionality will be impaired.")
 except Exception as e_gen:
@@ -1611,13 +1590,13 @@ EDITOR_SCREEN_INITIAL_WIDTH = 1280
 EDITOR_SCREEN_INITIAL_HEIGHT = 720
 
 MENU_SECTION_WIDTH = 280
-MENU_SECTION_HEIGHT = 250 
+MENU_SECTION_HEIGHT = 250
 
 ASSET_PALETTE_SECTION_WIDTH = 220
 
-SECTION_PADDING = 10 
+SECTION_PADDING = 10
 
-MAP_VIEW_SECTION_DEFAULT_WIDTH = EDITOR_SCREEN_INITIAL_WIDTH - MENU_SECTION_WIDTH - ASSET_PALETTE_SECTION_WIDTH - (SECTION_PADDING * 3) 
+MAP_VIEW_SECTION_DEFAULT_WIDTH = EDITOR_SCREEN_INITIAL_WIDTH - MENU_SECTION_WIDTH - ASSET_PALETTE_SECTION_WIDTH - (SECTION_PADDING * 3)
 MAP_VIEW_SECTION_DEFAULT_HEIGHT = EDITOR_SCREEN_INITIAL_HEIGHT - (SECTION_PADDING * 2)
 
 # --- UI Element Sizes & Colors ---
@@ -1654,7 +1633,7 @@ COLOR_PICKER_BG_COLOR: Tuple[int,int,int] = (40, 40, 50)
 COLOR_PICKER_TITLE_COLOR: Tuple[int,int,int] = getattr(C, 'WHITE', (255,255,255))
 COLOR_PICKER_HOVER_BORDER_COLOR: Tuple[int,int,int] = getattr(C, 'YELLOW', (255,255,0))
 
-MAPS_DIRECTORY = "maps" 
+MAPS_DIRECTORY = "maps"
 
 # --- Asset Definitions for Editor Palette ---
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = { # Added Any
@@ -1662,7 +1641,7 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = { # Added Any
         "source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn",
         "tooltip": "P1", "category": "spawn"
     },
-    "player2_spawn": { 
+    "player2_spawn": {
         "source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn",
         "tooltip": "P2", "category": "spawn"
     },
@@ -1695,15 +1674,15 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = { # Added Any
         "tooltip": "Chest", "category": "item"
     },
     "platform_wall_gray": {
-        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'GRAY', (128,128,128))), 
+        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'GRAY', (128,128,128))),
         "game_type_id": "platform_wall_gray", "tooltip": "Wall (Gray)", "category": "tile"
     },
     "platform_ledge_green": {
-        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'DARK_GREEN', (0,100,0))), 
+        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'DARK_GREEN', (0,100,0))),
         "game_type_id": "platform_ledge_green", "tooltip": "Ledge (Green)", "category": "tile"
     },
     "hazard_lava_tile": {
-        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'ORANGE_RED', (255,69,0))), 
+        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'ORANGE_RED', (255,69,0))),
         "game_type_id": "hazard_lava", "tooltip": "Lava Tile", "category": "hazard"
     },
 }
@@ -1720,30 +1699,31 @@ GAME_LEVEL_FILE_EXTENSION = ".py"
 
 TOOLTIP_FONT_SIZE = 18
 TOOLTIP_TEXT_COLOR: Tuple[int,int,int] = getattr(C, 'BLACK', (0,0,0))
-TOOLTIP_BG_COLOR: Tuple[int,int,int] = (240, 240, 210) 
+TOOLTIP_BG_COLOR: Tuple[int,int,int] = (240, 240, 210)
 TOOLTIP_PADDING = 5
 TOOLTIP_OFFSET_Y = 25
 
 COLOR_PICKER_PRESETS: Dict[str, Tuple[int,int,int]] = {
-    "Light Blue": getattr(C, 'LIGHT_BLUE', (173,216,230)), "White": getattr(C, 'WHITE', (255,255,255)), 
+    "Light Blue": getattr(C, 'LIGHT_BLUE', (173,216,230)), "White": getattr(C, 'WHITE', (255,255,255)),
     "Black": getattr(C, 'BLACK', (0,0,0)), "Gray": getattr(C, 'GRAY', (128,128,128)),
-    "Dark Gray": getattr(C, 'DARK_GRAY', (50,50,50)), "Red": getattr(C, 'RED', (255,0,0)), 
+    "Dark Gray": getattr(C, 'DARK_GRAY', (50,50,50)), "Red": getattr(C, 'RED', (255,0,0)),
     "Green": getattr(C, 'GREEN', (0,255,0)), "Blue": getattr(C, 'BLUE', (0,0,255)),
-    "Yellow": getattr(C, 'YELLOW', (255,255,0)), "Orange": getattr(C, 'ORANGE_RED', (255,69,0)), 
-    "Purple": (128, 0, 128), "Brown": (139, 69, 19), 
+    "Yellow": getattr(C, 'YELLOW', (255,255,0)), "Orange": getattr(C, 'ORANGE_RED', (255,69,0)),
+    "Purple": (128, 0, 128), "Brown": (139, 69, 19),
     "Dark Green": getattr(C, 'DARK_GREEN', (0,100,0)), "Sky Blue": (100, 150, 255),
-    "Dark Purple": (75,0,130), "Sand": (244,164,96)
+    "Dark Purple": (75,0,130), "Sand": (244,164,96),
+    "Magenta": getattr(C, 'MAGENTA', (255, 0, 255)) # Ensure Magenta is also here if needed as a selectable preset
 }
 
 FONT_CONFIG: Dict[str, Optional[pygame.font.Font]] = {
     "small": None, "medium": None, "large": None, "tooltip": None
 }
 try:
-    if not pygame.font.get_init(): 
+    if not pygame.font.get_init():
         print("DEBUG CONFIG: pygame.font not initialized, calling pygame.font.init()")
         pygame.font.init()
-    
-    if pygame.font.get_init(): 
+
+    if pygame.font.get_init():
         FONT_CONFIG["small"] = pygame.font.Font(None, 22)
         FONT_CONFIG["medium"] = pygame.font.Font(None, 28)
         FONT_CONFIG["large"] = pygame.font.Font(None, 36)
@@ -3119,7 +3099,7 @@ class EditorState:
 # editor_ui.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.6 (Added more debug prints for dialog start and drawing)
+## version 1.0.0.7 (Reduced verbose prints, added debug for MAGENTA issue)
 Pygame-based UI functions for the Level Editor.
 Includes buttons, input dialogs, color pickers, and tooltips.
 """
@@ -3127,17 +3107,6 @@ import pygame
 import os
 from typing import Optional, Dict, Tuple, Any, Callable, List
 import traceback # ADDED for more detailed error reporting
-
-# --- Add parent directory to sys.path for editor_config & editor_state if this file is run standalone (unlikely here) ---
-# This is more robustly handled in the main editor.py script.
-# current_script_path_ui = os.path.dirname(os.path.abspath(__file__))
-# parent_directory_ui = os.path.dirname(current_script_path_ui) # This should be 'editor'
-# project_root_ui = os.path.dirname(parent_directory_ui) # This should be 'Platformer'
-# if project_root_ui not in sys.path:
-#     sys.path.insert(0, project_root_ui)
-# if parent_directory_ui not in sys.path: # If editor_config is in 'editor' not project root
-#    sys.path.insert(0, parent_directory_ui)
-
 
 import editor_config as ED_CONFIG
 from editor_state import EditorState
@@ -3157,7 +3126,7 @@ def draw_button(surface: pygame.Surface,
                 border_color: Tuple[int, int, int] = ED_CONFIG.BUTTON_COLOR_BORDER,
                 border_width: int = ED_CONFIG.BUTTON_BORDER_WIDTH,
                 is_active: bool = True) -> bool:
-    # print(f"DEBUG UI_DRAW: draw_button called for '{text}' at {rect}, active={is_active}") # Can be verbose
+    # print(f"DEBUG UI_DRAW: draw_button called for '{text}' at {rect}, active={is_active}") # Kept commented: Can be verbose
     is_hovered = False
     if is_active and rect.collidepoint(mouse_pos):
         is_hovered = True
@@ -3175,7 +3144,7 @@ def draw_button(surface: pygame.Surface,
         pygame.draw.rect(surface, current_button_color, rect)
         if border_width > 0:
             pygame.draw.rect(surface, border_color, rect, border_width)
-        
+
         if font:
             text_surf = font.render(text, True, current_text_color)
             text_rect = text_surf.get_rect(center=rect.center)
@@ -3185,14 +3154,14 @@ def draw_button(surface: pygame.Surface,
     except Exception as e:
         print(f"ERROR UI_DRAW: Exception in draw_button for '{text}': {e}")
         traceback.print_exc()
-        
+
     return is_hovered
 
 def draw_tooltip(surface: pygame.Surface,
                  editor_state: EditorState,
                  font: Optional[pygame.font.Font]):
     if editor_state.hovered_tooltip_text and editor_state.hovered_tooltip_pos and font:
-        # print(f"DEBUG UI_DRAW: Drawing tooltip: '{editor_state.hovered_tooltip_text}' at {editor_state.hovered_tooltip_pos}") # Verbose
+        # print(f"DEBUG UI_DRAW: Drawing tooltip: '{editor_state.hovered_tooltip_text}' at {editor_state.hovered_tooltip_pos}") # Kept commented: Verbose
         try:
             text_surf = font.render(editor_state.hovered_tooltip_text, True, ED_CONFIG.TOOLTIP_TEXT_COLOR)
             text_rect = text_surf.get_rect(
@@ -3213,9 +3182,9 @@ def draw_tooltip(surface: pygame.Surface,
 
 def draw_status_message(surface: pygame.Surface, editor_state: EditorState, font: Optional[pygame.font.Font]):
     if editor_state.status_message and font:
-        # print(f"DEBUG UI_DRAW: Drawing status message: '{editor_state.status_message}'") # Verbose
+        # print(f"DEBUG UI_DRAW: Drawing status message: '{editor_state.status_message}'") # Kept commented: Verbose
         try:
-            message_surf = font.render(editor_state.status_message, True, ED_CONFIG.C.YELLOW)
+            message_surf = font.render(editor_state.status_message, True, getattr(ED_CONFIG.C, 'YELLOW', (255,255,0))) # Use getattr for safety
             message_rect = message_surf.get_rect(centerx=surface.get_width() // 2,
                                                   bottom=surface.get_height() - 10)
             bg_padding = 5
@@ -3238,7 +3207,7 @@ def start_text_input_dialog(editor_state: EditorState,
                             default_text: str = "",
                             on_confirm: Optional[Callable[[str], None]] = None,
                             on_cancel: Optional[Callable[[], None]] = None):
-    print(f"DEBUG UI_DIALOG: start_text_input_dialog. Prompt: '{prompt}', Default: '{default_text}', HasConfirm: {on_confirm is not None}, HasCancel: {on_cancel is not None}")
+    print(f"DEBUG UI_DIALOG: start_text_input_dialog. Prompt: '{prompt}', Default: '{default_text}'") # Removed cb presence for brevity
     editor_state.active_dialog_type = "text_input"
     editor_state.dialog_prompt_message = prompt
     editor_state.dialog_input_text = default_text
@@ -3250,47 +3219,46 @@ def start_text_input_dialog(editor_state: EditorState,
 def start_color_picker_dialog(editor_state: EditorState,
                               on_confirm: Optional[Callable[[Tuple[int,int,int]], None]] = None,
                               on_cancel: Optional[Callable[[], None]] = None):
-    print(f"DEBUG UI_DIALOG: start_color_picker_dialog. HasConfirm: {on_confirm is not None}, HasCancel: {on_cancel is not None}")
+    print(f"DEBUG UI_DIALOG: start_color_picker_dialog.") # Removed cb presence for brevity
     editor_state.active_dialog_type = "color_picker"
     editor_state.dialog_prompt_message = "Select Background Color (Esc to Cancel)"
-    editor_state.color_picker_rects.clear() 
-    
+    editor_state.color_picker_rects.clear()
+
     cols = ED_CONFIG.COLOR_PICKER_COLS
     button_size = ED_CONFIG.COLOR_PICKER_BUTTON_SIZE
     padding = ED_CONFIG.COLOR_PICKER_PADDING
-    
-    start_x_in_dialog = padding * 2 
-    current_y_in_dialog = 50 
+
+    start_x_in_dialog = padding * 2
+    current_y_in_dialog = 50 # Initial Y offset for swatches below title
     current_x_in_dialog = start_x_in_dialog
     idx = 0
     for name in ED_CONFIG.COLOR_PICKER_PRESETS.keys():
         rect = pygame.Rect(current_x_in_dialog, current_y_in_dialog, button_size, button_size)
-        editor_state.color_picker_rects[name] = rect 
+        editor_state.color_picker_rects[name] = rect
         current_x_in_dialog += button_size + padding
         idx += 1
         if idx % cols == 0:
             current_x_in_dialog = start_x_in_dialog
             current_y_in_dialog += button_size + padding
-            
+
     editor_state.dialog_callback_confirm = on_confirm
     editor_state.dialog_callback_cancel = on_cancel
-    editor_state.dialog_rect = None
+    editor_state.dialog_rect = None # Will be set by draw_active_dialog
 
 def start_file_load_dialog(editor_state: EditorState,
                            on_confirm: Optional[Callable[[str], None]] = None,
                            on_cancel: Optional[Callable[[], None]] = None,
                            initial_path: str = ED_CONFIG.MAPS_DIRECTORY,
                            file_extension: str = ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
-    print(f"DEBUG UI_DIALOG: start_file_load_dialog. Path: '{initial_path}', Ext: '{file_extension}', HasConfirm: {on_confirm is not None}, HasCancel: {on_cancel is not None}")
+    print(f"DEBUG UI_DIALOG: start_file_load_dialog. Path: '{initial_path}', Ext: '{file_extension}'") # Removed cb presence
     editor_state.active_dialog_type = "file_load"
     editor_state.dialog_prompt_message = f"Select Map to Load (from ./{initial_path})"
-    editor_state.dialog_input_text = "" 
+    editor_state.dialog_input_text = ""
     editor_state.dialog_file_list = []
     editor_state.dialog_file_scroll_y = 0
-    editor_state.dialog_selected_file_index = -1 
+    editor_state.dialog_selected_file_index = -1
     editor_state.dialog_rect = None
 
-    # Ensure ui_elements_rects key for file items exists and is cleared
     if 'dialog_file_item_rects' not in editor_state.ui_elements_rects:
         editor_state.ui_elements_rects['dialog_file_item_rects'] = []
     else:
@@ -3299,30 +3267,30 @@ def start_file_load_dialog(editor_state: EditorState,
     if not os.path.exists(initial_path):
         try:
             os.makedirs(initial_path)
-            print(f"DEBUG UI_DIALOG: Created maps directory at '{initial_path}' during file_load_dialog start.")
+            # print(f"DEBUG UI_DIALOG: Created maps directory at '{initial_path}' during file_load_dialog start.") # Less frequent, so ok
             editor_state.set_status_message(f"Created maps dir '{initial_path}'. No files yet.", 2)
         except OSError as e:
             err_msg = f"Error creating dir '{initial_path}': {e}"
             editor_state.set_status_message(err_msg, 3)
             print(f"ERROR UI_DIALOG: {err_msg}")
             if on_cancel: on_cancel()
-            editor_state.active_dialog_type = None # Critical error, abort dialog
+            editor_state.active_dialog_type = None
             return
 
     try:
         for item in os.listdir(initial_path):
-            if item.endswith(file_extension) and os.path.isfile(os.path.join(initial_path, item)): # Check if it's a file
+            if item.endswith(file_extension) and os.path.isfile(os.path.join(initial_path, item)):
                 editor_state.dialog_file_list.append(item)
         editor_state.dialog_file_list.sort()
-        print(f"DEBUG UI_DIALOG: Found files in '{initial_path}': {editor_state.dialog_file_list}")
+        # print(f"DEBUG UI_DIALOG: Found files in '{initial_path}': {editor_state.dialog_file_list}") # Less frequent, so ok
     except OSError as e:
         err_msg = f"Error listing files in '{initial_path}': {e}"
         editor_state.set_status_message(err_msg, 3)
         print(f"ERROR UI_DIALOG: {err_msg}")
         if on_cancel: on_cancel()
-        editor_state.active_dialog_type = None # Critical error, abort dialog
+        editor_state.active_dialog_type = None
         return
-    
+
     if not editor_state.dialog_file_list:
         editor_state.set_status_message(f"No '{file_extension}' files found in ./{initial_path}", 2.5)
 
@@ -3333,12 +3301,11 @@ def start_file_load_dialog(editor_state: EditorState,
 def draw_active_dialog(surface: pygame.Surface, editor_state: EditorState, fonts: Dict[str, Optional[pygame.font.Font]]):
     if not editor_state.active_dialog_type:
         return
-    
-    # print(f"DEBUG UI_DRAW_DIALOG: Drawing dialog type '{editor_state.active_dialog_type}'") # Can be verbose
 
+    # print(f"DEBUG UI_DRAW_DIALOG: Drawing dialog type '{editor_state.active_dialog_type}'") # Kept commented: Can be verbose
     try:
         screen_center_x, screen_center_y = surface.get_rect().center
-        dialog_width, dialog_height = 450, 350 # Default size
+        dialog_width, dialog_height = 450, 350
 
         if editor_state.active_dialog_type == "text_input":
             dialog_width, dialog_height = 400, 200
@@ -3348,19 +3315,18 @@ def draw_active_dialog(surface: pygame.Surface, editor_state: EditorState, fonts
             rows = (num_colors + cols - 1) // cols
             content_w = cols * ED_CONFIG.COLOR_PICKER_BUTTON_SIZE + (cols -1 if cols > 0 else 0) * ED_CONFIG.COLOR_PICKER_PADDING
             content_h = rows * ED_CONFIG.COLOR_PICKER_BUTTON_SIZE + (rows -1 if rows > 0 else 0) * ED_CONFIG.COLOR_PICKER_PADDING
-            dialog_width = max(300, content_w + ED_CONFIG.COLOR_PICKER_PADDING * 4) # Padding around content
-            title_space = 60 # Approx space for title and margin
-            dialog_height = max(200, content_h + title_space + ED_CONFIG.COLOR_PICKER_PADDING * 2) 
+            dialog_width = max(300, content_w + ED_CONFIG.COLOR_PICKER_PADDING * 4)
+            title_space = 60
+            dialog_height = max(200, content_h + title_space + ED_CONFIG.COLOR_PICKER_PADDING * 2)
         elif editor_state.active_dialog_type == "file_load":
             dialog_width, dialog_height = 400, 350
 
-        # Calculate dialog_rect and store it in editor_state (critical for event handling)
         current_dialog_rect = pygame.Rect(0, 0, dialog_width, dialog_height)
         current_dialog_rect.center = screen_center_x, screen_center_y
-        editor_state.dialog_rect = current_dialog_rect # Update state
+        editor_state.dialog_rect = current_dialog_rect
 
         pygame.draw.rect(surface, ED_CONFIG.DIALOG_BG_COLOR, current_dialog_rect, border_radius=5)
-        pygame.draw.rect(surface, ED_CONFIG.C.BLACK, current_dialog_rect, 2, border_radius=5)
+        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), current_dialog_rect, 2, border_radius=5) # Use getattr
 
         prompt_font = fonts.get("medium") or ED_CONFIG.FONT_CONFIG.get("medium")
         if prompt_font and editor_state.dialog_prompt_message:
@@ -3368,7 +3334,6 @@ def draw_active_dialog(surface: pygame.Surface, editor_state: EditorState, fonts
             prompt_draw_rect = prompt_surf.get_rect(midtop=(current_dialog_rect.centerx, current_dialog_rect.top + 15))
             surface.blit(prompt_surf, prompt_draw_rect)
 
-        # --- Specific Dialog Content ---
         if editor_state.active_dialog_type == "text_input":
             _draw_text_input_content(surface, editor_state, current_dialog_rect, fonts)
         elif editor_state.active_dialog_type == "color_picker":
@@ -3379,199 +3344,164 @@ def draw_active_dialog(surface: pygame.Surface, editor_state: EditorState, fonts
     except Exception as e:
         print(f"ERROR UI_DRAW_DIALOG: Exception in draw_active_dialog for type '{editor_state.active_dialog_type}': {e}")
         traceback.print_exc()
-        # Optionally, draw an error message on the dialog itself
         error_font = fonts.get("small")
         if error_font and editor_state.dialog_rect:
-            err_surf = error_font.render(f"Dialog Error! See console.", True, ED_CONFIG.C.RED)
+            err_surf = error_font.render(f"Dialog Error! See console.", True, getattr(ED_CONFIG.C, 'RED', (255,0,0))) # Use getattr
             surface.blit(err_surf, err_surf.get_rect(center=editor_state.dialog_rect.center))
 
 
 def _draw_text_input_content(surface: pygame.Surface, editor_state: EditorState, dialog_rect: pygame.Rect, fonts: Dict[str, Optional[pygame.font.Font]]):
     input_box_rect = pygame.Rect(0, 0, dialog_rect.width - 40, 40)
-    input_box_rect.center = dialog_rect.centerx, dialog_rect.centery + 10 # Position below prompt
-    
+    input_box_rect.center = dialog_rect.centerx, dialog_rect.centery + 10
     pygame.draw.rect(surface, ED_CONFIG.DIALOG_INPUT_BOX_COLOR, input_box_rect)
-    pygame.draw.rect(surface, ED_CONFIG.C.BLACK, input_box_rect, 2)
+    pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), input_box_rect, 2) # Use getattr
 
     text_font = fonts.get("medium") or ED_CONFIG.FONT_CONFIG.get("medium")
     if text_font:
         current_text_to_render = str(editor_state.dialog_input_text) if editor_state.dialog_input_text is not None else ""
         input_text_surf = text_font.render(current_text_to_render, True, ED_CONFIG.DIALOG_INPUT_TEXT_COLOR)
-        
-        text_clip_area_rect = input_box_rect.inflate(-12, -12) # Padding inside input box
-        
+        text_clip_area_rect = input_box_rect.inflate(-12, -12)
         text_surf_width = input_text_surf.get_width()
-        blit_area = None # Part of the input_text_surf to blit (for scrolling)
-        
-        # Default: text fits or is empty, draw from its left
-        text_draw_pos_on_surface_x = text_clip_area_rect.left 
+        blit_area = None
+        text_draw_pos_on_surface_x = text_clip_area_rect.left
 
         if text_surf_width > text_clip_area_rect.width:
-            # Text is wider than clip area, show the end part (cursor is at the end)
-            # Blit the source surface such that its right edge aligns with clip_area's right
             text_draw_pos_on_surface_x = text_clip_area_rect.right - text_surf_width
-            # Define the part of the source text surface to actually draw
             blit_source_x_offset = text_surf_width - text_clip_area_rect.width
             blit_area = pygame.Rect(blit_source_x_offset, 0, text_clip_area_rect.width, input_text_surf.get_height())
-        
-        blit_destination_topleft = (text_draw_pos_on_surface_x, 
-                                    text_clip_area_rect.top + (text_clip_area_rect.height - input_text_surf.get_height()) // 2)
 
+        blit_destination_topleft = (text_draw_pos_on_surface_x,
+                                    text_clip_area_rect.top + (text_clip_area_rect.height - input_text_surf.get_height()) // 2)
         original_clip = surface.get_clip()
         surface.set_clip(text_clip_area_rect)
         surface.blit(input_text_surf, blit_destination_topleft, area=blit_area)
         surface.set_clip(original_clip)
 
-        # Cursor positioning: cursor should be at the end of the *rendered* text within the clip_area
-        # If text was scrolled (blit_area is set), cursor is at the right of clip_area.
-        # Otherwise, it's at the end of the un-scrolled text.
-        if blit_area: # Text was wider than field
-            cursor_render_x = text_clip_area_rect.right -1 # Slightly inside the box
-        else: # Text fits
+        if blit_area:
+            cursor_render_x = text_clip_area_rect.right -1
+        else:
             cursor_render_x = text_clip_area_rect.left + input_text_surf.get_width() + 1
-        
-        # Clamp cursor to be visible within the input box's drawable area
         cursor_render_x = max(text_clip_area_rect.left, min(cursor_render_x, text_clip_area_rect.right -1))
 
-        if int(pygame.time.get_ticks() / 500) % 2 == 0: # Blinking cursor
+        if int(pygame.time.get_ticks() / 500) % 2 == 0:
              pygame.draw.line(surface, ED_CONFIG.DIALOG_CURSOR_COLOR,
                              (cursor_render_x, input_box_rect.top + 5),
                              (cursor_render_x, input_box_rect.bottom - 5), 2)
-    
+
     info_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
     if info_font:
-        info_surf = info_font.render("Enter: Confirm, Esc: Cancel", True, ED_CONFIG.C.LIGHT_GRAY)
+        info_surf = info_font.render("Enter: Confirm, Esc: Cancel", True, getattr(ED_CONFIG.C, 'LIGHT_GRAY', (200,200,200))) # Use getattr
         surface.blit(info_surf, info_surf.get_rect(midbottom=(dialog_rect.centerx, dialog_rect.bottom - 10)))
 
 def _draw_color_picker_content(surface: pygame.Surface, editor_state: EditorState, dialog_rect: pygame.Rect, fonts: Dict[str, Optional[pygame.font.Font]]):
-    mouse_pos_dialog = pygame.mouse.get_pos() 
+    mouse_pos_dialog = pygame.mouse.get_pos()
+
+    # --- TEMPORARY DEBUG for MAGENTA issue (Uncomment if still happening after restart) ---
+    # print(f"DEBUG UI_COLOR_PICKER: In _draw_color_picker_content")
+    # print(f"DEBUG UI_COLOR_PICKER: ED_CONFIG type: {type(ED_CONFIG)}")
+    # print(f"DEBUG UI_COLOR_PICKER: ED_CONFIG.C type: {type(ED_CONFIG.C)}")
+    # print(f"DEBUG UI_COLOR_PICKER: ED_CONFIG.C attributes: {dir(ED_CONFIG.C)}")
+    # print(f"DEBUG UI_COLOR_PICKER: Has MAGENTA in ED_CONFIG.C? {hasattr(ED_CONFIG.C, 'MAGENTA')}")
+    # if hasattr(ED_CONFIG.C, 'MAGENTA'):
+    #     print(f"DEBUG UI_COLOR_PICKER: ED_CONFIG.C.MAGENTA value: {ED_CONFIG.C.MAGENTA}")
+    # else:
+    #     print(f"CRITICAL DEBUG UI_COLOR_PICKER: ED_CONFIG.C does NOT have MAGENTA attribute!")
+    # print(f"DEBUG UI_COLOR_PICKER: COLOR_PICKER_PRESETS keys: {list(ED_CONFIG.COLOR_PICKER_PRESETS.keys())}")
+    # --- END TEMPORARY DEBUG ---
+
+    default_fallback_color = (255, 0, 255) # Define a literal magenta just in case C.MAGENTA access fails
+
     for name, swatch_rect_relative in editor_state.color_picker_rects.items():
-        # swatch_rect_relative is relative to dialog content area, not dialog_rect.topleft directly.
-        # It was calculated based on current_x_in_dialog, current_y_in_dialog from start_color_picker_dialog.
         absolute_swatch_rect = swatch_rect_relative.move(dialog_rect.left, dialog_rect.top)
-        color_val = ED_CONFIG.COLOR_PICKER_PRESETS.get(name, ED_CONFIG.C.MAGENTA)
         
+        # Safely get MAGENTA from ED_CONFIG.C, or use the literal default_fallback_color
+        magenta_default = getattr(ED_CONFIG.C, 'MAGENTA', default_fallback_color)
+        color_val = ED_CONFIG.COLOR_PICKER_PRESETS.get(name, magenta_default)
+
         pygame.draw.rect(surface, color_val, absolute_swatch_rect)
-        border_col = ED_CONFIG.C.BLACK
+        border_col = getattr(ED_CONFIG.C, 'BLACK', (0,0,0)) # Use getattr
         border_w = 1
         if absolute_swatch_rect.collidepoint(mouse_pos_dialog):
-            border_col = ED_CONFIG.COLOR_PICKER_HOVER_BORDER_COLOR
+            border_col = getattr(ED_CONFIG.COLOR_PICKER_HOVER_BORDER_COLOR, 'YELLOW', (255,255,0)) # Use getattr for this too
             border_w = 3
         pygame.draw.rect(surface, border_col, absolute_swatch_rect, border_w)
 
 def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, dialog_rect: pygame.Rect, fonts: Dict[str, Optional[pygame.font.Font]]):
     prompt_font = fonts.get("medium") or ED_CONFIG.FONT_CONFIG.get("medium")
-    title_height = prompt_font.get_height() + 25 if prompt_font else 55 # Space for prompt + padding
-    buttons_panel_height = ED_CONFIG.BUTTON_HEIGHT_STANDARD // 2 + 20 # Approx for OK/Cancel + padding
-    
+    title_height = prompt_font.get_height() + 25 if prompt_font else 55
+    buttons_panel_height = ED_CONFIG.BUTTON_HEIGHT_STANDARD // 2 + 20
+
     list_area_y_start = dialog_rect.top + title_height
     list_area_height = dialog_rect.height - title_height - buttons_panel_height
-    
-    # Main area for the file list itself
+
     list_area_rect = pygame.Rect(dialog_rect.left + 10, list_area_y_start, dialog_rect.width - 20, list_area_height)
-    pygame.draw.rect(surface, ED_CONFIG.DIALOG_INPUT_BOX_COLOR, list_area_rect) # Background for list
-    pygame.draw.rect(surface, ED_CONFIG.C.BLACK, list_area_rect, 1) # Border for list area
+    pygame.draw.rect(surface, ED_CONFIG.DIALOG_INPUT_BOX_COLOR, list_area_rect)
+    pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), list_area_rect, 1) # Use getattr
 
     item_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
-    item_line_height = (item_font.get_height() + 6) if item_font else 22 # Height of one file item row
-    
-    # Clear previous item rects for hit detection
-    editor_state.ui_elements_rects['dialog_file_item_rects'] = [] 
+    item_line_height = (item_font.get_height() + 6) if item_font else 22
 
-    # Clipping rect for drawing list items, slightly smaller than list_area_rect
-    list_clip_rect = list_area_rect.inflate(-8, -8) # Content area for text, inside list_area_rect border
-
+    editor_state.ui_elements_rects['dialog_file_item_rects'] = []
+    list_clip_rect = list_area_rect.inflate(-8, -8)
     total_content_height_pixels = len(editor_state.dialog_file_list) * item_line_height
-    
-    scrollbar_width_drawn = 0 # Actual width taken by scrollbar if drawn
-    if total_content_height_pixels > list_clip_rect.height: # Content taller than visible area, need scrollbar
-        scrollbar_width_drawn = 15 # Desired width of scrollbar
-        # Scrollbar track is to the right of the list_clip_rect
+    scrollbar_width_drawn = 0
+
+    if total_content_height_pixels > list_clip_rect.height:
+        scrollbar_width_drawn = 15
         scrollbar_track_rect = pygame.Rect(list_clip_rect.right + 2, list_clip_rect.top,
                                           scrollbar_width_drawn, list_clip_rect.height)
-        pygame.draw.rect(surface, ED_CONFIG.C.DARK_GRAY, scrollbar_track_rect) # Scrollbar background
-        
+        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'DARK_GRAY', (50,50,50)), scrollbar_track_rect) # Use getattr
         handle_height_ratio = min(1.0, list_clip_rect.height / total_content_height_pixels if total_content_height_pixels > 0 else 1.0)
-        handle_height = max(20, scrollbar_track_rect.height * handle_height_ratio) # Min handle height
-        
+        handle_height = max(20, scrollbar_track_rect.height * handle_height_ratio)
         scrollable_content_outside_view = max(0, total_content_height_pixels - list_clip_rect.height)
         current_scroll_ratio_of_hidden = editor_state.dialog_file_scroll_y / scrollable_content_outside_view if scrollable_content_outside_view > 0 else 0
-        
-        # Position handle within the track based on scroll ratio
         handle_y_pos_on_track = (scrollbar_track_rect.height - handle_height) * current_scroll_ratio_of_hidden
-        
-        scrollbar_handle_rect = pygame.Rect(scrollbar_track_rect.left, 
-                                            scrollbar_track_rect.top + handle_y_pos_on_track, 
+        scrollbar_handle_rect = pygame.Rect(scrollbar_track_rect.left,
+                                            scrollbar_track_rect.top + handle_y_pos_on_track,
                                             scrollbar_width_drawn, handle_height)
-        pygame.draw.rect(surface, ED_CONFIG.C.GRAY, scrollbar_handle_rect, border_radius=3) # Scrollbar handle
-        
-        # Store rects for event handling
+        pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'GRAY', (128,128,128)), scrollbar_handle_rect, border_radius=3) # Use getattr
         editor_state.ui_elements_rects['file_dialog_scrollbar_handle'] = scrollbar_handle_rect
-        editor_state.ui_elements_rects['file_dialog_scrollbar_area'] = scrollbar_track_rect # The whole track area
-    
-    # Adjust width available for list item text if scrollbar is present
+        editor_state.ui_elements_rects['file_dialog_scrollbar_area'] = scrollbar_track_rect
+
     list_item_text_render_width = list_clip_rect.width - (scrollbar_width_drawn + 2 if scrollbar_width_drawn > 0 else 0)
+    original_clip_pygame = surface.get_clip()
+    surface.set_clip(list_clip_rect)
+    current_y_offset_in_clip_rect = 0
 
-    original_clip_pygame = surface.get_clip() # Save Pygame's current clip region
-    surface.set_clip(list_clip_rect) # Clip drawing to the content area of the list
-
-    current_y_offset_in_clip_rect = 0 # Relative Y for drawing items inside list_clip_rect
     for i, filename in enumerate(editor_state.dialog_file_list):
-        # Calculate actual screen Y position for this item, considering scroll
         item_draw_y_on_surface = list_clip_rect.top + current_y_offset_in_clip_rect - editor_state.dialog_file_scroll_y
-        
-        # This is the rect on the main surface where this item *would* be drawn if fully visible
-        item_full_rect_on_screen = pygame.Rect(list_clip_rect.left, item_draw_y_on_surface, 
+        item_full_rect_on_screen = pygame.Rect(list_clip_rect.left, item_draw_y_on_surface,
                                            list_item_text_render_width, item_line_height)
-        
-        # Only process/draw if this item is (at least partially) visible within the list_clip_rect
         if list_clip_rect.colliderect(item_full_rect_on_screen):
-            # Store this on-screen rect for mouse collision detection
             editor_state.ui_elements_rects['dialog_file_item_rects'].append(
                 {"text": filename, "rect": item_full_rect_on_screen, "index": i}
             )
             if item_font:
-                text_color = ED_CONFIG.C.BLACK
-                bg_color_item = ED_CONFIG.DIALOG_INPUT_BOX_COLOR # Default item background
+                text_color = getattr(ED_CONFIG.C, 'BLACK', (0,0,0)) # Use getattr
+                bg_color_item = ED_CONFIG.DIALOG_INPUT_BOX_COLOR
                 if editor_state.dialog_selected_file_index == i:
-                    bg_color_item = ED_CONFIG.C.BLUE # Highlight selected item
-                    text_color = ED_CONFIG.C.WHITE
-                
-                # Draw the item background (will be clipped by surface.set_clip)
+                    bg_color_item = getattr(ED_CONFIG.C, 'BLUE', (0,0,255)) # Use getattr
+                    text_color = getattr(ED_CONFIG.C, 'WHITE', (255,255,255)) # Use getattr
                 pygame.draw.rect(surface, bg_color_item, item_full_rect_on_screen)
-                
                 text_surf = item_font.render(filename, True, text_color)
-                # Center text vertically in the item_full_rect_on_screen
-                text_draw_pos = (item_full_rect_on_screen.left + 5, 
+                text_draw_pos = (item_full_rect_on_screen.left + 5,
                                  item_full_rect_on_screen.centery - text_surf.get_height() // 2)
                 surface.blit(text_surf, text_draw_pos)
-        
-        current_y_offset_in_clip_rect += item_line_height # Move to next item position
+        current_y_offset_in_clip_rect += item_line_height
+    surface.set_clip(original_clip_pygame)
 
-    surface.set_clip(original_clip_pygame) # Restore Pygame's original clip region
-
-    # --- Draw OK/Cancel Buttons ---
     button_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
     if button_font:
-        btn_width = ED_CONFIG.BUTTON_WIDTH_STANDARD // 2 - 15 # Slightly smaller buttons for dialog
-        btn_height = ED_CONFIG.BUTTON_HEIGHT_STANDARD // 2 + 5 # Slimmer buttons
-        
-        # Position buttons below the list_area_rect
-        buttons_y_pos = list_area_rect.bottom + 10 
-        
+        btn_width = ED_CONFIG.BUTTON_WIDTH_STANDARD // 2 - 15
+        btn_height = ED_CONFIG.BUTTON_HEIGHT_STANDARD // 2 + 5
+        buttons_y_pos = list_area_rect.bottom + 10
         ok_button_rect = pygame.Rect(dialog_rect.centerx - btn_width - 5, buttons_y_pos, btn_width, btn_height)
         cancel_button_rect = pygame.Rect(dialog_rect.centerx + 5, buttons_y_pos, btn_width, btn_height)
-        
-        mouse_pos = pygame.mouse.get_pos() # Get current mouse pos for button hover state
-        
-        # OK button is active only if a file is selected
-        ok_is_active = (editor_state.dialog_selected_file_index != -1 and 
+        mouse_pos = pygame.mouse.get_pos()
+        ok_is_active = (editor_state.dialog_selected_file_index != -1 and
                         0 <= editor_state.dialog_selected_file_index < len(editor_state.dialog_file_list))
-
         draw_button(surface, ok_button_rect, "Load", button_font, mouse_pos, is_active=ok_is_active)
         draw_button(surface, cancel_button_rect, "Cancel", button_font, mouse_pos)
-        
-        # Store button rects for event handling
         editor_state.ui_elements_rects["dialog_file_load_ok"] = ok_button_rect
         editor_state.ui_elements_rects["dialog_file_load_cancel"] = cancel_button_rect
 
@@ -6269,10 +6199,234 @@ if __name__ == "__main__":
     print("MAIN: Application terminated.")
     sys.exit(0)
 
+########## START OF FILE: maps\1.py ##########
+
+# Level: 1
+# Generated by Platformer Level Editor on 108706
+import pygame
+from tiles import Platform, Ladder, Lava # Ensure all used tile types are imported by game
+import constants as C
+
+# Optional: Define level-specific background color if your game supports it
+LEVEL_SPECIFIC_BACKGROUND_COLOR = (75, 0, 130)
+
+def load_map_1(initial_screen_width, initial_screen_height):
+    """
+    Loads the '1' level.
+    Generated by the level editor.
+    """
+    print(f"Loading map: load_map_1...") # Game-side log
+    platforms = pygame.sprite.Group()
+    ladders = pygame.sprite.Group()
+    hazards = pygame.sprite.Group()
+    enemy_spawns_data = []
+    collectible_spawns_data = []
+
+    player1_spawn = (89, 757)
+    
+    # --- Placed Objects ---
+    platforms.add(Platform(0, 0, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 0, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 40, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 40, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 80, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 120, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 160, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 200, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 240, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 280, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 320, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 160, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 120, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 80, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 200, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 240, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 280, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 320, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 360, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 360, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 400, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 440, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 480, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 400, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 440, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 520, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 560, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 600, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 480, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 520, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 640, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 680, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 600, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 560, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 640, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 680, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 720, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 720, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(0, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(40, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(80, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(120, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(160, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(200, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(240, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(280, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(320, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(360, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(400, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(440, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(480, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(520, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(560, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(600, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(640, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(680, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(720, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(760, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(800, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(840, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(880, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(920, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(960, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1000, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1040, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1080, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 760, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 720, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 680, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 640, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 600, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 560, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 520, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 480, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 440, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 400, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 360, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 320, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 280, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 240, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 200, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 160, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 120, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 80, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 720, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 680, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 640, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 600, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 560, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 520, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 440, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 480, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 400, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 360, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 320, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 280, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 240, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 200, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 160, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 120, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 80, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 40, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1120, 0, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 0, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1160, 40, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(80, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(120, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(160, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(200, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(320, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(360, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(400, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(440, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(480, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(520, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(80, 360, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(120, 360, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(160, 360, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(200, 360, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(240, 360, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(640, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(680, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(720, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(760, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(800, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(840, 600, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(760, 400, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(800, 400, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(840, 400, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(880, 400, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(920, 400, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(440, 240, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(480, 240, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(520, 240, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(560, 240, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(600, 240, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(240, 320, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(360, 440, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(560, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(600, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(640, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(680, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(720, 480, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(720, 440, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(720, 400, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(920, 360, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(720, 360, 40, 40, C.DARK_GREEN, platform_type='ledge'))
+    platforms.add(Platform(480, 720, 40, 40, C.GRAY, platform_type='wall'))
+    platforms.add(Platform(1000, 720, 40, 40, C.GRAY, platform_type='wall'))
+    # No ladders placed.
+    hazards.add(Lava(520, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(560, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(600, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(640, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(680, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(720, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(760, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(800, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(840, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(880, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(920, 760, 40, 40, C.ORANGE_RED))
+    hazards.add(Lava(960, 760, 40, 40, C.ORANGE_RED))
+    enemy_spawns_data.append({'pos': (769, 397), 'patrol': None, 'enemy_color_id': 'cyan'})
+    enemy_spawns_data.append({'pos': (409, 477), 'patrol': None, 'enemy_color_id': 'pink'})
+    enemy_spawns_data.append({'pos': (689, 597), 'patrol': None, 'enemy_color_id': 'red'})
+    collectible_spawns_data.append({'type': 'chest', 'pos': (466, 239)})
+
+    # --- Level Dimensions for Game Camera & Boundaries ---
+    map_total_width_pixels = 1360
+    level_min_y_absolute = -80 # Top-most Y coordinate for camera/content
+    level_max_y_absolute = 880 # Bottom-most Y coordinate for camera/content (e.g., death plane below this)
+    
+    main_ground_y_reference = 800 # Y-value of the main 'floor' surface
+    main_ground_height_reference = 40 # Height of typical ground tiles
+
+    # --- Auto-generated Boundary Walls (Invisible in game unless styled) ---
+    # These ensure entities cannot go outside the defined level space.
+    _boundary_thickness = C.TILE_SIZE * 2 # Make them thick enough
+    _boundary_wall_height = level_max_y_absolute - level_min_y_absolute + (2 * _boundary_thickness) # Span slightly beyond min/max_y
+
+    # Top boundary (ceiling) - place its bottom edge at level_min_y_absolute
+    platforms.add(Platform(0, level_min_y_absolute - _boundary_thickness, map_total_width_pixels, _boundary_thickness, C.DARK_GRAY, platform_type="boundary_wall_top"))
+    # Bottom boundary (floor/kill plane) - place its top edge at level_max_y_absolute
+    platforms.add(Platform(0, level_max_y_absolute, map_total_width_pixels, _boundary_thickness, C.DARK_GRAY, platform_type="boundary_wall_bottom"))
+    # Left boundary wall
+    platforms.add(Platform(-_boundary_thickness, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, C.DARK_GRAY, platform_type="boundary_wall_left"))
+    # Right boundary wall
+    platforms.add(Platform(map_total_width_pixels, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, C.DARK_GRAY, platform_type="boundary_wall_right"))
+
+    print(f"Map 'load_map_1' loaded with: {len(platforms)} platforms, {len(ladders)} ladders, {len(hazards)} hazards.") # Game-side log
+    return (platforms, ladders, hazards, enemy_spawns_data, collectible_spawns_data,
+            player1_spawn,
+            map_total_width_pixels, level_min_y_absolute, level_max_y_absolute,
+            main_ground_y_reference, main_ground_height_reference,
+            LEVEL_SPECIFIC_BACKGROUND_COLOR) # Return background color
+
+
 ########## START OF FILE: maps\try.py ##########
 
 # Level: try
-# Generated by Platformer Level Editor on 1385294
+# Generated by Platformer Level Editor on 18190
 import pygame
 from tiles import Platform, Ladder, Lava # Ensure all used tile types are imported by game
 import constants as C
@@ -6379,6 +6533,8 @@ def load_map_try(initial_screen_width, initial_screen_height):
     hazards.add(Lava(1080, 440, 40, 40, C.ORANGE_RED))
     enemy_spawns_data.append({'pos': (729, 517), 'patrol': None, 'enemy_color_id': 'cyan'})
     enemy_spawns_data.append({'pos': (929, 517), 'patrol': None, 'enemy_color_id': 'pink'})
+    enemy_spawns_data.append({'pos': (569, 517), 'patrol': None, 'enemy_color_id': 'yellow'})
+    enemy_spawns_data.append({'pos': (609, 277), 'patrol': None, 'enemy_color_id': 'green'})
     collectible_spawns_data.append({'type': 'chest', 'pos': (426, 159)})
 
     # --- Level Dimensions for Game Camera & Boundaries ---
@@ -8330,12 +8486,10 @@ class Fireball(pygame.sprite.Sprite):
 
 ########## START OF FILE: server_logic.py ##########
 
-########## START OF FILE: server_logic.py ##########
-
 # server_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0000000.1
+version 1.0.0.2 (Changed reset key from R to Q)
 Handles server-side game logic, connection management, and broadcasting.
 """
 import pygame
@@ -8414,23 +8568,20 @@ def broadcast_presence_thread(server_state_obj: ServerState):
     while server_state_obj.app_running:
         try:
             server_state_obj.server_udp_socket.sendto(broadcast_message_bytes, broadcast_address)
-            # print(f"DEBUG Server (broadcast_presence_thread): Broadcast sent.") # DEBUG - can be very noisy
         except socket.error as sock_err:
-            print(f"DEBUG Server (broadcast_presence_thread): Socket error during broadcast send: {sock_err}") # DEBUG
+            # print(f"DEBUG Server (broadcast_presence_thread): Socket error during broadcast send: {sock_err}") # DEBUG - Can be noisy
             pass 
         except Exception as e:
             print(f"Server Warning: Unexpected error during broadcast send: {e}")
         
-        # Sleep for the broadcast interval, checking app_running periodically for a timely exit
-        for _ in range(int(server_state_obj.broadcast_interval_s * 10)): # e.g., check every 100ms
+        for _ in range(int(server_state_obj.broadcast_interval_s * 10)): 
             if not server_state_obj.app_running: break
             time.sleep(0.1)
             
-    # Cleanup UDP socket when the thread stops
     if server_state_obj.server_udp_socket:
         server_state_obj.server_udp_socket.close()
         server_state_obj.server_udp_socket = None
-    print("DEBUG Server (broadcast_presence_thread): Broadcast thread stopped.") # DEBUG
+    print("DEBUG Server (broadcast_presence_thread): Broadcast thread stopped.") 
 
 
 def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj: ServerState):
@@ -8438,48 +8589,45 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
     Thread function to handle receiving data from a single connected client.
     Updates the server_state_obj.client_input_buffer with the latest client input.
     """
-    print(f"DEBUG Server (handle_client_connection_thread): Client connected from {addr}. Handler thread started.") # DEBUG
-    conn.settimeout(1.0) # Use a timeout for recv to keep the loop responsive
-    partial_data_from_client = b"" # Buffer for accumulating partial messages
+    print(f"DEBUG Server (handle_client_connection_thread): Client connected from {addr}. Handler thread started.") 
+    conn.settimeout(1.0) 
+    partial_data_from_client = b"" 
 
     while server_state_obj.app_running:
-        with client_lock: # Synchronize access to shared server state
+        with client_lock: 
             if server_state_obj.client_connection is not conn:
-                print(f"DEBUG Server Handler ({addr}): Stale connection. Exiting thread.") # DEBUG
+                print(f"DEBUG Server Handler ({addr}): Stale connection. Exiting thread.") 
                 break 
         try:
             chunk = conn.recv(server_state_obj.buffer_size)
             if not chunk: 
-                print(f"DEBUG Server Handler ({addr}): Client disconnected (received empty data).") # DEBUG
+                print(f"DEBUG Server Handler ({addr}): Client disconnected (received empty data).") 
                 break
             
-            # print(f"DEBUG Server Handler ({addr}): Received chunk: {chunk[:60]}...") # DEBUG - can be noisy
             partial_data_from_client += chunk
             decoded_inputs, partial_data_from_client = decode_data_stream(partial_data_from_client)
 
             if decoded_inputs:
                 last_input_data = decoded_inputs[-1] 
-                # print(f"DEBUG Server Handler ({addr}): Decoded client input: {last_input_data}") # DEBUG
                 if "input" in last_input_data:
                     with client_lock:
                         if server_state_obj.client_connection is conn: 
                             server_state_obj.client_input_buffer = last_input_data["input"]
-                            # print(f"DEBUG Server Handler ({addr}): Updated client_input_buffer: {server_state_obj.client_input_buffer}") # DEBUG
         except socket.timeout:
             continue 
         except socket.error as e:
             if server_state_obj.app_running:
-                print(f"DEBUG Server Handler ({addr}): Socket error: {e}. Assuming disconnect.") # DEBUG
+                print(f"DEBUG Server Handler ({addr}): Socket error: {e}. Assuming disconnect.") 
             break 
         except Exception as e:
             if server_state_obj.app_running:
-                print(f"DEBUG Server Handler ({addr}): Unexpected error: {e}") # DEBUG
+                print(f"DEBUG Server Handler ({addr}): Unexpected error: {e}") 
                 traceback.print_exc()
             break
 
     with client_lock:
         if server_state_obj.client_connection is conn: 
-            print(f"DEBUG Server Handler ({addr}): Closing active connection from handler.") # DEBUG
+            print(f"DEBUG Server Handler ({addr}): Closing active connection from handler.") 
             server_state_obj.client_connection = None 
             server_state_obj.client_input_buffer = {"disconnect": True} 
     try:
@@ -8488,7 +8636,7 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
     try:
         conn.close() 
     except: pass
-    print(f"DEBUG Server: Client handler for {addr} finished.") # DEBUG
+    print(f"DEBUG Server: Client handler for {addr} finished.") 
 
 
 def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock, 
@@ -8497,23 +8645,23 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     Main function to run the game in server mode.
     Manages client connections, game loop, and state synchronization.
     """
-    print("DEBUG Server: Entering run_server_mode.") # DEBUG
-    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: R)")
+    print("DEBUG Server: Entering run_server_mode.") 
+    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: Q)") # Updated caption
     
     server_state_obj.app_running = True 
     current_width, current_height = screen.get_size()
 
     if server_state_obj.broadcast_thread and server_state_obj.broadcast_thread.is_alive():
-        print("DEBUG Server: Broadcast thread already running (normal if re-entering server mode without full app restart).") # DEBUG
+        print("DEBUG Server: Broadcast thread already running (normal if re-entering server mode without full app restart).") 
     else:
-        print("DEBUG Server: Starting broadcast thread.") # DEBUG
+        print("DEBUG Server: Starting broadcast thread.") 
         server_state_obj.broadcast_thread = threading.Thread(
             target=broadcast_presence_thread, args=(server_state_obj,), daemon=True
         )
         server_state_obj.broadcast_thread.start()
 
     if server_state_obj.server_tcp_socket: 
-        print("DEBUG Server: Closing existing TCP socket before creating new one.") # DEBUG
+        print("DEBUG Server: Closing existing TCP socket before creating new one.") 
         try: server_state_obj.server_tcp_socket.close()
         except: pass
     
@@ -8523,12 +8671,12 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         server_state_obj.server_tcp_socket.bind((C.SERVER_IP_BIND, server_state_obj.server_port_tcp))
         server_state_obj.server_tcp_socket.listen(1) 
         server_state_obj.server_tcp_socket.settimeout(1.0) 
-        print(f"DEBUG Server: Listening on {C.SERVER_IP_BIND}:{server_state_obj.server_port_tcp}") # DEBUG
+        print(f"DEBUG Server: Listening on {C.SERVER_IP_BIND}:{server_state_obj.server_port_tcp}") 
     except socket.error as e:
         print(f"FATAL SERVER ERROR: Failed to bind/listen TCP socket: {e}")
         return 
 
-    print("DEBUG Server: Waiting for Player 2 to connect...") # DEBUG
+    print("DEBUG Server: Waiting for Player 2 to connect...") 
     temp_client_conn_obj = None 
     while temp_client_conn_obj is None and server_state_obj.app_running:
         for event in pygame.event.get():
@@ -8555,27 +8703,27 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             temp_client_conn_obj, temp_client_addr_tuple = server_state_obj.server_tcp_socket.accept()
             with client_lock:
                  if server_state_obj.client_connection: 
-                     print("DEBUG Server: Closing pre-existing client connection before new one.") # DEBUG
+                     print("DEBUG Server: Closing pre-existing client connection before new one.") 
                      try: server_state_obj.client_connection.close()
                      except: pass
                  server_state_obj.client_connection = temp_client_conn_obj
                  server_state_obj.client_address = temp_client_addr_tuple
                  server_state_obj.client_input_buffer = {} 
-                 print(f"DEBUG Server: Accepted connection from {temp_client_addr_tuple}") # DEBUG
+                 print(f"DEBUG Server: Accepted connection from {temp_client_addr_tuple}") 
         except socket.timeout:
             continue 
         except Exception as e:
             if server_state_obj.app_running:
-                print(f"DEBUG Server: Error during client accept: {e}") # DEBUG
+                print(f"DEBUG Server: Error during client accept: {e}") 
             break 
     
     if not server_state_obj.app_running or server_state_obj.client_connection is None:
-        print("DEBUG Server: Exiting wait loop (no client connected or app closed).") # DEBUG
+        print("DEBUG Server: Exiting wait loop (no client connected or app closed).") 
         return 
 
-    print(f"DEBUG Server: Client {server_state_obj.client_address} connected. Starting game...") # DEBUG
+    print(f"DEBUG Server: Client {server_state_obj.client_address} connected. Starting game...") 
     if server_state_obj.client_handler_thread and server_state_obj.client_handler_thread.is_alive():
-        print("DEBUG Server: Previous client handler thread still alive. Attempting to join.") # DEBUG
+        print("DEBUG Server: Previous client handler thread still alive. Attempting to join.") 
         server_state_obj.client_handler_thread.join(timeout=0.2) 
     
     server_state_obj.client_handler_thread = threading.Thread(
@@ -8584,12 +8732,12 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         daemon=True
     )
     server_state_obj.client_handler_thread.start()
-    print("DEBUG Server: Client handler thread started.") # DEBUG
+    print("DEBUG Server: Client handler thread started.") 
 
     p1 = game_elements_ref.get("player1") 
     p2 = game_elements_ref.get("player2") 
-    if p1: print(f"DEBUG Server: P1 instance from game_elements: {p1}, Valid: {p1._valid_init if p1 else 'N/A'}") # DEBUG
-    if p2: print(f"DEBUG Server: P2 instance from game_elements: {p2}, Valid: {p2._valid_init if p2 else 'N/A'}") # DEBUG
+    if p1: print(f"DEBUG Server: P1 instance from game_elements: {p1}, Valid: {p1._valid_init if p1 else 'N/A'}") 
+    if p2: print(f"DEBUG Server: P2 instance from game_elements: {p2}, Valid: {p2._valid_init if p2 else 'N/A'}") 
 
 
     p1_key_map_config = { 
@@ -8625,7 +8773,8 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                         game_elements_ref["camera"].screen_height = current_height
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: server_game_active = False 
-                if event.key == pygame.K_r: host_requested_reset = True
+                # MODIFIED: Changed reset key from K_r to K_q
+                if event.key == pygame.K_q: host_requested_reset = True
                 if p1 and p1._valid_init: 
                     if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'): p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'): p1.heal_to_full()
@@ -8640,7 +8789,6 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         with client_lock: 
             if server_state_obj.client_input_buffer:
                 buffered_input = server_state_obj.client_input_buffer
-                # print(f"DEBUG Server: Processing client_input_buffer: {buffered_input}") # DEBUG
                 if buffered_input.get("disconnect"): client_disconnected_signal = True
                 elif buffered_input.get("action_reset", False): p2_requested_reset = True
                 elif p2 and p2._valid_init:
@@ -8653,16 +8801,15 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 server_state_obj.client_input_buffer = {} 
 
         if client_disconnected_signal:
-            print("DEBUG Server: Client disconnected signal received in main loop.") # DEBUG
+            print("DEBUG Server: Client disconnected signal received in main loop.") 
             server_game_active = False 
             break 
 
         if p2 and p2._valid_init and p2_network_input and hasattr(p2, 'handle_network_input'):
-            # print(f"DEBUG Server: Handling P2 network input: {p2_network_input}") # DEBUG
             p2.handle_network_input(p2_network_input) 
 
         if host_requested_reset or (p2_requested_reset and is_p1_game_over_for_reset):
-            print("DEBUG Server: Game state reset triggered.") # DEBUG
+            print("DEBUG Server: Game state reset triggered by 'Q' key or client request.") # Updated message
             game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
 
         if p1 and p1._valid_init:
@@ -8717,17 +8864,15 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 
         if server_state_obj.client_connection: 
             network_state_to_send = get_network_game_state(game_elements_ref)
-            # print(f"DEBUG Server: State to send: P1 pos {network_state_to_send.get('p1', {}).get('pos')}, P2 pos {network_state_to_send.get('p2', {}).get('pos')}") # DEBUG
             encoded_game_state = encode_data(network_state_to_send)
             if encoded_game_state:
                 try:
                     server_state_obj.client_connection.sendall(encoded_game_state)
                 except socket.error as e:
-                    print(f"DEBUG Server: Send failed to client: {e}. Client likely disconnected.") # DEBUG
+                    print(f"DEBUG Server: Send failed to client: {e}. Client likely disconnected.") 
                     server_game_active = False 
                     with client_lock: server_state_obj.client_connection = None 
                     break 
-            # else: print("DEBUG Server Error: Failed to encode game state for sending.") # DEBUG
         
         try:
             draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_server)
@@ -8736,7 +8881,7 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             server_game_active = False; break
         pygame.display.flip()
 
-    print("DEBUG Server: Exiting active game loop.") # DEBUG
+    print("DEBUG Server: Exiting active game loop.") 
     
     connection_to_close_at_server_exit = None
     with client_lock:
@@ -8744,20 +8889,18 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             connection_to_close_at_server_exit = server_state_obj.client_connection
             server_state_obj.client_connection = None 
     if connection_to_close_at_server_exit:
-        print("DEBUG Server: Mode exit cleanup - closing client connection.") # DEBUG
+        print("DEBUG Server: Mode exit cleanup - closing client connection.") 
         try:
             connection_to_close_at_server_exit.shutdown(socket.SHUT_RDWR)
             connection_to_close_at_server_exit.close()
         except: pass 
 
     if server_state_obj.server_tcp_socket:
-        print("DEBUG Server: Closing main TCP listening socket.") # DEBUG
+        print("DEBUG Server: Closing main TCP listening socket.") 
         server_state_obj.server_tcp_socket.close()
         server_state_obj.server_tcp_socket = None
     
-    print("DEBUG Server: Server mode finished and returned to caller.") # DEBUG
-
-########## END OF FILE: server_logic.py ##########
+    print("DEBUG Server: Server mode finished and returned to caller.") 
 
 ########## START OF FILE: tiles.py ##########
 
