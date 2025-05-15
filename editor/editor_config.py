@@ -1,19 +1,19 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.4 (Added typing imports for Optional, Dict)
+## version 1.0.0.5 (Added MAGENTA to FallbackConstants)
 Configuration constants for the Platformer Level Editor.
 """
 import pygame
 import sys
 import os
-import traceback 
+import traceback
 from typing import Dict, Optional, Tuple, Any # ADDED Optional, Dict, Tuple, Any for type hints
 
 # --- Add parent directory to sys.path ---
 # (sys.path manipulation and constants import remains the same)
-current_dir = os.path.dirname(os.path.abspath(__file__)) 
-parent_dir = os.path.dirname(current_dir)                 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
 print(f"DEBUG CONFIG: current_dir (editor_config.py location): {current_dir}")
 print(f"DEBUG CONFIG: parent_dir (project root attempt): {parent_dir}")
 
@@ -24,16 +24,17 @@ else:
     print(f"DEBUG CONFIG: '{parent_dir}' already in sys.path.")
 
 try:
-    import constants as C 
+    import constants as C
     print(f"DEBUG CONFIG: Successfully imported 'constants as C'. TILE_SIZE: {C.TILE_SIZE if hasattr(C, 'TILE_SIZE') else 'NOT FOUND'}")
 except ImportError as e:
     print(f"CRITICAL CONFIG ERROR: Failed to import 'constants as C' from '{parent_dir}'. Error: {e}")
     print(f"DEBUG CONFIG: sys.path was: {sys.path}")
-    class FallbackConstants: 
+    class FallbackConstants:
         TILE_SIZE = 32; WHITE = (255,255,255); BLACK = (0,0,0); RED = (255,0,0); GREEN = (0,255,0)
         BLUE = (0,0,255); GRAY = (128,128,128); DARK_GRAY = (50,50,50); YELLOW = (255,255,0)
         LIGHT_BLUE = (173,216,230); DARK_GREEN = (0,100,0); ORANGE_RED = (255,69,0)
         LIGHT_GRAY = (200,200,200); FPS = 60
+        MAGENTA = (255, 0, 255)  # <--- ADDED MAGENTA HERE
     C = FallbackConstants()
     print("CRITICAL CONFIG ERROR: Using fallback constants. Editor functionality will be impaired.")
 except Exception as e_gen:
@@ -46,13 +47,13 @@ EDITOR_SCREEN_INITIAL_WIDTH = 1280
 EDITOR_SCREEN_INITIAL_HEIGHT = 720
 
 MENU_SECTION_WIDTH = 280
-MENU_SECTION_HEIGHT = 250 
+MENU_SECTION_HEIGHT = 250
 
 ASSET_PALETTE_SECTION_WIDTH = 220
 
-SECTION_PADDING = 10 
+SECTION_PADDING = 10
 
-MAP_VIEW_SECTION_DEFAULT_WIDTH = EDITOR_SCREEN_INITIAL_WIDTH - MENU_SECTION_WIDTH - ASSET_PALETTE_SECTION_WIDTH - (SECTION_PADDING * 3) 
+MAP_VIEW_SECTION_DEFAULT_WIDTH = EDITOR_SCREEN_INITIAL_WIDTH - MENU_SECTION_WIDTH - ASSET_PALETTE_SECTION_WIDTH - (SECTION_PADDING * 3)
 MAP_VIEW_SECTION_DEFAULT_HEIGHT = EDITOR_SCREEN_INITIAL_HEIGHT - (SECTION_PADDING * 2)
 
 # --- UI Element Sizes & Colors ---
@@ -89,7 +90,7 @@ COLOR_PICKER_BG_COLOR: Tuple[int,int,int] = (40, 40, 50)
 COLOR_PICKER_TITLE_COLOR: Tuple[int,int,int] = getattr(C, 'WHITE', (255,255,255))
 COLOR_PICKER_HOVER_BORDER_COLOR: Tuple[int,int,int] = getattr(C, 'YELLOW', (255,255,0))
 
-MAPS_DIRECTORY = "maps" 
+MAPS_DIRECTORY = "maps"
 
 # --- Asset Definitions for Editor Palette ---
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = { # Added Any
@@ -97,7 +98,7 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = { # Added Any
         "source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn",
         "tooltip": "P1", "category": "spawn"
     },
-    "player2_spawn": { 
+    "player2_spawn": {
         "source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn",
         "tooltip": "P2", "category": "spawn"
     },
@@ -130,15 +131,15 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = { # Added Any
         "tooltip": "Chest", "category": "item"
     },
     "platform_wall_gray": {
-        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'GRAY', (128,128,128))), 
+        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'GRAY', (128,128,128))),
         "game_type_id": "platform_wall_gray", "tooltip": "Wall (Gray)", "category": "tile"
     },
     "platform_ledge_green": {
-        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'DARK_GREEN', (0,100,0))), 
+        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'DARK_GREEN', (0,100,0))),
         "game_type_id": "platform_ledge_green", "tooltip": "Ledge (Green)", "category": "tile"
     },
     "hazard_lava_tile": {
-        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'ORANGE_RED', (255,69,0))), 
+        "surface_params": (getattr(C, 'TILE_SIZE', 32), getattr(C, 'TILE_SIZE', 32), getattr(C, 'ORANGE_RED', (255,69,0))),
         "game_type_id": "hazard_lava", "tooltip": "Lava Tile", "category": "hazard"
     },
 }
@@ -155,30 +156,31 @@ GAME_LEVEL_FILE_EXTENSION = ".py"
 
 TOOLTIP_FONT_SIZE = 18
 TOOLTIP_TEXT_COLOR: Tuple[int,int,int] = getattr(C, 'BLACK', (0,0,0))
-TOOLTIP_BG_COLOR: Tuple[int,int,int] = (240, 240, 210) 
+TOOLTIP_BG_COLOR: Tuple[int,int,int] = (240, 240, 210)
 TOOLTIP_PADDING = 5
 TOOLTIP_OFFSET_Y = 25
 
 COLOR_PICKER_PRESETS: Dict[str, Tuple[int,int,int]] = {
-    "Light Blue": getattr(C, 'LIGHT_BLUE', (173,216,230)), "White": getattr(C, 'WHITE', (255,255,255)), 
+    "Light Blue": getattr(C, 'LIGHT_BLUE', (173,216,230)), "White": getattr(C, 'WHITE', (255,255,255)),
     "Black": getattr(C, 'BLACK', (0,0,0)), "Gray": getattr(C, 'GRAY', (128,128,128)),
-    "Dark Gray": getattr(C, 'DARK_GRAY', (50,50,50)), "Red": getattr(C, 'RED', (255,0,0)), 
+    "Dark Gray": getattr(C, 'DARK_GRAY', (50,50,50)), "Red": getattr(C, 'RED', (255,0,0)),
     "Green": getattr(C, 'GREEN', (0,255,0)), "Blue": getattr(C, 'BLUE', (0,0,255)),
-    "Yellow": getattr(C, 'YELLOW', (255,255,0)), "Orange": getattr(C, 'ORANGE_RED', (255,69,0)), 
-    "Purple": (128, 0, 128), "Brown": (139, 69, 19), 
+    "Yellow": getattr(C, 'YELLOW', (255,255,0)), "Orange": getattr(C, 'ORANGE_RED', (255,69,0)),
+    "Purple": (128, 0, 128), "Brown": (139, 69, 19),
     "Dark Green": getattr(C, 'DARK_GREEN', (0,100,0)), "Sky Blue": (100, 150, 255),
-    "Dark Purple": (75,0,130), "Sand": (244,164,96)
+    "Dark Purple": (75,0,130), "Sand": (244,164,96),
+    "Magenta": getattr(C, 'MAGENTA', (255, 0, 255)) # Ensure Magenta is also here if needed as a selectable preset
 }
 
 FONT_CONFIG: Dict[str, Optional[pygame.font.Font]] = {
     "small": None, "medium": None, "large": None, "tooltip": None
 }
 try:
-    if not pygame.font.get_init(): 
+    if not pygame.font.get_init():
         print("DEBUG CONFIG: pygame.font not initialized, calling pygame.font.init()")
         pygame.font.init()
-    
-    if pygame.font.get_init(): 
+
+    if pygame.font.get_init():
         FONT_CONFIG["small"] = pygame.font.Font(None, 22)
         FONT_CONFIG["medium"] = pygame.font.Font(None, 28)
         FONT_CONFIG["large"] = pygame.font.Font(None, 36)
