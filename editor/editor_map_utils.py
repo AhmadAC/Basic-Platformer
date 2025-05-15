@@ -1,7 +1,7 @@
 # editor_map_utils.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.7 (Auto-corrects lava/platform conflicts)
+## version 1.0.0.8 (Added delete_map_files utility)
 Utility functions for map operations in the Level Editor,
 including initializing new maps, saving/loading editor-specific
 map data (JSON), and exporting maps to game-compatible Python scripts.
@@ -12,7 +12,7 @@ import os
 import json
 import traceback
 from typing import Optional, Dict, List, Tuple, Any
-import logging # Import logging
+import logging 
 
 import editor_config as ED_CONFIG
 from editor_state import EditorState
@@ -20,7 +20,7 @@ from editor_state import EditorState
 import constants as C
 from tiles import Platform, Ladder, Lava
 
-logger = logging.getLogger(__name__) # Get the logger instance configured in editor.py
+logger = logging.getLogger(__name__) 
 
 
 def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
@@ -40,7 +40,6 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     editor_state.camera_offset_x = 0
     editor_state.camera_offset_y = 0
     editor_state.unsaved_changes = True
-    editor_state.color_change_target_info = None 
 
     py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
     editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
@@ -191,14 +190,13 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
                 logger.warning(f"Asset key '{asset_key}' from loaded object (JSON type: '{game_type_id_from_json}') "
                                f"not found in current ED_CONFIG.EDITOR_PALETTE_ASSETS. Object at ({world_x},{world_y}) skipped.")
         
-        # --- Auto-correction for lava platforms ---
         corrected_objects: List[Dict[str, Any]] = []
         lava_coords_to_check = set()
         corrections_made = False
 
         for obj in temp_placed_objects_from_json:
             if obj.get("game_type_id") == "hazard_lava":
-                if obj.get("world_x") is not None and obj.get("world_y") is not None: # Ensure coords exist
+                if obj.get("world_x") is not None and obj.get("world_y") is not None: 
                     lava_coords_to_check.add((obj["world_x"], obj["world_y"]))
         
         logger.debug(f"Auto-correction: Found {len(lava_coords_to_check)} lava coordinates for checking: {lava_coords_to_check}")
@@ -207,7 +205,6 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
             obj_wx, obj_wy = obj.get("world_x"), obj.get("world_y")
             obj_game_type_id = obj.get("game_type_id", "")
             
-            # Check if current object is a platform type
             is_solid_platform_game_type = (
                 obj_game_type_id == "platform_wall_gray" or
                 ("platform_wall_gray_" in obj_game_type_id and "_half" in obj_game_type_id) or
@@ -227,18 +224,16 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
             editor_state.unsaved_changes = True
             editor_state.set_status_message("Map auto-corrected: Removed solid platforms under lava.", 4.0)
             logger.info("Map auto-corrected due to lava/platform conflict. Unsaved changes flag set.")
-        # --- End Auto-correction ---
 
         editor_state.camera_offset_x = data.get("camera_offset_x", 0)
         editor_state.camera_offset_y = data.get("camera_offset_y", 0)
         editor_state.show_grid = data.get("show_grid", True)
-        editor_state.color_change_target_info = None 
 
         py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
         editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
 
         editor_state.recreate_map_content_surface()
-        if not corrections_made: # Only set to False if no corrections were made by this load
+        if not corrections_made: 
             editor_state.unsaved_changes = False 
         
         success_msg = f"Map '{editor_state.map_name_for_function}' loaded from {os.path.basename(json_filepath)}."
@@ -299,7 +294,6 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     all_placed_world_rects_for_bounds: List[pygame.Rect] = []
     logger.debug(f"Processing {len(editor_state.placed_objects)} objects for .py export.")
     
-    # --- Identify lava tile coordinates ---
     lava_occupied_coords = set()
     for obj_data in editor_state.placed_objects:
         if obj_data.get("game_type_id") == "hazard_lava":
@@ -352,7 +346,6 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         current_obj_rect = pygame.Rect(export_x, export_y, obj_w_px, obj_h_px)
         all_placed_world_rects_for_bounds.append(current_obj_rect)
 
-        # --- Check if this is a platform type and if it's on lava coordinates ---
         is_platform_type = (
             game_type_id == "platform_wall_gray" or
             ("platform_wall_gray_" in game_type_id and "_half" in game_type_id) or
@@ -363,7 +356,6 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         if is_platform_type and (world_x, world_y) in lava_occupied_coords:
             logger.info(f"Export: Skipping platform '{game_type_id}' at ({world_x},{world_y}) because it's occupied by lava.")
             continue 
-        # --- End Check ---
 
         if game_type_id == "platform_wall_gray" or "platform_wall_gray_" in game_type_id and "_half" in game_type_id:
             platforms_code_lines.append(f"    platforms.add(Platform({export_x}, {export_y}, {obj_w_px}, {obj_h_px}, {current_color_str}, platform_type='wall'))")
@@ -494,3 +486,61 @@ def {function_name}(initial_screen_width, initial_screen_height):
 
     editor_state.set_status_message(error_msg, 4)
     return False
+
+def delete_map_files(editor_state: EditorState, json_filepath: str) -> bool:
+    logger.info(f"Attempting to delete map files for: {json_filepath}")
+    if not json_filepath.endswith(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
+        msg = f"Invalid file type for deletion: {json_filepath}. Expected .json"
+        logger.error(msg)
+        editor_state.set_status_message(msg, 3)
+        return False
+
+    map_name_base = os.path.basename(json_filepath).replace(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION, "")
+    py_filename = map_name_base + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
+    py_filepath = os.path.join(os.path.dirname(json_filepath), py_filename)
+
+    deleted_json = False
+    deleted_py = False
+    action_performed = False # To track if we even tried to delete existing files
+
+    try:
+        if os.path.exists(json_filepath):
+            action_performed = True
+            os.remove(json_filepath)
+            logger.info(f"Deleted editor map file: {json_filepath}")
+            deleted_json = True
+        else:
+            logger.warning(f"Editor map file not found for deletion: {json_filepath}")
+    except OSError as e:
+        action_performed = True
+        msg = f"Error deleting editor map file '{json_filepath}': {e}"
+        logger.error(msg, exc_info=True)
+        editor_state.set_status_message(msg, 4)
+        # Don't return yet, try to delete .py too
+
+    try:
+        if os.path.exists(py_filepath):
+            action_performed = True
+            os.remove(py_filepath)
+            logger.info(f"Deleted game level file: {py_filepath}")
+            deleted_py = True
+        else:
+            logger.warning(f"Game level file not found for deletion: {py_filepath}")
+    except OSError as e:
+        action_performed = True
+        msg = f"Error deleting game level file '{py_filepath}': {e}"
+        logger.error(msg, exc_info=True)
+        editor_state.set_status_message(msg, 4)
+
+    if deleted_json or deleted_py:
+        editor_state.set_status_message(f"Map '{map_name_base}' files deleted (JSON: {deleted_json}, PY: {deleted_py}).", 3)
+        return True
+    elif not action_performed and not os.path.exists(json_filepath) and not os.path.exists(py_filepath): # Files were already gone
+        editor_state.set_status_message(f"Map '{map_name_base}' files already gone or not found.", 2)
+        return True 
+    elif action_performed and not deleted_json and not deleted_py: # Attempted but failed for both
+        editor_state.set_status_message(f"Failed to delete any files for map '{map_name_base}'. Check logs.", 4)
+        return False
+    else: # No action performed, but one or both files might still exist if only one deletion was attempted and failed
+        editor_state.set_status_message(f"No files found or action taken for map '{map_name_base}'.", 3)
+        return False

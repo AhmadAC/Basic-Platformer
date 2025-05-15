@@ -10,11 +10,15 @@ import pygame
 import socket
 import time
 import traceback
+import os # For os.path and os.makedirs
+import importlib # For importlib.invalidate_caches()
+from typing import Optional # Added import for Optional
 import constants as C
 from network_comms import get_local_ip, encode_data, decode_data_stream
 from game_state_manager import set_network_game_state
 from enemy import Enemy # For print_limiter access if needed, or for type hinting
-from game_ui import draw_platformer_scene_on_surface # For drawing client's view
+from game_ui import draw_platformer_scene_on_surface, draw_download_dialog # For drawing client's view
+from game_setup import initialize_game_elements # To re-init after map download
 
 class ClientState:
     """
@@ -33,9 +37,17 @@ class ClientState:
         self.client_search_timeout_s = getattr(C, "CLIENT_SEARCH_TIMEOUT_S", 5.0)
         self.buffer_size = getattr(C, "BUFFER_SIZE", 8192)
 
+        # Map download state
+        self.server_selected_map_name: Optional[str] = None
+        self.map_download_status: str = "unknown" # "unknown", "checking", "missing", "downloading", "present", "error"
+        self.map_download_progress: float = 0.0 # 0.0 to 100.0
+        self.map_total_size_bytes: int = 0
+        self.map_received_bytes: int = 0
+        self.map_file_buffer: bytes = b""
+
 
 def find_server_on_lan(screen: pygame.Surface, fonts: dict, 
-                       clock_obj: pygame.time.Clock, client_state_obj: ClientState):
+                       clock_obj: pygame.time.Clock, client_state_obj: ClientState): # Changed clock to clock_obj
     """
     Searches for a game server on the LAN by listening for UDP broadcasts.
     Displays a "Searching..." message on the screen.
@@ -95,7 +107,7 @@ def find_server_on_lan(screen: pygame.Surface, fonts: dict,
         screen.fill(C.BLACK)
         screen.blit(search_text_surf, search_text_surf.get_rect(center=(current_width//2, current_height//2)))
         pygame.display.flip()
-        clock_obj.tick(10) # Low FPS during search
+        clock_obj.tick(10) # Low FPS during search # Used clock_obj here
 
         raw_udp_data, decoded_udp_message = None, None
         try:
@@ -178,15 +190,17 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     try:
         print(f"DEBUG Client (run_client_mode): Attempting to connect to server at {server_ip_to_connect}:{server_port_to_connect}...") # DEBUG
         pygame.display.set_caption(f"Platformer - Connecting to {server_ip_to_connect}...")
-        screen.fill(C.BLACK) 
-        if fonts.get("large"):
-            conn_text_surf = fonts["large"].render(f"Connecting...", True, C.WHITE)
-            screen.blit(conn_text_surf, conn_text_surf.get_rect(center=(current_width//2, current_height//2)))
-        pygame.display.flip()
+        # screen.fill(C.BLACK) 
+        # if fonts.get("large"):
+        #     conn_text_surf = fonts["large"].render(f"Connecting...", True, C.WHITE)
+        #     screen.blit(conn_text_surf, conn_text_surf.get_rect(center=(current_width//2, current_height//2)))
+        # pygame.display.flip()
+        draw_download_dialog(screen, fonts, "Connecting to server...", f"{server_ip_to_connect}:{server_port_to_connect}", 0)
+
 
         client_state_obj.client_tcp_socket.settimeout(10.0) 
         client_state_obj.client_tcp_socket.connect((server_ip_to_connect, server_port_to_connect))
-        client_state_obj.client_tcp_socket.settimeout(0.05) 
+        client_state_obj.client_tcp_socket.settimeout(0.05) # Short timeout for non-blocking recv
         print("DEBUG Client (run_client_mode): TCP Connection to server successful!") # DEBUG
         connection_succeeded = True
     except socket.timeout: connection_error_msg = "Connection Timed Out"
@@ -195,18 +209,169 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 
     if not connection_succeeded:
         print(f"DEBUG Client (run_client_mode): Failed to connect to server: {connection_error_msg}") # DEBUG
-        screen.fill(C.BLACK) 
-        if fonts.get("large"):
-            fail_text_surf = fonts["large"].render(f"Connection Failed", True, C.RED)
-            screen.blit(fail_text_surf, fail_text_surf.get_rect(center=(current_width//2, current_height//2 - 30)))
-        if fonts.get("small"):
-            reason_surf = fonts["small"].render(connection_error_msg, True, C.WHITE)
-            screen.blit(reason_surf, reason_surf.get_rect(center=(current_width//2, current_height//2 + 30)))
-        pygame.display.flip(); time.sleep(3)
+        # screen.fill(C.BLACK) 
+        # if fonts.get("large"):
+        #     fail_text_surf = fonts["large"].render(f"Connection Failed", True, C.RED)
+        #     screen.blit(fail_text_surf, fail_text_surf.get_rect(center=(current_width//2, current_height//2 - 30)))
+        # if fonts.get("small"):
+        #     reason_surf = fonts["small"].render(connection_error_msg, True, C.WHITE)
+        #     screen.blit(reason_surf, reason_surf.get_rect(center=(current_width//2, current_height//2 + 30)))
+        # pygame.display.flip(); time.sleep(3)
+        draw_download_dialog(screen, fonts, "Connection Failed", connection_error_msg, -1) # -1 for error indication
+        time.sleep(3)
         if client_state_obj.client_tcp_socket: client_state_obj.client_tcp_socket.close()
         client_state_obj.client_tcp_socket = None
         return 
 
+    # --- Map Synchronization Phase ---
+    client_state_obj.map_download_status = "waiting_map_info"
+    client_state_obj.server_state_buffer = b"" # Clear buffer for fresh messages
+    
+    map_sync_phase_active = True
+    while map_sync_phase_active and client_state_obj.app_running:
+        current_width, current_height = screen.get_size() # Handle resize during this phase
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: client_state_obj.app_running = False; map_sync_phase_active = False; break
+            if event.type == pygame.VIDEORESIZE:
+                if not screen.get_flags() & pygame.FULLSCREEN:
+                    current_width, current_height = max(320,event.w), max(240,event.h)
+                    screen = pygame.display.set_mode((current_width,current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                 client_state_obj.app_running = False; map_sync_phase_active = False; break
+        if not client_state_obj.app_running: break
+
+        dialog_title = "Synchronizing"
+        dialog_message = "Waiting for map information from server..."
+        dialog_progress = -1 # Indicates waiting, not progress value
+
+        if client_state_obj.map_download_status == "checking":
+            dialog_message = f"Checking for map: {client_state_obj.server_selected_map_name}..."
+        elif client_state_obj.map_download_status == "missing":
+            dialog_message = f"Map '{client_state_obj.server_selected_map_name}' missing. Requesting download..."
+        elif client_state_obj.map_download_status == "downloading":
+            dialog_title = f"Downloading Map: {client_state_obj.server_selected_map_name}"
+            dialog_message = f"Received {client_state_obj.map_received_bytes / 1024:.1f} / {client_state_obj.map_total_size_bytes / 1024:.1f} KB"
+            dialog_progress = client_state_obj.map_download_progress
+        elif client_state_obj.map_download_status == "error":
+            dialog_title = "Map Download Error"
+            dialog_message = f"Failed to download map: {client_state_obj.server_selected_map_name}"
+            dialog_progress = -1 # Error indication
+        
+        draw_download_dialog(screen, fonts, dialog_title, dialog_message, dialog_progress)
+        
+        try:
+            server_data_chunk = client_state_obj.client_tcp_socket.recv(client_state_obj.buffer_size)
+            if not server_data_chunk:
+                print("DEBUG Client: Server disconnected during map sync."); map_sync_phase_active = False; break
+            client_state_obj.server_state_buffer += server_data_chunk
+            
+            decoded_messages, client_state_obj.server_state_buffer = decode_data_stream(client_state_obj.server_state_buffer)
+
+            for msg in decoded_messages:
+                command = msg.get("command")
+                if command == "set_map":
+                    client_state_obj.server_selected_map_name = msg.get("name")
+                    print(f"DEBUG Client: Received map name from server: {client_state_obj.server_selected_map_name}")
+                    client_state_obj.map_download_status = "checking"
+                    
+                    map_file_path = os.path.join(C.MAPS_DIR, client_state_obj.server_selected_map_name + ".py")
+                    if os.path.exists(map_file_path):
+                        print(f"DEBUG Client: Map '{client_state_obj.server_selected_map_name}' found locally.")
+                        client_state_obj.map_download_status = "present"
+                        client_state_obj.client_tcp_socket.sendall(encode_data({"command": "report_map_status", "name": client_state_obj.server_selected_map_name, "status": "present"}))
+                        map_sync_phase_active = False # Ready to start game
+                    else:
+                        print(f"DEBUG Client: Map '{client_state_obj.server_selected_map_name}' MISSING. Requesting file.")
+                        client_state_obj.map_download_status = "missing" # UI will show this briefly
+                        client_state_obj.client_tcp_socket.sendall(encode_data({"command": "report_map_status", "name": client_state_obj.server_selected_map_name, "status": "missing"}))
+                        client_state_obj.client_tcp_socket.sendall(encode_data({"command": "request_map_file", "name": client_state_obj.server_selected_map_name}))
+                        client_state_obj.map_download_status = "downloading" # Switch to downloading state
+                        client_state_obj.map_received_bytes = 0
+                        client_state_obj.map_total_size_bytes = 0
+                        client_state_obj.map_file_buffer = b""
+                
+                elif command == "map_file_info" and client_state_obj.map_download_status == "downloading":
+                    client_state_obj.map_total_size_bytes = msg.get("size", 0)
+                    print(f"DEBUG Client: Expecting map file of size {client_state_obj.map_total_size_bytes} bytes.")
+                
+                elif command == "map_data_chunk" and client_state_obj.map_download_status == "downloading":
+                    chunk_data_str = msg.get("data", "")
+                    chunk_data_bytes = chunk_data_str.encode('utf-8') # Server sends as string, client decodes to bytes
+                    client_state_obj.map_file_buffer += chunk_data_bytes
+                    client_state_obj.map_received_bytes = len(client_state_obj.map_file_buffer)
+                    if client_state_obj.map_total_size_bytes > 0:
+                        client_state_obj.map_download_progress = (client_state_obj.map_received_bytes / client_state_obj.map_total_size_bytes) * 100
+                    client_state_obj.client_tcp_socket.sendall(encode_data({"command": "report_download_progress", "progress": client_state_obj.map_download_progress}))
+
+                elif command == "map_transfer_end" and client_state_obj.map_download_status == "downloading":
+                    if client_state_obj.map_received_bytes == client_state_obj.map_total_size_bytes:
+                        map_file_to_save = os.path.join(C.MAPS_DIR, client_state_obj.server_selected_map_name + ".py")
+                        try:
+                            # Ensure maps directory exists
+                            if not os.path.exists(C.MAPS_DIR): os.makedirs(C.MAPS_DIR)
+                            with open(map_file_to_save, "wb") as f: # write bytes
+                                f.write(client_state_obj.map_file_buffer)
+                            print(f"DEBUG Client: Map '{client_state_obj.server_selected_map_name}' downloaded and saved to '{map_file_to_save}'.")
+                            client_state_obj.map_download_status = "present"
+                            importlib.invalidate_caches() # Important for re-importing
+                            client_state_obj.client_tcp_socket.sendall(encode_data({"command": "report_map_status", "name": client_state_obj.server_selected_map_name, "status": "present"})) # Inform server map is now present
+                            map_sync_phase_active = False # Ready to start game
+                        except Exception as e_save:
+                            print(f"Client Error: Failed to save downloaded map '{map_file_to_save}': {e_save}")
+                            client_state_obj.map_download_status = "error"
+                            # Optionally send error status to server
+                    else:
+                        print(f"Client Error: Map download size mismatch. Expected {client_state_obj.map_total_size_bytes}, got {client_state_obj.map_received_bytes}.")
+                        client_state_obj.map_download_status = "error"
+                
+                elif command == "start_game_now": # Server signals game can start
+                    if client_state_obj.map_download_status == "present":
+                        print(f"DEBUG Client: Received start_game_now. Map is present. Proceeding.")
+                        map_sync_phase_active = False
+                    else:
+                        print(f"DEBUG Client: Received start_game_now, but map status is '{client_state_obj.map_download_status}'. Waiting.")
+
+
+        except socket.timeout: pass # No data received, continue loop
+        except socket.error as e:
+            print(f"Client: Socket error during map sync: {e}. Server might have disconnected.")
+            map_sync_phase_active = False; break
+        except Exception as e:
+            print(f"Client: Error processing data during map sync: {e}"); traceback.print_exc()
+            map_sync_phase_active = False; break
+
+        clock.tick(C.FPS) # Keep UI responsive
+
+    if not client_state_obj.app_running or client_state_obj.map_download_status != "present":
+        print(f"DEBUG Client: Exiting client mode (app closed or map not ready: {client_state_obj.map_download_status}).")
+        if client_state_obj.client_tcp_socket: client_state_obj.client_tcp_socket.close(); client_state_obj.client_tcp_socket = None
+        return
+
+    # --- Re-initialize game elements with the correct map ---
+    print(f"DEBUG Client: Map '{client_state_obj.server_selected_map_name}' is present. Initializing game elements...")
+    current_screen_width, current_screen_height = screen.get_size()
+    updated_game_elements = initialize_game_elements(
+        current_screen_width, current_screen_height,
+        for_game_mode="join_ip", # Or "join_lan", doesn't matter much here for element creation
+        existing_sprites_groups=game_elements_ref, # Pass existing groups to preserve instances
+        map_module_name=client_state_obj.server_selected_map_name
+    )
+    if updated_game_elements is None:
+        print(f"Client CRITICAL: Failed to initialize game elements with map '{client_state_obj.server_selected_map_name}'.")
+        # Show error on screen
+        draw_download_dialog(screen, fonts, "Error", f"Failed to load map: {client_state_obj.server_selected_map_name}", -1)
+        time.sleep(3)
+        if client_state_obj.client_tcp_socket: client_state_obj.client_tcp_socket.close(); client_state_obj.client_tcp_socket = None
+        return
+    
+    game_elements_ref.update(updated_game_elements)
+    # Ensure camera is updated if it was re-created
+    if game_elements_ref.get("camera"):
+        cam_instance = game_elements_ref["camera"]
+        if hasattr(cam_instance, "set_screen_dimensions"):
+            cam_instance.set_screen_dimensions(current_screen_width, current_screen_height)
+
+    # --- Main Game Loop (starts after map sync) ---
     pygame.display.set_caption("Platformer - CLIENT (You are P2: WASD+VB | Self-Harm: H | Heal: G | Reset: Enter)")
     
     p2_controlled_by_client = game_elements_ref.get("player2") 

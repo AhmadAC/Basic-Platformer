@@ -20,12 +20,14 @@ try:
     BLACK = constants.BLACK
     BLUE = constants.BLUE
     YELLOW = constants.YELLOW
+    MAPS_DIR = constants.MAPS_DIR # Added for assets to know where maps are, if ever needed by assets directly
 except ImportError:
     print("Assets Warning: Failed to import 'constants' (using 'import constants'). Using fallback colors.")
     RED = (255, 0, 0)
     BLACK = (0, 0, 0)
     BLUE = (0, 0, 255)
     YELLOW = (255, 255, 0)
+    MAPS_DIR = "maps" # Fallback
 except AttributeError as e:
     # This block will catch if 'constants' was imported but one of the specific color names is missing.
     print(f"Assets Warning: Imported 'constants' but an attribute is missing: {e}. Using fallback colors.")
@@ -33,12 +35,14 @@ except AttributeError as e:
     BLACK = (0, 0, 0)
     BLUE = (0, 0, 255)
     YELLOW = (255, 255, 0)
+    MAPS_DIR = getattr(constants, "MAPS_DIR", "maps") if 'constants' in sys.modules else "maps"
 except Exception as e_general_import: # Catch any other unexpected error during constants import
     print(f"Assets CRITICAL: Unexpected error importing 'constants': {e_general_import}. Using fallback colors.")
     RED = (255, 0, 0)
     BLACK = (0, 0, 0)
     BLUE = (0, 0, 255)
     YELLOW = (255, 255, 0)
+    MAPS_DIR = "maps" # Fallback
 
 
 # --- Helper Function for PyInstaller Compatibility ---
@@ -59,7 +63,20 @@ def resource_path(relative_path: str) -> str:
         base_path = sys._MEIPASS
     except AttributeError:
         base_path = os.path.abspath(".")
+    
+    # Check if relative_path is for the maps directory
+    # If so, ensure it's treated as relative to the project root, not potentially sys._MEIPASS
+    # This is important because maps are user-modifiable/downloadable and should be in a predictable user-accessible location.
+    if relative_path.startswith(MAPS_DIR + os.sep) or relative_path == MAPS_DIR:
+        # Always use os.path.abspath(".") for maps, ensuring they are in the CWD/script dir (or project root for dev)
+        # and not inside _MEIPASS if bundled.
+        base_path_for_maps = os.path.abspath(".")
+        full_asset_path = os.path.join(base_path_for_maps, relative_path)
+        # print(f"DEBUG resource_path (map): relative='{relative_path}', base='{base_path_for_maps}', full='{full_asset_path}'")
+        return full_asset_path
+
     full_asset_path = os.path.join(base_path, relative_path)
+    # print(f"DEBUG resource_path (asset): relative='{relative_path}', base='{base_path}', full='{full_asset_path}'")
     return full_asset_path
 # ----------------------------------------------------
 
@@ -233,6 +250,15 @@ if __name__ == "__main__":
     resolved_test_path = resource_path(test_relative_path)
     print(f"Resolved path for '{test_relative_path}': {resolved_test_path}")
     print(f"Does it exist? {os.path.exists(resolved_test_path)}")
+
+    test_map_path_rel = os.path.join(MAPS_DIR, "test_map.py")
+    resolved_map_path = resource_path(test_map_path_rel)
+    print(f"Resolved path for map '{test_map_path_rel}': {resolved_map_path}")
+    # Create dummy map dir and file for testing resource_path with maps
+    if not os.path.exists(MAPS_DIR): os.makedirs(MAPS_DIR)
+    with open(resolved_map_path, "w") as f: f.write("# Test map file")
+    print(f"Does map file exist after creation? {os.path.exists(resolved_map_path)}")
+
 
     test_character_asset_folder = 'characters/player1' 
     print(f"\n--- Testing load_all_player_animations with relative folder: '{test_character_asset_folder}' ---")

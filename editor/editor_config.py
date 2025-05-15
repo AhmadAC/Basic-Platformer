@@ -1,7 +1,7 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.8 (Added camera momentum config)
+## version 1.0.0.9 (Added Asset Palette Fling Scroll Config)
 Configuration constants for the Platformer Level Editor.
 """
 import pygame
@@ -85,6 +85,12 @@ ASSET_PALETTE_HOVER_BG_COLOR: Tuple[int,int,int] = (50, 80, 50)
 ASSET_PALETTE_BOTTOM_OVERHANG_PX = 72
 ASSET_PALETTE_TOOLTIP_TEXT_V_OFFSET = 2
 
+# --- Asset Palette Scroll ---
+ASSET_PALETTE_SCROLL_KICK_MULTIPLIER = 250.0  # Speed (pixels/sec like) added on mouse wheel tick
+ASSET_PALETTE_FLING_DAMPING_FACTOR = 0.92     # Closer to 1.0 = longer fling (e.g., 0.9 means 10% speed loss per frame)
+ASSET_PALETTE_FLING_MIN_SPEED_THRESHOLD = 50 # Momentum (pixels/sec) below which fling stops
+ASSET_PALETTE_MAX_MOMENTUM = 2000.0          # Max scroll speed (pixels/sec)
+
 MAP_VIEW_GRID_COLOR: Tuple[int,int,int] = getattr(C, 'GRAY', (128,128,128))
 MAP_VIEW_BORDER_COLOR: Tuple[int,int,int] = getattr(C, 'GRAY', (128,128,128))
 
@@ -106,10 +112,6 @@ MAPS_DIRECTORY = "maps"
 TS = getattr(C, 'TILE_SIZE', 32)
 
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
-    "color_change_tool": {
-        "icon_type": "triangle_tool", "base_color_tuple": getattr(C, 'MAGENTA', (255,0,255)),
-        "game_type_id": "tool_color_change", "tooltip": "Color Tool", "category": "tool"
-    },
     "player1_spawn": {
         "source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn",
         "tooltip": "P1 Spawn", "category": "spawn"
@@ -126,7 +128,7 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "tooltip": "Enemy (Yellow)", "category": "enemy"},
     "chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "tooltip": "Chest", "category": "item"},
     "platform_wall_gray": {"surface_params": (TS, TS, getattr(C, 'GRAY', (128,128,128))), "colorable": True, "game_type_id": "platform_wall_gray", "tooltip": "Wall (Gray)", "category": "tile"},
-    "platform_wall_gray_2x2_placer": {"icon_type": "2x2_placer", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "places_asset_key": "platform_wall_gray", "game_type_id": "tool_wall_2x2_placer", "tooltip": "Wall 2x2 (Gray)", "category": "tile"},
+    "platform_wall_gray_2x2_placer": {"icon_type": "2x2_placer", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "places_asset_key": "platform_wall_gray", "game_type_id": "tool_wall_2x2_placer", "tooltip": "Wall 2x2 (Gray)", "category": "tool"},
     "platform_ledge_green": {"surface_params": (TS, TS // 4, getattr(C, 'DARK_GREEN', (0,100,0))), "colorable": True, "game_type_id": "platform_ledge_green", "tooltip": "Ledge (Green)", "category": "tile"},
     "platform_wall_gray_left_half": {"render_mode": "half_tile", "half_type": "left", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "colorable": True, "game_type_id": "platform_wall_gray_left_half", "tooltip": "Wall L-Half (Gray)", "category": "tile"},
     "platform_wall_gray_right_half": {"render_mode": "half_tile", "half_type": "right", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "colorable": True, "game_type_id": "platform_wall_gray_right_half", "tooltip": "Wall R-Half (Gray)", "category": "tile"},

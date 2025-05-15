@@ -1,7 +1,7 @@
 # editor_state.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.13 (Corrected selected_asset_editor_key setter for color tool)
+## version 1.0.0.15 (Added dialog_input_text_selected flag)
 Defines the EditorState class, which holds all the dynamic state
 and data for the level editor.
 """
@@ -34,9 +34,11 @@ class EditorState:
         self.placed_objects: List[Dict[str, Any]] = []
         self.assets_palette: Dict[str, Dict[str, Any]] = {}
         self._selected_asset_editor_key: Optional[str] = None
-        self.selected_asset_image_for_cursor: Optional[pygame.Surface] = None # Controlled by setter
-        self.asset_palette_scroll_y: int = 0
+        self.selected_asset_image_for_cursor: Optional[pygame.Surface] = None 
+        self.asset_palette_scroll_y: float = 0.0 
+        self.asset_palette_scroll_momentum: float = 0.0 
         self.total_asset_palette_content_height: int = 0
+
 
         self.camera_offset_x: int = 0
         self.camera_offset_y: int = 0
@@ -57,8 +59,6 @@ class EditorState:
         self.is_erasing_tiles: bool = False
         self.last_erased_tile_coords: Optional[Tuple[int, int]] = None
 
-        self.color_change_target_info: Optional[Dict[str, Any]] = None
-
         self._current_editor_mode: str = "menu"
         self.unsaved_changes: bool = False
         self.hovered_tooltip_text: Optional[str] = None
@@ -68,10 +68,11 @@ class EditorState:
         self.dialog_input_text: str = ""
         self.dialog_prompt_message: str = ""
         self.dialog_input_default: str = ""
+        self.dialog_input_text_selected: bool = False # New flag for text highlighting
         self.dialog_callback_confirm: Optional[Callable[..., None]] = None
         self.dialog_callback_cancel: Optional[Callable[[], None]] = None
         self.dialog_rect: Optional[pygame.Rect] = None
-        self.color_picker_rects: Dict[str, pygame.Rect] = {}
+        self.color_picker_rects: Dict[str, pygame.Rect] = {} 
         self.dialog_file_list: List[str] = []
         self.dialog_file_scroll_y: int = 0
         self.dialog_selected_file_index: int = -1
@@ -97,11 +98,10 @@ class EditorState:
             if value == "editing_map":
                 self.minimap_needs_regeneration = True
                 self.camera_momentum_pan = (0.0, 0.0)
-                if self.selected_asset_editor_key == "tool_color_change":
-                    logger.debug("Editor mode to editing_map, color tool was selected, ensuring no cursor image.")
-                    self.selected_asset_image_for_cursor = None
+                self.asset_palette_scroll_momentum = 0.0 
             if value == "menu":
                 self.camera_momentum_pan = (0.0, 0.0)
+                self.asset_palette_scroll_momentum = 0.0 
 
 
     @property
@@ -114,14 +114,22 @@ class EditorState:
             logger.debug(f"Changing active_dialog_type from '{self._active_dialog_type}' to '{value}'")
             old_dialog_type = self._active_dialog_type
             self._active_dialog_type = value
-            if value is not None:
+            if value is not None: # If any dialog is opening
                 self.camera_momentum_pan = (0.0, 0.0)
+                self.asset_palette_scroll_momentum = 0.0 
+            else: # Dialog is closing
+                self.dialog_input_text_selected = False # Ensure deselected when any dialog closes
+
             if value is None or (old_dialog_type is not None and old_dialog_type != value):
                 keys_to_remove = []
                 if old_dialog_type == "file_load":
                     keys_to_remove.extend(['dialog_file_item_rects', 'file_dialog_scrollbar_handle',
                                            'file_dialog_scrollbar_area', 'dialog_file_load_ok', 'dialog_file_load_cancel'])
                 elif old_dialog_type == "color_picker": self.color_picker_rects.clear()
+                elif old_dialog_type == "text_input":
+                    if 'dialog_text_input_box' in self.ui_elements_rects:
+                        keys_to_remove.append('dialog_text_input_box')
+
                 for key in keys_to_remove:
                     if key in self.ui_elements_rects:
                         try: del self.ui_elements_rects[key]
@@ -135,18 +143,13 @@ class EditorState:
     @selected_asset_editor_key.setter
     def selected_asset_editor_key(self, value: Optional[str]):
         logger.debug(f"Attempting to set selected_asset_editor_key from '{self._selected_asset_editor_key}' to '{value}'")
-        # Only proceed if the value is actually different OR if it's a tool being re-asserted
         if self._selected_asset_editor_key != value or \
-           (value == "tool_color_change" and self.selected_asset_image_for_cursor is not None) or \
-           (value is not None and value != "tool_color_change" and value in self.assets_palette and self.selected_asset_image_for_cursor is None) :
+           (value is not None and value in self.assets_palette and self.selected_asset_image_for_cursor is None):
 
             self._selected_asset_editor_key = value
             logger.info(f"selected_asset_editor_key changed to: '{value}'")
 
-            if value == "tool_color_change":
-                self.selected_asset_image_for_cursor = None
-                logger.debug(f"Color tool ('{value}') selected/re-asserted. selected_asset_image_for_cursor explicitly set to None.")
-            elif value is None:
+            if value is None:
                 self.selected_asset_image_for_cursor = None
                 logger.debug("No asset selected. selected_asset_image_for_cursor set to None.")
             elif value in self.assets_palette:
@@ -157,7 +160,7 @@ class EditorState:
                 else:
                     self.selected_asset_image_for_cursor = None
                     logger.warning(f"Asset '{value}' selected, but has no image in palette. Cursor image set to None.")
-            else: # Asset key not in palette (should ideally not happen if selected from UI)
+            else: 
                 self.selected_asset_image_for_cursor = None
                 logger.warning(f"Asset key '{value}' not found in assets_palette during selection. Cursor image set to None.")
         else:
@@ -199,11 +202,13 @@ class EditorState:
         self.selected_asset_editor_key, self.selected_asset_image_for_cursor = None, None
         self.is_painting_tiles, self.last_painted_tile_coords = False, None
         self.is_erasing_tiles, self.last_erased_tile_coords = False, None
-        self.color_change_target_info = None
         self.minimap_needs_regeneration = True
         self.last_mouse_pos_map_view = None
         self.mouse_velocity_map_view = (0.0, 0.0)
         self.camera_momentum_pan = (0.0, 0.0)
+        self.asset_palette_scroll_momentum = 0.0 
+        self.asset_palette_scroll_y = 0.0
+        self.dialog_input_text_selected = False # Reset this flag
         self.is_mouse_over_map_view = False
         self.is_dragging_minimap_view = False
         logger.debug(f"Map context reset. Map name: '{self.map_name_for_function}'.")

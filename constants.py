@@ -81,6 +81,7 @@ HEALTH_BAR_OFFSET_ABOVE = 5
 TILE_SIZE = 40
 LAVA_PATCH_HEIGHT = 20
 LAVA_DAMAGE = 50
+MAPS_DIR = "maps" # Added for map file locations
 
 # --- Network Constants ---
 SERVER_IP_BIND = '0.0.0.0'  # Listen on all available interfaces
@@ -90,6 +91,7 @@ DISCOVERY_PORT_UDP = 5556   # UDP port for LAN discovery broadcasts
 BUFFER_SIZE = 8192          # Network buffer size for send/recv
 BROADCAST_INTERVAL_S = 1.0  # How often server broadcasts its presence (seconds)
 CLIENT_SEARCH_TIMEOUT_S = 5.0 # How long client searches for LAN server (seconds)
+MAP_DOWNLOAD_CHUNK_SIZE = 4096 # Size of map file chunks for transfer
 
 # --- Other ---
 PLAYER_SELF_DAMAGE = 10

@@ -1,7 +1,7 @@
 # editor_drawing.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.16 (Minimap object drawing refinement)
+## version 1.0.0.17 (Adjusted menu for delete button)
 Contains functions for drawing the different sections and elements
 of the Platformer Level Editor UI using Pygame.
 """
@@ -28,13 +28,20 @@ def draw_menu_ui(surface: pygame.Surface, editor_state: EditorState, menu_sectio
 
         button_w = ED_CONFIG.BUTTON_WIDTH_STANDARD
         button_h = ED_CONFIG.BUTTON_HEIGHT_STANDARD
-        spacing = 20
-        num_buttons = 3
+        spacing = 15 # Reduced spacing slightly to fit new button
+        num_buttons = 4 # New total
         total_button_h = (num_buttons * button_h) + ((num_buttons - 1) * spacing)
         title_h_approx = title_font.get_height() if title_font else 40
-        content_start_y = menu_section_rect.top + title_h_approx + 30
-        remaining_h = menu_section_rect.height - (content_start_y - menu_section_rect.top)
-        start_y = max(content_start_y + (remaining_h - total_button_h) // 2, content_start_y)
+        content_start_y = menu_section_rect.top + title_h_approx + 30 
+        
+        # Adjust start_y if menu height is fixed or allow dynamic centering
+        if menu_section_rect.height < total_button_h + (content_start_y - menu_section_rect.top) + 20 : # check if content overflows
+             start_y = content_start_y # Start from top if no room to center
+        else:
+             remaining_h = menu_section_rect.height - (content_start_y - menu_section_rect.top)
+             start_y = content_start_y + (remaining_h - total_button_h) // 2
+        start_y = max(start_y, menu_section_rect.top + title_h_approx + 20)
+
 
         if not hasattr(editor_state, 'ui_elements_rects') or editor_state.ui_elements_rects is None:
             editor_state.ui_elements_rects = {}
@@ -45,7 +52,8 @@ def draw_menu_ui(surface: pygame.Surface, editor_state: EditorState, menu_sectio
             rect_params = [
                 (start_y, "menu_new_map", "New Map"),
                 (start_y + button_h + spacing, "menu_load_map", "Load Map (.json)"),
-                (start_y + 2 * (button_h + spacing), "menu_quit", "Quit Editor")
+                (start_y + 2 * (button_h + spacing), "menu_delete_map", "Delete Map"),
+                (start_y + 3 * (button_h + spacing), "menu_quit", "Quit Editor")
             ]
             for top_y, key, text in rect_params:
                 btn_r = pygame.Rect(0,0,button_w,button_h)
@@ -97,29 +105,23 @@ def _regenerate_minimap_surface(editor_state: EditorState, available_width: int,
 
         obj_color_override = obj.get("override_color")
         
-        # Determine the actual color to use for drawing this object on the minimap
-        final_color_for_minimap_obj = getattr(ED_CONFIG.C, "LIGHT_GRAY", (200,200,200)) # Default fallback
+        final_color_for_minimap_obj = getattr(ED_CONFIG.C, "LIGHT_GRAY", (200,200,200)) 
         is_colorable = asset_palette_info.get("colorable", False)
 
         if is_colorable and obj_color_override:
             final_color_for_minimap_obj = obj_color_override
         elif asset_palette_info.get("surface_params_dims_color"):
             final_color_for_minimap_obj = asset_palette_info["surface_params_dims_color"][2]
-        elif asset_palette_info.get("base_color_tuple"): # For half-tiles or icon_types with a base color
+        elif asset_palette_info.get("base_color_tuple"): 
             final_color_for_minimap_obj = asset_palette_info["base_color_tuple"]
-        # For GIFs (image-based without specific color params), they won't draw as simple rects here
-        # unless we decide to draw a placeholder. For now, surface_params/half_tiles will show color.
 
-        # Determine drawing dimensions for the object on the full-scale minimap_content_surf
-        draw_w, draw_h = ts, ts # Default to full tile for minimap representation
+        draw_w, draw_h = ts, ts 
         draw_x, draw_y = world_x, world_y
         
-        # Use original_size_pixels if available from palette for more accuracy before scaling
         original_dims = asset_palette_info.get("original_size_pixels")
         if original_dims:
             draw_w, draw_h = original_dims[0], original_dims[1]
 
-        # Adjust for half-tiles actual geometry
         if asset_palette_info.get("render_mode") == "half_tile":
             half_type = asset_palette_info.get("half_type")
             if half_type == "left": draw_w = ts // 2
@@ -129,26 +131,19 @@ def _regenerate_minimap_surface(editor_state: EditorState, available_width: int,
         
         obj_rect_on_map = pygame.Rect(draw_x, draw_y, draw_w, draw_h)
         
-        # Only draw if we determined a color (i.e., it's not purely an image like a GIF character)
-        # This primarily makes sense for tiles, hazards etc. that are color-based.
         if asset_palette_info.get("surface_params_dims_color") or \
            asset_palette_info.get("render_mode") == "half_tile" or \
-           (is_colorable and obj_color_override): # If it's colorable and overridden, draw the color
+           (is_colorable and obj_color_override): 
             try:
                 pygame.draw.rect(minimap_content_surf, final_color_for_minimap_obj, obj_rect_on_map)
             except TypeError:
                  pygame.draw.rect(minimap_content_surf, getattr(ED_CONFIG.C, "MAGENTA", (255,0,255)), obj_rect_on_map)
-        elif asset_palette_info.get("image"): # For image based things like characters, try to blit scaled thumbnail
-            # This can be slow if many complex images. For now, let's try it.
-            # We need to scale the thumbnail appropriately for the *full map size* before it gets scaled down with the whole minimap.
-            # This is tricky. Simpler: just draw colored rects for objects on minimap.
-            # For now, stick to drawing colored rects for simplicity and performance.
-            # If you want scaled images for GIFS on minimap, that's a more complex blit operation here.
+        elif asset_palette_info.get("image"):
             pass
 
 
-    if editor_state.show_grid: # Optionally draw grid on minimap_content_surf before scaling
-        grid_color_minimap = (50,50,50) # Darker grid for minimap
+    if editor_state.show_grid: 
+        grid_color_minimap = (50,50,50) 
         for x_coord in range(0, map_px_w, ts):
             pygame.draw.line(minimap_content_surf, grid_color_minimap, (x_coord,0), (x_coord, map_px_h))
         for y_coord in range(0, map_px_h, ts):
@@ -181,10 +176,6 @@ def _draw_minimap(surface: pygame.Surface, editor_state: EditorState, palette_se
         minimap_outer_rect_width,
         minimap_outer_rect_height
     )
-    # Store the actual screen rect where the *scaled minimap image* will be drawn, for click detection.
-    # This will be set after we know the scaled minimap's dimensions.
-    # editor_state.minimap_rect_in_palette = minimap_outer_rect # This is the container, not the image itself
-
     pygame.draw.rect(surface, ED_CONFIG.MINIMAP_BG_COLOR, minimap_outer_rect)
 
     minimap_draw_area_width = minimap_outer_rect.width
@@ -194,12 +185,11 @@ def _draw_minimap(surface: pygame.Surface, editor_state: EditorState, palette_se
         _regenerate_minimap_surface(editor_state, minimap_draw_area_width, minimap_draw_area_height)
 
     if editor_state.minimap_surface:
-        # Center the scaled minimap surface within the minimap_outer_rect
         minimap_blit_x = minimap_outer_rect.left + (minimap_outer_rect.width - editor_state.minimap_surface.get_width()) // 2
         minimap_blit_y = minimap_outer_rect.top + (minimap_outer_rect.height - editor_state.minimap_surface.get_height()) // 2
         
         actual_minimap_screen_rect = editor_state.minimap_surface.get_rect(topleft=(minimap_blit_x, minimap_blit_y))
-        editor_state.minimap_rect_in_palette = actual_minimap_screen_rect # Store this precise rect for clicks
+        editor_state.minimap_rect_in_palette = actual_minimap_screen_rect 
 
         surface.blit(editor_state.minimap_surface, actual_minimap_screen_rect.topleft)
         pygame.draw.rect(surface, ED_CONFIG.MINIMAP_BORDER_COLOR, actual_minimap_screen_rect, 1)
@@ -226,30 +216,30 @@ def _draw_minimap(surface: pygame.Surface, editor_state: EditorState, palette_se
 
 def _draw_single_palette_item(scroll_surf: pygame.Surface,
                               editor_state: EditorState,
-                              palette_section_rect: pygame.Rect,
+                              palette_section_rect: pygame.Rect, 
                               asset_key: str, asset_data: Dict[str, Any],
-                              item_x: int, item_y_on_scroll: int,
+                              item_x: int, item_y_on_scroll: int, 
                               tip_font: Optional[pygame.font.Font],
-                              mouse_pos: Tuple[int, int]) -> int:
+                              mouse_pos: Tuple[int, int]) -> int: 
     img = asset_data.get("image")
     tooltip_text = asset_data.get("tooltip", asset_key)
     if not img: return 0
 
     scrollable_content_y_start_on_screen = palette_section_rect.top + ED_CONFIG.MINIMAP_AREA_HEIGHT
     item_rect_on_screen = pygame.Rect(
-        palette_section_rect.left + item_x,
-        scrollable_content_y_start_on_screen + item_y_on_scroll - editor_state.asset_palette_scroll_y,
+        palette_section_rect.left + item_x, 
+        scrollable_content_y_start_on_screen + item_y_on_scroll - int(editor_state.asset_palette_scroll_y), # scroll_y is float
         img.get_width(), img.get_height()
     )
     editor_state.ui_elements_rects['asset_palette_items'][asset_key] = item_rect_on_screen
     
-    asset_list_on_screen_rect = pygame.Rect(
+    asset_list_visible_area_on_screen = pygame.Rect(
         palette_section_rect.left,
         scrollable_content_y_start_on_screen,
         palette_section_rect.width,
-        palette_section_rect.height - ED_CONFIG.MINIMAP_AREA_HEIGHT - (ED_CONFIG.BUTTON_HEIGHT_STANDARD*0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING*2)
+        palette_section_rect.height - ED_CONFIG.MINIMAP_AREA_HEIGHT - (ED_CONFIG.BUTTON_HEIGHT_STANDARD*0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING*2) # type: ignore
     )
-    is_hovered = item_rect_on_screen.collidepoint(mouse_pos) and asset_list_on_screen_rect.collidepoint(mouse_pos)
+    is_hovered = item_rect_on_screen.collidepoint(mouse_pos) and asset_list_visible_area_on_screen.collidepoint(mouse_pos)
     is_selected = editor_state.selected_asset_editor_key == asset_key
 
     if is_hovered:
@@ -261,7 +251,7 @@ def _draw_single_palette_item(scroll_surf: pygame.Surface,
         select_b_r = pygame.Rect(item_x - 3, item_y_on_scroll - 3, img.get_width() + 6, img.get_height() + 6)
         pygame.draw.rect(scroll_surf, ED_CONFIG.C.YELLOW, select_b_r, 2, border_radius=3) # type: ignore
 
-    scroll_surf.blit(img, (item_x, item_y_on_scroll))
+    scroll_surf.blit(img, (item_x, item_y_on_scroll)) 
     current_item_total_height = img.get_height()
 
     if tip_font:
@@ -280,7 +270,8 @@ def draw_asset_palette_ui(surface: pygame.Surface, editor_state: EditorState, pa
 
         scrollable_assets_y_start = palette_section_rect.top + ED_CONFIG.MINIMAP_AREA_HEIGHT
         scrollable_assets_height = palette_section_rect.height - ED_CONFIG.MINIMAP_AREA_HEIGHT \
-                                   - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2)
+                                   - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2) # type: ignore
+                                   
         scrollable_assets_rect_on_screen = pygame.Rect(
             palette_section_rect.left, scrollable_assets_y_start,
             palette_section_rect.width, scrollable_assets_height
@@ -298,7 +289,7 @@ def draw_asset_palette_ui(surface: pygame.Surface, editor_state: EditorState, pa
 
         if editor_state.total_asset_palette_content_height > 0:
             scroll_surf = pygame.Surface((palette_section_rect.width, editor_state.total_asset_palette_content_height), pygame.SRCALPHA)
-            scroll_surf.fill((0,0,0,0))
+            scroll_surf.fill((0,0,0,0)) # Transparent background for scroll surface
             current_y_on_scroll_surf = ED_CONFIG.ASSET_PALETTE_ITEM_PADDING
             cat_font = fonts.get("medium") or ED_CONFIG.FONT_CONFIG.get("medium")
             tip_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
@@ -339,20 +330,24 @@ def draw_asset_palette_ui(surface: pygame.Surface, editor_state: EditorState, pa
                     item_h = _draw_single_palette_item(scroll_surf, editor_state, palette_section_rect, asset_key, asset_data, ED_CONFIG.ASSET_PALETTE_ITEM_PADDING, current_y_on_scroll_surf, tip_font, mouse_pos)
                     current_y_on_scroll_surf += item_h + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING
                 if assets_in_category_tuples: current_y_on_scroll_surf += ED_CONFIG.ASSET_PALETTE_ITEM_PADDING
+            
+            # Blit the scrollable surface with the current scroll_y offset
             surface.blit(scroll_surf, scrollable_assets_rect_on_screen.topleft,
-                        (0, editor_state.asset_palette_scroll_y, scrollable_assets_rect_on_screen.width, scrollable_assets_rect_on_screen.height))
+                        (0, int(editor_state.asset_palette_scroll_y), scrollable_assets_rect_on_screen.width, scrollable_assets_rect_on_screen.height)) # scroll_y is float
+        
         pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'GRAY', (128,128,128)), scrollable_assets_rect_on_screen, 1)
 
         btn_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
         if btn_font:
             btn_h = ED_CONFIG.BUTTON_HEIGHT_STANDARD*0.8
             cp_btn_r = pygame.Rect(palette_section_rect.left+ED_CONFIG.ASSET_PALETTE_ITEM_PADDING,
-                                   palette_section_rect.bottom-btn_h-ED_CONFIG.ASSET_PALETTE_ITEM_PADDING,
+                                   palette_section_rect.bottom-btn_h-ED_CONFIG.ASSET_PALETTE_ITEM_PADDING, 
                                    palette_section_rect.width-ED_CONFIG.ASSET_PALETTE_ITEM_PADDING*2, int(btn_h))
             editor_state.ui_elements_rects["palette_bg_color_button"] = cp_btn_r
             bg_lum = sum(editor_state.background_color)/3
             txt_col = getattr(ED_CONFIG.C, 'BLACK', (0,0,0)) if bg_lum > 192 else getattr(ED_CONFIG.C, 'WHITE', (255,255,255)) # type: ignore
             draw_button(surface,cp_btn_r,"BG Color",btn_font,mouse_pos,text_color=txt_col,button_color_normal=editor_state.background_color,button_color_hover=pygame.Color(editor_state.background_color).lerp(getattr(ED_CONFIG.C, 'WHITE', (255,255,255)),0.3),border_color=getattr(ED_CONFIG.C, 'BLACK', (0,0,0))) # type: ignore
+        
         pygame.draw.rect(surface, getattr(ED_CONFIG.C, 'DARK_GRAY', (50,50,50)), palette_section_rect, 2)
     except Exception as e:
         print(f"ERROR DRAW: draw_asset_palette_ui: {e}")
@@ -382,7 +377,7 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
                 pygame.draw.rect(editor_state.map_content_surface, getattr(ED_CONFIG.C, 'RED', (255,0,0)), (world_x,world_y,ts,ts),1)
                 continue
             
-            image_to_draw_from_palette = asset_palette_info.get("image") # This is the palette thumbnail
+            image_to_draw_from_palette = asset_palette_info.get("image") 
             override_color = obj.get("override_color")
             final_image_for_map = None
 
@@ -390,12 +385,11 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
             current_color = override_color if is_colorable and override_color else None
 
             if asset_palette_info.get("render_mode") == "half_tile":
-                # Use current_color or fallback to base_color_tuple from palette definition
                 color_to_use = current_color if current_color else asset_palette_info.get("base_color_tuple")
                 if color_to_use:
                     temp_half_surf = pygame.Surface((ts, ts), pygame.SRCALPHA); temp_half_surf.fill((0,0,0,0))
                     half_type = asset_palette_info.get("half_type", "left")
-                    rect_to_draw = pygame.Rect(0,0,0,0) # Initialize
+                    rect_to_draw = pygame.Rect(0,0,0,0) 
                     if half_type == "left": rect_to_draw = pygame.Rect(0, 0, ts // 2, ts)
                     elif half_type == "right": rect_to_draw = pygame.Rect(ts // 2, 0, ts // 2, ts)
                     elif half_type == "top": rect_to_draw = pygame.Rect(0, 0, ts, ts // 2)
@@ -407,21 +401,19 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
                 color_to_use = current_color if current_color else default_color_from_def
                 temp_param_surf = pygame.Surface((w,h)); temp_param_surf.fill(color_to_use) # type: ignore
                 final_image_for_map = temp_param_surf
-            elif image_to_draw_from_palette : # For GIFs or other image based assets
-                if current_color: # If colorable and color is overridden
-                    # Simple tint: create a colored surface and blit original image with special flags
-                    # This is a basic tint, more advanced might be needed for good looks
+            elif image_to_draw_from_palette : 
+                if current_color: 
                     tinted_surf = image_to_draw_from_palette.copy()
                     color_surface = pygame.Surface(tinted_surf.get_size(), pygame.SRCALPHA)
-                    color_surface.fill((*current_color, 128)) # Fill with semi-transparent override color
+                    color_surface.fill((*current_color, 128)) 
                     tinted_surf.blit(color_surface, (0,0), special_flags=pygame.BLEND_RGBA_MULT) # type: ignore
                     final_image_for_map = tinted_surf
                 else:
-                    final_image_for_map = image_to_draw_from_palette # Use original palette image
+                    final_image_for_map = image_to_draw_from_palette 
             
             if final_image_for_map:
                 editor_state.map_content_surface.blit(final_image_for_map, (world_x, world_y))
-            else: # Fallback if no image could be determined
+            else: 
                  pygame.draw.rect(editor_state.map_content_surface, getattr(ED_CONFIG.C, 'MAGENTA', (255,0,255)), (world_x,world_y,ts,ts),1)
 
         if editor_state.show_grid:
@@ -430,9 +422,9 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
         surface.blit(editor_state.map_content_surface, map_view_rect.topleft, (int(editor_state.camera_offset_x), int(editor_state.camera_offset_y), map_view_rect.width, map_view_rect.height))
         pygame.draw.rect(surface, ED_CONFIG.MAP_VIEW_BORDER_COLOR, map_view_rect, 2)
 
-        if editor_state.selected_asset_image_for_cursor and editor_state.selected_asset_editor_key != "tool_color_change":
+        if editor_state.selected_asset_image_for_cursor: 
             img = editor_state.selected_asset_image_for_cursor
-            pos_on_screen = img.get_rect(center=mouse_pos).topleft # Default if not over map
+            pos_on_screen = img.get_rect(center=mouse_pos).topleft 
             if map_view_rect.collidepoint(mouse_pos):
                 world_mx = mouse_pos[0]-map_view_rect.left+editor_state.camera_offset_x
                 world_my = mouse_pos[1]-map_view_rect.top+editor_state.camera_offset_y
@@ -440,7 +432,7 @@ def draw_map_view_ui(surface: pygame.Surface, editor_state: EditorState, map_vie
                 grid_wy = (world_my//editor_state.grid_size)*editor_state.grid_size
                 pos_on_screen = (grid_wx-int(editor_state.camera_offset_x)+map_view_rect.left, grid_wy-int(editor_state.camera_offset_y)+map_view_rect.top)
             
-            clip_orig = surface.get_clip(); surface.set_clip(map_view_rect) # Clip to map view
+            clip_orig = surface.get_clip(); surface.set_clip(map_view_rect) 
             surface.blit(img,pos_on_screen); surface.set_clip(clip_orig)
 
         _draw_map_view_info_text(surface, editor_state, map_view_rect, fonts, mouse_pos)
@@ -452,30 +444,23 @@ def _draw_map_view_info_text(surface: pygame.Surface, editor_state: EditorState,
                              fonts: Dict[str, Optional[pygame.font.Font]], general_mouse_pos: Tuple[int, int]):
     info_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
     if not info_font: return
-    lines = ["LMB Drag: Paint, RMB Drag: Erase", "WASD (Hold): Pan, G: Grid, ESC: Deselect/Menu", "Shift+RMB(Map): Save All", "Ctrl+S: Save All"]
-    if editor_state.selected_asset_editor_key == "tool_color_change":
-        lines[0] = "LMB Click (Map): Pick tile to color flood fill."
-    line_h = info_font.get_height()+3
-    y_start = map_view_rect.bottom+7
-    for i,line_text in enumerate(lines):
-        txt_surf = info_font.render(line_text,True,getattr(ED_CONFIG.C, 'YELLOW', (255,255,0)))
-        y_draw = y_start + i*line_h
-        if y_draw + line_h > surface.get_height()-5: y_draw = surface.get_height()-5 - line_h*(len(lines)-i)
-        if i==0: y_draw = max(5, y_draw)
-        surface.blit(txt_surf, (map_view_rect.left+5, y_draw))
+    
     coords_text_str = f"Cam:({int(editor_state.camera_offset_x)},{int(editor_state.camera_offset_y)})"
     if map_view_rect.collidepoint(general_mouse_pos):
         world_mx = general_mouse_pos[0]-map_view_rect.left+editor_state.camera_offset_x
         world_my = general_mouse_pos[1]-map_view_rect.top+editor_state.camera_offset_y
         tx,ty = world_mx//editor_state.grid_size, world_my//editor_state.grid_size
         coords_text_str += f" MouseW:({int(world_mx)},{int(world_my)}) Tile:({tx},{ty})"
+    
     coords_surf = info_font.render(coords_text_str,True,getattr(ED_CONFIG.C, 'WHITE', (255,255,255)))
-    coords_y_pos = map_view_rect.top-coords_surf.get_height()-4
-    coords_x_pos = map_view_rect.left+5
-    if coords_y_pos < 5:
-        coords_y_pos = y_start + len(lines)*line_h + 5
-        if coords_y_pos + coords_surf.get_height() > surface.get_height()-5:
-             coords_y_pos = surface.get_height()-5-coords_surf.get_height()
+    coords_x_pos = map_view_rect.left + 5
+    
+    coords_y_pos = map_view_rect.top - coords_surf.get_height() - 4 
+    if coords_y_pos < 5: 
+        coords_y_pos = map_view_rect.bottom + 4 
+        if coords_y_pos + coords_surf.get_height() > surface.get_height() - 5:
+            coords_y_pos = surface.get_height() - 5 - coords_surf.get_height()
+            
     surface.blit(coords_surf, (coords_x_pos, coords_y_pos))
 
 def draw_grid_on_map_surface(map_content_surface: pygame.Surface, editor_state: EditorState):

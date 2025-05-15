@@ -9,6 +9,7 @@ import socket
 import threading
 import time
 import traceback
+import os # For file operations
 import constants as C
 from network_comms import get_local_ip, encode_data, decode_data_stream
 from game_state_manager import get_network_game_state, reset_game_state
@@ -45,13 +46,19 @@ class ServerState:
         self.buffer_size = getattr(C, "BUFFER_SIZE", 8192)
         self.broadcast_interval_s = getattr(C, "BROADCAST_INTERVAL_S", 1.0)
 
+        # Map synchronization state
+        self.current_map_name: Optional[str] = None
+        self.client_map_status: str = "unknown" # "unknown", "present", "missing", "downloading_requested", "downloading_ack", "error"
+        self.client_download_progress: float = 0.0
+        self.game_start_signaled_to_client: bool = False # To ensure start_game_now is sent once
+
 
 def broadcast_presence_thread(server_state_obj: ServerState):
     """
     Thread function to periodically broadcast the server's presence on the LAN.
     Uses UDP to send a discovery message.
     """
-    current_lan_ip = get_local_ip() # Get the server's LAN IP for the broadcast message
+    current_lan_ip = get_local_ip() 
     broadcast_message_dict = {
         "service": server_state_obj.service_name,
         "tcp_ip": current_lan_ip,
@@ -64,24 +71,22 @@ def broadcast_presence_thread(server_state_obj: ServerState):
         return
 
     try:
-        # Create and configure the UDP socket for broadcasting
         server_state_obj.server_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         server_state_obj.server_udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_state_obj.server_udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        server_state_obj.server_udp_socket.settimeout(0.5) # Timeout for socket operations to allow periodic checks
+        server_state_obj.server_udp_socket.settimeout(0.5) 
     except socket.error as e:
         print(f"Server Error: Failed to create UDP broadcast socket: {e}")
         server_state_obj.server_udp_socket = None
         return
     
     broadcast_address = ('<broadcast>', server_state_obj.discovery_port_udp)
-    print(f"DEBUG Server (broadcast_presence_thread): Broadcasting presence: {broadcast_message_dict} to {broadcast_address} (LAN IP: {current_lan_ip})") # DEBUG
+    print(f"DEBUG Server (broadcast_presence_thread): Broadcasting presence: {broadcast_message_dict} to {broadcast_address} (LAN IP: {current_lan_ip})") 
 
     while server_state_obj.app_running:
         try:
             server_state_obj.server_udp_socket.sendto(broadcast_message_bytes, broadcast_address)
         except socket.error as sock_err:
-            # print(f"DEBUG Server (broadcast_presence_thread): Socket error during broadcast send: {sock_err}") # DEBUG - Can be noisy
             pass 
         except Exception as e:
             print(f"Server Warning: Unexpected error during broadcast send: {e}")
@@ -100,10 +105,23 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
     """
     Thread function to handle receiving data from a single connected client.
     Updates the server_state_obj.client_input_buffer with the latest client input.
+    Also handles map file requests from the client.
     """
     print(f"DEBUG Server (handle_client_connection_thread): Client connected from {addr}. Handler thread started.") 
     conn.settimeout(1.0) 
     partial_data_from_client = b"" 
+
+    # Send initial map info
+    if server_state_obj.current_map_name:
+        try:
+            conn.sendall(encode_data({"command": "set_map", "name": server_state_obj.current_map_name}))
+            print(f"DEBUG Server Handler ({addr}): Sent initial map info: {server_state_obj.current_map_name}")
+        except socket.error as e:
+            print(f"DEBUG Server Handler ({addr}): Error sending initial map info: {e}. Client may have disconnected early.")
+            # No need to break here immediately, the main loop's recv will catch the disconnect.
+    else:
+        print(f"DEBUG Server Handler ({addr}): CRITICAL - server_state_obj.current_map_name is None. Cannot send initial map info.")
+        # This is a server-side logic error if current_map_name isn't set before client connects.
 
     while server_state_obj.app_running:
         with client_lock: 
@@ -119,12 +137,63 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
             partial_data_from_client += chunk
             decoded_inputs, partial_data_from_client = decode_data_stream(partial_data_from_client)
 
-            if decoded_inputs:
-                last_input_data = decoded_inputs[-1] 
-                if "input" in last_input_data:
+            for msg in decoded_inputs:
+                command = msg.get("command")
+                if command == "report_map_status":
+                    map_name = msg.get("name")
+                    status = msg.get("status")
+                    print(f"DEBUG Server Handler ({addr}): Client map status for '{map_name}': {status}")
+                    with client_lock:
+                        server_state_obj.client_map_status = status
+                        if status == "present":
+                             server_state_obj.client_download_progress = 100.0
+                             # Server can now signal game start if P1 is also ready (implicitly P1 is always ready as host)
+                             if not server_state_obj.game_start_signaled_to_client:
+                                conn.sendall(encode_data({"command": "start_game_now"}))
+                                server_state_obj.game_start_signaled_to_client = True
+                                print(f"DEBUG Server Handler ({addr}): Client has map. Sent start_game_now.")
+
+                elif command == "request_map_file":
+                    map_name_req = msg.get("name")
+                    print(f"DEBUG Server Handler ({addr}): Client requested map file: '{map_name_req}'")
+                    map_file_path = os.path.join(C.MAPS_DIR, map_name_req + ".py")
+                    if os.path.exists(map_file_path):
+                        with open(map_file_path, "r", encoding="utf-8") as f: # Read as text
+                            map_content_str = f.read()
+                        
+                        conn.sendall(encode_data({"command": "map_file_info", "name": map_name_req, "size": len(map_content_str.encode('utf-8'))}))
+                        
+                        # Send in chunks as JSON strings
+                        offset = 0
+                        map_content_bytes = map_content_str.encode('utf-8')
+                        while offset < len(map_content_bytes):
+                            chunk = map_content_bytes[offset : offset + C.MAP_DOWNLOAD_CHUNK_SIZE]
+                            # Send chunk as a string within the JSON payload
+                            conn.sendall(encode_data({"command": "map_data_chunk", "data": chunk.decode('utf-8', 'replace'), "seq": offset})) # 'seq' can be offset
+                            offset += len(chunk)
+                        
+                        conn.sendall(encode_data({"command": "map_transfer_end", "name": map_name_req}))
+                        print(f"DEBUG Server Handler ({addr}): Sent map file '{map_name_req}' to client.")
+                    else:
+                        print(f"Server Error: Client requested map '{map_name_req}' but it was not found on server at '{map_file_path}'.")
+                        # Optionally send an error message to client
+                        conn.sendall(encode_data({"command": "map_file_error", "name": map_name_req, "reason": "not_found"}))
+
+
+                elif command == "report_download_progress":
+                    progress = msg.get("progress", 0)
+                    # print(f"DEBUG Server Handler ({addr}): Client download progress: {progress:.1f}%") # Can be noisy
+                    with client_lock:
+                        server_state_obj.client_download_progress = progress
+
+                elif "input" in msg: # Regular game input
                     with client_lock:
                         if server_state_obj.client_connection is conn: 
-                            server_state_obj.client_input_buffer = last_input_data["input"]
+                            server_state_obj.client_input_buffer = msg["input"]
+                # else: # Other commands if any
+                #     print(f"DEBUG Server Handler ({addr}): Received unhandled command: {command}")
+
+
         except socket.timeout:
             continue 
         except socket.error as e:
@@ -142,6 +211,7 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
             print(f"DEBUG Server Handler ({addr}): Closing active connection from handler.") 
             server_state_obj.client_connection = None 
             server_state_obj.client_input_buffer = {"disconnect": True} 
+            server_state_obj.client_map_status = "disconnected" # Update status
     try:
         conn.shutdown(socket.SHUT_RDWR) 
     except: pass 
@@ -158,13 +228,20 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     Manages client connections, game loop, and state synchronization.
     """
     print("DEBUG Server: Entering run_server_mode.") 
-    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: Q)") # Updated caption
+    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: Q)") 
     
     server_state_obj.app_running = True 
     current_width, current_height = screen.get_size()
 
+    # current_map_name should be set by main.py before calling this.
+    # If it's None here, there's a logic flow issue in main.
+    if server_state_obj.current_map_name is None:
+        print("CRITICAL SERVER: server_state_obj.current_map_name is None at start of run_server_mode. This should be set by main.py.")
+        # Fallback or error handling needed, e.g., return or set a default.
+        # For now, we'll assume it's set.
+
     if server_state_obj.broadcast_thread and server_state_obj.broadcast_thread.is_alive():
-        print("DEBUG Server: Broadcast thread already running (normal if re-entering server mode without full app restart).") 
+        print("DEBUG Server: Broadcast thread already running.") 
     else:
         print("DEBUG Server: Starting broadcast thread.") 
         server_state_obj.broadcast_thread = threading.Thread(
@@ -190,67 +267,96 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 
     print("DEBUG Server: Waiting for Player 2 to connect...") 
     temp_client_conn_obj = None 
-    while temp_client_conn_obj is None and server_state_obj.app_running:
+    server_state_obj.client_map_status = "unknown" # Reset for new client
+    server_state_obj.client_download_progress = 0.0
+    server_state_obj.game_start_signaled_to_client = False
+
+
+    # --- Wait for Client Connection and Map Sync Phase ---
+    client_sync_wait_active = True
+    while client_sync_wait_active and server_state_obj.app_running:
+        current_width, current_height = screen.get_size()
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: server_state_obj.app_running = False; break
-            if event.type == pygame.VIDEORESIZE:
+            if event.type == pygame.QUIT: server_state_obj.app_running = False; client_sync_wait_active = False; break
+            if event.type == pygame.VIDEORESIZE: # Basic resize handling
                 if not screen.get_flags() & pygame.FULLSCREEN:
                     current_width, current_height = max(320,event.w), max(240,event.h)
                     screen = pygame.display.set_mode((current_width, current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
-                    if game_elements_ref.get("camera"): 
-                        game_elements_ref["camera"].screen_width = current_width
-                        game_elements_ref["camera"].screen_height = current_height
+                    # Camera update if needed by host view
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                server_state_obj.app_running = False; break 
+                server_state_obj.app_running = False; client_sync_wait_active = False; break
         if not server_state_obj.app_running: break
-        
-        screen.fill(C.BLACK)
-        if fonts.get("large"):
-            wait_text_surf = fonts["large"].render("Waiting for P2...", True, C.WHITE)
-            screen.blit(wait_text_surf, wait_text_surf.get_rect(center=(current_width//2, current_height//2)))
-        pygame.display.flip()
-        clock.tick(10) 
 
-        try:
-            temp_client_conn_obj, temp_client_addr_tuple = server_state_obj.server_tcp_socket.accept()
-            with client_lock:
-                 if server_state_obj.client_connection: 
-                     print("DEBUG Server: Closing pre-existing client connection before new one.") 
-                     try: server_state_obj.client_connection.close()
-                     except: pass
-                 server_state_obj.client_connection = temp_client_conn_obj
-                 server_state_obj.client_address = temp_client_addr_tuple
-                 server_state_obj.client_input_buffer = {} 
-                 print(f"DEBUG Server: Accepted connection from {temp_client_addr_tuple}") 
-        except socket.timeout:
-            continue 
-        except Exception as e:
-            if server_state_obj.app_running:
-                print(f"DEBUG Server: Error during client accept: {e}") 
-            break 
-    
-    if not server_state_obj.app_running or server_state_obj.client_connection is None:
-        print("DEBUG Server: Exiting wait loop (no client connected or app closed).") 
+        # Accept new connection if none active
+        if server_state_obj.client_connection is None:
+            try:
+                temp_client_conn_obj, temp_client_addr_tuple = server_state_obj.server_tcp_socket.accept()
+                with client_lock:
+                    server_state_obj.client_connection = temp_client_conn_obj
+                    server_state_obj.client_address = temp_client_addr_tuple
+                    server_state_obj.client_input_buffer = {}
+                    server_state_obj.client_map_status = "waiting_client_report" # New status after connect
+                    server_state_obj.game_start_signaled_to_client = False
+                print(f"DEBUG Server: Accepted connection from {temp_client_addr_tuple}")
+
+                # Start client handler thread
+                if server_state_obj.client_handler_thread and server_state_obj.client_handler_thread.is_alive():
+                    server_state_obj.client_handler_thread.join(timeout=0.1) # Try to clean up old one
+                server_state_obj.client_handler_thread = threading.Thread(
+                    target=handle_client_connection_thread, 
+                    args=(server_state_obj.client_connection, server_state_obj.client_address, server_state_obj), 
+                    daemon=True
+                )
+                server_state_obj.client_handler_thread.start()
+            except socket.timeout: pass # No connection attempt, continue
+            except Exception as e_accept: print(f"Server: Error accepting client: {e_accept}")
+        
+        # UI Update
+        dialog_title = "Server Hosting"
+        dialog_message = "Waiting for Player 2 to connect..."
+        dialog_progress = -1 # Waiting state
+
+        with client_lock: # Access shared state safely
+            if server_state_obj.client_connection:
+                if server_state_obj.client_map_status == "waiting_client_report":
+                    dialog_message = f"Player 2 ({server_state_obj.client_address[0]}) connected. Waiting for map status..."
+                elif server_state_obj.client_map_status == "missing":
+                     dialog_message = f"Player 2 is missing map '{server_state_obj.current_map_name}'. Sending..."
+                     dialog_progress = server_state_obj.client_download_progress
+                elif server_state_obj.client_map_status == "downloading_ack": # Client acknowledged download start
+                     dialog_message = f"Player 2 downloading '{server_state_obj.current_map_name}'..."
+                     dialog_progress = server_state_obj.client_download_progress
+                elif server_state_obj.client_map_status == "present":
+                    dialog_message = f"Player 2 has map '{server_state_obj.current_map_name}'. Ready."
+                    dialog_progress = 100.0
+                    client_sync_wait_active = False # Exit this loop, proceed to game
+                elif server_state_obj.client_map_status == "disconnected":
+                    dialog_message = "Player 2 disconnected. Waiting for new connection..."
+                    server_state_obj.client_connection = None # Allow re-accepting
+        
+        # Draw the waiting/syncing UI
+        game_ui.draw_download_dialog(screen, fonts, dialog_title, dialog_message, dialog_progress)
+        clock.tick(10) # Lower FPS while waiting
+
+    if not server_state_obj.app_running or server_state_obj.client_connection is None or server_state_obj.client_map_status != "present":
+        print(f"DEBUG Server: Exiting wait loop (app_running: {server_state_obj.app_running}, client_conn: {server_state_obj.client_connection is not None}, map_status: {server_state_obj.client_map_status}).") 
+        # Ensure broadcast thread stops if server mode exits here
+        server_state_obj.app_running = False # Signal threads to stop
+        if server_state_obj.broadcast_thread and server_state_obj.broadcast_thread.is_alive():
+            server_state_obj.broadcast_thread.join(timeout=0.5)
+        if server_state_obj.client_handler_thread and server_state_obj.client_handler_thread.is_alive():
+            server_state_obj.client_handler_thread.join(timeout=0.5)
+        if server_state_obj.server_tcp_socket: server_state_obj.server_tcp_socket.close(); server_state_obj.server_tcp_socket = None
         return 
 
-    print(f"DEBUG Server: Client {server_state_obj.client_address} connected. Starting game...") 
-    if server_state_obj.client_handler_thread and server_state_obj.client_handler_thread.is_alive():
-        print("DEBUG Server: Previous client handler thread still alive. Attempting to join.") 
-        server_state_obj.client_handler_thread.join(timeout=0.2) 
-    
-    server_state_obj.client_handler_thread = threading.Thread(
-        target=handle_client_connection_thread, 
-        args=(server_state_obj.client_connection, server_state_obj.client_address, server_state_obj), 
-        daemon=True
-    )
-    server_state_obj.client_handler_thread.start()
-    print("DEBUG Server: Client handler thread started.") 
 
+    # --- Main Game Loop (starts after client is connected and map is synced) ---
+    print(f"DEBUG Server: Client {server_state_obj.client_address} connected and map synced. Starting game...") 
+    
     p1 = game_elements_ref.get("player1") 
     p2 = game_elements_ref.get("player2") 
     if p1: print(f"DEBUG Server: P1 instance from game_elements: {p1}, Valid: {p1._valid_init if p1 else 'N/A'}") 
     if p2: print(f"DEBUG Server: P2 instance from game_elements: {p2}, Valid: {p2._valid_init if p2 else 'N/A'}") 
-
 
     p1_key_map_config = { 
         'left': pygame.K_a, 'right': pygame.K_d, 'up': pygame.K_w, 'down': pygame.K_s,
@@ -285,7 +391,6 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                         game_elements_ref["camera"].screen_height = current_height
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: server_game_active = False 
-                # MODIFIED: Changed reset key from K_r to K_q
                 if event.key == pygame.K_q: host_requested_reset = True
                 if p1 and p1._valid_init: 
                     if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'): p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
@@ -300,28 +405,36 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         p2_network_input, client_disconnected_signal, p2_requested_reset = None, False, False
         with client_lock: 
             if server_state_obj.client_input_buffer:
-                buffered_input = server_state_obj.client_input_buffer
+                buffered_input = server_state_obj.client_input_buffer.copy() # Make a copy
+                server_state_obj.client_input_buffer.clear() # Clear after copying
+                
                 if buffered_input.get("disconnect"): client_disconnected_signal = True
                 elif buffered_input.get("action_reset", False): p2_requested_reset = True
-                elif p2 and p2._valid_init:
+                
+                if p2 and p2._valid_init: # Process self-harm/heal directly on server
                     if buffered_input.get("action_self_harm", False) and hasattr(p2, 'self_inflict_damage'):
                         p2.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     elif buffered_input.get("action_heal", False) and hasattr(p2, 'heal_to_full'):
                         p2.heal_to_full()
-                else: 
-                    p2_network_input = buffered_input.copy()
-                server_state_obj.client_input_buffer = {} 
+                
+                # Pass other inputs to p2.handle_network_input
+                p2_network_input = buffered_input
 
         if client_disconnected_signal:
             print("DEBUG Server: Client disconnected signal received in main loop.") 
             server_game_active = False 
+            # Reset client related server state for next potential connection
+            with client_lock:
+                server_state_obj.client_connection = None
+                server_state_obj.client_map_status = "unknown"
+                server_state_obj.client_download_progress = 0.0
             break 
 
         if p2 and p2._valid_init and p2_network_input and hasattr(p2, 'handle_network_input'):
             p2.handle_network_input(p2_network_input) 
 
         if host_requested_reset or (p2_requested_reset and is_p1_game_over_for_reset):
-            print("DEBUG Server: Game state reset triggered by 'Q' key or client request.") # Updated message
+            print("DEBUG Server: Game state reset triggered.") 
             game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
 
         if p1 and p1._valid_init:
@@ -387,7 +500,15 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                     break 
         
         try:
-            draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_server)
+            # Pass download status for UI display
+            dl_status_msg, dl_progress = None, None
+            with client_lock:
+                if server_state_obj.client_map_status in ["missing", "downloading_ack"]:
+                    dl_status_msg = f"P2 Downloading Map: {server_state_obj.current_map_name}"
+                    dl_progress = server_state_obj.client_download_progress
+            draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_server,
+                                             download_status_message=dl_status_msg,
+                                             download_progress_percent=dl_progress)
         except Exception as e:
             print(f"Server draw error: {e}"); traceback.print_exc()
             server_game_active = False; break

@@ -76,13 +76,16 @@ def draw_player_hud(surface: pygame.Surface, x: int, y: int, player_instance: An
         except Exception as e: pass
 
 def draw_platformer_scene_on_surface(screen_surface: pygame.Surface, game_elements: Dict[str, Any], 
-                                     fonts: Dict[str, Optional[pygame.font.Font]], current_game_time_ticks: int): 
+                                     fonts: Dict[str, Optional[pygame.font.Font]], current_game_time_ticks: int,
+                                     # Added optional parameters for download status
+                                     download_status_message: Optional[str] = None,
+                                     download_progress_percent: Optional[float] = None): 
     camera_instance = game_elements.get("camera"); all_sprites_group = game_elements.get("all_sprites") 
     enemy_list_for_health_bars = game_elements.get("enemy_list", [])
     player1_instance, player2_instance = game_elements.get("player1"), game_elements.get("player2")
     font_for_hud = fonts.get("medium") or (pygame.font.Font(None, 24) if pygame.font.get_init() else None)
-    current_screen_width, _ = screen_surface.get_size(); bg_color = getattr(C, 'LIGHT_BLUE', (135, 206, 235))
-    level_bg_color = game_elements.get("level_background_color", bg_color) # Use level specific if available
+    current_screen_width, current_screen_height = screen_surface.get_size(); bg_color = getattr(C, 'LIGHT_BLUE', (135, 206, 235))
+    level_bg_color = game_elements.get("level_background_color", bg_color) 
     screen_surface.fill(level_bg_color) 
     if camera_instance and all_sprites_group:
         for entity_sprite in all_sprites_group: 
@@ -103,6 +106,39 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface, game_elemen
         p2_hud_w = getattr(C, 'HUD_HEALTH_BAR_WIDTH', getattr(C, 'HEALTH_BAR_WIDTH',50)*2) + 120 
         draw_player_hud(screen_surface, current_screen_width - p2_hud_w - 10, 10, player2_instance, 2, font_for_hud)
 
+    # Draw download status overlay if provided (typically for the host watching a client download)
+    if download_status_message and font_for_hud:
+        dialog_rect = pygame.Rect(0, 0, current_screen_width * 0.6, current_screen_height * 0.3)
+        dialog_rect.center = (current_screen_width // 2, current_screen_height // 2)
+        pygame.draw.rect(screen_surface, C.DARK_GRAY, dialog_rect, border_radius=10)
+        pygame.draw.rect(screen_surface, C.WHITE, dialog_rect, 2, border_radius=10)
+
+        status_surf = font_for_hud.render(download_status_message, True, C.WHITE)
+        status_rect = status_surf.get_rect(centerx=dialog_rect.centerx, top=dialog_rect.top + 20)
+        screen_surface.blit(status_surf, status_rect)
+
+        if download_progress_percent is not None and download_progress_percent >= 0:
+            bar_width = dialog_rect.width * 0.8
+            bar_height = 30
+            bar_x = dialog_rect.centerx - bar_width / 2
+            bar_y = status_rect.bottom + 20
+            
+            # Background of the progress bar
+            pygame.draw.rect(screen_surface, C.GRAY, (bar_x, bar_y, bar_width, bar_height), border_radius=5)
+            # Filled part of the progress bar
+            fill_width = (download_progress_percent / 100) * bar_width
+            pygame.draw.rect(screen_surface, C.GREEN, (bar_x, bar_y, fill_width, bar_height), border_radius=5)
+            # Border for the progress bar
+            pygame.draw.rect(screen_surface, C.WHITE, (bar_x, bar_y, bar_width, bar_height), 2, border_radius=5)
+
+            progress_text = f"{download_progress_percent:.1f}%"
+            font_small = fonts.get("small") or pygame.font.Font(None, 24)
+            if font_small:
+                text_surf = font_small.render(progress_text, True, C.BLACK)
+                text_rect_prog = text_surf.get_rect(center=(bar_x + bar_width / 2, bar_y + bar_height / 2))
+                screen_surface.blit(text_surf, text_rect_prog)
+
+
 def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock, 
                    fonts: Dict[str, Optional[pygame.font.Font]], app_status_obj: Any) -> Optional[str]:
     button_w, button_h, spacing, title_gap = 350, 55, 20, 60
@@ -118,8 +154,8 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
     title_rect = title_surf.get_rect(center=(current_w // 2, current_h // 4))
     
     def update_btn_geo():
-        nonlocal title_rect # Need to update title_rect if screen resizes
-        current_w_local, current_h_local = screen_surface.get_size() # Use current screen size
+        nonlocal title_rect 
+        current_w_local, current_h_local = screen_surface.get_size() 
         title_rect = title_surf.get_rect(center=(current_w_local // 2, current_h_local // 4))
         btn_y = title_rect.bottom + title_gap
         for props in menu_buttons.values():
@@ -221,42 +257,37 @@ def get_server_ip_input_dialog(screen_surface: pygame.Surface, clock_obj: pygame
     pygame.key.set_repeat(0,0)
     return current_input.strip() if current_input is not None else None
 
-# --- ADD THIS NEW FUNCTION ---
-MAPS_DIRECTORY_GAME_UI = "maps" # Define it locally or import from editor_config if preferred
+
+MAPS_DIRECTORY_GAME_UI = getattr(C, "MAPS_DIR", "maps")
 
 def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock, 
                       fonts: Dict[str, Optional[pygame.font.Font]], 
                       app_status: Any) -> Optional[str]:
-    """
-    Displays a dialog to select a map from the 'maps' directory.
-    Returns the selected map module name (without .py) or None if cancelled/quit.
-    """
     print("GAME_UI: Opening select_map_dialog...")
     map_module_names: List[str] = []
     if os.path.exists(MAPS_DIRECTORY_GAME_UI) and os.path.isdir(MAPS_DIRECTORY_GAME_UI):
         try:
             for f_name in os.listdir(MAPS_DIRECTORY_GAME_UI):
                 if f_name.endswith(".py") and f_name != "__init__.py":
-                    map_module_names.append(f_name[:-3]) # Remove .py
+                    map_module_names.append(f_name[:-3]) 
             map_module_names.sort()
             print(f"GAME_UI: Found maps: {map_module_names}")
         except OSError as e:
             print(f"GAME_UI Error: Could not read maps directory '{MAPS_DIRECTORY_GAME_UI}': {e}")
-            map_module_names = [] # Ensure it's empty on error
+            map_module_names = [] 
     else:
         print(f"GAME_UI Warning: Maps directory '{MAPS_DIRECTORY_GAME_UI}' not found.")
 
     if not map_module_names:
-        # Display a "No Maps Found" message briefly and return
         font_medium = fonts.get("medium") or (pygame.font.Font(None, 36) if pygame.font.get_init() else None)
         if font_medium:
             screen_w, screen_h = screen.get_size()
             screen.fill(getattr(C, 'BLACK', (0,0,0)))
-            msg_surf = font_medium.render("No Maps Found in 'maps/' folder.", True, getattr(C, 'RED', (255,0,0)))
+            msg_surf = font_medium.render(f"No Maps Found in '{C.MAPS_DIR}/' folder.", True, getattr(C, 'RED', (255,0,0)))
             screen.blit(msg_surf, msg_surf.get_rect(center=(screen_w//2, screen_h//2)))
             pygame.display.flip()
-            pygame.time.wait(2500) # Show message for 2.5 seconds
-        return None # No map to select
+            pygame.time.wait(2500) 
+        return None 
 
     selected_index = 0
     dialog_active = True
@@ -267,19 +298,16 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
 
     if not all([font_title, font_item, font_instr]):
         print("GAME_UI Error: Essential fonts for map selection dialog missing.")
-        return map_module_names[0] if map_module_names else None # Fallback: auto-select first or None
+        return map_module_names[0] if map_module_names else None 
 
-    # Pagination/Scrolling (simplified for now, shows first N maps)
-    maps_per_page = 8 # Show up to 8 maps at a time
+    maps_per_page = 8 
     current_page = 0
     max_pages = (len(map_module_names) + maps_per_page - 1) // maps_per_page
 
-    # Button dimensions
     button_height = 45
     button_spacing = 10
-    button_width_factor = 0.6 # Relative to screen width
+    button_width_factor = 0.6 
     
-    # Colors
     color_white = getattr(C, 'WHITE', (255,255,255))
     color_black = getattr(C, 'BLACK', (0,0,0))
     color_blue = getattr(C, 'BLUE', (0,0,255))
@@ -295,27 +323,25 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
                 app_status.app_running = False; dialog_active = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    dialog_active = False; return None # Cancel selection
+                    dialog_active = False; return None 
                 elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
                     if 0 <= selected_index < len(map_module_names):
                         print(f"GAME_UI: Map selected: {map_module_names[selected_index]}")
                         return map_module_names[selected_index]
                 elif event.key == pygame.K_UP:
                     selected_index = (selected_index - 1 + len(map_module_names)) % len(map_module_names)
-                    # Adjust page if selection goes off current visible list
                     current_page = selected_index // maps_per_page
                 elif event.key == pygame.K_DOWN:
                     selected_index = (selected_index + 1) % len(map_module_names)
                     current_page = selected_index // maps_per_page
-                elif event.key == pygame.K_PAGEUP or (event.key == pygame.K_LEFT and max_pages > 1) : # Prev page
+                elif event.key == pygame.K_PAGEUP or (event.key == pygame.K_LEFT and max_pages > 1) : 
                     current_page = max(0, current_page - 1)
-                    selected_index = current_page * maps_per_page # Select first item on new page
-                elif event.key == pygame.K_PAGEDOWN or (event.key == pygame.K_RIGHT and max_pages > 1): # Next page
+                    selected_index = current_page * maps_per_page 
+                elif event.key == pygame.K_PAGEDOWN or (event.key == pygame.K_RIGHT and max_pages > 1): 
                     current_page = min(max_pages - 1, current_page + 1)
                     selected_index = current_page * maps_per_page
             
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                # Check clicks on map items
                 start_idx = current_page * maps_per_page
                 end_idx = min(start_idx + maps_per_page, len(map_module_names))
                 visible_maps_on_page = map_module_names[start_idx:end_idx]
@@ -331,42 +357,38 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
                     item_rect.top = current_btn_y
                     if item_rect.collidepoint(mouse_pos):
                         print(f"GAME_UI: Map selected by click: {map_name}")
-                        return map_name # Return map name without .py
+                        return map_name 
                     current_btn_y += button_height + button_spacing
         
         if not app_status.app_running: break
 
-        # --- Drawing ---
         screen.fill(color_black)
         
-        # Title
         title_surf = font_title.render("Select a Map to Play", True, color_white)
         title_rect = title_surf.get_rect(center=(screen_w // 2, screen_h * 0.15))
         screen.blit(title_surf, title_rect)
 
-        # Instructions
         instr_text = "Use UP/DOWN Arrows, Enter to Select. PgUp/PgDn or LEFT/RIGHT for pages. ESC to cancel."
         instr_surf = font_instr.render(instr_text, True, color_gray)
         instr_rect = instr_surf.get_rect(center=(screen_w // 2, title_rect.bottom + 20))
         screen.blit(instr_surf, instr_rect)
         
-        # List maps for the current page
         start_idx = current_page * maps_per_page
         end_idx = min(start_idx + maps_per_page, len(map_module_names))
         visible_maps_on_page = map_module_names[start_idx:end_idx]
 
-        current_btn_y = title_rect.bottom + 60 # Start Y for first map item
+        current_btn_y = title_rect.bottom + 60 
 
         for i, map_name in enumerate(visible_maps_on_page):
-            actual_map_index = start_idx + i # Index in the full map_module_names list
+            actual_map_index = start_idx + i 
             
             item_text = f"{map_name}"
             item_color = color_white
             bg_color = color_blue
 
             if actual_map_index == selected_index:
-                item_color = color_black # Text color for selected
-                bg_color = color_green   # Background for selected
+                item_color = color_black 
+                bg_color = color_green   
             
             item_surf = font_item.render(item_text, True, item_color)
             
@@ -375,14 +397,13 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
             item_rect.top = current_btn_y
             
             pygame.draw.rect(screen, bg_color, item_rect, border_radius=5)
-            pygame.draw.rect(screen, color_white, item_rect, 1, border_radius=5) # Border
+            pygame.draw.rect(screen, color_white, item_rect, 1, border_radius=5) 
             
             text_rect = item_surf.get_rect(center=item_rect.center)
             screen.blit(item_surf, text_rect)
             
             current_btn_y += button_height + button_spacing
 
-        # Page number
         if max_pages > 1:
             page_text = f"Page {current_page + 1} of {max_pages}"
             page_surf = font_instr.render(page_text, True, color_gray)
@@ -390,7 +411,57 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
             screen.blit(page_surf, page_rect)
 
         pygame.display.flip()
-        clock.tick(30) # Menu can run at a lower FPS
+        clock.tick(30) 
 
     print("GAME_UI: Exiting select_map_dialog.")
-    return None # Default if loop exits due to app_status not running
+    return None 
+
+
+def draw_download_dialog(screen: pygame.Surface, fonts: dict, title: str, message: str, progress_percent: float = -1):
+    """
+    Draws a generic dialog for showing download status or messages.
+    progress_percent: -1 means no bar, 0-100 shows progress.
+    """
+    screen_w, screen_h = screen.get_size()
+    dialog_w = screen_w * 0.7
+    dialog_h = screen_h * 0.4
+    dialog_rect = pygame.Rect(0, 0, dialog_w, dialog_h)
+    dialog_rect.center = (screen_w // 2, screen_h // 2)
+
+    font_large = fonts.get("large") or pygame.font.Font(None, 48)
+    font_medium = fonts.get("medium") or pygame.font.Font(None, 32)
+
+    screen.fill(C.BLACK) # Full screen dim for focus
+
+    pygame.draw.rect(screen, C.DARK_GRAY, dialog_rect, border_radius=10)
+    pygame.draw.rect(screen, C.WHITE, dialog_rect, 2, border_radius=10)
+
+    if font_large:
+        title_surf = font_large.render(title, True, C.WHITE)
+        title_rect_ui = title_surf.get_rect(centerx=dialog_rect.centerx, top=dialog_rect.top + 20)
+        screen.blit(title_surf, title_rect_ui)
+    
+    if font_medium:
+        msg_surf = font_medium.render(message, True, C.LIGHT_GRAY)
+        msg_rect = msg_surf.get_rect(centerx=dialog_rect.centerx, top=(dialog_rect.top + 20 + (font_large.get_height() if font_large else 50) + 15))
+        screen.blit(msg_surf, msg_rect)
+
+    if progress_percent >= 0:
+        bar_width = dialog_rect.width * 0.8
+        bar_height = 30
+        bar_x = dialog_rect.centerx - bar_width / 2
+        bar_y = msg_rect.bottom + 30
+        
+        pygame.draw.rect(screen, C.GRAY, (bar_x, bar_y, bar_width, bar_height), border_radius=5)
+        fill_width = (progress_percent / 100.0) * bar_width
+        pygame.draw.rect(screen, C.GREEN, (bar_x, bar_y, fill_width, bar_height), border_radius=5)
+        pygame.draw.rect(screen, C.WHITE, (bar_x, bar_y, bar_width, bar_height), 2, border_radius=5)
+
+        font_small = fonts.get("small") or pygame.font.Font(None, 24)
+        if font_small:
+            progress_text = f"{progress_percent:.1f}%"
+            text_surf_prog = font_small.render(progress_text, True, C.BLACK)
+            text_rect_p = text_surf_prog.get_rect(center=(bar_x + bar_width / 2, bar_y + bar_height / 2))
+            screen.blit(text_surf_prog, text_rect_p)
+            
+    pygame.display.flip()

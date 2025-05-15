@@ -16,24 +16,7 @@ parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
     # print(f"INFO ASSETS: Added '{parent_dir}' to sys.path for 'assets' module import.")
-# try:
-    # from assets import load_gif_frames, resource_path
-    # print("INFO ASSETS: Imported 'load_gif_frames' and 'resource_path' from assets.py")
-# except ImportError as e:
-    # print(f"CRITICAL ASSETS ERROR: Failed to import from 'assets.py': {e}")
-    # def load_gif_frames(path: str) -> list:
-        # print(f"CRITICAL ASSETS ERROR: Using DUMMY load_gif_frames for path: {path}")
-        # return []
-    # def resource_path(relative_path: str) -> str:
-        # resolved_path = os.path.join(parent_dir, relative_path)
-        # print(f"CRITICAL ASSETS ERROR: Using DUMMY resource_path. Input: '{relative_path}', Output: '{resolved_path}'")
-        # return resolved_path
-    # print("CRITICAL ASSETS ERROR: Using dummy asset loading functions.")
-# except Exception as e_gen:
-    # print(f"CRITICAL ASSETS ERROR: Unexpected error importing from 'assets.py': {e_gen}"); traceback.print_exc()
-    # sys.exit("Failed to initialize assets module in editor_assets.py")
 
-# Simplified import for brevity in this example, ensure your actual import works
 try:
     from assets import load_gif_frames, resource_path # Assuming this is in your project root/assets.py
 except ImportError:
@@ -102,10 +85,7 @@ def load_editor_palette_assets(editor_state: EditorState):
                     pygame.draw.rect(surf, color, (ts*0.1, ts*0.55, ts*0.35, ts*0.35))
                     pygame.draw.rect(surf, color, (ts*0.55, ts*0.55, ts*0.35, ts*0.35))
                     pygame.draw.rect(surf, getattr(ED_CONFIG.C, "BLACK", (0,0,0)), (0,0,ts,ts), 1)
-                elif icon_type == "triangle_tool":
-                    points = [(ts*0.5, ts*0.1), (ts*0.1, ts*0.9), (ts*0.9, ts*0.9)]
-                    pygame.draw.polygon(surf, color, points)
-                    pygame.draw.polygon(surf, getattr(ED_CONFIG.C, "BLACK", (0,0,0)), points, 2)
+                # Removed "triangle_tool" as it was for the color picker asset
                 original_w, original_h = ts, ts
             except Exception as e: print(f"Error ASSETS: Creating icon surface for '{asset_key}': {e}");
 
@@ -145,7 +125,7 @@ def load_editor_palette_assets(editor_state: EditorState):
             "tooltip": tooltip, "category": category,
             "original_size_pixels": (original_w, original_h),
             "places_asset_key": asset_info.get("places_asset_key"),
-            "colorable": asset_info.get("colorable", False),
+            "colorable": asset_info.get("colorable", False), 
             "render_mode": asset_info.get("render_mode"),
             "half_type": asset_info.get("half_type"),
             "base_color_tuple": asset_info.get("base_color_tuple"),

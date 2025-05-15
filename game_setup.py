@@ -4,6 +4,7 @@
 Handles initialization of game elements, levels, and entities.
 version 1.0.0.7 (Added debug prints for projectile group assignment)
 """
+import sys
 import pygame
 import random
 import traceback
@@ -30,8 +31,6 @@ def initialize_game_elements(current_width: int, current_height: int,
     enemy_sprites = pygame.sprite.Group()
     collectible_sprites = pygame.sprite.Group()
     
-    # Ensure projectile_sprites and all_sprites are always valid groups
-    # If they are passed in and are None, re-initialize them.
     projectile_sprites_from_existing = existing_sprites_groups.get('projectile_sprites') if existing_sprites_groups else None
     all_sprites_from_existing = existing_sprites_groups.get('all_sprites') if existing_sprites_groups else None
 
@@ -50,25 +49,17 @@ def initialize_game_elements(current_width: int, current_height: int,
     current_chest_to_kill = existing_sprites_groups.get('current_chest') if existing_sprites_groups else None
     if current_chest_to_kill and hasattr(current_chest_to_kill, 'kill'): current_chest_to_kill.kill()
     
-    # Empty groups that are definitely re-populated by level load or enemy spawn
     for group in [platform_sprites, ladder_sprites, hazard_sprites, enemy_sprites, collectible_sprites]:
         if group is not None: group.empty()
     
-    # Selectively empty all_sprites and projectile_sprites to remove old game objects
-    # but keep the group instances themselves if they were passed in.
-    if all_sprites_from_existing: # if all_sprites was passed in
-        for sprite in all_sprites.sprites(): # Remove all existing sprites from it
-            if sprite not in [player1_to_kill, player2_to_kill, current_chest_to_kill]: # Avoid double kill
-                 # Be careful here if other persistent sprites are needed across modes
-                 if not isinstance(sprite, Player): # Don't kill player instances again if they were in all_sprites
+    if all_sprites_from_existing: 
+        for sprite in list(all_sprites.sprites()): # Iterate over a copy
+             if sprite not in [player1_to_kill, player2_to_kill, current_chest_to_kill]:
+                 if not isinstance(sprite, Player): 
                     sprite.kill() 
-    else: # all_sprites was not passed in or was None, so it's a fresh group, no need to empty.
-        pass
     
-    if projectile_sprites_from_existing: # if projectile_sprites was passed in
-        projectile_sprites.empty() # Clear any old projectiles
-    else: # projectile_sprites was not passed in or was None, fresh group.
-        pass
+    if projectile_sprites_from_existing: 
+        projectile_sprites.empty() 
 
     print(f"DEBUG GameSetup: After clearing, projectile_sprites: {projectile_sprites} (Count: {len(projectile_sprites.sprites())})")
     print(f"DEBUG GameSetup: After clearing, all_sprites: {all_sprites} (Count: {len(all_sprites.sprites())})")
@@ -77,13 +68,11 @@ def initialize_game_elements(current_width: int, current_height: int,
     enemy_list: List[Enemy] = [] 
 
     level_data_loaded_successfully = False
-    target_map_name_for_load = map_module_name if map_module_name else DEFAULT_LEVEL_MODULE_NAME
-    safe_map_name_for_func = target_map_name_for_load.replace('-', '_').replace(' ', '_')
-    expected_level_load_func_name = f"load_map_{safe_map_name_for_func}"
+    # If map_module_name is None (e.g. client initial call), we don't load level geometry yet.
+    target_map_name_for_load = map_module_name if map_module_name else None
     
-    print(f"DEBUG GameSetup: Attempting to load map module 'maps.{target_map_name_for_load}' and call function '{expected_level_load_func_name}'")
-
-    level_background_color = C.LIGHT_BLUE # Default
+    # Default values if no map is loaded yet
+    level_background_color = C.LIGHT_BLUE 
     local_enemy_spawns_data_list = [] 
     collectible_spawns_data_list = []
     player1_spawn_pos = (100, current_height - (C.TILE_SIZE * 2)) 
@@ -93,85 +82,97 @@ def initialize_game_elements(current_width: int, current_height: int,
     lvl_max_y_abs = current_height
     ground_level_y = current_height - C.TILE_SIZE
     ground_platform_height = C.TILE_SIZE
+    loaded_map_name_return = None # To return the name of the map that was actually loaded
 
-
-    try:
-        map_module = importlib.import_module(f"maps.{target_map_name_for_load}")
-        load_level_function = getattr(map_module, expected_level_load_func_name)
-        level_data_tuple = load_level_function(current_width, current_height)
+    if target_map_name_for_load: # Only attempt to load map data if a name is provided
+        safe_map_name_for_func = target_map_name_for_load.replace('-', '_').replace(' ', '_')
+        expected_level_load_func_name = f"load_map_{safe_map_name_for_func}"
         
-        if level_data_tuple and len(level_data_tuple) >= 11:
-            (platform_data_group, ladder_data_group, hazard_data_group, 
-             local_enemy_spawns_data_list_loaded, collectible_spawns_data_list_loaded, p1_spawn_tuple, 
-             lvl_total_width_pixels_loaded, lvl_min_y_abs_loaded, lvl_max_y_abs_loaded, 
-             main_ground_y_reference_loaded, main_ground_height_reference_loaded, 
-             *optional_bg_color_list) = level_data_tuple
+        print(f"DEBUG GameSetup: Attempting to load map module 'maps.{target_map_name_for_load}' and call function '{expected_level_load_func_name}'")
 
-            platform_sprites.add(platform_data_group.sprites() if platform_data_group else [])
-            ladder_sprites.add(ladder_data_group.sprites() if ladder_data_group else [])
-            hazard_sprites.add(hazard_data_group.sprites() if hazard_data_group else [])
+        try:
+            map_module_full_path = f"maps.{target_map_name_for_load}"
+            if map_module_full_path in sys.modules: # If already imported, reload for potential updates
+                print(f"DEBUG GameSetup: Reloading map module '{map_module_full_path}'")
+                map_module = importlib.reload(sys.modules[map_module_full_path])
+            else:
+                map_module = importlib.import_module(map_module_full_path)
             
-            local_enemy_spawns_data_list = local_enemy_spawns_data_list_loaded if local_enemy_spawns_data_list_loaded else []
-            collectible_spawns_data_list = collectible_spawns_data_list_loaded if collectible_spawns_data_list_loaded else []
+            load_level_function = getattr(map_module, expected_level_load_func_name)
+            level_data_tuple = load_level_function(current_width, current_height)
+            
+            if level_data_tuple and len(level_data_tuple) >= 11:
+                (platform_data_group, ladder_data_group, hazard_data_group, 
+                local_enemy_spawns_data_list_loaded, collectible_spawns_data_list_loaded, p1_spawn_tuple, 
+                lvl_total_width_pixels_loaded, lvl_min_y_abs_loaded, lvl_max_y_abs_loaded, 
+                main_ground_y_reference_loaded, main_ground_height_reference_loaded, 
+                *optional_bg_color_list) = level_data_tuple
 
-            player1_spawn_pos = p1_spawn_tuple
-            p2_spawn_x = p1_spawn_tuple[0] + C.TILE_SIZE * 1.5
-            if p2_spawn_x + (C.TILE_SIZE / 2) > lvl_total_width_pixels_loaded - C.TILE_SIZE: 
-                p2_spawn_x = lvl_total_width_pixels_loaded - C.TILE_SIZE * 2.5 
-            if p2_spawn_x - (C.TILE_SIZE / 2) < C.TILE_SIZE:
-                p2_spawn_x = C.TILE_SIZE * 2.5
-            player2_spawn_pos = (p2_spawn_x, p1_spawn_tuple[1])
-            
-            level_pixel_width = lvl_total_width_pixels_loaded
-            lvl_min_y_abs = lvl_min_y_abs_loaded
-            lvl_max_y_abs = lvl_max_y_abs_loaded
-            ground_level_y = main_ground_y_reference_loaded
-            ground_platform_height = main_ground_height_reference_loaded
-            
-            if optional_bg_color_list and isinstance(optional_bg_color_list[0], (tuple, list)) and len(optional_bg_color_list[0]) == 3:
-                level_background_color = optional_bg_color_list[0]
+                platform_sprites.add(platform_data_group.sprites() if platform_data_group else [])
+                ladder_sprites.add(ladder_data_group.sprites() if ladder_data_group else [])
+                hazard_sprites.add(hazard_data_group.sprites() if hazard_data_group else [])
                 
-            print(f"DEBUG GameSetup: Level geometry loaded. Width: {level_pixel_width}, MinY: {lvl_min_y_abs}, MaxY: {lvl_max_y_abs}, P1 Spawn: {player1_spawn_pos}, P2 Spawn: {player2_spawn_pos}, BG Color: {level_background_color}")
-            level_data_loaded_successfully = True
-        else:
-            print(f"CRITICAL GameSetup Error: Map '{target_map_name_for_load}' function '{expected_level_load_func_name}' did not return enough data elements.")
+                local_enemy_spawns_data_list = local_enemy_spawns_data_list_loaded if local_enemy_spawns_data_list_loaded else []
+                collectible_spawns_data_list = collectible_spawns_data_list_loaded if collectible_spawns_data_list_loaded else []
 
-    except ImportError:
-        print(f"CRITICAL GameSetup Error: Could not import map module 'maps.{target_map_name_for_load}'."); traceback.print_exc()
-    except AttributeError:
-        print(f"CRITICAL GameSetup Error: Map module 'maps.{target_map_name_for_load}' no func '{expected_level_load_func_name}'."); traceback.print_exc()
-    except Exception as e:
-        print(f"CRITICAL GameSetup Error: Unexpected error loading map '{target_map_name_for_load}': {e}"); traceback.print_exc()
+                player1_spawn_pos = p1_spawn_tuple
+                p2_spawn_x = p1_spawn_tuple[0] + C.TILE_SIZE * 1.5
+                if p2_spawn_x + (C.TILE_SIZE / 2) > lvl_total_width_pixels_loaded - C.TILE_SIZE: 
+                    p2_spawn_x = lvl_total_width_pixels_loaded - C.TILE_SIZE * 2.5 
+                if p2_spawn_x - (C.TILE_SIZE / 2) < C.TILE_SIZE:
+                    p2_spawn_x = C.TILE_SIZE * 2.5
+                player2_spawn_pos = (p2_spawn_x, p1_spawn_tuple[1])
+                
+                level_pixel_width = lvl_total_width_pixels_loaded
+                lvl_min_y_abs = lvl_min_y_abs_loaded
+                lvl_max_y_abs = lvl_max_y_abs_loaded
+                ground_level_y = main_ground_y_reference_loaded
+                ground_platform_height = main_ground_height_reference_loaded
+                
+                if optional_bg_color_list and isinstance(optional_bg_color_list[0], (tuple, list)) and len(optional_bg_color_list[0]) == 3:
+                    level_background_color = optional_bg_color_list[0]
+                    
+                print(f"DEBUG GameSetup: Level geometry loaded. Width: {level_pixel_width}, MinY: {lvl_min_y_abs}, MaxY: {lvl_max_y_abs}, P1 Spawn: {player1_spawn_pos}, P2 Spawn: {player2_spawn_pos}, BG Color: {level_background_color}")
+                level_data_loaded_successfully = True
+                loaded_map_name_return = target_map_name_for_load
+            else:
+                print(f"CRITICAL GameSetup Error: Map '{target_map_name_for_load}' function '{expected_level_load_func_name}' did not return enough data elements.")
 
-    if not level_data_loaded_successfully:
-        if target_map_name_for_load != DEFAULT_LEVEL_MODULE_NAME:
-            print(f"GAME_SETUP Warning: Failed to load map '{target_map_name_for_load}'. Trying default '{DEFAULT_LEVEL_MODULE_NAME}'.")
-            return initialize_game_elements(current_width, current_height, for_game_mode, existing_sprites_groups, DEFAULT_LEVEL_MODULE_NAME)
-        else:
-            print(f"GAME_SETUP FATAL: Default map '{DEFAULT_LEVEL_MODULE_NAME}' also failed. Cannot proceed."); return None
+        except ImportError:
+            print(f"CRITICAL GameSetup Error: Could not import map module 'maps.{target_map_name_for_load}'."); traceback.print_exc()
+        except AttributeError:
+            print(f"CRITICAL GameSetup Error: Map module 'maps.{target_map_name_for_load}' no func '{expected_level_load_func_name}'."); traceback.print_exc()
+        except Exception as e:
+            print(f"CRITICAL GameSetup Error: Unexpected error loading map '{target_map_name_for_load}': {e}"); traceback.print_exc()
 
-    # Add newly loaded map sprites to the main all_sprites group
+        if not level_data_loaded_successfully:
+            if target_map_name_for_load != DEFAULT_LEVEL_MODULE_NAME:
+                print(f"GAME_SETUP Warning: Failed to load map '{target_map_name_for_load}'. Trying default '{DEFAULT_LEVEL_MODULE_NAME}'.")
+                return initialize_game_elements(current_width, current_height, for_game_mode, existing_sprites_groups, DEFAULT_LEVEL_MODULE_NAME)
+            else:
+                print(f"GAME_SETUP FATAL: Default map '{DEFAULT_LEVEL_MODULE_NAME}' also failed. Cannot proceed."); return None
+    else: # No map_module_name provided, e.g., client initial setup
+        print("DEBUG GameSetup: No map module name provided, skipping level geometry loading. Only players/camera shells will be created if mode requires.")
+        loaded_map_name_return = None # Explicitly none if no map loaded.
+
     all_sprites.add(platform_sprites.sprites(), ladder_sprites.sprites(), hazard_sprites.sprites())
     
     player1, player2 = None, None 
 
     if for_game_mode in ["host", "couch_play", "join_lan", "join_ip"]:
-        p1_id_val = "p1_host" if for_game_mode == "host" else \
-                 "p1_couch" if for_game_mode == "couch_play" else \
-                 "p1_client_ph" # Placeholder ID for client's local P1 representation
-        player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1) # Use int 1 for P1
+        player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1) 
         if not player1._valid_init: print(f"CRITICAL GameSetup: P1 init failed."); return None
         all_sprites.add(player1)
 
     if for_game_mode == "couch_play":
-        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) # Use int 2 for P2
+        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) 
         if not player2._valid_init: print(f"CRITICAL GameSetup: P2 (couch) init failed."); return None
         all_sprites.add(player2)
-    elif for_game_mode in ["join_lan", "join_ip"]: 
-        # For client, P2 is the locally controlled player. P1 is remote.
-        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) # Use int 2 for P2
-        if not player2._valid_init: print(f"CRITICAL GameSetup: P2 (client) init failed."); return None
+    elif for_game_mode in ["join_lan", "join_ip", "host"]: # Host also needs a P2 shell for network data
+        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) 
+        if not player2._valid_init: print(f"CRITICAL GameSetup: P2 shell init failed."); return None
         all_sprites.add(player2)
+
 
     print(f"DEBUG GameSetup: Before setting proj groups for P1: projectile_sprites is {('set' if projectile_sprites is not None else 'None')}, all_sprites is {('set' if all_sprites is not None else 'None')}")
     if player1 and hasattr(player1, 'set_projectile_group_references'): 
@@ -184,17 +185,12 @@ def initialize_game_elements(current_width: int, current_height: int,
 
     if (for_game_mode == "host" or for_game_mode == "couch_play") and local_enemy_spawns_data_list:
         print(f"DEBUG GameSetup: Spawning {len(local_enemy_spawns_data_list)} enemies...")
-        from enemy import Enemy # Keep import local if only used here
+        from enemy import Enemy 
         for i, spawn_info in enumerate(local_enemy_spawns_data_list):
             try:
                 patrol_rect = pygame.Rect(spawn_info['patrol']) if spawn_info.get('patrol') else None
-                # Ensure Enemy constructor uses correct parameter for color
-                # Assuming Enemy takes 'start_x', 'start_y', 'patrol_area', 'enemy_id'
-                # and 'color_name' is handled internally or via another param.
-                # The current Enemy constructor takes 'start_x, start_y, patrol_area=None, enemy_id=None'
-                # It seems enemy color is chosen randomly inside Enemy.__init__
                 enemy = Enemy(start_x=spawn_info['pos'][0], start_y=spawn_info['pos'][1], 
-                              patrol_area=patrol_rect, enemy_id=i) # Pass index as ID
+                              patrol_area=patrol_rect, enemy_id=i) 
                 if enemy._valid_init: 
                     all_sprites.add(enemy); enemy_sprites.add(enemy); enemy_list.append(enemy)
                 else:
@@ -241,7 +237,8 @@ def initialize_game_elements(current_width: int, current_height: int,
         "ground_platform_height": ground_platform_height,
         "player1_spawn_pos": player1_spawn_pos, "player2_spawn_pos": player2_spawn_pos,
         "enemy_spawns_data_cache": local_enemy_spawns_data_list, 
-        "level_background_color": level_background_color
+        "level_background_color": level_background_color,
+        "loaded_map_name": loaded_map_name_return # Return the name of the map loaded
     }
     return game_elements_dict
 

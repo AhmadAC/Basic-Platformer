@@ -59,6 +59,20 @@ class AppStatus:
     def __init__(self):
         self.app_running = True
 
+def ensure_maps_directory_exists():
+    """Ensures the MAPS_DIR exists, creating it if necessary."""
+    maps_dir = C.MAPS_DIR
+    if not os.path.exists(maps_dir):
+        try:
+            os.makedirs(maps_dir)
+            logger.info(f"MAIN: Created maps directory at '{maps_dir}'")
+        except OSError as e:
+            logger.error(f"MAIN Error: Could not create maps directory '{maps_dir}': {e}")
+            # Depending on severity, you might want to exit or degrade functionality
+            return False
+    return True
+
+
 # --- Display Setup ---
 try:
     display_info = pygame.display.Info()
@@ -103,13 +117,19 @@ game_elements: Dict[str, Any] = {
     "ground_platform_height": getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT),
     "player1_spawn_pos": (100, HEIGHT_MAIN - (getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT) * 2)),
     "player2_spawn_pos": (150, HEIGHT_MAIN - (getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT) * 2)),
-    "enemy_spawns_data_cache": [], "level_background_color": getattr(C, 'LIGHT_BLUE', _LIGHT_BLUE_DEFAULT)
+    "enemy_spawns_data_cache": [], "level_background_color": getattr(C, 'LIGHT_BLUE', _LIGHT_BLUE_DEFAULT),
+    "loaded_map_name": None # Added to store the name of the map that was loaded
 }
 
 if __name__ == "__main__":
     logger.info("MAIN: Starting __main__ execution block.")
     main_clock = pygame.time.Clock()
     app_status = AppStatus()
+
+    if not ensure_maps_directory_exists(): # Create maps dir at startup
+        logger.critical("MAIN: Failed to ensure maps directory exists. Game may not function correctly for map loading/downloading.")
+        # Optionally, quit if maps dir is critical and cannot be created.
+        # app_status.app_running = False 
 
     fonts: Dict[str, Optional[pygame.font.Font]] = {"small": None, "medium": None, "large": None, "debug": None}
     try:
@@ -131,7 +151,7 @@ if __name__ == "__main__":
         current_screen_width, current_screen_height = screen.get_size()
         pygame.display.set_caption("Platformer Adventure - Main Menu")
         
-        logger.info("\nMAIN: Showing main menu...") # Add newline for better log readability
+        logger.info("\nMAIN: Showing main menu...") 
         menu_choice = game_ui.show_main_menu(screen, main_clock, fonts, app_status)
         logger.info(f"MAIN: Main menu choice: '{menu_choice}'")
         
@@ -147,8 +167,12 @@ if __name__ == "__main__":
                 logger.info("MAIN: Map selection cancelled/no maps. Returning to main menu."); continue 
             logger.info(f"MAIN: Map selected for '{menu_choice}': '{map_to_load_for_game}'")
         
-        logger.info(f"MAIN: Initializing game elements for mode '{menu_choice}' with map '{map_to_load_for_game if map_to_load_for_game else 'Default/Server-defined'}'...")
-        # Pass logger to initialize_game_elements if it also needs to log
+        # For client modes, map_module_name is initially None. Client will determine map from server.
+        # For host/couch, map_to_load_for_game will have the selected map name.
+        initial_map_name_for_setup = map_to_load_for_game if menu_choice in ["host", "couch_play"] else None
+
+        logger.info(f"MAIN: Initializing game elements for mode '{menu_choice}' with map '{initial_map_name_for_setup if initial_map_name_for_setup else 'To be determined by server (for client)'}'...")
+        
         initialized_elements = initialize_game_elements( 
             current_screen_width, current_screen_height, 
             for_game_mode=menu_choice,
@@ -157,11 +181,11 @@ if __name__ == "__main__":
                 "player1": game_elements.get("player1"), "player2": game_elements.get("player2"),
                 "current_chest": game_elements.get("current_chest")
             },
-            map_module_name=map_to_load_for_game
+            map_module_name=initial_map_name_for_setup # Pass None for client, selected map for host/couch
         )
 
         if initialized_elements is None:
-            logger.error(f"Main Error: Failed to initialize game elements for mode '{menu_choice}' (Map: '{map_to_load_for_game}'). Returning to menu.")
+            logger.error(f"Main Error: Failed to initialize game elements for mode '{menu_choice}' (Map: '{initial_map_name_for_setup}'). Returning to menu.")
             screen.fill(getattr(C, 'BLACK', (0,0,0))) 
             if fonts.get("medium"):
                 err_msg_surf = fonts["medium"].render(f"Error starting {menu_choice} mode.", True, getattr(C, 'RED', (255,0,0)))
@@ -182,12 +206,14 @@ if __name__ == "__main__":
 
         logger.info(f"MAIN: Launching game mode: '{menu_choice}'")
         if menu_choice == "host":
-            server_state = ServerState(); server_state.app_running = app_status.app_running 
-            run_server_mode(screen, main_clock, fonts, game_elements, server_state) # Pass logger if needed
+            server_state = ServerState()
+            server_state.app_running = app_status.app_running 
+            server_state.current_map_name = game_elements.get("loaded_map_name") # Get from initialized_elements
+            run_server_mode(screen, main_clock, fonts, game_elements, server_state)
             app_status.app_running = server_state.app_running
         elif menu_choice == "join_lan":
             client_state = ClientState(); client_state.app_running = app_status.app_running
-            run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=None) # Pass logger
+            run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=None) 
             app_status.app_running = client_state.app_running
         elif menu_choice == "join_ip":
             logger.info("MAIN: Requesting IP input for 'join_ip' mode...")
@@ -195,12 +221,12 @@ if __name__ == "__main__":
             logger.info(f"MAIN: IP input dialog returned: '{target_ip_input}'")
             if target_ip_input and app_status.app_running: 
                 client_state = ClientState(); client_state.app_running = app_status.app_running
-                run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=target_ip_input) # Pass logger
+                run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=target_ip_input) 
                 app_status.app_running = client_state.app_running
             elif not app_status.app_running: logger.info("MAIN: IP input cancelled or app quit during dialog.")
             else: logger.info("MAIN: No IP entered. Returning to main menu.")
         elif menu_choice == "couch_play":
-            run_couch_play_mode(screen, main_clock, fonts, game_elements, app_status) # Pass logger
+            run_couch_play_mode(screen, main_clock, fonts, game_elements, app_status) 
         
         logger.info(f"MAIN: Returned from game mode '{menu_choice}'. App running: {app_status.app_running}")
 
