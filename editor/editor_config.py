@@ -86,7 +86,7 @@ ASSET_PALETTE_BOTTOM_OVERHANG_PX = 72
 ASSET_PALETTE_TOOLTIP_TEXT_V_OFFSET = 2
 
 # --- Asset Palette Scroll ---
-ASSET_PALETTE_SCROLL_KICK_MULTIPLIER = 250.0  # Speed (pixels/sec like) added on mouse wheel tick
+ASSET_PALETTE_SCROLL_KICK_MULTIPLIER = 2000.0  # Speed (pixels/sec like) added on mouse wheel tick (WAS 250.0)
 ASSET_PALETTE_FLING_DAMPING_FACTOR = 0.92     # Closer to 1.0 = longer fling (e.g., 0.9 means 10% speed loss per frame)
 ASSET_PALETTE_FLING_MIN_SPEED_THRESHOLD = 50 # Momentum (pixels/sec) below which fling stops
 ASSET_PALETTE_MAX_MOMENTUM = 2000.0          # Max scroll speed (pixels/sec)
@@ -114,18 +114,18 @@ TS = getattr(C, 'TILE_SIZE', 32)
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "player1_spawn": {
         "source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn",
-        "tooltip": "P1 Spawn", "category": "spawn"
+        "tooltip": "P1", "category": "spawn"
     },
     "player2_spawn": {
         "source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn",
-        "tooltip": "P2 Spawn", "category": "spawn"
+        "tooltip": "P2", "category": "spawn"
     },
-    "enemy_cyan": {"source_file": "characters/cyan/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (Cyan)", "category": "enemy"},
-    "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "tooltip": "Enemy (Green)", "category": "enemy"},
-    "enemy_pink": { "source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "tooltip": "Enemy (Pink)", "category": "enemy"},
-    "enemy_purple": { "source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "tooltip": "Enemy (Purple)", "category": "enemy"},
-    "enemy_red": { "source_file": "characters/red/__Idle.gif", "game_type_id": "enemy_red", "tooltip": "Enemy (Red)", "category": "enemy"},
-    "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "tooltip": "Enemy (Yellow)", "category": "enemy"},
+    "enemy_cyan": {"source_file": "characters/cyan/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "", "category": "enemy"},
+    "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "tooltip": "", "category": "enemy"},
+    "enemy_pink": { "source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "tooltip": "", "category": "enemy"},
+    "enemy_purple": { "source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "tooltip": "", "category": "enemy"},
+    "enemy_red": { "source_file": "characters/red/__Idle.gif", "game_type_id": "enemy_red", "tooltip": "", "category": "enemy"},
+    "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "tooltip": "", "category": "enemy"},
     "chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "tooltip": "Chest", "category": "item"},
     "platform_wall_gray": {"surface_params": (TS, TS, getattr(C, 'GRAY', (128,128,128))), "colorable": True, "game_type_id": "platform_wall_gray", "tooltip": "Wall (Gray)", "category": "tile"},
     "platform_wall_gray_2x2_placer": {"icon_type": "2x2_placer", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "places_asset_key": "platform_wall_gray", "game_type_id": "tool_wall_2x2_placer", "tooltip": "Wall 2x2 (Gray)", "category": "tool"},

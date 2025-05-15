@@ -1,0 +1,71 @@
+2025-05-16 00:22:42,238 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
+2025-05-16 00:22:42,239 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
+2025-05-16 00:22:42,241 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
+2025-05-16 00:22:42,411 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers.
+2025-05-16 00:22:42,411 - INFO - editor.py:106 - editor_main - editor_main() started.
+2025-05-16 00:22:42,513 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
+2025-05-16 00:22:42,513 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
+2025-05-16 00:22:42,578 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
+2025-05-16 00:22:42,578 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
+2025-05-16 00:22:42,579 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-16 00:22:42,579 - DEBUG - editor_state.py:86 - __init__ - EditorState initialized.
+2025-05-16 00:22:42,630 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
+2025-05-16 00:22:42,630 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-16 00:22:42,630 - INFO - editor.py:170 - editor_main - Entering main loop.
+2025-05-16 00:22:43,999 - INFO - editor_handlers_menu.py:57 - handle_menu_events - Menu: 'Load Map' button clicked.
+2025-05-16 00:22:43,999 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-16 00:22:45,361 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
+2025-05-16 00:22:45,361 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-16 00:22:45,361 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\2.json'
+2025-05-16 00:22:45,361 - INFO - editor_map_utils.py:141 - load_map_from_json - Loading map from JSON: 'maps\2.json'
+2025-05-16 00:22:45,361 - DEBUG - editor_map_utils.py:151 - load_map_from_json - Successfully read JSON data from 'maps\2.json'.
+2025-05-16 00:22:45,361 - DEBUG - editor_map_utils.py:167 - load_map_from_json - Loading 0 objects from JSON.
+2025-05-16 00:22:45,362 - DEBUG - editor_map_utils.py:202 - load_map_from_json - Auto-correction: Found 0 lava coordinates for checking: set()
+2025-05-16 00:22:45,369 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 4000x2000
+2025-05-16 00:22:45,369 - INFO - editor_map_utils.py:242 - load_map_from_json - Map '2' loaded from 2.json.. unsaved_changes=False, current_map_filename='maps\2.py'
+2025-05-16 00:22:45,369 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map '2' loaded from 2.json.' for 3.0s
+2025-05-16 00:22:45,369 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
+2025-05-16 00:22:45,369 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 00:22:45,369 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
+2025-05-16 00:22:45,369 - DEBUG - editor.py:226 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
+2025-05-16 00:22:45,369 - DEBUG - editor.py:239 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
+2025-05-16 00:22:45,369 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
+2025-05-16 00:22:45,369 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
+2025-05-16 00:22:45,831 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-4875.00, -2062.50) based on mouse velocity (-3250.0, -1375.0)
+2025-05-16 00:22:46,497 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (110, 618). Selected asset: 'None'
+2025-05-16 00:22:46,498 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:46,529 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (112, 564). Selected asset: 'None'
+2025-05-16 00:22:46,529 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:46,564 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (110, 544). Selected asset: 'None'
+2025-05-16 00:22:46,564 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (110, 544). Selected asset: 'None'
+2025-05-16 00:22:46,564 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-2, kick=4000.0, new momentum=2000.0
+2025-05-16 00:22:46,579 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (108, 539). Selected asset: 'None'
+2025-05-16 00:22:46,579 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:46,596 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (108, 538). Selected asset: 'None'
+2025-05-16 00:22:46,596 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:47,057 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (112, 539). Selected asset: 'None'
+2025-05-16 00:22:47,057 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:47,074 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (112, 539). Selected asset: 'None'
+2025-05-16 00:22:47,074 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:47,090 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (112, 539). Selected asset: 'None'
+2025-05-16 00:22:47,090 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:47,106 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (112, 539). Selected asset: 'None'
+2025-05-16 00:22:47,106 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:47,122 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (112, 539). Selected asset: 'None'
+2025-05-16 00:22:47,122 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:47,139 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (112, 539). Selected asset: 'None'
+2025-05-16 00:22:47,139 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 00:22:50,982 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
+2025-05-16 00:22:50,982 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
+2025-05-16 00:22:50,982 - DEBUG - editor_state.py:197 - reset_map_context - Resetting map context.
+2025-05-16 00:22:50,982 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
+2025-05-16 00:22:50,982 - DEBUG - editor_state.py:167 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
+2025-05-16 00:22:50,982 - DEBUG - editor_state.py:214 - reset_map_context - Map context reset. Map name: 'untitled_map'.
+2025-05-16 00:22:50,982 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
+2025-05-16 00:22:50,982 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
+2025-05-16 00:22:50,982 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-16 00:22:51,680 - INFO - editor.py:231 - editor_main - Escape pressed in menu. Posting QUIT event.
+2025-05-16 00:22:51,697 - INFO - editor_handlers_global.py:18 - handle_global_events - pygame.QUIT event received.
+2025-05-16 00:22:51,697 - INFO - editor.py:217 - editor_main - handle_global_events returned False (QUIT). Setting running=False.
+2025-05-16 00:22:51,698 - INFO - editor.py:338 - editor_main - Exiting editor_main. Calling pygame.quit().
+2025-05-16 00:22:51,786 - INFO - editor.py:341 - editor_main - Editor session ended.

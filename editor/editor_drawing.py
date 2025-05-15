@@ -51,7 +51,7 @@ def draw_menu_ui(surface: pygame.Surface, editor_state: EditorState, menu_sectio
         if button_font:
             rect_params = [
                 (start_y, "menu_new_map", "New Map"),
-                (start_y + button_h + spacing, "menu_load_map", "Load Map (.json)"),
+                (start_y + button_h + spacing, "menu_load_map", "Load Map"),
                 (start_y + 2 * (button_h + spacing), "menu_delete_map", "Delete Map"),
                 (start_y + 3 * (button_h + spacing), "menu_quit", "Quit Editor")
             ]

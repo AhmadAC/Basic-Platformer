@@ -9,12 +9,14 @@ import socket
 import threading
 import time
 import traceback
+from typing import Optional
 import os # For file operations
 import constants as C
 from network_comms import get_local_ip, encode_data, decode_data_stream
 from game_state_manager import get_network_game_state, reset_game_state
 from enemy import Enemy # For print_limiter access if needed, or just for type hinting
-from game_ui import draw_platformer_scene_on_surface # For drawing the server's view
+import game_ui
+from game_ui import draw_platformer_scene_on_surface, draw_download_dialog # Added draw_download_dialog
 
 # Shared lock for client connection and input buffer
 client_lock = threading.Lock()

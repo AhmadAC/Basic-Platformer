@@ -61,8 +61,9 @@ def update_continuous_camera_pan(editor_state: EditorState, map_view_rect: pygam
            (abs(editor_state.mouse_velocity_map_view[0]) > ED_CONFIG.CAMERA_MOMENTUM_MIN_SPEED_THRESHOLD or \
             abs(editor_state.mouse_velocity_map_view[1]) > ED_CONFIG.CAMERA_MOMENTUM_MIN_SPEED_THRESHOLD) :
             
-            fling_vx = -editor_state.mouse_velocity_map_view[0] * ED_CONFIG.CAMERA_MOMENTUM_INITIAL_MULTIPLIER
-            fling_vy = -editor_state.mouse_velocity_map_view[1] * ED_CONFIG.CAMERA_MOMENTUM_INITIAL_MULTIPLIER
+            # Changed: Removed negative sign to make camera pan in direction of swipe
+            fling_vx = editor_state.mouse_velocity_map_view[0] * ED_CONFIG.CAMERA_MOMENTUM_INITIAL_MULTIPLIER
+            fling_vy = editor_state.mouse_velocity_map_view[1] * ED_CONFIG.CAMERA_MOMENTUM_INITIAL_MULTIPLIER
             editor_state.camera_momentum_pan = (fling_vx, fling_vy)
             logger.debug(f"Mouse exited map view. Initiated camera fling with momentum: ({fling_vx:.2f}, {fling_vy:.2f}) based on mouse velocity {editor_state.mouse_velocity_map_view}")
         
