@@ -1,0 +1,119 @@
+2025-05-15 22:24:07,520 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
+2025-05-15 22:24:07,520 - DEBUG - editor.py:70 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
+2025-05-15 22:24:07,524 - INFO - editor.py:75 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
+2025-05-15 22:24:07,624 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules.
+2025-05-15 22:24:07,625 - INFO - editor.py:106 - editor_main - editor_main() started.
+2025-05-15 22:24:07,723 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
+2025-05-15 22:24:07,723 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
+2025-05-15 22:24:07,783 - INFO - editor.py:127 - editor_main - Editor screen created: (1280, 720)
+2025-05-15 22:24:07,785 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
+2025-05-15 22:24:07,787 - DEBUG - editor_state.py:174 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-15 22:24:07,787 - DEBUG - editor_state.py:85 - __init__ - EditorState initialized.
+2025-05-15 22:24:07,836 - DEBUG - editor.py:137 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
+2025-05-15 22:24:07,836 - DEBUG - editor.py:168 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-15 22:24:07,836 - INFO - editor.py:171 - editor_main - Entering main loop.
+2025-05-15 22:24:08,650 - INFO - editor_event_handlers.py:159 - handle_menu_events - Menu: 'Load Map' button clicked.
+2025-05-15 22:24:08,651 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-15 22:24:10,100 - DEBUG - editor_event_handlers.py:115 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
+2025-05-15 22:24:10,101 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-15 22:24:10,101 - DEBUG - editor_event_handlers.py:120 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\2.json'
+2025-05-15 22:24:10,110 - DEBUG - editor_state.py:174 - recreate_map_content_surface - Recreated map_content_surface: 4000x2000
+2025-05-15 22:24:10,111 - INFO - editor_state.py:186 - set_status_message - Status message set: 'Map '2' loaded from 2.json' for 3.0s
+2025-05-15 22:24:10,111 - DEBUG - editor_state.py:95 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
+2025-05-15 22:24:10,111 - DEBUG - editor_event_handlers.py:129 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-15 22:24:10,111 - DEBUG - editor.py:205 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
+2025-05-15 22:24:10,111 - DEBUG - editor.py:207 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
+2025-05-15 22:24:10,111 - DEBUG - editor.py:220 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
+2025-05-15 22:24:10,111 - DEBUG - editor.py:257 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
+2025-05-15 22:24:10,112 - DEBUG - editor.py:261 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
+2025-05-15 22:24:10,812 - DEBUG - editor_event_handlers.py:311 - _update_continuous_camera_pan - Mouse exited map view. Initiated fling with momentum: (-176.47, -264.71) based on mouse velocity (-117.6470588235294, -176.47058823529412)
+2025-05-15 22:24:11,752 - DEBUG - editor_event_handlers.py:357 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (40, 340). Selected asset: 'None'
+2025-05-15 22:24:11,752 - DEBUG - editor_event_handlers.py:366 - handle_editing_map_events - Left click in asset palette section.
+2025-05-15 22:24:11,752 - INFO - editor_event_handlers.py:376 - handle_editing_map_events - Asset palette item 'platform_wall_gray_2x2_placer' clicked.
+2025-05-15 22:24:11,752 - DEBUG - editor_state.py:137 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'platform_wall_gray_2x2_placer'
+2025-05-15 22:24:11,752 - INFO - editor_state.py:144 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray_2x2_placer'
+2025-05-15 22:24:11,752 - DEBUG - editor_state.py:156 - selected_asset_editor_key - Asset 'platform_wall_gray_2x2_placer' selected. Cursor image set from palette.
+2025-05-15 22:24:11,752 - INFO - editor_state.py:186 - set_status_message - Status message set: 'Selected: Wall 2x2 (Gray)' for 3.0s
+2025-05-15 22:24:12,199 - DEBUG - editor_event_handlers.py:357 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (663, 243). Selected asset: 'platform_wall_gray_2x2_placer'
+2025-05-15 22:24:12,199 - DEBUG - editor_event_handlers.py:386 - handle_editing_map_events - Left click in map view section.
+2025-05-15 22:24:12,199 - DEBUG - editor_event_handlers.py:389 - handle_editing_map_events - Map click at grid (10,5). Current tool: 'platform_wall_gray_2x2_placer'
+2025-05-15 22:24:12,199 - DEBUG - editor_event_handlers.py:415 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_2x2_placer' at grid (10,5)
+2025-05-15 22:24:12,199 - DEBUG - editor_event_handlers.py:185 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (10, 5)
+2025-05-15 22:24:12,199 - DEBUG - editor_event_handlers.py:199 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (10, 5)
+2025-05-15 22:24:12,199 - DEBUG - editor_event_handlers.py:168 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (10, 5)
+2025-05-15 22:24:12,200 - DEBUG - editor_event_handlers.py:168 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (11, 5)
+2025-05-15 22:24:12,200 - DEBUG - editor_event_handlers.py:168 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (10, 6)
+2025-05-15 22:24:12,200 - DEBUG - editor_event_handlers.py:168 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (11, 6)
+2025-05-15 22:24:12,675 - DEBUG - editor_event_handlers.py:311 - _update_continuous_camera_pan - Mouse exited map view. Initiated fling with momentum: (-3281.25, 0.00) based on mouse velocity (-2187.5, 0.0)
+2025-05-15 22:24:13,426 - DEBUG - editor_event_handlers.py:357 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (48, 192). Selected asset: 'platform_wall_gray_2x2_placer'
+2025-05-15 22:24:13,426 - DEBUG - editor_event_handlers.py:366 - handle_editing_map_events - Left click in asset palette section.
+2025-05-15 22:24:13,426 - INFO - editor_event_handlers.py:376 - handle_editing_map_events - Asset palette item 'color_change_tool' clicked.
+2025-05-15 22:24:13,426 - DEBUG - editor_state.py:137 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'platform_wall_gray_2x2_placer' to 'color_change_tool'
+2025-05-15 22:24:13,426 - INFO - editor_state.py:144 - selected_asset_editor_key - selected_asset_editor_key changed to: 'color_change_tool'
+2025-05-15 22:24:13,426 - DEBUG - editor_state.py:156 - selected_asset_editor_key - Asset 'color_change_tool' selected. Cursor image set from palette.
+2025-05-15 22:24:13,426 - INFO - editor_state.py:186 - set_status_message - Status message set: 'Selected: Color Tool' for 3.0s
+2025-05-15 22:24:14,486 - DEBUG - editor_event_handlers.py:357 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (706, 272). Selected asset: 'color_change_tool'
+2025-05-15 22:24:14,486 - DEBUG - editor_event_handlers.py:386 - handle_editing_map_events - Left click in map view section.
+2025-05-15 22:24:14,486 - DEBUG - editor_event_handlers.py:389 - handle_editing_map_events - Map click at grid (11,6). Current tool: 'color_change_tool'
+2025-05-15 22:24:14,486 - DEBUG - editor_event_handlers.py:415 - handle_editing_map_events - Attempting to place asset 'color_change_tool' at grid (11,6)
+2025-05-15 22:24:14,486 - DEBUG - editor_event_handlers.py:185 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'color_change_tool' for grid (11, 6)
+2025-05-15 22:24:14,486 - DEBUG - editor_event_handlers.py:204 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'color_change_tool' at (11, 6)
+2025-05-15 22:24:14,486 - DEBUG - editor_event_handlers.py:168 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'color_change_tool' at (11, 6)
+2025-05-15 22:24:15,208 - DEBUG - editor_event_handlers.py:311 - _update_continuous_camera_pan - Mouse exited map view. Initiated fling with momentum: (-352.94, 0.00) based on mouse velocity (-235.2941176470588, 0.0)
+2025-05-15 22:24:18,959 - DEBUG - editor_event_handlers.py:357 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (53, 190). Selected asset: 'color_change_tool'
+2025-05-15 22:24:18,959 - DEBUG - editor_event_handlers.py:366 - handle_editing_map_events - Left click in asset palette section.
+2025-05-15 22:24:18,959 - INFO - editor_event_handlers.py:376 - handle_editing_map_events - Asset palette item 'color_change_tool' clicked.
+2025-05-15 22:24:18,959 - DEBUG - editor_state.py:137 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'color_change_tool' to 'color_change_tool'
+2025-05-15 22:24:18,959 - DEBUG - editor_state.py:164 - selected_asset_editor_key - selected_asset_editor_key already 'color_change_tool', no change needed for key or cursor state.
+2025-05-15 22:24:18,959 - INFO - editor_state.py:186 - set_status_message - Status message set: 'Selected: Color Tool' for 3.0s
+2025-05-15 22:24:19,138 - DEBUG - editor_event_handlers.py:357 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (53, 190). Selected asset: 'color_change_tool'
+2025-05-15 22:24:19,138 - DEBUG - editor_event_handlers.py:366 - handle_editing_map_events - Left click in asset palette section.
+2025-05-15 22:24:19,138 - INFO - editor_event_handlers.py:376 - handle_editing_map_events - Asset palette item 'color_change_tool' clicked.
+2025-05-15 22:24:19,138 - DEBUG - editor_state.py:137 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'color_change_tool' to 'color_change_tool'
+2025-05-15 22:24:19,138 - DEBUG - editor_state.py:164 - selected_asset_editor_key - selected_asset_editor_key already 'color_change_tool', no change needed for key or cursor state.
+2025-05-15 22:24:19,138 - INFO - editor_state.py:186 - set_status_message - Status message set: 'Selected: Color Tool' for 3.0s
+2025-05-15 22:24:20,757 - DEBUG - editor_event_handlers.py:357 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (133, 690). Selected asset: 'color_change_tool'
+2025-05-15 22:24:20,757 - DEBUG - editor_event_handlers.py:366 - handle_editing_map_events - Left click in asset palette section.
+2025-05-15 22:24:20,757 - INFO - editor_event_handlers.py:369 - handle_editing_map_events - BG Color button clicked.
+2025-05-15 22:24:20,759 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'color_picker'
+2025-05-15 22:24:22,128 - DEBUG - editor_event_handlers.py:115 - handle_dialog_events - Dialog 'color_picker' outcome: CONFIRMED
+2025-05-15 22:24:22,128 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'color_picker' to 'None'
+2025-05-15 22:24:22,128 - DEBUG - editor_event_handlers.py:120 - handle_dialog_events - Calling confirm_callback for 'color_picker' with value: '(255, 0, 0)'
+2025-05-15 22:24:22,128 - INFO - editor_state.py:186 - set_status_message - Status message set: 'BG:(255, 0, 0)' for 3.0s
+2025-05-15 22:24:22,128 - DEBUG - editor_event_handlers.py:129 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-15 22:24:22,128 - DEBUG - editor_event_handlers.py:134 - handle_dialog_events - Clearing color_change_target_info as color_picker dialog is closing.
+2025-05-15 22:24:22,128 - DEBUG - editor.py:205 - editor_main - Dialog type changed from 'color_picker' to 'None' after handle_dialog_events.
+2025-05-15 22:24:22,678 - DEBUG - editor_event_handlers.py:311 - _update_continuous_camera_pan - Mouse exited map view. Initiated fling with momentum: (-5343.75, -1875.00) based on mouse velocity (-3562.5, -1250.0)
+2025-05-15 22:24:23,723 - DEBUG - editor_event_handlers.py:357 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (107, 688). Selected asset: 'color_change_tool'
+2025-05-15 22:24:23,723 - DEBUG - editor_event_handlers.py:366 - handle_editing_map_events - Left click in asset palette section.
+2025-05-15 22:24:23,723 - INFO - editor_event_handlers.py:369 - handle_editing_map_events - BG Color button clicked.
+2025-05-15 22:24:23,723 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'color_picker'
+2025-05-15 22:24:23,723 - DEBUG - editor.py:205 - editor_main - Dialog type changed from 'None' to 'color_picker' after handle_dialog_events.
+2025-05-15 22:24:24,567 - DEBUG - editor_event_handlers.py:115 - handle_dialog_events - Dialog 'color_picker' outcome: CONFIRMED
+2025-05-15 22:24:24,567 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'color_picker' to 'None'
+2025-05-15 22:24:24,567 - DEBUG - editor_event_handlers.py:120 - handle_dialog_events - Calling confirm_callback for 'color_picker' with value: '(255, 255, 255)'
+2025-05-15 22:24:24,567 - INFO - editor_state.py:186 - set_status_message - Status message set: 'BG:(255, 255, 255)' for 3.0s
+2025-05-15 22:24:24,567 - DEBUG - editor_event_handlers.py:129 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-15 22:24:24,567 - DEBUG - editor_event_handlers.py:134 - handle_dialog_events - Clearing color_change_target_info as color_picker dialog is closing.
+2025-05-15 22:24:24,567 - DEBUG - editor.py:205 - editor_main - Dialog type changed from 'color_picker' to 'None' after handle_dialog_events.
+2025-05-15 22:24:24,977 - INFO - editor_event_handlers.py:477 - handle_editing_map_events - Escape pressed: Deselecting asset/tool.
+2025-05-15 22:24:24,977 - DEBUG - editor_state.py:137 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'color_change_tool' to 'None'
+2025-05-15 22:24:24,977 - INFO - editor_state.py:144 - selected_asset_editor_key - selected_asset_editor_key changed to: 'None'
+2025-05-15 22:24:24,977 - DEBUG - editor_state.py:151 - selected_asset_editor_key - No asset selected. selected_asset_image_for_cursor set to None.
+2025-05-15 22:24:24,977 - INFO - editor_state.py:186 - set_status_message - Status message set: 'Asset/Tool deselected' for 3.0s
+2025-05-15 22:24:25,356 - INFO - editor_event_handlers.py:479 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
+2025-05-15 22:24:25,356 - INFO - editor_state.py:186 - set_status_message - Status message set: 'Unsaved! Esc again to discard.' for 4s
+2025-05-15 22:24:25,972 - INFO - editor_event_handlers.py:479 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
+2025-05-15 22:24:25,972 - DEBUG - editor_state.py:95 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
+2025-05-15 22:24:25,972 - DEBUG - editor_state.py:194 - reset_map_context - Resetting map context.
+2025-05-15 22:24:25,972 - DEBUG - editor_state.py:137 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
+2025-05-15 22:24:25,972 - DEBUG - editor_state.py:164 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
+2025-05-15 22:24:25,972 - DEBUG - editor_state.py:209 - reset_map_context - Map context reset. Map name: 'untitled_map'.
+2025-05-15 22:24:25,972 - DEBUG - editor.py:220 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
+2025-05-15 22:24:25,973 - DEBUG - editor.py:257 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
+2025-05-15 22:24:25,973 - DEBUG - editor.py:261 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-15 22:24:26,948 - INFO - editor.py:212 - editor_main - Escape pressed in menu. Posting QUIT event.
+2025-05-15 22:24:26,964 - INFO - editor_event_handlers.py:25 - handle_global_events - pygame.QUIT event received.
+2025-05-15 22:24:26,964 - INFO - editor.py:198 - editor_main - handle_global_events returned False (QUIT). Setting running=False.
+2025-05-15 22:24:26,964 - INFO - editor.py:301 - editor_main - Exiting editor_main. Calling pygame.quit().
+2025-05-15 22:24:27,057 - INFO - editor.py:304 - editor_main - Editor session ended.

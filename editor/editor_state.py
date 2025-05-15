@@ -1,19 +1,22 @@
 # editor_state.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.11 (Refined color tool selection behavior)
+## version 1.0.0.13 (Corrected selected_asset_editor_key setter for color tool)
 Defines the EditorState class, which holds all the dynamic state
 and data for the level editor.
 """
-
 import pygame
 from typing import Optional, Dict, List, Tuple, Any, Callable
 import traceback
+import logging
 
 import editor_config as ED_CONFIG
 
+logger = logging.getLogger(__name__)
+
 class EditorState:
     def __init__(self):
+        logger.debug("Initializing EditorState...")
         self.current_map_data: Dict[str, Any] = {}
         self.current_map_filename: Optional[str] = None
         self.map_name_for_function: str = "untitled_map"
@@ -31,7 +34,7 @@ class EditorState:
         self.placed_objects: List[Dict[str, Any]] = []
         self.assets_palette: Dict[str, Dict[str, Any]] = {}
         self._selected_asset_editor_key: Optional[str] = None
-        self.selected_asset_image_for_cursor: Optional[pygame.Surface] = None # This will be controlled by the setter
+        self.selected_asset_image_for_cursor: Optional[pygame.Surface] = None # Controlled by setter
         self.asset_palette_scroll_y: int = 0
         self.total_asset_palette_content_height: int = 0
 
@@ -79,6 +82,8 @@ class EditorState:
         self.status_message_timer: float = 0.0
         self.status_message_duration: float = 3.0
         self.recreate_map_content_surface()
+        logger.debug("EditorState initialized.")
+
 
     @property
     def current_editor_mode(self) -> str:
@@ -87,14 +92,15 @@ class EditorState:
     @current_editor_mode.setter
     def current_editor_mode(self, value: str):
         if self._current_editor_mode != value:
+            logger.debug(f"Changing editor mode from '{self._current_editor_mode}' to '{value}'")
             self._current_editor_mode = value
-            if value == "editing_map": # General actions when entering editing mode
+            if value == "editing_map":
                 self.minimap_needs_regeneration = True
                 self.camera_momentum_pan = (0.0, 0.0)
-                # If color tool was selected, ensure its cursor state is correct
                 if self.selected_asset_editor_key == "tool_color_change":
+                    logger.debug("Editor mode to editing_map, color tool was selected, ensuring no cursor image.")
                     self.selected_asset_image_for_cursor = None
-            if value == "menu": # Reset momentum if going to menu
+            if value == "menu":
                 self.camera_momentum_pan = (0.0, 0.0)
 
 
@@ -105,6 +111,7 @@ class EditorState:
     @active_dialog_type.setter
     def active_dialog_type(self, value: Optional[str]):
         if self._active_dialog_type != value:
+            logger.debug(f"Changing active_dialog_type from '{self._active_dialog_type}' to '{value}'")
             old_dialog_type = self._active_dialog_type
             self._active_dialog_type = value
             if value is not None:
@@ -127,20 +134,34 @@ class EditorState:
 
     @selected_asset_editor_key.setter
     def selected_asset_editor_key(self, value: Optional[str]):
-        if self._selected_asset_editor_key != value:
+        logger.debug(f"Attempting to set selected_asset_editor_key from '{self._selected_asset_editor_key}' to '{value}'")
+        # Only proceed if the value is actually different OR if it's a tool being re-asserted
+        if self._selected_asset_editor_key != value or \
+           (value == "tool_color_change" and self.selected_asset_image_for_cursor is not None) or \
+           (value is not None and value != "tool_color_change" and value in self.assets_palette and self.selected_asset_image_for_cursor is None) :
+
             self._selected_asset_editor_key = value
+            logger.info(f"selected_asset_editor_key changed to: '{value}'")
+
             if value == "tool_color_change":
-                self.selected_asset_image_for_cursor = None # Explicitly no cursor image for this tool
+                self.selected_asset_image_for_cursor = None
+                logger.debug(f"Color tool ('{value}') selected/re-asserted. selected_asset_image_for_cursor explicitly set to None.")
             elif value is None:
-                 self.selected_asset_image_for_cursor = None
-            else: # For actual placeable assets, get their image
-                if value in self.assets_palette:
-                    self.selected_asset_image_for_cursor = self.assets_palette[value]["image"].copy()
-                else: # Should not happen if selected from palette
+                self.selected_asset_image_for_cursor = None
+                logger.debug("No asset selected. selected_asset_image_for_cursor set to None.")
+            elif value in self.assets_palette:
+                asset_data = self.assets_palette[value]
+                if "image" in asset_data and asset_data["image"] is not None:
+                    self.selected_asset_image_for_cursor = asset_data["image"].copy()
+                    logger.debug(f"Asset '{value}' selected. Cursor image set from palette.")
+                else:
                     self.selected_asset_image_for_cursor = None
-        # If the same tool/asset is re-selected, ensure cursor state is correct
-        elif value == "tool_color_change" and self.selected_asset_image_for_cursor is not None:
-             self.selected_asset_image_for_cursor = None
+                    logger.warning(f"Asset '{value}' selected, but has no image in palette. Cursor image set to None.")
+            else: # Asset key not in palette (should ideally not happen if selected from UI)
+                self.selected_asset_image_for_cursor = None
+                logger.warning(f"Asset key '{value}' not found in assets_palette during selection. Cursor image set to None.")
+        else:
+            logger.debug(f"selected_asset_editor_key already '{value}', no change needed for key or cursor state.")
 
 
     def recreate_map_content_surface(self):
@@ -150,16 +171,19 @@ class EditorState:
         try:
             self.map_content_surface = pygame.Surface((safe_width, safe_height))
             self.minimap_needs_regeneration = True
+            logger.debug(f"Recreated map_content_surface: {safe_width}x{safe_height}")
         except pygame.error as e:
-            print(f"ERROR STATE: Failed to create map_content_surface: {e}"); traceback.print_exc()
+            logger.error(f"Failed to create map_content_surface: {e}", exc_info=True)
             try: self.map_content_surface = pygame.Surface((ED_CONFIG.DEFAULT_GRID_SIZE, ED_CONFIG.DEFAULT_GRID_SIZE))
-            except Exception as e_fallback: self.map_content_surface = None; print(f"CRITICAL STATE: Fallback surface failed: {e_fallback}")
+            except Exception as e_fallback: self.map_content_surface = None; logger.critical(f"Fallback surface failed: {e_fallback}", exc_info=True)
+
 
     def get_map_pixel_width(self) -> int: return self.map_width_tiles * self.grid_size
     def get_map_pixel_height(self) -> int: return self.map_height_tiles * self.grid_size
 
     def set_status_message(self, message: str, duration: float = 3.0):
         self.status_message, self.status_message_duration, self.status_message_timer = message, duration, duration
+        logger.info(f"Status message set: '{message}' for {duration}s")
 
     def update_status_message(self, dt: float):
         if self.status_message and self.status_message_timer > 0:
@@ -167,6 +191,7 @@ class EditorState:
             if self.status_message_timer <= 0: self.status_message, self.status_message_timer = None, 0.0
 
     def reset_map_context(self):
+        logger.debug("Resetting map context.")
         self.map_name_for_function = "untitled_map"; self.current_map_filename = None
         self.placed_objects = []; self.map_width_tiles = ED_CONFIG.DEFAULT_MAP_WIDTH_TILES
         self.map_height_tiles = ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES; self.background_color = ED_CONFIG.DEFAULT_BACKGROUND_COLOR
@@ -181,3 +206,4 @@ class EditorState:
         self.camera_momentum_pan = (0.0, 0.0)
         self.is_mouse_over_map_view = False
         self.is_dragging_minimap_view = False
+        logger.debug(f"Map context reset. Map name: '{self.map_name_for_function}'.")

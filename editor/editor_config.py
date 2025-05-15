@@ -52,13 +52,11 @@ MAP_VIEW_SECTION_DEFAULT_HEIGHT = EDITOR_SCREEN_INITIAL_HEIGHT - (SECTION_PADDIN
 KEY_PAN_SPEED_PIXELS_PER_SECOND = 300
 EDGE_SCROLL_ZONE_THICKNESS = 30
 EDGE_SCROLL_SPEED_PIXELS_PER_SECOND = 250
+CAMERA_MOMENTUM_INITIAL_MULTIPLIER = 1.5
+CAMERA_MOMENTUM_DAMPING_FACTOR = 0.96
+CAMERA_MOMENTUM_MIN_SPEED_THRESHOLD = 5.0
+CAMERA_MOMENTUM_BOUNDARY_DAMP_FACTOR = 0.5
 
-# --- Camera Momentum / Fling --- ADD THESE LINES ---
-CAMERA_MOMENTUM_INITIAL_MULTIPLIER = 1.5  # Multiplies mouse exit speed for fling (e.g., 1.0 to 2.0)
-CAMERA_MOMENTUM_DAMPING_FACTOR = 0.96    # Closer to 1.0 = longer coast (e.g., 0.95 to 0.99) - This is damping per "physics step" if step is dt_ref
-CAMERA_MOMENTUM_MIN_SPEED_THRESHOLD = 5.0 # Pixels per second, below this momentum stops
-CAMERA_MOMENTUM_BOUNDARY_DAMP_FACTOR = 0.5 # How much to dampen momentum when hitting a boundary (e.g., 0.5 = half speed, 0 = full stop)
-# --- END OF ADDED LINES ---
 
 # --- Minimap Configuration ---
 MINIMAP_AREA_HEIGHT = 120
