@@ -1,7 +1,3 @@
-########## START OF FILE: enemy_network_handler.py ##########
-
-# enemy_network_handler.py
-# -*- coding: utf-8 -*-
 """
 version 1.0.0.2 (Updated stomp death networking and client-side image capture)
 Handles network-related data serialization and deserialization for the Enemy class.
@@ -23,7 +19,6 @@ def get_enemy_network_data(enemy):
     Returns:
         dict: A dictionary containing the enemy's network-relevant state.
     """
-    # Ensure all serialized values are basic Python types for JSON compatibility
     data = {
         'enemy_id': enemy.enemy_id, 
         '_valid_init': enemy._valid_init, 
@@ -47,10 +42,14 @@ def get_enemy_network_data(enemy):
         'post_attack_pause_timer': enemy.post_attack_pause_timer, 
         'color_name': getattr(enemy, 'color_name', 'default_color'),
 
-        # Stomp death specific fields
-        'is_stomp_dying': getattr(enemy, 'is_stomp_dying', False), # Add getattr for safety
+        'is_stomp_dying': getattr(enemy, 'is_stomp_dying', False), 
         'stomp_death_start_time': getattr(enemy, 'stomp_death_start_time', 0),
         'original_stomp_facing_right': getattr(enemy, 'original_stomp_facing_right', True),
+
+        # New fields for frozen/defrost state
+        'is_frozen': getattr(enemy, 'is_frozen', False),
+        'is_defrosting': getattr(enemy, 'is_defrosting', False),
+        'frozen_effect_timer': getattr(enemy, 'frozen_effect_timer', 0), # Server's start time for the current effect
     }
     return data
 
@@ -76,69 +75,84 @@ def set_enemy_network_data(enemy, network_data):
     vel_data = network_data.get('vel')
     if vel_data: enemy.vel.x, enemy.vel.y = vel_data
     
-    enemy.facing_right = network_data.get('facing_right', enemy.facing_right) # General facing
+    enemy.facing_right = network_data.get('facing_right', enemy.facing_right) 
     
     enemy.current_health = network_data.get('current_health', enemy.current_health)
     new_is_dead_from_net = network_data.get('is_dead', enemy.is_dead)
     enemy.death_animation_finished = network_data.get('death_animation_finished', enemy.death_animation_finished)
 
-    # Stomp Death Handling
+    # --- Frozen/Defrost State Synchronization ---
+    new_is_frozen_net = network_data.get('is_frozen', enemy.is_frozen)
+    new_is_defrosting_net = network_data.get('is_defrosting', enemy.is_defrosting)
+    net_frozen_effect_timer = network_data.get('frozen_effect_timer', enemy.frozen_effect_timer)
+
+    if new_is_frozen_net and not enemy.is_frozen: # Started freezing
+        enemy.is_frozen = True
+        enemy.is_defrosting = False
+        enemy.frozen_effect_timer = net_frozen_effect_timer # Sync server's start time for client-side anim
+        enemy.set_state('frozen') # Ensure state matches
+    elif not new_is_frozen_net and enemy.is_frozen: # Stopped freezing
+        enemy.is_frozen = False
+        # Server will dictate transition to defrost or idle via 'state' field
+
+    if new_is_defrosting_net and not enemy.is_defrosting: # Started defrosting
+        enemy.is_defrosting = True
+        enemy.is_frozen = False
+        enemy.frozen_effect_timer = net_frozen_effect_timer # Sync server's start time for client-side anim
+        enemy.set_state('defrost')
+    elif not new_is_defrosting_net and enemy.is_defrosting: # Stopped defrosting
+        enemy.is_defrosting = False
+        # Server will dictate transition to idle via 'state' field
+
+    # If server says not frozen AND not defrosting, ensure local flags are cleared
+    if not new_is_frozen_net and not new_is_defrosting_net:
+        enemy.is_frozen = False
+        enemy.is_defrosting = False
+
+    # Stomp Death Handling (should take precedence if occurring)
     new_is_stomp_dying_from_net = network_data.get('is_stomp_dying', False)
     if new_is_stomp_dying_from_net and not enemy.is_stomp_dying:
         enemy.is_stomp_dying = True
         enemy.stomp_death_start_time = network_data.get('stomp_death_start_time', pygame.time.get_ticks())
-        # Use the server's facing direction at the moment of stomp for visual consistency
         enemy.original_stomp_facing_right = network_data.get('original_stomp_facing_right', enemy.facing_right)
         
-        # Client needs to capture its current image (correctly oriented) as the base for scaling.
-        # Ensure the enemy's state, frame, and facing are consistent with what the server *would have seen*
-        # at the moment it decided to stomp_kill.
-        # The server's `get_enemy_network_data` sends `state`, `current_frame`, and `facing_right`.
-        # These should be applied *before* this stomp logic if they're part of the same network packet.
-        
-        # Temporarily set facing_right for image capture to match the server's view at stomp time
         original_facing = enemy.facing_right
         enemy.facing_right = enemy.original_stomp_facing_right
-        
-        # Animate once to get the correct base frame.
-        # Temporarily disable stomp_dying during this animate call to ensure it uses regular animation logic.
         _temp_stomp_flag = enemy.is_stomp_dying
         enemy.is_stomp_dying = False
-        enemy.animate() # This should set self.image based on current_frame and new facing_right
-        enemy.is_stomp_dying = _temp_stomp_flag # Restore flag
-
+        enemy.animate() 
+        enemy.is_stomp_dying = _temp_stomp_flag 
         enemy.original_stomp_death_image = enemy.image.copy()
-        enemy.facing_right = original_facing # Restore actual facing direction for subsequent logic if needed
+        enemy.facing_right = original_facing 
 
-        # Update other death-related states
         enemy.is_dead = True
         enemy.current_health = 0
         enemy.vel.xy = 0,0
         enemy.acc.xy = 0,0
-        enemy.death_animation_finished = False # Stomp animation will handle this
-        enemy.state = 'stomp_death' # Can be useful for client-side logic, though animation handles visual
+        enemy.death_animation_finished = False 
+        enemy.state = 'stomp_death' 
+        enemy.is_frozen = False; enemy.is_defrosting = False # Stomp overrides freeze
 
-    elif not new_is_stomp_dying_from_net and enemy.is_stomp_dying: # Stomp death ended/cancelled
+    elif not new_is_stomp_dying_from_net and enemy.is_stomp_dying: 
         enemy.is_stomp_dying = False
         enemy.original_stomp_death_image = None
-        # If the enemy is now considered alive by the server, the regular death logic below will handle it.
 
-    # Regular Death Status (only if not currently stomp_dying)
-    if not enemy.is_stomp_dying:
+    # Regular Death Status (only if not currently stomp_dying or frozen/defrosting as those have priority)
+    if not enemy.is_stomp_dying and not enemy.is_frozen and not enemy.is_defrosting:
         if new_is_dead_from_net and not enemy.is_dead: 
             enemy.is_dead = True
             enemy.current_health = 0 
             enemy.set_state('death') 
-        elif not new_is_dead_from_net and enemy.is_dead: # Revived
+        elif not new_is_dead_from_net and enemy.is_dead: 
             enemy.is_dead = False
             enemy.death_animation_finished = False 
-            if enemy.state in ['death', 'death_nm', 'stomp_death']: # Check stomp_death too
+            if enemy.state in ['death', 'death_nm', 'stomp_death']: 
                 enemy.set_state('idle') 
         else: 
             enemy.is_dead = new_is_dead_from_net 
 
-    # Combat and Action States (only if not currently stomp_dying)
-    if not enemy.is_stomp_dying:
+    # Combat and Action States (only if not stomp_dying or frozen/defrosting)
+    if not enemy.is_stomp_dying and not enemy.is_frozen and not enemy.is_defrosting:
         enemy.is_attacking = network_data.get('is_attacking', enemy.is_attacking)
         enemy.attack_type = network_data.get('attack_type', enemy.attack_type)
         
@@ -153,16 +167,15 @@ def set_enemy_network_data(enemy, network_data):
 
         enemy.post_attack_pause_timer = network_data.get('post_attack_pause_timer', enemy.post_attack_pause_timer)
         
-        # Logical State (if not stomp_dying, as stomp_death state is managed above)
         new_logical_state_from_net = network_data.get('state', enemy.state)
-        if enemy.state != 'stomp_death' and enemy.state != new_logical_state_from_net and \
+        if enemy.state not in ['stomp_death', 'frozen', 'defrost'] and enemy.state != new_logical_state_from_net and \
            not (enemy.is_dead and new_logical_state_from_net in ['death', 'death_nm']):
              enemy.set_state(new_logical_state_from_net)
-        else: # If state is the same, or it's a death/stomp_death state, just sync animation details
+        else: 
             enemy.current_frame = network_data.get('current_frame', enemy.current_frame)
             enemy.last_anim_update = network_data.get('last_anim_update', enemy.last_anim_update)
     
     enemy.rect.midbottom = (round(enemy.pos.x), round(enemy.pos.y)) 
     
     if enemy._valid_init and enemy.alive(): 
-        enemy.animate() # This will correctly handle stomp animation if is_stomp_dying is true
+        enemy.animate() 

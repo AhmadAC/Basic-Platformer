@@ -35,7 +35,8 @@ from enemy_network_handler import get_enemy_network_data, set_enemy_network_data
 
 
 class Enemy(pygame.sprite.Sprite):
-    # Note: Class-level PrintLimiter was removed. Use global logger functions (debug, info, warning, etc.)
+    FROZEN_DURATION = 3000  # ms
+    DEFROST_DURATION = 2000 # ms
 
     def __init__(self, start_x, start_y, patrol_area=None, enemy_id=None):
         super().__init__()
@@ -59,7 +60,7 @@ class Enemy(pygame.sprite.Sprite):
             self._valid_init = False; self.is_dead = True; return
 
         self._last_facing_right = True
-        self._last_state_for_debug = "init" # Can be removed if not actively debugging state machine
+        self._last_state_for_debug = "init" 
         self.state = 'idle'
         self.current_frame = 0
         self.last_anim_update = pygame.time.get_ticks()
@@ -104,22 +105,29 @@ class Enemy(pygame.sprite.Sprite):
         try: self.standard_height = self.animations['idle'][0].get_height() if self.animations.get('idle') else 60
         except (KeyError, IndexError, TypeError): self.standard_height = 60
 
-        # Stomp death attributes
         self.is_stomp_dying = False
         self.stomp_death_start_time = 0
         self.original_stomp_death_image = None
         self.original_stomp_facing_right = True
+        
+        # Frozen/Defrost state
+        self.is_frozen = False
+        self.is_defrosting = False
+        self.frozen_effect_timer = 0 # Used for both frozen and defrost duration tracking
 
 
     def set_state(self, new_state: str):
         if not self._valid_init: return
 
-        # If being stomp-killed, visual state is handled by is_stomp_dying in animate()
-        if self.is_stomp_dying and new_state != 'stomp_death': # Allow setting to 'stomp_death' if needed by logic
+        if (self.is_frozen or self.is_defrosting) and new_state not in ['frozen', 'defrost', 'idle', 'death', 'death_nm', 'stomp_death']:
+            debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' due to frozen/defrosting.")
+            return
+            
+        if self.is_stomp_dying and new_state != 'stomp_death':
             return
 
         animation_key_to_validate = new_state
-        valid_direct_animation_states = ['idle', 'run', 'attack', 'attack_nm', 'hit', 'death', 'death_nm', 'fall', 'stomp_death']
+        valid_direct_animation_states = ['idle', 'run', 'attack', 'attack_nm', 'hit', 'death', 'death_nm', 'fall', 'stomp_death', 'frozen', 'defrost']
 
         if new_state not in valid_direct_animation_states:
             if new_state in ['chasing', 'patrolling']:
@@ -128,10 +136,14 @@ class Enemy(pygame.sprite.Sprite):
                 animation_key_to_validate = new_state
             else:
                 animation_key_to_validate = 'idle'
+        
+        is_new_anim_green_specific = animation_key_to_validate in ['frozen', 'defrost']
+        if is_new_anim_green_specific and self.color_name != 'green':
+            debug(f"Enemy {self.enemy_id} ({self.color_name}): Cannot use state '{animation_key_to_validate}', not green. Defaulting to idle.")
+            animation_key_to_validate = 'idle' # Fallback for non-green enemies
 
-        # For stomp_death, there's no dedicated animation sheet, it's procedural
         if new_state == 'stomp_death':
-            pass # No animation frames to validate for stomp_death
+            pass 
         elif animation_key_to_validate not in self.animations or not self.animations[animation_key_to_validate]:
             warning(f"Enemy Warning (ID: {self.enemy_id}): Animation for key '{animation_key_to_validate}' (from logical: '{new_state}') missing. Trying 'idle'.")
             animation_key_to_validate = 'idle'
@@ -139,21 +151,44 @@ class Enemy(pygame.sprite.Sprite):
                  critical(f"Enemy CRITICAL (ID: {self.enemy_id}): Cannot find valid 'idle' animation. Halting state change for '{new_state}'.")
                  return
 
-        can_change_state_now = (self.state != new_state or new_state in ['death', 'stomp_death']) and \
+        can_change_state_now = (self.state != new_state or new_state in ['death', 'stomp_death', 'frozen', 'defrost']) and \
                                not (self.is_dead and not self.death_animation_finished and new_state not in ['death', 'stomp_death'])
 
         if can_change_state_now:
-            self._last_state_for_debug = new_state # Keep if still useful for your own debugging
+            self._last_state_for_debug = new_state 
             if 'attack' not in new_state: self.is_attacking = False; self.attack_type = 0
             if new_state != 'hit': self.is_taking_hit = False
 
+            # Handle flags for frozen/defrost if transitioning out of them
+            if self.state == 'frozen' and new_state != 'frozen': self.is_frozen = False
+            if self.state == 'defrost' and new_state != 'defrost': self.is_defrosting = False
+            
             self.state = new_state
             self.current_frame = 0
             current_ticks_ms = pygame.time.get_ticks()
             self.last_anim_update = current_ticks_ms
             self.state_timer = current_ticks_ms
 
-            if 'attack' in new_state:
+            if new_state == 'frozen': # Specific handling when entering 'frozen'
+                self.is_frozen = True
+                self.is_defrosting = False # Explicitly false
+                self.frozen_effect_timer = current_ticks_ms # Start frozen timer
+                self.vel.xy = 0,0
+                self.acc.x = 0
+                # self.acc.y = 0 # Optional: if it should not fall while frozen
+            elif new_state == 'defrost': # Specific handling for 'defrost'
+                self.is_defrosting = True
+                self.is_frozen = False # Explicitly false
+                self.frozen_effect_timer = current_ticks_ms # Start defrost timer (re-using var)
+                self.vel.xy = 0,0
+                self.acc.x = 0
+                # self.acc.y = 0
+            elif new_state == 'idle' and (self.is_frozen or self.is_defrosting): # Came from frozen/defrost
+                self.is_frozen = False
+                self.is_defrosting = False
+
+
+            elif 'attack' in new_state:
                 self.is_attacking = True; self.attack_type = 1
                 self.attack_timer = current_ticks_ms; self.vel.x = 0
             elif new_state == 'hit':
@@ -165,16 +200,21 @@ class Enemy(pygame.sprite.Sprite):
                  self.is_dead = True; self.vel.x = 0; self.vel.y = 0
                  self.acc.xy = 0, 0; self.current_health = 0
                  self.death_animation_finished = False
-                 if new_state == 'stomp_death' and not self.is_stomp_dying: # Ensure stomp flags are set if directly setting this state
-                     self.stomp_kill() # This will correctly initialize stomp death
+                 self.is_frozen = False; self.is_defrosting = False # Clear freeze states on death
+                 if new_state == 'stomp_death' and not self.is_stomp_dying: 
+                     self.stomp_kill() 
 
             self.animate()
         elif not self.is_dead:
              self._last_state_for_debug = self.state
 
+    def apply_freeze_effect(self):
+        if self.color_name == 'green' and not self.is_frozen and not self.is_defrosting and not self.is_dead:
+            debug(f"Enemy {self.enemy_id}: Apply freeze effect triggered.")
+            self.set_state('frozen') # set_state will handle setting is_frozen and timer
+
     def animate(self):
         if not self._valid_init or not hasattr(self, 'animations') or not self.animations: return
-        # Allow animation if alive() OR if is_dead and death animation not finished (covers normal and stomp death)
         if not (self.alive() or (self.is_dead and not self.death_animation_finished)):
             return
 
@@ -185,7 +225,6 @@ class Enemy(pygame.sprite.Sprite):
             if not self.original_stomp_death_image:
                 self.death_animation_finished = True
                 self.is_stomp_dying = False
-                # if self.alive(): self.kill() # Let external logic handle kill based on death_animation_finished
                 return
 
             elapsed_time = current_time_ms - self.stomp_death_start_time
@@ -199,15 +238,14 @@ class Enemy(pygame.sprite.Sprite):
                 scale_factor = 1.0 - (elapsed_time / stomp_death_total_duration)
 
             scale_factor = max(0.0, min(1.0, scale_factor))
-
             original_width = self.original_stomp_death_image.get_width()
             original_height = self.original_stomp_death_image.get_height()
             new_height = int(original_height * scale_factor)
 
-            if new_height <= 1: # Make it effectively invisible or 1px high
+            if new_height <= 1: 
                 self.image = pygame.Surface((original_width, 1), pygame.SRCALPHA)
-                self.image.fill((0,0,0,0)) # Transparent
-                if not self.death_animation_finished: # Ensure flags are set if shrink makes it disappear early
+                self.image.fill((0,0,0,0)) 
+                if not self.death_animation_finished: 
                     self.death_animation_finished = True
                     self.is_stomp_dying = False
             else:
@@ -215,16 +253,19 @@ class Enemy(pygame.sprite.Sprite):
 
             old_midbottom = self.rect.midbottom
             self.rect = self.image.get_rect(midbottom=old_midbottom)
-            # self._last_facing_right is not strictly needed here as stomp image is fixed.
-            return # Stomp death animation overrides other animation logic
+            return 
 
         determined_animation_key = 'idle'
 
-        if self.is_dead: # Regular death (not stomp)
+        if self.is_dead: 
             determined_animation_key = 'death_nm' if abs(self.vel.x) < 0.1 and abs(self.vel.y) < 0.1 and \
                                      self.animations.get('death_nm') else 'death'
             if not self.animations.get(determined_animation_key):
                 determined_animation_key = 'death' if self.animations.get('death') else 'idle'
+        elif self.state == 'frozen': # New state check
+            determined_animation_key = 'frozen'
+        elif self.state == 'defrost': # New state check
+            determined_animation_key = 'defrost'
         elif self.post_attack_pause_timer > 0 and current_time_ms < self.post_attack_pause_timer:
             determined_animation_key = 'idle'
         elif self.state in ['patrolling', 'chasing'] or (self.state == 'run' and abs(self.vel.x) > 0.1):
@@ -240,6 +281,10 @@ class Enemy(pygame.sprite.Sprite):
             determined_animation_key = 'idle'
         elif self.state == 'run':
             determined_animation_key = 'run' if abs(self.vel.x) > 0.1 else 'idle'
+        
+        is_new_anim_green_specific_anim = determined_animation_key in ['frozen', 'defrost']
+        if is_new_anim_green_specific_anim and self.color_name != 'green':
+            determined_animation_key = 'idle' # Fallback for non-green if trying to use green-specific anim key
 
         if not self.animations.get(determined_animation_key):
             warning(f"Enemy Animate Warning (ID: {self.enemy_id}): Key '{determined_animation_key}' invalid for state '{self.state}'. Defaulting to 'idle'.")
@@ -258,7 +303,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.current_frame += 1
 
                 if self.current_frame >= len(current_animation_frames_list):
-                    if self.is_dead: # Regular death animation finished
+                    if self.is_dead: 
                         self.current_frame = len(current_animation_frames_list) - 1
                         self.death_animation_finished = True
                         final_death_image_surface = current_animation_frames_list[self.current_frame]
@@ -270,7 +315,7 @@ class Enemy(pygame.sprite.Sprite):
                     elif self.state == 'hit':
                         self.set_state('idle' if self.on_ground else 'fall')
                         return
-                    else:
+                    else: # For looping animations like frozen, defrost, idle, run
                         self.current_frame = 0
 
                 if self.current_frame >= len(current_animation_frames_list) and not self.is_dead : self.current_frame = 0
@@ -302,6 +347,8 @@ class Enemy(pygame.sprite.Sprite):
         self.current_health = 0
         self.is_dead = True
         self.is_stomp_dying = True
+        self.is_frozen = False # Cannot be stomp_dying and frozen
+        self.is_defrosting = False 
         self.stomp_death_start_time = pygame.time.get_ticks()
 
         self.original_stomp_death_image = self.image.copy()
@@ -316,8 +363,8 @@ class Enemy(pygame.sprite.Sprite):
     def _check_attack_collisions(self, player_target_list_for_combat):
         check_enemy_attack_collisions(self, player_target_list_for_combat)
 
-    def take_damage(self, damage_amount_taken):
-        enemy_take_damage(self, damage_amount_taken)
+    def take_damage(self, damage_amount_taken): # Projectile object is not passed here
+        enemy_take_damage(self, damage_amount_taken) # Actual damage application in combat_handler
 
     def get_network_data(self):
         return get_enemy_network_data(self)
@@ -330,10 +377,10 @@ class Enemy(pygame.sprite.Sprite):
         if not self._valid_init: return
 
         if self.is_stomp_dying:
-            self.animate() # Handles scaling and sets death_animation_finished
+            self.animate() 
             return
 
-        if self.is_dead and self.alive(): # Regular death (not stomp)
+        if self.is_dead and self.alive(): 
             if not self.death_animation_finished:
                 if not self.on_ground:
                     self.vel.y += self.acc.y
@@ -350,12 +397,32 @@ class Enemy(pygame.sprite.Sprite):
             self.animate()
             return
 
-        if self.is_dead and self.death_animation_finished: # Fully dead (stomp or regular)
+        if self.is_dead and self.death_animation_finished: 
             if self.alive(): self.kill()
             return
 
         current_time_ms = pygame.time.get_ticks()
 
+        # Handle frozen/defrosting states first
+        if self.is_frozen:
+            self.vel.xy = 0,0
+            self.acc.x = 0
+            # self.acc.y = 0 # Optional: if truly static. Otherwise, gravity applies if in air.
+            if current_time_ms - self.frozen_effect_timer > self.FROZEN_DURATION:
+                self.set_state('defrost') # This will set is_defrosting, is_frozen=False, and reset frozen_effect_timer for defrost
+            self.animate() # Animate frozen state
+            return # Skip normal update
+
+        if self.is_defrosting:
+            self.vel.xy = 0,0
+            self.acc.x = 0
+            # self.acc.y = 0
+            if current_time_ms - self.frozen_effect_timer > self.DEFROST_DURATION: # Timer was reset by set_state('defrost')
+                self.set_state('idle')
+            self.animate() # Animate defrost state
+            return # Skip normal update
+
+        # --- Normal Update Logic (if not frozen/defrosting) ---
         if self.post_attack_pause_timer > 0 and current_time_ms >= self.post_attack_pause_timer:
             self.post_attack_pause_timer = 0
 
@@ -364,15 +431,13 @@ class Enemy(pygame.sprite.Sprite):
 
         self._ai_update(players_list_for_logic)
 
-        if not self.is_dead:
+        if not self.is_dead: # Should always be false here if not frozen/defrosting/stomp_dying
             self.vel.y += self.acc.y
-
             enemy_friction_val = getattr(C, 'ENEMY_FRICTION', -0.12)
             enemy_run_speed_max = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5)
             terminal_fall_speed_y = getattr(C, 'TERMINAL_VELOCITY_Y', 18)
 
             self.vel.x += self.acc.x
-
             apply_friction_to_enemy = self.on_ground and self.acc.x == 0
             if apply_friction_to_enemy:
                 friction_force_on_enemy = self.vel.x * enemy_friction_val
@@ -381,7 +446,6 @@ class Enemy(pygame.sprite.Sprite):
 
             self.vel.x = max(-enemy_run_speed_max, min(enemy_run_speed_max, self.vel.x))
             self.vel.y = min(self.vel.y, terminal_fall_speed_y)
-
             self.on_ground = False
 
             self.pos.x += self.vel.x
@@ -405,7 +469,7 @@ class Enemy(pygame.sprite.Sprite):
             if self.is_attacking:
                 self._check_attack_collisions(players_list_for_logic)
 
-        self.animate()
+        self.animate() # Final animation update for the frame
 
 
     def check_platform_collisions(self, direction: str, platforms_group: pygame.sprite.Group):
@@ -509,10 +573,13 @@ class Enemy(pygame.sprite.Sprite):
            self.image.get_alpha() < 255:
             self.image.set_alpha(255)
 
-        # Reset stomp death attributes
         self.is_stomp_dying = False
         self.stomp_death_start_time = 0
         self.original_stomp_death_image = None
         self.original_stomp_facing_right = self.facing_right
+        
+        self.is_frozen = False # Reset frozen state
+        self.is_defrosting = False # Reset defrost state
+        self.frozen_effect_timer = 0
 
         self.set_state('idle')

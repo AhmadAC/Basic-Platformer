@@ -175,6 +175,9 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         'turn': '__TurnAround.gif',
         'wall_climb': '__WallClimb.gif', 'wall_climb_nm': '__WallClimbNoMovement.gif',
         'wall_hang': '__WallHang.gif', 'wall_slide': '__WallSlide.gif',
+        # New animations for green enemy (assuming files are named conventionally)
+        'frozen': '__Frozen.gif',
+        'defrost': '__Defrost.gif',
     }
 
     info(f"Assets Info: Attempting to load animations from relative folder: '{relative_asset_folder}'")
@@ -187,9 +190,14 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
          absolute_gif_path = resource_path(relative_path_to_gif_for_resource_path)
 
          if not os.path.exists(absolute_gif_path):
-             missing_files_log.append(
-                 (anim_state_name, relative_path_to_gif_for_resource_path, absolute_gif_path)
-             )
+             # Only log as missing if it's not one of the new green enemy specific anims *unless* loading for green enemy
+             is_green_enemy_folder = 'characters/green' in relative_asset_folder.replace('\\', '/')
+             is_new_anim = anim_state_name in ['frozen', 'defrost']
+             
+             if not (is_new_anim and not is_green_enemy_folder): # Log if it's a general anim OR it's a new anim AND we ARE in green folder
+                missing_files_log.append(
+                    (anim_state_name, relative_path_to_gif_for_resource_path, absolute_gif_path)
+                )
              animations_dict[anim_state_name] = [] # Mark as missing for later placeholder generation
              continue
 
@@ -246,10 +254,15 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         )
 
         if animation_is_missing_or_placeholder:
-            if anim_name_check not in animations_dict or not animations_dict[anim_name_check]:
-                 warning(f"Assets Warning: Animation state '{anim_name_check}' (file missing). Providing a BLUE placeholder.")
-            else:
-                 warning(f"Assets Warning: Animation state '{anim_name_check}' (load failed, is RED placeholder). Using a BLUE placeholder.")
+            # Only warn if it's not one of the new anims for a non-green character
+            is_green_enemy_folder_ph = 'characters/green' in relative_asset_folder.replace('\\', '/')
+            is_new_anim_ph = anim_name_check in ['frozen', 'defrost']
+
+            if not (is_new_anim_ph and not is_green_enemy_folder_ph):
+                if anim_name_check not in animations_dict or not animations_dict[anim_name_check]:
+                     warning(f"Assets Warning: Animation state '{anim_name_check}' (file missing). Providing a BLUE placeholder.")
+                else:
+                     warning(f"Assets Warning: Animation state '{anim_name_check}' (load failed, is RED placeholder). Using a BLUE placeholder.")
 
             blue_placeholder = pygame.Surface((30, 40)).convert_alpha()
             blue_placeholder.fill(BLUE) # BLUE from constants/fallback

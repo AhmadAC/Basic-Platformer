@@ -1,5 +1,3 @@
-# enemy_ai_handler.py
-# -*- coding: utf-8 -*-
 """
 version 1.0.0.2 (Corrected set_state logic for patrol/chase transitions)
 Handles AI logic for enemies, including patrolling, chasing, and attacking decisions.
@@ -19,10 +17,6 @@ def set_enemy_new_patrol_target(enemy):
     Args:
         enemy (Enemy): The enemy instance for which to set a new patrol target.
     """
-    # if not hasattr(enemy, 'rect') or not hasattr(enemy, 'pos'): # Guard against incomplete enemy object
-    #     if hasattr(enemy, 'print_limiter') and enemy.print_limiter.can_print(f"enemy_patrol_target_no_rect_{enemy.enemy_id}"):
-    #         print(f"ENEMY AI WARN ({enemy.enemy_id}): set_enemy_new_patrol_target called on enemy without rect/pos.")
-        # return
 
     if enemy.patrol_area and isinstance(enemy.patrol_area, pygame.Rect):
          min_x_patrol = enemy.patrol_area.left + enemy.rect.width / 2
@@ -46,6 +40,10 @@ def enemy_ai_update(enemy, players_list_for_ai):
         enemy (Enemy): The enemy instance to update.
         players_list_for_ai (list): A list of player Sprites that the AI can target.
     """
+    if enemy.is_frozen or enemy.is_defrosting: # Prevent AI logic if frozen or defrosting
+        enemy.acc.x = 0 
+        return
+
     current_time_ms = pygame.time.get_ticks() 
     
     if enemy.post_attack_pause_timer > 0 and current_time_ms < enemy.post_attack_pause_timer:
@@ -77,9 +75,6 @@ def enemy_ai_update(enemy, players_list_for_ai):
     
     if not closest_target_player: 
         enemy.ai_state = 'patrolling' 
-        # If the AI decides to patrol, and the enemy's logical state isn't already
-        # 'patrolling' or 'run' (which is used for patrol animation), then set it.
-        # This allows transitioning from 'idle' to 'patrolling'.
         if enemy.state not in ['patrolling', 'run']: 
             enemy.set_state('patrolling') 
         
@@ -132,14 +127,11 @@ def enemy_ai_update(enemy, players_list_for_ai):
         enemy.ai_state = 'chasing'
         current_target_facing_right = (closest_target_player.pos.x > enemy.pos.x) 
         current_target_acceleration_x = enemy_standard_acceleration * (1 if current_target_facing_right else -1)
-        # If AI decides to chase, and logical state isn't 'chasing' or 'run', set it.
         if enemy.state not in ['chasing', 'run']: 
             enemy.set_state('chasing') 
     
     else: 
         enemy.ai_state = 'patrolling'
-        # If AI decides to patrol (because player is out of detection range),
-        # and logical state isn't 'patrolling' or 'run', set it.
         if enemy.state not in ['patrolling', 'run']: 
             enemy.set_state('patrolling')
         

@@ -69,8 +69,7 @@ jobs:
           # into an '_internal' subfolder within the bundled application.
           # The first element of the tuple is the source (in your repo).
           # The second element is the destination relative to the bundle's root (dist/Platformer/).
-          $dataToAdd = "[('characters', '_internal/characters'), ('maps', '_internal/maps')]"
-          # --- MODIFIED LINE END ---
+          $dataToAdd = "[('characters', 'characters'), ('maps', 'maps')]"          # --- MODIFIED LINE END ---
                                         
           # Regex to find 'datas=[]' (allowing for spaces) and replace it
           $modifiedContent = $specContent -replace 'datas=\s*\[\s*\]', "datas=$dataToAdd"
