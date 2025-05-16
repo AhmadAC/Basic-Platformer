@@ -338,7 +338,7 @@ def editor_main():
         if logger: logger.info("Exiting editor_main. Calling pygame.quit().")
         else: print("Exiting editor_main. Calling pygame.quit().")
         pygame.quit()
-        if logger: logger.info("Editor session ended.")
+        if logger: logger.info("Editor session ended.") 
         else: print("Editor session ended.")
         sys.exit()
 
