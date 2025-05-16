@@ -1,11 +1,12 @@
-########## START OF FILE: constants.py ##########
-
 # constants.py
 # -*- coding: utf-8 -*-
 """
 Stores constant values used throughout the game.
+Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 1.0.0.3 (Added collision-specific constants)
+# version 1.0.0.4 (Integrated dynamic MAPS_DIR, kept original collision constants)
+import os
+import sys
 
 # --- Gameplay / Physics ---
 FPS = 60
@@ -52,7 +53,7 @@ FIREBALL_DAMAGE = 50
 FIREBALL_SPEED = 9
 FIREBALL_COOLDOWN = 750 # ms
 FIREBALL_LIFESPAN = 2500 # ms
-FIREBALL_SPRITE_PATH = "characters/weapons/fire.gif"
+FIREBALL_SPRITE_PATH = "characters/weapons/fire.gif" # Relative to MEIPASS or project root
 FIREBALL_DIMENSIONS = (61, 58) # width, height
 
 # Poison (Key 2)
@@ -61,7 +62,7 @@ POISON_SPEED = 6
 POISON_COOLDOWN = 1000 # ms
 POISON_LIFESPAN = 3000 # ms
 POISON_SPRITE_PATH = "characters/weapons/poison.gif"
-POISON_DIMENSIONS = (40, 40) # Placeholder, adjust if needed
+POISON_DIMENSIONS = (40, 40)
 
 # Bolt (Key 3)
 BOLT_DAMAGE = 35
@@ -69,15 +70,15 @@ BOLT_SPEED = 15
 BOLT_COOLDOWN = 600 # ms
 BOLT_LIFESPAN = 1500 # ms
 BOLT_SPRITE_PATH = "characters/weapons/bolt1_resized_11x29.gif"
-BOLT_DIMENSIONS = (11, 29) # Original dimensions, will be (29, 11) after rotation
+BOLT_DIMENSIONS = (11, 29) # Original dimensions
 
 # Blood (Key 4)
-BLOOD_DAMAGE = 30 
+BLOOD_DAMAGE = 30
 BLOOD_SPEED = 8
 BLOOD_COOLDOWN = 800 # ms
 BLOOD_LIFESPAN = 2000 # ms
 BLOOD_SPRITE_PATH = "characters/weapons/blood.gif"
-BLOOD_DIMENSIONS = (40, 40) # Placeholder, adjust if needed
+BLOOD_DIMENSIONS = (40, 40)
 
 # Ice (Key 5)
 ICE_DAMAGE = 25
@@ -85,7 +86,7 @@ ICE_SPEED = 7
 ICE_COOLDOWN = 900 # ms
 ICE_LIFESPAN = 2200 # ms
 ICE_SPRITE_PATH = "characters/weapons/ice.gif"
-ICE_DIMENSIONS = (40, 40) # Placeholder, adjust if needed
+ICE_DIMENSIONS = (40, 40)
 
 
 # --- Enemy Constants ---
@@ -93,14 +94,16 @@ ENEMY_MAX_HEALTH = 80
 ENEMY_RUN_SPEED_LIMIT = 5
 ENEMY_ACCEL = 0.4
 ENEMY_FRICTION = -0.12
-ENEMY_DETECTION_RANGE = 250 # Increased for better AI reaction
-ENEMY_ATTACK_RANGE = 70   # Slightly increased
+ENEMY_DETECTION_RANGE = 250
+ENEMY_ATTACK_RANGE = 70
 ENEMY_ATTACK_DAMAGE = 10
 ENEMY_ATTACK_COOLDOWN = 1500 # ms
 ENEMY_PATROL_DIST = 150
 ENEMY_HIT_STUN_DURATION = 300 # ms
 ENEMY_HIT_COOLDOWN = 500 # ms (invulnerability after being hit)
-ENEMY_HIT_BOUNCE_Y = PLAYER_JUMP_STRENGTH * 0.3 # Upward bounce when enemy is hit
+ENEMY_HIT_BOUNCE_Y = PLAYER_JUMP_STRENGTH * 0.3
+ENEMY_STOMP_DEATH_DURATION = 300 # ms, visual duration of stomp death scale effect
+ENEMY_POST_ATTACK_PAUSE_DURATION = 200 # ms, brief pause after an enemy attack animation finishes
 
 # --- Colors ---
 WHITE = (255, 255, 255)
@@ -123,22 +126,100 @@ PURPLE_BACKGROUND = (75, 0, 130) # Default map background if not specified
 HEALTH_BAR_WIDTH = 50
 HEALTH_BAR_HEIGHT = 8
 HEALTH_BAR_OFFSET_ABOVE = 5 # Pixels above character's head
+HUD_HEALTH_BAR_WIDTH = HEALTH_BAR_WIDTH * 2
+HUD_HEALTH_BAR_HEIGHT = HEALTH_BAR_HEIGHT + 4
+
 
 # --- Map ---
 TILE_SIZE = 40
 LAVA_PATCH_HEIGHT = 20 # Default height for lava tiles if not specified by map
 LAVA_DAMAGE = 25       # Damage per hit from lava (can be time-based via hit cooldown)
-MAPS_DIR = "maps"
+
+def get_maps_directory():
+    """
+    Determines the absolute path to the 'maps' directory for file operations.
+    This path is where map files (.py from editor export, .json for editor saves)
+    are expected to be read from and written to.
+
+    For PyInstaller Bundles:
+    - If _MEIPASS/_internal/maps exists, uses that. (_MEIPASS is the bundle root)
+    - Else if _MEIPASS/maps exists, uses that.
+    - Else defaults to _MEIPASS/_internal/maps (this is the desired structure).
+
+    For Development:
+    - Uses 'maps' directory relative to this constants.py file (assumed to be project root).
+    """
+    # Check if running in a PyInstaller bundle
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        bundle_dir_meipass = sys._MEIPASS # This is your _internal if PyInstaller is set up that way
+
+        # Desired structure: maps folder directly inside _MEIPASS (your _internal folder)
+        desired_bundled_maps_path = os.path.join(bundle_dir_meipass, 'maps')
+        _maps_dir_to_use = desired_bundled_maps_path # Default to this for bundled app
+
+        if os.path.isdir(desired_bundled_maps_path):
+            # print(f"CONSTANTS (get_maps_directory): Using bundled maps dir: {_maps_dir_to_use}")
+            pass # Already set
+        else:
+            # Fallback: Check if 'maps' is next to the EXE (less common for _internal setup)
+            exe_dir = os.path.dirname(sys.executable)
+            maps_next_to_exe = os.path.join(exe_dir, 'maps')
+            if os.path.isdir(maps_next_to_exe):
+                # print(f"CONSTANTS (get_maps_directory): WARNING - Using maps dir next to EXE: {maps_next_to_exe}")
+                _maps_dir_to_use = maps_next_to_exe
+            # else:
+                # print(f"CONSTANTS (get_maps_directory): Maps directory not found at '{desired_bundled_maps_path}' or next to EXE. "
+                      # f"Will proceed assuming '{desired_bundled_maps_path}' for operations.")
+        return _maps_dir_to_use
+    else:
+        # Development mode: 'maps' directory relative to the project root
+        # (assuming constants.py is in or near the project root)
+        project_root_guess = os.path.abspath(os.path.join(os.path.dirname(__file__))) # Dir of constants.py
+        dev_maps_path = os.path.join(project_root_guess, 'maps')
+        # print(f"CONSTANTS (get_maps_directory): Development mode, using maps dir: {dev_maps_path}")
+        return dev_maps_path
+
+MAPS_DIR = get_maps_directory()
+# print(f"CONSTANTS: Final MAPS_DIR resolved to: {MAPS_DIR}") # For debugging if needed
+
 
 # --- Network Constants ---
-SERVER_IP_BIND = '0.0.0.0'
+SERVER_IP_BIND = '0.0.0.0' # Bind to all available interfaces
 SERVER_PORT_TCP = 5555
-SERVICE_NAME = "platformer_adventure_lan_v1"
+SERVICE_NAME = "platformer_adventure_lan_v1" # For LAN discovery
 DISCOVERY_PORT_UDP = 5556
-BUFFER_SIZE = 8192
+BUFFER_SIZE = 8192 # Increased buffer size for potentially larger game states
 BROADCAST_INTERVAL_S = 1.0
 CLIENT_SEARCH_TIMEOUT_S = 5.0
-MAP_DOWNLOAD_CHUNK_SIZE = 4096
+MAP_DOWNLOAD_CHUNK_SIZE = 4096 # Bytes per map data chunk
 
 # --- Other ---
 PLAYER_SELF_DAMAGE = 10 # For debug purposes
+
+# --- Player Ability Durations/Cooldowns (can be moved to a more specific section if Player constants grow) ---
+PLAYER_DASH_DURATION = 150 # ms
+PLAYER_ROLL_DURATION = 300 # ms
+PLAYER_SLIDE_DURATION = 400 # ms
+PLAYER_WALL_CLIMB_DURATION = 500 # ms
+PLAYER_COMBO_WINDOW = 250 # ms, time after first attack to chain a combo
+PLAYER_HIT_STUN_DURATION = 300 # ms
+PLAYER_HIT_COOLDOWN = 600 # ms (invulnerability after being hit)
+
+# --- Player 2 Controls (Example, can be customized) ---
+# These are just examples if you want to define them centrally.
+# Player class currently sets its own keys.
+# P2_LEFT_KEY = pygame.K_j
+# P2_RIGHT_KEY = pygame.K_l
+# P2_UP_KEY = pygame.K_i
+# P2_DOWN_KEY = pygame.K_k
+# P2_ATTACK1_KEY = pygame.K_o
+# P2_ATTACK2_KEY = pygame.K_p
+# P2_DASH_KEY = pygame.K_SEMICOLON
+# P2_ROLL_KEY = pygame.K_QUOTE
+# P2_INTERACT_KEY = pygame.K_BACKSLASH
+
+# P2_FIREBALL_KEY = pygame.K_KP_1
+# P2_POISON_KEY = pygame.K_KP_2
+# P2_BOLT_KEY = pygame.K_KP_3
+# P2_BLOOD_KEY = pygame.K_KP_4
+# P2_ICE_KEY = pygame.K_KP_5
