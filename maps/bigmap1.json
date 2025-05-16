@@ -2884,108 +2884,6 @@
             "game_type_id": "chest"
         },
         {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 200.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 240.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 400.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 440.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 480.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 520.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 560.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 720.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 760.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 800.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 840.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 880.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 920.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 960.0,
-            "world_y": 1800.0,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 1120.0,
-            "world_y": 1800,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 1160.0,
-            "world_y": 1800,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
-            "asset_editor_key": "platform_ledge_green",
-            "world_x": 1200.0,
-            "world_y": 1800,
-            "game_type_id": "platform_ledge_green"
-        },
-        {
             "asset_editor_key": "hazard_lava_tile",
             "world_x": 880.0,
             "world_y": 1920,
@@ -3050,9 +2948,33 @@
             "world_x": 1160.0,
             "world_y": 1920,
             "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "platform_ledge_gray_one_fourth",
+            "world_x": 120,
+            "world_y": 1880,
+            "game_type_id": "platform_ledge_gray_one_fourth"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_third",
+            "world_x": 160,
+            "world_y": 1880.0,
+            "game_type_id": "platform_ledge_green_one_third"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_third",
+            "world_x": 200,
+            "world_y": 1880.0,
+            "game_type_id": "platform_ledge_green_one_third"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 240,
+            "world_y": 1880,
+            "game_type_id": "platform_ledge_green_one_fourth"
         }
     ],
     "camera_offset_x": 0,
-    "camera_offset_y": 1000.0,
+    "camera_offset_y": 1300.0,
     "show_grid": true
 }

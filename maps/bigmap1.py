@@ -20,10 +20,8 @@ def load_map_bigmap1(initial_screen_width, initial_screen_height):
     player1_spawn = (89.0, 1917.0)
 
     # --- Placed Objects (merged where possible) ---
-    platforms.add(Platform(200.0, 1800.0, 80, 10, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(400.0, 1800.0, 200, 10, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(720.0, 1800.0, 280, 10, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(1120.0, 1800, 120, 10, (0,100,0), platform_type='ledge'))
+    platforms.add(Platform(160, 1880.0, 80, 13, (0,100,0), platform_type='ledge'))
+    platforms.add(Platform(240, 1880, 40, 10, (0,100,0), platform_type='ledge'))
     platforms.add(Platform(0, 600, 80, 200, (128,128,128), platform_type='wall'))
     platforms.add(Platform(0, 1160.0, 80, 120, (128,128,128), platform_type='wall'))
     platforms.add(Platform(0, 1360.0, 80, 560, (128,128,128), platform_type='wall'))

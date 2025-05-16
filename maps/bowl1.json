@@ -1,0 +1,1486 @@
+{
+    "map_name_for_function": "bowl1",
+    "map_width_tiles": 50,
+    "map_height_tiles": 50,
+    "grid_size": 40,
+    "background_color": [
+        173,
+        216,
+        230
+    ],
+    "placed_objects": [
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1280.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1280.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1320.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1320.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1360.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1360.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1400.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1400.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1440.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1440.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1480.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1480.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1520.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1520.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1560.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1560.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1600.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1600.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1680.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1680.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1720.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1720.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1760.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1760.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1800.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1840.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1840.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 80.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 80.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 120.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 120.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 160.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 160.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 280.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 320.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 280.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 320.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 440.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 440.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 480.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 480.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 560.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 560.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 240.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 240.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 200.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 200.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 160,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 200,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 240,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 320,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 560,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 640,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 680,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 640,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 680,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 720,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 760,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 720,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 760,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 800,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 840,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 800,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 840,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 880,
+            "world_y": 1880,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 920,
+            "world_y": 1880,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 880,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 920,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 960,
+            "world_y": 1880,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 960,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000,
+            "world_y": 1880,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040,
+            "world_y": 1880,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 600.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 600.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 640.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 680.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 720.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 760.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 800.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 840.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 880.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 920.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 960.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080.0,
+            "world_y": 1920,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000.0,
+            "world_y": 1840.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040.0,
+            "world_y": 1840.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080.0,
+            "world_y": 1840.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040.0,
+            "world_y": 1760.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080.0,
+            "world_y": 1760.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040.0,
+            "world_y": 2000.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080.0,
+            "world_y": 2000.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1120.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1120.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1200.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160.0,
+            "world_y": 2000.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1200.0,
+            "world_y": 2000.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1200.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1240.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1240.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1280.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1320.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1280.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1320.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1360.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1400.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1360.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1400.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1440.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1440.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1480.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1520.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1480.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1520.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1600.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1600.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1640.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1680.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1640.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1680.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1720.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1720.0,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1680.0,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1720.0,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1760.0,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1760.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1800.0,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1800.0,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1760,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1800,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1840,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1840,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1880,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1880,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920,
+            "world_y": 1960.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 2000,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 2000,
+            "world_y": 1920.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1840,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1880,
+            "world_y": 1880.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 2000.0,
+            "world_y": 1960,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 2000.0,
+            "world_y": 2000,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1840,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 2000.0,
+            "world_y": 1840,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1800,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 2000.0,
+            "world_y": 1800,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1800,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1840,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1760,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1760,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1720,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1720,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1680,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1680,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1880.0,
+            "world_y": 1800,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1880.0,
+            "world_y": 1840,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1600,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1600,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1560,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1560,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1520,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1520,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1480,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1480,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1440,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1440,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1400,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1400,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1360,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1360,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1320,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1320,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1920.0,
+            "world_y": 1280.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1960.0,
+            "world_y": 1280.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1720,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1680,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1640,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1600,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1560,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1520,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1480,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1440,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1400,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1360,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1320,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1280.0,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1240.0,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1160.0,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1120.0,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 1080.0,
+            "world_y": 1200.0,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "player1_spawn",
+            "world_x": 200,
+            "world_y": 1880.0,
+            "game_type_id": "player1_spawn"
+        },
+        {
+            "asset_editor_key": "player2_spawn",
+            "world_x": 240,
+            "world_y": 1880,
+            "game_type_id": "player2_spawn"
+        },
+        {
+            "asset_editor_key": "chest",
+            "world_x": 880.0,
+            "world_y": 1840.0,
+            "game_type_id": "chest"
+        },
+        {
+            "asset_editor_key": "chest",
+            "world_x": 1280.0,
+            "world_y": 1880,
+            "game_type_id": "chest"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 600.0,
+            "world_y": 1920.0,
+            "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 680.0,
+            "world_y": 1920.0,
+            "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 640.0,
+            "world_y": 1920.0,
+            "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 360,
+            "world_y": 1880.0,
+            "game_type_id": "platform_ledge_green_one_fourth"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1840.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1800.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1760.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1720.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1680.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1600.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1560.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1520.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 1480.0,
+            "game_type_id": "platform_wall_gray"
+        }
+    ],
+    "camera_offset_x": 0,
+    "camera_offset_y": 1300,
+    "show_grid": true
+}
