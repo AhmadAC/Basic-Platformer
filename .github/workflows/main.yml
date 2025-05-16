@@ -114,8 +114,8 @@ jobs:
           # Add any other hidden imports the editor might need.
         shell: pwsh
 
-      # 9. Modify the Spec File to Add Data Files for Editor (if needed)
-      - name: Configure data files in Editor Spec File
+      # 9. Modify the Spec File to Add Data Files for Editor
+      - name: Add data files to Editor Spec File
         run: |
           $specFile = "Editor.spec" # Name matches '--name' arg above
           Write-Host "Checking if $specFile exists..."
@@ -123,42 +123,39 @@ jobs:
             Write-Error "$specFile not found after pyi-makespec!"
             exit 1
           }
-          Write-Host "$specFile found. Attempting to configure datas..."
+          Write-Host "$specFile found. Attempting to modify..."
           $specContent = Get-Content -Path $specFile -Raw
           
-          # Define what 'datas' should be for the editor.
-          # If your editor needs asset files (e.g., from an 'editor/assets' folder):
-          # $dataToSetForEditor = "[('editor/assets', 'assets_editor')]"
-          # If the editor does not need any specific data files bundled this way,
-          # an empty list is appropriate. PyInstaller will still bundle detected imports.
-          $dataToSetForEditor = "[]" # Default: no specific data files. MODIFY AS NEEDED.
+          # Bundle the 'characters' folder for the Editor, similar to the Platformer.
+          # This is necessary because editor_assets.py uses resource_path
+          # which expects these assets to be available.
+          $dataToSetForEditor = "[('characters', 'characters')]" 
           
           $patternToReplace = 'datas=\s*\[\s*\]' # Pattern to find the default datas=[]
           
           if ($specContent -match $patternToReplace) {
-            # Found the default datas=[] line, replace it with $dataToSetForEditor
             $modifiedContent = $specContent -replace $patternToReplace, "datas=$dataToSetForEditor"
             Set-Content -Path $specFile -Value $modifiedContent
             Write-Host "Successfully set 'datas' in $specFile to $dataToSetForEditor."
+            # Check if replacement actually happened if we intended to add data
             if (($specContent -eq $modifiedContent) -and ($dataToSetForEditor -ne "[]")) {
-              # This case: we intended to add data, but content didn't change.
               Write-Host "--- Editor Spec File Content START ---"
               Write-Host $specContent
               Write-Host "--- Editor Spec File Content END ---"
-              Write-Error "Warning: Tried to set non-empty datas for Editor, but spec file content did not change. Original datas line might not have been 'datas=[]' or was already set to the target."
-              # Potentially change to exit 1 if this is critical.
-            } elseif ($specContent -eq $modifiedContent) {
-              Write-Host "Note: Content of $specFile for Editor did not change. This is expected if 'datas' was already $dataToSetForEditor (e.g., both were '[]')."
+              # This is now a critical error if we added data and nothing changed.
+              Write-Error "CRITICAL: Tried to set non-empty datas for Editor, but spec file content did not change. Original datas line might not have been 'datas=[]' or was already set to the target. Halting build."
+              exit 1
+            } elseif (($specContent -eq $modifiedContent) -and ($dataToSetForEditor -eq "[]")) {
+              # This case: we intended to set an empty datas, and it didn't change (was already empty). This is OK.
+              Write-Host "Note: Content of $specFile for Editor did not change. This is expected as 'datas' was already '[]' and intended to be '[]'."
             }
           } else {
             # The default 'datas=[]' line was not found. This is unexpected for a fresh spec.
             Write-Host "--- Editor Spec File Content START ---"
             Write-Host $specContent
             Write-Host "--- Editor Spec File Content END ---"
-            Write-Error "The pattern '$patternToReplace' (default datas line) was not found in $specFile for Editor. If the Editor requires data files, you may need to manually inspect/create the .spec file or adjust this script."
-            # If $dataToSetForEditor is "[]", this might not be a critical failure,
-            # but it indicates the spec file isn't in the expected default state.
-            # exit 1 # Uncomment if this should be a hard failure.
+            Write-Error "CRITICAL: The pattern '$patternToReplace' (default datas line) was not found in $specFile for Editor. If the Editor requires data files, you may need to manually inspect/create the .spec file or adjust this script. Halting build."
+            exit 1
           }
         shell: pwsh
 
