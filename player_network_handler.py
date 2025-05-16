@@ -207,23 +207,34 @@ def handle_player_network_input(player, received_input_data_dict):
     
     can_perform_action_net = not player.is_attacking and not player.is_dashing and \
                              not player.is_rolling and not player.is_sliding and \
-                             not player.on_ladder and player.state not in ['turn','hit']
+                             not player.on_ladder and player.state not in ['turn','hit'] \
+                             and not player.is_crouching # Prevent actions while crouching for consistency
     
     if received_input_data_dict.get('attack1_pressed_event', False) and can_perform_action_net:
-        player.attack_type = 4 if player.is_crouching else 1 
+        player.attack_type = 4 if player.is_crouching else 1 # This line might be redundant if can_perform_action_net blocks crouching
         attack_anim_key_net = 'crouch_attack' if player.is_crouching else \
                               ('attack' if (intends_move_left_net or intends_move_right_net) else 'attack_nm')
         player.set_state(attack_anim_key_net)
     
     if received_input_data_dict.get('attack2_pressed_event', False) and can_perform_action_net:
-        player.attack_type = 4 if player.is_crouching else 2 
+        player.attack_type = 4 if player.is_crouching else 2 # Redundant if crouching blocked
         attack2_anim_key_net = 'crouch_attack' if player.is_crouching else \
                                ('attack2' if (intends_move_left_net or intends_move_right_net) else 'attack2_nm')
         player.set_state(attack2_anim_key_net)
 
-    if received_input_data_dict.get('fireball_pressed_event', False) and can_perform_action_net:
-        if hasattr(player, 'fire_fireball'): 
-             player.fire_fireball() 
+    # Handle new weapon firing events
+    if can_perform_action_net: # Ensure not crouching for projectiles too
+        if received_input_data_dict.get('fireball_pressed_event', False):
+            if hasattr(player, 'fire_fireball'): player.fire_fireball()
+        if received_input_data_dict.get('poison_pressed_event', False):
+            if hasattr(player, 'fire_poison'): player.fire_poison()
+        if received_input_data_dict.get('bolt_pressed_event', False):
+            if hasattr(player, 'fire_bolt'): player.fire_bolt()
+        if received_input_data_dict.get('blood_pressed_event', False):
+            if hasattr(player, 'fire_blood'): player.fire_blood()
+        if received_input_data_dict.get('ice_pressed_event', False):
+            if hasattr(player, 'fire_ice'): player.fire_ice()
+
 
     if received_input_data_dict.get('jump_intent', False) and can_perform_action_net and not player.is_crouching:
          if player.on_ground: 
@@ -251,10 +262,10 @@ def get_player_input_state_for_network(player, current_pygame_keys, current_pyga
     suitable for sending over the network.
 
     Args:
-        player (Player): The local player instance (used for player_id and fireball_key config).
+        player (Player): The local player instance (used for player_id and weapon key configs).
         current_pygame_keys: The result of pygame.key.get_pressed().
         current_pygame_events: The list from pygame.event.get().
-        key_map (dict): The key mapping for this player's controls.
+        key_map (dict): The key mapping for this player's movement/action controls.
 
     Returns:
         dict: A dictionary representing the player's input state.
@@ -271,7 +282,12 @@ def get_player_input_state_for_network(player, current_pygame_keys, current_pyga
         'roll_pressed_event': False,
         'interact_pressed_event': False, 
         'jump_intent': False, 
+        
         'fireball_pressed_event': False,
+        'poison_pressed_event': False,
+        'bolt_pressed_event': False,
+        'blood_pressed_event': False,
+        'ice_pressed_event': False,
         
         'fireball_aim_x': player.fireball_last_input_dir.x, 
         'fireball_aim_y': player.fireball_last_input_dir.y
@@ -286,8 +302,17 @@ def get_player_input_state_for_network(player, current_pygame_keys, current_pyga
             if event.key == key_map.get('interact'): input_state_dict["interact_pressed_event"] = True
             if event.key == key_map.get('up'): input_state_dict["jump_intent"] = True 
             
+            # Check weapon keys
             if player.fireball_key and event.key == player.fireball_key:
                 input_state_dict['fireball_pressed_event'] = True
+            elif player.poison_key and event.key == player.poison_key:
+                input_state_dict['poison_pressed_event'] = True
+            elif player.bolt_key and event.key == player.bolt_key:
+                input_state_dict['bolt_pressed_event'] = True
+            elif player.blood_key and event.key == player.blood_key:
+                input_state_dict['blood_pressed_event'] = True
+            elif player.ice_key and event.key == player.ice_key:
+                input_state_dict['ice_pressed_event'] = True
                 
     # print(f"DEBUG PNH (get_player_input_state_for_network) for P{player.player_id}: Generated input state: {input_state_dict}") # DEBUG
     return input_state_dict

@@ -1,3 +1,5 @@
+########## START OF FILE: constants.py ##########
+
 # constants.py
 # -*- coding: utf-8 -*-
 """
@@ -45,12 +47,46 @@ PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER = 1.5 # If attack2 animation is slower/
 CHARACTER_ATTACK_STATE_DURATION = 480 # ms, general duration for an attack state if not animation-driven
 
 # --- Projectile Constants ---
+# Fireball (Key 1)
 FIREBALL_DAMAGE = 50
 FIREBALL_SPEED = 9
 FIREBALL_COOLDOWN = 750 # ms
 FIREBALL_LIFESPAN = 2500 # ms
 FIREBALL_SPRITE_PATH = "characters/weapons/fire.gif"
 FIREBALL_DIMENSIONS = (61, 58) # width, height
+
+# Poison (Key 2)
+POISON_DAMAGE = 20
+POISON_SPEED = 6
+POISON_COOLDOWN = 1000 # ms
+POISON_LIFESPAN = 3000 # ms
+POISON_SPRITE_PATH = "characters/weapons/poison.gif"
+POISON_DIMENSIONS = (40, 40) # Placeholder, adjust if needed
+
+# Bolt (Key 3)
+BOLT_DAMAGE = 35
+BOLT_SPEED = 15
+BOLT_COOLDOWN = 600 # ms
+BOLT_LIFESPAN = 1500 # ms
+BOLT_SPRITE_PATH = "characters/weapons/bolt1_resized_11x29.gif"
+BOLT_DIMENSIONS = (11, 29) # Original dimensions, will be (29, 11) after rotation
+
+# Blood (Key 4)
+BLOOD_DAMAGE = 30 
+BLOOD_SPEED = 8
+BLOOD_COOLDOWN = 800 # ms
+BLOOD_LIFESPAN = 2000 # ms
+BLOOD_SPRITE_PATH = "characters/weapons/blood.gif"
+BLOOD_DIMENSIONS = (40, 40) # Placeholder, adjust if needed
+
+# Ice (Key 5)
+ICE_DAMAGE = 25
+ICE_SPEED = 7
+ICE_COOLDOWN = 900 # ms
+ICE_LIFESPAN = 2200 # ms
+ICE_SPRITE_PATH = "characters/weapons/ice.gif"
+ICE_DIMENSIONS = (40, 40) # Placeholder, adjust if needed
+
 
 # --- Enemy Constants ---
 ENEMY_MAX_HEALTH = 80

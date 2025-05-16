@@ -1,3 +1,5 @@
+########## START OF FILE: player.py ##########
+
 # player.py
 # -*- coding: utf-8 -*-
 """
@@ -32,6 +34,9 @@ from player_combat_handler import (fire_player_fireball, check_player_attack_col
                                    player_take_damage, player_self_inflict_damage, player_heal_to_full)
 from player_network_handler import (get_player_network_data, set_player_network_data, 
                                     handle_player_network_input, get_player_input_state_for_network)
+
+# Import new projectile types
+from projectiles import Fireball, PoisonShot, BoltProjectile, BloodShot, IceShard
 
 
 class Player(pygame.sprite.Sprite):
@@ -110,14 +115,38 @@ class Player(pygame.sprite.Sprite):
         self.is_holding_climb_ability_key = False
         self.is_holding_crouch_ability_key = False
 
+        # Projectile firing attributes
         self.fireball_cooldown_timer = 0
-        self.fireball_last_input_dir = pygame.math.Vector2(1.0, 0.0)
+        self.poison_cooldown_timer = 0
+        self.bolt_cooldown_timer = 0
+        self.blood_cooldown_timer = 0
+        self.ice_cooldown_timer = 0
+
+        self.fireball_last_input_dir = pygame.math.Vector2(1.0, 0.0) # Aim direction
         self.projectile_sprites_group = None
         self.all_sprites_group = None
         
+        # Weapon keys
         self.fireball_key = None 
-        if self.player_id == 1: self.fireball_key = getattr(C, 'P1_FIREBALL_KEY', pygame.K_1)
-        elif self.player_id == 2: self.fireball_key = getattr(C, 'P2_FIREBALL_KEY', pygame.K_0)
+        self.poison_key = None
+        self.bolt_key = None
+        self.blood_key = None
+        self.ice_key = None
+
+        if self.player_id == 1: 
+            self.fireball_key = pygame.K_1
+            self.poison_key = pygame.K_2
+            self.bolt_key = pygame.K_3
+            self.blood_key = pygame.K_4
+            self.ice_key = pygame.K_5
+        elif self.player_id == 2: # Player 2 key setup (can be different)
+            # Example: P2 uses numpad keys or different letter keys
+            self.fireball_key = getattr(C, 'P2_FIREBALL_KEY', pygame.K_KP_1) # Fallback to numpad 1
+            self.poison_key = getattr(C, 'P2_POISON_KEY', pygame.K_KP_2)
+            self.bolt_key = getattr(C, 'P2_BOLT_KEY', pygame.K_KP_3)
+            self.blood_key = getattr(C, 'P2_BLOOD_KEY', pygame.K_KP_4)
+            self.ice_key = getattr(C, 'P2_ICE_KEY', pygame.K_KP_5)
+
 
     def set_projectile_group_references(self, projectile_group: pygame.sprite.Group, 
                                         all_sprites_group: pygame.sprite.Group):
@@ -141,8 +170,64 @@ class Player(pygame.sprite.Sprite):
     def handle_mapped_input(self, keys_pressed_state, pygame_event_list, key_map_dict):
         process_player_input_logic(self, keys_pressed_state, pygame_event_list, key_map_dict)
 
+    def _generic_fire_projectile(self, projectile_class, cooldown_attr_name, cooldown_const, projectile_config_name):
+        if not self._valid_init or self.is_dead or not self.alive(): return
+        if self.projectile_sprites_group is None or self.all_sprites_group is None:
+            if self.print_limiter.can_print(f"player_{self.player_id}_fire_{projectile_config_name}_no_group_ref"):
+                print(f"Player {self.player_id}: Cannot fire {projectile_config_name}, projectile/all_sprites group not set.")
+            return
+
+        current_time_ms = pygame.time.get_ticks()
+        last_fire_time = getattr(self, cooldown_attr_name, 0)
+
+        if current_time_ms - last_fire_time >= cooldown_const:
+            setattr(self, cooldown_attr_name, current_time_ms)
+
+            spawn_x = self.rect.centerx
+            spawn_y = self.rect.centery
+            
+            current_aim_direction = self.fireball_last_input_dir.copy()
+            if current_aim_direction.length_squared() == 0: 
+                current_aim_direction.x = 1.0 if self.facing_right else -1.0
+                current_aim_direction.y = 0.0
+            
+            # Use projectile's own dimensions from constants for offset calc
+            proj_dims = getattr(C, f"{projectile_config_name.upper()}_DIMENSIONS", (10,10)) # Fallback
+            
+            offset_distance = (self.rect.width / 2) + (proj_dims[0] / 2) - 10 # Generic offset
+            if abs(current_aim_direction.y) > 0.8 * abs(current_aim_direction.x): 
+                offset_distance = (self.rect.height / 2) + (proj_dims[1] / 2) - 10
+            
+            if current_aim_direction.length_squared() > 0: 
+                offset_vector = current_aim_direction.normalize() * offset_distance
+                spawn_x += offset_vector.x
+                spawn_y += offset_vector.y
+
+            new_projectile = projectile_class(spawn_x, spawn_y, current_aim_direction, self)
+            self.projectile_sprites_group.add(new_projectile)
+            self.all_sprites_group.add(new_projectile)
+            
+            if self.print_limiter.can_print(f"player_{self.player_id}_fire_{projectile_config_name}_msg"):
+                print(f"Player {self.player_id} fires {projectile_config_name}. Aim Dir: {current_aim_direction}, Spawn: ({spawn_x:.1f}, {spawn_y:.1f})")
+        else:
+            if self.print_limiter.can_print(f"player_{self.player_id}_{projectile_config_name}_cooldown"):
+                print(f"Player {self.player_id}: {projectile_config_name} on cooldown.")
+
     def fire_fireball(self):
-        fire_player_fireball(self)
+        self._generic_fire_projectile(Fireball, 'fireball_cooldown_timer', C.FIREBALL_COOLDOWN, 'fireball')
+
+    def fire_poison(self):
+        self._generic_fire_projectile(PoisonShot, 'poison_cooldown_timer', C.POISON_COOLDOWN, 'poison')
+
+    def fire_bolt(self):
+        self._generic_fire_projectile(BoltProjectile, 'bolt_cooldown_timer', C.BOLT_COOLDOWN, 'bolt')
+
+    def fire_blood(self):
+        self._generic_fire_projectile(BloodShot, 'blood_cooldown_timer', C.BLOOD_COOLDOWN, 'blood')
+
+    def fire_ice(self):
+        self._generic_fire_projectile(IceShard, 'ice_cooldown_timer', C.ICE_COOLDOWN, 'ice')
+
 
     def check_attack_collisions(self, list_of_targets):
         check_player_attack_collisions(self, list_of_targets)
@@ -211,7 +296,14 @@ class Player(pygame.sprite.Sprite):
         self.on_ladder = False; self.touching_wall = 0; self.facing_right = True
         
         self.hit_timer = 0; self.dash_timer = 0; self.roll_timer = 0; self.slide_timer = 0
-        self.attack_timer = 0; self.wall_climb_timer = 0; self.fireball_cooldown_timer = 0
+        self.attack_timer = 0; self.wall_climb_timer = 0; 
+        
+        self.fireball_cooldown_timer = 0
+        self.poison_cooldown_timer = 0
+        self.bolt_cooldown_timer = 0
+        self.blood_cooldown_timer = 0
+        self.ice_cooldown_timer = 0
+
         self.fireball_last_input_dir = pygame.math.Vector2(1.0, 0.0)
 
         if hasattr(self.image, 'set_alpha') and hasattr(self.image, 'get_alpha') and \
@@ -219,3 +311,5 @@ class Player(pygame.sprite.Sprite):
             self.image.set_alpha(255)
         
         set_player_state(self, 'idle')
+
+########## END OF FILE: player.py ##########

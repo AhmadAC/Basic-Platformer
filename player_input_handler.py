@@ -1,3 +1,5 @@
+########## START OF FILE: player_input_handler.py ##########
+
 # player_input_handler.py
 # -*- coding: utf-8 -*-
 """
@@ -211,15 +213,31 @@ def process_player_input_logic(player, keys_pressed, pygame_events, key_config_m
                       player.on_ladder = False
                       player.set_state('fall' if not player.on_ground else 'idle')
 
-            # --- MODIFIED FIREBALL LOGIC ---
-            if player.fireball_key and event.key == player.fireball_key:
-                 if not player.is_crouching: # <-- ADDED THIS CHECK
-                     print(f"DEBUG PIH (P{player.player_id}): Matched fireball key press ({event.key}) and not crouching. Calling player.fire_fireball().")
-                     if hasattr(player, 'fire_fireball'):
-                         player.fire_fireball()
-                 else:
-                     print(f"DEBUG PIH (P{player.player_id}): Matched fireball key press ({event.key}) BUT player is crouching. Fireball blocked.")
-            # --- END OF MODIFIED FIREBALL LOGIC ---
+            # --- Weapon Firing Logic ---
+            can_fire_projectile = not player.is_crouching and \
+                                  not player.is_attacking and \
+                                  not player.is_dashing and \
+                                  not player.is_rolling and \
+                                  not player.is_sliding and \
+                                  not player.on_ladder and \
+                                  player.state not in ['turn', 'hit', 'death', 'death_nm', 'wall_climb', 'wall_hang', 'wall_slide']
+
+            if can_fire_projectile:
+                if player.fireball_key and event.key == player.fireball_key:
+                    if hasattr(player, 'fire_fireball'):
+                        player.fire_fireball()
+                elif player.poison_key and event.key == player.poison_key:
+                    if hasattr(player, 'fire_poison'):
+                        player.fire_poison()
+                elif player.bolt_key and event.key == player.bolt_key:
+                    if hasattr(player, 'fire_bolt'):
+                        player.fire_bolt()
+                elif player.blood_key and event.key == player.blood_key:
+                    if hasattr(player, 'fire_blood'):
+                        player.fire_blood()
+                elif player.ice_key and event.key == player.ice_key:
+                    if hasattr(player, 'fire_ice'):
+                        player.fire_ice()
 
 
     is_in_manual_override_or_transition_state = player.is_attacking or player.is_dashing or \
@@ -269,3 +287,5 @@ def process_player_input_logic(player, keys_pressed, pygame_events, key_config_m
                   player.set_state('fall' if 'fall' in player.animations and player.animations['fall'] else 'idle')
              elif player.state not in ['jump','jump_fall_trans','fall']:
                   player.set_state('idle')
+
+########## END OF FILE: player_input_handler.py ##########
