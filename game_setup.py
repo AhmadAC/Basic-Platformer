@@ -53,7 +53,7 @@ def initialize_game_elements(current_width: int, current_height: int,
         if group is not None: group.empty()
     
     if all_sprites_from_existing: 
-        for sprite in list(all_sprites.sprites()): # Iterate over a copy
+        for sprite in list(all_sprites.sprites()): 
              if sprite not in [player1_to_kill, player2_to_kill, current_chest_to_kill]:
                  if not isinstance(sprite, Player): 
                     sprite.kill() 
@@ -68,10 +68,8 @@ def initialize_game_elements(current_width: int, current_height: int,
     enemy_list: List[Enemy] = [] 
 
     level_data_loaded_successfully = False
-    # If map_module_name is None (e.g. client initial call), we don't load level geometry yet.
     target_map_name_for_load = map_module_name if map_module_name else None
     
-    # Default values if no map is loaded yet
     level_background_color = C.LIGHT_BLUE 
     local_enemy_spawns_data_list = [] 
     collectible_spawns_data_list = []
@@ -82,9 +80,9 @@ def initialize_game_elements(current_width: int, current_height: int,
     lvl_max_y_abs = current_height
     ground_level_y = current_height - C.TILE_SIZE
     ground_platform_height = C.TILE_SIZE
-    loaded_map_name_return = None # To return the name of the map that was actually loaded
+    loaded_map_name_return = None 
 
-    if target_map_name_for_load: # Only attempt to load map data if a name is provided
+    if target_map_name_for_load: 
         safe_map_name_for_func = target_map_name_for_load.replace('-', '_').replace(' ', '_')
         expected_level_load_func_name = f"load_map_{safe_map_name_for_func}"
         
@@ -92,7 +90,7 @@ def initialize_game_elements(current_width: int, current_height: int,
 
         try:
             map_module_full_path = f"maps.{target_map_name_for_load}"
-            if map_module_full_path in sys.modules: # If already imported, reload for potential updates
+            if map_module_full_path in sys.modules: 
                 print(f"DEBUG GameSetup: Reloading map module '{map_module_full_path}'")
                 map_module = importlib.reload(sys.modules[map_module_full_path])
             else:
@@ -151,9 +149,9 @@ def initialize_game_elements(current_width: int, current_height: int,
                 return initialize_game_elements(current_width, current_height, for_game_mode, existing_sprites_groups, DEFAULT_LEVEL_MODULE_NAME)
             else:
                 print(f"GAME_SETUP FATAL: Default map '{DEFAULT_LEVEL_MODULE_NAME}' also failed. Cannot proceed."); return None
-    else: # No map_module_name provided, e.g., client initial setup
+    else: 
         print("DEBUG GameSetup: No map module name provided, skipping level geometry loading. Only players/camera shells will be created if mode requires.")
-        loaded_map_name_return = None # Explicitly none if no map loaded.
+        loaded_map_name_return = None 
 
     all_sprites.add(platform_sprites.sprites(), ladder_sprites.sprites(), hazard_sprites.sprites())
     
@@ -168,7 +166,7 @@ def initialize_game_elements(current_width: int, current_height: int,
         player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) 
         if not player2._valid_init: print(f"CRITICAL GameSetup: P2 (couch) init failed."); return None
         all_sprites.add(player2)
-    elif for_game_mode in ["join_lan", "join_ip", "host"]: # Host also needs a P2 shell for network data
+    elif for_game_mode in ["join_lan", "join_ip", "host"]: 
         player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) 
         if not player2._valid_init: print(f"CRITICAL GameSetup: P2 shell init failed."); return None
         all_sprites.add(player2)
@@ -189,12 +187,13 @@ def initialize_game_elements(current_width: int, current_height: int,
         for i, spawn_info in enumerate(local_enemy_spawns_data_list):
             try:
                 patrol_rect = pygame.Rect(spawn_info['patrol']) if spawn_info.get('patrol') else None
+                enemy_color_id_from_map = spawn_info.get('enemy_color_id') # Get color ID from map data
                 enemy = Enemy(start_x=spawn_info['pos'][0], start_y=spawn_info['pos'][1], 
-                              patrol_area=patrol_rect, enemy_id=i) 
+                              patrol_area=patrol_rect, enemy_id=i, color_name=enemy_color_id_from_map) # Pass color_name
                 if enemy._valid_init: 
                     all_sprites.add(enemy); enemy_sprites.add(enemy); enemy_list.append(enemy)
                 else:
-                    print(f"Warning GameSetup: Enemy {i} at {spawn_info['pos']} failed _valid_init.")
+                    print(f"Warning GameSetup: Enemy {i} (Color: {enemy_color_id_from_map}) at {spawn_info['pos']} failed _valid_init.")
             except Exception as e: print(f"Error spawning enemy {i} with data {spawn_info}: {e}"); traceback.print_exc()
     
     current_chest = None
@@ -238,11 +237,10 @@ def initialize_game_elements(current_width: int, current_height: int,
         "player1_spawn_pos": player1_spawn_pos, "player2_spawn_pos": player2_spawn_pos,
         "enemy_spawns_data_cache": local_enemy_spawns_data_list, 
         "level_background_color": level_background_color,
-        "loaded_map_name": loaded_map_name_return # Return the name of the map loaded
+        "loaded_map_name": loaded_map_name_return 
     }
     return game_elements_dict
 
-# RENAMED FUNCTION from spawn_chest_on_ledge to spawn_chest
 def spawn_chest(all_platform_sprites_group: pygame.sprite.Group, main_ground_y_surface_level: int) -> Optional[Chest]:
     """
     Spawns a chest ONLY on platforms explicitly marked as 'ledge'.
@@ -265,7 +263,7 @@ def spawn_chest(all_platform_sprites_group: pygame.sprite.Group, main_ground_y_s
         cy = chosen_platform.rect.top 
         
         print(f"DEBUG GS (spawn_chest): Attempting to spawn chest at calculated pos: ({cx},{cy}) on platform {chosen_platform.rect}")
-        new_chest = Chest(cx, cy) # Chest constructor expects midbottom X, Y for its rect.bottom
+        new_chest = Chest(cx, cy) 
         if hasattr(new_chest, '_valid_init') and new_chest._valid_init:
             print(f"DEBUG GS (spawn_chest): Chest spawned on ledge at {new_chest.rect.midbottom}")
             return new_chest

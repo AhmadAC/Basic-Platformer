@@ -1,6 +1,8 @@
+########## START OF FILE: enemy.py ##########
+
 # enemy.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.10 (Integrated global logger, removed internal PrintLimiter)
+## version 1.0.0.12 (Corrected enemy_list reference in check_character_collision)
 """
 Defines the Enemy class, a CPU-controlled character.
 Handles AI-driven movement (via enemy_ai_handler), animations, states,
@@ -35,21 +37,31 @@ from enemy_network_handler import get_enemy_network_data, set_enemy_network_data
 
 
 class Enemy(pygame.sprite.Sprite):
-    FROZEN_DURATION = 3000  # ms
-    DEFROST_DURATION = 2000 # ms
+    # ... (rest of __init__, apply_aflame_effect, set_state, animate, stomp_kill methods remain the same) ...
 
-    def __init__(self, start_x, start_y, patrol_area=None, enemy_id=None):
+    def __init__(self, start_x, start_y, patrol_area=None, enemy_id=None, color_name=None): # Added color_name parameter
         super().__init__()
         self.spawn_pos = pygame.math.Vector2(start_x, start_y)
         self.patrol_area = patrol_area
         self.enemy_id = enemy_id if enemy_id is not None else id(self)
         self._valid_init = True
         character_base_asset_folder = 'characters'
+        
         available_enemy_colors = ['cyan', 'green', 'pink', 'purple', 'red', 'yellow']
         if not available_enemy_colors:
              warning(f"Enemy Warning (ID: {self.enemy_id}): No enemy colors defined! Defaulting to 'player1' assets.")
-             available_enemy_colors = ['player1']
-        self.color_name = random.choice(available_enemy_colors)
+             available_enemy_colors = ['player1'] # Fallback if list is empty
+
+        if color_name and color_name in available_enemy_colors: # If a valid color is provided, use it
+            self.color_name = color_name
+            debug(f"Enemy {self.enemy_id}: Initialized with specified color: {self.color_name}")
+        elif color_name: # If a color is provided but it's not in the known list
+            warning(f"Enemy Warning (ID: {self.enemy_id}): Specified color '{color_name}' not in available_enemy_colors. Choosing random.")
+            self.color_name = random.choice(available_enemy_colors)
+        else: # No color provided, choose randomly
+            self.color_name = random.choice(available_enemy_colors)
+            debug(f"Enemy {self.enemy_id}: Initialized with random color: {self.color_name}")
+
         chosen_enemy_asset_folder = os.path.join(character_base_asset_folder, self.color_name)
 
         self.animations = load_all_player_animations(relative_asset_folder=chosen_enemy_asset_folder)
@@ -110,16 +122,53 @@ class Enemy(pygame.sprite.Sprite):
         self.original_stomp_death_image = None
         self.original_stomp_facing_right = True
         
-        # Frozen/Defrost state
         self.is_frozen = False
         self.is_defrosting = False
-        self.frozen_effect_timer = 0 # Used for both frozen and defrost duration tracking
+        self.frozen_effect_timer = 0
 
+        # New aflame attributes
+        self.is_aflame = False
+        self.aflame_timer_start = 0
+        self.is_deflaming = False
+        self.deflame_timer_start = 0
+        self.aflame_damage_last_tick = 0
+        self.has_ignited_another_enemy_this_cycle = False
+
+    def apply_aflame_effect(self):
+        # Any enemy can be set aflame by touch, but only green ones by fireballs initially.
+        # This method handles an enemy *becoming* aflame.
+        if self.is_aflame or self.is_deflaming or self.is_dead:
+            debug(f"Enemy {self.enemy_id}: apply_aflame_effect called but already aflame/deflaming/dead. Ignoring.")
+            return
+
+        debug(f"Enemy {self.enemy_id} ({self.color_name}): Applying aflame effect.")
+        self.is_aflame = True
+        self.is_deflaming = False
+        self.is_frozen = False # Aflame overrides frozen/defrost
+        self.is_defrosting = False
+
+        self.aflame_timer_start = pygame.time.get_ticks()
+        self.aflame_damage_last_tick = self.aflame_timer_start
+        self.has_ignited_another_enemy_this_cycle = False
+        
+        # Stop current actions like attacking
+        self.is_attacking = False 
+        self.attack_type = 0
+        self.vel.x *= 0.5 # Briefly slow down from impact/ignition
+        
+        self.set_state('aflame') # Visual and state update
 
     def set_state(self, new_state: str):
         if not self._valid_init: return
 
-        if (self.is_frozen or self.is_defrosting) and new_state not in ['frozen', 'defrost', 'idle', 'death', 'death_nm', 'stomp_death']:
+        # Block state changes if aflame/deflaming, unless it's to a related state or death/idle
+        if (self.is_aflame or self.is_deflaming) and \
+           new_state not in ['aflame', 'deflame', 'idle', 'death', 'death_nm', 'stomp_death']:
+            debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' due to aflame/deflaming.")
+            return
+
+        if (self.is_frozen or self.is_defrosting) and \
+           new_state not in ['frozen', 'defrost', 'idle', 'death', 'death_nm', 'stomp_death', 'aflame', 'deflame']: # Aflame can override freeze
             debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' due to frozen/defrosting.")
             return
             
@@ -127,7 +176,8 @@ class Enemy(pygame.sprite.Sprite):
             return
 
         animation_key_to_validate = new_state
-        valid_direct_animation_states = ['idle', 'run', 'attack', 'attack_nm', 'hit', 'death', 'death_nm', 'fall', 'stomp_death', 'frozen', 'defrost']
+        valid_direct_animation_states = ['idle', 'run', 'attack', 'attack_nm', 'hit', 'death', 'death_nm', 'fall', 'stomp_death', 
+                                         'frozen', 'defrost', 'aflame', 'deflame'] # Added aflame/deflame
 
         if new_state not in valid_direct_animation_states:
             if new_state in ['chasing', 'patrolling']:
@@ -137,10 +187,10 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 animation_key_to_validate = 'idle'
         
-        is_new_anim_green_specific = animation_key_to_validate in ['frozen', 'defrost']
+        is_new_anim_green_specific = animation_key_to_validate in ['frozen', 'defrost', 'aflame', 'deflame'] # Updated list
         if is_new_anim_green_specific and self.color_name != 'green':
             debug(f"Enemy {self.enemy_id} ({self.color_name}): Cannot use state '{animation_key_to_validate}', not green. Defaulting to idle.")
-            animation_key_to_validate = 'idle' # Fallback for non-green enemies
+            animation_key_to_validate = 'idle' 
 
         if new_state == 'stomp_death':
             pass 
@@ -151,7 +201,7 @@ class Enemy(pygame.sprite.Sprite):
                  critical(f"Enemy CRITICAL (ID: {self.enemy_id}): Cannot find valid 'idle' animation. Halting state change for '{new_state}'.")
                  return
 
-        can_change_state_now = (self.state != new_state or new_state in ['death', 'stomp_death', 'frozen', 'defrost']) and \
+        can_change_state_now = (self.state != new_state or new_state in ['death', 'stomp_death', 'frozen', 'defrost', 'aflame', 'deflame']) and \
                                not (self.is_dead and not self.death_animation_finished and new_state not in ['death', 'stomp_death'])
 
         if can_change_state_now:
@@ -159,9 +209,11 @@ class Enemy(pygame.sprite.Sprite):
             if 'attack' not in new_state: self.is_attacking = False; self.attack_type = 0
             if new_state != 'hit': self.is_taking_hit = False
 
-            # Handle flags for frozen/defrost if transitioning out of them
+            # Clear previous status effect flags if transitioning to a different type of status or normal state
             if self.state == 'frozen' and new_state != 'frozen': self.is_frozen = False
             if self.state == 'defrost' and new_state != 'defrost': self.is_defrosting = False
+            if self.state == 'aflame' and new_state != 'aflame': self.is_aflame = False
+            if self.state == 'deflame' and new_state != 'deflame': self.is_deflaming = False
             
             self.state = new_state
             self.current_frame = 0
@@ -169,24 +221,29 @@ class Enemy(pygame.sprite.Sprite):
             self.last_anim_update = current_ticks_ms
             self.state_timer = current_ticks_ms
 
-            if new_state == 'frozen': # Specific handling when entering 'frozen'
-                self.is_frozen = True
-                self.is_defrosting = False # Explicitly false
-                self.frozen_effect_timer = current_ticks_ms # Start frozen timer
-                self.vel.xy = 0,0
-                self.acc.x = 0
-                # self.acc.y = 0 # Optional: if it should not fall while frozen
-            elif new_state == 'defrost': # Specific handling for 'defrost'
-                self.is_defrosting = True
-                self.is_frozen = False # Explicitly false
-                self.frozen_effect_timer = current_ticks_ms # Start defrost timer (re-using var)
-                self.vel.xy = 0,0
-                self.acc.x = 0
-                # self.acc.y = 0
-            elif new_state == 'idle' and (self.is_frozen or self.is_defrosting): # Came from frozen/defrost
-                self.is_frozen = False
-                self.is_defrosting = False
-
+            if new_state == 'frozen': 
+                self.is_frozen = True; self.is_defrosting = False 
+                self.is_aflame = False; self.is_deflaming = False # Freeze extinguishes fire
+                self.frozen_effect_timer = current_ticks_ms 
+                self.vel.xy = 0,0; self.acc.x = 0
+            elif new_state == 'defrost': 
+                self.is_defrosting = True; self.is_frozen = False 
+                self.is_aflame = False; self.is_deflaming = False
+                self.frozen_effect_timer = current_ticks_ms 
+                self.vel.xy = 0,0; self.acc.x = 0
+            elif new_state == 'aflame':
+                self.is_aflame = True; self.is_deflaming = False
+                self.is_frozen = False; self.is_defrosting = False # Aflame overrides freeze
+                self.aflame_timer_start = current_ticks_ms # Ensure timer is set/reset
+                self.aflame_damage_last_tick = current_ticks_ms
+                self.has_ignited_another_enemy_this_cycle = False
+            elif new_state == 'deflame':
+                self.is_deflaming = True; self.is_aflame = False
+                self.is_frozen = False; self.is_defrosting = False
+                self.deflame_timer_start = current_ticks_ms
+            elif new_state == 'idle': # If explicitly set to idle (e.g. end of effect cycle)
+                self.is_frozen = False; self.is_defrosting = False
+                self.is_aflame = False; self.is_deflaming = False
 
             elif 'attack' in new_state:
                 self.is_attacking = True; self.attack_type = 1
@@ -200,18 +257,14 @@ class Enemy(pygame.sprite.Sprite):
                  self.is_dead = True; self.vel.x = 0; self.vel.y = 0
                  self.acc.xy = 0, 0; self.current_health = 0
                  self.death_animation_finished = False
-                 self.is_frozen = False; self.is_defrosting = False # Clear freeze states on death
+                 self.is_frozen = False; self.is_defrosting = False 
+                 self.is_aflame = False; self.is_deflaming = False # Death extinguishes fire
                  if new_state == 'stomp_death' and not self.is_stomp_dying: 
                      self.stomp_kill() 
 
             self.animate()
         elif not self.is_dead:
              self._last_state_for_debug = self.state
-
-    def apply_freeze_effect(self):
-        if self.color_name == 'green' and not self.is_frozen and not self.is_defrosting and not self.is_dead:
-            debug(f"Enemy {self.enemy_id}: Apply freeze effect triggered.")
-            self.set_state('frozen') # set_state will handle setting is_frozen and timer
 
     def animate(self):
         if not self._valid_init or not hasattr(self, 'animations') or not self.animations: return
@@ -262,9 +315,13 @@ class Enemy(pygame.sprite.Sprite):
                                      self.animations.get('death_nm') else 'death'
             if not self.animations.get(determined_animation_key):
                 determined_animation_key = 'death' if self.animations.get('death') else 'idle'
-        elif self.state == 'frozen': # New state check
+        elif self.state == 'aflame': # Prioritize aflame/deflame visuals
+            determined_animation_key = 'aflame'
+        elif self.state == 'deflame':
+            determined_animation_key = 'deflame'
+        elif self.state == 'frozen': 
             determined_animation_key = 'frozen'
-        elif self.state == 'defrost': # New state check
+        elif self.state == 'defrost': 
             determined_animation_key = 'defrost'
         elif self.post_attack_pause_timer > 0 and current_time_ms < self.post_attack_pause_timer:
             determined_animation_key = 'idle'
@@ -282,9 +339,9 @@ class Enemy(pygame.sprite.Sprite):
         elif self.state == 'run':
             determined_animation_key = 'run' if abs(self.vel.x) > 0.1 else 'idle'
         
-        is_new_anim_green_specific_anim = determined_animation_key in ['frozen', 'defrost']
+        is_new_anim_green_specific_anim = determined_animation_key in ['frozen', 'defrost', 'aflame', 'deflame'] # Updated
         if is_new_anim_green_specific_anim and self.color_name != 'green':
-            determined_animation_key = 'idle' # Fallback for non-green if trying to use green-specific anim key
+            determined_animation_key = 'idle' 
 
         if not self.animations.get(determined_animation_key):
             warning(f"Enemy Animate Warning (ID: {self.enemy_id}): Key '{determined_animation_key}' invalid for state '{self.state}'. Defaulting to 'idle'.")
@@ -315,7 +372,7 @@ class Enemy(pygame.sprite.Sprite):
                     elif self.state == 'hit':
                         self.set_state('idle' if self.on_ground else 'fall')
                         return
-                    else: # For looping animations like frozen, defrost, idle, run
+                    else: 
                         self.current_frame = 0
 
                 if self.current_frame >= len(current_animation_frames_list) and not self.is_dead : self.current_frame = 0
@@ -347,8 +404,8 @@ class Enemy(pygame.sprite.Sprite):
         self.current_health = 0
         self.is_dead = True
         self.is_stomp_dying = True
-        self.is_frozen = False # Cannot be stomp_dying and frozen
-        self.is_defrosting = False 
+        self.is_frozen = False; self.is_defrosting = False 
+        self.is_aflame = False; self.is_deflaming = False # Stomp extinguishes fire
         self.stomp_death_start_time = pygame.time.get_ticks()
 
         self.original_stomp_death_image = self.image.copy()
@@ -363,8 +420,8 @@ class Enemy(pygame.sprite.Sprite):
     def _check_attack_collisions(self, player_target_list_for_combat):
         check_enemy_attack_collisions(self, player_target_list_for_combat)
 
-    def take_damage(self, damage_amount_taken): # Projectile object is not passed here
-        enemy_take_damage(self, damage_amount_taken) # Actual damage application in combat_handler
+    def take_damage(self, damage_amount_taken): 
+        enemy_take_damage(self, damage_amount_taken) 
 
     def get_network_data(self):
         return get_enemy_network_data(self)
@@ -373,56 +430,64 @@ class Enemy(pygame.sprite.Sprite):
         set_enemy_network_data(self, received_network_data)
 
 
-    def update(self, dt_sec, players_list_for_logic, platforms_group, hazards_group):
+    # Modified update method
+    def update(self, dt_sec, players_list_for_logic, platforms_group, hazards_group, all_enemies_list):
         if not self._valid_init: return
-
-        if self.is_stomp_dying:
-            self.animate() 
-            return
-
-        if self.is_dead and self.alive(): 
-            if not self.death_animation_finished:
-                if not self.on_ground:
-                    self.vel.y += self.acc.y
-                    self.vel.y = min(self.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18))
-                    self.pos.y += self.vel.y
-                    self.rect.bottom = round(self.pos.y)
-                    self.on_ground = False
-                    for platform_sprite in pygame.sprite.spritecollide(self, platforms_group, False):
-                        if self.vel.y > 0 and self.rect.bottom > platform_sprite.rect.top and \
-                           (self.pos.y - self.vel.y) <= platform_sprite.rect.top + 1:
-                            self.rect.bottom = platform_sprite.rect.top
-                            self.on_ground = True; self.vel.y = 0; self.acc.y = 0
-                            self.pos.y = self.rect.bottom; break
-            self.animate()
-            return
-
-        if self.is_dead and self.death_animation_finished: 
-            if self.alive(): self.kill()
-            return
 
         current_time_ms = pygame.time.get_ticks()
 
-        # Handle frozen/defrosting states first
+        if self.is_aflame:
+            if current_time_ms - self.aflame_timer_start > C.ENEMY_AFLAME_DURATION_MS:
+                self.set_state('deflame') # Transition to deflame
+            elif current_time_ms - self.aflame_damage_last_tick > C.ENEMY_AFLAME_DAMAGE_INTERVAL_MS:
+                self.take_damage(C.ENEMY_AFLAME_DAMAGE_PER_TICK)
+                self.aflame_damage_last_tick = current_time_ms
+            if self.state == 'deflame': # If state just changed to deflame by the above
+                self.animate() # Update animation to deflame
+                # Then proceed with physics for this frame
+
+        elif self.is_deflaming:
+            if current_time_ms - self.deflame_timer_start > C.ENEMY_DEFLAME_DURATION_MS:
+                self.set_state('idle') # Transition to idle
+            if self.state == 'idle' and not self.is_aflame and not self.is_deflaming: # If state just changed
+                self.animate()
+                # Then proceed with physics
+
+        if self.is_stomp_dying:
+            self.animate(); return
+
+        if self.is_dead:
+            self.is_aflame = False; self.is_deflaming = False; self.is_frozen = False; self.is_defrosting = False
+            if self.alive():
+                if not self.death_animation_finished:
+                    if not self.on_ground:
+                        self.vel.y += self.acc.y
+                        self.vel.y = min(self.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18))
+                        self.pos.y += self.vel.y
+                        self.rect.bottom = round(self.pos.y)
+                        self.on_ground = False
+                        for platform_sprite in pygame.sprite.spritecollide(self, platforms_group, False):
+                            if self.vel.y > 0 and self.rect.bottom > platform_sprite.rect.top and \
+                               (self.pos.y - self.vel.y) <= platform_sprite.rect.top + 1:
+                                self.rect.bottom = platform_sprite.rect.top
+                                self.on_ground = True; self.vel.y = 0; self.acc.y = 0
+                                self.pos.y = self.rect.bottom; break
+                self.animate()
+            if self.death_animation_finished and self.alive(): self.kill()
+            return
+
         if self.is_frozen:
-            self.vel.xy = 0,0
-            self.acc.x = 0
-            # self.acc.y = 0 # Optional: if truly static. Otherwise, gravity applies if in air.
-            if current_time_ms - self.frozen_effect_timer > self.FROZEN_DURATION:
-                self.set_state('defrost') # This will set is_defrosting, is_frozen=False, and reset frozen_effect_timer for defrost
-            self.animate() # Animate frozen state
-            return # Skip normal update
+            self.vel.xy = 0,0; self.acc.x = 0
+            if current_time_ms - self.frozen_effect_timer > C.ENEMY_FROZEN_DURATION_MS:
+                self.set_state('defrost')
+            self.animate(); return
 
         if self.is_defrosting:
-            self.vel.xy = 0,0
-            self.acc.x = 0
-            # self.acc.y = 0
-            if current_time_ms - self.frozen_effect_timer > self.DEFROST_DURATION: # Timer was reset by set_state('defrost')
+            self.vel.xy = 0,0; self.acc.x = 0
+            if current_time_ms - self.frozen_effect_timer > C.ENEMY_DEFROST_DURATION_MS:
                 self.set_state('idle')
-            self.animate() # Animate defrost state
-            return # Skip normal update
+            self.animate(); return
 
-        # --- Normal Update Logic (if not frozen/defrosting) ---
         if self.post_attack_pause_timer > 0 and current_time_ms >= self.post_attack_pause_timer:
             self.post_attack_pause_timer = 0
 
@@ -431,45 +496,46 @@ class Enemy(pygame.sprite.Sprite):
 
         self._ai_update(players_list_for_logic)
 
-        if not self.is_dead: # Should always be false here if not frozen/defrosting/stomp_dying
-            self.vel.y += self.acc.y
-            enemy_friction_val = getattr(C, 'ENEMY_FRICTION', -0.12)
-            enemy_run_speed_max = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5)
-            terminal_fall_speed_y = getattr(C, 'TERMINAL_VELOCITY_Y', 18)
+        self.vel.y += self.acc.y
+        enemy_friction_val = getattr(C, 'ENEMY_FRICTION', -0.12)
+        enemy_run_speed_max = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5)
+        terminal_fall_speed_y = getattr(C, 'TERMINAL_VELOCITY_Y', 18)
 
-            self.vel.x += self.acc.x
-            apply_friction_to_enemy = self.on_ground and self.acc.x == 0
-            if apply_friction_to_enemy:
-                friction_force_on_enemy = self.vel.x * enemy_friction_val
-                if abs(self.vel.x) > 0.1: self.vel.x += friction_force_on_enemy
-                else: self.vel.x = 0
+        self.vel.x += self.acc.x
+        apply_friction_to_enemy = self.on_ground and self.acc.x == 0
+        if apply_friction_to_enemy:
+            friction_force_on_enemy = self.vel.x * enemy_friction_val
+            if abs(self.vel.x) > 0.1: self.vel.x += friction_force_on_enemy
+            else: self.vel.x = 0
 
-            self.vel.x = max(-enemy_run_speed_max, min(enemy_run_speed_max, self.vel.x))
-            self.vel.y = min(self.vel.y, terminal_fall_speed_y)
-            self.on_ground = False
+        self.vel.x = max(-enemy_run_speed_max, min(enemy_run_speed_max, self.vel.x))
+        self.vel.y = min(self.vel.y, terminal_fall_speed_y)
+        self.on_ground = False
 
-            self.pos.x += self.vel.x
-            self.rect.centerx = round(self.pos.x)
-            self.check_platform_collisions('x', platforms_group)
+        self.pos.x += self.vel.x
+        self.rect.centerx = round(self.pos.x)
+        self.check_platform_collisions('x', platforms_group)
+        
+        # Combine players and other enemies for collision check
+        all_other_characters = players_list_for_logic + [e for e in all_enemies_list if e is not self]
+        collided_horizontally_with_char = self.check_character_collision('x', all_other_characters)
 
-            collided_horizontally_with_player = self.check_character_collision('x', players_list_for_logic)
+        self.pos.y += self.vel.y
+        self.rect.bottom = round(self.pos.y)
+        self.check_platform_collisions('y', platforms_group)
 
-            self.pos.y += self.vel.y
-            self.rect.bottom = round(self.pos.y)
-            self.check_platform_collisions('y', platforms_group)
+        if not collided_horizontally_with_char:
+            self.check_character_collision('y', all_other_characters)
 
-            if not collided_horizontally_with_player:
-                self.check_character_collision('y', players_list_for_logic)
+        self.pos.x = self.rect.centerx
+        self.pos.y = self.rect.bottom
 
-            self.pos.x = self.rect.centerx
-            self.pos.y = self.rect.bottom
+        self.check_hazard_collisions(hazards_group)
 
-            self.check_hazard_collisions(hazards_group)
+        if self.is_attacking and not (self.is_aflame or self.is_deflaming):
+            self._check_attack_collisions(players_list_for_logic)
 
-            if self.is_attacking:
-                self._check_attack_collisions(players_list_for_logic)
-
-        self.animate() # Final animation update for the frame
+        self.animate()
 
 
     def check_platform_collisions(self, direction: str, platforms_group: pygame.sprite.Group):
@@ -499,36 +565,64 @@ class Enemy(pygame.sprite.Sprite):
             else: self.pos.y = self.rect.bottom
 
 
-    def check_character_collision(self, direction: str, player_list: list):
+    def check_character_collision(self, direction: str, character_list: list): 
         if not self._valid_init or self.is_dead or not self.alive(): return False
-        collision_with_player_occurred = False
-        for player_char_sprite in player_list:
-            if not (player_char_sprite and player_char_sprite._valid_init and \
-                    not player_char_sprite.is_dead and player_char_sprite.alive()):
+        collision_occurred = False
+        for other_char_sprite in character_list:
+            if other_char_sprite is self: continue 
+
+            if not (other_char_sprite and hasattr(other_char_sprite, '_valid_init') and \
+                    other_char_sprite._valid_init and hasattr(other_char_sprite, 'is_dead') and \
+                    not other_char_sprite.is_dead and other_char_sprite.alive()):
                 continue
-            if self.rect.colliderect(player_char_sprite.rect):
-                collision_with_player_occurred = True
+
+            if self.rect.colliderect(other_char_sprite.rect):
+                collision_occurred = True
+                
+                # Aflame spread logic
+                if self.is_aflame and isinstance(other_char_sprite, Enemy) and \
+                   not getattr(other_char_sprite, 'is_aflame', False) and \
+                   not getattr(other_char_sprite, 'is_deflaming', False) and \
+                   not self.has_ignited_another_enemy_this_cycle:
+                    
+                    if hasattr(other_char_sprite, 'apply_aflame_effect'):
+                        debug(f"Enemy {self.enemy_id} (aflame) touched Enemy {getattr(other_char_sprite, 'enemy_id', 'Unknown')}. Igniting.")
+                        other_char_sprite.apply_aflame_effect()
+                        self.has_ignited_another_enemy_this_cycle = True
+                        # No pushback if just spreading fire for now
+                        continue 
+
                 bounce_vel_on_collision = getattr(C, 'CHARACTER_BOUNCE_VELOCITY', 2.5)
                 if direction == 'x':
-                    push_direction_for_enemy = -1 if self.rect.centerx < player_char_sprite.rect.centerx else 1
-                    if push_direction_for_enemy == -1: self.rect.right = player_char_sprite.rect.left
-                    else: self.rect.left = player_char_sprite.rect.right
-                    self.vel.x = push_direction_for_enemy * bounce_vel_on_collision
-                    if hasattr(player_char_sprite, 'vel'):
-                        player_char_sprite.vel.x = -push_direction_for_enemy * bounce_vel_on_collision
-                    if hasattr(player_char_sprite, 'pos') and hasattr(player_char_sprite, 'rect'):
-                        player_char_sprite.pos.x += (-push_direction_for_enemy * 1.5)
-                        player_char_sprite.rect.centerx = round(player_char_sprite.pos.x)
+                    push_direction_for_self = -1 if self.rect.centerx < other_char_sprite.rect.centerx else 1
+                    if push_direction_for_self == -1: self.rect.right = other_char_sprite.rect.left
+                    else: self.rect.left = other_char_sprite.rect.right
+                    self.vel.x = push_direction_for_self * bounce_vel_on_collision
+                    
+                    can_push_other = True
+                    if hasattr(other_char_sprite, 'is_attacking') and other_char_sprite.is_attacking: can_push_other = False
+                    if hasattr(other_char_sprite, 'is_aflame') and other_char_sprite.is_aflame: can_push_other = False
+                    if hasattr(other_char_sprite, 'is_frozen') and other_char_sprite.is_frozen: can_push_other = False
+
+
+                    if hasattr(other_char_sprite, 'vel') and can_push_other:
+                        other_char_sprite.vel.x = -push_direction_for_self * bounce_vel_on_collision
+                    if hasattr(other_char_sprite, 'pos') and hasattr(other_char_sprite, 'rect') and can_push_other:
+                        other_char_sprite.pos.x += (-push_direction_for_self * 1.5)
+                        other_char_sprite.rect.centerx = round(other_char_sprite.pos.x)
+                        other_char_sprite.rect.bottom = round(other_char_sprite.pos.y)
+                        other_char_sprite.pos.x = other_char_sprite.rect.centerx
+                        other_char_sprite.pos.y = other_char_sprite.rect.bottom
                     self.pos.x = self.rect.centerx
-                elif direction == 'y':
-                    if self.vel.y > 0 and self.rect.bottom > player_char_sprite.rect.top and \
-                       self.rect.centery < player_char_sprite.rect.centery:
-                        self.rect.bottom = player_char_sprite.rect.top; self.on_ground = True; self.vel.y = 0
-                    elif self.vel.y < 0 and self.rect.top < player_char_sprite.rect.bottom and \
-                         self.rect.centery > player_char_sprite.rect.centery:
-                        self.rect.top = player_char_sprite.rect.bottom; self.vel.y = 0
+                elif direction == 'y': 
+                    if self.vel.y > 0 and self.rect.bottom > other_char_sprite.rect.top and \
+                       self.rect.centery < other_char_sprite.rect.centery: 
+                        self.rect.bottom = other_char_sprite.rect.top; self.on_ground = True; self.vel.y = 0
+                    elif self.vel.y < 0 and self.rect.top < other_char_sprite.rect.bottom and \
+                         self.rect.centery > other_char_sprite.rect.centery: 
+                        self.rect.top = other_char_sprite.rect.bottom; self.vel.y = 0
                     self.pos.y = self.rect.bottom
-        return collision_with_player_occurred
+        return collision_occurred
 
 
     def check_hazard_collisions(self, hazards_group: pygame.sprite.Group):
@@ -578,8 +672,16 @@ class Enemy(pygame.sprite.Sprite):
         self.original_stomp_death_image = None
         self.original_stomp_facing_right = self.facing_right
         
-        self.is_frozen = False # Reset frozen state
-        self.is_defrosting = False # Reset defrost state
+        self.is_frozen = False 
+        self.is_defrosting = False 
         self.frozen_effect_timer = 0
+        
+        # Reset aflame attributes
+        self.is_aflame = False
+        self.aflame_timer_start = 0
+        self.is_deflaming = False
+        self.deflame_timer_start = 0
+        self.aflame_damage_last_tick = 0
+        self.has_ignited_another_enemy_this_cycle = False
 
         self.set_state('idle')

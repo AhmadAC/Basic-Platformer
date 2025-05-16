@@ -1,5 +1,7 @@
+########## START OF FILE: enemy_ai_handler.py ##########
+
 """
-version 1.0.0.2 (Corrected set_state logic for patrol/chase transitions)
+version 1.0.0.3 (Added aflame/deflame check to block attacks)
 Handles AI logic for enemies, including patrolling, chasing, and attacking decisions.
 Functions here will typically take an 'enemy' instance as their first argument.
 """
@@ -40,7 +42,7 @@ def enemy_ai_update(enemy, players_list_for_ai):
         enemy (Enemy): The enemy instance to update.
         players_list_for_ai (list): A list of player Sprites that the AI can target.
     """
-    if enemy.is_frozen or enemy.is_defrosting: # Prevent AI logic if frozen or defrosting
+    if enemy.is_frozen or enemy.is_defrosting: 
         enemy.acc.x = 0 
         return
 
@@ -75,7 +77,7 @@ def enemy_ai_update(enemy, players_list_for_ai):
     
     if not closest_target_player: 
         enemy.ai_state = 'patrolling' 
-        if enemy.state not in ['patrolling', 'run']: 
+        if enemy.state not in ['patrolling', 'run', 'aflame', 'deflame']: # Allow burning anims
             enemy.set_state('patrolling') 
         
         if abs(enemy.pos.x - enemy.patrol_target_x) < 10: 
@@ -104,17 +106,45 @@ def enemy_ai_update(enemy, players_list_for_ai):
          enemy.is_attacking = False; enemy.attack_type = 0      
          enemy.attack_cooldown_timer = current_time_ms 
          enemy.post_attack_pause_timer = current_time_ms + enemy.post_attack_pause_duration 
-         enemy.set_state('idle'); enemy.acc.x = 0         
+         # Don't force idle if aflame/deflame, let those states persist if active
+         if not (enemy.is_aflame or enemy.is_deflaming):
+            enemy.set_state('idle')
+         enemy.acc.x = 0         
          return 
 
-    if enemy.is_attacking:
+    if enemy.is_attacking: # Already in an attack animation
         enemy.acc.x = 0 
         return
+
+    # Check if aflame/deflaming, if so, block new attack initiation
+    if enemy.is_aflame or enemy.is_deflaming:
+        # "Runs around" behavior: continue chasing or patrolling but no attacks
+        if is_player_in_detection_range:
+            enemy.ai_state = 'chasing'
+            current_target_facing_right_aflame = (closest_target_player.pos.x > enemy.pos.x)
+            enemy.acc.x = enemy_standard_acceleration * (1 if current_target_facing_right_aflame else -1)
+            if enemy.facing_right != current_target_facing_right_aflame:
+                enemy.facing_right = current_target_facing_right_aflame
+            # Let 'aflame' or 'deflame' state persist for animation
+            if enemy.state not in ['aflame', 'deflame', 'run', 'chasing']: # Only switch to run if not already in a burn anim
+                 enemy.set_state('run') # Or 'chasing' if you have distinct anims
+        else: # Patrol if not detecting player
+            enemy.ai_state = 'patrolling'
+            if abs(enemy.pos.x - enemy.patrol_target_x) < 10:
+                set_enemy_new_patrol_target(enemy)
+            current_target_facing_right_aflame = (enemy.patrol_target_x > enemy.pos.x)
+            enemy.acc.x = enemy_standard_acceleration * 0.7 * (1 if current_target_facing_right_aflame else -1)
+            if enemy.facing_right != current_target_facing_right_aflame:
+                enemy.facing_right = current_target_facing_right_aflame
+            if enemy.state not in ['aflame', 'deflame', 'run', 'patrolling']:
+                enemy.set_state('run') # Or 'patrolling'
+        return # Skip attack logic
+
 
     current_target_acceleration_x = 0 
     current_target_facing_right = enemy.facing_right 
 
-    if is_player_in_attack_range and is_attack_off_cooldown:
+    if is_player_in_attack_range and is_attack_off_cooldown: # This block is now skipped if aflame/deflaming
         enemy.ai_state = 'attacking'
         current_target_facing_right = (closest_target_player.pos.x > enemy.pos.x) 
         enemy.facing_right = current_target_facing_right
@@ -127,12 +157,12 @@ def enemy_ai_update(enemy, players_list_for_ai):
         enemy.ai_state = 'chasing'
         current_target_facing_right = (closest_target_player.pos.x > enemy.pos.x) 
         current_target_acceleration_x = enemy_standard_acceleration * (1 if current_target_facing_right else -1)
-        if enemy.state not in ['chasing', 'run']: 
+        if enemy.state not in ['chasing', 'run', 'aflame', 'deflame']: # Allow burn anims
             enemy.set_state('chasing') 
     
     else: 
         enemy.ai_state = 'patrolling'
-        if enemy.state not in ['patrolling', 'run']: 
+        if enemy.state not in ['patrolling', 'run', 'aflame', 'deflame']: # Allow burn anims
             enemy.set_state('patrolling')
         
         if abs(enemy.pos.x - enemy.patrol_target_x) < 10: 

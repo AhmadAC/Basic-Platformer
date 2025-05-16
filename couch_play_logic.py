@@ -1,7 +1,9 @@
+########## START OF FILE: couch_play_logic.py ##########
+
 # couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.0.4 (Fixed AttributeError for Enemy.print_limiter)
+version 1.0.0.5 (Pass full enemy list to enemy.update)
 Handles the game logic for the local couch co-op (two players on one machine) mode.
 """
 import pygame
@@ -130,11 +132,11 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         for enemy_couch in list(game_elements_ref.get("enemy_list", [])):
             if enemy_couch._valid_init:
                 enemy_couch.update(dt_sec, active_players_for_enemy_ai_couch,
-                                   game_elements_ref["platform_sprites"], game_elements_ref["hazard_sprites"])
+                                   game_elements_ref["platform_sprites"], 
+                                   game_elements_ref["hazard_sprites"],
+                                   game_elements_ref["enemy_list"]) # Pass full enemy_list
                 if enemy_couch.is_dead and hasattr(enemy_couch, 'death_animation_finished') and \
                    enemy_couch.death_animation_finished and enemy_couch.alive():
-                    # Enemy.print_limiter was removed or changed.
-                    # Directly log the debug message now.
                     debug(f"Couch Play: Auto-killing enemy {enemy_couch.enemy_id} as death anim finished.")
                     enemy_couch.kill()
 

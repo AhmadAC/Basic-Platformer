@@ -1,6 +1,8 @@
+########## START OF FILE: assets.py ##########
+
 # assets.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.5 (Removed special map handling from resource_path; uses C.MAPS_DIR directly if needed)
+## version 1.0.0.6 (Added aflame/deflame animations for green enemy)
 """
 Handles loading game assets, primarily animations from GIF files.
 Includes a helper function `resource_path` to ensure correct asset pathing
@@ -175,36 +177,34 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         'turn': '__TurnAround.gif',
         'wall_climb': '__WallClimb.gif', 'wall_climb_nm': '__WallClimbNoMovement.gif',
         'wall_hang': '__WallHang.gif', 'wall_slide': '__WallSlide.gif',
-        # New animations for green enemy (assuming files are named conventionally)
+        # Green enemy specific animations
         'frozen': '__Frozen.gif',
         'defrost': '__Defrost.gif',
+        'aflame': '__Aflame.gif',    # New
+        'deflame': '__Deflame.gif',  # New
     }
 
     info(f"Assets Info: Attempting to load animations from relative folder: '{relative_asset_folder}'")
     missing_files_log: List[tuple[str, str, str]] = []
 
     for anim_state_name, gif_filename in animation_filenames_map.items():
-         # Construct the relative path that resource_path expects
          relative_path_to_gif_for_resource_path = os.path.join(relative_asset_folder, gif_filename)
-         # Get the absolute path using resource_path for this general asset
          absolute_gif_path = resource_path(relative_path_to_gif_for_resource_path)
 
          if not os.path.exists(absolute_gif_path):
-             # Only log as missing if it's not one of the new green enemy specific anims *unless* loading for green enemy
              is_green_enemy_folder = 'characters/green' in relative_asset_folder.replace('\\', '/')
-             is_new_anim = anim_state_name in ['frozen', 'defrost']
+             is_new_anim = anim_state_name in ['frozen', 'defrost', 'aflame', 'deflame'] # Updated list
              
-             if not (is_new_anim and not is_green_enemy_folder): # Log if it's a general anim OR it's a new anim AND we ARE in green folder
+             if not (is_new_anim and not is_green_enemy_folder):
                 missing_files_log.append(
                     (anim_state_name, relative_path_to_gif_for_resource_path, absolute_gif_path)
                 )
-             animations_dict[anim_state_name] = [] # Mark as missing for later placeholder generation
+             animations_dict[anim_state_name] = []
              continue
 
-         loaded_animation_frames = load_gif_frames(absolute_gif_path) # Pass the direct absolute path
+         loaded_animation_frames = load_gif_frames(absolute_gif_path)
          animations_dict[anim_state_name] = loaded_animation_frames
 
-         # Check if load_gif_frames returned its RED placeholder due to an internal error
          if not animations_dict[anim_state_name] or \
             (len(animations_dict[anim_state_name]) == 1 and \
              animations_dict[anim_state_name][0].get_size() == (30,40) and \
@@ -213,16 +213,13 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
 
     if missing_files_log:
         warning("\n--- Assets: Missing Animation Files Detected ---")
-        # Determine the base_path used by resource_path for logging context
         try: base_path_for_log = sys._MEIPASS
         except AttributeError: base_path_for_log = os.path.abspath(".")
-
         for name, rel_path, res_path_checked in missing_files_log:
             warning(f"- State '{name}': Expected relative path (for resource_path): '{rel_path}', Resolved path checked: '{res_path_checked}'")
         info(f"(Asset loading base path used by resource_path for these assets: '{base_path_for_log}')")
         warning("--------------------------------------------\n")
 
-    # Check for critical 'idle' animation
     idle_anim_is_missing_or_placeholder = (
         'idle' not in animations_dict or
         not animations_dict['idle'] or
@@ -236,14 +233,13 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         idle_file_abs_path_checked = resource_path(idle_file_rel_path_for_resource_path)
         if 'idle' not in animations_dict or not animations_dict['idle']:
             critical(f"CRITICAL Assets Error: 'idle' animation file ('{idle_file_rel_path_for_resource_path}') not found or empty. Checked: '{idle_file_abs_path_checked}'.")
-        else: # It's the RED placeholder
+        else:
             critical(f"CRITICAL Assets Error: 'idle' animation failed to load correctly (is RED placeholder) from '{idle_file_abs_path_checked}'.")
         warning("Assets: Returning None due to critical 'idle' animation failure.")
         return None
 
-    # Provide blue placeholders for other missing/failed non-critical animations
     for anim_name_check in animation_filenames_map:
-        if anim_name_check == 'idle': continue # Already handled
+        if anim_name_check == 'idle': continue
 
         animation_is_missing_or_placeholder = (
             anim_name_check not in animations_dict or
@@ -254,9 +250,8 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         )
 
         if animation_is_missing_or_placeholder:
-            # Only warn if it's not one of the new anims for a non-green character
             is_green_enemy_folder_ph = 'characters/green' in relative_asset_folder.replace('\\', '/')
-            is_new_anim_ph = anim_name_check in ['frozen', 'defrost']
+            is_new_anim_ph = anim_name_check in ['frozen', 'defrost', 'aflame', 'deflame'] # Updated list
 
             if not (is_new_anim_ph and not is_green_enemy_folder_ph):
                 if anim_name_check not in animations_dict or not animations_dict[anim_name_check]:
@@ -265,8 +260,8 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
                      warning(f"Assets Warning: Animation state '{anim_name_check}' (load failed, is RED placeholder). Using a BLUE placeholder.")
 
             blue_placeholder = pygame.Surface((30, 40)).convert_alpha()
-            blue_placeholder.fill(BLUE) # BLUE from constants/fallback
-            pygame.draw.line(blue_placeholder, RED, (0,0), (30,40), 2) # RED for cross
+            blue_placeholder.fill(BLUE)
+            pygame.draw.line(blue_placeholder, RED, (0,0), (30,40), 2)
             pygame.draw.line(blue_placeholder, RED, (0,40), (30,0), 2)
             animations_dict[anim_name_check] = [blue_placeholder]
 

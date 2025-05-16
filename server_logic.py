@@ -1,7 +1,9 @@
+########## START OF FILE: server_logic.py ##########
+
 # server_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.0.2 (Changed reset key from R to Q)
+version 1.0.0.3 (Pass full enemy list to enemy.update)
 Handles server-side game logic, connection management, and broadcasting.
 """
 import pygame
@@ -452,7 +454,10 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         active_players_for_enemy_ai = [char for char in [p1, p2] if char and char._valid_init and not char.is_dead and char.alive()]
         for enemy in list(game_elements_ref.get("enemy_list", [])): 
             if enemy._valid_init:
-                enemy.update(dt_sec, active_players_for_enemy_ai, game_elements_ref["platform_sprites"], game_elements_ref["hazard_sprites"])
+                enemy.update(dt_sec, active_players_for_enemy_ai, 
+                             game_elements_ref["platform_sprites"], 
+                             game_elements_ref["hazard_sprites"],
+                             game_elements_ref["enemy_list"]) # Pass full enemy_list
                 if enemy.is_dead and hasattr(enemy, 'death_animation_finished') and \
                    enemy.death_animation_finished and enemy.alive():
                     if hasattr(Enemy, 'print_limiter') and Enemy.print_limiter.can_print(f"server_killing_enemy_{enemy.enemy_id}"):

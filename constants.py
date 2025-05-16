@@ -1,10 +1,12 @@
+########## START OF FILE: constants.py ##########
+
 # constants.py
 # -*- coding: utf-8 -*-
 """
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 1.0.0.4 (Integrated dynamic MAPS_DIR, kept original collision constants)
+# version 1.0.0.5 (Added aflame status constants)
 import os
 import sys
 
@@ -81,7 +83,7 @@ BLOOD_SPRITE_PATH = "characters/weapons/blood.gif"
 BLOOD_DIMENSIONS = (40, 40)
 
 # Ice (Key 5)
-ICE_DAMAGE = 25
+ICE_DAMAGE = 10
 ICE_SPEED = 7
 ICE_COOLDOWN = 900 # ms
 ICE_LIFESPAN = 2200 # ms
@@ -104,6 +106,15 @@ ENEMY_HIT_COOLDOWN = 500 # ms (invulnerability after being hit)
 ENEMY_HIT_BOUNCE_Y = PLAYER_JUMP_STRENGTH * 0.3
 ENEMY_STOMP_DEATH_DURATION = 300 # ms, visual duration of stomp death scale effect
 ENEMY_POST_ATTACK_PAUSE_DURATION = 200 # ms, brief pause after an enemy attack animation finishes
+
+# --- Enemy Status Effect Constants (New) ---
+ENEMY_AFLAME_DURATION_MS = 3000
+ENEMY_DEFLAME_DURATION_MS = 2000
+ENEMY_AFLAME_DAMAGE_PER_TICK = 5
+ENEMY_AFLAME_DAMAGE_INTERVAL_MS = 1000
+ENEMY_FROZEN_DURATION_MS = 3000 # Renamed from Enemy.FROZEN_DURATION for consistency
+ENEMY_DEFROST_DURATION_MS = 2000 # Renamed from Enemy.DEFROST_DURATION
+
 
 # --- Colors ---
 WHITE = (255, 255, 255)

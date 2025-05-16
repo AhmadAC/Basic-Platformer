@@ -1,14 +1,23 @@
+########## START OF FILE: projectiles.py ##########
+
 # projectiles.py
 # -*- coding: utf-8 -*-
 """
 Defines projectile classes like Fireball.
 """
-# version 1.0.1 (fixed length_sq typo in init)
+# version 1.0.2 (Fireball effect_type set to 'aflame')
 import pygame
 import os # For path joining
 import math # For math.atan2 and math.degrees if more complex rotation is needed
 import constants as C
 from assets import load_gif_frames, resource_path
+# Import Enemy type for isinstance checks if needed, and debug
+from enemy import Enemy # For type checking and debug log
+try:
+    from logger import debug # Use your logger
+except ImportError:
+    def debug(msg): print(f"DEBUG_PROJ: {msg}")
+
 
 class BaseProjectile(pygame.sprite.Sprite):
     def __init__(self, x, y, direction_vector, owner_player, config):
@@ -19,14 +28,14 @@ class BaseProjectile(pygame.sprite.Sprite):
         self.lifespan = config['lifespan']
         self.dimensions = config['dimensions']
         self.sprite_path = config['sprite_path']
-        self.effect_type = config.get('effect_type', None) # Added for special effects
+        self.effect_type = config.get('effect_type', None) 
         
         full_gif_path = resource_path(self.sprite_path)
         self.frames = load_gif_frames(full_gif_path)
         
         if not self.frames or \
            (len(self.frames) == 1 and self.frames[0].get_size() == (30,40) and self.frames[0].get_at((0,0)) == C.RED): 
-            print(f"Warning: Projectile GIF '{full_gif_path}' failed to load or is default placeholder. Using fallback.")
+            debug(f"Warning: Projectile GIF '{full_gif_path}' failed to load or is default placeholder. Using fallback.")
             self.image = pygame.Surface(self.dimensions, pygame.SRCALPHA).convert_alpha()
             self.image.fill((0,0,0,0)) 
             pygame.draw.circle(self.image, config.get('fallback_color1', C.ORANGE_RED), (self.dimensions[0]//2, self.dimensions[1]//2), self.dimensions[0]//3)
@@ -95,16 +104,27 @@ class BaseProjectile(pygame.sprite.Sprite):
                     if char.is_taking_hit and (now - char.hit_timer < char.hit_cooldown):
                         can_damage_target = False
                 
-                if hasattr(char, 'is_frozen') and char.is_frozen and self.effect_type == "freeze": # Don't re-freeze already frozen
-                    can_damage_target = False # Or, allow damage but not re-freeze effect
+                # Prevent re-application of same status effect if already active
+                if self.effect_type == "freeze" and hasattr(char, 'is_frozen') and char.is_frozen:
+                    can_damage_target = False # Or allow damage but skip effect
+                elif self.effect_type == "aflame" and hasattr(char, 'is_aflame') and char.is_aflame:
+                    can_damage_target = False # Or allow damage but skip effect
+
 
                 if can_damage_target:
                     char.take_damage(self.damage)
                     
+                    # Apply specific effects
                     if self.effect_type == "freeze":
                         if hasattr(char, 'apply_freeze_effect'):
                             char.apply_freeze_effect()
-                            
+                    elif self.effect_type == "aflame":
+                        # Only apply aflame if it's an Enemy and specifically green
+                        if isinstance(char, Enemy) and getattr(char, 'color_name', None) == 'green':
+                            if hasattr(char, 'apply_aflame_effect'):
+                                debug(f"Projectile with 'aflame' effect hit green Enemy {getattr(char, 'enemy_id', 'Unknown')}. Applying aflame effect.")
+                                char.apply_aflame_effect()
+                                
                     self.kill()
                     return 
         
@@ -122,7 +142,7 @@ class BaseProjectile(pygame.sprite.Sprite):
             'frame': self.current_frame_index,
             'spawn_time': self.spawn_time,
             'image_flipped': image_flipped,
-            'effect_type': self.effect_type # Send effect type
+            'effect_type': self.effect_type 
         }
 
     def set_network_data(self, data):
@@ -131,7 +151,7 @@ class BaseProjectile(pygame.sprite.Sprite):
              self.vel.x, self.vel.y = data['vel']
         self.rect.center = round(self.pos.x), round(self.pos.y)
         self.current_frame_index = data.get('frame', self.current_frame_index)
-        self.effect_type = data.get('effect_type', self.effect_type) # Sync effect type
+        self.effect_type = data.get('effect_type', self.effect_type) 
         
         old_center = self.rect.center
         
@@ -175,7 +195,8 @@ class Fireball(BaseProjectile):
         config = {
             'damage': C.FIREBALL_DAMAGE, 'speed': C.FIREBALL_SPEED, 'lifespan': C.FIREBALL_LIFESPAN,
             'sprite_path': C.FIREBALL_SPRITE_PATH, 'dimensions': C.FIREBALL_DIMENSIONS,
-            'fallback_color1': (255,120,0,200), 'fallback_color2': C.RED
+            'fallback_color1': (255,120,0,200), 'fallback_color2': C.RED,
+            'effect_type': "aflame" # Added effect type
         }
         super().__init__(x, y, direction_vector, owner_player, config)
 
@@ -244,6 +265,6 @@ class IceShard(BaseProjectile):
             'damage': C.ICE_DAMAGE, 'speed': C.ICE_SPEED, 'lifespan': C.ICE_LIFESPAN,
             'sprite_path': C.ICE_SPRITE_PATH, 'dimensions': C.ICE_DIMENSIONS,
             'fallback_color1': (150,200,255,200), 'fallback_color2': C.LIGHT_BLUE,
-            'effect_type': "freeze" # Add the effect type
+            'effect_type': "freeze"
         }
         super().__init__(x, y, direction_vector, owner_player, config)
