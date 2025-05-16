@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Handles initialization of game elements, levels, and entities.
-version 1.0.0.7 (Added debug prints for projectile group assignment)
+version 1.0.0.8 (Set player control_scheme and joystick_id_idx from game_config)
 """
 import sys
 import pygame
@@ -16,6 +16,7 @@ import levels as LevelLoader
 from camera import Camera
 from typing import Dict, Optional, Any, Tuple, List 
 import importlib 
+import config as game_config # Import the game config
 
 DEFAULT_LEVEL_MODULE_NAME = "level_default" 
 
@@ -160,15 +161,31 @@ def initialize_game_elements(current_width: int, current_height: int,
     if for_game_mode in ["host", "couch_play", "join_lan", "join_ip"]:
         player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1) 
         if not player1._valid_init: print(f"CRITICAL GameSetup: P1 init failed."); return None
+        player1.control_scheme = game_config.CURRENT_P1_INPUT_DEVICE
+        if "joystick" in player1.control_scheme:
+            try: player1.joystick_id_idx = int(player1.control_scheme.split('_')[-1])
+            except (IndexError, ValueError): player1.joystick_id_idx = None
         all_sprites.add(player1)
 
     if for_game_mode == "couch_play":
         player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) 
         if not player2._valid_init: print(f"CRITICAL GameSetup: P2 (couch) init failed."); return None
+        player2.control_scheme = game_config.CURRENT_P2_INPUT_DEVICE
+        if "joystick" in player2.control_scheme:
+            try: player2.joystick_id_idx = int(player2.control_scheme.split('_')[-1])
+            except (IndexError, ValueError): player2.joystick_id_idx = None
         all_sprites.add(player2)
     elif for_game_mode in ["join_lan", "join_ip", "host"]: 
         player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2) 
         if not player2._valid_init: print(f"CRITICAL GameSetup: P2 shell init failed."); return None
+        # P2 (client) control scheme is determined by client, server just creates a shell.
+        # However, for a host that also acts as P2 (split screen server), this might be set.
+        # For now, assume P2 in "host" mode is remote, so no local control scheme.
+        if for_game_mode != "host": # Client or local P2 for join_lan/ip
+            player2.control_scheme = game_config.CURRENT_P2_INPUT_DEVICE # This is likely wrong for pure client
+            if "joystick" in player2.control_scheme:
+                try: player2.joystick_id_idx = int(player2.control_scheme.split('_')[-1])
+                except: player2.joystick_id_idx = None
         all_sprites.add(player2)
 
 
@@ -187,9 +204,9 @@ def initialize_game_elements(current_width: int, current_height: int,
         for i, spawn_info in enumerate(local_enemy_spawns_data_list):
             try:
                 patrol_rect = pygame.Rect(spawn_info['patrol']) if spawn_info.get('patrol') else None
-                enemy_color_id_from_map = spawn_info.get('enemy_color_id') # Get color ID from map data
+                enemy_color_id_from_map = spawn_info.get('enemy_color_id') 
                 enemy = Enemy(start_x=spawn_info['pos'][0], start_y=spawn_info['pos'][1], 
-                              patrol_area=patrol_rect, enemy_id=i, color_name=enemy_color_id_from_map) # Pass color_name
+                              patrol_area=patrol_rect, enemy_id=i, color_name=enemy_color_id_from_map) 
                 if enemy._valid_init: 
                     all_sprites.add(enemy); enemy_sprites.add(enemy); enemy_list.append(enemy)
                 else:

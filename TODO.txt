@@ -33,3 +33,12 @@ Make wall switches.
 Make remote C4. 
 Make a small circular drone that will die in one hit but can navigate (player movement is disabled) and turn switches on. 
 Make fog of war. 
+
+update gif sizes so its accurate (fire/freeze)
+make gifs for other enemys
+fix gif code - combine, streamline it more...
+make drop down floors
+controller support and Check
+fix editor stuff..
+add new things to editor..
+test chest

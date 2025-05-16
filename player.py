@@ -1,9 +1,8 @@
 ########## START OF FILE: player.py ##########
-
 # player.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.6 (Added Shadow and Grey projectile support to Player class)
+## version 1.0.0.8 (Ensured petrification attributes initialized in __init__ and reset_state)
 Defines the Player class, handling core attributes, collision heights, and
 the ability to check for safe uncrouching.
 Delegates state, animation, physics, collisions, input, combat, and network handling
@@ -63,6 +62,12 @@ class Player(pygame.sprite.Sprite):
             self.standing_collision_height = 0
             self.crouching_collision_height = 0
             self.standard_height = 0 
+            # Initialize petrification attributes even on failed animation load for safety
+            self.is_petrified = False
+            self.is_stone_smashed = False
+            self.stone_smashed_timer_start = 0
+            self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "StoneP_Fail")
+            self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "SmashP_Fail")]
             return 
 
         self.standing_collision_height = 0
@@ -189,9 +194,52 @@ class Player(pygame.sprite.Sprite):
             self.shadow_key = C.P2_SHADOW_PROJECTILE_KEY 
             self.grey_key = C.P2_GREY_PROJECTILE_KEY     
 
+        # Petrification attributes
+        self.is_petrified = False
+        self.is_stone_smashed = False
+        self.stone_smashed_timer_start = 0
+        
+        # Pre-load stone images if available from the character's animation set
+        # If 'stone' or 'stone_smashed' are not in self.animations (e.g., missing files),
+        # load_all_player_animations should have provided a BLUE placeholder.
+        # We'll use that or the specific loaded one.
+        self.stone_image_frame = self.animations.get('stone', [self._create_placeholder_surface(C.GRAY, "StoneP")])[0]
+        self.stone_smashed_frames = self.animations.get('stone_smashed', [self._create_placeholder_surface(C.DARK_GRAY, "SmashP")])
+
+
         if not self._valid_init:
             print(f"Player {self.player_id}: Initialization was marked as invalid. Player might not function correctly.")
 
+    def _create_placeholder_surface(self, color, text="Err"):
+        height = self.standing_collision_height if hasattr(self, 'standing_collision_height') and self.standing_collision_height > 0 else 60
+        surf = pygame.Surface((30, height)).convert_alpha() 
+        surf.fill(color)
+        pygame.draw.rect(surf, C.BLACK, surf.get_rect(), 1)
+        try: 
+            font = pygame.font.Font(None, 18)
+            text_surf = font.render(text, True, C.BLACK)
+            surf.blit(text_surf, text_surf.get_rect(center=surf.get_rect().center))
+        except: pass 
+        return surf
+        
+    def petrify(self):
+        if self.is_petrified or (self.is_dead and not self.is_petrified):
+            return
+        print(f"Player {self.player_id} is being petrified.")
+        self.is_petrified = True
+        self.is_stone_smashed = False
+        self.is_dead = True 
+        self.current_health = 0
+        self.vel.xy = 0,0
+        self.acc.xy = 0,0
+        self.is_attacking = False; self.attack_type = 0
+        self.is_dashing = False; self.is_rolling = False; self.is_sliding = False
+        self.on_ladder = False; self.is_taking_hit = False
+        
+        self.state = 'petrified' 
+        self.current_frame = 0 
+        self.death_animation_finished = True 
+        set_player_state(self, 'petrified') 
 
     def set_projectile_group_references(self, projectile_group: pygame.sprite.Group,
                                         all_sprites_group: pygame.sprite.Group):
@@ -241,7 +289,8 @@ class Player(pygame.sprite.Sprite):
         process_player_input_logic(self, keys_pressed_state, pygame_event_list, key_map_dict)
 
     def _generic_fire_projectile(self, projectile_class, cooldown_attr_name, cooldown_const, projectile_config_name):
-        if not self._valid_init or self.is_dead or not self.alive(): return
+        if not self._valid_init or self.is_dead or not self.alive() or getattr(self, 'is_petrified', False): 
+             return
         if self.projectile_sprites_group is None or self.all_sprites_group is None:
             if self.print_limiter.can_print(f"player_{self.player_id}_fire_{projectile_config_name}_no_group_ref"):
                 print(f"Player {self.player_id}: Cannot fire {projectile_config_name}, projectile/all_sprites group not set.")
@@ -271,6 +320,15 @@ class Player(pygame.sprite.Sprite):
             new_projectile = projectile_class(spawn_x, spawn_y, current_aim_direction, self)
             self.projectile_sprites_group.add(new_projectile)
             self.all_sprites_group.add(new_projectile)
+
+            if projectile_config_name == 'blood' and self.current_health > 0:
+                health_cost_percent = 0.05 
+                health_cost_amount = self.current_health * health_cost_percent
+                self.current_health -= health_cost_amount
+                self.current_health = max(0, self.current_health)
+                print(f"Player {self.player_id} paid {health_cost_amount:.1f} health for BloodShot. Current health: {self.current_health:.1f}")
+                if self.current_health <= 0 and not self.is_dead:
+                    self.set_state('death')
         # else: pass 
 
     def fire_fireball(self): self._generic_fire_projectile(Fireball, 'fireball_cooldown_timer', C.FIREBALL_COOLDOWN, 'fireball')
@@ -320,6 +378,21 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, dt_sec, platforms_group, ladders_group, hazards_group,
                other_players_sprite_list, enemies_sprite_list):
+        if self.is_stone_smashed:
+            current_time_ms = pygame.time.get_ticks()
+            if current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS:
+                print(f"Smashed stone Player {self.player_id} duration ended. Killing.")
+                self.kill()
+                return
+            self.animate() 
+            return 
+        
+        if self.is_petrified: 
+            self.vel.xy = 0,0
+            self.acc.xy = 0,0
+            self.animate() 
+            return 
+
         update_player_core_logic(self, dt_sec, platforms_group, ladders_group, hazards_group,
                                  other_players_sprite_list, enemies_sprite_list)
 
@@ -368,10 +441,14 @@ class Player(pygame.sprite.Sprite):
         self.grey_cooldown_timer = 0   
         self.fireball_last_input_dir = pygame.math.Vector2(1.0, 0.0) 
 
+        # Reset petrification state
+        self.is_petrified = False
+        self.is_stone_smashed = False
+        self.stone_smashed_timer_start = 0
+
         if hasattr(self.image, 'set_alpha') and hasattr(self.image, 'get_alpha') and \
            self.image.get_alpha() is not None and self.image.get_alpha() < 255:
             self.image.set_alpha(255)
 
         set_player_state(self, 'idle') 
-
 ########## END OF FILE: player.py ##########

@@ -4,7 +4,7 @@
 """
 Defines projectile classes like Fireball, PoisonShot, etc.
 """
-# version 1.0.4 (Bolt rotation fix, Ice Shot fix trigger, Blood Shot health cost trigger)
+# version 1.0.6 (Bolt vertical flip for upwards, horizontal rotation for L/R)
 import pygame
 import os # For path joining
 import math # For math.atan2 and math.degrees if more complex rotation is needed
@@ -35,7 +35,6 @@ class BaseProjectile(pygame.sprite.Sprite):
         if not self.frames or \
            (len(self.frames) == 1 and self.frames[0].get_size() == (30,40) and self.frames[0].get_at((0,0)) == C.RED): 
             debug(f"Warning: Projectile GIF '{full_gif_path}' failed to load or is default placeholder. Using fallback.")
-            # Update dimensions if actual GIF loaded and it's not a placeholder
             if self.frames and not (len(self.frames) == 1 and self.frames[0].get_size() == (30,40) and self.frames[0].get_at((0,0)) == C.RED):
                 self.dimensions = self.frames[0].get_size()
 
@@ -44,12 +43,11 @@ class BaseProjectile(pygame.sprite.Sprite):
             pygame.draw.circle(self.image, config.get('fallback_color1', C.ORANGE_RED), (self.dimensions[0]//2, self.dimensions[1]//2), self.dimensions[0]//3)
             pygame.draw.circle(self.image, config.get('fallback_color2', C.RED), (self.dimensions[0]//2, self.dimensions[1]//2), self.dimensions[0]//4)
             self.frames = [self.image]
-        else: # Successfully loaded frames
-            self.dimensions = self.frames[0].get_size() # Update dimensions from actual GIF
+        else: 
+            self.dimensions = self.frames[0].get_size() 
         
         self.current_frame_index = 0
         self.image = self.frames[self.current_frame_index]
-        # Initial rect for _post_init_hook which might rotate frames
         self.rect = self.image.get_rect(center=(x, y))
         
         if direction_vector.length_squared() > 0:
@@ -57,10 +55,11 @@ class BaseProjectile(pygame.sprite.Sprite):
         else: 
             self.vel = pygame.math.Vector2(1 if owner_player.facing_right else -1, 0) * self.speed
 
-        self._post_init_hook(self.vel) # This might change self.frames and self.image
+        # Store original frames before _post_init_hook might modify them (especially for Bolt)
+        self.original_frames = [frame.copy() for frame in self.frames]
+        self._post_init_hook(self.vel) 
 
-        # Re-set rect and pos after potential rotation in post_init_hook
-        self.image = self.frames[self.current_frame_index % len(self.frames)] # Ensure current_frame_index is valid
+        self.image = self.frames[self.current_frame_index % len(self.frames)] 
         self.rect = self.image.get_rect(center=(x,y)) 
         self.pos = pygame.math.Vector2(self.rect.center)
         
@@ -83,15 +82,19 @@ class BaseProjectile(pygame.sprite.Sprite):
             self.last_anim_update = now
             self.current_frame_index = (self.current_frame_index + 1) % len(self.frames)
             old_center = self.rect.center
-            base_image_for_anim = self.frames[self.current_frame_index]
+            base_image_for_anim = self.frames[self.current_frame_index] # Use potentially transformed frames
 
+            # For most projectiles, flipping is based on horizontal velocity for visual consistency.
+            # BoltProjectile handles its primary orientation in _post_init_hook and its animate().
             if not isinstance(self, BoltProjectile): 
                 if self.vel.x < 0: 
                     self.image = pygame.transform.flip(base_image_for_anim, True, False)
                 else:
                     self.image = base_image_for_anim 
             else: 
-                self.image = base_image_for_anim # BoltProjectile handles its rotation in _post_init_hook
+                # Bolt's frames are already oriented by _post_init_hook.
+                # Its animate method just cycles through these pre-oriented frames.
+                self.image = base_image_for_anim 
 
 
             self.rect = self.image.get_rect(center=old_center)
@@ -115,7 +118,6 @@ class BaseProjectile(pygame.sprite.Sprite):
                 continue
             if char is self.owner_player and not getattr(C, "ALLOW_SELF_FIREBALL_DAMAGE", False) and self.__class__.__name__ == "Fireball": 
                 continue
-            # For blood shot, owner takes damage when firing, not on hit self.
             if char is self.owner_player and self.__class__.__name__ == "BloodShot":
                 continue
 
@@ -133,13 +135,13 @@ class BaseProjectile(pygame.sprite.Sprite):
                     can_damage_target = False 
 
                 if can_damage_target:
-                    # If it's a grey shot and the target can be petrified
-                    if self.__class__.__name__ == "GreyProjectile" and hasattr(char, 'petrify') and not getattr(char, 'is_petrified', False):
+                    if self.effect_type == 'petrify' and hasattr(char, 'petrify') and not getattr(char, 'is_petrified', False):
+                        debug(f"Grey shot hit {type(char).__name__} {getattr(char, 'player_id', getattr(char, 'enemy_id', ''))}. Petrifying.")
                         char.petrify()
-                        self.kill() # Grey shot disappears after petrifying
-                        return # Skip normal damage if petrified
+                        self.kill() 
+                        return 
 
-                    char.take_damage(self.damage) # Apply normal damage
+                    char.take_damage(self.damage) 
                     
                     if self.effect_type == "freeze":
                         if hasattr(char, 'apply_freeze_effect'):
@@ -150,11 +152,11 @@ class BaseProjectile(pygame.sprite.Sprite):
                                 debug(f"Projectile with 'aflame' effect hit green Enemy {getattr(char, 'enemy_id', 'Unknown')}. Applying aflame effect.")
                                 char.apply_aflame_effect()
                                 
-                    self.kill() # Projectile disappears after hitting and applying effects/damage
+                    self.kill() 
                     return 
         
     def get_network_data(self):
-        image_flipped = False
+        image_flipped = False # For Bolt, this might be less relevant if rotation covers direction
         if not isinstance(self, BoltProjectile):
             image_flipped = self.vel.x < 0
 
@@ -166,31 +168,40 @@ class BaseProjectile(pygame.sprite.Sprite):
             'owner_id': self.owner_player.player_id if self.owner_player else None,
             'frame': self.current_frame_index,
             'spawn_time': self.spawn_time,
-            'image_flipped': image_flipped,
+            'image_flipped': image_flipped, # Bolt's orientation is more complex than simple flip
             'effect_type': self.effect_type 
         }
 
     def set_network_data(self, data):
         self.pos.x, self.pos.y = data['pos']
         if 'vel' in data:
-             self.vel.x, self.vel.y = data['vel']
+             self.vel.x, self.vel.y = data['vel'] # Important for Bolt's _post_init_hook if re-applied
         self.rect.center = round(self.pos.x), round(self.pos.y)
         self.current_frame_index = data.get('frame', self.current_frame_index)
         self.effect_type = data.get('effect_type', self.effect_type) 
         
         old_center = self.rect.center
         
+        # Check if frames need to be (re)loaded or (re)transformed
+        # This is especially important if a client joins late or if projectile state needs full reconstruction
         if not self.frames or (len(self.frames) == 1 and self.frames[0].get_size() == (1,1)): 
             if not self.sprite_path: 
                 proj_type_name_from_data = data.get('type')
                 if proj_type_name_from_data:
-                    path_const_name = f"{proj_type_name_from_data.upper()}_SPRITE_PATH" # e.g. FIREBALL_SPRITE_PATH
+                    path_const_name = f"{proj_type_name_from_data.upper()}_SPRITE_PATH" 
                     if hasattr(C, path_const_name):
                         self.sprite_path = getattr(C, path_const_name)
                 
             if self.sprite_path:
                 full_gif_path = resource_path(self.sprite_path)
-                self.frames = load_gif_frames(full_gif_path)
+                # Use self.original_frames if available and valid, otherwise load fresh
+                if hasattr(self, 'original_frames') and self.original_frames and \
+                   not (len(self.original_frames) == 1 and self.original_frames[0].get_size() == (30,40) and self.original_frames[0].get_at((0,0)) == C.RED):
+                    self.frames = [frame.copy() for frame in self.original_frames] # Work with copies
+                else:
+                    self.frames = load_gif_frames(full_gif_path)
+                    self.original_frames = [frame.copy() for frame in self.frames] # Store originals
+
                 if not self.frames or (len(self.frames) == 1 and self.frames[0].get_size() == (30,40) and self.frames[0].get_at((0,0)) == C.RED):
                     fallback_dims = self.dimensions if self.dimensions else (1,1)
                     self.frames = [pygame.Surface(fallback_dims, pygame.SRCALPHA)] 
@@ -198,7 +209,8 @@ class BaseProjectile(pygame.sprite.Sprite):
                 else: 
                     self.dimensions = self.frames[0].get_size() 
                 
-                final_velocity_vector_for_hook = pygame.math.Vector2(data.get('vel', (1,0)))
+                # Re-apply transformations based on network velocity
+                final_velocity_vector_for_hook = pygame.math.Vector2(data.get('vel', (self.vel.x, self.vel.y)))
                 self._post_init_hook(final_velocity_vector_for_hook) 
 
 
@@ -208,8 +220,10 @@ class BaseProjectile(pygame.sprite.Sprite):
             return
 
         self.current_frame_index = self.current_frame_index % len(self.frames)
-        base_image = self.frames[self.current_frame_index]
+        base_image = self.frames[self.current_frame_index] # These are now the (potentially) transformed frames
 
+        # For non-Bolt projectiles, simple flip might still apply based on net data if needed,
+        # but Bolt handles its own orientation entirely in _post_init_hook based on velocity.
         if not isinstance(self, BoltProjectile) and data.get('image_flipped', False):
             self.image = pygame.transform.flip(base_image, True, False)
         else: 
@@ -243,38 +257,53 @@ class BoltProjectile(BaseProjectile):
             'sprite_path': C.BOLT_SPRITE_PATH, 'dimensions': C.BOLT_DIMENSIONS, 
             'fallback_color1': (255,255,0,200), 'fallback_color2': C.YELLOW
         }
-        # Initial super().__init__ will load original frames
         super().__init__(x, y, direction_vector, owner_player, config)
-        # _post_init_hook (called by super) will handle the rotation based on self.vel
 
     def _post_init_hook(self, final_velocity_vector):
-        if not self.frames or not self.frames[0]: return 
-
-        angle = 0
-        # Determine rotation based on horizontal velocity component
-        if final_velocity_vector.x > 0: # Shot right
-            angle = 90 # Rotate 90 degrees left (counter-clockwise)
-        elif final_velocity_vector.x < 0: # Shot left
-            angle = -90 # Rotate 90 degrees right (clockwise)
-        # If vel.x is 0 (e.g. shot straight up/down), no additional rotation based on L/R direction
-
-        if angle != 0:
-            rotated_frames = []
-            for frame_idx, frame in enumerate(self.frames):
-                if frame and frame.get_width() > 0 and frame.get_height() > 0:
-                    rotated_frames.append(pygame.transform.rotate(frame, angle))
-                elif frame: 
-                    rotated_frames.append(frame) 
-            if rotated_frames:
-                self.frames = rotated_frames
+        # Use self.original_frames for transformations to avoid cumulative effects
+        if not self.original_frames or not self.original_frames[0]: return 
         
-        # Set the initial image after potential rotation
+        self.frames = [frame.copy() for frame in self.original_frames] # Start with fresh copies
+
+        vx, vy = final_velocity_vector.x, final_velocity_vector.y
+        transformed_frames = []
+
+        if abs(vy) > abs(vx) * 1.5 and vy < 0: # Moving primarily upwards
+            debug(f"Bolt shot upwards (vx:{vx:.2f}, vy:{vy:.2f}). Applying vertical flip.")
+            for frame in self.frames:
+                if frame and frame.get_width() > 0 and frame.get_height() > 0:
+                    transformed_frames.append(pygame.transform.flip(frame, False, True)) # Flip vertically
+                elif frame:
+                    transformed_frames.append(frame)
+        elif vx > 0: # Shot right (and not primarily vertical)
+            debug(f"Bolt shot right (vx:{vx:.2f}, vy:{vy:.2f}). Rotating 90 deg left.")
+            for frame in self.frames:
+                if frame and frame.get_width() > 0 and frame.get_height() > 0:
+                    transformed_frames.append(pygame.transform.rotate(frame, 90)) # Rotate 90 deg left
+                elif frame:
+                    transformed_frames.append(frame)
+        elif vx < 0: # Shot left (and not primarily vertical)
+            debug(f"Bolt shot left (vx:{vx:.2f}, vy:{vy:.2f}). Rotating 90 deg right.")
+            for frame in self.frames:
+                if frame and frame.get_width() > 0 and frame.get_height() > 0:
+                    transformed_frames.append(pygame.transform.rotate(frame, -90)) # Rotate 90 deg right
+                elif frame:
+                    transformed_frames.append(frame)
+        else: # No specific transformation (e.g., shot straight down or vx=0, vy=0)
+            transformed_frames = self.frames # Use as is
+
+        if transformed_frames:
+            self.frames = transformed_frames
+        
         self.current_frame_index = 0 
-        self.image = self.frames[self.current_frame_index]
-        # The rect will be re-centered by the BaseProjectile's __init__ after this hook.
+        if self.frames: # Ensure self.frames is not empty after transformations
+             self.image = self.frames[self.current_frame_index % len(self.frames)]
+        else: # Fallback if something went wrong with frame processing
+            self.image = pygame.Surface(self.dimensions, pygame.SRCALPHA)
+            self.image.fill(C.MAGENTA)
+            self.frames = [self.image] # Ensure self.frames has at least one image
 
     def animate(self): 
-        # Bolt's animation uses pre-rotated frames, so it doesn't need standard flipping.
         now = pygame.time.get_ticks()
         anim_duration = C.ANIM_FRAME_DURATION / 1.5 
         if hasattr(self, 'custom_anim_speed_divisor'):
@@ -284,7 +313,7 @@ class BoltProjectile(BaseProjectile):
             self.last_anim_update = now
             self.current_frame_index = (self.current_frame_index + 1) % len(self.frames)
             old_center = self.rect.center
-            self.image = self.frames[self.current_frame_index] # Image is already correctly rotated
+            self.image = self.frames[self.current_frame_index] 
             self.rect = self.image.get_rect(center=old_center)
 
 
@@ -328,7 +357,7 @@ class GreyProjectile(BaseProjectile):
             'sprite_path': C.GREY_PROJECTILE_SPRITE_PATH, 
             'dimensions': C.GREY_PROJECTILE_DIMENSIONS, 
             'fallback_color1': (100,100,100,200), 'fallback_color2': C.DARK_GRAY,
-            'effect_type': 'petrify' # Special effect type
+            'effect_type': 'petrify' 
         }
         super().__init__(x, y, direction_vector, owner_player, config)
         self.custom_anim_speed_divisor = 1.0

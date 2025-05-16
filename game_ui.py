@@ -1,17 +1,16 @@
 # game_ui.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.4 (Added select_map_dialog)
+## version 1.0.0.5 (Added "Settings" button to main menu)
 """
 Functions for drawing User Interface elements like health bars, player HUDs,
 main menus, input dialogs, and the main game scene.
 """
 import pygame
 import time 
-import os # Needed for listing map files
+import os 
 import constants as C 
-from typing import Dict, Optional, Any, List # Added List
+from typing import Dict, Optional, Any, List 
 
-# --- (PYPERCLIP_AVAILABLE_UI_MODULE and SCRAP_INITIALIZED_UI_MODULE setup remains the same) ---
 PYPERCLIP_AVAILABLE_UI_MODULE = False
 try:
     import pyperclip
@@ -29,8 +28,6 @@ def check_pygame_scrap_init_status():
     except (AttributeError, pygame.error): SCRAP_INITIALIZED_UI_MODULE = False
     return SCRAP_INITIALIZED_UI_MODULE
 
-# --- (draw_health_bar, draw_player_hud, draw_platformer_scene_on_surface, show_main_menu, get_server_ip_input_dialog remain the same as your provided version) ---
-# --- Health Bar Drawing Function ---
 def draw_health_bar(surface: pygame.Surface, x: int, y: int, 
                     width: int, height: int, 
                     current_hp: float, max_hp: float):
@@ -77,7 +74,6 @@ def draw_player_hud(surface: pygame.Surface, x: int, y: int, player_instance: An
 
 def draw_platformer_scene_on_surface(screen_surface: pygame.Surface, game_elements: Dict[str, Any], 
                                      fonts: Dict[str, Optional[pygame.font.Font]], current_game_time_ticks: int,
-                                     # Added optional parameters for download status
                                      download_status_message: Optional[str] = None,
                                      download_progress_percent: Optional[float] = None): 
     camera_instance = game_elements.get("camera"); all_sprites_group = game_elements.get("all_sprites") 
@@ -94,43 +90,36 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface, game_elemen
         for enemy_sprite in enemy_list_for_health_bars:
             if enemy_sprite.alive() and getattr(enemy_sprite, '_valid_init', False) and not \
                (getattr(enemy_sprite, 'is_dead', False) and getattr(enemy_sprite, 'death_animation_finished', False)) and \
-               hasattr(enemy_sprite, 'current_health') and hasattr(enemy_sprite, 'max_health'):
+               hasattr(enemy_sprite, 'current_health') and hasattr(enemy_sprite, 'max_health') and not getattr(enemy_sprite, 'is_petrified', False) : # Don't draw health bar for petrified
                 enemy_rect_on_screen = camera_instance.apply(enemy_sprite.rect) 
                 hb_w, hb_h = getattr(C, 'HEALTH_BAR_WIDTH', 50), getattr(C, 'HEALTH_BAR_HEIGHT', 8)
                 hb_x, hb_y = enemy_rect_on_screen.centerx - hb_w // 2, enemy_rect_on_screen.top - hb_h - getattr(C, 'HEALTH_BAR_OFFSET_ABOVE', 5) 
                 draw_health_bar(screen_surface, hb_x, hb_y, hb_w, hb_h, enemy_sprite.current_health, enemy_sprite.max_health)
     elif all_sprites_group: all_sprites_group.draw(screen_surface)
-    if player1_instance and getattr(player1_instance, '_valid_init', False) and player1_instance.alive():
+    
+    if player1_instance and getattr(player1_instance, '_valid_init', False) and player1_instance.alive() and not getattr(player1_instance, 'is_petrified', False):
         draw_player_hud(screen_surface, 10, 10, player1_instance, 1, font_for_hud)
-    if player2_instance and getattr(player2_instance, '_valid_init', False) and player2_instance.alive():
+    if player2_instance and getattr(player2_instance, '_valid_init', False) and player2_instance.alive() and not getattr(player2_instance, 'is_petrified', False):
         p2_hud_w = getattr(C, 'HUD_HEALTH_BAR_WIDTH', getattr(C, 'HEALTH_BAR_WIDTH',50)*2) + 120 
         draw_player_hud(screen_surface, current_screen_width - p2_hud_w - 10, 10, player2_instance, 2, font_for_hud)
 
-    # Draw download status overlay if provided (typically for the host watching a client download)
     if download_status_message and font_for_hud:
         dialog_rect = pygame.Rect(0, 0, current_screen_width * 0.6, current_screen_height * 0.3)
         dialog_rect.center = (current_screen_width // 2, current_screen_height // 2)
         pygame.draw.rect(screen_surface, C.DARK_GRAY, dialog_rect, border_radius=10)
         pygame.draw.rect(screen_surface, C.WHITE, dialog_rect, 2, border_radius=10)
-
         status_surf = font_for_hud.render(download_status_message, True, C.WHITE)
         status_rect = status_surf.get_rect(centerx=dialog_rect.centerx, top=dialog_rect.top + 20)
         screen_surface.blit(status_surf, status_rect)
-
         if download_progress_percent is not None and download_progress_percent >= 0:
             bar_width = dialog_rect.width * 0.8
             bar_height = 30
             bar_x = dialog_rect.centerx - bar_width / 2
             bar_y = status_rect.bottom + 20
-            
-            # Background of the progress bar
             pygame.draw.rect(screen_surface, C.GRAY, (bar_x, bar_y, bar_width, bar_height), border_radius=5)
-            # Filled part of the progress bar
             fill_width = (download_progress_percent / 100) * bar_width
             pygame.draw.rect(screen_surface, C.GREEN, (bar_x, bar_y, fill_width, bar_height), border_radius=5)
-            # Border for the progress bar
             pygame.draw.rect(screen_surface, C.WHITE, (bar_x, bar_y, bar_width, bar_height), 2, border_radius=5)
-
             progress_text = f"{download_progress_percent:.1f}%"
             font_small = fonts.get("small") or pygame.font.Font(None, 24)
             if font_small:
@@ -146,9 +135,18 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
     font_title = fonts.get("large") or (pygame.font.Font(None, 60) if pygame.font.get_init() else None)
     if not font_title: return "quit"
     title_surf = font_title.render("Platformer Adventure LAN", True, getattr(C, 'WHITE',(255,255,255)))
-    menu_buttons = {"host": {"text": "Host Game", "action": "host"}, "join_lan": {"text": "Join LAN", "action": "join_lan"},
-                    "join_ip": {"text": "Join by IP", "action": "join_ip"}, "couch_play": {"text": "Couch Play", "action": "couch_play"},
-                    "quit": {"text": "Quit", "action": "quit"}}
+    
+    menu_buttons = {
+        "host": {"text": "Host Game", "action": "host"}, 
+        "join_lan": {"text": "Join LAN", "action": "join_lan"},
+        "join_ip": {"text": "Join by IP", "action": "join_ip"}, 
+        "couch_play": {"text": "Couch Play", "action": "couch_play"},
+        "settings": {"text": "Settings", "action": "settings"}, # New Settings button
+        "quit": {"text": "Quit", "action": "quit"}
+    }
+    button_order = ["host", "join_lan", "join_ip", "couch_play", "settings", "quit"]
+
+
     font_button = fonts.get("medium") or (pygame.font.Font(None, 30) if pygame.font.get_init() else None)
     if not font_button: return "quit"
     title_rect = title_surf.get_rect(center=(current_w // 2, current_h // 4))
@@ -158,7 +156,8 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
         current_w_local, current_h_local = screen_surface.get_size() 
         title_rect = title_surf.get_rect(center=(current_w_local // 2, current_h_local // 4))
         btn_y = title_rect.bottom + title_gap
-        for props in menu_buttons.values():
+        for key in button_order: # Iterate in defined order
+            props = menu_buttons[key]
             props["rect"] = pygame.Rect(0, 0, button_w, button_h); props["rect"].centerx, props["rect"].top = current_w_local // 2, btn_y
             props["text_surf"] = font_button.render(props["text"], True, getattr(C, 'WHITE',(255,255,255)))
             props["text_rect"] = props["text_surf"].get_rect(center=props["rect"].center); btn_y += button_h + spacing
@@ -176,11 +175,13 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
                 except pygame.error as e: print(f"Menu resize error: {e}")
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: app_status_obj.app_running = False; selected_action = "quit"
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                for props in menu_buttons.values():
+                for key in button_order: # Check in order
+                    props = menu_buttons[key]
                     if "rect" in props and props["rect"].collidepoint(mouse_pos): selected_action = props["action"]; break
         if not app_status_obj.app_running: break
         screen_surface.fill(getattr(C, 'BLACK',(0,0,0))); screen_surface.blit(title_surf, title_rect)
-        for props in menu_buttons.values():
+        for key in button_order: # Draw in order
+            props = menu_buttons[key]
             if "rect" in props:
                 hover = props["rect"].collidepoint(mouse_pos)
                 color = getattr(C, 'GREEN',(0,255,0)) if hover else getattr(C, 'BLUE',(0,0,255))
@@ -308,16 +309,14 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
     button_spacing = 10
     button_width_factor = 0.6 
     
-    # Define colors
     color_white = getattr(C, 'WHITE', (255,255,255))
     color_black = getattr(C, 'BLACK', (0,0,0))
     color_gray = getattr(C, 'GRAY', (128,128,128))
     
-    # Button specific colors
     color_button_normal_bg = getattr(C, 'BLUE', (0,0,255))
-    color_button_hover_bg = (70, 70, 220)  # A custom hover color for normal items
+    color_button_hover_bg = (70, 70, 220)  
     color_button_selected_bg = getattr(C, 'GREEN', (0,255,0))
-    color_button_selected_hover_bg = (70, 220, 70) # A custom hover color for selected items
+    color_button_selected_hover_bg = (70, 220, 70) 
     
     color_text_normal = color_white
     color_text_selected = color_black
@@ -327,8 +326,6 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
         screen_w, screen_h = screen.get_size()
         mouse_pos = pygame.mouse.get_pos()
 
-        # Calculate title surface and rect once per frame for consistency
-        # This ensures click detection and drawing use the same positions
         frame_title_surf = font_title.render("Select a Map", True, color_white)
         frame_title_rect = frame_title_surf.get_rect(center=(screen_w // 2, screen_h * 0.15))
 
@@ -356,82 +353,54 @@ def select_map_dialog(screen: pygame.Surface, clock: pygame.time.Clock,
                     selected_index = current_page * maps_per_page
             
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                # Determine visible maps for click check
                 _start_idx_click = current_page * maps_per_page
                 _end_idx_click = min(_start_idx_click + maps_per_page, len(map_module_names))
                 _visible_maps_on_page_click = map_module_names[_start_idx_click:_end_idx_click]
-
-                # Use the frame_title_rect for consistent positioning
-                _current_btn_y_click = frame_title_rect.bottom + 60 # Crucial: Same offset as drawing
-
+                _current_btn_y_click = frame_title_rect.bottom + 60 
                 for i, map_name in enumerate(_visible_maps_on_page_click):
                     item_rect_click = pygame.Rect(0, 0, screen_w * button_width_factor, button_height)
                     item_rect_click.centerx = screen_w // 2
                     item_rect_click.top = _current_btn_y_click
                     if item_rect_click.collidepoint(mouse_pos):
                         print(f"GAME_UI: Map selected by click: {map_name}")
-                        # Update selected_index to reflect mouse click for visual consistency if needed, then return
                         selected_index = _start_idx_click + i 
                         return map_name 
                     _current_btn_y_click += button_height + button_spacing
         
         if not app_status.app_running: break
-
         screen.fill(color_black)
-        
-        # Draw the consistent title
         screen.blit(frame_title_surf, frame_title_rect)
-
-        # Draw instruction text (anchored to the consistent title rect)
         instr_text = "Use UP/DOWN Arrows, Enter to Select. PgUp/PgDn or LEFT/RIGHT for pages. ESC to cancel."
         instr_surf = font_instr.render(instr_text, True, color_gray)
         instr_rect = instr_surf.get_rect(center=(screen_w // 2, frame_title_rect.bottom + 20))
         screen.blit(instr_surf, instr_rect)
         
-        # Determine visible maps for drawing
         start_idx_draw = current_page * maps_per_page
         end_idx_draw = min(start_idx_draw + maps_per_page, len(map_module_names))
         visible_maps_on_page_draw = map_module_names[start_idx_draw:end_idx_draw]
-
-        # Start drawing map items (buttons)
-        current_btn_y_draw = frame_title_rect.bottom + 60 # Crucial: Same offset as click check
+        current_btn_y_draw = frame_title_rect.bottom + 60 
 
         for i, map_name in enumerate(visible_maps_on_page_draw):
             actual_map_index = start_idx_draw + i 
-            
             item_text = f"{map_name}"
-            
-            # Create rect for the current item
             item_rect_draw = pygame.Rect(0, 0, screen_w * button_width_factor, button_height)
             item_rect_draw.centerx = screen_w // 2
             item_rect_draw.top = current_btn_y_draw
-            
             is_keyboard_selected = (actual_map_index == selected_index)
             is_mouse_hovered = item_rect_draw.collidepoint(mouse_pos)
-
             current_bg_color = color_button_normal_bg
             current_text_color = color_text_normal
-
             if is_keyboard_selected:
                 current_text_color = color_text_selected
-                if is_mouse_hovered:
-                    current_bg_color = color_button_selected_hover_bg
-                else:
-                    current_bg_color = color_button_selected_bg
-            elif is_mouse_hovered: # Not keyboard selected, but mouse is over it
+                if is_mouse_hovered: current_bg_color = color_button_selected_hover_bg
+                else: current_bg_color = color_button_selected_bg
+            elif is_mouse_hovered: 
                 current_bg_color = color_button_hover_bg
-                # current_text_color remains color_text_normal
-            
-            # Draw the button background
             pygame.draw.rect(screen, current_bg_color, item_rect_draw, border_radius=5)
-            # Draw the button border
             pygame.draw.rect(screen, color_white, item_rect_draw, 1, border_radius=5) 
-            
-            # Render and blit the text
             item_surf = font_item.render(item_text, True, current_text_color)
             text_rect = item_surf.get_rect(center=item_rect_draw.center)
             screen.blit(item_surf, text_rect)
-            
             current_btn_y_draw += button_height + button_spacing
 
         if max_pages > 1:
@@ -461,7 +430,7 @@ def draw_download_dialog(screen: pygame.Surface, fonts: dict, title: str, messag
     font_large = fonts.get("large") or pygame.font.Font(None, 48)
     font_medium = fonts.get("medium") or pygame.font.Font(None, 32)
 
-    screen.fill(C.BLACK) # Full screen dim for focus
+    screen.fill(C.BLACK) 
 
     pygame.draw.rect(screen, C.DARK_GRAY, dialog_rect, border_radius=10)
     pygame.draw.rect(screen, C.WHITE, dialog_rect, 2, border_radius=10)
