@@ -1,7 +1,9 @@
+########## START OF FILE: client_logic.py ##########
+
 # client_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.0.2 (Integrated global logger)
+version 1.0.0.3 (Added P2 weapon key handling)
 Handles client-side game logic, connection to server, and LAN discovery.
 """
 import pygame
@@ -30,6 +32,7 @@ from game_state_manager import set_network_game_state
 from enemy import Enemy # For print_limiter access if needed, or for type hinting
 from game_ui import draw_platformer_scene_on_surface, draw_download_dialog # For drawing client's view
 from game_setup import initialize_game_elements # To re-init after map download
+from items import Chest # for type hinting
 
 class ClientState:
     """
@@ -369,9 +372,9 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     current_screen_width, current_screen_height = screen.get_size()
     updated_game_elements = initialize_game_elements(
         current_screen_width, current_screen_height,
-        for_game_mode="join_ip", # Or "join_lan", doesn't matter much here for element creation
-        existing_sprites_groups=game_elements_ref, # Pass existing groups to preserve instances
-        map_module_name=client_state_obj.server_selected_map_name # This map name is used for `import maps.{name}`
+        for_game_mode="join_ip", 
+        existing_sprites_groups=game_elements_ref, 
+        map_module_name=client_state_obj.server_selected_map_name 
     )
     if updated_game_elements is None:
         critical(f"Client CRITICAL: Failed to initialize game elements with map '{client_state_obj.server_selected_map_name}'.")
@@ -381,12 +384,10 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         return
 
     game_elements_ref.update(updated_game_elements)
-    # Ensure camera is updated if it was re-created or its dimensions need sync
     if game_elements_ref.get("camera"):
         cam_instance = game_elements_ref["camera"]
         if hasattr(cam_instance, "set_screen_dimensions"):
             cam_instance.set_screen_dimensions(current_screen_width, current_screen_height)
-        # Also ensure level dimensions are set if camera was just created or map changed
         if hasattr(cam_instance, "set_level_dimensions") and "level_pixel_width" in game_elements_ref:
             cam_instance.set_level_dimensions(
                 game_elements_ref["level_pixel_width"],
@@ -396,7 +397,8 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 
 
     # --- Main Game Loop (starts after map sync) ---
-    pygame.display.set_caption("Platformer - CLIENT (You are P2: WASD+VB | Self-Harm: H | Heal: G | Reset: Enter)")
+    pygame.display.set_caption(f"Platformer - CLIENT (You are P2: WASD+VB | Self-Harm:H | Heal:G | Reset:Enter | Weapons: {C.P2_SHADOW_PROJECTILE_KEY % 1000 - C.K_KP0 + 6 if C.P2_SHADOW_PROJECTILE_KEY >= C.K_KP0 and C.P2_SHADOW_PROJECTILE_KEY <= C.K_KP9 else C.P2_SHADOW_PROJECTILE_KEY - C.K_0 + 6}, {C.P2_GREY_PROJECTILE_KEY % 1000 - C.K_KP0 + 7 if C.P2_GREY_PROJECTILE_KEY >= C.K_KP0 and C.P2_GREY_PROJECTILE_KEY <= C.K_KP9 else C.P2_GREY_PROJECTILE_KEY - C.K_0 + 7})")
+
 
     p2_controlled_by_client = game_elements_ref.get("player2")
     p1_remote_on_client = game_elements_ref.get("player1")
@@ -412,14 +414,20 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     }
 
     client_game_active = True
-    client_state_obj.server_state_buffer = b"" # Clear buffer for game state messages
+    client_state_obj.server_state_buffer = b"" 
     client_state_obj.last_received_server_state = None
 
     while client_game_active and client_state_obj.app_running:
         dt_sec = clock.tick(C.FPS) / 1000.0
         now_ticks_client = pygame.time.get_ticks()
 
-        client_initiated_actions = {'action_reset': False, 'action_self_harm': False, 'action_heal': False}
+        client_initiated_actions = {
+            'action_reset': False, 
+            'action_self_harm': False, 
+            'action_heal': False,
+            'fire_shadow_event': False, 
+            'fire_grey_event': False    
+        }
         server_indicated_game_over = False
         if client_state_obj.last_received_server_state and \
            'game_over' in client_state_obj.last_received_server_state:
@@ -434,34 +442,35 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                     current_width,current_height=max(320,event.w),max(240,event.h)
                     screen=pygame.display.set_mode((current_width,current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
                     if game_elements_ref.get("camera"):
-                        # Update camera's screen dimensions directly
-                        game_elements_ref["camera"].screen_width = current_width
-                        game_elements_ref["camera"].screen_height = current_height
-                        if hasattr(game_elements_ref["camera"], 'camera_rect'):
-                             game_elements_ref["camera"].camera_rect.width = current_width
-                             game_elements_ref["camera"].camera_rect.height = current_height
+                        game_elements_ref["camera"].set_screen_dimensions(current_width, current_height)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: client_game_active = False
                 if event.key == pygame.K_RETURN and server_indicated_game_over :
                     client_initiated_actions['action_reset'] = True
                 if event.key == pygame.K_h: client_initiated_actions['action_self_harm'] = True
                 if event.key == pygame.K_g: client_initiated_actions['action_heal'] = True
+                
+                if p2_controlled_by_client: 
+                    if event.key == C.P2_SHADOW_PROJECTILE_KEY: 
+                        client_initiated_actions['fire_shadow_event'] = True
+                    if event.key == C.P2_GREY_PROJECTILE_KEY: 
+                        client_initiated_actions['fire_grey_event'] = True
+
 
         if not client_state_obj.app_running or not client_game_active: break
 
         p2_input_state_for_server = {}
         if p2_controlled_by_client and hasattr(p2_controlled_by_client, 'get_input_state_for_network'):
              p2_input_state_for_server = p2_controlled_by_client.get_input_state_for_network(
-                 keys_pressed_client, pygame_events_client, p2_client_key_map
+                 keys_pressed_client, pygame_events_client, p2_client_key_map 
              )
-        p2_input_state_for_server.update(client_initiated_actions) # Add special actions to the input payload
+        p2_input_state_for_server.update(client_initiated_actions)
 
         if client_state_obj.client_tcp_socket:
             client_input_payload = {"input": p2_input_state_for_server}
             encoded_client_payload = encode_data(client_input_payload)
             if encoded_client_payload:
                 try:
-                    # debug(f"Client: Sending input to server: {client_input_payload}") # Noisy
                     client_state_obj.client_tcp_socket.sendall(encoded_client_payload)
                 except socket.error as e_send:
                     error(f"Client: Send to server failed: {e_send}. Server might have disconnected.")
@@ -469,23 +478,20 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 
         if client_state_obj.client_tcp_socket:
             try:
-                # Potentially larger buffer if server sends very large states, though 8192*2 is already quite large.
                 server_data_chunk = client_state_obj.client_tcp_socket.recv(client_state_obj.buffer_size * 2)
                 if not server_data_chunk:
                     info("Client: Server disconnected (received empty data from recv).")
                     client_game_active = False; break
 
-                # debug(f"Client: Received chunk from server: {server_data_chunk[:100]}...") # Noisy
                 client_state_obj.server_state_buffer += server_data_chunk
                 decoded_server_states, client_state_obj.server_state_buffer = \
                     decode_data_stream(client_state_obj.server_state_buffer)
 
                 if decoded_server_states:
-                    # Apply the most recent complete state received
                     client_state_obj.last_received_server_state = decoded_server_states[-1]
                     set_network_game_state(client_state_obj.last_received_server_state, game_elements_ref, client_player_id=2)
 
-            except socket.timeout: pass # No data received, normal for non-blocking
+            except socket.timeout: pass 
             except socket.error as e_recv:
                 error(f"Client: Recv error from server: {e_recv}. Server might have disconnected.")
                 client_game_active = False; break
@@ -493,7 +499,6 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 error(f"Client: Error processing data from server: {e_process_server}", exc_info=True)
                 client_game_active = False; break
 
-        # Animate local and remote entities based on their (now synced) states
         if p1_remote_on_client and p1_remote_on_client.alive() and p1_remote_on_client._valid_init and \
            hasattr(p1_remote_on_client, 'animate'):
             p1_remote_on_client.animate()
@@ -505,20 +510,17 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         for enemy_client in game_elements_ref.get("enemy_list", []):
             if enemy_client.alive() and enemy_client._valid_init and hasattr(enemy_client, 'animate'):
                 enemy_client.animate()
-            # Visual removal of dead enemies (server dictates actual death)
             if enemy_client.is_dead and hasattr(enemy_client, 'death_animation_finished') and \
                enemy_client.death_animation_finished and enemy_client.alive():
                 debug(f"Client: Visually removing enemy {enemy_client.enemy_id} as death anim finished.")
-                enemy_client.kill() # Remove from sprite groups
+                enemy_client.kill() 
 
         for proj_client in game_elements_ref.get("projectile_sprites", pygame.sprite.Group()):
             if proj_client.alive() and hasattr(proj_client, 'animate'):
                 proj_client.animate()
-            # Projectile removal is usually handled by its own update logic (lifespan, collision)
 
-        game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec) # Collectibles might have simple animations
+        game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec) 
 
-        # Update camera based on P2 (client's player) or P1 if P2 is not active
         client_camera = game_elements_ref.get("camera")
         if client_camera:
             camera_focus_target_client = None
@@ -530,13 +532,13 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 camera_focus_target_client = p1_remote_on_client
 
             if camera_focus_target_client: client_camera.update(camera_focus_target_client)
-            else: client_camera.static_update() # Or center on map, etc.
+            else: client_camera.static_update() 
 
         try:
             draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_client)
         except Exception as e_draw:
             error(f"Client draw error: {e_draw}", exc_info=True)
-            client_game_active=False; break # Stop game if drawing fails
+            client_game_active=False; break 
         pygame.display.flip()
 
     info("Client: Exiting active game loop.")
@@ -548,3 +550,5 @@ def run_client_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         except: pass
         client_state_obj.client_tcp_socket = None
     info("Client: Client mode finished and returned to caller.")
+
+########## END OF FILE: client_logic.py ##########

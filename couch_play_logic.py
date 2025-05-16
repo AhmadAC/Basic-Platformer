@@ -3,7 +3,7 @@
 # couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.0.5 (Pass full enemy list to enemy.update)
+version 1.0.0.6 (Added P1/P2 weapon keys)
 Handles the game logic for the local couch co-op (two players on one machine) mode.
 """
 import pygame
@@ -42,14 +42,12 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         app_status_obj: An object (like main's AppStatus) with an 'app_running' attribute
                         to signal if the whole application should quit.
     """
-    pygame.display.set_caption("Platformer - Couch Co-op (P1:WASD+VB, P2:IJKL+OP | Harm:H,N | Heal:G,M | Reset:Q)") # Updated caption
+    pygame.display.set_caption("Platformer - Couch Co-op (P1:WASD+VB, P2:IJKL+OP | Harm:H,N | Heal:G,M | Reset:Q | P1 Weap:1-7, P2 Weap:KP1-KP7)") 
     current_width, current_height = screen.get_size()
 
-    # Get player instances from the game_elements dictionary
     p1 = game_elements_ref.get("player1")
     p2 = game_elements_ref.get("player2")
 
-    # Define key mappings for Player 1 and Player 2
     p1_key_map_config = {
         'left': pygame.K_a, 'right': pygame.K_d, 'up': pygame.K_w, 'down': pygame.K_s,
         'attack1': pygame.K_v, 'attack2': pygame.K_b, 'dash': pygame.K_LSHIFT,
@@ -58,9 +56,9 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     p2_key_map_config = {
         'left': pygame.K_j, 'right': pygame.K_l, 'up': pygame.K_i, 'down': pygame.K_k,
         'attack1': pygame.K_o, 'attack2': pygame.K_p,
-        'dash': pygame.K_SEMICOLON,
-        'roll': pygame.K_QUOTE,
-        'interact': pygame.K_BACKSLASH
+        'dash': pygame.K_SEMICOLON, 
+        'roll': pygame.K_QUOTE, 
+        'interact': pygame.K_BACKSLASH 
     }
 
     couch_game_active = True
@@ -97,12 +95,30 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                         p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'):
                         p1.heal_to_full()
+                    # P1 Weapon Keys (from constants for consistency)
+                    if event.key == C.P1_FIREBALL_KEY and hasattr(p1, 'fire_fireball'): p1.fire_fireball()
+                    if event.key == C.P1_POISON_KEY and hasattr(p1, 'fire_poison'): p1.fire_poison()
+                    if event.key == C.P1_BOLT_KEY and hasattr(p1, 'fire_bolt'): p1.fire_bolt()
+                    if event.key == C.P1_BLOOD_KEY and hasattr(p1, 'fire_blood'): p1.fire_blood()
+                    if event.key == C.P1_ICE_KEY and hasattr(p1, 'fire_ice'): p1.fire_ice()
+                    if event.key == C.P1_SHADOW_PROJECTILE_KEY and hasattr(p1, 'fire_shadow'): p1.fire_shadow()
+                    if event.key == C.P1_GREY_PROJECTILE_KEY and hasattr(p1, 'fire_grey'): p1.fire_grey()
+
 
                 if p2 and p2._valid_init:
                     if event.key == pygame.K_n and hasattr(p2, 'self_inflict_damage'):
                         p2.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_m and hasattr(p2, 'heal_to_full'):
                         p2.heal_to_full()
+                    # P2 Weapon Keys (from constants for consistency)
+                    if event.key == C.P2_FIREBALL_KEY and hasattr(p2, 'fire_fireball'): p2.fire_fireball()
+                    if event.key == C.P2_POISON_KEY and hasattr(p2, 'fire_poison'): p2.fire_poison()
+                    if event.key == C.P2_BOLT_KEY and hasattr(p2, 'fire_bolt'): p2.fire_bolt()
+                    if event.key == C.P2_BLOOD_KEY and hasattr(p2, 'fire_blood'): p2.fire_blood()
+                    if event.key == C.P2_ICE_KEY and hasattr(p2, 'fire_ice'): p2.fire_ice()
+                    if event.key == C.P2_SHADOW_PROJECTILE_KEY and hasattr(p2, 'fire_shadow'): p2.fire_shadow()
+                    if event.key == C.P2_GREY_PROJECTILE_KEY and hasattr(p2, 'fire_grey'): p2.fire_grey()
+
 
         if not app_status_obj.app_running or not couch_game_active: break
 
@@ -117,6 +133,9 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         if host_requested_reset_couch:
             info("Couch Play: Game state reset triggered by 'Q' key.")
             game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
+            if p1 and p1._valid_init and not p1.alive(): game_elements_ref["all_sprites"].add(p1)
+            if p2 and p2._valid_init and not p2.alive(): game_elements_ref["all_sprites"].add(p2)
+
 
         if p1 and p1._valid_init:
             other_players_for_p1_update = [char for char in [p2] if char and char._valid_init and char.alive() and char is not p1]
@@ -134,7 +153,7 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 enemy_couch.update(dt_sec, active_players_for_enemy_ai_couch,
                                    game_elements_ref["platform_sprites"], 
                                    game_elements_ref["hazard_sprites"],
-                                   game_elements_ref["enemy_list"]) # Pass full enemy_list
+                                   game_elements_ref["enemy_list"]) 
                 if enemy_couch.is_dead and hasattr(enemy_couch, 'death_animation_finished') and \
                    enemy_couch.death_animation_finished and enemy_couch.alive():
                     debug(f"Couch Play: Auto-killing enemy {enemy_couch.enemy_id} as death anim finished.")
@@ -151,19 +170,20 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         )
 
         game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec)
+        
         couch_current_chest = game_elements_ref.get("current_chest")
-        if Chest and couch_current_chest and couch_current_chest.alive():
-            player_who_collected_chest_couch = None
+        if isinstance(couch_current_chest, Chest) and couch_current_chest.alive() and \
+           not couch_current_chest.is_collected_flag_internal: 
+            player_who_interacted_with_chest = None
             if p1 and p1._valid_init and not p1.is_dead and p1.alive() and \
                pygame.sprite.collide_rect(p1, couch_current_chest):
-                player_who_collected_chest_couch = p1
+                player_who_interacted_with_chest = p1
             elif p2 and p2._valid_init and not p2.is_dead and p2.alive() and \
                  pygame.sprite.collide_rect(p2, couch_current_chest):
-                player_who_collected_chest_couch = p2
+                player_who_interacted_with_chest = p2
 
-            if player_who_collected_chest_couch:
-                couch_current_chest.collect(player_who_collected_chest_couch)
-                game_elements_ref["current_chest"] = None
+            if player_who_interacted_with_chest:
+                couch_current_chest.collect(player_who_interacted_with_chest)
 
         couch_camera = game_elements_ref.get("camera")
         if couch_camera:
@@ -184,3 +204,5 @@ def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         pygame.display.flip()
 
     info("Exiting Couch Play mode.")
+
+########## END OF FILE: couch_play_logic.py ##########

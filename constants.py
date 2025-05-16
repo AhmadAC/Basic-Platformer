@@ -6,9 +6,10 @@
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 1.0.0.5 (Added aflame status constants)
+# version 1.0.0.7 (Added Shadow, Grey projectiles, Chest open constants, and P2 projectile keys)
 import os
 import sys
+import pygame # For K_ constants
 
 # --- Gameplay / Physics ---
 FPS = 60
@@ -49,13 +50,21 @@ PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER = 1.5 # If attack2 animation is slower/
 
 CHARACTER_ATTACK_STATE_DURATION = 480 # ms, general duration for an attack state if not animation-driven
 
+# --- Item Constants ---
+CHEST_CLOSED_SPRITE_PATH = "characters/items/chest.gif"
+CHEST_OPEN_SPRITE_PATH = "characters/items/chest_open.gif" # NEW
+CHEST_STAY_OPEN_DURATION_MS = 3000 # Time from collection start (fully open) until fade out begins - NEW
+CHEST_FADE_OUT_DURATION_MS = 1000  # Duration of the fade out animation - NEW
+# CHEST_FADE_ALPHA_STEP = 5 # Alpha reduction per frame for fade - Using time-based fade in Chest class now
+
+
 # --- Projectile Constants ---
 # Fireball (Key 1)
 FIREBALL_DAMAGE = 50
 FIREBALL_SPEED = 9
 FIREBALL_COOLDOWN = 750 # ms
 FIREBALL_LIFESPAN = 2500 # ms
-FIREBALL_SPRITE_PATH = "characters/weapons/fire.gif" # Relative to MEIPASS or project root
+FIREBALL_SPRITE_PATH = "characters/weapons/fire.gif"
 FIREBALL_DIMENSIONS = (61, 58) # width, height
 
 # Poison (Key 2)
@@ -72,7 +81,7 @@ BOLT_SPEED = 15
 BOLT_COOLDOWN = 600 # ms
 BOLT_LIFESPAN = 1500 # ms
 BOLT_SPRITE_PATH = "characters/weapons/bolt1_resized_11x29.gif"
-BOLT_DIMENSIONS = (11, 29) # Original dimensions
+BOLT_DIMENSIONS = (11, 29)
 
 # Blood (Key 4)
 BLOOD_DAMAGE = 30
@@ -89,6 +98,22 @@ ICE_COOLDOWN = 900 # ms
 ICE_LIFESPAN = 2200 # ms
 ICE_SPRITE_PATH = "characters/weapons/ice.gif"
 ICE_DIMENSIONS = (40, 40)
+
+# Shadow Projectile (Key 6) - NEW
+SHADOW_PROJECTILE_DAMAGE = 45
+SHADOW_PROJECTILE_SPEED = 9
+SHADOW_PROJECTILE_COOLDOWN = 800 # ms
+SHADOW_PROJECTILE_LIFESPAN = 1700 # ms
+SHADOW_PROJECTILE_SPRITE_PATH = "characters/weapons/shadow095.gif"
+SHADOW_PROJECTILE_DIMENSIONS = (40, 40) # Placeholder, will be overridden by GIF dimensions
+
+# Grey Projectile (Key 7) - NEW
+GREY_PROJECTILE_DAMAGE = 30
+GREY_PROJECTILE_SPEED = 5
+GREY_PROJECTILE_COOLDOWN = 750 # ms
+GREY_PROJECTILE_LIFESPAN = 1500 # ms
+GREY_PROJECTILE_SPRITE_PATH = "characters/weapons/grey.gif"
+GREY_PROJECTILE_DIMENSIONS = (40, 40) # Placeholder, will be overridden by GIF dimensions
 
 
 # --- Enemy Constants ---
@@ -112,8 +137,8 @@ ENEMY_AFLAME_DURATION_MS = 3000
 ENEMY_DEFLAME_DURATION_MS = 2000
 ENEMY_AFLAME_DAMAGE_PER_TICK = 5
 ENEMY_AFLAME_DAMAGE_INTERVAL_MS = 1000
-ENEMY_FROZEN_DURATION_MS = 3000 # Renamed from Enemy.FROZEN_DURATION for consistency
-ENEMY_DEFROST_DURATION_MS = 2000 # Renamed from Enemy.DEFROST_DURATION
+ENEMY_FROZEN_DURATION_MS = 3000
+ENEMY_DEFROST_DURATION_MS = 2000
 
 
 # --- Colors ---
@@ -149,76 +174,67 @@ LAVA_DAMAGE = 25       # Damage per hit from lava (can be time-based via hit coo
 def get_maps_directory():
     """
     Determines the absolute path to the 'maps' directory for file operations.
-    This path is where map files (.py from editor export, .json for editor saves)
-    are expected to be read from and written to.
-
-    For PyInstaller Bundles:
-    - If _MEIPASS/_internal/maps exists, uses that. (_MEIPASS is the bundle root)
-    - Else if _MEIPASS/maps exists, uses that.
-    - Else defaults to _MEIPASS/_internal/maps (this is the desired structure).
-
-    For Development:
-    - Uses 'maps' directory relative to this constants.py file (assumed to be project root).
     """
-    # Check if running in a PyInstaller bundle
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        bundle_dir_meipass = sys._MEIPASS # This is your _internal if PyInstaller is set up that way
-
-        # Desired structure: maps folder directly inside _MEIPASS (your _internal folder)
+        bundle_dir_meipass = sys._MEIPASS
         desired_bundled_maps_path = os.path.join(bundle_dir_meipass, 'maps')
-        _maps_dir_to_use = desired_bundled_maps_path # Default to this for bundled app
-
-        if os.path.isdir(desired_bundled_maps_path):
-            # print(f"CONSTANTS (get_maps_directory): Using bundled maps dir: {_maps_dir_to_use}")
-            pass # Already set
-        else:
-            # Fallback: Check if 'maps' is next to the EXE (less common for _internal setup)
+        _maps_dir_to_use = desired_bundled_maps_path
+        if not os.path.isdir(desired_bundled_maps_path):
             exe_dir = os.path.dirname(sys.executable)
             maps_next_to_exe = os.path.join(exe_dir, 'maps')
             if os.path.isdir(maps_next_to_exe):
-                # print(f"CONSTANTS (get_maps_directory): WARNING - Using maps dir next to EXE: {maps_next_to_exe}")
                 _maps_dir_to_use = maps_next_to_exe
-            # else:
-                # print(f"CONSTANTS (get_maps_directory): Maps directory not found at '{desired_bundled_maps_path}' or next to EXE. "
-                      # f"Will proceed assuming '{desired_bundled_maps_path}' for operations.")
         return _maps_dir_to_use
     else:
-        # Development mode: 'maps' directory relative to the project root
-        # (assuming constants.py is in or near the project root)
-        project_root_guess = os.path.abspath(os.path.join(os.path.dirname(__file__))) # Dir of constants.py
+        project_root_guess = os.path.abspath(os.path.join(os.path.dirname(__file__)))
         dev_maps_path = os.path.join(project_root_guess, 'maps')
-        # print(f"CONSTANTS (get_maps_directory): Development mode, using maps dir: {dev_maps_path}")
         return dev_maps_path
 
 MAPS_DIR = get_maps_directory()
-# print(f"CONSTANTS: Final MAPS_DIR resolved to: {MAPS_DIR}") # For debugging if needed
 
 
 # --- Network Constants ---
-SERVER_IP_BIND = '0.0.0.0' # Bind to all available interfaces
+SERVER_IP_BIND = '0.0.0.0'
 SERVER_PORT_TCP = 5555
-SERVICE_NAME = "platformer_adventure_lan_v1" # For LAN discovery
+SERVICE_NAME = "platformer_adventure_lan_v1"
 DISCOVERY_PORT_UDP = 5556
-BUFFER_SIZE = 8192 # Increased buffer size for potentially larger game states
+BUFFER_SIZE = 8192
 BROADCAST_INTERVAL_S = 1.0
 CLIENT_SEARCH_TIMEOUT_S = 5.0
-MAP_DOWNLOAD_CHUNK_SIZE = 4096 # Bytes per map data chunk
+MAP_DOWNLOAD_CHUNK_SIZE = 4096
 
 # --- Other ---
-PLAYER_SELF_DAMAGE = 10 # For debug purposes
+PLAYER_SELF_DAMAGE = 10
 
-# --- Player Ability Durations/Cooldowns (can be moved to a more specific section if Player constants grow) ---
+# --- Player Ability Durations/Cooldowns ---
 PLAYER_DASH_DURATION = 150 # ms
 PLAYER_ROLL_DURATION = 300 # ms
 PLAYER_SLIDE_DURATION = 400 # ms
 PLAYER_WALL_CLIMB_DURATION = 500 # ms
-PLAYER_COMBO_WINDOW = 250 # ms, time after first attack to chain a combo
+PLAYER_COMBO_WINDOW = 250 # ms
 PLAYER_HIT_STUN_DURATION = 300 # ms
-PLAYER_HIT_COOLDOWN = 600 # ms (invulnerability after being hit)
+PLAYER_HIT_COOLDOWN = 600 # ms
 
-# --- Player 2 Controls (Example, can be customized) ---
-# These are just examples if you want to define them centrally.
-# Player class currently sets its own keys.
+# --- Player 1 Projectile Keys ---
+P1_FIREBALL_KEY = pygame.K_1
+P1_POISON_KEY = pygame.K_2
+P1_BOLT_KEY = pygame.K_3
+P1_BLOOD_KEY = pygame.K_4
+P1_ICE_KEY = pygame.K_5
+P1_SHADOW_PROJECTILE_KEY = pygame.K_6 # NEW
+P1_GREY_PROJECTILE_KEY = pygame.K_7   # NEW
+
+# --- Player 2 Projectile Keys ---
+# Default to numpad keys. Player class will use these if available.
+P2_FIREBALL_KEY = pygame.K_KP_1
+P2_POISON_KEY = pygame.K_KP_2
+P2_BOLT_KEY = pygame.K_KP_3
+P2_BLOOD_KEY = pygame.K_KP_4
+P2_ICE_KEY = pygame.K_KP_5
+P2_SHADOW_PROJECTILE_KEY = pygame.K_KP_6 # NEW
+P2_GREY_PROJECTILE_KEY = pygame.K_KP_7   # NEW
+
+# Example standard P2 movement keys for reference (used in couch_play_logic & Player defaults)
 # P2_LEFT_KEY = pygame.K_j
 # P2_RIGHT_KEY = pygame.K_l
 # P2_UP_KEY = pygame.K_i
@@ -229,8 +245,4 @@ PLAYER_HIT_COOLDOWN = 600 # ms (invulnerability after being hit)
 # P2_ROLL_KEY = pygame.K_QUOTE
 # P2_INTERACT_KEY = pygame.K_BACKSLASH
 
-# P2_FIREBALL_KEY = pygame.K_KP_1
-# P2_POISON_KEY = pygame.K_KP_2
-# P2_BOLT_KEY = pygame.K_KP_3
-# P2_BLOOD_KEY = pygame.K_KP_4
-# P2_ICE_KEY = pygame.K_KP_5
+########## END OF FILE: constants.py ##########

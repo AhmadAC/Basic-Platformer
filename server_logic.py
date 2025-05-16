@@ -3,7 +3,7 @@
 # server_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.0.3 (Pass full enemy list to enemy.update)
+version 1.0.0.4 (Added P1 weapon keys and chest interaction handling)
 Handles server-side game logic, connection management, and broadcasting.
 """
 import pygame
@@ -12,15 +12,15 @@ import threading
 import time
 import traceback
 from typing import Optional
-import os # For file operations
+import os 
 import constants as C
 from network_comms import get_local_ip, encode_data, decode_data_stream
 from game_state_manager import get_network_game_state, reset_game_state
-from enemy import Enemy # For print_limiter access if needed, or just for type hinting
+from enemy import Enemy 
 import game_ui
-from game_ui import draw_platformer_scene_on_surface, draw_download_dialog # Added draw_download_dialog
+from game_ui import draw_platformer_scene_on_surface, draw_download_dialog 
+from items import Chest # For type checking
 
-# Shared lock for client connection and input buffer
 client_lock = threading.Lock()
 
 class ServerState:
@@ -30,37 +30,32 @@ class ServerState:
     the running state of the server components.
     """
     def __init__(self):
-        self.client_connection = None  # Holds the active client socket object
-        self.client_address = None     # Holds the (IP, port) of the active client
-        self.client_input_buffer = {}  # Stores the last processed input from the client
-        self.app_running = True        # Global flag: True if the application is running
+        self.client_connection = None  
+        self.client_address = None     
+        self.client_input_buffer = {}  
+        self.app_running = True        
         
-        # Network socket objects
-        self.server_tcp_socket = None  # TCP socket for listening to client connections
-        self.server_udp_socket = None  # UDP socket for broadcasting server presence
+        self.server_tcp_socket = None  
+        self.server_udp_socket = None  
         
-        # Thread objects
-        self.broadcast_thread = None       # Thread for LAN broadcasting
-        self.client_handler_thread = None  # Thread for handling communication with the connected client
+        self.broadcast_thread = None       
+        self.client_handler_thread = None  
         
-        # Configuration (can be loaded from constants.py or passed)
         self.service_name = getattr(C, "SERVICE_NAME", "platformer_adventure_lan_v1")
         self.discovery_port_udp = getattr(C, "DISCOVERY_PORT_UDP", 5556)
         self.server_port_tcp = getattr(C, "SERVER_PORT_TCP", 5555)
         self.buffer_size = getattr(C, "BUFFER_SIZE", 8192)
         self.broadcast_interval_s = getattr(C, "BROADCAST_INTERVAL_S", 1.0)
 
-        # Map synchronization state
         self.current_map_name: Optional[str] = None
-        self.client_map_status: str = "unknown" # "unknown", "present", "missing", "downloading_requested", "downloading_ack", "error"
+        self.client_map_status: str = "unknown" 
         self.client_download_progress: float = 0.0
-        self.game_start_signaled_to_client: bool = False # To ensure start_game_now is sent once
+        self.game_start_signaled_to_client: bool = False 
 
 
 def broadcast_presence_thread(server_state_obj: ServerState):
     """
     Thread function to periodically broadcast the server's presence on the LAN.
-    Uses UDP to send a discovery message.
     """
     current_lan_ip = get_local_ip() 
     broadcast_message_dict = {
@@ -108,24 +103,19 @@ def broadcast_presence_thread(server_state_obj: ServerState):
 def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj: ServerState):
     """
     Thread function to handle receiving data from a single connected client.
-    Updates the server_state_obj.client_input_buffer with the latest client input.
-    Also handles map file requests from the client.
     """
     print(f"DEBUG Server (handle_client_connection_thread): Client connected from {addr}. Handler thread started.") 
     conn.settimeout(1.0) 
     partial_data_from_client = b"" 
 
-    # Send initial map info
     if server_state_obj.current_map_name:
         try:
             conn.sendall(encode_data({"command": "set_map", "name": server_state_obj.current_map_name}))
             print(f"DEBUG Server Handler ({addr}): Sent initial map info: {server_state_obj.current_map_name}")
         except socket.error as e:
             print(f"DEBUG Server Handler ({addr}): Error sending initial map info: {e}. Client may have disconnected early.")
-            # No need to break here immediately, the main loop's recv will catch the disconnect.
     else:
         print(f"DEBUG Server Handler ({addr}): CRITICAL - server_state_obj.current_map_name is None. Cannot send initial map info.")
-        # This is a server-side logic error if current_map_name isn't set before client connects.
 
     while server_state_obj.app_running:
         with client_lock: 
@@ -151,7 +141,6 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
                         server_state_obj.client_map_status = status
                         if status == "present":
                              server_state_obj.client_download_progress = 100.0
-                             # Server can now signal game start if P1 is also ready (implicitly P1 is always ready as host)
                              if not server_state_obj.game_start_signaled_to_client:
                                 conn.sendall(encode_data({"command": "start_game_now"}))
                                 server_state_obj.game_start_signaled_to_client = True
@@ -162,41 +151,34 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
                     print(f"DEBUG Server Handler ({addr}): Client requested map file: '{map_name_req}'")
                     map_file_path = os.path.join(C.MAPS_DIR, map_name_req + ".py")
                     if os.path.exists(map_file_path):
-                        with open(map_file_path, "r", encoding="utf-8") as f: # Read as text
+                        with open(map_file_path, "r", encoding="utf-8") as f: 
                             map_content_str = f.read()
                         
                         conn.sendall(encode_data({"command": "map_file_info", "name": map_name_req, "size": len(map_content_str.encode('utf-8'))}))
                         
-                        # Send in chunks as JSON strings
                         offset = 0
                         map_content_bytes = map_content_str.encode('utf-8')
                         while offset < len(map_content_bytes):
-                            chunk = map_content_bytes[offset : offset + C.MAP_DOWNLOAD_CHUNK_SIZE]
-                            # Send chunk as a string within the JSON payload
-                            conn.sendall(encode_data({"command": "map_data_chunk", "data": chunk.decode('utf-8', 'replace'), "seq": offset})) # 'seq' can be offset
-                            offset += len(chunk)
+                            chunk_to_send = map_content_bytes[offset : offset + C.MAP_DOWNLOAD_CHUNK_SIZE]
+                            conn.sendall(encode_data({"command": "map_data_chunk", "data": chunk_to_send.decode('utf-8', 'replace'), "seq": offset})) 
+                            offset += len(chunk_to_send)
                         
                         conn.sendall(encode_data({"command": "map_transfer_end", "name": map_name_req}))
                         print(f"DEBUG Server Handler ({addr}): Sent map file '{map_name_req}' to client.")
                     else:
                         print(f"Server Error: Client requested map '{map_name_req}' but it was not found on server at '{map_file_path}'.")
-                        # Optionally send an error message to client
                         conn.sendall(encode_data({"command": "map_file_error", "name": map_name_req, "reason": "not_found"}))
 
 
                 elif command == "report_download_progress":
                     progress = msg.get("progress", 0)
-                    # print(f"DEBUG Server Handler ({addr}): Client download progress: {progress:.1f}%") # Can be noisy
                     with client_lock:
                         server_state_obj.client_download_progress = progress
 
-                elif "input" in msg: # Regular game input
+                elif "input" in msg: 
                     with client_lock:
                         if server_state_obj.client_connection is conn: 
                             server_state_obj.client_input_buffer = msg["input"]
-                # else: # Other commands if any
-                #     print(f"DEBUG Server Handler ({addr}): Received unhandled command: {command}")
-
 
         except socket.timeout:
             continue 
@@ -215,7 +197,7 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
             print(f"DEBUG Server Handler ({addr}): Closing active connection from handler.") 
             server_state_obj.client_connection = None 
             server_state_obj.client_input_buffer = {"disconnect": True} 
-            server_state_obj.client_map_status = "disconnected" # Update status
+            server_state_obj.client_map_status = "disconnected" 
     try:
         conn.shutdown(socket.SHUT_RDWR) 
     except: pass 
@@ -229,20 +211,16 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                     fonts: dict, game_elements_ref: dict, server_state_obj: ServerState):
     """
     Main function to run the game in server mode.
-    Manages client connections, game loop, and state synchronization.
     """
     print("DEBUG Server: Entering run_server_mode.") 
-    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: Q)") 
+    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: Q | Weap:1-7)") 
     
     server_state_obj.app_running = True 
     current_width, current_height = screen.get_size()
 
-    # current_map_name should be set by main.py before calling this.
-    # If it's None here, there's a logic flow issue in main.
     if server_state_obj.current_map_name is None:
-        print("CRITICAL SERVER: server_state_obj.current_map_name is None at start of run_server_mode. This should be set by main.py.")
-        # Fallback or error handling needed, e.g., return or set a default.
-        # For now, we'll assume it's set.
+        print("CRITICAL SERVER: server_state_obj.current_map_name is None at start of run_server_mode.")
+        return 
 
     if server_state_obj.broadcast_thread and server_state_obj.broadcast_thread.is_alive():
         print("DEBUG Server: Broadcast thread already running.") 
@@ -271,27 +249,23 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 
     print("DEBUG Server: Waiting for Player 2 to connect...") 
     temp_client_conn_obj = None 
-    server_state_obj.client_map_status = "unknown" # Reset for new client
+    server_state_obj.client_map_status = "unknown" 
     server_state_obj.client_download_progress = 0.0
     server_state_obj.game_start_signaled_to_client = False
 
-
-    # --- Wait for Client Connection and Map Sync Phase ---
     client_sync_wait_active = True
     while client_sync_wait_active and server_state_obj.app_running:
         current_width, current_height = screen.get_size()
         for event in pygame.event.get():
             if event.type == pygame.QUIT: server_state_obj.app_running = False; client_sync_wait_active = False; break
-            if event.type == pygame.VIDEORESIZE: # Basic resize handling
+            if event.type == pygame.VIDEORESIZE: 
                 if not screen.get_flags() & pygame.FULLSCREEN:
                     current_width, current_height = max(320,event.w), max(240,event.h)
                     screen = pygame.display.set_mode((current_width, current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
-                    # Camera update if needed by host view
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 server_state_obj.app_running = False; client_sync_wait_active = False; break
         if not server_state_obj.app_running: break
 
-        # Accept new connection if none active
         if server_state_obj.client_connection is None:
             try:
                 temp_client_conn_obj, temp_client_addr_tuple = server_state_obj.server_tcp_socket.accept()
@@ -299,53 +273,49 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                     server_state_obj.client_connection = temp_client_conn_obj
                     server_state_obj.client_address = temp_client_addr_tuple
                     server_state_obj.client_input_buffer = {}
-                    server_state_obj.client_map_status = "waiting_client_report" # New status after connect
+                    server_state_obj.client_map_status = "waiting_client_report" 
                     server_state_obj.game_start_signaled_to_client = False
                 print(f"DEBUG Server: Accepted connection from {temp_client_addr_tuple}")
 
-                # Start client handler thread
                 if server_state_obj.client_handler_thread and server_state_obj.client_handler_thread.is_alive():
-                    server_state_obj.client_handler_thread.join(timeout=0.1) # Try to clean up old one
+                    server_state_obj.client_handler_thread.join(timeout=0.1) 
                 server_state_obj.client_handler_thread = threading.Thread(
                     target=handle_client_connection_thread, 
                     args=(server_state_obj.client_connection, server_state_obj.client_address, server_state_obj), 
                     daemon=True
                 )
                 server_state_obj.client_handler_thread.start()
-            except socket.timeout: pass # No connection attempt, continue
+            except socket.timeout: pass 
             except Exception as e_accept: print(f"Server: Error accepting client: {e_accept}")
         
-        # UI Update
         dialog_title = "Server Hosting"
         dialog_message = "Waiting for Player 2 to connect..."
-        dialog_progress = -1 # Waiting state
+        dialog_progress = -1 
 
-        with client_lock: # Access shared state safely
+        with client_lock: 
             if server_state_obj.client_connection:
                 if server_state_obj.client_map_status == "waiting_client_report":
                     dialog_message = f"Player 2 ({server_state_obj.client_address[0]}) connected. Waiting for map status..."
                 elif server_state_obj.client_map_status == "missing":
                      dialog_message = f"Player 2 is missing map '{server_state_obj.current_map_name}'. Sending..."
                      dialog_progress = server_state_obj.client_download_progress
-                elif server_state_obj.client_map_status == "downloading_ack": # Client acknowledged download start
+                elif server_state_obj.client_map_status == "downloading_ack": 
                      dialog_message = f"Player 2 downloading '{server_state_obj.current_map_name}'..."
                      dialog_progress = server_state_obj.client_download_progress
                 elif server_state_obj.client_map_status == "present":
                     dialog_message = f"Player 2 has map '{server_state_obj.current_map_name}'. Ready."
                     dialog_progress = 100.0
-                    client_sync_wait_active = False # Exit this loop, proceed to game
+                    client_sync_wait_active = False 
                 elif server_state_obj.client_map_status == "disconnected":
                     dialog_message = "Player 2 disconnected. Waiting for new connection..."
-                    server_state_obj.client_connection = None # Allow re-accepting
+                    server_state_obj.client_connection = None 
         
-        # Draw the waiting/syncing UI
         game_ui.draw_download_dialog(screen, fonts, dialog_title, dialog_message, dialog_progress)
-        clock.tick(10) # Lower FPS while waiting
+        clock.tick(10) 
 
     if not server_state_obj.app_running or server_state_obj.client_connection is None or server_state_obj.client_map_status != "present":
         print(f"DEBUG Server: Exiting wait loop (app_running: {server_state_obj.app_running}, client_conn: {server_state_obj.client_connection is not None}, map_status: {server_state_obj.client_map_status}).") 
-        # Ensure broadcast thread stops if server mode exits here
-        server_state_obj.app_running = False # Signal threads to stop
+        server_state_obj.app_running = False 
         if server_state_obj.broadcast_thread and server_state_obj.broadcast_thread.is_alive():
             server_state_obj.broadcast_thread.join(timeout=0.5)
         if server_state_obj.client_handler_thread and server_state_obj.client_handler_thread.is_alive():
@@ -353,8 +323,6 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         if server_state_obj.server_tcp_socket: server_state_obj.server_tcp_socket.close(); server_state_obj.server_tcp_socket = None
         return 
 
-
-    # --- Main Game Loop (starts after client is connected and map is synced) ---
     print(f"DEBUG Server: Client {server_state_obj.client_address} connected and map synced. Starting game...") 
     
     p1 = game_elements_ref.get("player1") 
@@ -391,14 +359,22 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                     current_width, current_height = max(320,event.w), max(240,event.h)
                     screen = pygame.display.set_mode((current_width,current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
                     if game_elements_ref.get("camera"):
-                        game_elements_ref["camera"].screen_width = current_width
-                        game_elements_ref["camera"].screen_height = current_height
+                        game_elements_ref["camera"].set_screen_dimensions(current_width, current_height)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: server_game_active = False 
                 if event.key == pygame.K_q: host_requested_reset = True
                 if p1 and p1._valid_init: 
                     if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'): p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'): p1.heal_to_full()
+                    # P1 Weapon Keys (from constants for consistency)
+                    if event.key == C.P1_FIREBALL_KEY and hasattr(p1, 'fire_fireball'): p1.fire_fireball()
+                    if event.key == C.P1_POISON_KEY and hasattr(p1, 'fire_poison'): p1.fire_poison()
+                    if event.key == C.P1_BOLT_KEY and hasattr(p1, 'fire_bolt'): p1.fire_bolt()
+                    if event.key == C.P1_BLOOD_KEY and hasattr(p1, 'fire_blood'): p1.fire_blood()
+                    if event.key == C.P1_ICE_KEY and hasattr(p1, 'fire_ice'): p1.fire_ice()
+                    if event.key == C.P1_SHADOW_PROJECTILE_KEY and hasattr(p1, 'fire_shadow'): p1.fire_shadow()
+                    if event.key == C.P1_GREY_PROJECTILE_KEY and hasattr(p1, 'fire_grey'): p1.fire_grey()
+
         
         if not server_state_obj.app_running or not server_game_active: break
 
@@ -409,25 +385,23 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         p2_network_input, client_disconnected_signal, p2_requested_reset = None, False, False
         with client_lock: 
             if server_state_obj.client_input_buffer:
-                buffered_input = server_state_obj.client_input_buffer.copy() # Make a copy
-                server_state_obj.client_input_buffer.clear() # Clear after copying
+                buffered_input = server_state_obj.client_input_buffer.copy() 
+                server_state_obj.client_input_buffer.clear() 
                 
                 if buffered_input.get("disconnect"): client_disconnected_signal = True
                 elif buffered_input.get("action_reset", False): p2_requested_reset = True
                 
-                if p2 and p2._valid_init: # Process self-harm/heal directly on server
+                if p2 and p2._valid_init: 
                     if buffered_input.get("action_self_harm", False) and hasattr(p2, 'self_inflict_damage'):
                         p2.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     elif buffered_input.get("action_heal", False) and hasattr(p2, 'heal_to_full'):
                         p2.heal_to_full()
                 
-                # Pass other inputs to p2.handle_network_input
                 p2_network_input = buffered_input
 
         if client_disconnected_signal:
             print("DEBUG Server: Client disconnected signal received in main loop.") 
             server_game_active = False 
-            # Reset client related server state for next potential connection
             with client_lock:
                 server_state_obj.client_connection = None
                 server_state_obj.client_map_status = "unknown"
@@ -440,6 +414,9 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         if host_requested_reset or (p2_requested_reset and is_p1_game_over_for_reset):
             print("DEBUG Server: Game state reset triggered.") 
             game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
+            if p1 and p1._valid_init and not p1.alive(): game_elements_ref["all_sprites"].add(p1)
+            if p2 and p2._valid_init and not p2.alive(): game_elements_ref["all_sprites"].add(p2)
+
 
         if p1 and p1._valid_init:
             other_players_for_p1_update = [char for char in [p2] if char and char._valid_init and char.alive() and char is not p1]
@@ -457,7 +434,7 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 enemy.update(dt_sec, active_players_for_enemy_ai, 
                              game_elements_ref["platform_sprites"], 
                              game_elements_ref["hazard_sprites"],
-                             game_elements_ref["enemy_list"]) # Pass full enemy_list
+                             game_elements_ref["enemy_list"]) 
                 if enemy.is_dead and hasattr(enemy, 'death_animation_finished') and \
                    enemy.death_animation_finished and enemy.alive():
                     if hasattr(Enemy, 'print_limiter') and Enemy.print_limiter.can_print(f"server_killing_enemy_{enemy.enemy_id}"):
@@ -472,18 +449,20 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 hittable_characters_server_group.add(enemy_inst_proj)
         game_elements_ref.get("projectile_sprites", pygame.sprite.Group()).update(dt_sec, game_elements_ref["platform_sprites"], hittable_characters_server_group)
         
-        game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec)
+        game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec) # Chest update is called here
+        
         server_current_chest = game_elements_ref.get("current_chest")
-        if server_current_chest and server_current_chest.alive(): 
-            player_who_collected_chest = None
+        if isinstance(server_current_chest, Chest) and server_current_chest.alive() and \
+           not server_current_chest.is_collected_flag_internal: # Check if collection process has started
+            player_who_interacted_with_chest = None
             if p1 and p1._valid_init and not p1.is_dead and p1.alive() and pygame.sprite.collide_rect(p1, server_current_chest):
-                player_who_collected_chest = p1
+                player_who_interacted_with_chest = p1
             elif p2 and p2._valid_init and not p2.is_dead and p2.alive() and pygame.sprite.collide_rect(p2, server_current_chest):
-                player_who_collected_chest = p2
+                player_who_interacted_with_chest = p2
             
-            if player_who_collected_chest:
-                server_current_chest.collect(player_who_collected_chest) 
-                game_elements_ref["current_chest"] = None 
+            if player_who_interacted_with_chest:
+                server_current_chest.collect(player_who_interacted_with_chest) 
+                # Chest handles its own state and removal now. Don't set to None here.
         
         server_camera = game_elements_ref.get("camera")
         if server_camera:
@@ -507,7 +486,6 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                     break 
         
         try:
-            # Pass download status for UI display
             dl_status_msg, dl_progress = None, None
             with client_lock:
                 if server_state_obj.client_map_status in ["missing", "downloading_ack"]:
@@ -541,3 +519,5 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         server_state_obj.server_tcp_socket = None
     
     print("DEBUG Server: Server mode finished and returned to caller.") 
+
+########## END OF FILE: server_logic.py ##########
