@@ -976,7 +976,7 @@
             "game_type_id": "platform_ledge_green_bottom_half"
         }
     ],
-    "camera_offset_x": 77.75,
-    "camera_offset_y": 100.0,
+    "camera_offset_x": 0,
+    "camera_offset_y": 80.0,
     "show_grid": true
 }

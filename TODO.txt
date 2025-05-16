@@ -1,0 +1,35 @@
+https://3d.hunyuan.tencent.com/animationTo3D
+
+update main aspect ratio of png2gif
+
+fix auto save map wrong name after rename stuff
+
+wont load map if its renamed
+
+enemy's gifs are breaking somewhere
+getting thrown throw a wall when i get attacked
+
+fix delete menu
+Current Platformer game issues, things to test, and features to add:
+
+Check LAN. 
+Logging is not working well. 
+Change color of drawn sprites in editor. 
+Completely disable fireball when crouching. 
+Sending new maps to others. 
+Add sound files. 
+Check roll frames, timing, and try to fix it. 
+Add a mushroom that makes the user big for 30 seconds and put a transformation time remaining bar under the health bar. Attacks are twice as strong 
+Throw objects. 
+Disable fireball and add it as an ability players acquire. 
+Add some settings to editor maps such as modifying base stats, attacks, if fireball is enable or disabled. This temporarily overwrites the constants. 
+Add a new drawable sprite - fences. 
+Add switch controller support. 
+Add the option for only one player or more.
+Up to 3 players? 
+Make a next level sprite (black hole) 
+Make a destructible bridge? 
+Make wall switches. 
+Make remote C4. 
+Make a small circular drone that will die in one hit but can navigate (player movement is disabled) and turn switches on. 
+Make fog of war. 

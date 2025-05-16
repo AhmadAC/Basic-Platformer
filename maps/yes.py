@@ -17,55 +17,34 @@ def load_map_yes(initial_screen_width, initial_screen_height):
     enemy_spawns_data = []
     collectible_spawns_data = []
 
-    player1_spawn = (89, 757.0)
+    player1_spawn = (489.0, 757.0)
 
     # --- Placed Objects (merged where possible) ---
-    platforms.add(Platform(160, 480, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(160, 520, 40, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(200.0, 300.0, 200, 20, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(200, 520.0, 200, 20, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(220.0, 560.0, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(260.0, 600.0, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(300.0, 680, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(360.0, 380.0, 200, 20, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(380.0, 640, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(460, 720, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(480, 460.0, 200, 20, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(480, 280, 240, 20, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(500, 600.0, 20, 80, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(520, 640, 320, 20, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(580.0, 640.0, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(660.0, 640.0, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(700.0, 640.0, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(760.0, 340.0, 200, 20, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(780.0, 640.0, 20, 40, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(820, 600.0, 20, 80, (0,100,0), platform_type='ledge'))
-    platforms.add(Platform(880.0, 720, 20, 40, (0,100,0), platform_type='ledge'))
+    platforms.add(Platform(440, 520, 40, 20, (0,100,0), platform_type='ledge'))
+    platforms.add(Platform(440, 660, 40, 20, (0,100,0), platform_type='ledge'))
+    platforms.add(Platform(520, 580, 40, 20, (0,100,0), platform_type='ledge'))
     platforms.add(Platform(0, 0, 80, 760, (128,128,128), platform_type='wall'))
-    platforms.add(Platform(40.0, 760, 1200, 80, (128,128,128), platform_type='wall'))
-    platforms.add(Platform(1080.0, 120, 160, 80, (128,128,128), platform_type='wall'))
-    platforms.add(Platform(1120.0, 0, 80, 80, (128,128,128), platform_type='wall'))
-    platforms.add(Platform(1120.0, 80, 120, 40, (128,128,128), platform_type='wall'))
-    platforms.add(Platform(1120.0, 200, 120, 560, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(0, 760, 1240, 80, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(320.0, 720, 140, 40, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(360.0, 680, 100, 40, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(400, 640.0, 60, 40, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(440, 520, 20, 120, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(560, 560, 20, 200, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(560.0, 640, 80, 80, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(560.0, 720, 120, 40, (128,128,128), platform_type='wall'))
+    platforms.add(Platform(1120.0, 0, 80, 760, (128,128,128), platform_type='wall'))
     # No ladders placed.
-    hazards.add(Lava(480.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(520.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(560.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(600.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(640.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(680.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(720.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(760.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(800.0, 720, 40, 40, (255,69,0)))
-    hazards.add(Lava(840.0, 720, 40, 40, (255,69,0)))
-    enemy_spawns_data.append({'pos': (1009, 757.0), 'patrol': None, 'enemy_color_id': 'cyan'})
-    enemy_spawns_data.append({'pos': (889.0, 757.0), 'patrol': None, 'enemy_color_id': 'green'})
-    enemy_spawns_data.append({'pos': (1049, 757), 'patrol': None, 'enemy_color_id': 'red'})
-    enemy_spawns_data.append({'pos': (569, 637), 'patrol': None, 'enemy_color_id': 'green'})
-    enemy_spawns_data.append({'pos': (769, 637), 'patrol': None, 'enemy_color_id': 'green'})
-    enemy_spawns_data.append({'pos': (209, 517.0), 'patrol': None, 'enemy_color_id': 'cyan'})
-    collectible_spawns_data.append({'type': 'chest', 'pos': (946.0, 759)})
-    collectible_spawns_data.append({'type': 'chest', 'pos': (586, 279.0)})
+    # No hazards placed.
+    enemy_spawns_data.append({'pos': (289.0, 757), 'patrol': None, 'enemy_color_id': 'cyan'})
+    enemy_spawns_data.append({'pos': (169.0, 757), 'patrol': None, 'enemy_color_id': 'cyan'})
+    enemy_spawns_data.append({'pos': (169.0, 677), 'patrol': None, 'enemy_color_id': 'cyan'})
+    enemy_spawns_data.append({'pos': (729.0, 677), 'patrol': None, 'enemy_color_id': 'pink'})
+    enemy_spawns_data.append({'pos': (729.0, 717), 'patrol': None, 'enemy_color_id': 'pink'})
+    enemy_spawns_data.append({'pos': (929.0, 717), 'patrol': None, 'enemy_color_id': 'pink'})
+    enemy_spawns_data.append({'pos': (1129.0, 757.0), 'patrol': None, 'enemy_color_id': 'pink'})
+    enemy_spawns_data.append({'pos': (449, 517), 'patrol': None, 'enemy_color_id': 'red'})
+    enemy_spawns_data.append({'pos': (529.0, 557.0), 'patrol': None, 'enemy_color_id': 'red'})
+    # No collectible spawns defined.
 
     # --- Level Dimensions for Game Camera & Boundaries ---
     map_total_width_pixels = 1400
@@ -78,14 +57,17 @@ def load_map_yes(initial_screen_width, initial_screen_height):
     _boundary_wall_height = level_max_y_absolute - level_min_y_absolute + (2 * _boundary_thickness)
     _boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))
 
-    # Boundary platforms are added after all content platforms.
+    # Filler wall on the right to ensure no empty background padding
+    platforms.add(Platform(1240, level_min_y_absolute - _boundary_thickness, 160, _boundary_wall_height, _boundary_color, platform_type='wall'))
+
+    # Boundary platforms (these define the absolute edges of the level area)
     # Top boundary (ceiling)
     platforms.add(Platform(0, level_min_y_absolute - _boundary_thickness, map_total_width_pixels, _boundary_thickness, _boundary_color, platform_type="boundary_wall_top"))
     # Bottom boundary (floor/kill plane)
     platforms.add(Platform(0, level_max_y_absolute, map_total_width_pixels, _boundary_thickness, _boundary_color, platform_type="boundary_wall_bottom"))
     # Left boundary
     platforms.add(Platform(-_boundary_thickness, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, _boundary_color, platform_type="boundary_wall_left"))
-    # Right boundary
+    # Right boundary (placed at the very edge of map_total_width_pixels)
     platforms.add(Platform(map_total_width_pixels, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, _boundary_color, platform_type="boundary_wall_right"))
 
     print(f"Map 'load_map_yes' loaded with: {len(platforms)} platforms, {len(ladders)} ladders, {len(hazards)} hazards.")

@@ -1020,19 +1020,7 @@
         {
             "asset_editor_key": "platform_wall_gray",
             "world_x": 760,
-            "world_y": 1920,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 760,
             "world_y": 1960,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 800,
-            "world_y": 1920,
             "game_type_id": "platform_wall_gray"
         },
         {
@@ -1044,30 +1032,12 @@
         {
             "asset_editor_key": "platform_wall_gray",
             "world_x": 840,
-            "world_y": 1920,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 840,
             "world_y": 1960,
             "game_type_id": "platform_wall_gray"
         },
         {
             "asset_editor_key": "platform_wall_gray",
             "world_x": 880,
-            "world_y": 1920,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 920,
-            "world_y": 1920,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 880,
             "world_y": 1960,
             "game_type_id": "platform_wall_gray"
         },
@@ -1075,48 +1045,6 @@
             "asset_editor_key": "platform_wall_gray",
             "world_x": 920,
             "world_y": 1960,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 920,
-            "world_y": 1880,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 960,
-            "world_y": 1880,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 960,
-            "world_y": 1920,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1000,
-            "world_y": 1880,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1000,
-            "world_y": 1920,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1040,
-            "world_y": 1880,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1040,
-            "world_y": 1920,
             "game_type_id": "platform_wall_gray"
         },
         {
@@ -1177,36 +1105,6 @@
             "asset_editor_key": "platform_wall_gray",
             "world_x": 1120.0,
             "world_y": 2000,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1080.0,
-            "world_y": 1880.0,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1120.0,
-            "world_y": 1880.0,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1080.0,
-            "world_y": 1920.0,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1120.0,
-            "world_y": 1920.0,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 1160.0,
-            "world_y": 1920.0,
             "game_type_id": "platform_wall_gray"
         },
         {
@@ -2980,61 +2878,181 @@
             "game_type_id": "enemy_cyan"
         },
         {
-            "asset_editor_key": "hazard_lava_tile",
-            "world_x": 920,
+            "asset_editor_key": "chest",
+            "world_x": 1280.0,
             "world_y": 1880,
+            "game_type_id": "chest"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 200.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 240.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 400.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 440.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 480.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 520.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 560.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 720.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 760.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 800.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 840.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 880.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 920.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 960.0,
+            "world_y": 1800.0,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 1120.0,
+            "world_y": 1800,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 1160.0,
+            "world_y": 1800,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "platform_ledge_green",
+            "world_x": 1200.0,
+            "world_y": 1800,
+            "game_type_id": "platform_ledge_green"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 880.0,
+            "world_y": 1920,
             "game_type_id": "hazard_lava"
         },
         {
             "asset_editor_key": "hazard_lava_tile",
-            "world_x": 960,
-            "world_y": 1880,
+            "world_x": 920.0,
+            "world_y": 1920,
             "game_type_id": "hazard_lava"
         },
         {
             "asset_editor_key": "hazard_lava_tile",
-            "world_x": 1000,
-            "world_y": 1880,
+            "world_x": 1000.0,
+            "world_y": 1920,
             "game_type_id": "hazard_lava"
         },
         {
             "asset_editor_key": "hazard_lava_tile",
             "world_x": 1040.0,
-            "world_y": 1880.0,
+            "world_y": 1920,
+            "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 960.0,
+            "world_y": 1920,
             "game_type_id": "hazard_lava"
         },
         {
             "asset_editor_key": "hazard_lava_tile",
             "world_x": 1080.0,
-            "world_y": 1880.0,
+            "world_y": 1920,
             "game_type_id": "hazard_lava"
         },
         {
             "asset_editor_key": "hazard_lava_tile",
             "world_x": 1120.0,
-            "world_y": 1880.0,
+            "world_y": 1920,
             "game_type_id": "hazard_lava"
         },
         {
-            "asset_editor_key": "platform_ledge_green_left_half",
-            "world_x": 920.0,
-            "world_y": 1880,
-            "game_type_id": "platform_ledge_green_left_half"
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 840.0,
+            "world_y": 1920,
+            "game_type_id": "hazard_lava"
         },
         {
-            "asset_editor_key": "platform_ledge_green_right_half",
-            "world_x": 1120.0,
-            "world_y": 1880,
-            "game_type_id": "platform_ledge_green_right_half"
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 800.0,
+            "world_y": 1920,
+            "game_type_id": "hazard_lava"
         },
         {
-            "asset_editor_key": "chest",
-            "world_x": 1280.0,
-            "world_y": 1880,
-            "game_type_id": "chest"
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 760.0,
+            "world_y": 1920,
+            "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 1160.0,
+            "world_y": 1920,
+            "game_type_id": "hazard_lava"
         }
     ],
     "camera_offset_x": 0,
-    "camera_offset_y": 959,
+    "camera_offset_y": 1077,
     "show_grid": true
 }
