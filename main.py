@@ -1,11 +1,57 @@
 # main.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.6 (Safer global game_elements defaults)
+## version 1.0.0.7 (Added sys.path adjustment for map loading)
 import sys
 import os
 import pygame
-import traceback 
+import traceback
 from typing import Dict, Optional, Any # Ensure these are imported for type hints
+
+# --- Adjust sys.path for map loading ---
+# This allows 'maps' to be found in various locations:
+# 1. '_internal/maps/' if bundled by PyInstaller with that structure.
+# 2. 'maps/' directly in the PyInstaller bundle root (_MEIPASS).
+# 3. 'maps/' relative to the current working directory (for development or external maps).
+# The order of insertion can affect priority if 'maps' exists in multiple candidate locations.
+
+_maps_package_found_at_debug = "Not found by main.py adjustment" # For logging
+
+# Determine if running as a PyInstaller bundle
+_is_frozen = getattr(sys, 'frozen', False)
+_bundle_dir = getattr(sys, '_MEIPASS', None)
+
+if _is_frozen and _bundle_dir:
+    # Scenario 1: Maps are in _MEIPASS/_internal/maps/
+    _internal_dir = os.path.join(_bundle_dir, '_internal')
+    _internal_maps_path = os.path.join(_internal_dir, 'maps')
+
+    if os.path.isdir(_internal_maps_path):
+        if _internal_dir not in sys.path:
+            sys.path.insert(0, _internal_dir) # Add parent of 'maps' package
+            _maps_package_found_at_debug = f"bundled at '{_internal_maps_path}' (parent '{_internal_dir}' added to sys.path)"
+    else:
+        # Scenario 2: Maps are directly in _MEIPASS/maps/
+        _direct_bundled_maps_path = os.path.join(_bundle_dir, 'maps')
+        if os.path.isdir(_direct_bundled_maps_path):
+            if _bundle_dir not in sys.path:
+                sys.path.insert(0, _bundle_dir) # Add parent of 'maps' package
+                _maps_package_found_at_debug = f"bundled at '{_direct_bundled_maps_path}' (parent '{_bundle_dir}' added to sys.path)"
+else:
+    # Scenario 3: Development or maps folder external to a bundled exe
+    _local_dev_parent_dir = os.path.abspath(".") # Current working directory
+    _local_dev_maps_path = os.path.join(_local_dev_parent_dir, 'maps')
+    if os.path.isdir(_local_dev_maps_path):
+        if _local_dev_parent_dir not in sys.path:
+            # Append for lower priority than potential frozen paths if they somehow also exist.
+            # For pure development, this becomes the primary path.
+            sys.path.append(_local_dev_parent_dir)
+            _maps_package_found_at_debug = f"local at '{_local_dev_maps_path}' (parent '{_local_dev_parent_dir}' added to sys.path)"
+
+print(f"Main: Attempted to locate 'maps' package. Status: {_maps_package_found_at_debug}")
+# For more detailed debugging of sys.path if needed:
+# print(f"Main: Current sys.path after adjustment: {sys.path}")
+# --- End of sys.path adjustment ---
+
 
 # --- Pyperclip Check ---
 PYPERCLIP_AVAILABLE_MAIN = False
@@ -21,15 +67,16 @@ try:
     import constants as C # This should make C available globally in this module
     from camera import Camera
     from items import Chest
-    from game_setup import initialize_game_elements 
+    from game_setup import initialize_game_elements
     from server_logic import ServerState, run_server_mode
     from client_logic import ClientState, run_client_mode
     from couch_play_logic import run_couch_play_mode
-    import game_ui 
+    import game_ui
 
     print("Platformer modules imported successfully.")
 except ImportError as e:
     print(f"FATAL MAIN: Failed to import a required platformer module: {e}")
+    print(f"Current sys.path was: {sys.path}") # Print sys.path on import error
     traceback.print_exc()
     sys.exit(1)
 except Exception as e:
@@ -38,9 +85,9 @@ except Exception as e:
     sys.exit(1)
 
 # --- Pygame Initialization ---
-os.environ['SDL_VIDEO_WINDOW_POS'] = '0,0' 
-pygame.init() 
-pygame.font.init() 
+os.environ['SDL_VIDEO_WINDOW_POS'] = '0,0'
+pygame.init()
+pygame.font.init()
 
 class AppStatus:
     def __init__(self):
@@ -67,8 +114,8 @@ except Exception as e:
 # --- Pygame Scrap Initialization ---
 SCRAP_INITIALIZED_MAIN = False
 try:
-    if pygame.display.get_init(): 
-        pygame.scrap.init() 
+    if pygame.display.get_init():
+        pygame.scrap.init()
         SCRAP_INITIALIZED_MAIN = pygame.scrap.get_init()
         if SCRAP_INITIALIZED_MAIN: print("Main: pygame.scrap clipboard module initialized successfully.")
         else: print("Main Warning: pygame.scrap.init() called but pygame.scrap.get_init() returned False.")
@@ -79,11 +126,7 @@ except Exception as e: print(f"Main Warning: An unexpected error occurred during
 
 
 # --- Global Game Variables ---
-# These are placeholders; initialize_game_elements will populate them correctly.
-# Avoid direct use of C.X here if C might not be fully "ready" for complex constants,
-# though basic color tuples and TILE_SIZE should be fine after a successful import.
-# The main thing is that initialize_game_elements will use C properly from within its scope.
-_TILE_SIZE_DEFAULT = 40 # A hardcoded fallback if C.TILE_SIZE access fails globally
+_TILE_SIZE_DEFAULT = 40
 _LIGHT_BLUE_DEFAULT = (173, 216, 230)
 
 game_elements: Dict[str, Any] = {
@@ -96,10 +139,8 @@ game_elements: Dict[str, Any] = {
     "collectible_sprites": pygame.sprite.Group(),
     "projectile_sprites": pygame.sprite.Group(),
     "all_sprites": pygame.sprite.Group(),
-    
-    # These defaults are less critical as initialize_game_elements recalculates them based on loaded level.
-    "level_pixel_width": WIDTH_MAIN, 
-    "level_min_y_absolute": 0, 
+    "level_pixel_width": WIDTH_MAIN,
+    "level_min_y_absolute": 0,
     "level_max_y_absolute": HEIGHT_MAIN,
     "ground_level_y": HEIGHT_MAIN - getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT),
     "ground_platform_height": getattr(C, 'TILE_SIZE', _TILE_SIZE_DEFAULT),
@@ -128,7 +169,7 @@ if __name__ == "__main__":
         print("MAIN: Fonts loaded successfully.")
     except pygame.error as e:
         print(f"FATAL MAIN: Font loading error: {e}. Ensure Pygame font module is working.")
-        app_status.app_running = False 
+        app_status.app_running = False
     except Exception as e:
         print(f"FATAL MAIN: Unexpected error during font loading: {e}")
         app_status.app_running = False
@@ -137,50 +178,54 @@ if __name__ == "__main__":
     while app_status.app_running:
         current_screen_width, current_screen_height = screen.get_size()
         pygame.display.set_caption("Platformer Adventure - Main Menu")
-        
+
         print("\nMAIN: Showing main menu...")
         menu_choice = game_ui.show_main_menu(screen, main_clock, fonts, app_status)
         print(f"MAIN: Main menu choice: '{menu_choice}'")
-        
-        if not app_status.app_running or menu_choice == "quit":
-            app_status.app_running = False; break 
 
-        map_to_load_for_game: Optional[str] = None 
+        if not app_status.app_running or menu_choice == "quit":
+            app_status.app_running = False; break
+
+        map_to_load_for_game: Optional[str] = None
         if menu_choice in ["couch_play", "host"]:
             print(f"MAIN: Mode '{menu_choice}' requires map selection. Opening map dialog...")
+            # The game_ui.select_map_dialog itself needs to be aware of map locations.
+            # The sys.path change above helps `import maps.map_name`, but not `os.listdir("maps")` directly
+            # if "maps" isn't in CWD. For now, we assume select_map_dialog has its own robust way
+            # or that maps are accessible via CWD for the dialog to list them.
             map_to_load_for_game = game_ui.select_map_dialog(screen, main_clock, fonts, app_status)
-            if not app_status.app_running: print("MAIN: App quit during map selection."); break 
+            if not app_status.app_running: print("MAIN: App quit during map selection."); break
             if map_to_load_for_game is None:
-                print("MAIN: Map selection cancelled/no maps. Returning to main menu."); continue 
+                print("MAIN: Map selection cancelled/no maps. Returning to main menu."); continue
             print(f"MAIN: Map selected for '{menu_choice}': '{map_to_load_for_game}'")
-        
+
         print(f"MAIN: Initializing game elements for mode '{menu_choice}' with map '{map_to_load_for_game if map_to_load_for_game else 'Default/Server-defined'}'...")
         initialized_elements = initialize_game_elements(
-            current_screen_width, current_screen_height, 
+            current_screen_width, current_screen_height,
             for_game_mode=menu_choice,
-            existing_sprites_groups={ 
+            existing_sprites_groups={
                 "all_sprites": game_elements["all_sprites"], "projectile_sprites": game_elements["projectile_sprites"],
                 "player1": game_elements.get("player1"), "player2": game_elements.get("player2"),
                 "current_chest": game_elements.get("current_chest")
             },
-            map_module_name=map_to_load_for_game 
+            map_module_name=map_to_load_for_game
         )
 
         if initialized_elements is None:
             print(f"Main Error: Failed to initialize game elements for mode '{menu_choice}' (Map: '{map_to_load_for_game}'). Returning to menu.")
-            screen.fill(getattr(C, 'BLACK', (0,0,0))) 
+            screen.fill(getattr(C, 'BLACK', (0,0,0)))
             if fonts.get("medium"):
                 err_msg_surf = fonts["medium"].render(f"Error starting {menu_choice} mode.", True, getattr(C, 'RED', (255,0,0)))
                 screen.blit(err_msg_surf, err_msg_surf.get_rect(center=(current_screen_width//2, current_screen_height//2)))
             pygame.display.flip(); pygame.time.wait(3000); continue
 
         game_elements.update(initialized_elements)
-        
+
         if game_elements.get("camera"):
             cam_instance = game_elements["camera"]
             if hasattr(cam_instance, "set_screen_dimensions"):
                  cam_instance.set_screen_dimensions(current_screen_width, current_screen_height)
-            else: 
+            else:
                  cam_instance.screen_width, cam_instance.screen_height = current_screen_width, current_screen_height
                  if hasattr(cam_instance, 'camera_rect'):
                     cam_instance.camera_rect.width, cam_instance.camera_rect.height = current_screen_width, current_screen_height
@@ -188,7 +233,7 @@ if __name__ == "__main__":
 
         print(f"MAIN: Launching game mode: '{menu_choice}'")
         if menu_choice == "host":
-            server_state = ServerState(); server_state.app_running = app_status.app_running 
+            server_state = ServerState(); server_state.app_running = app_status.app_running
             run_server_mode(screen, main_clock, fonts, game_elements, server_state)
             app_status.app_running = server_state.app_running
         elif menu_choice == "join_lan":
@@ -199,7 +244,7 @@ if __name__ == "__main__":
             print("MAIN: Requesting IP input for 'join_ip' mode...")
             target_ip_input = game_ui.get_server_ip_input_dialog(screen, main_clock, fonts, app_status, default_input_text="127.0.0.1:5555")
             print(f"MAIN: IP input dialog returned: '{target_ip_input}'")
-            if target_ip_input and app_status.app_running: 
+            if target_ip_input and app_status.app_running:
                 client_state = ClientState(); client_state.app_running = app_status.app_running
                 run_client_mode(screen, main_clock, fonts, game_elements, client_state, target_ip_port_str=target_ip_input)
                 app_status.app_running = client_state.app_running
@@ -207,7 +252,7 @@ if __name__ == "__main__":
             else: print("MAIN: No IP entered. Returning to main menu.")
         elif menu_choice == "couch_play":
             run_couch_play_mode(screen, main_clock, fonts, game_elements, app_status)
-        
+
         print(f"MAIN: Returned from game mode '{menu_choice}'. App running: {app_status.app_running}")
 
     print("MAIN: Exiting application loop gracefully.")

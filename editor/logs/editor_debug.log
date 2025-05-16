@@ -1,47 +1,52 @@
-2025-05-16 10:54:24,066 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
-2025-05-16 10:54:24,066 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
-2025-05-16 10:54:24,068 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
-2025-05-16 10:54:24,134 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers.
-2025-05-16 10:54:24,134 - INFO - editor.py:106 - editor_main - editor_main() started.
-2025-05-16 10:54:24,235 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
-2025-05-16 10:54:24,235 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
-2025-05-16 10:54:24,334 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
-2025-05-16 10:54:24,334 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
-2025-05-16 10:54:24,336 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-16 10:54:24,336 - DEBUG - editor_state.py:86 - __init__ - EditorState initialized.
-2025-05-16 10:54:24,384 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
-2025-05-16 10:54:24,384 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-16 10:54:24,384 - INFO - editor.py:170 - editor_main - Entering main loop.
-2025-05-16 10:54:27,505 - INFO - editor_handlers_menu.py:227 - handle_menu_events - Menu: 'New Map' button clicked.
-2025-05-16 10:54:27,506 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
-2025-05-16 10:54:28,991 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CONFIRMED
-2025-05-16 10:54:28,991 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
-2025-05-16 10:54:28,991 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'text_input' with value: 'my_map'
-2025-05-16 10:54:28,992 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
-2025-05-16 10:54:30,349 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CONFIRMED
-2025-05-16 10:54:30,349 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
-2025-05-16 10:54:30,349 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'text_input' with value: '30,20'
-2025-05-16 10:54:30,349 - INFO - editor_map_utils.py:28 - init_new_map_state - Initializing new map state. Name: 'my_map', Size: 30x20
-2025-05-16 10:54:30,350 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-16 10:54:30,350 - INFO - editor_map_utils.py:55 - init_new_map_state - Editor state initialized for new map. map_name_for_function='my_map', current_map_filename (py)='maps\my_map.py', current_json_filename='maps\my_map.json', unsaved_changes=True
-2025-05-16 10:54:30,350 - INFO - editor_map_utils.py:76 - save_map_to_json - Saving map to JSON. Map name from state: 'my_map'
-2025-05-16 10:54:30,350 - DEBUG - editor_map_utils.py:92 - save_map_to_json - Attempting to save JSON to: 'maps\my_map.json' using map name 'my_map'
-2025-05-16 10:54:30,350 - DEBUG - editor_map_utils.py:128 - save_map_to_json - Data to save (first object example): No objects
-2025-05-16 10:54:30,351 - INFO - editor_map_utils.py:134 - save_map_to_json - Editor data saved to: my_map.json
-2025-05-16 10:54:30,351 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Editor data saved to: my_map.json' for 3.0s
-2025-05-16 10:54:30,351 - INFO - editor_handlers_menu.py:263 - on_map_size - New map JSON 'my_map.json' saved.
-2025-05-16 10:54:30,351 - INFO - editor_map_utils.py:374 - export_map_to_game_python_script - Exporting map. Map name from state: 'my_map'
-2025-05-16 10:54:30,351 - DEBUG - editor_map_utils.py:411 - export_map_to_game_python_script - Exporting to function 'load_map_my_map' in file 'maps\my_map.py'
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:426 - export_map_to_game_python_script - Processing 0 objects for .py export.
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:435 - export_map_to_game_python_script - Export: Identified 0 lava-occupied coordinates for check: set()
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:520 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 1, Hazards: 0, Enemies: 0, Collectibles: 0
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:526 - export_map_to_game_python_script - No objects placed, using editor map dimensions for export boundaries.
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:555 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 0, map_max_x_content: 1200
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:556 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 1360, MinYAbs: -80, MaxYAbs: 800
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:614 - export_map_to_game_python_script - Code for right-side filler wall generated: x=1200, y_expr='level_min_y_absolute - _boundary_thickness', w=160, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:615 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=-160, h_val_approx=1040, color_val_approx=(50, 50, 50)
-2025-05-16 10:54:30,352 - DEBUG - editor_map_utils.py:638 - export_map_to_game_python_script - Final .py script content (first 500 chars):
-# Level: my_map
+2025-05-16 13:23:12,516 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
+2025-05-16 13:23:12,517 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
+2025-05-16 13:23:12,520 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
+2025-05-16 13:23:12,624 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers.
+2025-05-16 13:23:12,625 - INFO - editor.py:106 - editor_main - editor_main() started.
+2025-05-16 13:23:13,064 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
+2025-05-16 13:23:13,065 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
+2025-05-16 13:23:13,197 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
+2025-05-16 13:23:13,198 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
+2025-05-16 13:23:13,201 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-16 13:23:13,201 - DEBUG - editor_state.py:86 - __init__ - EditorState initialized.
+2025-05-16 13:23:13,270 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
+2025-05-16 13:23:13,270 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-16 13:23:13,270 - INFO - editor.py:170 - editor_main - Entering main loop.
+2025-05-16 13:23:25,104 - INFO - editor_handlers_menu.py:227 - handle_menu_events - Menu: 'New Map' button clicked.
+2025-05-16 13:23:25,105 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
+2025-05-16 13:23:32,060 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CONFIRMED
+2025-05-16 13:23:32,060 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
+2025-05-16 13:23:32,060 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'text_input' with value: 'Booooi'
+2025-05-16 13:23:32,062 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
+2025-05-16 13:23:45,228 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CONFIRMED
+2025-05-16 13:23:45,229 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
+2025-05-16 13:23:45,229 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'text_input' with value: '1000,10'
+2025-05-16 13:23:45,229 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Invalid size:Dims must be >0 and <= max (500x500)' for 3.5s
+2025-05-16 13:23:45,230 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
+2025-05-16 13:23:54,795 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CONFIRMED
+2025-05-16 13:23:54,795 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
+2025-05-16 13:23:54,796 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'text_input' with value: '500,10'
+2025-05-16 13:23:54,796 - INFO - editor_map_utils.py:28 - init_new_map_state - Initializing new map state. Name: 'booooi', Size: 500x10
+2025-05-16 13:23:54,814 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 20000x400
+2025-05-16 13:23:54,814 - INFO - editor_map_utils.py:55 - init_new_map_state - Editor state initialized for new map. map_name_for_function='booooi', current_map_filename (py)='maps\booooi.py', current_json_filename='maps\booooi.json', unsaved_changes=True
+2025-05-16 13:23:54,814 - INFO - editor_map_utils.py:76 - save_map_to_json - Saving map to JSON. Map name from state: 'booooi'
+2025-05-16 13:23:54,814 - DEBUG - editor_map_utils.py:92 - save_map_to_json - Attempting to save JSON to: 'maps\booooi.json' using map name 'booooi'
+2025-05-16 13:23:54,815 - DEBUG - editor_map_utils.py:128 - save_map_to_json - Data to save (first object example): No objects
+2025-05-16 13:23:54,816 - INFO - editor_map_utils.py:134 - save_map_to_json - Editor data saved to: booooi.json
+2025-05-16 13:23:54,816 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Editor data saved to: booooi.json' for 3.0s
+2025-05-16 13:23:54,816 - INFO - editor_handlers_menu.py:263 - on_map_size - New map JSON 'booooi.json' saved.
+2025-05-16 13:23:54,816 - INFO - editor_map_utils.py:374 - export_map_to_game_python_script - Exporting map. Map name from state: 'booooi'
+2025-05-16 13:23:54,817 - DEBUG - editor_map_utils.py:411 - export_map_to_game_python_script - Exporting to function 'load_map_booooi' in file 'maps\booooi.py'
+2025-05-16 13:23:54,817 - DEBUG - editor_map_utils.py:426 - export_map_to_game_python_script - Processing 0 objects for .py export.
+2025-05-16 13:23:54,817 - DEBUG - editor_map_utils.py:435 - export_map_to_game_python_script - Export: Identified 0 lava-occupied coordinates for check: set()
+2025-05-16 13:23:54,817 - DEBUG - editor_map_utils.py:520 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 1, Hazards: 0, Enemies: 0, Collectibles: 0
+2025-05-16 13:23:54,817 - DEBUG - editor_map_utils.py:526 - export_map_to_game_python_script - No objects placed, using editor map dimensions for export boundaries.
+2025-05-16 13:23:54,817 - DEBUG - editor_map_utils.py:555 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 0, map_max_x_content: 20000
+2025-05-16 13:23:54,818 - DEBUG - editor_map_utils.py:556 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 20160, MinYAbs: -80, MaxYAbs: 400
+2025-05-16 13:23:54,818 - DEBUG - editor_map_utils.py:614 - export_map_to_game_python_script - Code for right-side filler wall generated: x=20000, y_expr='level_min_y_absolute - _boundary_thickness', w=160, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
+2025-05-16 13:23:54,818 - DEBUG - editor_map_utils.py:615 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=-160, h_val_approx=640, color_val_approx=(50, 50, 50)
+2025-05-16 13:23:54,818 - DEBUG - editor_map_utils.py:638 - export_map_to_game_python_script - Final .py script content (first 500 chars):
+# Level: booooi
 # Generated by Platformer Level Editor (Optimized Export)
 import pygame
 from tiles import Platform, Ladder, Lava
@@ -49,518 +54,566 @@ import constants as C
 
 LEVEL_SPECIFIC_BACKGROUND_COLOR = (173, 216, 230)
 
-def load_map_my_map(initial_screen_width, initial_screen_height):
+def load_map_booooi(initial_screen_width, initial_screen_height):
     """
-    Loads the 'my_map' level.
+    Loads the 'booooi' level.
     """
-    print(f"Loading map: load_map_my_map...")
+    print(f"Loading map: load_map_booooi...")
     platforms = pygame.sprite.Group()
     ladders = pygame.sprite.Group()
     hazards = pygame.sprite.Group()
     enemy_spawns_data = []
   ...
-2025-05-16 10:54:30,353 - INFO - editor_map_utils.py:644 - export_map_to_game_python_script - Map exported to game script: my_map.py
-2025-05-16 10:54:30,353 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: my_map.py' for 3.0s
-2025-05-16 10:54:30,353 - DEBUG - editor_map_utils.py:647 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'maps\my_map.py'.
-2025-05-16 10:54:30,353 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'my_map' created and exported.' for 3s
-2025-05-16 10:54:30,353 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
-2025-05-16 10:54:30,353 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
-2025-05-16 10:54:30,353 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'text_input' to 'None' after handle_dialog_events.
-2025-05-16 10:54:30,353 - DEBUG - editor.py:226 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
-2025-05-16 10:54:30,353 - DEBUG - editor.py:239 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
-2025-05-16 10:54:30,353 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
-2025-05-16 10:54:30,353 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
-2025-05-16 10:54:31,128 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-7323.53, 5735.29) based on mouse velocity (-4882.35294117647, 3823.5294117647054)
-2025-05-16 10:54:31,809 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (44, 257). Selected asset: 'None'
-2025-05-16 10:54:31,809 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-16 10:54:31,810 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'platform_wall_gray' clicked.
-2025-05-16 10:54:31,810 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'platform_wall_gray'
-2025-05-16 10:54:31,810 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray'
-2025-05-16 10:54:31,810 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'platform_wall_gray' selected. Cursor image set from palette.
-2025-05-16 10:54:31,810 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: Wall (Gray)' for 3.0s
-2025-05-16 10:54:32,238 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (705.88, -2470.59) based on mouse velocity (470.5882352941176, -1647.0588235294117)
-2025-05-16 10:54:32,554 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-1323.53, 1147.06) based on mouse velocity (-882.3529411764705, 764.7058823529411)
-2025-05-16 10:54:33,131 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (48, 172). Selected asset: 'platform_wall_gray'
-2025-05-16 10:54:33,131 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-16 10:54:33,131 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'platform_wall_gray_2x2_placer' clicked.
-2025-05-16 10:54:33,131 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'platform_wall_gray' to 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:33,132 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:33,132 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'platform_wall_gray_2x2_placer' selected. Cursor image set from palette.
-2025-05-16 10:54:33,132 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: Wall 2x2 (Gray)' for 3.0s
-2025-05-16 10:54:33,561 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (0.00, -264.71) based on mouse velocity (0.0, -176.47058823529412)
-2025-05-16 10:54:33,932 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (750.00, 5343.75) based on mouse velocity (500.0, 3562.5)
-2025-05-16 10:54:34,433 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (560, 376). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:34,433 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:34,433 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (8,11). Current asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:34,433 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_2x2_placer' at grid (8,11)
-2025-05-16 10:54:34,433 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (8, 11)
-2025-05-16 10:54:34,433 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (8, 11)
-2025-05-16 10:54:34,433 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (8, 11)
-2025-05-16 10:54:34,434 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (9, 11)
-2025-05-16 10:54:34,434 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (8, 12)
-2025-05-16 10:54:34,435 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (9, 12)
-2025-05-16 10:54:34,553 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (9, 11)
-2025-05-16 10:54:34,553 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (9, 11)
-2025-05-16 10:54:34,553 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (9, 11)
-2025-05-16 10:54:34,553 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (9, 11), not placing.
-2025-05-16 10:54:34,553 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (10, 11)
-2025-05-16 10:54:34,553 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (9, 12)
-2025-05-16 10:54:34,554 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (9, 12), not placing.
-2025-05-16 10:54:34,554 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (10, 12)
-2025-05-16 10:54:34,570 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (10, 11)
-2025-05-16 10:54:34,570 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (10, 11)
-2025-05-16 10:54:34,570 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (10, 11)
-2025-05-16 10:54:34,570 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (10, 11), not placing.
-2025-05-16 10:54:34,570 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (11, 11)
-2025-05-16 10:54:34,571 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (10, 12)
-2025-05-16 10:54:34,571 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (10, 12), not placing.
-2025-05-16 10:54:34,571 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (11, 12)
-2025-05-16 10:54:34,587 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (11, 11)
-2025-05-16 10:54:34,588 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (11, 11)
-2025-05-16 10:54:34,588 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (11, 11)
-2025-05-16 10:54:34,588 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (11, 11), not placing.
-2025-05-16 10:54:34,588 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (12, 11)
-2025-05-16 10:54:34,588 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (11, 12)
-2025-05-16 10:54:34,589 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (11, 12), not placing.
-2025-05-16 10:54:34,589 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (12, 12)
-2025-05-16 10:54:34,604 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (12, 12)
-2025-05-16 10:54:34,604 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (12, 12)
-2025-05-16 10:54:34,604 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (12, 12)
-2025-05-16 10:54:34,604 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (12, 12), not placing.
-2025-05-16 10:54:34,604 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (13, 12)
-2025-05-16 10:54:34,605 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (12, 13)
-2025-05-16 10:54:34,606 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (13, 13)
-2025-05-16 10:54:34,621 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (13, 12)
-2025-05-16 10:54:34,621 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (13, 12)
-2025-05-16 10:54:34,621 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (13, 12)
-2025-05-16 10:54:34,621 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (13, 12), not placing.
-2025-05-16 10:54:34,621 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (14, 12)
-2025-05-16 10:54:34,621 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (13, 13)
-2025-05-16 10:54:34,621 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (13, 13), not placing.
-2025-05-16 10:54:34,621 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (14, 13)
-2025-05-16 10:54:34,636 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (14, 12)
-2025-05-16 10:54:34,636 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (14, 12)
-2025-05-16 10:54:34,636 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (14, 12)
-2025-05-16 10:54:34,636 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (14, 12), not placing.
-2025-05-16 10:54:34,636 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (15, 12)
-2025-05-16 10:54:34,636 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (14, 13)
-2025-05-16 10:54:34,636 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (14, 13), not placing.
-2025-05-16 10:54:34,636 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (15, 13)
-2025-05-16 10:54:34,671 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (15, 12)
-2025-05-16 10:54:34,671 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (15, 12)
-2025-05-16 10:54:34,671 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (15, 12)
-2025-05-16 10:54:34,671 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (15, 12), not placing.
-2025-05-16 10:54:34,671 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (16, 12)
-2025-05-16 10:54:34,671 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (15, 13)
-2025-05-16 10:54:34,671 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (15, 13), not placing.
-2025-05-16 10:54:34,671 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (16, 13)
-2025-05-16 10:54:34,688 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (16, 12)
-2025-05-16 10:54:34,688 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (16, 12)
-2025-05-16 10:54:34,688 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (16, 12)
-2025-05-16 10:54:34,688 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (16, 12), not placing.
-2025-05-16 10:54:34,689 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (17, 12)
-2025-05-16 10:54:34,689 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (16, 13)
-2025-05-16 10:54:34,689 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (16, 13), not placing.
-2025-05-16 10:54:34,689 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (17, 13)
-2025-05-16 10:54:34,706 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (18, 12)
-2025-05-16 10:54:34,706 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (18, 12)
-2025-05-16 10:54:34,706 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (18, 12)
-2025-05-16 10:54:34,707 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (19, 12)
-2025-05-16 10:54:34,707 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (18, 13)
-2025-05-16 10:54:34,708 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (19, 13)
-2025-05-16 10:54:34,722 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (19, 12)
-2025-05-16 10:54:34,722 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (19, 12)
-2025-05-16 10:54:34,722 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (19, 12)
-2025-05-16 10:54:34,722 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (19, 12), not placing.
-2025-05-16 10:54:34,722 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (20, 12)
-2025-05-16 10:54:34,722 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (19, 13)
-2025-05-16 10:54:34,723 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (19, 13), not placing.
-2025-05-16 10:54:34,723 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (20, 13)
-2025-05-16 10:54:34,756 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (20, 12)
-2025-05-16 10:54:34,756 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (20, 12)
-2025-05-16 10:54:34,756 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (20, 12)
-2025-05-16 10:54:34,757 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (20, 12), not placing.
-2025-05-16 10:54:34,757 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (21, 12)
-2025-05-16 10:54:34,757 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (20, 13)
-2025-05-16 10:54:34,757 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (20, 13), not placing.
-2025-05-16 10:54:34,757 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (21, 13)
-2025-05-16 10:54:34,790 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (21, 12)
-2025-05-16 10:54:34,790 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (21, 12)
-2025-05-16 10:54:34,791 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (21, 12)
-2025-05-16 10:54:34,791 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (21, 12), not placing.
-2025-05-16 10:54:34,791 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 12)
-2025-05-16 10:54:34,792 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (21, 13)
-2025-05-16 10:54:34,792 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (21, 13), not placing.
-2025-05-16 10:54:34,792 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 13)
-2025-05-16 10:54:34,827 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (22, 12)
-2025-05-16 10:54:34,827 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (22, 12)
-2025-05-16 10:54:34,828 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 12)
-2025-05-16 10:54:34,828 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (22, 12), not placing.
-2025-05-16 10:54:34,828 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (23, 12)
-2025-05-16 10:54:34,829 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 13)
-2025-05-16 10:54:34,829 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (22, 13), not placing.
-2025-05-16 10:54:34,829 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (23, 13)
-2025-05-16 10:54:34,859 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (23, 12)
-2025-05-16 10:54:34,859 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (23, 12)
-2025-05-16 10:54:34,859 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (23, 12)
-2025-05-16 10:54:34,859 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (23, 12), not placing.
-2025-05-16 10:54:34,859 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (24, 12)
-2025-05-16 10:54:34,859 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (23, 13)
-2025-05-16 10:54:34,859 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (23, 13), not placing.
-2025-05-16 10:54:34,859 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (24, 13)
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (22, 12)
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (22, 12)
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 12)
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (22, 12), not placing.
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (23, 12)
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (23, 12), not placing.
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 13)
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (22, 13), not placing.
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (23, 13)
-2025-05-16 10:54:35,112 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (23, 13), not placing.
-2025-05-16 10:54:35,129 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (22, 11)
-2025-05-16 10:54:35,129 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (22, 11)
-2025-05-16 10:54:35,129 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 11)
-2025-05-16 10:54:35,129 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (23, 11)
-2025-05-16 10:54:35,129 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 12)
-2025-05-16 10:54:35,129 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (22, 12), not placing.
-2025-05-16 10:54:35,129 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (23, 12)
-2025-05-16 10:54:35,129 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (23, 12), not placing.
-2025-05-16 10:54:35,176 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (21, 11)
-2025-05-16 10:54:35,176 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (21, 11)
-2025-05-16 10:54:35,176 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (21, 11)
-2025-05-16 10:54:35,176 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 11)
-2025-05-16 10:54:35,176 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (22, 11), not placing.
-2025-05-16 10:54:35,176 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (21, 12)
-2025-05-16 10:54:35,176 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (21, 12), not placing.
-2025-05-16 10:54:35,176 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (22, 12)
-2025-05-16 10:54:35,177 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (22, 12), not placing.
-2025-05-16 10:54:35,210 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (19, 11)
-2025-05-16 10:54:35,210 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (19, 11)
-2025-05-16 10:54:35,210 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (19, 11)
-2025-05-16 10:54:35,210 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (20, 11)
-2025-05-16 10:54:35,210 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (19, 12)
-2025-05-16 10:54:35,210 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (19, 12), not placing.
-2025-05-16 10:54:35,210 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (20, 12)
-2025-05-16 10:54:35,210 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (20, 12), not placing.
-2025-05-16 10:54:35,227 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (18, 11)
-2025-05-16 10:54:35,227 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (18, 11)
-2025-05-16 10:54:35,227 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (18, 11)
-2025-05-16 10:54:35,227 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (19, 11)
-2025-05-16 10:54:35,227 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (19, 11), not placing.
-2025-05-16 10:54:35,227 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (18, 12)
-2025-05-16 10:54:35,227 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (18, 12), not placing.
-2025-05-16 10:54:35,227 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (19, 12)
-2025-05-16 10:54:35,228 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (19, 12), not placing.
-2025-05-16 10:54:35,277 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (17, 11)
-2025-05-16 10:54:35,277 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (17, 11)
-2025-05-16 10:54:35,278 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (17, 11)
-2025-05-16 10:54:35,278 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (18, 11)
-2025-05-16 10:54:35,278 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (18, 11), not placing.
-2025-05-16 10:54:35,278 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (17, 12)
-2025-05-16 10:54:35,278 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (17, 12), not placing.
-2025-05-16 10:54:35,278 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (18, 12)
-2025-05-16 10:54:35,278 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (18, 12), not placing.
-2025-05-16 10:54:35,311 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (16, 11)
-2025-05-16 10:54:35,311 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (16, 11)
-2025-05-16 10:54:35,312 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (16, 11)
-2025-05-16 10:54:35,312 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (17, 11)
-2025-05-16 10:54:35,312 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (17, 11), not placing.
-2025-05-16 10:54:35,312 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (16, 12)
-2025-05-16 10:54:35,312 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (16, 12), not placing.
-2025-05-16 10:54:35,312 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (17, 12)
-2025-05-16 10:54:35,312 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (17, 12), not placing.
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (15, 11)
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (15, 11)
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (15, 11)
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (16, 11)
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (16, 11), not placing.
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (15, 12)
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (15, 12), not placing.
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (16, 12)
-2025-05-16 10:54:35,327 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (16, 12), not placing.
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (14, 11)
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (14, 11)
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (14, 11)
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (15, 11)
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (15, 11), not placing.
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (14, 12)
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (14, 12), not placing.
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (15, 12)
-2025-05-16 10:54:35,376 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (15, 12), not placing.
-2025-05-16 10:54:35,440 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (13, 11)
-2025-05-16 10:54:35,441 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (13, 11)
-2025-05-16 10:54:35,441 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (13, 11)
-2025-05-16 10:54:35,441 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (14, 11)
-2025-05-16 10:54:35,441 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (14, 11), not placing.
-2025-05-16 10:54:35,441 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (13, 12)
-2025-05-16 10:54:35,441 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (13, 12), not placing.
-2025-05-16 10:54:35,441 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (14, 12)
-2025-05-16 10:54:35,441 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (14, 12), not placing.
-2025-05-16 10:54:35,489 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (12, 11)
-2025-05-16 10:54:35,489 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (12, 11)
-2025-05-16 10:54:35,490 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (12, 11)
-2025-05-16 10:54:35,490 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (12, 11), not placing.
-2025-05-16 10:54:35,490 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (13, 11)
-2025-05-16 10:54:35,490 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (13, 11), not placing.
-2025-05-16 10:54:35,490 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (12, 12)
-2025-05-16 10:54:35,490 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (12, 12), not placing.
-2025-05-16 10:54:35,490 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (13, 12)
-2025-05-16 10:54:35,490 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (13, 12), not placing.
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_2x2_placer' for grid (11, 11)
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:74 - _place_tile_at_grid - _place_tile_at_grid: Handling 2x2 placer for base_key 'platform_wall_gray' at (11, 11)
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (11, 11)
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (11, 11), not placing.
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (12, 11)
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (12, 11), not placing.
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (11, 12)
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (11, 12), not placing.
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (12, 12)
-2025-05-16 10:54:35,537 - DEBUG - editor_handlers_map_editing.py:37 - _place_single_tile_at_grid - Duplicate tile 'platform_wall_gray' at (12, 12), not placing.
-2025-05-16 10:54:35,819 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-15468.75, 3375.00) based on mouse velocity (-10312.5, 2250.0)
-2025-05-16 10:54:36,111 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (90, 462). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,111 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (90, 462). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,111 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-2, kick=4000.0, new momentum=2000.0
-2025-05-16 10:54:36,128 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (90, 462). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,128 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-16 10:54:36,145 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (90, 462). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,145 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (90, 462). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,145 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-2, kick=4000.0, new momentum=2000.0
-2025-05-16 10:54:36,162 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (90, 462). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,162 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-16 10:54:36,712 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (40, 549). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,712 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-16 10:54:36,729 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (40, 549). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,729 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-16 10:54:36,746 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (40, 549). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,746 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-16 10:54:36,764 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (40, 549). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,764 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-16 10:54:36,781 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (40, 549). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:36,781 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-16 10:54:37,678 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (19, 559). Selected asset: 'platform_wall_gray_2x2_placer'
-2025-05-16 10:54:37,678 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-16 10:54:37,678 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'player1_spawn' clicked.
-2025-05-16 10:54:37,678 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'platform_wall_gray_2x2_placer' to 'player1_spawn'
-2025-05-16 10:54:37,678 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'player1_spawn'
-2025-05-16 10:54:37,678 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'player1_spawn' selected. Cursor image set from palette.
-2025-05-16 10:54:37,678 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: P1' for 3.0s
-2025-05-16 10:54:38,512 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (710, 324). Selected asset: 'player1_spawn'
-2025-05-16 10:54:38,512 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:38,513 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (11,10). Current asset: 'player1_spawn'
-2025-05-16 10:54:38,513 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'player1_spawn' at grid (11,10)
-2025-05-16 10:54:38,513 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'player1_spawn' for grid (11, 10)
-2025-05-16 10:54:38,513 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'player1_spawn' at (11, 10)
-2025-05-16 10:54:38,513 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'player1_spawn' at (11, 10)
-2025-05-16 10:54:38,882 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-3441.18, 1411.76) based on mouse velocity (-2294.1176470588234, 941.1764705882352)
-2025-05-16 10:54:39,573 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (41, 541). Selected asset: 'player1_spawn'
-2025-05-16 10:54:39,573 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-16 10:54:39,573 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'player2_spawn' clicked.
-2025-05-16 10:54:39,573 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'player1_spawn' to 'player2_spawn'
-2025-05-16 10:54:39,574 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'player2_spawn'
-2025-05-16 10:54:39,574 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'player2_spawn' selected. Cursor image set from palette.
-2025-05-16 10:54:39,574 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: P2' for 3.0s
-2025-05-16 10:54:40,423 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (1006, 311). Selected asset: 'player2_spawn'
-2025-05-16 10:54:40,423 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:40,423 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (19,10). Current asset: 'player2_spawn'
-2025-05-16 10:54:40,423 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'player2_spawn' at grid (19,10)
-2025-05-16 10:54:40,423 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'player2_spawn' for grid (19, 10)
-2025-05-16 10:54:40,423 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'player2_spawn' at (19, 10)
-2025-05-16 10:54:40,424 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'player2_spawn' at (19, 10)
-2025-05-16 10:54:40,761 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-32735.29, 1323.53) based on mouse velocity (-21823.529411764703, 882.3529411764705)
-2025-05-16 10:54:41,832 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (18, 406). Selected asset: 'player2_spawn'
-2025-05-16 10:54:41,832 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-16 10:54:41,832 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'enemy_red' clicked.
-2025-05-16 10:54:41,832 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'player2_spawn' to 'enemy_red'
-2025-05-16 10:54:41,832 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'enemy_red'
-2025-05-16 10:54:41,832 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'enemy_red' selected. Cursor image set from palette.
-2025-05-16 10:54:41,832 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: ' for 3.0s
-2025-05-16 10:54:42,856 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (903, 88). Selected asset: 'enemy_red'
-2025-05-16 10:54:42,856 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:42,856 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (16,4). Current asset: 'enemy_red'
-2025-05-16 10:54:42,856 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'enemy_red' at grid (16,4)
-2025-05-16 10:54:42,856 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'enemy_red' for grid (16, 4)
-2025-05-16 10:54:42,856 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'enemy_red' at (16, 4)
-2025-05-16 10:54:42,856 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'enemy_red' at (16, 4)
-2025-05-16 10:54:43,270 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (894, 138). Selected asset: 'enemy_red'
-2025-05-16 10:54:43,270 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:43,271 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (16,5). Current asset: 'enemy_red'
-2025-05-16 10:54:43,271 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'enemy_red' at grid (16,5)
-2025-05-16 10:54:43,271 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'enemy_red' for grid (16, 5)
-2025-05-16 10:54:43,271 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'enemy_red' at (16, 5)
-2025-05-16 10:54:43,271 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'enemy_red' at (16, 5)
-2025-05-16 10:54:43,611 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (890, 190). Selected asset: 'enemy_red'
-2025-05-16 10:54:43,611 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:43,611 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (16,7). Current asset: 'enemy_red'
-2025-05-16 10:54:43,611 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'enemy_red' at grid (16,7)
-2025-05-16 10:54:43,611 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'enemy_red' for grid (16, 7)
-2025-05-16 10:54:43,611 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'enemy_red' at (16, 7)
-2025-05-16 10:54:43,611 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'enemy_red' at (16, 7)
-2025-05-16 10:54:44,110 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (890, 162). Selected asset: 'enemy_red'
-2025-05-16 10:54:44,110 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:44,110 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (16,6). Current asset: 'enemy_red'
-2025-05-16 10:54:44,110 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'enemy_red' at grid (16,6)
-2025-05-16 10:54:44,110 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'enemy_red' for grid (16, 6)
-2025-05-16 10:54:44,110 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'enemy_red' at (16, 6)
-2025-05-16 10:54:44,110 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'enemy_red' at (16, 6)
-2025-05-16 10:54:44,494 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (890, 251). Selected asset: 'enemy_red'
-2025-05-16 10:54:44,494 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:44,494 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (16,8). Current asset: 'enemy_red'
-2025-05-16 10:54:44,494 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'enemy_red' at grid (16,8)
-2025-05-16 10:54:44,494 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'enemy_red' for grid (16, 8)
-2025-05-16 10:54:44,494 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'enemy_red' at (16, 8)
-2025-05-16 10:54:44,494 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'enemy_red' at (16, 8)
-2025-05-16 10:54:44,828 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (890, 297). Selected asset: 'enemy_red'
-2025-05-16 10:54:44,828 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:44,828 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (16,9). Current asset: 'enemy_red'
-2025-05-16 10:54:44,828 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'enemy_red' at grid (16,9)
-2025-05-16 10:54:44,828 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'enemy_red' for grid (16, 9)
-2025-05-16 10:54:44,828 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'enemy_red' at (16, 9)
-2025-05-16 10:54:44,828 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'enemy_red' at (16, 9)
-2025-05-16 10:54:45,259 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (899, 334). Selected asset: 'enemy_red'
-2025-05-16 10:54:45,259 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:45,259 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (16,10). Current asset: 'enemy_red'
-2025-05-16 10:54:45,259 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'enemy_red' at grid (16,10)
-2025-05-16 10:54:45,259 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'enemy_red' for grid (16, 10)
-2025-05-16 10:54:45,259 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'enemy_red' at (16, 10)
-2025-05-16 10:54:45,259 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'enemy_red' at (16, 10)
-2025-05-16 10:54:45,761 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-18264.71, 0.00) based on mouse velocity (-12176.470588235294, 0.0)
-2025-05-16 10:54:46,188 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-4500.00, 7676.47) based on mouse velocity (-3000.0, 5117.647058823529)
-2025-05-16 10:54:47,384 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-1588.24, -352.94) based on mouse velocity (-1058.8235294117646, -235.2941176470588)
-2025-05-16 10:54:47,649 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (0, 261). Selected asset: 'enemy_red'
-2025-05-16 10:54:47,682 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (0, 261). Selected asset: 'enemy_red'
-2025-05-16 10:54:47,698 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (0, 261). Selected asset: 'enemy_red'
-2025-05-16 10:54:47,766 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (4, 261). Selected asset: 'enemy_red'
-2025-05-16 10:54:47,980 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (17, 361). Selected asset: 'enemy_red'
-2025-05-16 10:54:47,980 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
-2025-05-16 10:54:47,980 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (17, 361). Selected asset: 'enemy_red'
-2025-05-16 10:54:47,980 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
-2025-05-16 10:54:47,997 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (17, 361). Selected asset: 'enemy_red'
-2025-05-16 10:54:47,997 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
-2025-05-16 10:54:48,065 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (31, 357). Selected asset: 'enemy_red'
-2025-05-16 10:54:48,065 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
-2025-05-16 10:54:48,933 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (41, 544). Selected asset: 'enemy_red'
-2025-05-16 10:54:48,933 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-16 10:54:48,933 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'hazard_lava_tile' clicked.
-2025-05-16 10:54:48,933 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'enemy_red' to 'hazard_lava_tile'
-2025-05-16 10:54:48,933 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'hazard_lava_tile'
-2025-05-16 10:54:48,933 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'hazard_lava_tile' selected. Cursor image set from palette.
-2025-05-16 10:54:48,933 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: Lava Tile' for 3.0s
-2025-05-16 10:54:50,149 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (541, 178). Selected asset: 'hazard_lava_tile'
-2025-05-16 10:54:50,149 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:50,149 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (7,6.0). Current asset: 'hazard_lava_tile'
-2025-05-16 10:54:50,149 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'hazard_lava_tile' at grid (7,6.0)
-2025-05-16 10:54:50,149 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (7, 6.0)
-2025-05-16 10:54:50,150 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (7, 6.0)
-2025-05-16 10:54:50,150 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (7, 6.0)
-2025-05-16 10:54:50,282 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (7, 7.0)
-2025-05-16 10:54:50,282 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (7, 7.0)
-2025-05-16 10:54:50,282 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (7, 7.0)
-2025-05-16 10:54:50,315 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (7, 8.0)
-2025-05-16 10:54:50,315 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (7, 8.0)
-2025-05-16 10:54:50,315 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (7, 8.0)
-2025-05-16 10:54:50,347 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (7, 9.0)
-2025-05-16 10:54:50,347 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (7, 9.0)
-2025-05-16 10:54:50,347 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (7, 9.0)
-2025-05-16 10:54:50,397 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (7, 10.0)
-2025-05-16 10:54:50,397 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (7, 10.0)
-2025-05-16 10:54:50,397 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (7, 10.0)
-2025-05-16 10:54:50,464 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (7, 11.0)
-2025-05-16 10:54:50,464 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (7, 11.0)
-2025-05-16 10:54:50,464 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (7, 11.0)
-2025-05-16 10:54:50,549 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (7, 12.0)
-2025-05-16 10:54:50,549 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (7, 12.0)
-2025-05-16 10:54:50,549 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (7, 12.0)
-2025-05-16 10:54:50,649 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (7, 13.0)
-2025-05-16 10:54:50,649 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (7, 13.0)
-2025-05-16 10:54:50,649 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (7, 13.0)
-2025-05-16 10:54:51,482 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (1000.00, 166.67) based on mouse velocity (666.6666666666667, 111.11111111111111)
-2025-05-16 10:54:52,922 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (1133, 95). Selected asset: 'hazard_lava_tile'
-2025-05-16 10:54:52,922 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
-2025-05-16 10:54:52,923 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (25.0,4.0). Current asset: 'hazard_lava_tile'
-2025-05-16 10:54:52,923 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'hazard_lava_tile' at grid (25.0,4.0)
-2025-05-16 10:54:52,923 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 4.0)
-2025-05-16 10:54:52,923 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 4.0)
-2025-05-16 10:54:52,923 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 4.0)
-2025-05-16 10:54:53,041 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 5.0)
-2025-05-16 10:54:53,041 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 5.0)
-2025-05-16 10:54:53,041 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 5.0)
-2025-05-16 10:54:53,108 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 6.0)
-2025-05-16 10:54:53,108 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 6.0)
-2025-05-16 10:54:53,108 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 6.0)
-2025-05-16 10:54:53,158 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 7.0)
-2025-05-16 10:54:53,158 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 7.0)
-2025-05-16 10:54:53,159 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 7.0)
-2025-05-16 10:54:53,208 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 8.0)
-2025-05-16 10:54:53,208 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 8.0)
-2025-05-16 10:54:53,208 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 8.0)
-2025-05-16 10:54:53,258 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 9.0)
-2025-05-16 10:54:53,258 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 9.0)
-2025-05-16 10:54:53,259 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 9.0)
-2025-05-16 10:54:53,323 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 10.0)
-2025-05-16 10:54:53,323 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 10.0)
-2025-05-16 10:54:53,323 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 10.0)
-2025-05-16 10:54:53,439 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 11.0)
-2025-05-16 10:54:53,439 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 11.0)
-2025-05-16 10:54:53,439 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 11.0)
-2025-05-16 10:54:53,588 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (25.0, 12.0)
-2025-05-16 10:54:53,589 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (25.0, 12.0)
-2025-05-16 10:54:53,589 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (25.0, 12.0)
-2025-05-16 10:54:54,137 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-5625.00, -1781.25) based on mouse velocity (-3750.0, -1187.5)
-2025-05-16 10:54:55,024 - INFO - editor_handlers_map_editing.py:316 - handle_editing_map_events - Ctrl+S pressed: Save All attempt.
-2025-05-16 10:54:55,024 - INFO - editor_map_utils.py:76 - save_map_to_json - Saving map to JSON. Map name from state: 'my_map'
-2025-05-16 10:54:55,024 - DEBUG - editor_map_utils.py:92 - save_map_to_json - Attempting to save JSON to: 'maps\my_map.json' using map name 'my_map'
-2025-05-16 10:54:55,024 - DEBUG - editor_map_utils.py:128 - save_map_to_json - Data to save (first object example): {'asset_editor_key': 'platform_wall_gray', 'world_x': 320, 'world_y': 440, 'game_type_id': 'platform_wall_gray'}
-2025-05-16 10:54:55,026 - INFO - editor_map_utils.py:134 - save_map_to_json - Editor data saved to: my_map.json
-2025-05-16 10:54:55,026 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Editor data saved to: my_map.json' for 3.0s
-2025-05-16 10:54:55,026 - INFO - editor_map_utils.py:374 - export_map_to_game_python_script - Exporting map. Map name from state: 'my_map'
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:411 - export_map_to_game_python_script - Exporting to function 'load_map_my_map' in file 'maps\my_map.py'
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:426 - export_map_to_game_python_script - Processing 72 objects for .py export.
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:435 - export_map_to_game_python_script - Export: Identified 17 lava-occupied coordinates for check: {(1000.0, 400.0), (280, 480.0), (1000.0, 480.0), (1000.0, 200.0), (280, 280.0), (1000.0, 280.0), (280, 360.0), (280, 440.0), (1000.0, 360.0), (1000.0, 440.0), (280, 520.0), (1000.0, 160.0), (280, 240.0), (1000.0, 240.0), (280, 320.0), (1000.0, 320.0), (280, 400.0)}
-2025-05-16 10:54:55,027 - WARNING - editor_map_utils.py:510 - export_map_to_game_python_script - Unknown game_type_id 'player2_spawn' for object at (760,400). Not exported to .py.
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:520 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 3, Hazards: 17, Enemies: 7, Collectibles: 0
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:555 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 280, map_max_x_content: 1040
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:556 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 1280, MinYAbs: 80, MaxYAbs: 560
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:614 - export_map_to_game_python_script - Code for right-side filler wall generated: x=1040, y_expr='level_min_y_absolute - _boundary_thickness', w=240, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:615 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=0, h_val_approx=640, color_val_approx=(50, 50, 50)
-2025-05-16 10:54:55,027 - DEBUG - editor_map_utils.py:638 - export_map_to_game_python_script - Final .py script content (first 500 chars):
-# Level: my_map
+2025-05-16 13:23:54,819 - INFO - editor_map_utils.py:644 - export_map_to_game_python_script - Map exported to game script: booooi.py
+2025-05-16 13:23:54,819 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: booooi.py' for 3.0s
+2025-05-16 13:23:54,819 - DEBUG - editor_map_utils.py:647 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'maps\booooi.py'.
+2025-05-16 13:23:54,819 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'booooi' created and exported.' for 3s
+2025-05-16 13:23:54,820 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
+2025-05-16 13:23:54,820 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 13:23:54,820 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'text_input' to 'None' after handle_dialog_events.
+2025-05-16 13:23:54,820 - DEBUG - editor.py:226 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
+2025-05-16 13:23:54,820 - DEBUG - editor.py:239 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
+2025-05-16 13:23:54,820 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
+2025-05-16 13:23:54,820 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
+2025-05-16 13:23:56,652 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (649, 391). Selected asset: 'None'
+2025-05-16 13:23:56,752 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (649, 391). Selected asset: 'None'
+2025-05-16 13:23:56,834 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (649, 391). Selected asset: 'None'
+2025-05-16 13:23:56,917 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (649, 391). Selected asset: 'None'
+2025-05-16 13:23:57,464 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-2131.58, -1105.26) based on mouse velocity (-1421.0526315789475, -736.8421052631579)
+2025-05-16 13:23:58,847 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (1968.75, -7500.00) based on mouse velocity (1312.5, -5000.0)
+2025-05-16 13:23:59,595 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-3088.24, -176.47) based on mouse velocity (-2058.8235294117644, -117.6470588235294)
+2025-05-16 13:24:00,668 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (79, 71). Selected asset: 'None'
+2025-05-16 13:24:00,668 - DEBUG - editor_handlers_map_editing.py:174 - handle_editing_map_events - Left click on minimap area.
+2025-05-16 13:24:00,668 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6095,300). New offset: (5580,0)
+2025-05-16 13:24:00,970 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (5905,300). New offset: (5389,0)
+2025-05-16 13:24:00,988 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (4762,300). New offset: (4246,0)
+2025-05-16 13:24:01,003 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (3238,300). New offset: (2723,0)
+2025-05-16 13:24:01,020 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (1333,300). New offset: (818,0)
+2025-05-16 13:24:01,038 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (190,300). New offset: (0,0)
+2025-05-16 13:24:01,054 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,072 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,089 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,105 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,123 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,139 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,288 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,321 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,337 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,354 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,369 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,300). New offset: (0,0)
+2025-05-16 13:24:01,387 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (571,300). New offset: (56,0)
+2025-05-16 13:24:01,404 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (1619,300). New offset: (1104,0)
+2025-05-16 13:24:01,420 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (2286,300). New offset: (1770,0)
+2025-05-16 13:24:01,436 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (2762,300). New offset: (2246,0)
+2025-05-16 13:24:01,453 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (3048,300). New offset: (2532,0)
+2025-05-16 13:24:01,469 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (3714,300). New offset: (3199,0)
+2025-05-16 13:24:01,486 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (4190,300). New offset: (3675,0)
+2025-05-16 13:24:01,503 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (4571,300). New offset: (4056,0)
+2025-05-16 13:24:01,519 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (5143,300). New offset: (4627,0)
+2025-05-16 13:24:01,536 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (5619,300). New offset: (5104,0)
+2025-05-16 13:24:01,552 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6286,300). New offset: (5770,0)
+2025-05-16 13:24:01,569 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6857,300). New offset: (6342,0)
+2025-05-16 13:24:01,586 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (7429,300). New offset: (6913,0)
+2025-05-16 13:24:01,602 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (8000,300). New offset: (7485,0)
+2025-05-16 13:24:01,618 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (8762,300). New offset: (8246,0)
+2025-05-16 13:24:01,635 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (10095,300). New offset: (9580,0)
+2025-05-16 13:24:01,652 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (10667,300). New offset: (10151,0)
+2025-05-16 13:24:01,670 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (11238,300). New offset: (10723,0)
+2025-05-16 13:24:01,686 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (11905,300). New offset: (11389,0)
+2025-05-16 13:24:01,703 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (12571,300). New offset: (12056,0)
+2025-05-16 13:24:01,719 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (13143,300). New offset: (12627,0)
+2025-05-16 13:24:01,735 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (13905,300). New offset: (13389,0)
+2025-05-16 13:24:01,752 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (14667,300). New offset: (14151,0)
+2025-05-16 13:24:01,770 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (15524,300). New offset: (15008,0)
+2025-05-16 13:24:01,785 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (15810,300). New offset: (15294,0)
+2025-05-16 13:24:01,802 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (16095,300). New offset: (15580,0)
+2025-05-16 13:24:01,819 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (16190,300). New offset: (15675,0)
+2025-05-16 13:24:01,836 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (16381,300). New offset: (15865,0)
+2025-05-16 13:24:01,853 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (16762,300). New offset: (16246,0)
+2025-05-16 13:24:01,869 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (16952,300). New offset: (16437,0)
+2025-05-16 13:24:01,887 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (17524,300). New offset: (17008,0)
+2025-05-16 13:24:01,906 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (18095,300). New offset: (17580,0)
+2025-05-16 13:24:01,923 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (18762,300). New offset: (18246,0)
+2025-05-16 13:24:01,940 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19429,300). New offset: (18913,0)
+2025-05-16 13:24:01,958 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:01,974 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:01,990 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,007 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,024 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,041 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,058 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,074 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,090 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,105 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,122 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,139 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,157 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,157 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,171 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,188 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,205 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,222 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,238 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,255 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,273 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,306 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,340 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,357 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,375 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,391 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,408 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,423 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (19905,300). New offset: (18970,0)
+2025-05-16 13:24:02,439 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-1593.75, -281.25) based on mouse velocity (-1062.5, -187.5)
+2025-05-16 13:24:02,439 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (18286,300). New offset: (17770,0)
+2025-05-16 13:24:02,456 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (17143,300). New offset: (16627,0)
+2025-05-16 13:24:02,473 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (16667,300). New offset: (16151,0)
+2025-05-16 13:24:02,489 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (16381,300). New offset: (15865,0)
+2025-05-16 13:24:02,505 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (16000,300). New offset: (15485,0)
+2025-05-16 13:24:02,522 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (15619,300). New offset: (15104,0)
+2025-05-16 13:24:02,538 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (15333,300). New offset: (14818,0)
+2025-05-16 13:24:02,555 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (14762,300). New offset: (14246,0)
+2025-05-16 13:24:02,572 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (13905,300). New offset: (13389,0)
+2025-05-16 13:24:02,588 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (13333,300). New offset: (12818,0)
+2025-05-16 13:24:02,604 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (12952,300). New offset: (12437,0)
+2025-05-16 13:24:02,621 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (12667,300). New offset: (12151,0)
+2025-05-16 13:24:02,637 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (12476,300). New offset: (11961,0)
+2025-05-16 13:24:02,653 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (12286,300). New offset: (11770,0)
+2025-05-16 13:24:02,670 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (12000,300). New offset: (11485,0)
+2025-05-16 13:24:02,686 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (12000,300). New offset: (11485,0)
+2025-05-16 13:24:02,702 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (11810,300). New offset: (11294,0)
+2025-05-16 13:24:02,719 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (11524,300). New offset: (11008,0)
+2025-05-16 13:24:02,736 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (11333,300). New offset: (10818,0)
+2025-05-16 13:24:02,752 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (11048,300). New offset: (10532,0)
+2025-05-16 13:24:02,768 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (10952,300). New offset: (10437,0)
+2025-05-16 13:24:02,784 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (10476,300). New offset: (9961,0)
+2025-05-16 13:24:02,801 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (10000,300). New offset: (9485,0)
+2025-05-16 13:24:02,817 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (9619,300). New offset: (9104,0)
+2025-05-16 13:24:02,834 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (9238,300). New offset: (8723,0)
+2025-05-16 13:24:02,850 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (8952,300). New offset: (8437,0)
+2025-05-16 13:24:02,865 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (8667,300). New offset: (8151,0)
+2025-05-16 13:24:02,882 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (8381,300). New offset: (7865,0)
+2025-05-16 13:24:02,899 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (8000,300). New offset: (7485,0)
+2025-05-16 13:24:02,915 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (7714,300). New offset: (7199,0)
+2025-05-16 13:24:02,931 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (7429,300). New offset: (6913,0)
+2025-05-16 13:24:02,947 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (7048,300). New offset: (6532,0)
+2025-05-16 13:24:02,964 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6857,300). New offset: (6342,0)
+2025-05-16 13:24:02,980 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6667,300). New offset: (6151,0)
+2025-05-16 13:24:02,998 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6381,300). New offset: (5865,0)
+2025-05-16 13:24:03,014 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6286,300). New offset: (5770,0)
+2025-05-16 13:24:03,031 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6095,300). New offset: (5580,0)
+2025-05-16 13:24:03,048 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (6000,300). New offset: (5485,0)
+2025-05-16 13:24:03,065 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (5810,300). New offset: (5294,0)
+2025-05-16 13:24:03,082 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (5619,300). New offset: (5104,0)
+2025-05-16 13:24:03,098 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (5429,300). New offset: (4913,0)
+2025-05-16 13:24:03,115 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (5238,300). New offset: (4723,0)
+2025-05-16 13:24:03,115 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (5048,300). New offset: (4532,0)
+2025-05-16 13:24:03,131 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (4762,300). New offset: (4246,0)
+2025-05-16 13:24:03,148 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (4095,300). New offset: (3580,0)
+2025-05-16 13:24:03,166 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (3048,300). New offset: (2532,0)
+2025-05-16 13:24:03,183 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (1905,300). New offset: (1389,0)
+2025-05-16 13:24:03,199 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (1143,300). New offset: (627,0)
+2025-05-16 13:24:03,215 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (571,100). New offset: (56,0)
+2025-05-16 13:24:03,232 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (190,0). New offset: (0,0)
+2025-05-16 13:24:03,249 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,0). New offset: (0,0)
+2025-05-16 13:24:03,264 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,0). New offset: (0,0)
+2025-05-16 13:24:03,281 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,0). New offset: (0,0)
+2025-05-16 13:24:03,298 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,0). New offset: (0,0)
+2025-05-16 13:24:03,315 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,0). New offset: (0,0)
+2025-05-16 13:24:03,330 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,0). New offset: (0,0)
+2025-05-16 13:24:03,529 - DEBUG - editor_handlers_map_editing.py:139 - _pan_camera_via_minimap_click - Minimap click: Panned camera to center around world (0,0). New offset: (0,0)
+2025-05-16 13:24:03,547 - DEBUG - editor_handlers_map_editing.py:250 - handle_editing_map_events - Minimap drag released.
+2025-05-16 13:24:04,113 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,162 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,203 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,250 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,300 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,517 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,534 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,549 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,582 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:04,650 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (401, 257). Selected asset: 'None'
+2025-05-16 13:24:05,257 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-4588.24, 3000.00) based on mouse velocity (-3058.8235294117644, 1999.9999999999998)
+2025-05-16 13:24:05,990 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-843.75, 0.00) based on mouse velocity (-562.5, 0.0)
+2025-05-16 13:24:15,132 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:15,132 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:24:17,759 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:17,759 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:24:19,827 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:19,827 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:24:20,090 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:20,090 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:24:21,843 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:21,843 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:24:21,877 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:21,877 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:24:21,927 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:21,927 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:24:22,052 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:22,052 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:24:22,171 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:22,171 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:24:24,045 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:24,045 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:24:24,266 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (133, 563). Selected asset: 'None'
+2025-05-16 13:24:24,266 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:24:26,361 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (157, 402). Selected asset: 'None'
+2025-05-16 13:24:26,361 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:24:31,753 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (27, 565). Selected asset: 'None'
+2025-05-16 13:24:31,755 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
+2025-05-16 13:24:31,755 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'platform_wall_gray_bottom_half' clicked.
+2025-05-16 13:24:31,755 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:31,755 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:31,755 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'platform_wall_gray_bottom_half' selected. Cursor image set from palette.
+2025-05-16 13:24:31,755 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: Wall B-Half (Gray)' for 3.0s
+2025-05-16 13:24:37,480 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (380, 353). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:37,480 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:24:37,480 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (3,8). Current asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:37,480 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_bottom_half' at grid (3,8)
+2025-05-16 13:24:37,480 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_bottom_half' for grid (3, 8)
+2025-05-16 13:24:37,480 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray_bottom_half' at (3, 8)
+2025-05-16 13:24:37,480 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray_bottom_half' at (3, 8)
+2025-05-16 13:24:41,426 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-2625.00, 1031.25) based on mouse velocity (-1750.0, 687.5)
+2025-05-16 13:24:43,231 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (43, 253). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:43,232 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
+2025-05-16 13:24:43,232 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'platform_wall_gray' clicked.
+2025-05-16 13:24:43,232 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'platform_wall_gray_bottom_half' to 'platform_wall_gray'
+2025-05-16 13:24:43,232 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray'
+2025-05-16 13:24:43,232 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'platform_wall_gray' selected. Cursor image set from palette.
+2025-05-16 13:24:43,232 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: Wall (Gray)' for 3.0s
+2025-05-16 13:24:44,959 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (385, 384). Selected asset: 'platform_wall_gray'
+2025-05-16 13:24:44,959 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:24:44,959 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (3,9). Current asset: 'platform_wall_gray'
+2025-05-16 13:24:44,959 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray' at grid (3,9)
+2025-05-16 13:24:44,960 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray' for grid (3, 9)
+2025-05-16 13:24:44,960 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray' at (3, 9)
+2025-05-16 13:24:44,960 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (3, 9)
+2025-05-16 13:24:46,574 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (425, 386). Selected asset: 'platform_wall_gray'
+2025-05-16 13:24:46,574 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:24:46,575 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (4,9). Current asset: 'platform_wall_gray'
+2025-05-16 13:24:46,575 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray' at grid (4,9)
+2025-05-16 13:24:46,575 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray' for grid (4, 9)
+2025-05-16 13:24:46,575 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray' at (4, 9)
+2025-05-16 13:24:46,575 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (4, 9)
+2025-05-16 13:24:48,961 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (581, 396). Selected asset: 'platform_wall_gray'
+2025-05-16 13:24:48,961 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:24:48,962 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (8,9). Current asset: 'platform_wall_gray'
+2025-05-16 13:24:48,962 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray' at grid (8,9)
+2025-05-16 13:24:48,962 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray' for grid (8, 9)
+2025-05-16 13:24:48,962 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray' at (8, 9)
+2025-05-16 13:24:48,962 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (8, 9)
+2025-05-16 13:24:50,414 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (614, 397). Selected asset: 'platform_wall_gray'
+2025-05-16 13:24:50,414 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:24:50,415 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (9,9). Current asset: 'platform_wall_gray'
+2025-05-16 13:24:50,415 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray' at grid (9,9)
+2025-05-16 13:24:50,415 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray' for grid (9, 9)
+2025-05-16 13:24:50,416 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray' at (9, 9)
+2025-05-16 13:24:50,416 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray' at (9, 9)
+2025-05-16 13:24:50,968 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-14911.76, 617.65) based on mouse velocity (-9941.176470588234, 411.7647058823529)
+2025-05-16 13:24:52,412 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (29, 489). Selected asset: 'platform_wall_gray'
+2025-05-16 13:24:52,412 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
+2025-05-16 13:24:52,412 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'platform_wall_gray_top_half' clicked.
+2025-05-16 13:24:52,412 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'platform_wall_gray' to 'platform_wall_gray_top_half'
+2025-05-16 13:24:52,412 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray_top_half'
+2025-05-16 13:24:52,412 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'platform_wall_gray_top_half' selected. Cursor image set from palette.
+2025-05-16 13:24:52,412 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: Wall T-Half (Gray)' for 3.0s
+2025-05-16 13:24:53,902 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-13323.53, 617.65) based on mouse velocity (-8882.35294117647, 411.7647058823529)
+2025-05-16 13:24:54,801 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (33, 544). Selected asset: 'platform_wall_gray_top_half'
+2025-05-16 13:24:54,802 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
+2025-05-16 13:24:54,802 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'platform_wall_gray_bottom_half' clicked.
+2025-05-16 13:24:54,802 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'platform_wall_gray_top_half' to 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:54,802 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:54,802 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'platform_wall_gray_bottom_half' selected. Cursor image set from palette.
+2025-05-16 13:24:54,802 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: Wall B-Half (Gray)' for 3.0s
+2025-05-16 13:24:56,358 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (625, 340). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:56,358 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:24:56,358 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (9,8). Current asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:56,358 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_bottom_half' at grid (9,8)
+2025-05-16 13:24:56,358 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_bottom_half' for grid (9, 8)
+2025-05-16 13:24:56,359 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray_bottom_half' at (9, 8)
+2025-05-16 13:24:56,359 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray_bottom_half' at (9, 8)
+2025-05-16 13:24:57,503 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-843.75, 187.50) based on mouse velocity (-562.5, 125.0)
+2025-05-16 13:24:59,925 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (261, 400). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:59,925 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:24:59,925 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (0,9). Current asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:24:59,925 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_bottom_half' at grid (0,9)
+2025-05-16 13:24:59,925 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_bottom_half' for grid (0, 9)
+2025-05-16 13:24:59,926 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray_bottom_half' at (0, 9)
+2025-05-16 13:24:59,926 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray_bottom_half' at (0, 9)
+2025-05-16 13:25:00,746 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (290, 400). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:00,747 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:00,747 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (1,9). Current asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:00,747 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_bottom_half' at grid (1,9)
+2025-05-16 13:25:00,747 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_bottom_half' for grid (1, 9)
+2025-05-16 13:25:00,747 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray_bottom_half' at (1, 9)
+2025-05-16 13:25:00,747 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray_bottom_half' at (1, 9)
+2025-05-16 13:25:01,638 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (333, 403). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:01,638 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:01,638 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (2,9). Current asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:01,639 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_bottom_half' at grid (2,9)
+2025-05-16 13:25:01,639 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_bottom_half' for grid (2, 9)
+2025-05-16 13:25:01,639 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray_bottom_half' at (2, 9)
+2025-05-16 13:25:01,639 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray_bottom_half' at (2, 9)
+2025-05-16 13:25:03,776 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (667, 394). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:03,777 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:03,777 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (10,9). Current asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:03,777 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_bottom_half' at grid (10,9)
+2025-05-16 13:25:03,777 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_bottom_half' for grid (10, 9)
+2025-05-16 13:25:03,777 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray_bottom_half' at (10, 9)
+2025-05-16 13:25:03,777 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray_bottom_half' at (10, 9)
+2025-05-16 13:25:04,410 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (723, 403). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:04,410 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:04,411 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (12,9). Current asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:04,411 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_bottom_half' at grid (12,9)
+2025-05-16 13:25:04,411 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_bottom_half' for grid (12, 9)
+2025-05-16 13:25:04,411 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray_bottom_half' at (12, 9)
+2025-05-16 13:25:04,411 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray_bottom_half' at (12, 9)
+2025-05-16 13:25:05,341 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (710, 403). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:05,341 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:05,341 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (11,9). Current asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:05,341 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'platform_wall_gray_bottom_half' at grid (11,9)
+2025-05-16 13:25:05,341 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'platform_wall_gray_bottom_half' for grid (11, 9)
+2025-05-16 13:25:05,341 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'platform_wall_gray_bottom_half' at (11, 9)
+2025-05-16 13:25:05,341 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'platform_wall_gray_bottom_half' at (11, 9)
+2025-05-16 13:25:06,472 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-11555.56, 166.67) based on mouse velocity (-7703.7037037037035, 111.11111111111111)
+2025-05-16 13:25:08,145 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (167, 564). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:08,145 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:08,195 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (167, 564). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:08,195 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:08,250 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (167, 564). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:08,250 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:08,547 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (167, 564). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:08,547 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:08,580 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (167, 564). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:08,580 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:10,553 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (27, 559). Selected asset: 'platform_wall_gray_bottom_half'
+2025-05-16 13:25:10,553 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
+2025-05-16 13:25:10,553 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'player1_spawn' clicked.
+2025-05-16 13:25:10,553 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'platform_wall_gray_bottom_half' to 'player1_spawn'
+2025-05-16 13:25:10,554 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'player1_spawn'
+2025-05-16 13:25:10,554 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'player1_spawn' selected. Cursor image set from palette.
+2025-05-16 13:25:10,554 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: P1' for 3.0s
+2025-05-16 13:25:12,220 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (269, 345). Selected asset: 'player1_spawn'
+2025-05-16 13:25:12,220 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:12,221 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (0,8). Current asset: 'player1_spawn'
+2025-05-16 13:25:12,221 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'player1_spawn' at grid (0,8)
+2025-05-16 13:25:12,221 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'player1_spawn' for grid (0, 8)
+2025-05-16 13:25:12,221 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'player1_spawn' at (0, 8)
+2025-05-16 13:25:12,221 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'player1_spawn' at (0, 8)
+2025-05-16 13:25:13,163 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-2437.50, 1125.00) based on mouse velocity (-1625.0, 750.0)
+2025-05-16 13:25:13,983 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-3750.00, -562.50) based on mouse velocity (-2500.0, -375.0)
+2025-05-16 13:25:14,398 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,398 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,433 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,433 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,449 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,449 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,482 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,482 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,516 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,517 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,532 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,532 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,562 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,563 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,613 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,613 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,630 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,630 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,684 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,684 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:14,794 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:14,794 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:15,377 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,378 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,378 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=2, kick=-4000.0, new momentum=-2000.0
+2025-05-16 13:25:15,393 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,393 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,394 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=2, kick=-4000.0, new momentum=-2000.0
+2025-05-16 13:25:15,411 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,411 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:15,427 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,428 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:15,444 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,444 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:15,463 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,463 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,463 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=2, kick=-4000.0, new momentum=-2000.0
+2025-05-16 13:25:15,513 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,513 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,513 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=2, kick=-4000.0, new momentum=-2000.0
+2025-05-16 13:25:15,531 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,531 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:15,547 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,547 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:15,582 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,582 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:15,617 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,617 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:15,699 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (117, 453). Selected asset: 'player1_spawn'
+2025-05-16 13:25:15,699 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:16,723 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (141, 690). Selected asset: 'player1_spawn'
+2025-05-16 13:25:16,724 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
+2025-05-16 13:25:16,724 - INFO - editor_handlers_map_editing.py:183 - handle_editing_map_events - BG Color button clicked.
+2025-05-16 13:25:16,727 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'color_picker'
+2025-05-16 13:25:19,352 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'color_picker' outcome: CONFIRMED
+2025-05-16 13:25:19,352 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'color_picker' to 'None'
+2025-05-16 13:25:19,353 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'color_picker' with value: '(255, 69, 0)'
+2025-05-16 13:25:19,353 - INFO - editor_state.py:189 - set_status_message - Status message set: 'BG Color set to: (255, 69, 0)' for 3.0s
+2025-05-16 13:25:19,353 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 13:25:19,353 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'color_picker' to 'None' after handle_dialog_events.
+2025-05-16 13:25:20,934 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-7058.82, 2382.35) based on mouse velocity (-4705.882352941177, 1588.2352941176468)
+2025-05-16 13:25:21,744 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (153, 687). Selected asset: 'player1_spawn'
+2025-05-16 13:25:21,744 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
+2025-05-16 13:25:21,745 - INFO - editor_handlers_map_editing.py:183 - handle_editing_map_events - BG Color button clicked.
+2025-05-16 13:25:21,745 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'color_picker'
+2025-05-16 13:25:23,163 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'color_picker' outcome: CONFIRMED
+2025-05-16 13:25:23,163 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'color_picker' to 'None'
+2025-05-16 13:25:23,163 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'color_picker' with value: '(0, 100, 0)'
+2025-05-16 13:25:23,164 - INFO - editor_state.py:189 - set_status_message - Status message set: 'BG Color set to: (0, 100, 0)' for 3.0s
+2025-05-16 13:25:23,164 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 13:25:23,164 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'color_picker' to 'None' after handle_dialog_events.
+2025-05-16 13:25:25,285 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (301, 485). Selected asset: 'player1_spawn'
+2025-05-16 13:25:25,314 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (301, 485). Selected asset: 'player1_spawn'
+2025-05-16 13:25:25,347 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (301, 485). Selected asset: 'player1_spawn'
+2025-05-16 13:25:25,381 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (301, 485). Selected asset: 'player1_spawn'
+2025-05-16 13:25:25,983 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-2029.41, -2911.76) based on mouse velocity (-1352.941176470588, -1941.1764705882351)
+2025-05-16 13:25:29,363 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (106, 460). Selected asset: 'player1_spawn'
+2025-05-16 13:25:29,363 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:29,378 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (106, 460). Selected asset: 'player1_spawn'
+2025-05-16 13:25:29,378 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:29,415 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (106, 460). Selected asset: 'player1_spawn'
+2025-05-16 13:25:29,415 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:29,430 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (106, 460). Selected asset: 'player1_spawn'
+2025-05-16 13:25:29,430 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:29,463 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (106, 460). Selected asset: 'player1_spawn'
+2025-05-16 13:25:29,465 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:29,497 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (106, 460). Selected asset: 'player1_spawn'
+2025-05-16 13:25:29,497 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:29,563 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (106, 460). Selected asset: 'player1_spawn'
+2025-05-16 13:25:29,563 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:31,246 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,246 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,247 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=2, kick=-4000.0, new momentum=-2000.0
+2025-05-16 13:25:31,262 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,262 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,283 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,284 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,297 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,297 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,297 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=2, kick=-4000.0, new momentum=-2000.0
+2025-05-16 13:25:31,312 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,312 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,329 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,329 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,330 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=2, kick=-4000.0, new momentum=-2000.0
+2025-05-16 13:25:31,346 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,347 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,361 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,362 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,378 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,378 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,393 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,393 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,443 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,443 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,477 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,477 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:31,577 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (101, 357). Selected asset: 'player1_spawn'
+2025-05-16 13:25:31,578 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
+2025-05-16 13:25:32,318 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (131, 451). Selected asset: 'player1_spawn'
+2025-05-16 13:25:32,318 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:32,335 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (131, 451). Selected asset: 'player1_spawn'
+2025-05-16 13:25:32,335 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:32,377 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (131, 451). Selected asset: 'player1_spawn'
+2025-05-16 13:25:32,377 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
+2025-05-16 13:25:33,476 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (43, 380). Selected asset: 'player1_spawn'
+2025-05-16 13:25:33,476 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
+2025-05-16 13:25:33,476 - INFO - editor_handlers_map_editing.py:199 - handle_editing_map_events - Asset palette item 'hazard_lava_tile' clicked.
+2025-05-16 13:25:33,476 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'player1_spawn' to 'hazard_lava_tile'
+2025-05-16 13:25:33,477 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'hazard_lava_tile'
+2025-05-16 13:25:33,477 - DEBUG - editor_state.py:159 - selected_asset_editor_key - Asset 'hazard_lava_tile' selected. Cursor image set from palette.
+2025-05-16 13:25:33,477 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Selected: Lava Tile' for 3.0s
+2025-05-16 13:25:35,497 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (781, 384). Selected asset: 'hazard_lava_tile'
+2025-05-16 13:25:35,497 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:35,497 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (13,9). Current asset: 'hazard_lava_tile'
+2025-05-16 13:25:35,497 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'hazard_lava_tile' at grid (13,9)
+2025-05-16 13:25:35,498 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (13, 9)
+2025-05-16 13:25:35,498 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (13, 9)
+2025-05-16 13:25:35,498 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (13, 9)
+2025-05-16 13:25:36,242 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (820, 389). Selected asset: 'hazard_lava_tile'
+2025-05-16 13:25:36,242 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:36,243 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (14,9). Current asset: 'hazard_lava_tile'
+2025-05-16 13:25:36,243 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'hazard_lava_tile' at grid (14,9)
+2025-05-16 13:25:36,244 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (14, 9)
+2025-05-16 13:25:36,244 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (14, 9)
+2025-05-16 13:25:36,244 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (14, 9)
+2025-05-16 13:25:37,315 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (879, 399). Selected asset: 'hazard_lava_tile'
+2025-05-16 13:25:37,315 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:37,315 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (15,9). Current asset: 'hazard_lava_tile'
+2025-05-16 13:25:37,316 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'hazard_lava_tile' at grid (15,9)
+2025-05-16 13:25:37,316 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (15, 9)
+2025-05-16 13:25:37,316 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (15, 9)
+2025-05-16 13:25:37,316 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (15, 9)
+2025-05-16 13:25:44,639 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (324, 511). Selected asset: 'hazard_lava_tile'
+2025-05-16 13:25:44,640 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 13:25:44,640 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (2,12). Current asset: 'hazard_lava_tile'
+2025-05-16 13:25:44,641 - DEBUG - editor_handlers_map_editing.py:215 - handle_editing_map_events - Attempting to place asset 'hazard_lava_tile' at grid (2,12)
+2025-05-16 13:25:44,641 - DEBUG - editor_handlers_map_editing.py:55 - _place_tile_at_grid - _place_tile_at_grid: current selected_asset_editor_key = 'hazard_lava_tile' for grid (2, 12)
+2025-05-16 13:25:44,641 - DEBUG - editor_handlers_map_editing.py:82 - _place_tile_at_grid - _place_tile_at_grid: Proceeding to place single tile for 'hazard_lava_tile' at (2, 12)
+2025-05-16 13:25:44,642 - DEBUG - editor_handlers_map_editing.py:24 - _place_single_tile_at_grid - _place_single_tile_at_grid: Placing 'hazard_lava_tile' at (2, 12)
+2025-05-16 13:25:46,583 - INFO - editor_handlers_map_editing.py:316 - handle_editing_map_events - Ctrl+S pressed: Save All attempt.
+2025-05-16 13:25:46,583 - INFO - editor_map_utils.py:76 - save_map_to_json - Saving map to JSON. Map name from state: 'booooi'
+2025-05-16 13:25:46,583 - DEBUG - editor_map_utils.py:92 - save_map_to_json - Attempting to save JSON to: 'maps\booooi.json' using map name 'booooi'
+2025-05-16 13:25:46,583 - DEBUG - editor_map_utils.py:128 - save_map_to_json - Data to save (first object example): {'asset_editor_key': 'platform_wall_gray_bottom_half', 'world_x': 120, 'world_y': 320, 'game_type_id': 'platform_wall_gray_bottom_half'}
+2025-05-16 13:25:46,585 - INFO - editor_map_utils.py:134 - save_map_to_json - Editor data saved to: booooi.json
+2025-05-16 13:25:46,585 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Editor data saved to: booooi.json' for 3.0s
+2025-05-16 13:25:46,586 - INFO - editor_map_utils.py:374 - export_map_to_game_python_script - Exporting map. Map name from state: 'booooi'
+2025-05-16 13:25:46,586 - DEBUG - editor_map_utils.py:411 - export_map_to_game_python_script - Exporting to function 'load_map_booooi' in file 'maps\booooi.py'
+2025-05-16 13:25:46,586 - DEBUG - editor_map_utils.py:426 - export_map_to_game_python_script - Processing 17 objects for .py export.
+2025-05-16 13:25:46,586 - DEBUG - editor_map_utils.py:435 - export_map_to_game_python_script - Export: Identified 4 lava-occupied coordinates for check: {(560, 360), (520, 360), (80, 480), (600, 360)}
+2025-05-16 13:25:46,587 - DEBUG - editor_map_utils.py:520 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 6, Hazards: 4, Enemies: 0, Collectibles: 0
+2025-05-16 13:25:46,587 - DEBUG - editor_map_utils.py:555 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 0, map_max_x_content: 640
+2025-05-16 13:25:46,587 - DEBUG - editor_map_utils.py:556 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 1280, MinYAbs: 240, MaxYAbs: 520
+2025-05-16 13:25:46,587 - DEBUG - editor_map_utils.py:614 - export_map_to_game_python_script - Code for right-side filler wall generated: x=640, y_expr='level_min_y_absolute - _boundary_thickness', w=640, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
+2025-05-16 13:25:46,587 - DEBUG - editor_map_utils.py:615 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=160, h_val_approx=440, color_val_approx=(50, 50, 50)
+2025-05-16 13:25:46,587 - DEBUG - editor_map_utils.py:638 - export_map_to_game_python_script - Final .py script content (first 500 chars):
+# Level: booooi
 # Generated by Platformer Level Editor (Optimized Export)
 import pygame
 from tiles import Platform, Ladder, Lava
 import constants as C
 
-LEVEL_SPECIFIC_BACKGROUND_COLOR = (173, 216, 230)
+LEVEL_SPECIFIC_BACKGROUND_COLOR = (0, 100, 0)
 
-def load_map_my_map(initial_screen_width, initial_screen_height):
+def load_map_booooi(initial_screen_width, initial_screen_height):
     """
-    Loads the 'my_map' level.
+    Loads the 'booooi' level.
     """
-    print(f"Loading map: load_map_my_map...")
+    print(f"Loading map: load_map_booooi...")
     platforms = pygame.sprite.Group()
     ladders = pygame.sprite.Group()
     hazards = pygame.sprite.Group()
     enemy_spawns_data = []
-  ...
-2025-05-16 10:54:55,028 - INFO - editor_map_utils.py:644 - export_map_to_game_python_script - Map exported to game script: my_map.py
-2025-05-16 10:54:55,028 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: my_map.py' for 3.0s
-2025-05-16 10:54:55,028 - DEBUG - editor_map_utils.py:647 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'maps\my_map.py'.
-2025-05-16 10:54:55,989 - INFO - editor_handlers_map_editing.py:289 - handle_editing_map_events - Escape pressed: Deselecting asset.
-2025-05-16 10:54:55,989 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'hazard_lava_tile' to 'None'
-2025-05-16 10:54:55,990 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'None'
-2025-05-16 10:54:55,990 - DEBUG - editor_state.py:154 - selected_asset_editor_key - No asset selected. selected_asset_image_for_cursor set to None.
-2025-05-16 10:54:55,990 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Asset deselected' for 3.0s
-2025-05-16 10:54:57,166 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
-2025-05-16 10:54:57,166 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
-2025-05-16 10:54:57,166 - DEBUG - editor_state.py:197 - reset_map_context - Resetting map context.
-2025-05-16 10:54:57,167 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
-2025-05-16 10:54:57,167 - DEBUG - editor_state.py:167 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
-2025-05-16 10:54:57,167 - DEBUG - editor_state.py:214 - reset_map_context - Map context reset. Map name: 'untitled_map'.
-2025-05-16 10:54:57,167 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
-2025-05-16 10:54:57,167 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
-2025-05-16 10:54:57,167 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-16 10:54:57,756 - INFO - editor.py:231 - editor_main - Escape pressed in menu. Posting QUIT event.
-2025-05-16 10:54:57,778 - INFO - editor_handlers_global.py:18 - handle_global_events - pygame.QUIT event received.
-2025-05-16 10:54:57,779 - INFO - editor.py:217 - editor_main - handle_global_events returned False (QUIT). Setting running=False.
-2025-05-16 10:54:57,779 - INFO - editor.py:338 - editor_main - Exiting editor_main. Calling pygame.quit().
-2025-05-16 10:54:57,936 - INFO - editor.py:341 - editor_main - Editor session ended.
+    co...
+2025-05-16 13:25:46,589 - INFO - editor_map_utils.py:644 - export_map_to_game_python_script - Map exported to game script: booooi.py
+2025-05-16 13:25:46,589 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: booooi.py' for 3.0s
+2025-05-16 13:25:46,589 - DEBUG - editor_map_utils.py:647 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'maps\booooi.py'.
+2025-05-16 13:25:49,725 - INFO - editor_handlers_map_editing.py:289 - handle_editing_map_events - Escape pressed: Deselecting asset.
+2025-05-16 13:25:49,725 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'hazard_lava_tile' to 'None'
+2025-05-16 13:25:49,725 - INFO - editor_state.py:150 - selected_asset_editor_key - selected_asset_editor_key changed to: 'None'
+2025-05-16 13:25:49,725 - DEBUG - editor_state.py:154 - selected_asset_editor_key - No asset selected. selected_asset_image_for_cursor set to None.
+2025-05-16 13:25:49,725 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Asset deselected' for 3.0s
+2025-05-16 13:25:50,118 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
+2025-05-16 13:25:50,119 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
+2025-05-16 13:25:50,119 - DEBUG - editor_state.py:197 - reset_map_context - Resetting map context.
+2025-05-16 13:25:50,119 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
+2025-05-16 13:25:50,119 - DEBUG - editor_state.py:167 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
+2025-05-16 13:25:50,119 - DEBUG - editor_state.py:214 - reset_map_context - Map context reset. Map name: 'untitled_map'.
+2025-05-16 13:25:50,121 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
+2025-05-16 13:25:50,121 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
+2025-05-16 13:25:50,121 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-16 13:25:50,904 - INFO - editor.py:231 - editor_main - Escape pressed in menu. Posting QUIT event.
+2025-05-16 13:25:50,913 - INFO - editor_handlers_global.py:18 - handle_global_events - pygame.QUIT event received.
+2025-05-16 13:25:50,914 - INFO - editor.py:217 - editor_main - handle_global_events returned False (QUIT). Setting running=False.
+2025-05-16 13:25:50,914 - INFO - editor.py:338 - editor_main - Exiting editor_main. Calling pygame.quit().
+2025-05-16 13:25:51,504 - INFO - editor.py:341 - editor_main - Editor session ended.

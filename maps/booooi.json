@@ -1,0 +1,118 @@
+{
+    "map_name_for_function": "booooi",
+    "map_width_tiles": 500,
+    "map_height_tiles": 10,
+    "grid_size": 40,
+    "background_color": [
+        0,
+        100,
+        0
+    ],
+    "placed_objects": [
+        {
+            "asset_editor_key": "platform_wall_gray_bottom_half",
+            "world_x": 120,
+            "world_y": 320,
+            "game_type_id": "platform_wall_gray_bottom_half"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 120,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 160,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 320,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray_bottom_half",
+            "world_x": 360,
+            "world_y": 320,
+            "game_type_id": "platform_wall_gray_bottom_half"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray_bottom_half",
+            "world_x": 0,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray_bottom_half"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray_bottom_half",
+            "world_x": 40,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray_bottom_half"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray_bottom_half",
+            "world_x": 80,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray_bottom_half"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray_bottom_half",
+            "world_x": 400,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray_bottom_half"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray_bottom_half",
+            "world_x": 480,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray_bottom_half"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray_bottom_half",
+            "world_x": 440,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray_bottom_half"
+        },
+        {
+            "asset_editor_key": "player1_spawn",
+            "world_x": 0,
+            "world_y": 320,
+            "game_type_id": "player1_spawn"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 520,
+            "world_y": 360,
+            "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 560,
+            "world_y": 360,
+            "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 600,
+            "world_y": 360,
+            "game_type_id": "hazard_lava"
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 80,
+            "world_y": 480,
+            "game_type_id": "hazard_lava"
+        }
+    ],
+    "camera_offset_x": 0,
+    "camera_offset_y": 0,
+    "show_grid": true
+}
