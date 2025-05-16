@@ -1,5 +1,5 @@
 {
-    "map_name_for_function": "1",
+    "map_name_for_function": "lavacenter2",
     "map_width_tiles": 30,
     "map_height_tiles": 20,
     "grid_size": 40,
@@ -977,6 +977,6 @@
         }
     ],
     "camera_offset_x": 0,
-    "camera_offset_y": 80.0,
+    "camera_offset_y": 72.0,
     "show_grid": true
 }

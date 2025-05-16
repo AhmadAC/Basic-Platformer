@@ -1,7 +1,7 @@
 # editor_map_utils.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.2.1 (Fixed NameError for level_min_y_absolute in export, refined filler wall logic)
+## version 1.0.3 (Improved rename logic for consistency)
 Utility functions for map operations in the Level Editor,
 including initializing new maps, saving/loading editor-specific
 map data (JSON), and exporting maps to game-compatible Python scripts.
@@ -27,10 +27,11 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
                        map_width_tiles: int, map_height_tiles: int):
     logger.info(f"Initializing new map state. Name: '{map_name_for_function}', Size: {map_width_tiles}x{map_height_tiles}")
 
-    clean_map_name = map_name_for_function.lower().replace(" ", "_").replace("-", "_")
-    if not clean_map_name:
+    # map_name_for_function is already cleaned by the caller in editor_handlers_menu
+    clean_map_name = map_name_for_function
+    if not clean_map_name: # Should not happen if caller validates
         clean_map_name = "untitled_map"
-        logger.warning(f"map_name_for_function was empty after cleaning, defaulting to '{clean_map_name}'")
+        logger.warning(f"map_name_for_function was empty during init, defaulting to '{clean_map_name}'")
 
     editor_state.map_name_for_function = clean_map_name
     editor_state.map_width_tiles = map_width_tiles
@@ -39,15 +40,22 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     editor_state.background_color = ED_CONFIG.DEFAULT_BACKGROUND_COLOR
     editor_state.camera_offset_x = 0
     editor_state.camera_offset_y = 0
-    editor_state.unsaved_changes = True
+    editor_state.unsaved_changes = True # New map is inherently unsaved until first save/export
 
     py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
+    json_filename = editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
+
     editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
+    # Also store the expected JSON path for consistency, though save/load determine it dynamically
+    editor_state.current_json_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, json_filename)
+
 
     editor_state.recreate_map_content_surface()
 
     logger.info(f"Editor state initialized for new map. map_name_for_function='{editor_state.map_name_for_function}', "
-                f"current_map_filename='{editor_state.current_map_filename}', unsaved_changes={editor_state.unsaved_changes}")
+                f"current_map_filename (py)='{editor_state.current_map_filename}', "
+                f"current_json_filename='{editor_state.current_json_filename}', "
+                f"unsaved_changes={editor_state.unsaved_changes}")
 
 
 def ensure_maps_directory_exists() -> bool:
@@ -65,7 +73,7 @@ def ensure_maps_directory_exists() -> bool:
 
 
 def save_map_to_json(editor_state: EditorState) -> bool:
-    logger.info(f"Saving map to JSON. Map name: '{editor_state.map_name_for_function}'")
+    logger.info(f"Saving map to JSON. Map name from state: '{editor_state.map_name_for_function}'")
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
         msg = "Map name is not set or is 'untitled_map'. Cannot save JSON."
         editor_state.set_status_message(f"Error: {msg}", 3)
@@ -78,9 +86,10 @@ def save_map_to_json(editor_state: EditorState) -> bool:
         logger.error(f"{msg} JSON save aborted.")
         return False
 
+    # Use the map_name_for_function from editor_state to construct filename
     json_filename = editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
     json_filepath = os.path.join(ED_CONFIG.MAPS_DIRECTORY, json_filename)
-    logger.debug(f"Attempting to save JSON to: '{json_filepath}'")
+    logger.debug(f"Attempting to save JSON to: '{json_filepath}' using map name '{editor_state.map_name_for_function}'")
 
     serializable_objects = []
     for i, obj in enumerate(editor_state.placed_objects):
@@ -106,7 +115,7 @@ def save_map_to_json(editor_state: EditorState) -> bool:
         serializable_objects.append(s_obj)
 
     data_to_save = {
-        "map_name_for_function": editor_state.map_name_for_function,
+        "map_name_for_function": editor_state.map_name_for_function, # Save the current, correct name
         "map_width_tiles": editor_state.map_width_tiles,
         "map_height_tiles": editor_state.map_height_tiles,
         "grid_size": editor_state.grid_size,
@@ -124,6 +133,8 @@ def save_map_to_json(editor_state: EditorState) -> bool:
         success_msg = f"Editor data saved to: {json_filename}"
         logger.info(success_msg)
         editor_state.set_status_message(success_msg)
+        # NOTE: save_map_to_json itself does not set unsaved_changes to False.
+        # This is typically handled by export_map_to_game_python_script or a "Save All" operation.
         return True
     except IOError as e:
         error_msg = f"IOError saving map to JSON '{json_filepath}': {e}"
@@ -150,7 +161,15 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
             data = json.load(f)
         logger.debug(f"Successfully read JSON data from '{json_filepath}'.")
 
-        editor_state.map_name_for_function = data.get("map_name_for_function", "loaded_map_error_name")
+        # Crucially, set editor_state.map_name_for_function from the JSON file's content
+        loaded_map_name = data.get("map_name_for_function")
+        if not loaded_map_name:
+            # Fallback: derive from filename if missing in JSON (less ideal, but robust)
+            loaded_map_name = os.path.splitext(os.path.basename(json_filepath))[0]
+            logger.warning(f"'map_name_for_function' missing in JSON, derived as '{loaded_map_name}' from filename.")
+        editor_state.map_name_for_function = loaded_map_name
+
+
         editor_state.map_width_tiles = data.get("map_width_tiles", ED_CONFIG.DEFAULT_MAP_WIDTH_TILES)
         editor_state.map_height_tiles = data.get("map_height_tiles", ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES)
         editor_state.grid_size = data.get("grid_size", ED_CONFIG.DEFAULT_GRID_SIZE)
@@ -231,17 +250,22 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
         editor_state.camera_offset_y = data.get("camera_offset_y", 0)
         editor_state.show_grid = data.get("show_grid", True)
 
-        py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
-        editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
+        # Set current_map_filename (for .py) and current_json_filename based on the loaded map_name_for_function
+        py_filename_for_state = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
+        editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename_for_state)
+        editor_state.current_json_filename = json_filepath # Store the path of the JSON it was loaded from
 
         editor_state.recreate_map_content_surface()
-        if not corrections_made:
+        if not corrections_made: # Only set to False if no corrections were made
             editor_state.unsaved_changes = False
 
         success_msg = f"Map '{editor_state.map_name_for_function}' loaded from {os.path.basename(json_filepath)}."
         if corrections_made: success_msg += " (Auto-corrected)"
 
-        logger.info(f"{success_msg}. unsaved_changes={editor_state.unsaved_changes}, current_map_filename='{editor_state.current_map_filename}'")
+        logger.info(f"{success_msg}. map_name_for_function='{editor_state.map_name_for_function}', "
+                    f"current_map_filename (py)='{editor_state.current_map_filename}', "
+                    f"current_json_filename='{editor_state.current_json_filename}', "
+                    f"unsaved_changes={editor_state.unsaved_changes}")
         editor_state.set_status_message(success_msg)
         return True
 
@@ -347,19 +371,34 @@ def _merge_rect_objects(objects_raw: List[Dict[str, Any]], class_name_for_export
 
 
 def export_map_to_game_python_script(editor_state: EditorState) -> bool:
-    logger.info(f"Exporting map '{editor_state.map_name_for_function}' to Python script.")
+    logger.info(f"Exporting map. Map name from state: '{editor_state.map_name_for_function}'")
     ts = editor_state.grid_size
 
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
-        msg = "Map name not set or is 'untitled_map'. Cannot export .py."
+        msg = "Map name is not set or is 'untitled_map'. Cannot export .py."
         editor_state.set_status_message(f"Error: {msg}", 3)
         logger.error(msg)
         return False
 
-    if not editor_state.current_map_filename:
+    # Use editor_state.current_map_filename if already set (e.g., by init or load),
+    # otherwise derive it from map_name_for_function. This ensures re-exports (like after rename)
+    # target the correct new filename.
+    py_filepath_to_use = editor_state.current_map_filename
+    if not py_filepath_to_use:
         py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
-        editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
-        logger.warning(f"current_map_filename was not set, derived as '{editor_state.current_map_filename}' for export.")
+        py_filepath_to_use = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
+        logger.warning(f"current_map_filename was not set, derived as '{py_filepath_to_use}' for export.")
+        editor_state.current_map_filename = py_filepath_to_use # Store it
+    elif os.path.basename(py_filepath_to_use) != (editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION):
+        # This case might happen if map_name_for_function changed but current_map_filename wasn't updated.
+        # This is a safeguard; proper state management should prevent this.
+        logger.warning(f"Mismatch between editor_state.map_name_for_function ('{editor_state.map_name_for_function}') "
+                       f"and basename of editor_state.current_map_filename ('{os.path.basename(py_filepath_to_use)}'). "
+                       f"Re-deriving PY filepath.")
+        py_filename_new = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
+        py_filepath_to_use = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename_new)
+        editor_state.current_map_filename = py_filepath_to_use
+
 
     if not ensure_maps_directory_exists():
         msg = "Could not create or access maps directory for .py export."
@@ -367,8 +406,10 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         logger.error(f"{msg} PY export aborted.")
         return False
 
+    # function_name in the Python script is derived from the current map_name_for_function
     function_name = f"load_map_{editor_state.map_name_for_function}"
-    logger.debug(f"Exporting to function '{function_name}' in file '{editor_state.current_map_filename}'")
+    logger.debug(f"Exporting to function '{function_name}' in file '{py_filepath_to_use}'")
+
 
     platform_objects_raw: List[Dict[str, Any]] = []
     hazards_code_lines: List[str] = []
@@ -515,7 +556,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     logger.debug(f"Export boundaries - TotalWidthPx: {game_map_total_width_pixels}, MinYAbs: {game_level_min_y_absolute}, MaxYAbs: {game_level_max_y_absolute}")
 
     script_content_parts = [
-        f"# Level: {editor_state.map_name_for_function}",
+        f"# Level: {editor_state.map_name_for_function}", # Uses the current name from state
         "# Generated by Platformer Level Editor (Optimized Export)",
         "import pygame",
         "from tiles import Platform, Ladder, Lava",
@@ -523,11 +564,11 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         "",
         f"LEVEL_SPECIFIC_BACKGROUND_COLOR = {editor_state.background_color}",
         "",
-        f"def {function_name}(initial_screen_width, initial_screen_height):",
+        f"def {function_name}(initial_screen_width, initial_screen_height):", # function_name is derived from current name
         f"    \"\"\"",
-        f"    Loads the '{editor_state.map_name_for_function}' level.",
+        f"    Loads the '{editor_state.map_name_for_function}' level.", # Docstring uses current name
         f"    \"\"\"",
-        f"    print(f\"Loading map: {function_name}...\")",
+        f"    print(f\"Loading map: {function_name}...\")", # Print uses current name
         "    platforms = pygame.sprite.Group()",
         "    ladders = pygame.sprite.Group()",
         "    hazards = pygame.sprite.Group()",
@@ -544,49 +585,34 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         collectible_spawns_code_str,
         "",
         "    # --- Level Dimensions for Game Camera & Boundaries ---",
-        # Values from exporter's Python variables are written into the generated script
         f"    map_total_width_pixels = {game_map_total_width_pixels}",
         f"    level_min_y_absolute = {game_level_min_y_absolute}",
         f"    level_max_y_absolute = {game_level_max_y_absolute}",
         f"    main_ground_y_reference = {game_main_ground_y_reference}",
         f"    main_ground_height_reference = {game_main_ground_height_reference}",
         "",
-        # These define variables *within the generated script*
         "    _boundary_thickness = C.TILE_SIZE * 2",
         "    _boundary_wall_height = level_max_y_absolute - level_min_y_absolute + (2 * _boundary_thickness)",
         "    _boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))",
         "",
     ]
 
-    # --- Add filler wall for the right side if content doesn't span the full map width ---
-    # These calculations use Python variables from the exporter's scope
     filler_wall_x_start = map_max_x_content 
     filler_wall_width = game_map_total_width_pixels - filler_wall_x_start
     
     if filler_wall_width > 0:
-        # These are string expressions that will be embedded into the generated code.
-        # They refer to variables that will be defined IN THE GENERATED SCRIPT
-        # (level_min_y_absolute, _boundary_thickness, _boundary_wall_height, _boundary_color).
         filler_wall_y_expr_str = "level_min_y_absolute - _boundary_thickness"
         filler_wall_height_expr_str = "_boundary_wall_height" 
-        
         script_content_parts.extend([
             "    # Filler wall on the right to ensure no empty background padding",
             f"    platforms.add(Platform({filler_wall_x_start}, {filler_wall_y_expr_str}, {filler_wall_width}, {filler_wall_height_expr_str}, _boundary_color, platform_type='wall'))"
         ])
-        
-        # For logging, calculate approximate values based on exporter's context for reference
-        # These use constants C available in the exporter.
         log_calculated_boundary_thickness = C.TILE_SIZE * 2
         log_calculated_filler_wall_y = game_level_min_y_absolute - log_calculated_boundary_thickness
         log_calculated_filler_wall_height = (game_level_max_y_absolute - game_level_min_y_absolute) + (2 * log_calculated_boundary_thickness)
         log_boundary_color_value_for_debug = getattr(C, 'DARK_GRAY', (50,50,50))
-
-        logger.debug(f"Code for right-side filler wall generated: x={filler_wall_x_start}, "
-                     f"y_expr='{filler_wall_y_expr_str}', w={filler_wall_width}, "
-                     f"h_expr='{filler_wall_height_expr_str}', color_var_name='_boundary_color'")
-        logger.debug(f"Approximate calculated values for filler wall (for logging ref): "
-                     f"y_val_approx={log_calculated_filler_wall_y}, h_val_approx={log_calculated_filler_wall_height}, color_val_approx={log_boundary_color_value_for_debug}")
+        logger.debug(f"Code for right-side filler wall generated: x={filler_wall_x_start}, y_expr='{filler_wall_y_expr_str}', w={filler_wall_width}, h_expr='{filler_wall_height_expr_str}', color_var_name='_boundary_color'")
+        logger.debug(f"Approximate calculated values for filler wall (for logging ref): y_val_approx={log_calculated_filler_wall_y}, h_val_approx={log_calculated_filler_wall_height}, color_val_approx={log_boundary_color_value_for_debug}")
     
     script_content_parts.extend([
         "",
@@ -600,7 +626,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         "    # Right boundary (placed at the very edge of map_total_width_pixels)",
         f"    platforms.add(Platform(map_total_width_pixels, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, _boundary_color, platform_type=\"boundary_wall_right\"))",
         "",
-        f"    print(f\"Map '{function_name}' loaded with: {{len(platforms)}} platforms, {{len(ladders)}} ladders, {{len(hazards)}} hazards.\")",
+        f"    print(f\"Map '{function_name}' loaded with: {{len(platforms)}} platforms, {{len(ladders)}} ladders, {{len(hazards)}} hazards.\")", # Print uses current name
         "    return (platforms, ladders, hazards, enemy_spawns_data, collectible_spawns_data,",
         "            player1_spawn,",
         "            map_total_width_pixels, level_min_y_absolute, level_max_y_absolute,",
@@ -609,23 +635,22 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         ])
 
     script_content = "\n".join(script_content_parts)
-    py_filepath = editor_state.current_map_filename
     logger.debug(f"Final .py script content (first 500 chars):\n{script_content[:500]}...")
 
     try:
-        with open(py_filepath, "w") as f:
+        with open(py_filepath_to_use, "w") as f:
             f.write(script_content)
-        success_msg = f"Map exported to game script: {os.path.basename(py_filepath)}"
+        success_msg = f"Map exported to game script: {os.path.basename(py_filepath_to_use)}"
         logger.info(success_msg)
         editor_state.set_status_message(success_msg)
-        editor_state.unsaved_changes = False
-        logger.debug("unsaved_changes set to False after .py export.")
+        editor_state.unsaved_changes = False # Export successful, consider it "saved"
+        logger.debug(f"unsaved_changes set to False after .py export to '{py_filepath_to_use}'.")
         return True
     except IOError as e:
-        error_msg = f"IOError exporting map to .py '{py_filepath}': {e}"
+        error_msg = f"IOError exporting map to .py '{py_filepath_to_use}': {e}"
         logger.error(error_msg, exc_info=True)
     except Exception as e:
-        error_msg = f"Unexpected error during .py export to '{py_filepath}': {e}"
+        error_msg = f"Unexpected error during .py export to '{py_filepath_to_use}': {e}"
         logger.error(error_msg, exc_info=True)
         traceback.print_exc()
 
@@ -633,17 +658,17 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     return False
 
 
-def delete_map_files(editor_state: EditorState, json_filepath: str) -> bool:
-    logger.info(f"Attempting to delete map files for: {json_filepath}")
-    if not json_filepath.endswith(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
-        msg = f"Invalid file type for deletion: {json_filepath}. Expected .json"
+def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) -> bool:
+    logger.info(f"Attempting to delete map files. Base JSON path: {json_filepath_to_delete}")
+    if not json_filepath_to_delete.endswith(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
+        msg = f"Invalid file type for deletion: {json_filepath_to_delete}. Expected {ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION}"
         logger.error(msg)
         editor_state.set_status_message(msg, 3)
         return False
 
-    map_name_base = os.path.basename(json_filepath).replace(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION, "")
-    py_filename = map_name_base + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
-    py_filepath = os.path.join(os.path.dirname(json_filepath), py_filename)
+    map_name_base = os.path.splitext(os.path.basename(json_filepath_to_delete))[0]
+    py_filename_to_delete = map_name_base + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
+    py_filepath_to_delete = os.path.join(os.path.dirname(json_filepath_to_delete), py_filename_to_delete)
 
     deleted_json = False
     deleted_py = False
@@ -651,50 +676,56 @@ def delete_map_files(editor_state: EditorState, json_filepath: str) -> bool:
     action_performed_py = False
 
     try:
-        if os.path.exists(json_filepath):
+        if os.path.exists(json_filepath_to_delete):
             action_performed_json = True
-            os.remove(json_filepath)
-            logger.info(f"Deleted editor map file: {json_filepath}")
+            os.remove(json_filepath_to_delete)
+            logger.info(f"Deleted editor map file: {json_filepath_to_delete}")
             deleted_json = True
         else:
-            logger.warning(f"Editor map file not found for deletion: {json_filepath}")
+            logger.warning(f"Editor map file not found for deletion: {json_filepath_to_delete}")
     except OSError as e:
         action_performed_json = True 
-        msg = f"Error deleting editor map file '{json_filepath}': {e}"
+        msg = f"Error deleting editor map file '{json_filepath_to_delete}': {e}"
         logger.error(msg, exc_info=True)
-        editor_state.set_status_message(msg, 4)
+        editor_state.set_status_message(msg, 4) # Set status message here
 
     try:
-        if os.path.exists(py_filepath):
+        if os.path.exists(py_filepath_to_delete):
             action_performed_py = True
-            os.remove(py_filepath)
-            logger.info(f"Deleted game level file: {py_filepath}")
+            os.remove(py_filepath_to_delete)
+            logger.info(f"Deleted game level file: {py_filepath_to_delete}")
             deleted_py = True
         else:
-            logger.warning(f"Game level file not found for deletion: {py_filepath}")
+            logger.warning(f"Game level file not found for deletion: {py_filepath_to_delete}")
     except OSError as e:
         action_performed_py = True
-        msg = f"Error deleting game level file '{py_filepath}': {e}"
+        msg = f"Error deleting game level file '{py_filepath_to_delete}': {e}"
         logger.error(msg, exc_info=True)
-        editor_state.set_status_message(msg, 4)
+        editor_state.set_status_message(msg, 4) # Set status message here
 
+
+    final_status_message = ""
+    operation_successful = False
 
     if deleted_json and deleted_py:
-        editor_state.set_status_message(f"Map '{map_name_base}' JSON and PY files deleted.", 3)
-        return True
+        final_status_message = f"Map '{map_name_base}' JSON and PY files deleted."
+        operation_successful = True
     elif deleted_json:
-        editor_state.set_status_message(f"Map '{map_name_base}' JSON file deleted. PY not found or failed to delete.", 3)
-        return True 
+        final_status_message = f"Map '{map_name_base}' JSON file deleted. PY not found or failed to delete."
+        operation_successful = True # Considered success if JSON is gone
     elif deleted_py:
-         editor_state.set_status_message(f"Map '{map_name_base}' PY file deleted. JSON not found or failed to delete.", 3)
-         return True 
+         final_status_message = f"Map '{map_name_base}' PY file deleted. JSON not found or failed to delete."
+         operation_successful = True # Considered success if PY is gone
     elif not action_performed_json and not action_performed_py: 
-        editor_state.set_status_message(f"Map '{map_name_base}' files not found.", 2)
-        return True 
+        final_status_message = f"Map '{map_name_base}' files not found."
+        operation_successful = True # No action needed, so "success" in terms of state
     elif (action_performed_json and not deleted_json) or \
          (action_performed_py and not deleted_py): 
-        editor_state.set_status_message(f"Failed to delete one or more files for map '{map_name_base}'. Check logs.", 4)
-        return False
-    else: 
-        editor_state.set_status_message(f"Deletion status unclear for map '{map_name_base}'. Check logs.", 3)
-        return False
+        final_status_message = f"Failed to delete one or more files for map '{map_name_base}'. Check logs."
+        operation_successful = False # Explicit failure
+    else: # Should not be reached if logic is sound
+        final_status_message = f"Deletion status unclear for map '{map_name_base}'. Check logs."
+        operation_successful = False
+
+    editor_state.set_status_message(final_status_message, 3 if operation_successful else 4)
+    return operation_successful

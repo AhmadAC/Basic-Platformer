@@ -1,55 +1,124 @@
-2025-05-16 09:41:19,330 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
-2025-05-16 09:41:19,330 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
-2025-05-16 09:41:19,333 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
-2025-05-16 09:41:19,445 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers.
-2025-05-16 09:41:19,446 - INFO - editor.py:106 - editor_main - editor_main() started.
-2025-05-16 09:41:20,720 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
-2025-05-16 09:41:20,720 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
-2025-05-16 09:41:20,838 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
-2025-05-16 09:41:20,839 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
-2025-05-16 09:41:20,841 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-16 09:41:20,841 - DEBUG - editor_state.py:86 - __init__ - EditorState initialized.
-2025-05-16 09:41:20,916 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
-2025-05-16 09:41:20,916 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-16 09:41:20,916 - INFO - editor.py:170 - editor_main - Entering main loop.
-2025-05-16 09:41:21,945 - INFO - editor_handlers_menu.py:227 - handle_menu_events - Menu: 'Load Map' button clicked.
-2025-05-16 09:41:21,946 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-16 09:41:23,622 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
-2025-05-16 09:41:23,622 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
-2025-05-16 09:41:23,622 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\lavacenter.json'
-2025-05-16 09:41:23,622 - DEBUG - editor_handlers_menu.py:230 - on_file_sel - Attempting to load map from: maps\lavacenter.json
-2025-05-16 09:41:23,622 - INFO - editor_map_utils.py:141 - load_map_from_json - Loading map from JSON: 'maps\lavacenter.json'
-2025-05-16 09:41:23,641 - DEBUG - editor_map_utils.py:151 - load_map_from_json - Successfully read JSON data from 'maps\lavacenter.json'.
-2025-05-16 09:41:23,641 - DEBUG - editor_map_utils.py:167 - load_map_from_json - Loading 161 objects from JSON.
-2025-05-16 09:41:23,641 - DEBUG - editor_map_utils.py:202 - load_map_from_json - Auto-correction: Found 12 lava coordinates for checking: {(720, 760), (880, 760), (640, 760), (920, 760), (840, 760), (520, 760), (800, 760), (760, 760), (560, 760), (680, 760), (960, 760), (600, 760)}
-2025-05-16 09:41:23,643 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-16 09:41:23,643 - INFO - editor_map_utils.py:244 - load_map_from_json - Map '1' loaded from lavacenter.json.. unsaved_changes=False, current_map_filename='maps\1.py'
-2025-05-16 09:41:23,643 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map '1' loaded from lavacenter.json.' for 3.0s
-2025-05-16 09:41:23,643 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
-2025-05-16 09:41:23,643 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
-2025-05-16 09:41:23,644 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
-2025-05-16 09:41:23,644 - DEBUG - editor.py:226 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
-2025-05-16 09:41:23,644 - DEBUG - editor.py:239 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:23,644 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
-2025-05-16 09:41:23,644 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
-2025-05-16 09:41:24,469 - INFO - editor_handlers_map_editing.py:316 - handle_editing_map_events - Ctrl+S pressed: Save All attempt.
-2025-05-16 09:41:24,470 - INFO - editor_map_utils.py:68 - save_map_to_json - Saving map to JSON. Map name: '1'
-2025-05-16 09:41:24,470 - DEBUG - editor_map_utils.py:83 - save_map_to_json - Attempting to save JSON to: 'maps\1.json'
-2025-05-16 09:41:24,470 - DEBUG - editor_map_utils.py:119 - save_map_to_json - Data to save (first object example): {'asset_editor_key': 'platform_wall_gray', 'world_x': 0, 'world_y': 0, 'game_type_id': 'platform_wall_gray'}
-2025-05-16 09:41:24,473 - INFO - editor_map_utils.py:125 - save_map_to_json - Editor data saved to: 1.json
-2025-05-16 09:41:24,473 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Editor data saved to: 1.json' for 3.0s
-2025-05-16 09:41:24,473 - INFO - editor_map_utils.py:350 - export_map_to_game_python_script - Exporting map '1' to Python script.
-2025-05-16 09:41:24,473 - DEBUG - editor_map_utils.py:371 - export_map_to_game_python_script - Exporting to function 'load_map_1' in file 'maps\1.py'
-2025-05-16 09:41:24,474 - DEBUG - editor_map_utils.py:385 - export_map_to_game_python_script - Processing 161 objects for .py export.
-2025-05-16 09:41:24,474 - DEBUG - editor_map_utils.py:394 - export_map_to_game_python_script - Export: Identified 12 lava-occupied coordinates for check: {(720, 760), (880, 760), (640, 760), (920, 760), (840, 760), (520, 760), (800, 760), (760, 760), (560, 760), (680, 760), (960, 760), (600, 760)}
-2025-05-16 09:41:24,474 - WARNING - editor_map_utils.py:469 - export_map_to_game_python_script - Unknown game_type_id 'player2_spawn' for object at (120,720). Not exported to .py.
-2025-05-16 09:41:24,475 - DEBUG - editor_map_utils.py:479 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 22, Hazards: 12, Enemies: 3, Collectibles: 1
-2025-05-16 09:41:24,475 - DEBUG - editor_map_utils.py:514 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 0, map_max_x_content: 1200
-2025-05-16 09:41:24,475 - DEBUG - editor_map_utils.py:515 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 1360, MinYAbs: -80, MaxYAbs: 800
-2025-05-16 09:41:24,475 - DEBUG - editor_map_utils.py:585 - export_map_to_game_python_script - Code for right-side filler wall generated: x=1200, y_expr='level_min_y_absolute - _boundary_thickness', w=160, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
-2025-05-16 09:41:24,475 - DEBUG - editor_map_utils.py:588 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=-160, h_val_approx=1040, color_val_approx=(50, 50, 50)
-2025-05-16 09:41:24,475 - DEBUG - editor_map_utils.py:613 - export_map_to_game_python_script - Final .py script content (first 500 chars):
-# Level: 1
+2025-05-16 10:09:06,565 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
+2025-05-16 10:09:06,566 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
+2025-05-16 10:09:06,567 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
+2025-05-16 10:09:06,635 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers.
+2025-05-16 10:09:06,635 - INFO - editor.py:106 - editor_main - editor_main() started.
+2025-05-16 10:09:06,987 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
+2025-05-16 10:09:06,987 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
+2025-05-16 10:09:07,080 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
+2025-05-16 10:09:07,081 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
+2025-05-16 10:09:07,082 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-16 10:09:07,082 - DEBUG - editor_state.py:86 - __init__ - EditorState initialized.
+2025-05-16 10:09:07,144 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
+2025-05-16 10:09:07,144 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-16 10:09:07,144 - INFO - editor.py:170 - editor_main - Entering main loop.
+2025-05-16 10:09:08,563 - INFO - editor_handlers_menu.py:294 - handle_menu_events - Menu: 'Rename Map' button clicked.
+2025-05-16 10:09:08,563 - INFO - editor_handlers_menu.py:212 - start_rename_map_flow - Starting rename map flow.
+2025-05-16 10:09:08,563 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-16 10:09:10,057 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
+2025-05-16 10:09:10,057 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-16 10:09:10,057 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\lavacenter.json'
+2025-05-16 10:09:10,057 - INFO - editor_handlers_menu.py:193 - _handle_rename_select_map - Map selected for rename (path from dialog): 'maps\lavacenter.json'
+2025-05-16 10:09:10,058 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
+2025-05-16 10:09:10,058 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'text_input' after handle_dialog_events.
+2025-05-16 10:09:11,429 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CONFIRMED
+2025-05-16 10:09:11,429 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
+2025-05-16 10:09:11,429 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'text_input' with value: 'lavacenter1'
+2025-05-16 10:09:11,429 - INFO - editor_handlers_menu.py:28 - _handle_rename_get_new_name - Attempting to rename 'lavacenter' to 'lavacenter1'
+2025-05-16 10:09:11,430 - ERROR - editor_handlers_dialog.py:124 - handle_dialog_events - Err Confirm CB for text_input:'EditorState' object has no attribute 'current_json_filename'
+Traceback (most recent call last):
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_dialog.py", line 123, in handle_dialog_events
+    try: cb_confirm(val_pass) # type: ignore
+         ^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_menu.py", line 206, in <lambda>
+    on_confirm=lambda new_name: _handle_rename_get_new_name(new_name, base_name_no_ext, editor_state),
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_menu.py", line 95, in _handle_rename_get_new_name
+    is_currently_active_map_by_json_path = (editor_state.current_json_filename and
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'EditorState' object has no attribute 'current_json_filename'
+2025-05-16 10:09:11,431 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 10:09:11,431 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'text_input' to 'None' after handle_dialog_events.
+2025-05-16 10:09:12,234 - INFO - editor_handlers_menu.py:282 - handle_menu_events - Menu: 'Load Map' button clicked.
+2025-05-16 10:09:12,234 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-16 10:09:13,660 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
+2025-05-16 10:09:13,660 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-16 10:09:13,660 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\lavacenter.json'
+2025-05-16 10:09:13,660 - DEBUG - editor_handlers_menu.py:284 - on_file_sel - Attempting to load map from: maps\lavacenter.json
+2025-05-16 10:09:13,660 - INFO - editor_map_utils.py:152 - load_map_from_json - Loading map from JSON: 'maps\lavacenter.json'
+2025-05-16 10:09:13,679 - DEBUG - editor_map_utils.py:162 - load_map_from_json - Successfully read JSON data from 'maps\lavacenter.json'.
+2025-05-16 10:09:13,679 - DEBUG - editor_map_utils.py:186 - load_map_from_json - Loading 161 objects from JSON.
+2025-05-16 10:09:13,679 - DEBUG - editor_map_utils.py:221 - load_map_from_json - Auto-correction: Found 12 lava coordinates for checking: {(720, 760), (880, 760), (640, 760), (920, 760), (840, 760), (520, 760), (800, 760), (760, 760), (560, 760), (680, 760), (960, 760), (600, 760)}
+2025-05-16 10:09:13,680 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-16 10:09:13,680 - INFO - editor_map_utils.py:265 - load_map_from_json - Map 'lavacenter' loaded from lavacenter.json.. map_name_for_function='lavacenter', current_map_filename (py)='maps\lavacenter.py', current_json_filename='maps\lavacenter.json', unsaved_changes=False
+2025-05-16 10:09:13,680 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'lavacenter' loaded from lavacenter.json.' for 3.0s
+2025-05-16 10:09:13,681 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
+2025-05-16 10:09:13,681 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 10:09:13,681 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
+2025-05-16 10:09:13,681 - DEBUG - editor.py:226 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
+2025-05-16 10:09:13,681 - DEBUG - editor.py:239 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
+2025-05-16 10:09:13,681 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
+2025-05-16 10:09:13,681 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
+2025-05-16 10:09:17,624 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (492, 423). Selected asset: 'None'
+2025-05-16 10:09:17,624 - DEBUG - editor_handlers_map_editing.py:209 - handle_editing_map_events - Left click in map view section.
+2025-05-16 10:09:17,624 - DEBUG - editor_handlers_map_editing.py:212 - handle_editing_map_events - Map click at grid (6,12.0). Current asset: 'None'
+2025-05-16 10:09:17,624 - DEBUG - editor_handlers_map_editing.py:219 - handle_editing_map_events - No asset selected, attempting to drag object.
+2025-05-16 10:09:17,891 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
+2025-05-16 10:09:17,892 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
+2025-05-16 10:09:17,892 - DEBUG - editor_state.py:197 - reset_map_context - Resetting map context.
+2025-05-16 10:09:17,892 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
+2025-05-16 10:09:17,892 - DEBUG - editor_state.py:167 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
+2025-05-16 10:09:17,892 - DEBUG - editor_state.py:214 - reset_map_context - Map context reset. Map name: 'untitled_map'.
+2025-05-16 10:09:17,892 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
+2025-05-16 10:09:17,892 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
+2025-05-16 10:09:17,892 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
+2025-05-16 10:09:17,892 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-16 10:09:18,762 - INFO - editor_handlers_menu.py:282 - handle_menu_events - Menu: 'Load Map' button clicked.
+2025-05-16 10:09:18,763 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-16 10:09:21,033 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CANCELLED
+2025-05-16 10:09:21,033 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-16 10:09:21,033 - DEBUG - editor_handlers_dialog.py:126 - handle_dialog_events - Calling cancel_callback for 'file_load'.
+2025-05-16 10:09:21,033 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 10:09:21,033 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
+2025-05-16 10:09:22,099 - INFO - editor_handlers_menu.py:294 - handle_menu_events - Menu: 'Rename Map' button clicked.
+2025-05-16 10:09:22,099 - INFO - editor_handlers_menu.py:212 - start_rename_map_flow - Starting rename map flow.
+2025-05-16 10:09:22,099 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-16 10:09:23,678 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
+2025-05-16 10:09:23,678 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-16 10:09:23,678 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\lavacenter.json'
+2025-05-16 10:09:23,678 - INFO - editor_handlers_menu.py:193 - _handle_rename_select_map - Map selected for rename (path from dialog): 'maps\lavacenter.json'
+2025-05-16 10:09:23,679 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
+2025-05-16 10:09:23,679 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'text_input' after handle_dialog_events.
+2025-05-16 10:09:23,679 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'text_input' after handle_dialog_events.
+2025-05-16 10:09:25,723 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CONFIRMED
+2025-05-16 10:09:25,723 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
+2025-05-16 10:09:25,723 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'text_input' with value: 'lavacenter2'
+2025-05-16 10:09:25,723 - INFO - editor_handlers_menu.py:28 - _handle_rename_get_new_name - Attempting to rename 'lavacenter' to 'lavacenter2'
+2025-05-16 10:09:25,723 - INFO - editor_handlers_menu.py:103 - _handle_rename_get_new_name - Map to rename ('lavacenter') is not the currently active map in editor mode ('untitled_map'). Loading its data.
+2025-05-16 10:09:25,723 - INFO - editor_map_utils.py:152 - load_map_from_json - Loading map from JSON: 'maps\lavacenter.json'
+2025-05-16 10:09:25,724 - DEBUG - editor_map_utils.py:162 - load_map_from_json - Successfully read JSON data from 'maps\lavacenter.json'.
+2025-05-16 10:09:25,724 - DEBUG - editor_map_utils.py:186 - load_map_from_json - Loading 161 objects from JSON.
+2025-05-16 10:09:25,724 - DEBUG - editor_map_utils.py:221 - load_map_from_json - Auto-correction: Found 12 lava coordinates for checking: {(720, 760), (880, 760), (640, 760), (920, 760), (840, 760), (520, 760), (800, 760), (760, 760), (560, 760), (680, 760), (960, 760), (600, 760)}
+2025-05-16 10:09:25,725 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-16 10:09:25,726 - INFO - editor_map_utils.py:265 - load_map_from_json - Map 'lavacenter' loaded from lavacenter.json.. map_name_for_function='lavacenter', current_map_filename (py)='maps\lavacenter.py', current_json_filename='maps\lavacenter.json', unsaved_changes=False
+2025-05-16 10:09:25,726 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'lavacenter' loaded from lavacenter.json.' for 3.0s
+2025-05-16 10:09:25,726 - INFO - editor_handlers_menu.py:107 - _handle_rename_get_new_name - Successfully loaded data for 'lavacenter' for rename operation.
+2025-05-16 10:09:25,727 - INFO - editor_handlers_menu.py:125 - _handle_rename_get_new_name - Successfully renamed file 'maps\lavacenter.json' to 'maps\lavacenter2.json'
+2025-05-16 10:09:25,730 - INFO - editor_handlers_menu.py:147 - _handle_rename_get_new_name - Updated 'map_name_for_function' to 'lavacenter2' and saved content to 'maps\lavacenter2.json'
+2025-05-16 10:09:25,732 - INFO - editor_handlers_menu.py:159 - _handle_rename_get_new_name - Successfully renamed file 'maps\lavacenter.py' to 'maps\lavacenter2.py'
+2025-05-16 10:09:25,732 - INFO - editor_handlers_menu.py:171 - _handle_rename_get_new_name - Editor state finalized for renamed map. New name: 'lavacenter2'. PY target: 'maps\lavacenter2.py'.
+2025-05-16 10:09:25,732 - INFO - editor_map_utils.py:374 - export_map_to_game_python_script - Exporting map. Map name from state: 'lavacenter2'
+2025-05-16 10:09:25,732 - DEBUG - editor_map_utils.py:411 - export_map_to_game_python_script - Exporting to function 'load_map_lavacenter2' in file 'maps\lavacenter2.py'
+2025-05-16 10:09:25,732 - DEBUG - editor_map_utils.py:426 - export_map_to_game_python_script - Processing 161 objects for .py export.
+2025-05-16 10:09:25,732 - DEBUG - editor_map_utils.py:435 - export_map_to_game_python_script - Export: Identified 12 lava-occupied coordinates for check: {(720, 760), (880, 760), (640, 760), (920, 760), (840, 760), (520, 760), (800, 760), (760, 760), (560, 760), (680, 760), (960, 760), (600, 760)}
+2025-05-16 10:09:25,733 - WARNING - editor_map_utils.py:510 - export_map_to_game_python_script - Unknown game_type_id 'player2_spawn' for object at (120,720). Not exported to .py.
+2025-05-16 10:09:25,734 - DEBUG - editor_map_utils.py:520 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 22, Hazards: 12, Enemies: 3, Collectibles: 1
+2025-05-16 10:09:25,734 - DEBUG - editor_map_utils.py:555 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 0, map_max_x_content: 1200
+2025-05-16 10:09:25,734 - DEBUG - editor_map_utils.py:556 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 1360, MinYAbs: -80, MaxYAbs: 800
+2025-05-16 10:09:25,734 - DEBUG - editor_map_utils.py:614 - export_map_to_game_python_script - Code for right-side filler wall generated: x=1200, y_expr='level_min_y_absolute - _boundary_thickness', w=160, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
+2025-05-16 10:09:25,734 - DEBUG - editor_map_utils.py:615 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=-160, h_val_approx=1040, color_val_approx=(50, 50, 50)
+2025-05-16 10:09:25,734 - DEBUG - editor_map_utils.py:638 - export_map_to_game_python_script - Final .py script content (first 500 chars):
+# Level: lavacenter2
 # Generated by Platformer Level Editor (Optimized Export)
 import pygame
 from tiles import Platform, Ladder, Lava
@@ -57,234 +126,90 @@ import constants as C
 
 LEVEL_SPECIFIC_BACKGROUND_COLOR = (75, 0, 130)
 
-def load_map_1(initial_screen_width, initial_screen_height):
+def load_map_lavacenter2(initial_screen_width, initial_screen_height):
     """
-    Loads the '1' level.
+    Loads the 'lavacenter2' level.
     """
-    print(f"Loading map: load_map_1...")
+    print(f"Loading map: load_map_lavacenter2...")
     platforms = pygame.sprite.Group()
     ladders = pygame.sprite.Group()
     hazards = pygame.sprite.Group()
-    enemy_spawns_data = []
-    collectible_spawns_da...
-2025-05-16 09:41:24,476 - INFO - editor_map_utils.py:619 - export_map_to_game_python_script - Map exported to game script: 1.py
-2025-05-16 09:41:24,476 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: 1.py' for 3.0s
-2025-05-16 09:41:24,476 - DEBUG - editor_map_utils.py:622 - export_map_to_game_python_script - unsaved_changes set to False after .py export.
-2025-05-16 09:41:25,002 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-843.75, 0.00) based on mouse velocity (-562.5, 0.0)
-2025-05-16 09:41:25,336 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
-2025-05-16 09:41:25,336 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
-2025-05-16 09:41:25,336 - DEBUG - editor_state.py:197 - reset_map_context - Resetting map context.
-2025-05-16 09:41:25,336 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
-2025-05-16 09:41:25,336 - DEBUG - editor_state.py:167 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
-2025-05-16 09:41:25,336 - DEBUG - editor_state.py:214 - reset_map_context - Map context reset. Map name: 'untitled_map'.
-2025-05-16 09:41:25,336 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:25,336 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:25,337 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
-2025-05-16 09:41:25,337 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-16 09:41:26,313 - INFO - editor_handlers_menu.py:227 - handle_menu_events - Menu: 'Load Map' button clicked.
-2025-05-16 09:41:26,314 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-16 09:41:28,077 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
-2025-05-16 09:41:28,077 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
-2025-05-16 09:41:28,078 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\minipit.json'
-2025-05-16 09:41:28,078 - DEBUG - editor_handlers_menu.py:230 - on_file_sel - Attempting to load map from: maps\minipit.json
-2025-05-16 09:41:28,078 - INFO - editor_map_utils.py:141 - load_map_from_json - Loading map from JSON: 'maps\minipit.json'
-2025-05-16 09:41:28,096 - DEBUG - editor_map_utils.py:151 - load_map_from_json - Successfully read JSON data from 'maps\minipit.json'.
-2025-05-16 09:41:28,096 - DEBUG - editor_map_utils.py:167 - load_map_from_json - Loading 176 objects from JSON.
-2025-05-16 09:41:28,096 - DEBUG - editor_map_utils.py:202 - load_map_from_json - Auto-correction: Found 0 lava coordinates for checking: set()
-2025-05-16 09:41:28,098 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-16 09:41:28,098 - INFO - editor_map_utils.py:244 - load_map_from_json - Map 'yes' loaded from minipit.json.. unsaved_changes=False, current_map_filename='maps\yes.py'
-2025-05-16 09:41:28,098 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'yes' loaded from minipit.json.' for 3.0s
-2025-05-16 09:41:28,098 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
-2025-05-16 09:41:28,098 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
-2025-05-16 09:41:28,098 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
-2025-05-16 09:41:28,098 - DEBUG - editor.py:226 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
-2025-05-16 09:41:28,098 - DEBUG - editor.py:239 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:28,098 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
-2025-05-16 09:41:28,098 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
-2025-05-16 09:41:29,142 - INFO - editor_handlers_map_editing.py:316 - handle_editing_map_events - Ctrl+S pressed: Save All attempt.
-2025-05-16 09:41:29,142 - INFO - editor_map_utils.py:68 - save_map_to_json - Saving map to JSON. Map name: 'yes'
-2025-05-16 09:41:29,142 - DEBUG - editor_map_utils.py:83 - save_map_to_json - Attempting to save JSON to: 'maps\yes.json'
-2025-05-16 09:41:29,143 - DEBUG - editor_map_utils.py:119 - save_map_to_json - Data to save (first object example): {'asset_editor_key': 'platform_wall_gray', 'world_x': 0, 'world_y': 0, 'game_type_id': 'platform_wall_gray'}
-2025-05-16 09:41:29,146 - INFO - editor_map_utils.py:125 - save_map_to_json - Editor data saved to: yes.json
-2025-05-16 09:41:29,146 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Editor data saved to: yes.json' for 3.0s
-2025-05-16 09:41:29,146 - INFO - editor_map_utils.py:350 - export_map_to_game_python_script - Exporting map 'yes' to Python script.
-2025-05-16 09:41:29,146 - DEBUG - editor_map_utils.py:371 - export_map_to_game_python_script - Exporting to function 'load_map_yes' in file 'maps\yes.py'
-2025-05-16 09:41:29,146 - DEBUG - editor_map_utils.py:385 - export_map_to_game_python_script - Processing 176 objects for .py export.
-2025-05-16 09:41:29,146 - DEBUG - editor_map_utils.py:394 - export_map_to_game_python_script - Export: Identified 0 lava-occupied coordinates for check: set()
-2025-05-16 09:41:29,148 - WARNING - editor_map_utils.py:469 - export_map_to_game_python_script - Unknown game_type_id 'player2_spawn' for object at (520,720). Not exported to .py.
-2025-05-16 09:41:29,148 - DEBUG - editor_map_utils.py:479 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 13, Hazards: 0, Enemies: 9, Collectibles: 0
-2025-05-16 09:41:29,148 - DEBUG - editor_map_utils.py:514 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 0, map_max_x_content: 1240
-2025-05-16 09:41:29,148 - DEBUG - editor_map_utils.py:515 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 1400, MinYAbs: -80, MaxYAbs: 840
-2025-05-16 09:41:29,148 - DEBUG - editor_map_utils.py:585 - export_map_to_game_python_script - Code for right-side filler wall generated: x=1240, y_expr='level_min_y_absolute - _boundary_thickness', w=160, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
-2025-05-16 09:41:29,148 - DEBUG - editor_map_utils.py:588 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=-160, h_val_approx=1080, color_val_approx=(50, 50, 50)
-2025-05-16 09:41:29,148 - DEBUG - editor_map_utils.py:613 - export_map_to_game_python_script - Final .py script content (first 500 chars):
-# Level: yes
+    enemy_sp...
+2025-05-16 10:09:25,735 - INFO - editor_map_utils.py:644 - export_map_to_game_python_script - Map exported to game script: lavacenter2.py
+2025-05-16 10:09:25,735 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: lavacenter2.py' for 3.0s
+2025-05-16 10:09:25,735 - DEBUG - editor_map_utils.py:647 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'maps\lavacenter2.py'.
+2025-05-16 10:09:25,735 - INFO - editor_handlers_menu.py:177 - _handle_rename_get_new_name - Successfully re-exported 'maps\lavacenter2.py' with updated internal names and content.
+2025-05-16 10:09:25,735 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'lavacenter' renamed to 'lavacenter2' and exported.' for 3s
+2025-05-16 10:09:25,735 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 10:09:25,735 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'text_input' to 'None' after handle_dialog_events.
+2025-05-16 10:09:27,602 - INFO - editor_handlers_menu.py:282 - handle_menu_events - Menu: 'Load Map' button clicked.
+2025-05-16 10:09:27,602 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-16 10:09:29,086 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
+2025-05-16 10:09:29,086 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-16 10:09:29,086 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\lavacenter2.json'
+2025-05-16 10:09:29,086 - DEBUG - editor_handlers_menu.py:284 - on_file_sel - Attempting to load map from: maps\lavacenter2.json
+2025-05-16 10:09:29,087 - INFO - editor_map_utils.py:152 - load_map_from_json - Loading map from JSON: 'maps\lavacenter2.json'
+2025-05-16 10:09:29,110 - DEBUG - editor_map_utils.py:162 - load_map_from_json - Successfully read JSON data from 'maps\lavacenter2.json'.
+2025-05-16 10:09:29,111 - DEBUG - editor_map_utils.py:186 - load_map_from_json - Loading 161 objects from JSON.
+2025-05-16 10:09:29,111 - DEBUG - editor_map_utils.py:221 - load_map_from_json - Auto-correction: Found 12 lava coordinates for checking: {(720, 760), (880, 760), (640, 760), (920, 760), (840, 760), (520, 760), (800, 760), (760, 760), (560, 760), (680, 760), (960, 760), (600, 760)}
+2025-05-16 10:09:29,112 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-16 10:09:29,113 - INFO - editor_map_utils.py:265 - load_map_from_json - Map 'lavacenter2' loaded from lavacenter2.json.. map_name_for_function='lavacenter2', current_map_filename (py)='maps\lavacenter2.py', current_json_filename='maps\lavacenter2.json', unsaved_changes=False
+2025-05-16 10:09:29,113 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'lavacenter2' loaded from lavacenter2.json.' for 3.0s
+2025-05-16 10:09:29,113 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
+2025-05-16 10:09:29,113 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-16 10:09:29,113 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
+2025-05-16 10:09:29,113 - DEBUG - editor.py:226 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
+2025-05-16 10:09:29,113 - DEBUG - editor.py:239 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
+2025-05-16 10:09:29,113 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
+2025-05-16 10:09:29,114 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
+2025-05-16 10:09:30,438 - INFO - editor_handlers_map_editing.py:316 - handle_editing_map_events - Ctrl+S pressed: Save All attempt.
+2025-05-16 10:09:30,438 - INFO - editor_map_utils.py:76 - save_map_to_json - Saving map to JSON. Map name from state: 'lavacenter2'
+2025-05-16 10:09:30,438 - DEBUG - editor_map_utils.py:92 - save_map_to_json - Attempting to save JSON to: 'maps\lavacenter2.json' using map name 'lavacenter2'
+2025-05-16 10:09:30,438 - DEBUG - editor_map_utils.py:128 - save_map_to_json - Data to save (first object example): {'asset_editor_key': 'platform_wall_gray', 'world_x': 0, 'world_y': 0, 'game_type_id': 'platform_wall_gray'}
+2025-05-16 10:09:30,442 - INFO - editor_map_utils.py:134 - save_map_to_json - Editor data saved to: lavacenter2.json
+2025-05-16 10:09:30,442 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Editor data saved to: lavacenter2.json' for 3.0s
+2025-05-16 10:09:30,442 - INFO - editor_map_utils.py:374 - export_map_to_game_python_script - Exporting map. Map name from state: 'lavacenter2'
+2025-05-16 10:09:30,442 - DEBUG - editor_map_utils.py:411 - export_map_to_game_python_script - Exporting to function 'load_map_lavacenter2' in file 'maps\lavacenter2.py'
+2025-05-16 10:09:30,442 - DEBUG - editor_map_utils.py:426 - export_map_to_game_python_script - Processing 161 objects for .py export.
+2025-05-16 10:09:30,442 - DEBUG - editor_map_utils.py:435 - export_map_to_game_python_script - Export: Identified 12 lava-occupied coordinates for check: {(720, 760), (880, 760), (640, 760), (920, 760), (840, 760), (520, 760), (800, 760), (760, 760), (560, 760), (680, 760), (960, 760), (600, 760)}
+2025-05-16 10:09:30,442 - WARNING - editor_map_utils.py:510 - export_map_to_game_python_script - Unknown game_type_id 'player2_spawn' for object at (120,720). Not exported to .py.
+2025-05-16 10:09:30,443 - DEBUG - editor_map_utils.py:520 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 22, Hazards: 12, Enemies: 3, Collectibles: 1
+2025-05-16 10:09:30,443 - DEBUG - editor_map_utils.py:555 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 0, map_max_x_content: 1200
+2025-05-16 10:09:30,443 - DEBUG - editor_map_utils.py:556 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 1360, MinYAbs: -80, MaxYAbs: 800
+2025-05-16 10:09:30,443 - DEBUG - editor_map_utils.py:614 - export_map_to_game_python_script - Code for right-side filler wall generated: x=1200, y_expr='level_min_y_absolute - _boundary_thickness', w=160, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
+2025-05-16 10:09:30,443 - DEBUG - editor_map_utils.py:615 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=-160, h_val_approx=1040, color_val_approx=(50, 50, 50)
+2025-05-16 10:09:30,443 - DEBUG - editor_map_utils.py:638 - export_map_to_game_python_script - Final .py script content (first 500 chars):
+# Level: lavacenter2
 # Generated by Platformer Level Editor (Optimized Export)
 import pygame
 from tiles import Platform, Ladder, Lava
 import constants as C
 
-LEVEL_SPECIFIC_BACKGROUND_COLOR = (173, 216, 230)
+LEVEL_SPECIFIC_BACKGROUND_COLOR = (75, 0, 130)
 
-def load_map_yes(initial_screen_width, initial_screen_height):
+def load_map_lavacenter2(initial_screen_width, initial_screen_height):
     """
-    Loads the 'yes' level.
+    Loads the 'lavacenter2' level.
     """
-    print(f"Loading map: load_map_yes...")
+    print(f"Loading map: load_map_lavacenter2...")
     platforms = pygame.sprite.Group()
     ladders = pygame.sprite.Group()
     hazards = pygame.sprite.Group()
-    enemy_spawns_data = []
-    collectibl...
-2025-05-16 09:41:29,149 - INFO - editor_map_utils.py:619 - export_map_to_game_python_script - Map exported to game script: yes.py
-2025-05-16 09:41:29,149 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: yes.py' for 3.0s
-2025-05-16 09:41:29,149 - DEBUG - editor_map_utils.py:622 - export_map_to_game_python_script - unsaved_changes set to False after .py export.
-2025-05-16 09:41:30,209 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
-2025-05-16 09:41:30,210 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
-2025-05-16 09:41:30,210 - DEBUG - editor_state.py:197 - reset_map_context - Resetting map context.
-2025-05-16 09:41:30,210 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
-2025-05-16 09:41:30,210 - DEBUG - editor_state.py:167 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
-2025-05-16 09:41:30,210 - DEBUG - editor_state.py:214 - reset_map_context - Map context reset. Map name: 'untitled_map'.
-2025-05-16 09:41:30,210 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:30,211 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
-2025-05-16 09:41:30,211 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-16 09:41:31,033 - INFO - editor_handlers_menu.py:227 - handle_menu_events - Menu: 'Load Map' button clicked.
-2025-05-16 09:41:31,034 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-16 09:41:33,407 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
-2025-05-16 09:41:33,408 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
-2025-05-16 09:41:33,408 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\noplatforms.json'
-2025-05-16 09:41:33,408 - DEBUG - editor_handlers_menu.py:230 - on_file_sel - Attempting to load map from: maps\noplatforms.json
-2025-05-16 09:41:33,408 - INFO - editor_map_utils.py:141 - load_map_from_json - Loading map from JSON: 'maps\noplatforms.json'
-2025-05-16 09:41:33,423 - DEBUG - editor_map_utils.py:151 - load_map_from_json - Successfully read JSON data from 'maps\noplatforms.json'.
-2025-05-16 09:41:33,423 - DEBUG - editor_map_utils.py:167 - load_map_from_json - Loading 507 objects from JSON.
-2025-05-16 09:41:33,423 - DEBUG - editor_map_utils.py:202 - load_map_from_json - Auto-correction: Found 11 lava coordinates for checking: {(880.0, 1920), (1000.0, 1920), (920.0, 1920), (800.0, 1920), (840.0, 1920), (760.0, 1920), (1040.0, 1920), (1160.0, 1920), (1120.0, 1920), (960.0, 1920), (1080.0, 1920)}
-2025-05-16 09:41:33,431 - DEBUG - editor_state.py:177 - recreate_map_content_surface - Recreated map_content_surface: 4000x2000
-2025-05-16 09:41:33,431 - INFO - editor_map_utils.py:244 - load_map_from_json - Map '2' loaded from noplatforms.json.. unsaved_changes=False, current_map_filename='maps\2.py'
-2025-05-16 09:41:33,431 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map '2' loaded from noplatforms.json.' for 3.0s
-2025-05-16 09:41:33,431 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
-2025-05-16 09:41:33,432 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
-2025-05-16 09:41:33,432 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
-2025-05-16 09:41:33,432 - DEBUG - editor.py:226 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
-2025-05-16 09:41:33,432 - DEBUG - editor.py:239 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:33,432 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
-2025-05-16 09:41:33,432 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(240, 10, 1030, 700)>
-2025-05-16 09:41:33,921 - INFO - editor_handlers_map_editing.py:316 - handle_editing_map_events - Ctrl+S pressed: Save All attempt.
-2025-05-16 09:41:33,921 - INFO - editor_map_utils.py:68 - save_map_to_json - Saving map to JSON. Map name: '2'
-2025-05-16 09:41:33,921 - DEBUG - editor_map_utils.py:83 - save_map_to_json - Attempting to save JSON to: 'maps\2.json'
-2025-05-16 09:41:33,922 - DEBUG - editor_map_utils.py:119 - save_map_to_json - Data to save (first object example): {'asset_editor_key': 'platform_wall_gray', 'world_x': 0, 'world_y': 0, 'game_type_id': 'platform_wall_gray'}
-2025-05-16 09:41:33,930 - INFO - editor_map_utils.py:125 - save_map_to_json - Editor data saved to: 2.json
-2025-05-16 09:41:33,930 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Editor data saved to: 2.json' for 3.0s
-2025-05-16 09:41:33,930 - INFO - editor_map_utils.py:350 - export_map_to_game_python_script - Exporting map '2' to Python script.
-2025-05-16 09:41:33,930 - DEBUG - editor_map_utils.py:371 - export_map_to_game_python_script - Exporting to function 'load_map_2' in file 'maps\2.py'
-2025-05-16 09:41:33,930 - DEBUG - editor_map_utils.py:385 - export_map_to_game_python_script - Processing 507 objects for .py export.
-2025-05-16 09:41:33,930 - DEBUG - editor_map_utils.py:394 - export_map_to_game_python_script - Export: Identified 11 lava-occupied coordinates for check: {(880.0, 1920), (1000.0, 1920), (920.0, 1920), (800.0, 1920), (840.0, 1920), (760.0, 1920), (1040.0, 1920), (1160.0, 1920), (1120.0, 1920), (960.0, 1920), (1080.0, 1920)}
-2025-05-16 09:41:33,931 - WARNING - editor_map_utils.py:469 - export_map_to_game_python_script - Unknown game_type_id 'player2_spawn' for object at (80,1840.0). Not exported to .py.
-2025-05-16 09:41:33,932 - DEBUG - editor_map_utils.py:479 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 36, Hazards: 11, Enemies: 6, Collectibles: 1
-2025-05-16 09:41:33,933 - DEBUG - editor_map_utils.py:514 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 0, map_max_x_content: 4040
-2025-05-16 09:41:33,933 - DEBUG - editor_map_utils.py:515 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 4200, MinYAbs: -80, MaxYAbs: 2040
-2025-05-16 09:41:33,933 - DEBUG - editor_map_utils.py:585 - export_map_to_game_python_script - Code for right-side filler wall generated: x=4040, y_expr='level_min_y_absolute - _boundary_thickness', w=160, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
-2025-05-16 09:41:33,933 - DEBUG - editor_map_utils.py:588 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=-160, h_val_approx=2280, color_val_approx=(50, 50, 50)
-2025-05-16 09:41:33,933 - DEBUG - editor_map_utils.py:613 - export_map_to_game_python_script - Final .py script content (first 500 chars):
-# Level: 2
-# Generated by Platformer Level Editor (Optimized Export)
-import pygame
-from tiles import Platform, Ladder, Lava
-import constants as C
-
-LEVEL_SPECIFIC_BACKGROUND_COLOR = (173, 216, 230)
-
-def load_map_2(initial_screen_width, initial_screen_height):
-    """
-    Loads the '2' level.
-    """
-    print(f"Loading map: load_map_2...")
-    platforms = pygame.sprite.Group()
-    ladders = pygame.sprite.Group()
-    hazards = pygame.sprite.Group()
-    enemy_spawns_data = []
-    collectible_spawns...
-2025-05-16 09:41:33,934 - INFO - editor_map_utils.py:619 - export_map_to_game_python_script - Map exported to game script: 2.py
-2025-05-16 09:41:33,934 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: 2.py' for 3.0s
-2025-05-16 09:41:33,934 - DEBUG - editor_map_utils.py:622 - export_map_to_game_python_script - unsaved_changes set to False after .py export.
-2025-05-16 09:41:34,309 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
-2025-05-16 09:41:34,309 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
-2025-05-16 09:41:34,309 - DEBUG - editor_state.py:197 - reset_map_context - Resetting map context.
-2025-05-16 09:41:34,310 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
-2025-05-16 09:41:34,310 - DEBUG - editor_state.py:167 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
-2025-05-16 09:41:34,310 - DEBUG - editor_state.py:214 - reset_map_context - Map context reset. Map name: 'untitled_map'.
-2025-05-16 09:41:34,310 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:34,310 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:34,311 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
-2025-05-16 09:41:34,311 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
-2025-05-16 09:41:34,311 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-16 09:41:34,788 - INFO - editor_handlers_menu.py:244 - handle_menu_events - Menu: 'Delete Map' button clicked.
-2025-05-16 09:41:34,788 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-16 09:41:36,199 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
-2025-05-16 09:41:36,199 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
-2025-05-16 09:41:36,199 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\lavacenter.json'
-2025-05-16 09:41:36,199 - INFO - editor_handlers_menu.py:249 - on_delete_file_selected - Attempting deletion of map: lavacenter (Path: maps\lavacenter.json)
-2025-05-16 09:41:36,199 - INFO - editor_map_utils.py:637 - delete_map_files - Attempting to delete map files for: maps\lavacenter.json
-2025-05-16 09:41:36,199 - INFO - editor_map_utils.py:657 - delete_map_files - Deleted editor map file: maps\lavacenter.json
-2025-05-16 09:41:36,200 - INFO - editor_map_utils.py:671 - delete_map_files - Deleted game level file: maps\lavacenter.py
-2025-05-16 09:41:36,200 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'lavacenter' JSON and PY files deleted.' for 3s
-2025-05-16 09:41:36,200 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'lavacenter' deleted.' for 3s
-2025-05-16 09:41:36,200 - ERROR - editor_handlers_dialog.py:124 - handle_dialog_events - Err Confirm CB for file_load:'EditorState' object has no attribute 'current_loaded_map_path'
-Traceback (most recent call last):
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_dialog.py", line 123, in handle_dialog_events
-    try: cb_confirm(val_pass) # type: ignore
-         ^^^^^^^^^^^^^^^^^^^^
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_menu.py", line 254, in on_delete_file_selected
-    if editor_state.current_loaded_map_path:
-       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'EditorState' object has no attribute 'current_loaded_map_path'
-2025-05-16 09:41:36,202 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
-2025-05-16 09:41:36,202 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
-2025-05-16 09:41:37,313 - INFO - editor_handlers_menu.py:244 - handle_menu_events - Menu: 'Delete Map' button clicked.
-2025-05-16 09:41:37,314 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-16 09:41:39,689 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
-2025-05-16 09:41:39,689 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
-2025-05-16 09:41:39,689 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\minipit.json'
-2025-05-16 09:41:39,689 - INFO - editor_handlers_menu.py:249 - on_delete_file_selected - Attempting deletion of map: minipit (Path: maps\minipit.json)
-2025-05-16 09:41:39,689 - INFO - editor_map_utils.py:637 - delete_map_files - Attempting to delete map files for: maps\minipit.json
-2025-05-16 09:41:39,689 - INFO - editor_map_utils.py:657 - delete_map_files - Deleted editor map file: maps\minipit.json
-2025-05-16 09:41:39,690 - INFO - editor_map_utils.py:671 - delete_map_files - Deleted game level file: maps\minipit.py
-2025-05-16 09:41:39,690 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'minipit' JSON and PY files deleted.' for 3s
-2025-05-16 09:41:39,690 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'minipit' deleted.' for 3s
-2025-05-16 09:41:39,690 - ERROR - editor_handlers_dialog.py:124 - handle_dialog_events - Err Confirm CB for file_load:'EditorState' object has no attribute 'current_loaded_map_path'
-Traceback (most recent call last):
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_dialog.py", line 123, in handle_dialog_events
-    try: cb_confirm(val_pass) # type: ignore
-         ^^^^^^^^^^^^^^^^^^^^
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_menu.py", line 254, in on_delete_file_selected
-    if editor_state.current_loaded_map_path:
-       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'EditorState' object has no attribute 'current_loaded_map_path'
-2025-05-16 09:41:39,691 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
-2025-05-16 09:41:39,691 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
-2025-05-16 09:41:40,316 - INFO - editor_handlers_menu.py:244 - handle_menu_events - Menu: 'Delete Map' button clicked.
-2025-05-16 09:41:40,316 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-16 09:41:42,410 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
-2025-05-16 09:41:42,410 - DEBUG - editor_state.py:114 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
-2025-05-16 09:41:42,410 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'maps\noplatforms.json'
-2025-05-16 09:41:42,410 - INFO - editor_handlers_menu.py:249 - on_delete_file_selected - Attempting deletion of map: noplatforms (Path: maps\noplatforms.json)
-2025-05-16 09:41:42,410 - INFO - editor_map_utils.py:637 - delete_map_files - Attempting to delete map files for: maps\noplatforms.json
-2025-05-16 09:41:42,411 - INFO - editor_map_utils.py:657 - delete_map_files - Deleted editor map file: maps\noplatforms.json
-2025-05-16 09:41:42,411 - INFO - editor_map_utils.py:671 - delete_map_files - Deleted game level file: maps\noplatforms.py
-2025-05-16 09:41:42,411 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'noplatforms' JSON and PY files deleted.' for 3s
-2025-05-16 09:41:42,411 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map 'noplatforms' deleted.' for 3s
-2025-05-16 09:41:42,411 - ERROR - editor_handlers_dialog.py:124 - handle_dialog_events - Err Confirm CB for file_load:'EditorState' object has no attribute 'current_loaded_map_path'
-Traceback (most recent call last):
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_dialog.py", line 123, in handle_dialog_events
-    try: cb_confirm(val_pass) # type: ignore
-         ^^^^^^^^^^^^^^^^^^^^
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_handlers_menu.py", line 254, in on_delete_file_selected
-    if editor_state.current_loaded_map_path:
-       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'EditorState' object has no attribute 'current_loaded_map_path'
-2025-05-16 09:41:42,412 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
-2025-05-16 09:41:42,412 - DEBUG - editor.py:224 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
-2025-05-16 09:41:43,521 - INFO - editor.py:231 - editor_main - Escape pressed in menu. Posting QUIT event.
-2025-05-16 09:41:43,536 - INFO - editor_handlers_global.py:18 - handle_global_events - pygame.QUIT event received.
-2025-05-16 09:41:43,536 - INFO - editor.py:217 - editor_main - handle_global_events returned False (QUIT). Setting running=False.
-2025-05-16 09:41:43,536 - INFO - editor.py:338 - editor_main - Exiting editor_main. Calling pygame.quit().
-2025-05-16 09:41:43,865 - INFO - editor.py:341 - editor_main - Editor session ended.
+    enemy_sp...
+2025-05-16 10:09:30,444 - INFO - editor_map_utils.py:644 - export_map_to_game_python_script - Map exported to game script: lavacenter2.py
+2025-05-16 10:09:30,444 - INFO - editor_state.py:189 - set_status_message - Status message set: 'Map exported to game script: lavacenter2.py' for 3.0s
+2025-05-16 10:09:30,444 - DEBUG - editor_map_utils.py:647 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'maps\lavacenter2.py'.
+2025-05-16 10:09:31,243 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
+2025-05-16 10:09:31,243 - DEBUG - editor_state.py:96 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
+2025-05-16 10:09:31,243 - DEBUG - editor_state.py:197 - reset_map_context - Resetting map context.
+2025-05-16 10:09:31,243 - DEBUG - editor_state.py:145 - selected_asset_editor_key - Attempting to set selected_asset_editor_key from 'None' to 'None'
+2025-05-16 10:09:31,243 - DEBUG - editor_state.py:167 - selected_asset_editor_key - selected_asset_editor_key already 'None', no change needed for key or cursor state.
+2025-05-16 10:09:31,243 - DEBUG - editor_state.py:214 - reset_map_context - Map context reset. Map name: 'untitled_map'.
+2025-05-16 10:09:31,243 - DEBUG - editor.py:239 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
+2025-05-16 10:09:31,243 - DEBUG - editor.py:283 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
+2025-05-16 10:09:31,243 - DEBUG - editor.py:287 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 220, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-16 10:09:31,963 - INFO - editor.py:231 - editor_main - Escape pressed in menu. Posting QUIT event.
+2025-05-16 10:09:31,979 - INFO - editor_handlers_global.py:18 - handle_global_events - pygame.QUIT event received.
+2025-05-16 10:09:31,979 - INFO - editor.py:217 - editor_main - handle_global_events returned False (QUIT). Setting running=False.
+2025-05-16 10:09:31,979 - INFO - editor.py:338 - editor_main - Exiting editor_main. Calling pygame.quit().
+2025-05-16 10:09:32,299 - INFO - editor.py:341 - editor_main - Editor session ended.

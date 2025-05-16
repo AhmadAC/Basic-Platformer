@@ -1,5 +1,5 @@
 {
-    "map_name_for_function": "2",
+    "map_name_for_function": "bigmap1",
     "map_width_tiles": 100,
     "map_height_tiles": 50,
     "grid_size": 40,
@@ -3053,6 +3053,6 @@
         }
     ],
     "camera_offset_x": 0,
-    "camera_offset_y": 1077,
+    "camera_offset_y": 1000.0,
     "show_grid": true
 }
