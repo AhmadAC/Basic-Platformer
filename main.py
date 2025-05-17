@@ -1,14 +1,13 @@
 ########## START OF FILE: main.py ##########
 # main.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.10 (Pass clock_obj to select_map_dialog)
+## version 1.0.0.11 (Removed settings_ui and redundant external mapping call)
 import sys
 import os
 import pygame
 import traceback
 from typing import Dict, Optional, Any
 
-# ... (rest of your main.py imports and setup as in the previous version) ...
 _maps_package_import_path_added = "None"
 _maps_package_physical_location_debug = "Not determined"
 _is_frozen = getattr(sys, 'frozen', False)
@@ -75,6 +74,7 @@ try:
     import game_ui
     import config as game_config
     import joystick_handler
+    # import settings_ui # REMOVED settings_ui import as per your request
     _main_print("INFO", "Platformer modules imported successfully.")
 except ImportError as e:
     _main_print("FATAL", f"Failed to import a required platformer module: {e}")
@@ -87,13 +87,15 @@ except Exception as e:
 os.environ['SDL_VIDEO_WINDOW_POS'] = '0,0'
 pygame.init()
 pygame.font.init()
+
+# CORRECT INITIALIZATION ORDER:
+# 1. Initialize joysticks so config.py can get an accurate count.
 joystick_handler.init_joysticks()
 
-if os.path.exists(os.path.dirname(game_config.EXTERNAL_CONTROLLER_MAPPINGS_FILE_PATH)):
-    game_config.load_external_controller_mappings()
-else:
-    _main_print("WARNING", f"Directory for external controller mappings ('{os.path.dirname(game_config.EXTERNAL_CONTROLLER_MAPPINGS_FILE_PATH)}') not found. External mappings not loaded.")
+# 2. Load game configuration. config.py now handles loading controller_mappings.json internally.
 game_config.load_config()
+
+# THE ERRONEOUS BLOCK THAT WAS HERE HAS BEEN REMOVED.
 
 class AppStatus:
     def __init__(self): self.app_running = True
@@ -103,10 +105,11 @@ try:
     monitor_width, monitor_height = display_info.current_w, display_info.current_h
     initial_width = max(800, min(1600, int(monitor_width * 0.75)))
     calculated_initial_height = max(600, min(900, int(monitor_height * 0.75)))
-    initial_height = calculated_initial_height + 80 # <--- ADD 80 HERE
+    initial_height = calculated_initial_height + 80 # As per your last main.py version
     WIDTH_MAIN, HEIGHT_MAIN = initial_width, initial_height
     screen_flags = pygame.RESIZABLE | pygame.DOUBLEBUF
     screen = pygame.display.set_mode((WIDTH_MAIN, HEIGHT_MAIN), screen_flags)
+    pygame.display.set_caption("Platformer Adventure LAN")
     _main_print("INFO", f"Initial window dimensions: {WIDTH_MAIN}x{HEIGHT_MAIN}")
 except Exception as e:
     _main_print("FATAL", f"Error setting up Pygame display: {e}")
@@ -162,15 +165,28 @@ if __name__ == "__main__":
 
     while app_status.app_running:
         current_screen_width, current_screen_height = screen.get_size()
+        pygame.display.set_caption("Platformer Adventure - Main Menu")
+
         _main_print("INFO", "\nShowing main menu...")
         menu_choice = game_ui.show_main_menu(screen, main_clock, fonts, app_status)
         _main_print("INFO", f"Main menu choice: '{menu_choice}'")
+
         if not app_status.app_running or menu_choice == "quit":
             app_status.app_running = False; break
+
+        if menu_choice == "settings": # Since settings_ui is removed
+            _main_print("INFO", "Settings chosen, but settings_ui is not integrated. Returning to main menu.")
+            if fonts.get("medium"):
+                screen.fill(getattr(C, 'BLACK', (0,0,0)))
+                msg_surf = fonts["medium"].render("Settings UI not available.", True, getattr(C, 'WHITE', (255,255,255)))
+                screen.blit(msg_surf, msg_surf.get_rect(center=(current_screen_width//2, current_screen_height//2)))
+                pygame.display.flip()
+                pygame.time.wait(1500)
+            continue
+
         map_to_load_for_game: Optional[str] = None
         if menu_choice in ["couch_play", "host"]:
             _main_print("INFO", f"Mode '{menu_choice}' requires map selection. Opening map dialog...")
-            # MODIFIED CALL TO select_map_dialog
             map_to_load_for_game = game_ui.select_map_dialog(screen, main_clock, fonts, app_status)
             if not app_status.app_running: _main_print("INFO", "App quit during map selection."); break
             if map_to_load_for_game is None:
@@ -208,7 +224,7 @@ if __name__ == "__main__":
                     game_elements["level_min_y_absolute"],
                     game_elements["level_max_y_absolute"]
                 )
-            _main_print("INFO", f"Camera reconfigured for mode '{menu_choice}'.")
+            _main_print("INFO", f"Camera reconfigured for mode '{menu_choice}'. Screen: {current_screen_width}x{current_screen_height}")
 
         _main_print("INFO", f"Launching game mode: '{menu_choice}'")
         if menu_choice == "host":

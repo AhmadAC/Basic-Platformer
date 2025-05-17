@@ -1,7 +1,7 @@
 # editor_ui.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.10 (Ensured start_file_load_dialog populates list with basenames only)
+## version 1.0.0.11 (File dialog shows basenames without extension, loads with extension)
 Pygame-based UI functions for the Level Editor.
 Includes buttons, input dialogs, color pickers, and tooltips.
 """
@@ -135,7 +135,7 @@ def start_color_picker_dialog(editor_state: EditorState,
     padding = ED_CONFIG.COLOR_PICKER_PADDING
 
     start_x_in_dialog = padding * 2
-    current_y_in_dialog = 50
+    current_y_in_dialog = 50 # Title space approx
     current_x_in_dialog = start_x_in_dialog
     idx = 0
     for name in ED_CONFIG.COLOR_PICKER_PRESETS.keys():
@@ -162,12 +162,17 @@ def start_file_load_dialog(editor_state: EditorState,
     if prompt_override:
         editor_state.dialog_prompt_message = prompt_override
     else:
-        # Use os.path.normpath to clean up the path for display if needed
         display_path = os.path.normpath(initial_path)
         editor_state.dialog_prompt_message = f"Select Map to Load (from ./{display_path})"
 
-    editor_state.dialog_input_text = ""
-    editor_state.dialog_file_list = []
+    editor_state.dialog_input_text = "" # Typically not used for file dialogs but reset for safety
+    editor_state.dialog_file_list = [] # Will store actual filenames (e.g., "map.json")
+    # Ensure dialog_file_display_list exists on editor_state, or add it if it's a dict-like state
+    if not hasattr(editor_state, 'dialog_file_display_list'):
+        editor_state.dialog_file_display_list = [] # Will store display names (e.g., "map")
+    else:
+        editor_state.dialog_file_display_list.clear()
+
     editor_state.dialog_file_scroll_y = 0
     editor_state.dialog_selected_file_index = -1
     editor_state.dialog_rect = None
@@ -190,14 +195,22 @@ def start_file_load_dialog(editor_state: EditorState,
             return
 
     try:
-        # Ensure we are appending only the basename
+        temp_file_entries: List[Tuple[str, str]] = []  # List of (display_name, actual_name)
         for item_name in os.listdir(initial_path):
-            # Check if it's a file and has the correct extension
             if item_name.endswith(file_extension) and os.path.isfile(os.path.join(initial_path, item_name)):
-                # item_name is already the basename as returned by os.listdir()
-                editor_state.dialog_file_list.append(item_name)
-        editor_state.dialog_file_list.sort()
-        print(f"DEBUG UI_DIALOG: Populated dialog_file_list: {editor_state.dialog_file_list}") # Debug print
+                display_name = os.path.splitext(item_name)[0]
+                actual_name = item_name
+                temp_file_entries.append((display_name, actual_name))
+        
+        # Sort by display name (case-insensitive)
+        temp_file_entries.sort(key=lambda x: x[0].lower())
+
+        # Populate the two lists in EditorState
+        editor_state.dialog_file_display_list = [entry[0] for entry in temp_file_entries]
+        editor_state.dialog_file_list = [entry[1] for entry in temp_file_entries] # Actual filenames
+
+        print(f"DEBUG UI_DIALOG: Populated dialog_file_display_list: {editor_state.dialog_file_display_list}")
+        # print(f"DEBUG UI_DIALOG: Corresponding actual filenames: {editor_state.dialog_file_list}") # Optional: for more verbose debugging
     except OSError as e:
         err_msg = f"Error listing files in '{initial_path}': {e}"
         editor_state.set_status_message(err_msg, 3)
@@ -206,7 +219,7 @@ def start_file_load_dialog(editor_state: EditorState,
         editor_state.active_dialog_type = None
         return
 
-    if not editor_state.dialog_file_list:
+    if not editor_state.dialog_file_display_list: # If display list is empty, actual list is also empty
         editor_state.set_status_message(f"No '{file_extension}' files found in ./{os.path.normpath(initial_path)}", 2.5)
 
     editor_state.dialog_callback_confirm = on_confirm
@@ -364,13 +377,16 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
     item_font = fonts.get("small") or ED_CONFIG.FONT_CONFIG.get("small")
     item_line_height = (item_font.get_height() + 6) if item_font else 22
 
+    # Ensure dialog_file_display_list is available
+    dialog_file_display_list = getattr(editor_state, 'dialog_file_display_list', [])
+
     if 'dialog_file_item_rects' not in editor_state.ui_elements_rects:
         editor_state.ui_elements_rects['dialog_file_item_rects'] = []
     else:
         editor_state.ui_elements_rects['dialog_file_item_rects'].clear()
 
     list_clip_rect = list_area_rect.inflate(-8, -8)
-    total_content_height_pixels = len(editor_state.dialog_file_list) * item_line_height
+    total_content_height_pixels = len(dialog_file_display_list) * item_line_height # Use display list length
     scrollbar_width_drawn = 0
 
     if total_content_height_pixels > list_clip_rect.height:
@@ -395,13 +411,13 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
     surface.set_clip(list_clip_rect)
     current_y_offset_in_clip_rect = 0
 
-    for i, filename in enumerate(editor_state.dialog_file_list): # filename here is already basename
+    for i, display_filename in enumerate(dialog_file_display_list): # Iterate over display names
         item_draw_y_on_surface = list_clip_rect.top + current_y_offset_in_clip_rect - editor_state.dialog_file_scroll_y
         item_full_rect_on_screen = pygame.Rect(list_clip_rect.left, item_draw_y_on_surface,
                                            list_item_text_render_width, item_line_height)
         if list_clip_rect.colliderect(item_full_rect_on_screen):
             editor_state.ui_elements_rects['dialog_file_item_rects'].append(
-                {"text": filename, "rect": item_full_rect_on_screen, "index": i}
+                {"text": display_filename, "rect": item_full_rect_on_screen, "index": i} # Store display_filename as text
             )
             if item_font:
                 text_color = getattr(ED_CONFIG.C, 'BLACK', (0,0,0))
@@ -410,7 +426,7 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
                     bg_color_item = getattr(ED_CONFIG.C, 'BLUE', (0,0,255))
                     text_color = getattr(ED_CONFIG.C, 'WHITE', (255,255,255))
                 pygame.draw.rect(surface, bg_color_item, item_full_rect_on_screen)
-                text_surf = item_font.render(filename, True, text_color) # Render the basename
+                text_surf = item_font.render(display_filename, True, text_color) # Render the display_filename
                 text_draw_pos = (item_full_rect_on_screen.left + 5,
                                  item_full_rect_on_screen.centery - text_surf.get_height() // 2)
                 surface.blit(text_surf, text_draw_pos)
@@ -426,14 +442,15 @@ def _draw_file_load_content(surface: pygame.Surface, editor_state: EditorState, 
         ok_text = "Load"
         if editor_state.dialog_prompt_message:
             prompt_lower = editor_state.dialog_prompt_message.lower()
-            if "delete" in prompt_lower or "rename" in prompt_lower: # Combined condition
+            if "delete" in prompt_lower or "rename" in prompt_lower: 
                 ok_text = "Select"
 
         ok_button_rect = pygame.Rect(dialog_rect.centerx - btn_width - 5, buttons_y_pos, btn_width, btn_height)
         cancel_button_rect = pygame.Rect(dialog_rect.centerx + 5, buttons_y_pos, btn_width, btn_height)
         mouse_pos = pygame.mouse.get_pos()
+        # Check against dialog_file_display_list length, which should be same as dialog_file_list
         ok_is_active = (editor_state.dialog_selected_file_index != -1 and
-                        0 <= editor_state.dialog_selected_file_index < len(editor_state.dialog_file_list))
+                        0 <= editor_state.dialog_selected_file_index < len(dialog_file_display_list))
         draw_button(surface, ok_button_rect, ok_text, button_font, mouse_pos, is_active=ok_is_active)
         draw_button(surface, cancel_button_rect, "Cancel", button_font, mouse_pos)
         editor_state.ui_elements_rects["dialog_file_load_ok"] = ok_button_rect
