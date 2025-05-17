@@ -1,9 +1,8 @@
 ########## START OF FILE: server_logic.py ##########
-
 # server_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.0.4 (Added P1 weapon keys and chest interaction handling)
+version 1.0.0.5 (Changed game_ui import method)
 Handles server-side game logic, connection management, and broadcasting.
 """
 import pygame
@@ -17,9 +16,11 @@ import constants as C
 from network_comms import get_local_ip, encode_data, decode_data_stream
 from game_state_manager import get_network_game_state, reset_game_state
 from enemy import Enemy 
-import game_ui
-from game_ui import draw_platformer_scene_on_surface, draw_download_dialog 
-from items import Chest # For type checking
+import game_ui # Changed from "from game_ui import ..."
+# from game_ui import draw_platformer_scene_on_surface, draw_download_dialog # Commented out
+from items import Chest 
+from statue import Statue # Assuming statue.py is created and in the right place
+import config as game_config
 
 client_lock = threading.Lock()
 
@@ -54,9 +55,6 @@ class ServerState:
 
 
 def broadcast_presence_thread(server_state_obj: ServerState):
-    """
-    Thread function to periodically broadcast the server's presence on the LAN.
-    """
     current_lan_ip = get_local_ip() 
     broadcast_message_dict = {
         "service": server_state_obj.service_name,
@@ -101,9 +99,6 @@ def broadcast_presence_thread(server_state_obj: ServerState):
 
 
 def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj: ServerState):
-    """
-    Thread function to handle receiving data from a single connected client.
-    """
     print(f"DEBUG Server (handle_client_connection_thread): Client connected from {addr}. Handler thread started.") 
     conn.settimeout(1.0) 
     partial_data_from_client = b"" 
@@ -209,11 +204,8 @@ def handle_client_connection_thread(conn: socket.socket, addr, server_state_obj:
 
 def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock, 
                     fonts: dict, game_elements_ref: dict, server_state_obj: ServerState):
-    """
-    Main function to run the game in server mode.
-    """
     print("DEBUG Server: Entering run_server_mode.") 
-    pygame.display.set_caption("Platformer - HOST (P1: WASD+VB | Self-Harm: H | Heal: G | Reset: Q | Weap:1-7)") 
+    pygame.display.set_caption("Platformer - HOST (P1: Configured | P2: Client | Reset: Q)") 
     
     server_state_obj.app_running = True 
     current_width, current_height = screen.get_size()
@@ -299,7 +291,7 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 elif server_state_obj.client_map_status == "missing":
                      dialog_message = f"Player 2 is missing map '{server_state_obj.current_map_name}'. Sending..."
                      dialog_progress = server_state_obj.client_download_progress
-                elif server_state_obj.client_map_status == "downloading_ack": 
+                elif server_state_obj.client_map_status == "downloading_ack": # Client acknowledged it's downloading
                      dialog_message = f"Player 2 downloading '{server_state_obj.current_map_name}'..."
                      dialog_progress = server_state_obj.client_download_progress
                 elif server_state_obj.client_map_status == "present":
@@ -310,6 +302,7 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                     dialog_message = "Player 2 disconnected. Waiting for new connection..."
                     server_state_obj.client_connection = None 
         
+        # Use game_ui.draw_download_dialog now
         game_ui.draw_download_dialog(screen, fonts, dialog_title, dialog_message, dialog_progress)
         clock.tick(10) 
 
@@ -329,12 +322,8 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
     p2 = game_elements_ref.get("player2") 
     if p1: print(f"DEBUG Server: P1 instance from game_elements: {p1}, Valid: {p1._valid_init if p1 else 'N/A'}") 
     if p2: print(f"DEBUG Server: P2 instance from game_elements: {p2}, Valid: {p2._valid_init if p2 else 'N/A'}") 
-
-    p1_key_map_config = { 
-        'left': pygame.K_a, 'right': pygame.K_d, 'up': pygame.K_w, 'down': pygame.K_s,
-        'attack1': pygame.K_v, 'attack2': pygame.K_b, 'dash': pygame.K_LSHIFT,
-        'roll': pygame.K_LCTRL, 'interact': pygame.K_e
-    }
+    
+    # P1 input will now be handled by p1.process_input()
     
     server_game_active = True
     while server_game_active and server_state_obj.app_running:
@@ -342,7 +331,7 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         now_ticks_server = pygame.time.get_ticks() 
         
         pygame_events = pygame.event.get()
-        keys_pressed_p1 = pygame.key.get_pressed()
+        keys_pressed_p1 = pygame.key.get_pressed() # Still needed for p1.process_input if keyboard
 
         is_p1_game_over_for_reset = False
         if p1 and p1._valid_init:
@@ -363,24 +352,17 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: server_game_active = False 
                 if event.key == pygame.K_q: host_requested_reset = True
+                # Global H and G keys for P1 (host)
                 if p1 and p1._valid_init: 
                     if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'): p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
                     if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'): p1.heal_to_full()
-                    # P1 Weapon Keys (from constants for consistency)
-                    if event.key == C.P1_FIREBALL_KEY and hasattr(p1, 'fire_fireball'): p1.fire_fireball()
-                    if event.key == C.P1_POISON_KEY and hasattr(p1, 'fire_poison'): p1.fire_poison()
-                    if event.key == C.P1_BOLT_KEY and hasattr(p1, 'fire_bolt'): p1.fire_bolt()
-                    if event.key == C.P1_BLOOD_KEY and hasattr(p1, 'fire_blood'): p1.fire_blood()
-                    if event.key == C.P1_ICE_KEY and hasattr(p1, 'fire_ice'): p1.fire_ice()
-                    if event.key == C.P1_SHADOW_PROJECTILE_KEY and hasattr(p1, 'fire_shadow'): p1.fire_shadow()
-                    if event.key == C.P1_GREY_PROJECTILE_KEY and hasattr(p1, 'fire_grey'): p1.fire_grey()
-
+                    # P1 Weapon keys are now handled by player.process_input()
         
         if not server_state_obj.app_running or not server_game_active: break
 
-        if p1 and p1._valid_init and not p1.is_dead:
-            if hasattr(p1, 'handle_mapped_input'):
-                p1.handle_mapped_input(keys_pressed_p1, pygame_events, p1_key_map_config)
+        if p1 and p1._valid_init and not p1.is_dead and hasattr(p1, 'process_input'):
+            p1.process_input(pygame_events, keys_pressed_override=keys_pressed_p1)
+
 
         p2_network_input, client_disconnected_signal, p2_requested_reset = None, False, False
         with client_lock: 
@@ -402,10 +384,7 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         if client_disconnected_signal:
             print("DEBUG Server: Client disconnected signal received in main loop.") 
             server_game_active = False 
-            with client_lock:
-                server_state_obj.client_connection = None
-                server_state_obj.client_map_status = "unknown"
-                server_state_obj.client_download_progress = 0.0
+            with client_lock: server_state_obj.client_connection = None; server_state_obj.client_map_status = "unknown"
             break 
 
         if p2 and p2._valid_init and p2_network_input and hasattr(p2, 'handle_network_input'):
@@ -420,17 +399,23 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
 
         if p1 and p1._valid_init:
             other_players_for_p1_update = [char for char in [p2] if char and char._valid_init and char.alive() and char is not p1]
+            p1.game_elements_ref_for_projectiles = game_elements_ref # Pass ref for statue creation
             p1.update(dt_sec, game_elements_ref["platform_sprites"], game_elements_ref["ladder_sprites"], 
                       game_elements_ref["hazard_sprites"], other_players_for_p1_update, game_elements_ref["enemy_list"])
 
         if p2 and p2._valid_init:
             other_players_for_p2_update = [char for char in [p1] if char and char._valid_init and char.alive() and char is not p2]
+            p2.game_elements_ref_for_projectiles = game_elements_ref # Pass ref for statue creation
             p2.update(dt_sec, game_elements_ref["platform_sprites"], game_elements_ref["ladder_sprites"], 
                       game_elements_ref["hazard_sprites"], other_players_for_p2_update, game_elements_ref["enemy_list"])
 
         active_players_for_enemy_ai = [char for char in [p1, p2] if char and char._valid_init and not char.is_dead and char.alive()]
         for enemy in list(game_elements_ref.get("enemy_list", [])): 
             if enemy._valid_init:
+                if hasattr(enemy, 'is_petrified') and enemy.is_petrified: # This enemy might have been turned into a statue
+                    # If it's truly petrified and replaced by a Statue object, it should already be kill()'d
+                    # This check is more for safety if an enemy instance is still around but flagged as petrified.
+                    continue # Skip AI update for petrified enemies
                 enemy.update(dt_sec, active_players_for_enemy_ai, 
                              game_elements_ref["platform_sprites"], 
                              game_elements_ref["hazard_sprites"],
@@ -440,35 +425,81 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                     if hasattr(Enemy, 'print_limiter') and Enemy.print_limiter.can_print(f"server_killing_enemy_{enemy.enemy_id}"):
                          print(f"Server: Auto-killing enemy {enemy.enemy_id} as death anim finished.")
                     enemy.kill() 
+        
+        # Update actual Statue objects
+        statue_objects_list = game_elements_ref.get("statue_objects", [])
+        for statue_obj in statue_objects_list:
+            if hasattr(statue_obj, 'update'):
+                statue_obj.update(dt_sec)
             
         hittable_characters_server_group = pygame.sprite.Group()
-        if p1 and p1.alive() and p1._valid_init: hittable_characters_server_group.add(p1)
-        if p2 and p2.alive() and p2._valid_init: hittable_characters_server_group.add(p2)
-        for enemy_inst_proj in game_elements_ref.get("enemy_list", []):
-            if enemy_inst_proj and enemy_inst_proj.alive() and enemy_inst_proj._valid_init:
+        if p1 and p1.alive() and p1._valid_init and not getattr(p1, 'is_petrified', False) : hittable_characters_server_group.add(p1)
+        if p2 and p2.alive() and p2._valid_init and not getattr(p2, 'is_petrified', False) : hittable_characters_server_group.add(p2)
+        for enemy_inst_proj in game_elements_ref.get("enemy_list", []): # Only non-petrified enemies
+            if enemy_inst_proj and enemy_inst_proj.alive() and enemy_inst_proj._valid_init and not getattr(enemy_inst_proj, 'is_petrified', False):
                 hittable_characters_server_group.add(enemy_inst_proj)
+        for statue in statue_objects_list: # Statues can be hit to be smashed
+            if statue.alive() and hasattr(statue, 'is_smashed') and not statue.is_smashed:
+                 hittable_characters_server_group.add(statue)
+
+
+        # Pass game_elements_ref to projectiles for GreyProjectile
+        for proj in game_elements_ref.get("projectile_sprites", pygame.sprite.Group()):
+            if hasattr(proj, 'game_elements_ref') and proj.game_elements_ref is None:
+                proj.game_elements_ref = game_elements_ref
         game_elements_ref.get("projectile_sprites", pygame.sprite.Group()).update(dt_sec, game_elements_ref["platform_sprites"], hittable_characters_server_group)
         
-        game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec) # Chest update is called here
+        game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec) 
         
         server_current_chest = game_elements_ref.get("current_chest")
         if isinstance(server_current_chest, Chest) and server_current_chest.alive() and \
-           not server_current_chest.is_collected_flag_internal: # Check if collection process has started
+           not server_current_chest.is_collected_flag_internal: 
             player_who_interacted_with_chest = None
-            if p1 and p1._valid_init and not p1.is_dead and p1.alive() and pygame.sprite.collide_rect(p1, server_current_chest):
-                player_who_interacted_with_chest = p1
-            elif p2 and p2._valid_init and not p2.is_dead and p2.alive() and pygame.sprite.collide_rect(p2, server_current_chest):
-                player_who_interacted_with_chest = p2
+            # Chest interaction requires player.process_input to return action_events
+            # For now, this part might only work for keyboard P1 if p1.process_input doesn't return events yet.
+            # And P2 keyboard still uses handle_mapped_input.
+            # TODO: Ensure player.process_input returns action_events and use that here.
+            # p1_actions = p1.process_input(...) # This should be captured earlier
+            # if p1_actions.get("interact", False) ... 
+            if p1 and p1._valid_init and not p1.is_dead and p1.alive() and not getattr(p1, 'is_petrified', False) and \
+               pygame.sprite.collide_rect(p1, server_current_chest) : # Add check for interact event from p1
+                # Placeholder: if p1.interact_key_was_pressed_this_frame:
+                # For now, assume any collision with interact intention (from KEYDOWN) will trigger.
+                # This needs proper event handling from player.process_input return value.
+                for ev in pygame_events: # Quick check for P1 interact key for demo
+                    p1_interact_key = game_config.P1_MAPPINGS.get("interact", -1) if p1.control_scheme == "keyboard_p1" else -1
+                    if p1.control_scheme.startswith("joystick"): # Get joystick interact
+                        p1_interact_key = game_config.P1_MAPPINGS.get("interact", {}).get("id", -1)
+                        if ev.type == pygame.JOYBUTTONDOWN and ev.joy == p1.joystick_id_idx and ev.button == p1_interact_key:
+                            player_who_interacted_with_chest = p1; break
+                    elif ev.type == pygame.KEYDOWN and ev.key == p1_interact_key:
+                        player_who_interacted_with_chest = p1; break
             
+            if not player_who_interacted_with_chest and p2 and p2._valid_init and not p2.is_dead and p2.alive() and not getattr(p2, 'is_petrified', False) and \
+                 pygame.sprite.collide_rect(p2, server_current_chest):
+                 # Similar placeholder for P2 interact
+                for ev in pygame_events:
+                    p2_interact_key = -1
+                    if p2.control_scheme == "keyboard_p2": p2_interact_key = game_config.P2_MAPPINGS.get("interact", -1)
+                    elif p2.control_scheme == "keyboard_p1": p2_interact_key = game_config.P1_MAPPINGS.get("interact", -1)
+                    elif p2.control_scheme.startswith("joystick"):
+                        p2_interact_key = game_config.P2_MAPPINGS.get("interact", {}).get("id", -1)
+                        if ev.type == pygame.JOYBUTTONDOWN and ev.joy == p2.joystick_id_idx and ev.button == p2_interact_key:
+                            player_who_interacted_with_chest = p2; break
+                    if ev.type == pygame.KEYDOWN and ev.key == p2_interact_key:
+                         player_who_interacted_with_chest = p2; break
+
+
             if player_who_interacted_with_chest:
                 server_current_chest.collect(player_who_interacted_with_chest) 
-                # Chest handles its own state and removal now. Don't set to None here.
         
         server_camera = game_elements_ref.get("camera")
         if server_camera:
             camera_focus_target = None
-            if p1 and p1.alive() and p1._valid_init and not p1.is_dead: camera_focus_target = p1
-            elif p2 and p2.alive() and p2._valid_init and not p2.is_dead: camera_focus_target = p2
+            if p1 and p1.alive() and p1._valid_init and not p1.is_dead and not getattr(p1,'is_petrified', False): camera_focus_target = p1
+            elif p2 and p2.alive() and p2._valid_init and not p2.is_dead and not getattr(p2,'is_petrified', False): camera_focus_target = p2
+            elif p1 and p1.alive() and p1._valid_init : camera_focus_target = p1 # Fallback to P1 even if stoned
+            elif p2 and p2.alive() and p2._valid_init : camera_focus_target = p2
             
             if camera_focus_target: server_camera.update(camera_focus_target)
             else: server_camera.static_update() 
@@ -491,7 +522,8 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
                 if server_state_obj.client_map_status in ["missing", "downloading_ack"]:
                     dl_status_msg = f"P2 Downloading Map: {server_state_obj.current_map_name}"
                     dl_progress = server_state_obj.client_download_progress
-            draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_server,
+            # Use game_ui.draw_platformer_scene_on_surface
+            game_ui.draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_server,
                                              download_status_message=dl_status_msg,
                                              download_progress_percent=dl_progress)
         except Exception as e:
@@ -519,5 +551,4 @@ def run_server_mode(screen: pygame.Surface, clock: pygame.time.Clock,
         server_state_obj.server_tcp_socket = None
     
     print("DEBUG Server: Server mode finished and returned to caller.") 
-
 ########## END OF FILE: server_logic.py ##########

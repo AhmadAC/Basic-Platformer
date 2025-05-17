@@ -1,7 +1,8 @@
+########## START OF FILE: player_animation_handler.py ##########
 # player_animation_handler.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.5 (Added petrified and smashed animation key determination)
+## version 1.0.0.6 (Ensures stone assets are correctly referenced from Player instance)
 Handles player animation selection and frame updates.
 Correctly anchors the player's rect when height changes (e.g., crouching),
 ensuring the player's feet (midbottom) remain consistent, and updates player.pos.
@@ -23,9 +24,9 @@ def determine_animation_key(player):
 
     if player.is_petrified:
         if player.is_stone_smashed:
-            animation_key = 'stone_smashed' # Uses pre-loaded self.stone_smashed_frames
+            animation_key = 'smashed' # This will use player.stone_smashed_frames
         else:
-            animation_key = 'stone' # Uses pre-loaded self.stone_image_frame
+            animation_key = 'petrified' # This will use player.stone_image_frame
     elif player.is_dead:
         is_still_nm = abs(player.vel.x) < 0.5 and abs(player.vel.y) < 1.0
         key_variant = 'death_nm' if is_still_nm else 'death'
@@ -93,10 +94,9 @@ def determine_animation_key(player):
         if player.state not in ['jump','jump_fall_trans','fall', 'wall_slide', 'wall_hang', 'wall_climb', 'wall_climb_nm', 'hit', 'dash', 'roll']:
              animation_key = 'fall' if 'fall' in player.animations and player.animations['fall'] else 'idle'
 
-
-    # Final validation: if the determined key is invalid, fallback to 'idle'
-    # (unless it's a special petrified state that uses its own pre-loaded frames)
-    if animation_key not in ['stone', 'stone_smashed']:
+    # For petrified states, the key from above is just logical. The actual frames come from player attributes.
+    # For regular animations, validate against player.animations.
+    if animation_key not in ['petrified', 'smashed']: # 'petrified' and 'smashed' are logical states mapping to specific frames
         if animation_key not in player.animations or not player.animations[animation_key]:
             if player.print_limiter.can_print(f"anim_key_final_fallback_{player.player_id}_{animation_key}_{player.state}"):
                 print(f"ANIM_HANDLER Warning (P{player.player_id}): Animation key '{animation_key}' (derived from state '{player.state}') "
@@ -114,9 +114,7 @@ def advance_frame_and_handle_state_transitions(player, current_animation_frames_
     if player.is_attacking and player.attack_type == 2 and hasattr(C, 'PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER'):
         ms_per_frame = int(C.ANIM_FRAME_DURATION * C.PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER)
 
-    # For petrified states, the animation is either single frame (stone) or handled by its own timer (stone_smashed duration)
-    # and doesn't loop or transition to other states via this mechanism.
-    if player.is_petrified and not player.is_stone_smashed: # Static stone image
+    if player.is_petrified and not player.is_stone_smashed: 
         player.current_frame = 0
         return
 
@@ -130,10 +128,9 @@ def advance_frame_and_handle_state_transitions(player, current_animation_frames_
                     player.current_frame = len(current_animation_frames_list) - 1 
                     player.death_animation_finished = True
                     return 
-                elif player.is_stone_smashed: # Smashed stone animation finished, stay on last frame
+                elif player.is_stone_smashed: 
                     player.current_frame = len(current_animation_frames_list) -1
-                    # Timer in Player.update will handle disappearance
-                    return # Don't loop smashed animation here
+                    return 
 
                 non_looping_animation_keys = [
                     'attack','attack_nm','attack2','attack2_nm','attack_combo','attack_combo_nm',
@@ -186,7 +183,7 @@ def advance_frame_and_handle_state_transitions(player, current_animation_frames_
                 else: 
                     player.current_frame = 0
 
-    if player.is_petrified and not player.is_stone_smashed: # Ensure static stone is always frame 0
+    if player.is_petrified and not player.is_stone_smashed: 
         player.current_frame = 0
     elif player.current_frame < 0 or player.current_frame >= len(current_animation_frames_list):
         player.current_frame = 0
@@ -197,58 +194,76 @@ def update_player_animation(player):
     Updates the player's current image based on its state, frame, and facing direction.
     Correctly anchors the player's rect when height changes by maintaining the midbottom point.
     """
-    if not player._valid_init or not hasattr(player, 'animations') or not player.animations:
-        if hasattr(player, 'image') and player.image: player.image.fill(C.MAGENTA) 
-        return
+    if not player._valid_init: # Allow animation if animations dict might be present even if init failed partially
+        if not hasattr(player, 'animations') or not player.animations:
+             if hasattr(player, 'image') and player.image: player.image.fill(C.MAGENTA) 
+             return
 
     if not player.alive() and not (player.is_dead and not player.death_animation_finished and not player.is_petrified):
-        return # Only animate if alive, or if normally dead & death anim not finished, or if petrified
+        return
 
     current_time_ms = pygame.time.get_ticks()
-    animation_key = determine_animation_key(player) 
+    # The logical_state_key is what drives the animation choice
+    logical_state_key = determine_animation_key(player) 
     
     current_animation_frames = None
-    if animation_key == 'stone':
+    # Determine which set of frames to use
+    if logical_state_key == 'petrified': # Logical state 'petrified' maps to 'stone' frames stored on player
         current_animation_frames = [player.stone_image_frame] if player.stone_image_frame else []
-    elif animation_key == 'stone_smashed':
+    elif logical_state_key == 'smashed': # Logical state 'smashed' maps to 'stone_smashed' frames
         current_animation_frames = player.stone_smashed_frames if player.stone_smashed_frames else []
-    else:
-        current_animation_frames = player.animations.get(animation_key)
+    else: # Regular animation from the player's character animation dictionary
+        current_animation_frames = player.animations.get(logical_state_key)
 
 
     if not current_animation_frames: 
-        if player.print_limiter.can_print(f"anim_frames_missing_update_{player.player_id}_{animation_key}"):
-            print(f"CRITICAL ANIM_HANDLER (P{player.player_id}): Frames for key '{animation_key}' (State: {player.state}) are missing AT UPDATE. Using RED.")
+        if player.print_limiter.can_print(f"anim_frames_missing_update_{player.player_id}_{logical_state_key}"):
+            print(f"CRITICAL ANIM_HANDLER (P{player.player_id}): Frames for key '{logical_state_key}' (State: {player.state}) are missing AT UPDATE. Using RED.")
         if hasattr(player, 'image') and player.image: player.image.fill(C.RED)
         return
 
-    advance_frame_and_handle_state_transitions(player, current_animation_frames, current_time_ms, animation_key)
+    # Advance frame and handle non-looping animation state transitions
+    # Pass the logical_state_key which corresponds to the animation being played
+    advance_frame_and_handle_state_transitions(player, current_animation_frames, current_time_ms, logical_state_key)
 
-    if player.state != animation_key and animation_key not in ['stone', 'stone_smashed']: 
-        new_animation_key_after_transition = determine_animation_key(player)
-        # Re-fetch frames only if it's a regular animation, not special stone frames
-        if new_animation_key_after_transition not in ['stone', 'stone_smashed']:
-            new_current_animation_frames = player.animations.get(new_animation_key_after_transition)
-            if new_current_animation_frames:
-                animation_key = new_animation_key_after_transition 
-                current_animation_frames = new_current_animation_frames
-        elif new_animation_key_after_transition == 'stone':
+    # Re-evaluate animation_key and current_animation_frames if state was changed by advance_frame...
+    # This ensures we use the frames for the *new* state if a transition just occurred.
+    if player.state != logical_state_key: 
+        new_logical_key_after_transition = determine_animation_key(player)
+        if new_logical_key_after_transition == 'petrified':
             current_animation_frames = [player.stone_image_frame] if player.stone_image_frame else []
-            animation_key = 'stone'
-        elif new_animation_key_after_transition == 'stone_smashed':
+        elif new_logical_key_after_transition == 'smashed':
             current_animation_frames = player.stone_smashed_frames if player.stone_smashed_frames else []
-            animation_key = 'stone_smashed'
+        else:
+            new_current_animation_frames = player.animations.get(new_logical_key_after_transition)
+            if new_current_animation_frames:
+                current_animation_frames = new_current_animation_frames
+        # player.current_frame should have been reset to 0 by set_player_state
 
+
+    if not current_animation_frames: # Should be very rare after all checks
+        if hasattr(player, 'image') and player.image: player.image.fill(C.BLUE)
+        return
 
     if player.current_frame < 0 or player.current_frame >= len(current_animation_frames):
-        player.current_frame = 0 # Safeguard frame index
+        player.current_frame = 0 
 
     image_for_this_frame = current_animation_frames[player.current_frame]
 
-    if not player.facing_right and animation_key not in ['stone', 'stone_smashed']: # Don't flip stone images by default
+    # Flipping based on facing_right (don't flip stone images by default unless they are multi-frame and need it)
+    # The logical_state_key reflects what animation *should* be playing.
+    should_flip = not player.facing_right
+    if logical_state_key in ['petrified', 'smashed'] : # Stone states
+        # Typically, stone images are not flipped, but if your stone_smashed is a directional anim, adjust here.
+        # For now, assume stone/smashed are not direction-dependent.
+        should_flip = False 
+        
+    if should_flip:
         image_for_this_frame = pygame.transform.flip(image_for_this_frame, True, False)
 
-    if player.image is not image_for_this_frame or player._last_facing_right != player.facing_right or (player.is_petrified and player.image != player.stone_image_frame) or (player.is_stone_smashed and player.image != player.stone_smashed_frames[player.current_frame]):
+    if player.image is not image_for_this_frame or player._last_facing_right != player.facing_right or \
+       (player.is_petrified and not player.is_stone_smashed and player.image != player.stone_image_frame) or \
+       (player.is_stone_smashed and player.image != player.stone_smashed_frames[player.current_frame % len(player.stone_smashed_frames)]):
         old_rect_midbottom = player.rect.midbottom 
         old_rect_height_for_debug = player.rect.height 
 
@@ -260,9 +275,10 @@ def update_player_animation(player):
 
         new_rect_height_for_debug = player.rect.height
         if old_rect_height_for_debug != new_rect_height_for_debug:
-            if player.print_limiter.can_print(f"anim_height_change_{player.player_id}_{animation_key}"):
-                print(f"DEBUG ANIM_H (P{player.player_id}): Height Change. Key:'{animation_key}'. "
+            if player.print_limiter.can_print(f"anim_height_change_{player.player_id}_{logical_state_key}"):
+                print(f"DEBUG ANIM_H (P{player.player_id}): Height Change. Key:'{logical_state_key}'. "
                       f"OldH:{old_rect_height_for_debug}, NewH:{new_rect_height_for_debug}. "
                       f"Rect anchored to old_midbottom: {old_rect_midbottom}. New player.pos: {player.pos}")
 
         player._last_facing_right = player.facing_right 
+########## END OF FILE: player_animation_handler.py ##########

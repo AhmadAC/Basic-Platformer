@@ -1,12 +1,10 @@
-########## START OF FILE: constants.py ##########
-
 # constants.py
 # -*- coding: utf-8 -*-
 """
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 1.0.0.7 (Added Shadow, Grey projectiles, Chest open constants, and P2 projectile keys)
+# version 1.0.0.9 (Stone smashed duration to 5s)
 import os
 import sys
 import pygame # For K_ constants
@@ -52,10 +50,9 @@ CHARACTER_ATTACK_STATE_DURATION = 480 # ms, general duration for an attack state
 
 # --- Item Constants ---
 CHEST_CLOSED_SPRITE_PATH = "characters/items/chest.gif"
-CHEST_OPEN_SPRITE_PATH = "characters/items/chest_open.gif" # NEW
-CHEST_STAY_OPEN_DURATION_MS = 3000 # Time from collection start (fully open) until fade out begins - NEW
-CHEST_FADE_OUT_DURATION_MS = 1000  # Duration of the fade out animation - NEW
-# CHEST_FADE_ALPHA_STEP = 5 # Alpha reduction per frame for fade - Using time-based fade in Chest class now
+CHEST_OPEN_SPRITE_PATH = "characters/items/chest_open.gif" 
+CHEST_STAY_OPEN_DURATION_MS = 3000 
+CHEST_FADE_OUT_DURATION_MS = 1000  
 
 
 # --- Projectile Constants ---
@@ -99,21 +96,21 @@ ICE_LIFESPAN = 2200 # ms
 ICE_SPRITE_PATH = "characters/weapons/ice.gif"
 ICE_DIMENSIONS = (40, 40)
 
-# Shadow Projectile (Key 6) - NEW
+# Shadow Projectile (Key 6) 
 SHADOW_PROJECTILE_DAMAGE = 45
-SHADOW_PROJECTILE_SPEED = 9
+SHADOW_PROJECTILE_SPEED = 11
 SHADOW_PROJECTILE_COOLDOWN = 800 # ms
 SHADOW_PROJECTILE_LIFESPAN = 1700 # ms
 SHADOW_PROJECTILE_SPRITE_PATH = "characters/weapons/shadow095.gif"
-SHADOW_PROJECTILE_DIMENSIONS = (40, 40) # Placeholder, will be overridden by GIF dimensions
+SHADOW_PROJECTILE_DIMENSIONS = (40, 40) 
 
-# Grey Projectile (Key 7) - NEW
-GREY_PROJECTILE_DAMAGE = 30
-GREY_PROJECTILE_SPEED = 5
+# Grey Projectile (Key 7) 
+GREY_PROJECTILE_DAMAGE = 0 # Petrifies instead of direct damage
+GREY_PROJECTILE_SPEED = 13
 GREY_PROJECTILE_COOLDOWN = 750 # ms
 GREY_PROJECTILE_LIFESPAN = 1500 # ms
 GREY_PROJECTILE_SPRITE_PATH = "characters/weapons/grey.gif"
-GREY_PROJECTILE_DIMENSIONS = (40, 40) # Placeholder, will be overridden by GIF dimensions
+GREY_PROJECTILE_DIMENSIONS = (40, 40) 
 
 
 # --- Enemy Constants ---
@@ -132,13 +129,16 @@ ENEMY_HIT_BOUNCE_Y = PLAYER_JUMP_STRENGTH * 0.3
 ENEMY_STOMP_DEATH_DURATION = 300 # ms, visual duration of stomp death scale effect
 ENEMY_POST_ATTACK_PAUSE_DURATION = 200 # ms, brief pause after an enemy attack animation finishes
 
-# --- Enemy Status Effect Constants (New) ---
+# --- Enemy Status Effect Constants ---
 ENEMY_AFLAME_DURATION_MS = 3000
 ENEMY_DEFLAME_DURATION_MS = 2000
 ENEMY_AFLAME_DAMAGE_PER_TICK = 5
 ENEMY_AFLAME_DAMAGE_INTERVAL_MS = 1000
 ENEMY_FROZEN_DURATION_MS = 3000
 ENEMY_DEFROST_DURATION_MS = 2000
+
+# --- Petrification Constants ---
+STONE_SMASHED_DURATION_MS = 5000 # Time for smashed stone to disappear (Player and Statue)
 
 
 # --- Colors ---
@@ -221,28 +221,14 @@ P1_POISON_KEY = pygame.K_2
 P1_BOLT_KEY = pygame.K_3
 P1_BLOOD_KEY = pygame.K_4
 P1_ICE_KEY = pygame.K_5
-P1_SHADOW_PROJECTILE_KEY = pygame.K_6 # NEW
-P1_GREY_PROJECTILE_KEY = pygame.K_7   # NEW
+P1_SHADOW_PROJECTILE_KEY = pygame.K_6 
+P1_GREY_PROJECTILE_KEY = pygame.K_7   
 
 # --- Player 2 Projectile Keys ---
-# Default to numpad keys. Player class will use these if available.
 P2_FIREBALL_KEY = pygame.K_KP_1
 P2_POISON_KEY = pygame.K_KP_2
 P2_BOLT_KEY = pygame.K_KP_3
 P2_BLOOD_KEY = pygame.K_KP_4
 P2_ICE_KEY = pygame.K_KP_5
-P2_SHADOW_PROJECTILE_KEY = pygame.K_KP_6 # NEW
-P2_GREY_PROJECTILE_KEY = pygame.K_KP_7   # NEW
-
-# Example standard P2 movement keys for reference (used in couch_play_logic & Player defaults)
-# P2_LEFT_KEY = pygame.K_j
-# P2_RIGHT_KEY = pygame.K_l
-# P2_UP_KEY = pygame.K_i
-# P2_DOWN_KEY = pygame.K_k
-# P2_ATTACK1_KEY = pygame.K_o
-# P2_ATTACK2_KEY = pygame.K_p
-# P2_DASH_KEY = pygame.K_SEMICOLON
-# P2_ROLL_KEY = pygame.K_QUOTE
-# P2_INTERACT_KEY = pygame.K_BACKSLASH
-
-########## END OF FILE: constants.py ##########
+P2_SHADOW_PROJECTILE_KEY = pygame.K_KP_6 
+P2_GREY_PROJECTILE_KEY = pygame.K_KP_7   

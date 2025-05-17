@@ -1,14 +1,15 @@
 ########## START OF FILE: config.py ##########
 # config.py
-# version 1.0.0.1
 # -*- coding: utf-8 -*-
 """
 Configuration for game settings, primarily controls.
 Allows defining default keyboard and joystick mappings, and storing current selections.
 """
+# version 1.0.2 (Improved joystick ID handling on load, fallback to joystick_0)
 import pygame
 import json
 import os
+import joystick_handler # To check actual joystick count
 
 # --- File for saving/loading config ---
 CONFIG_FILE_NAME = "game_config.json"
@@ -22,143 +23,86 @@ CURRENT_P1_INPUT_DEVICE = DEFAULT_P1_INPUT_DEVICE
 CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
 
 # --- Game Actions ---
-# These are the abstract actions the game understands.
-# They will be mapped to specific keys or joystick buttons/axes.
 GAME_ACTIONS = [
-    "left", "right", "up", "down",  # Movement
-    "jump",                         # Typically 'up' or a dedicated button
-    "attack1", "attack2",           # Primary/Secondary attacks
-    "dash", "roll", "interact",     # Abilities
+    "left", "right", "up", "down",
+    "jump",                     
+    "attack1", "attack2",       
+    "dash", "roll", "interact", 
     "projectile1", "projectile2", "projectile3", "projectile4",
-    "projectile5", "projectile6", "projectile7", # Weapon slots
-    "pause", "menu_confirm", "menu_cancel" # UI Navigation (examples)
+    "projectile5", "projectile6", "projectile7", 
+    "pause", 
+    "menu_confirm", "menu_cancel", "menu_up", "menu_down", "menu_left", "menu_right" 
 ]
 
 # --- Default Keyboard Mappings ---
-# Player 1 Keyboard
 DEFAULT_KEYBOARD_P1_MAPPINGS = {
-    "left": pygame.K_a,
-    "right": pygame.K_d,
-    "up": pygame.K_w,         # Used for jump, climb_up
-    "down": pygame.K_s,       # Used for crouch, climb_down
-    "jump": pygame.K_w,       # Explicit jump, can be same as 'up'
-    "attack1": pygame.K_v,
-    "attack2": pygame.K_b,
-    "dash": pygame.K_LSHIFT,
-    "roll": pygame.K_LCTRL,
-    "interact": pygame.K_e,
-    "projectile1": pygame.K_1,
-    "projectile2": pygame.K_2,
-    "projectile3": pygame.K_3,
-    "projectile4": pygame.K_4,
-    "projectile5": pygame.K_5,
-    "projectile6": pygame.K_6,
-    "projectile7": pygame.K_7,
-    "pause": pygame.K_ESCAPE, # Example pause key
+    "left": pygame.K_a, "right": pygame.K_d, "up": pygame.K_w, "down": pygame.K_s,       
+    "jump": pygame.K_w, "attack1": pygame.K_v, "attack2": pygame.K_b, "dash": pygame.K_LSHIFT,
+    "roll": pygame.K_LCTRL, "interact": pygame.K_e,
+    "projectile1": pygame.K_1, "projectile2": pygame.K_2, "projectile3": pygame.K_3,
+    "projectile4": pygame.K_4, "projectile5": pygame.K_5, "projectile6": pygame.K_6, "projectile7": pygame.K_7,
+    "pause": pygame.K_ESCAPE, "menu_confirm": pygame.K_RETURN, "menu_cancel": pygame.K_ESCAPE,
+    "menu_up": pygame.K_UP, "menu_down": pygame.K_DOWN, "menu_left": pygame.K_LEFT, "menu_right": pygame.K_RIGHT,
 }
 
-# Player 2 Keyboard (distinct from P1)
 DEFAULT_KEYBOARD_P2_MAPPINGS = {
-    "left": pygame.K_j,
-    "right": pygame.K_l,
-    "up": pygame.K_i,
-    "down": pygame.K_k,
-    "jump": pygame.K_i,
-    "attack1": pygame.K_o,
-    "attack2": pygame.K_p,
-    "dash": pygame.K_SEMICOLON,
-    "roll": pygame.K_QUOTE,
-    "interact": pygame.K_BACKSLASH,
-    "projectile1": pygame.K_KP_1,
-    "projectile2": pygame.K_KP_2,
-    "projectile3": pygame.K_KP_3,
-    "projectile4": pygame.K_KP_4,
-    "projectile5": pygame.K_KP_5,
-    "projectile6": pygame.K_KP_6,
-    "projectile7": pygame.K_KP_7,
-    "pause": pygame.K_PAUSE, # Example, might not be used directly by P2
+    "left": pygame.K_j, "right": pygame.K_l, "up": pygame.K_i, "down": pygame.K_k,
+    "jump": pygame.K_i, "attack1": pygame.K_o, "attack2": pygame.K_p, "dash": pygame.K_SEMICOLON,
+    "roll": pygame.K_QUOTE, "interact": pygame.K_BACKSLASH,
+    "projectile1": pygame.K_KP_1, "projectile2": pygame.K_KP_2, "projectile3": pygame.K_KP_3,
+    "projectile4": pygame.K_KP_4, "projectile5": pygame.K_KP_5, "projectile6": pygame.K_KP_6, "projectile7": pygame.K_KP_7,
+    "pause": pygame.K_PAUSE, "menu_confirm": pygame.K_KP_ENTER, "menu_cancel": pygame.K_DELETE, 
+    "menu_up": pygame.K_KP_8, "menu_down": pygame.K_KP_2, "menu_left": pygame.K_KP_4, "menu_right": pygame.K_KP_6,
 }
-
-# --- Default Nintendo Switch Pro Controller Mappings (Generic Button/Axis Numbers) ---
-# These are common mappings. Actual numbers might vary based on OS and drivers (e.g., BetterJoy).
-# Buttons: A=0, B=1, X=2, Y=3, L=4, R=5, ZL=6, ZR=7, Minus=8, Plus=9, LStick=10, RStick=11, Home=12, Capture=13
-# DPad (often comes as HAT 0): (x, y) -> (0,1) up, (0,-1) down, (-1,0) left, (1,0) right
-# Axes: LeftX=0, LeftY=1, RightX=2 (or 3), RightY=3 (or 4), ZL_axis=~4, ZR_axis=~5 (often -1.0 to 1.0)
-# For simplicity, we'll map DPad directions as separate actions if needed by game or map them to "up", "down", "left", "right".
 
 DEFAULT_SWITCH_PRO_MAPPINGS = {
-    "left": {"type": "axis", "id": 0, "value": -1, "threshold": 0.5}, # Left Stick X < -0.5
-    "right": {"type": "axis", "id": 0, "value": 1, "threshold": 0.5}, # Left Stick X > 0.5
-    "up": {"type": "axis", "id": 1, "value": -1, "threshold": 0.5},   # Left Stick Y < -0.5 (Pygame Y-axis is often inverted)
-    "down": {"type": "axis", "id": 1, "value": 1, "threshold": 0.5}, # Left Stick Y > 0.5
-    # OR DPad:
-    # "left": {"type": "hat", "id": 0, "value": (-1,0)},
-    # "right": {"type": "hat", "id": 0, "value": (1,0)},
-    # "up": {"type": "hat", "id": 0, "value": (0,1)}, # Hat Y can be inverted too depending on Pygame
-    # "down": {"type": "hat", "id": 0, "value": (0,-1)},
-
-    "jump": {"type": "button", "id": 0},      # 'A' button (Nintendo layout 'B') or 'B' (Xbox layout 'A')
-    "attack1": {"type": "button", "id": 2},   # 'X' button (Nintendo layout 'Y')
-    "attack2": {"type": "button", "id": 1},   # 'B' button (Nintendo layout 'A') or 'Y' (Xbox layout 'X')
-    "dash": {"type": "button", "id": 3},      # 'Y' button (Nintendo layout 'X')
-    "roll": {"type": "button", "id": 5},      # 'R' bumper
-    "interact": {"type": "button", "id": 4},  # 'L' bumper
-
-    # Example for projectiles - these would need careful thought on a controller
-    "projectile1": {"type": "button", "id": 6}, # ZL
-    "projectile2": {"type": "button", "id": 7}, # ZR
-    # "projectile_next": {"type": "button", "id": PLUS_BUTTON_ID_HERE},
-    # "projectile_prev": {"type": "button", "id": MINUS_BUTTON_ID_HERE},
-
-    "pause": {"type": "button", "id": 9},     # '+' (Plus) button
+    "left": {"type": "axis", "id": 0, "value": -1, "threshold": 0.7, "alt_type": "hat", "alt_id": 0, "alt_value": (-1,0)},
+    "right": {"type": "axis", "id": 0, "value": 1, "threshold": 0.7, "alt_type": "hat", "alt_id": 0, "alt_value": (1,0)},
+    "up": {"type": "axis", "id": 1, "value": -1, "threshold": 0.7, "alt_type": "hat", "alt_id": 0, "alt_value": (0,1)},  
+    "down": {"type": "axis", "id": 1, "value": 1, "threshold": 0.7, "alt_type": "hat", "alt_id": 0, "alt_value": (0,-1)},
+    "jump": {"type": "button", "id": 0},      
+    "attack1": {"type": "button", "id": 2},   
+    "attack2": {"type": "button", "id": 1},   
+    "dash": {"type": "button", "id": 3},      
+    "roll": {"type": "button", "id": 5},      
+    "interact": {"type": "button", "id": 4},  
+    "projectile1": {"type": "button", "id": 6}, 
+    "projectile2": {"type": "button", "id": 7}, 
+    "pause": {"type": "button", "id": 9},     
+    "menu_confirm": {"type": "button", "id": 1}, 
+    "menu_cancel": {"type": "button", "id": 0},  
+    "menu_up": {"type": "hat", "id": 0, "value": (0,1), "alt_type": "axis", "alt_id": 1, "alt_value": -1, "alt_threshold": 0.7},    
+    "menu_down": {"type": "hat", "id": 0, "value": (0,-1), "alt_type": "axis", "alt_id": 1, "alt_value": 1, "alt_threshold": 0.7},  
+    "menu_left": {"type": "hat", "id": 0, "value": (-1,0), "alt_type": "axis", "alt_id": 0, "alt_value": -1, "alt_threshold": 0.7},  
+    "menu_right": {"type": "hat", "id": 0, "value": (1,0), "alt_type": "axis", "alt_id": 0, "alt_value": 1, "alt_threshold": 0.7}, 
 }
 
-# --- Mappings Storage ---
-# These will hold the actual pygame key/joystick codes after loading/setting.
-# Initialized with defaults.
 P1_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
 P2_MAPPINGS = DEFAULT_KEYBOARD_P2_MAPPINGS.copy()
-# If a player is set to joystick, their P1_MAPPINGS/P2_MAPPINGS will be populated
-# from DEFAULT_SWITCH_PRO_MAPPINGS (or another joystick config).
 
-
-def get_action_key_map(player_id: int, device_type: str):
-    """
-    Returns the appropriate key/button mapping dictionary for the player.
-    For keyboard, it's direct. For joystick, it would be more complex
-    as joystick events are handled differently (axis, button, hat).
-
-    This function might be simplified or expanded based on how input processing is done.
-    For now, it helps settings_ui display current keyboard keys.
-    """
-    if device_type == "keyboard_p1":
-        return P1_MAPPINGS # Or a fresh copy of DEFAULT_KEYBOARD_P1_MAPPINGS
-    elif device_type == "keyboard_p2":
-        return P2_MAPPINGS # Or a fresh copy of DEFAULT_KEYBOARD_P2_MAPPINGS
-    elif "joystick" in device_type:
-        # This is a placeholder. Displaying joystick mappings directly as keys is not straightforward.
-        # The settings UI will need a different way to show these.
-        # For now, return the default joystick abstract mapping for reference.
-        return DEFAULT_SWITCH_PRO_MAPPINGS
+def get_action_key_map(player_id: int, device_id_str: str):
+    if device_id_str == "keyboard_p1":
+        return P1_MAPPINGS 
+    elif device_id_str == "keyboard_p2":
+        return P2_MAPPINGS 
+    elif "joystick" in device_id_str:
+        if player_id == 1 and CURRENT_P1_INPUT_DEVICE == device_id_str:
+            return P1_MAPPINGS
+        elif player_id == 2 and CURRENT_P2_INPUT_DEVICE == device_id_str:
+            return P2_MAPPINGS
+        return DEFAULT_SWITCH_PRO_MAPPINGS 
     return {}
 
 
 def _get_config_filepath():
-    """Gets the absolute path to the config file."""
-    # Place it in the same directory as this config.py file for simplicity
     base_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_dir, CONFIG_FILE_NAME)
 
 def save_config():
-    """Saves the current control schemes to a JSON file."""
     global CURRENT_P1_INPUT_DEVICE, CURRENT_P2_INPUT_DEVICE
-    # In a more complex scenario, you'd save P1_MAPPINGS and P2_MAPPINGS if they were remappable.
     config_data = {
         "p1_input_device": CURRENT_P1_INPUT_DEVICE,
         "p2_input_device": CURRENT_P2_INPUT_DEVICE,
-        # "p1_key_mappings": P1_MAPPINGS, # If keyboard keys are remappable
-        # "p2_key_mappings": P2_MAPPINGS, # If keyboard keys are remappable
-        # "joystick_mappings": P1_MAPPINGS if "joystick" in CURRENT_P1_INPUT_DEVICE else (P2_MAPPINGS if "joystick" in CURRENT_P2_INPUT_DEVICE else DEFAULT_SWITCH_PRO_MAPPINGS)
     }
     filepath = _get_config_filepath()
     try:
@@ -171,68 +115,115 @@ def save_config():
         return False
 
 def load_config():
-    """Loads control schemes from a JSON file. If file doesn't exist or is invalid, uses defaults."""
     global CURRENT_P1_INPUT_DEVICE, CURRENT_P2_INPUT_DEVICE, P1_MAPPINGS, P2_MAPPINGS
     filepath = _get_config_filepath()
+    
+    loaded_p1_device = DEFAULT_P1_INPUT_DEVICE
+    loaded_p2_device = DEFAULT_P2_INPUT_DEVICE
+
     if os.path.exists(filepath):
         try:
             with open(filepath, 'r') as f:
                 config_data = json.load(f)
             
-            CURRENT_P1_INPUT_DEVICE = config_data.get("p1_input_device", DEFAULT_P1_INPUT_DEVICE)
-            CURRENT_P2_INPUT_DEVICE = config_data.get("p2_input_device", DEFAULT_P2_INPUT_DEVICE)
+            loaded_p1_device = config_data.get("p1_input_device", DEFAULT_P1_INPUT_DEVICE)
+            loaded_p2_device = config_data.get("p2_input_device", DEFAULT_P2_INPUT_DEVICE)
+            print(f"Configuration loaded from {filepath}: P1='{loaded_p1_device}', P2='{loaded_p2_device}'")
 
-            # If P1_MAPPINGS etc. were saved, load them here.
-            # For now, they just stick to defaults unless explicitly changed by settings UI.
-            # P1_MAPPINGS = config_data.get("p1_key_mappings", DEFAULT_KEYBOARD_P1_MAPPINGS.copy())
-            # P2_MAPPINGS = config_data.get("p2_key_mappings", DEFAULT_KEYBOARD_P2_MAPPINGS.copy())
-
-            print(f"Configuration loaded from {filepath}")
-            # Apply the loaded device choice to the active mappings
-            update_player_mappings_from_device_choice()
-            return True
         except (IOError, json.JSONDecodeError) as e:
             print(f"Error loading configuration from {filepath}: {e}. Using defaults.")
+            # Defaults are already set above
     else:
         print(f"Configuration file {filepath} not found. Using defaults.")
-    
-    # Set to defaults if load failed or file not found
-    CURRENT_P1_INPUT_DEVICE = DEFAULT_P1_INPUT_DEVICE
-    CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-    update_player_mappings_from_device_choice() # Ensure mappings reflect default devices
-    return False
+
+    # --- Validate and adjust joystick assignments based on currently connected joysticks ---
+    num_joysticks = joystick_handler.get_joystick_count()
+
+    # Validate P1 device
+    if loaded_p1_device.startswith("joystick_"):
+        try:
+            p1_joy_idx = int(loaded_p1_device.split('_')[-1])
+            if not (0 <= p1_joy_idx < num_joysticks):
+                print(f"Config Warning: P1's configured joystick ID {p1_joy_idx} is not available (found {num_joysticks}).")
+                if num_joysticks > 0:
+                    print("Config: Falling back P1 to joystick_0.")
+                    CURRENT_P1_INPUT_DEVICE = "joystick_0"
+                else:
+                    print("Config: No joysticks available. Falling back P1 to keyboard_p1.")
+                    CURRENT_P1_INPUT_DEVICE = "keyboard_p1"
+            else:
+                CURRENT_P1_INPUT_DEVICE = loaded_p1_device
+        except (ValueError, IndexError):
+            print(f"Config Warning: Could not parse P1 joystick ID from '{loaded_p1_device}'. Falling back.")
+            CURRENT_P1_INPUT_DEVICE = "keyboard_p1" if num_joysticks == 0 else "joystick_0"
+    else:
+        CURRENT_P1_INPUT_DEVICE = loaded_p1_device # It's a keyboard type
+
+    # Validate P2 device (considering P1's assignment)
+    if loaded_p2_device.startswith("joystick_"):
+        try:
+            p2_joy_idx = int(loaded_p2_device.split('_')[-1])
+            p1_current_joy_idx = -1
+            if CURRENT_P1_INPUT_DEVICE.startswith("joystick_"):
+                 p1_current_joy_idx = int(CURRENT_P1_INPUT_DEVICE.split('_')[-1])
+
+            if not (0 <= p2_joy_idx < num_joysticks):
+                print(f"Config Warning: P2's configured joystick ID {p2_joy_idx} is not available.")
+                if num_joysticks > 0 and (num_joysticks == 1 and p1_current_joy_idx != 0): # P2 can use joy 0 if P1 isn't
+                    CURRENT_P2_INPUT_DEVICE = "joystick_0"
+                elif num_joysticks > 1 and p1_current_joy_idx == 0 : # P1 is joy 0, P2 can be joy 1
+                     CURRENT_P2_INPUT_DEVICE = "joystick_1"
+                else: # Fallback to keyboard for P2
+                    CURRENT_P2_INPUT_DEVICE = "keyboard_p2" if CURRENT_P1_INPUT_DEVICE != "keyboard_p1" else "keyboard_p1"
+            elif p2_joy_idx == p1_current_joy_idx : # P2 cannot use the same joystick as P1
+                print(f"Config Warning: P2 cannot use the same joystick as P1 (ID {p1_current_joy_idx}).")
+                if num_joysticks > 1: # If another joystick is available
+                    new_p2_joy_idx = 1 if p1_current_joy_idx == 0 else 0
+                    CURRENT_P2_INPUT_DEVICE = f"joystick_{new_p2_joy_idx}"
+                    print(f"Config: Assigning P2 to joystick_{new_p2_joy_idx}.")
+                else: # Only one joystick, and P1 has it
+                    print(f"Config: P1 has the only joystick. P2 falls back to keyboard.")
+                    CURRENT_P2_INPUT_DEVICE = "keyboard_p1" # P2 uses P1's keyboard keys
+            else:
+                CURRENT_P2_INPUT_DEVICE = loaded_p2_device
+        except (ValueError, IndexError):
+            print(f"Config Warning: Could not parse P2 joystick ID from '{loaded_p2_device}'. Falling back.")
+            CURRENT_P2_INPUT_DEVICE = "keyboard_p2"
+    else: # P2 is keyboard
+        if loaded_p2_device == "keyboard_p1" and CURRENT_P1_INPUT_DEVICE != "keyboard_p1":
+            # P1 is on joystick, P2 can safely use "keyboard_p1" (P1's default keys)
+            CURRENT_P2_INPUT_DEVICE = "keyboard_p1"
+        elif loaded_p2_device == "keyboard_p1" and CURRENT_P1_INPUT_DEVICE == "keyboard_p1":
+            # Conflict: P1 is on keyboard_p1, P2 cannot also be keyboard_p1. Default P2 to keyboard_p2.
+            print("Config Warning: P1 and P2 both configured for 'keyboard_p1'. Setting P2 to 'keyboard_p2'.")
+            CURRENT_P2_INPUT_DEVICE = "keyboard_p2"
+        else:
+            CURRENT_P2_INPUT_DEVICE = loaded_p2_device
+
+
+    update_player_mappings_from_device_choice() 
+    return True
 
 def update_player_mappings_from_device_choice():
-    """
-    Updates P1_MAPPINGS and P2_MAPPINGS based on CURRENT_P1_INPUT_DEVICE and CURRENT_P2_INPUT_DEVICE.
-    This is crucial after loading config or when settings are changed in the UI.
-    """
     global P1_MAPPINGS, P2_MAPPINGS
 
-    # Player 1 Mappings
     if CURRENT_P1_INPUT_DEVICE == "keyboard_p1":
         P1_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
-    elif "joystick" in CURRENT_P1_INPUT_DEVICE: # e.g., "joystick_0"
-        P1_MAPPINGS = DEFAULT_SWITCH_PRO_MAPPINGS.copy() # Or specific joystick config
-    else: # Fallback
+    elif CURRENT_P1_INPUT_DEVICE.startswith("joystick"): 
+        P1_MAPPINGS = DEFAULT_SWITCH_PRO_MAPPINGS.copy() 
+    else: 
         P1_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
 
-    # Player 2 Mappings
-    if CURRENT_P2_INPUT_DEVICE == "keyboard_p1": # P2 using P1 keyboard keys
+    if CURRENT_P2_INPUT_DEVICE == "keyboard_p1": 
         P2_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
-    elif CURRENT_P2_INPUT_DEVICE == "keyboard_p2": # P2 using P2 keyboard keys
+    elif CURRENT_P2_INPUT_DEVICE == "keyboard_p2": 
         P2_MAPPINGS = DEFAULT_KEYBOARD_P2_MAPPINGS.copy()
-    elif "joystick" in CURRENT_P2_INPUT_DEVICE:
-        P2_MAPPINGS = DEFAULT_SWITCH_PRO_MAPPINGS.copy() # Or specific joystick config
-    else: # Fallback
+    elif CURRENT_P2_INPUT_DEVICE.startswith("joystick"):
+        P2_MAPPINGS = DEFAULT_SWITCH_PRO_MAPPINGS.copy() 
+    else: 
         P2_MAPPINGS = DEFAULT_KEYBOARD_P2_MAPPINGS.copy()
 
     print(f"Config: P1 Mappings updated for device '{CURRENT_P1_INPUT_DEVICE}'.")
     print(f"Config: P2 Mappings updated for device '{CURRENT_P2_INPUT_DEVICE}'.")
 
-
-# --- Initialize by loading config ---
-# load_config() # Call this in main.py after pygame.init() and joystick_init()
-                # and before entering the main game loop or settings screen.
-                # For now, settings_ui will call it.
 ########## END OF FILE: config.py ##########

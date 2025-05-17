@@ -2,7 +2,7 @@
 # player.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.8 (Ensured petrification attributes initialized in __init__ and reset_state)
+## version 1.0.0.10 (process_input returns action_events)
 Defines the Player class, handling core attributes, collision heights, and
 the ability to check for safe uncrouching.
 Delegates state, animation, physics, collisions, input, combat, and network handling
@@ -16,7 +16,8 @@ import math
 
 from utils import PrintLimiter 
 import constants as C
-from assets import load_all_player_animations
+import config as game_config 
+from assets import load_all_player_animations, load_gif_frames, resource_path 
 
 from player_state_handler import set_player_state
 from player_animation_handler import update_player_animation
@@ -45,6 +46,8 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.player_id = player_id
         self._valid_init = True 
+        self.control_scheme: Optional[str] = None 
+        self.joystick_id_idx: Optional[int] = None 
 
         asset_folder = 'characters/player1' if self.player_id == 1 else 'characters/player2'
         if self.player_id not in [1, 2]:
@@ -52,6 +55,11 @@ class Player(pygame.sprite.Sprite):
                 print(f"Player Info (ID: {self.player_id}): Unrecognized ID. Defaulting to player1 assets.")
             
         self.animations = load_all_player_animations(relative_asset_folder=asset_folder)
+        
+        self.is_petrified = False
+        self.is_stone_smashed = False
+        self.stone_smashed_timer_start = 0
+
         if self.animations is None:
             print(f"CRITICAL Player Init Error (ID: {self.player_id}): Failed to load critical animations from '{asset_folder}'. Player invalid.")
             self.image = pygame.Surface((30, 40)).convert_alpha(); self.image.fill(C.RED)
@@ -62,10 +70,6 @@ class Player(pygame.sprite.Sprite):
             self.standing_collision_height = 0
             self.crouching_collision_height = 0
             self.standard_height = 0 
-            # Initialize petrification attributes even on failed animation load for safety
-            self.is_petrified = False
-            self.is_stone_smashed = False
-            self.stone_smashed_timer_start = 0
             self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "StoneP_Fail")
             self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "SmashP_Fail")]
             return 
@@ -193,18 +197,26 @@ class Player(pygame.sprite.Sprite):
             self.ice_key = C.P2_ICE_KEY
             self.shadow_key = C.P2_SHADOW_PROJECTILE_KEY 
             self.grey_key = C.P2_GREY_PROJECTILE_KEY     
-
-        # Petrification attributes
-        self.is_petrified = False
-        self.is_stone_smashed = False
-        self.stone_smashed_timer_start = 0
         
-        # Pre-load stone images if available from the character's animation set
-        # If 'stone' or 'stone_smashed' are not in self.animations (e.g., missing files),
-        # load_all_player_animations should have provided a BLUE placeholder.
-        # We'll use that or the specific loaded one.
-        self.stone_image_frame = self.animations.get('stone', [self._create_placeholder_surface(C.GRAY, "StoneP")])[0]
-        self.stone_smashed_frames = self.animations.get('stone_smashed', [self._create_placeholder_surface(C.DARK_GRAY, "SmashP")])
+        stone_common_folder = os.path.join('characters', 'Stone')
+        common_stone_png_path = resource_path(os.path.join(stone_common_folder, '__Stone.png'))
+        common_stone_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneSmashed.gif'))
+
+        loaded_common_stone_frames = load_gif_frames(common_stone_png_path)
+        if loaded_common_stone_frames and not (len(loaded_common_stone_frames) == 1 and loaded_common_stone_frames[0].get_size() == (30,40) and loaded_common_stone_frames[0].get_at((0,0)) == C.RED):
+            self.stone_image_frame = loaded_common_stone_frames[0]
+        elif 'stone' in self.animations and self.animations['stone']: 
+             self.stone_image_frame = self.animations['stone'][0]
+        else: 
+            self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "StoneP")
+
+        loaded_common_smashed_frames = load_gif_frames(common_stone_smashed_gif_path)
+        if loaded_common_smashed_frames and not (len(loaded_common_smashed_frames) == 1 and loaded_common_smashed_frames[0].get_size() == (30,40) and loaded_common_smashed_frames[0].get_at((0,0)) == C.RED):
+            self.stone_smashed_frames = loaded_common_smashed_frames
+        elif 'stone_smashed' in self.animations and self.animations['stone_smashed']: 
+            self.stone_smashed_frames = self.animations['stone_smashed']
+        else: 
+            self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "SmashP")]
 
 
         if not self._valid_init:
@@ -240,6 +252,17 @@ class Player(pygame.sprite.Sprite):
         self.current_frame = 0 
         self.death_animation_finished = True 
         set_player_state(self, 'petrified') 
+
+    def smash_petrification(self):
+        """Called when a petrified player is hit, to start the smashed animation."""
+        if self.is_petrified and not self.is_stone_smashed:
+            print(f"Player {self.player_id} (Petrified) is being smashed.")
+            self.is_stone_smashed = True
+            self.stone_smashed_timer_start = pygame.time.get_ticks()
+            set_player_state(self, 'smashed') # This will trigger the smashed animation
+        elif Player.print_limiter.can_print(f"smash_petrify_fail_{self.player_id}"):
+            print(f"Player {self.player_id}: smash_petrification called but not petrified or already smashed. State: petrified={self.is_petrified}, smashed={self.is_stone_smashed}")
+
 
     def set_projectile_group_references(self, projectile_group: pygame.sprite.Group,
                                         all_sprites_group: pygame.sprite.Group):
@@ -277,16 +300,49 @@ class Player(pygame.sprite.Sprite):
     def animate(self):
         update_player_animation(self)
 
-    def handle_input(self, keys_pressed_state, pygame_event_list): 
-        default_key_config = { 
-            'left': pygame.K_a, 'right': pygame.K_d, 'up': pygame.K_w, 'down': pygame.K_s,
-            'attack1': pygame.K_v, 'attack2': pygame.K_b, 'dash': pygame.K_LSHIFT,
-            'roll': pygame.K_LCTRL, 'interact': pygame.K_e
-        }
-        process_player_input_logic(self, keys_pressed_state, pygame_event_list, default_key_config)
+
+    def process_input(self, pygame_events, keys_pressed_override=None):
+        """
+        Processes input for the player based on their control_scheme.
+        `keys_pressed_override` is for network clients.
+        Returns a dictionary of action_events that occurred this frame.
+        """
+        active_mappings_for_input = {}
+        current_keys_for_input = keys_pressed_override if keys_pressed_override is not None else pygame.key.get_pressed()
+
+        if self.control_scheme:
+            if self.control_scheme == "keyboard_p1":
+                active_mappings_for_input = game_config.P1_MAPPINGS
+            elif self.control_scheme == "keyboard_p2":
+                active_mappings_for_input = game_config.P2_MAPPINGS
+            elif self.control_scheme.startswith("joystick_") and self.player_id == 1:
+                active_mappings_for_input = game_config.P1_MAPPINGS # P1_MAPPINGS holds joystick defs for P1
+            elif self.control_scheme.startswith("joystick_") and self.player_id == 2:
+                active_mappings_for_input = game_config.P2_MAPPINGS # P2_MAPPINGS holds joystick defs for P2
+            else: # Fallback or unassigned
+                if Player.print_limiter.can_print(f"proc_input_fallback_map_{self.player_id}_{self.control_scheme}"):
+                    print(f"Player {self.player_id}: process_input using default P1 keyboard map due to scheme '{self.control_scheme}'.")
+                active_mappings_for_input = game_config.DEFAULT_KEYBOARD_P1_MAPPINGS
+        else: # Should not happen if game_setup assigns control_scheme
+            if Player.print_limiter.can_print(f"proc_input_no_scheme_{self.player_id}"):
+                print(f"Player {self.player_id}: No control_scheme set in process_input. Using default P1 keyboard map.")
+            active_mappings_for_input = game_config.DEFAULT_KEYBOARD_P1_MAPPINGS
+        
+        return process_player_input_logic(self, current_keys_for_input, pygame_events, active_mappings_for_input)
+
 
     def handle_mapped_input(self, keys_pressed_state, pygame_event_list, key_map_dict): 
-        process_player_input_logic(self, keys_pressed_state, pygame_event_list, key_map_dict)
+        # This method is now primarily a wrapper for process_input if called with a specific key_map
+        # Its direct use might be phased out in favor of player.process_input which uses player.control_scheme
+        if Player.print_limiter.can_print(f"handle_mapped_input_call_{self.player_id}"):
+            print(f"Player {self.player_id}: handle_mapped_input called directly. Control scheme: '{self.control_scheme}'. This method might be deprecated.")
+        
+        # If the intention is to use the passed key_map_dict (e.g. for a specific keyboard override),
+        # then process_player_input_logic should be called with it.
+        # However, the Player.process_input() is the more modern way.
+        # For now, let it pass through to ensure older calls don't break immediately.
+        return process_player_input_logic(self, keys_pressed_state, pygame_event_list, key_map_dict)
+
 
     def _generic_fire_projectile(self, projectile_class, cooldown_attr_name, cooldown_const, projectile_config_name):
         if not self._valid_init or self.is_dead or not self.alive() or getattr(self, 'is_petrified', False): 
@@ -318,6 +374,10 @@ class Player(pygame.sprite.Sprite):
                 spawn_y += offset_vector.y
 
             new_projectile = projectile_class(spawn_x, spawn_y, current_aim_direction, self)
+            # Pass game_elements_ref to the projectile if it exists on the player
+            if hasattr(self, 'game_elements_ref_for_projectiles'):
+                new_projectile.game_elements_ref = self.game_elements_ref_for_projectiles
+
             self.projectile_sprites_group.add(new_projectile)
             self.all_sprites_group.add(new_projectile)
 
@@ -361,7 +421,7 @@ class Player(pygame.sprite.Sprite):
     def handle_network_input(self, network_input_data_dict):
         handle_player_network_input(self, network_input_data_dict)
 
-    def get_input_state_for_network(self, keys_state, events, key_map):
+    def get_input_state_for_network(self, keys_state, events, key_map): # key_map here is specific to the calling context
         return get_player_input_state_for_network(self, keys_state, events, key_map)
 
     def check_platform_collisions(self, direction: str, platforms_group: pygame.sprite.Group):
@@ -441,10 +501,28 @@ class Player(pygame.sprite.Sprite):
         self.grey_cooldown_timer = 0   
         self.fireball_last_input_dir = pygame.math.Vector2(1.0, 0.0) 
 
-        # Reset petrification state
         self.is_petrified = False
         self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
+        
+        stone_common_folder = os.path.join('characters', 'Stone')
+        common_stone_png_path = resource_path(os.path.join(stone_common_folder, '__Stone.png'))
+        common_stone_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneSmashed.gif'))
+        loaded_common_stone_frames = load_gif_frames(common_stone_png_path)
+        if loaded_common_stone_frames and not (len(loaded_common_stone_frames) == 1 and loaded_common_stone_frames[0].get_size() == (30,40) and loaded_common_stone_frames[0].get_at((0,0)) == C.RED):
+            self.stone_image_frame = loaded_common_stone_frames[0]
+        elif 'stone' in self.animations and self.animations['stone']:
+             self.stone_image_frame = self.animations['stone'][0]
+        else: 
+            self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "StoneP")
+        loaded_common_smashed_frames = load_gif_frames(common_stone_smashed_gif_path)
+        if loaded_common_smashed_frames and not (len(loaded_common_smashed_frames) == 1 and loaded_common_smashed_frames[0].get_size() == (30,40) and loaded_common_smashed_frames[0].get_at((0,0)) == C.RED):
+            self.stone_smashed_frames = loaded_common_smashed_frames
+        elif 'stone_smashed' in self.animations and self.animations['stone_smashed']:
+            self.stone_smashed_frames = self.animations['stone_smashed']
+        else: 
+            self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "SmashP")]
+
 
         if hasattr(self.image, 'set_alpha') and hasattr(self.image, 'get_alpha') and \
            self.image.get_alpha() is not None and self.image.get_alpha() < 255:
