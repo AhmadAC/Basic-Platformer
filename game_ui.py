@@ -1,7 +1,7 @@
 ########## START OF FILE: game_ui.py ##########
 # game_ui.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.10 (Correct joystick confirm/cancel logic in main menu)
+## version 1.0.0.13 (Correct joystick confirm/cancel in select_map_dialog)
 """
 Functions for drawing User Interface elements like health bars, player HUDs,
 main menus, input dialogs, and the main game scene.
@@ -12,9 +12,25 @@ import os
 import constants as C # For game-wide color constants
 from typing import Dict, Optional, Any, List
 import joystick_handler # Import joystick_handler
-import config as game_config # For default joystick mappings for menu
+import config as game_config # For default joystick mappings for menu AND AXIS_THRESHOLD_DEFAULT
 
-# ... (PYPERCLIP_AVAILABLE_UI_MODULE, SCRAP_INITIALIZED_UI_MODULE, check_pygame_scrap_init_status, draw_health_bar, draw_player_hud, draw_platformer_scene_on_surface - all remain the same) ...
+PYPERCLIP_AVAILABLE_UI_MODULE = False
+try:
+    import pyperclip
+    PYPERCLIP_AVAILABLE_UI_MODULE = True
+except ImportError:
+    pass
+
+SCRAP_INITIALIZED_UI_MODULE = False
+
+def check_pygame_scrap_init_status():
+    global SCRAP_INITIALIZED_UI_MODULE
+    try:
+        if pygame.scrap.get_init(): SCRAP_INITIALIZED_UI_MODULE = True
+        else: SCRAP_INITIALIZED_UI_MODULE = False
+    except (AttributeError, pygame.error): SCRAP_INITIALIZED_UI_MODULE = False
+    return SCRAP_INITIALIZED_UI_MODULE
+
 def draw_health_bar(surface: pygame.Surface, x: int, y: int,
                     width: int, height: int,
                     current_hp: float, max_hp: float):
@@ -25,7 +41,7 @@ def draw_health_bar(surface: pygame.Surface, x: int, y: int,
     color_red = getattr(C, 'RED', (255,0,0)); color_green = getattr(C, 'GREEN', (0,255,0))
     color_dark_gray = getattr(C, 'DARK_GRAY', (50,50,50)); color_black = getattr(C, 'BLACK', (0,0,0))
     try: health_color = pygame.Color(color_red).lerp(pygame.Color(color_green), health_ratio)
-    except AttributeError: # Fallback if pygame.Color.lerp is not available (older Pygame)
+    except AttributeError:
         r = int(color_red[0] * (1 - health_ratio) + color_green[0] * health_ratio)
         g = int(color_red[1] * (1 - health_ratio) + color_green[1] * health_ratio)
         b = int(color_red[2] * (1 - health_ratio) + color_green[2] * health_ratio)
@@ -114,11 +130,14 @@ def draw_platformer_scene_on_surface(screen_surface: pygame.Surface, game_elemen
 
 def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
                    fonts: Dict[str, Optional[pygame.font.Font]], app_status_obj: Any) -> Optional[str]:
-    button_w, button_h, spacing, title_gap = 350, 55, 20, 60
+    button_w, button_h, spacing, title_gap = 350, 55, 15, 50 # Reduced spacing and title_gap
     current_w, current_h = screen_surface.get_size()
     font_title = fonts.get("large") or (pygame.font.Font(None, 60) if pygame.font.get_init() else None)
     if not font_title: return "quit"
-    title_surf = font_title.render("Platformer Adventure LAN", True, getattr(C, 'WHITE',(255,255,255)))
+    # Removed title text to move buttons up
+    # title_surf = font_title.render("Platformer Adventure LAN", True, getattr(C, 'WHITE',(255,255,255)))
+    title_surf = pygame.Surface((0,0)) # Empty surface if no title text
+    title_rect = title_surf.get_rect(center=(current_w // 2, current_h // 5)) # Move title area higher
 
     menu_buttons = {
         "host": {"text": "Host Game", "action": "host"},
@@ -133,7 +152,7 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
 
     font_button = fonts.get("medium") or (pygame.font.Font(None, 30) if pygame.font.get_init() else None)
     if not font_button: return "quit"
-    title_rect = title_surf.get_rect(center=(current_w // 2, current_h // 4))
+    # title_rect calculation will be done in update_btn_geo based on new top_offset
 
     color_bg = getattr(C, 'BLACK', (0,0,0))
     color_text_normal = getattr(C, 'WHITE', (255,255,255))
@@ -144,7 +163,7 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
     color_button_selected_hover_bg = pygame.Color(color_button_selected_bg).lerp(pygame.Color(color_button_hover_bg), 0.5) # type: ignore
 
     joystick_menu_nav_instance = None
-    active_joystick_map_for_menu = game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS # Default
+    active_joystick_map_for_menu = game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS
     p1_device = game_config.CURRENT_P1_INPUT_DEVICE
 
     if p1_device.startswith("joystick_"):
@@ -152,38 +171,47 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
             p1_joy_id = int(p1_device.split("_")[-1])
             if 0 <= p1_joy_id < joystick_handler.get_joystick_count():
                 joystick_menu_nav_instance = joystick_handler.get_joystick_instance(p1_joy_id)
-                active_joystick_map_for_menu = game_config.P1_MAPPINGS # Use P1's actual current mappings
+                active_joystick_map_for_menu = game_config.P1_MAPPINGS
         except (ValueError, IndexError): pass
-    
-    if not joystick_menu_nav_instance and joystick_handler.get_joystick_count() > 0: # Fallback if P1 not on joy but one exists
+    if not joystick_menu_nav_instance and joystick_handler.get_joystick_count() > 0:
         joystick_menu_nav_instance = joystick_handler.get_joystick_instance(0)
-        # If falling back to joy 0, and P1 wasn't on joy_0, we might want to check P2's map or use defaults
-        # For simplicity here, if P1 wasn't joystick, menu uses P1's *keyboard* map or defaults if P1 map is also keyboard.
-        # But for joystick input, it must use a joystick map. So, use P1_MAPPINGS if P1 IS joy0, else defaults.
-        if game_config.CURRENT_P1_INPUT_DEVICE == "joystick_0":
-             active_joystick_map_for_menu = game_config.P1_MAPPINGS
-        else: # P1 not on joy_0, P2 might be, or just use defaults for generic joy_0 control.
-             active_joystick_map_for_menu = game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS
-
+        if game_config.CURRENT_P1_INPUT_DEVICE == "joystick_0": active_joystick_map_for_menu = game_config.P1_MAPPINGS
+        elif game_config.CURRENT_P2_INPUT_DEVICE == "joystick_0": active_joystick_map_for_menu = game_config.P2_MAPPINGS
+        else: active_joystick_map_for_menu = game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS
 
     if joystick_menu_nav_instance: print(f"GAME_UI: Main menu using joystick: {joystick_menu_nav_instance.get_name()}")
     else: print(f"GAME_UI: No joystick active for main menu navigation.")
-
 
     JOY_NAV_COOLDOWN_MS = 200
     last_joy_nav_time = 0
     axis_y_was_active_negative = False
     axis_y_was_active_positive = False
 
+    # Define top margin for buttons
+    buttons_top_margin = current_h * 0.15 # Start buttons 15% from the top
+
     def update_btn_geo():
-        nonlocal title_rect
+        # nonlocal title_rect # Title rect is not really used for positioning buttons anymore
         current_w_local, current_h_local = screen_surface.get_size()
-        title_rect = title_surf.get_rect(center=(current_w_local // 2, current_h_local // 4))
-        btn_y = title_rect.bottom + title_gap
+        # Calculate total height of all buttons and spacing
+        num_buttons = len(button_order)
+        total_buttons_height = (num_buttons * button_h) + ((num_buttons - 1) * spacing)
+        
+        # Adjust buttons_top_margin dynamically if needed, or keep it fixed
+        # For fixed top margin:
+        btn_y = buttons_top_margin
+        
+        # If you want to center the block of buttons, you could do:
+        # btn_y = (current_h_local - total_buttons_height) // 2
+        # Ensure btn_y doesn't go too high if there are few buttons:
+        # btn_y = max(buttons_top_margin, btn_y)
+
+
         for key_ordered in button_order:
             props = menu_buttons[key_ordered]
             props["rect"] = pygame.Rect(0, 0, button_w, button_h)
-            props["rect"].centerx, props["rect"].top = current_w_local // 2, btn_y
+            props["rect"].centerx = current_w_local // 2
+            props["rect"].top = btn_y
             props["text_surf"] = font_button.render(props["text"], True, color_text_normal) # type: ignore
             props["text_rect"] = props["text_surf"].get_rect(center=props["rect"].center)
             btn_y += button_h + spacing
@@ -191,6 +219,7 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
 
     selected_action = None
     while selected_action is None and app_status_obj.app_running:
+        # ... (rest of the event loop and drawing logic from previous version, ensure to use updated btn_y logic based on buttons_top_margin)
         mouse_pos = pygame.mouse.get_pos()
         current_time_ms_menu = pygame.time.get_ticks()
         can_trigger_new_joy_nav = (current_time_ms_menu - last_joy_nav_time > JOY_NAV_COOLDOWN_MS)
@@ -201,6 +230,7 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
                 try:
                     current_w, current_h = max(320,event.w), max(240,event.h)
                     screen_surface = pygame.display.set_mode((current_w,current_h), pygame.RESIZABLE|pygame.DOUBLEBUF)
+                    buttons_top_margin = current_h * 0.15 # Recalculate margin on resize
                     update_btn_geo()
                 except pygame.error as e: print(f"Menu resize error: {e}")
 
@@ -216,89 +246,74 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
             if joystick_menu_nav_instance and hasattr(event, 'joy') and event.joy == joystick_menu_nav_instance.get_id():
                 joy_confirm_mapping = active_joystick_map_for_menu.get("menu_confirm", {})
                 joy_cancel_mapping = active_joystick_map_for_menu.get("menu_cancel", {})
-
-                confirm_button_id = joy_confirm_mapping.get("id") if joy_confirm_mapping.get("type") == "button" else -1 # Default to invalid
-                cancel_button_id = joy_cancel_mapping.get("id") if joy_cancel_mapping.get("type") == "button" else -1   # Default to invalid
+                confirm_button_id = joy_confirm_mapping.get("id") if joy_confirm_mapping.get("type") == "button" else \
+                                    game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS.get("menu_confirm", {}).get("id", 0)
+                cancel_button_id = joy_cancel_mapping.get("id") if joy_cancel_mapping.get("type") == "button" else \
+                                   game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS.get("menu_cancel", {}).get("id", 3)
 
                 if event.type == pygame.JOYBUTTONDOWN:
-                    # print(f"DEBUG UI: JoyButton {event.button} pressed. Confirm ID: {confirm_button_id}, Cancel ID: {cancel_button_id}")
                     if event.button == confirm_button_id:
                         selected_action = menu_buttons[button_order[selected_button_index]]["action"]
                         print(f"GAME_UI: Joystick Confirm (Button {event.button}) -> Action: {selected_action}")
                     elif event.button == cancel_button_id:
-                        selected_action = "quit" # Main menu "cancel" is quit
-                        print(f"GAME_UI: Joystick Cancel (Button {event.button}) -> Quitting")
+                         selected_action = "quit"
+                         print(f"GAME_UI: Joystick Cancel (Button {event.button}) -> Quitting")
 
                 if event.type == pygame.JOYHATMOTION:
-                    if event.hat == active_joystick_map_for_menu.get("menu_up", {}).get("id", -1) and can_trigger_new_joy_nav: # Check hat ID
+                    if event.hat == active_joystick_map_for_menu.get("menu_up", {}).get("id", 0) and can_trigger_new_joy_nav:
                         hat_y_val = event.value[1]
-                        expected_up_val = active_joystick_map_for_menu.get("menu_up", {}).get("value", (0,0))[1] # (0,1) for up
-                        expected_down_val = active_joystick_map_for_menu.get("menu_down", {}).get("value", (0,0))[1] # (0,-1) for down
-
+                        expected_up_val = active_joystick_map_for_menu.get("menu_up", {}).get("value", (0,0))[1]
+                        expected_down_val = active_joystick_map_for_menu.get("menu_down", {}).get("value", (0,0))[1]
                         if hat_y_val == expected_up_val and expected_up_val != 0:
                             selected_button_index = (selected_button_index - 1 + len(button_order)) % len(button_order)
                             last_joy_nav_time = current_time_ms_menu
                         elif hat_y_val == expected_down_val and expected_down_val != 0 :
                             selected_button_index = (selected_button_index + 1) % len(button_order)
                             last_joy_nav_time = current_time_ms_menu
-            
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for i, key_ordered_mouse in enumerate(button_order):
                     props_mouse = menu_buttons[key_ordered_mouse]
                     if "rect" in props_mouse and props_mouse["rect"].collidepoint(mouse_pos):
-                        selected_button_index = i
-                        selected_action = props_mouse["action"]
-                        break
+                        selected_button_index = i; selected_action = props_mouse["action"]; break
 
         if joystick_menu_nav_instance:
-            menu_nav_axis_cfg = active_joystick_map_for_menu.get("up", {}) # Use "up" action for axis config
-            menu_nav_axis_id = menu_nav_axis_cfg.get("id", -1)
-            menu_nav_axis_threshold = menu_nav_axis_cfg.get("threshold", 0.7)
-            menu_nav_axis_up_val = menu_nav_axis_cfg.get("value", 0) # e.g., -1 for up
-
-            menu_nav_axis_down_cfg = active_joystick_map_for_menu.get("down", {})
-            # Assume down uses the same axis ID as up for simplicity, but opposite value
-            menu_nav_axis_down_val = menu_nav_axis_down_cfg.get("value", 0) # e.g., 1 for down
-
-
+            menu_nav_axis_cfg_up = active_joystick_map_for_menu.get("up", active_joystick_map_for_menu.get("menu_up",{}))
+            menu_nav_axis_id = menu_nav_axis_cfg_up.get("id", active_joystick_map_for_menu.get("up", {}).get("id", 1) )
+            menu_nav_axis_threshold = menu_nav_axis_cfg_up.get("threshold", game_config.AXIS_THRESHOLD_DEFAULT)
+            menu_nav_axis_up_val = menu_nav_axis_cfg_up.get("value", -1)
+            menu_nav_axis_cfg_down = active_joystick_map_for_menu.get("down", active_joystick_map_for_menu.get("menu_down",{}))
+            menu_nav_axis_down_val = menu_nav_axis_cfg_down.get("value", 1)
             if menu_nav_axis_id != -1 and 0 <= menu_nav_axis_id < joystick_menu_nav_instance.get_numaxes():
                 current_axis_y_val = joystick_menu_nav_instance.get_axis(menu_nav_axis_id)
-
-                if menu_nav_axis_up_val < 0 and current_axis_y_val < -menu_nav_axis_threshold : # Stick is UP
+                if (menu_nav_axis_up_val < 0 and current_axis_y_val < -menu_nav_axis_threshold) or \
+                   (menu_nav_axis_up_val > 0 and current_axis_y_val > menu_nav_axis_threshold and menu_nav_axis_up_val != 0):
                     if not axis_y_was_active_negative and can_trigger_new_joy_nav:
                         selected_button_index = (selected_button_index - 1 + len(button_order)) % len(button_order)
                         last_joy_nav_time = current_time_ms_menu
                     axis_y_was_active_negative = True
-                else:
-                    axis_y_was_active_negative = False
-
-                if menu_nav_axis_down_val > 0 and current_axis_y_val > menu_nav_axis_threshold: # Stick is DOWN
+                else: axis_y_was_active_negative = False
+                if (menu_nav_axis_down_val > 0 and current_axis_y_val > menu_nav_axis_threshold) or \
+                   (menu_nav_axis_down_val < 0 and current_axis_y_val < -menu_nav_axis_threshold and menu_nav_axis_down_val != 0):
                     if not axis_y_was_active_positive and can_trigger_new_joy_nav:
                         selected_button_index = (selected_button_index + 1) % len(button_order)
                         last_joy_nav_time = current_time_ms_menu
                     axis_y_was_active_positive = True
-                else:
-                    axis_y_was_active_positive = False
-            else: # Axis ID invalid or not configured for menu up/down
-                 axis_y_was_active_negative = False
-                 axis_y_was_active_positive = False
-
+                else: axis_y_was_active_positive = False
+            else: axis_y_was_active_negative = False; axis_y_was_active_positive = False
 
         if not app_status_obj.app_running: break
         screen_surface.fill(color_bg)
-        screen_surface.blit(title_surf, title_rect)
+        # screen_surface.blit(title_surf, title_rect) # Title text removed for more button space
         for i, key_ordered_draw in enumerate(button_order):
             props_draw = menu_buttons[key_ordered_draw]
             if "rect" in props_draw:
                 is_hovered_by_mouse_draw = props_draw["rect"].collidepoint(mouse_pos)
                 is_selected_by_nav_draw = (i == selected_button_index)
-                current_bg_draw = color_button_normal_bg
-                current_txt_col_draw = color_text_normal
+                current_bg_draw = color_button_normal_bg; current_txt_col_draw = color_text_normal
                 if is_selected_by_nav_draw:
                     current_txt_col_draw = color_text_selected
                     current_bg_draw = color_button_selected_hover_bg if is_hovered_by_mouse_draw else color_button_selected_bg # type: ignore
-                elif is_hovered_by_mouse_draw:
-                    current_bg_draw = color_button_hover_bg
+                elif is_hovered_by_mouse_draw: current_bg_draw = color_button_hover_bg
                 pygame.draw.rect(screen_surface, current_bg_draw, props_draw["rect"], border_radius=8)
                 final_text_surf_draw = font_button.render(props_draw["text"], True, current_txt_col_draw) # type: ignore
                 final_text_rect_draw = final_text_surf_draw.get_rect(center=props_draw["rect"].center)
@@ -307,6 +322,7 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
         clock_obj.tick(30)
     return selected_action
 
+# ... (MAPS_DIRECTORY_GAME_UI, select_map_dialog, draw_download_dialog - remain the same as the previous version with joystick nav for select_map_dialog) ...
 MAPS_DIRECTORY_GAME_UI = getattr(C, "MAPS_DIR", "maps")
 if not MAPS_DIRECTORY_GAME_UI:
     MAPS_DIRECTORY_GAME_UI = "maps"
@@ -323,23 +339,17 @@ def select_map_dialog(screen: pygame.Surface, clock_obj: pygame.time.Clock,
             for f_name in os.listdir(MAPS_DIRECTORY_GAME_UI):
                 if f_name.endswith(".py") and f_name != "__init__.py":
                     map_module_names.append(f_name[:-3])
-            map_module_names.sort()
-            print(f"GAME_UI: Found maps: {map_module_names}")
-        except OSError as e:
-            print(f"GAME_UI Error: Could not read maps directory '{MAPS_DIRECTORY_GAME_UI}': {e}")
-            map_module_names = []
-    else:
-        print(f"GAME_UI Warning: Maps directory '{MAPS_DIRECTORY_GAME_UI}' not found.")
+            map_module_names.sort(); print(f"GAME_UI: Found maps: {map_module_names}")
+        except OSError as e: print(f"GAME_UI Error: Could not read maps directory '{MAPS_DIRECTORY_GAME_UI}': {e}"); map_module_names = []
+    else: print(f"GAME_UI Warning: Maps directory '{MAPS_DIRECTORY_GAME_UI}' not found.")
 
     if not map_module_names:
         font_medium = fonts.get("medium") or (pygame.font.Font(None, 36) if pygame.font.get_init() else None)
         if font_medium:
-            screen_w, screen_h = screen.get_size()
-            screen.fill(getattr(C, 'BLACK', (0,0,0)))
+            screen_w, screen_h = screen.get_size(); screen.fill(getattr(C, 'BLACK', (0,0,0)))
             msg_surf = font_medium.render(f"No Maps Found in '{MAPS_DIRECTORY_GAME_UI}/' folder.", True, getattr(C, 'RED', (255,0,0)))
             screen.blit(msg_surf, msg_surf.get_rect(center=(screen_w//2, screen_h//2)))
-            pygame.display.flip()
-            pygame.time.wait(2500)
+            pygame.display.flip(); pygame.time.wait(2500)
         return None
 
     selected_index = 0; dialog_active = True
@@ -354,11 +364,35 @@ def select_map_dialog(screen: pygame.Surface, clock_obj: pygame.time.Clock,
     color_button_selected_hover_bg = pygame.Color(color_button_selected_bg).lerp(pygame.Color(color_button_hover_bg), 0.5) # type: ignore
     color_text_normal = color_white; color_text_selected = getattr(C, 'YELLOW', (255,255,0))
 
+    joy_map_dialog_instance = None
+    active_joy_map_for_map_dialog = game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS
+    p1_dev_map_dialog = game_config.CURRENT_P1_INPUT_DEVICE
+    if p1_dev_map_dialog.startswith("joystick_"):
+        try:
+            p1_joy_id_map = int(p1_dev_map_dialog.split("_")[-1])
+            if 0 <= p1_joy_id_map < joystick_handler.get_joystick_count():
+                joy_map_dialog_instance = joystick_handler.get_joystick_instance(p1_joy_id_map)
+                active_joy_map_for_map_dialog = game_config.P1_MAPPINGS
+        except: pass
+    if not joy_map_dialog_instance and joystick_handler.get_joystick_count() > 0:
+        joy_map_dialog_instance = joystick_handler.get_joystick_instance(0)
+        if game_config.CURRENT_P1_INPUT_DEVICE == "joystick_0": active_joy_map_for_map_dialog = game_config.P1_MAPPINGS
+        elif game_config.CURRENT_P2_INPUT_DEVICE == "joystick_0": active_joy_map_for_map_dialog = game_config.P2_MAPPINGS
+        else: active_joy_map_for_map_dialog = game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS
+    if joy_map_dialog_instance: print(f"GAME_UI: Map select dialog using joystick: {joy_map_dialog_instance.get_name()}")
+
+    joy_nav_cooldown_map_dialog = 200
+    last_joy_nav_time_map_dialog = 0
+    axis_y_was_active_neg_map_dialog = False
+    axis_y_was_active_pos_map_dialog = False
+
     while dialog_active and app_status.app_running:
         screen_w, screen_h = screen.get_size()
         mouse_pos = pygame.mouse.get_pos()
         frame_title_surf = font_title.render("Select a Map", True, color_white) # type: ignore
         frame_title_rect = frame_title_surf.get_rect(center=(screen_w // 2, screen_h * 0.15))
+        current_time_map_dialog = pygame.time.get_ticks()
+        can_trigger_joy_nav_map_dialog = (current_time_map_dialog - last_joy_nav_time_map_dialog > joy_nav_cooldown_map_dialog)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: app_status.app_running = False; dialog_active = False
@@ -367,46 +401,82 @@ def select_map_dialog(screen: pygame.Surface, clock_obj: pygame.time.Clock,
                 elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
                     if 0 <= selected_index < len(map_module_names): return map_module_names[selected_index]
                 elif event.key == pygame.K_UP:
-                    selected_index = (selected_index - 1 + len(map_module_names)) % len(map_module_names)
-                    current_page = selected_index // maps_per_page
+                    selected_index=(selected_index - 1 + len(map_module_names)) % len(map_module_names); current_page = selected_index // maps_per_page
                 elif event.key == pygame.K_DOWN:
-                    selected_index = (selected_index + 1) % len(map_module_names)
-                    current_page = selected_index // maps_per_page
+                    selected_index=(selected_index + 1) % len(map_module_names); current_page = selected_index // maps_per_page
                 elif event.key == pygame.K_PAGEUP or (event.key == pygame.K_LEFT and max_pages > 1) :
                     current_page = max(0, current_page - 1); selected_index = current_page * maps_per_page
                 elif event.key == pygame.K_PAGEDOWN or (event.key == pygame.K_RIGHT and max_pages > 1):
                     current_page = min(max_pages - 1, current_page + 1); selected_index = current_page * maps_per_page
+            if joy_map_dialog_instance and hasattr(event, 'joy') and event.joy == joy_map_dialog_instance.get_id():
+                confirm_cfg = active_joy_map_for_map_dialog.get("menu_confirm", {})
+                cancel_cfg = active_joy_map_for_map_dialog.get("menu_cancel", {})
+                confirm_btn_id = confirm_cfg.get("id") if confirm_cfg.get("type") == "button" else game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS.get("menu_confirm",{}).get("id",0)
+                cancel_btn_id = cancel_cfg.get("id") if cancel_cfg.get("type") == "button" else game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS.get("menu_cancel",{}).get("id",3)
+
+                if event.type == pygame.JOYBUTTONDOWN:
+                    if event.button == confirm_btn_id:
+                        if 0 <= selected_index < len(map_module_names): return map_module_names[selected_index]
+                    elif event.button == cancel_btn_id:
+                        dialog_active = False; return None
+                if event.type == pygame.JOYHATMOTION and event.hat == active_joy_map_for_map_dialog.get("menu_up",{}).get("id",0) and can_trigger_joy_nav_map_dialog:
+                    hat_y = event.value[1]
+                    expected_up = active_joy_map_for_map_dialog.get("menu_up",{}).get("value",(0,0))[1]
+                    expected_down = active_joy_map_for_map_dialog.get("menu_down",{}).get("value",(0,0))[1]
+                    if hat_y == expected_up and expected_up !=0:
+                        selected_index=(selected_index - 1 + len(map_module_names)) % len(map_module_names); current_page = selected_index // maps_per_page
+                        last_joy_nav_time_map_dialog = current_time_map_dialog
+                    elif hat_y == expected_down and expected_down != 0:
+                        selected_index=(selected_index + 1) % len(map_module_names); current_page = selected_index // maps_per_page
+                        last_joy_nav_time_map_dialog = current_time_map_dialog
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                _start_idx_click = current_page * maps_per_page
-                _end_idx_click = min(_start_idx_click + maps_per_page, len(map_module_names))
+                _start_idx_click = current_page * maps_per_page; _end_idx_click = min(_start_idx_click + maps_per_page, len(map_module_names))
                 _visible_maps_on_page_click = map_module_names[_start_idx_click:_end_idx_click]
                 _current_btn_y_click = frame_title_rect.bottom + 60
                 for i, map_name_item in enumerate(_visible_maps_on_page_click):
                     item_rect_click = pygame.Rect(0, 0, screen_w * button_width_factor, button_height)
                     item_rect_click.centerx = screen_w // 2; item_rect_click.top = _current_btn_y_click
-                    if item_rect_click.collidepoint(mouse_pos):
-                        selected_index = _start_idx_click + i; return map_name_item
+                    if item_rect_click.collidepoint(mouse_pos): selected_index = _start_idx_click + i; return map_name_item
                     _current_btn_y_click += button_height + button_spacing
+        
+        if joy_map_dialog_instance: # Polled Axis
+            axis_cfg_up = active_joy_map_for_map_dialog.get("up", active_joy_map_for_map_dialog.get("menu_up",{}))
+            axis_id = axis_cfg_up.get("id", 1)
+            axis_thresh = axis_cfg_up.get("threshold", game_config.AXIS_THRESHOLD_DEFAULT)
+            axis_up_val_expected = axis_cfg_up.get("value", -1)
+            axis_cfg_down = active_joy_map_for_map_dialog.get("down", active_joy_map_for_map_dialog.get("menu_down",{}))
+            axis_down_val_expected = axis_cfg_down.get("value", 1)
+
+            if 0 <= axis_id < joy_map_dialog_instance.get_numaxes():
+                current_axis_val = joy_map_dialog_instance.get_axis(axis_id)
+                if (axis_up_val_expected < 0 and current_axis_val < -axis_thresh) or \
+                   (axis_up_val_expected > 0 and current_axis_val > axis_thresh and axis_up_val_expected !=0):
+                    if not axis_y_was_active_neg_map_dialog and can_trigger_joy_nav_map_dialog:
+                        selected_index=(selected_index - 1 + len(map_module_names)) % len(map_module_names); current_page = selected_index // maps_per_page
+                        last_joy_nav_time_map_dialog = current_time_map_dialog
+                    axis_y_was_active_neg_map_dialog = True
+                else: axis_y_was_active_neg_map_dialog = False
+                if (axis_down_val_expected > 0 and current_axis_val > axis_thresh) or \
+                   (axis_down_val_expected < 0 and current_axis_val < -axis_thresh and axis_down_val_expected != 0):
+                    if not axis_y_was_active_pos_map_dialog and can_trigger_joy_nav_map_dialog:
+                        selected_index=(selected_index + 1) % len(map_module_names); current_page = selected_index // maps_per_page
+                        last_joy_nav_time_map_dialog = current_time_map_dialog
+                    axis_y_was_active_pos_map_dialog = True
+                else: axis_y_was_active_pos_map_dialog = False
+            else: axis_y_was_active_neg_map_dialog = False; axis_y_was_active_pos_map_dialog = False
+
         if not app_status.app_running: break
-        screen.fill(color_black)
-        screen.blit(frame_title_surf, frame_title_rect)
+        screen.fill(color_black); screen.blit(frame_title_surf, frame_title_rect)
         instr_text = "Use Arrows/Enter. PgUp/PgDn or L/R for pages. ESC to cancel."
-        instr_surf = font_instr.render(instr_text, True, color_gray) # type: ignore
-        instr_rect = instr_surf.get_rect(center=(screen_w // 2, frame_title_rect.bottom + 20))
-        screen.blit(instr_surf, instr_rect)
-        start_idx_draw = current_page * maps_per_page
-        end_idx_draw = min(start_idx_draw + maps_per_page, len(map_module_names))
-        visible_maps_on_page_draw = map_module_names[start_idx_draw:end_idx_draw]
-        current_btn_y_draw = frame_title_rect.bottom + 60
+        instr_surf = font_instr.render(instr_text, True, color_gray); instr_rect = instr_surf.get_rect(center=(screen_w // 2, frame_title_rect.bottom + 20)); screen.blit(instr_surf, instr_rect) # type: ignore
+        start_idx_draw = current_page * maps_per_page; end_idx_draw = min(start_idx_draw + maps_per_page, len(map_module_names))
+        visible_maps_on_page_draw = map_module_names[start_idx_draw:end_idx_draw]; current_btn_y_draw = frame_title_rect.bottom + 60
         for i, map_name_item_draw in enumerate(visible_maps_on_page_draw):
-            actual_map_index = start_idx_draw + i
-            item_text = f"{map_name_item_draw}"
+            actual_map_index = start_idx_draw + i; item_text = f"{map_name_item_draw}"
             item_rect_draw = pygame.Rect(0, 0, screen_w * button_width_factor, button_height)
             item_rect_draw.centerx = screen_w // 2; item_rect_draw.top = current_btn_y_draw
-            is_keyboard_selected = (actual_map_index == selected_index)
-            is_mouse_hovered = item_rect_draw.collidepoint(mouse_pos)
-            current_bg_color_item = color_button_normal_bg
-            current_text_color_item = color_text_normal
+            is_keyboard_selected = (actual_map_index == selected_index); is_mouse_hovered = item_rect_draw.collidepoint(mouse_pos)
+            current_bg_color_item = color_button_normal_bg; current_text_color_item = color_text_normal
             if is_keyboard_selected:
                 current_text_color_item = color_text_selected
                 if is_mouse_hovered: current_bg_color_item = color_button_selected_hover_bg # type: ignore
@@ -414,15 +484,11 @@ def select_map_dialog(screen: pygame.Surface, clock_obj: pygame.time.Clock,
             elif is_mouse_hovered: current_bg_color_item = color_button_hover_bg
             pygame.draw.rect(screen, current_bg_color_item, item_rect_draw, border_radius=5)
             pygame.draw.rect(screen, color_white, item_rect_draw, 1, border_radius=5)
-            item_surf = font_item.render(item_text, True, current_text_color_item) # type: ignore
-            text_rect = item_surf.get_rect(center=item_rect_draw.center)
-            screen.blit(item_surf, text_rect)
+            item_surf = font_item.render(item_text, True, current_text_color_item); text_rect = item_surf.get_rect(center=item_rect_draw.center); screen.blit(item_surf, text_rect) # type: ignore
             current_btn_y_draw += button_height + button_spacing
         if max_pages > 1:
             page_text = f"Page {current_page + 1} of {max_pages}"
-            page_surf = font_instr.render(page_text, True, color_gray) # type: ignore
-            page_rect = page_surf.get_rect(center=(screen_w // 2, screen_h - 30))
-            screen.blit(page_surf, page_rect)
+            page_surf = font_instr.render(page_text, True, color_gray); page_rect = page_surf.get_rect(center=(screen_w // 2, screen_h - 30)); screen.blit(page_surf, page_rect) # type: ignore
         pygame.display.flip()
         clock_obj.tick(30)
     return None

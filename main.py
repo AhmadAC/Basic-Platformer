@@ -103,11 +103,11 @@ try:
     display_info = pygame.display.Info()
     monitor_width, monitor_height = display_info.current_w, display_info.current_h
     initial_width = max(800, min(1600, int(monitor_width * 0.75)))
-    initial_height = max(600, min(900, int(monitor_height * 0.75)))
+    calculated_initial_height = max(600, min(900, int(monitor_height * 0.75)))
+    initial_height = calculated_initial_height + 80 # <--- ADD 80 HERE
     WIDTH_MAIN, HEIGHT_MAIN = initial_width, initial_height
     screen_flags = pygame.RESIZABLE | pygame.DOUBLEBUF
     screen = pygame.display.set_mode((WIDTH_MAIN, HEIGHT_MAIN), screen_flags)
-    pygame.display.set_caption("Platformer Adventure LAN")
     _main_print("INFO", f"Initial window dimensions: {WIDTH_MAIN}x{HEIGHT_MAIN}")
 except Exception as e:
     _main_print("FATAL", f"Error setting up Pygame display: {e}")
@@ -163,7 +163,6 @@ if __name__ == "__main__":
 
     while app_status.app_running:
         current_screen_width, current_screen_height = screen.get_size()
-        pygame.display.set_caption("Platformer Adventure - Main Menu")
         _main_print("INFO", "\nShowing main menu...")
         menu_choice = game_ui.show_main_menu(screen, main_clock, fonts, app_status)
         _main_print("INFO", f"Main menu choice: '{menu_choice}'")
