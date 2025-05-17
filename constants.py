@@ -216,13 +216,15 @@ PLAYER_HIT_STUN_DURATION = 300 # ms
 PLAYER_HIT_COOLDOWN = 600 # ms
 
 # --- Player 1 Projectile Keys ---
-P1_FIREBALL_KEY = pygame.K_1
+# P1_FIREBALL_KEY = pygame.K_1
+P1_FIREBALL_KEY = pygame.K_7
 P1_POISON_KEY = pygame.K_2
 P1_BOLT_KEY = pygame.K_3
 P1_BLOOD_KEY = pygame.K_4
 P1_ICE_KEY = pygame.K_5
 P1_SHADOW_PROJECTILE_KEY = pygame.K_6
-P1_GREY_PROJECTILE_KEY = pygame.K_7
+# P1_GREY_PROJECTILE_KEY = pygame.K_7
+P1_GREY_PROJECTILE_KEY = pygame.K_1
 
 # --- Player 2 Projectile Keys ---
 P2_FIREBALL_KEY = pygame.K_KP_1
