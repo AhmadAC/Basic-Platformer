@@ -43,34 +43,31 @@
         "raw_str": "Axis 0 > 0.7",
         "friendly_name": "JSR"
     },
-    "1": {
-        "event_type": "button",
-        "details": {
-            "button_id": 4,
-            "type": "button"
-        },
-        "raw_str": "Button 4 Down",
-        "friendly_name": "LB"
-    },
     "2": {
-        "event_type": "button",
+        "event_type": "hat",
         "details": {
-            "button_id": 5,
-            "type": "button"
+            "hat_id": 0,
+            "type": "hat",
+            "value": [
+                1,
+                0
+            ]
         },
-        "raw_str": "Button 5 Down",
-        "friendly_name": "RB"
+        "raw_str": "Hat 0 (1, 0)",
+        "friendly_name": "Hat 0 (1, 0)"
     },
     "3": {
-        "event_type": "axis",
+        "event_type": "hat",
         "details": {
-            "axis_id": 4,
-            "direction": -1,
-            "threshold": 0.7,
-            "type": "axis"
+            "hat_id": 0,
+            "type": "hat",
+            "value": [
+                0,
+                -1
+            ]
         },
-        "raw_str": "Axis 4 < -0.7",
-        "friendly_name": "ZL"
+        "raw_str": "Hat 0 (0, -1)",
+        "friendly_name": "Hat 0 (0, -1)"
     },
     "4": {
         "event_type": "axis",
@@ -84,13 +81,17 @@
         "friendly_name": "ZR"
     },
     "5": {
-        "event_type": "button",
+        "event_type": "hat",
         "details": {
-            "button_id": 8,
-            "type": "button"
+            "hat_id": 0,
+            "type": "hat",
+            "value": [
+                -1,
+                0
+            ]
         },
-        "raw_str": "Button 8 Down",
-        "friendly_name": "LJS PRESS"
+        "raw_str": "Hat 0 (-1, 0)",
+        "friendly_name": "Hat 0 (-1, 0)"
     },
     "Q": {
         "event_type": "button",
@@ -110,24 +111,6 @@
         "raw_str": "Button 7 Down",
         "friendly_name": "+"
     },
-    "V": {
-        "event_type": "button",
-        "details": {
-            "button_id": 3,
-            "type": "button"
-        },
-        "raw_str": "Button 3 Down",
-        "friendly_name": "X"
-    },
-    "B": {
-        "event_type": "button",
-        "details": {
-            "button_id": 1,
-            "type": "button"
-        },
-        "raw_str": "Button 1 Down",
-        "friendly_name": "A"
-    },
     "SPACE": {
         "event_type": "button",
         "details": {
@@ -140,19 +123,68 @@
     "SHIFT": {
         "event_type": "button",
         "details": {
+            "button_id": 4,
+            "type": "button"
+        },
+        "raw_str": "Button 4 Down",
+        "friendly_name": "Button 4 Down"
+    },
+    "MENU_CONFIRM": {
+        "event_type": "button",
+        "details": {
+            "button_id": 1,
+            "type": "button"
+        },
+        "raw_str": "Button 1 Down",
+        "friendly_name": "a"
+    },
+    "MENU_CANCEL": {
+        "event_type": "button",
+        "details": {
             "button_id": 2,
             "type": "button"
         },
         "raw_str": "Button 2 Down",
-        "friendly_name": "Y"
+        "friendly_name": "y"
     },
-    "ALT": {
+    "MENU_RETURN": {
         "event_type": "button",
         "details": {
             "button_id": 10,
             "type": "button"
         },
         "raw_str": "Button 10 Down",
-        "friendly_name": "Home"
+        "friendly_name": "Button 10 Down"
+    },
+    "B": {
+        "event_type": "button",
+        "details": {
+            "button_id": 0,
+            "type": "button"
+        },
+        "raw_str": "Button 0 Down",
+        "friendly_name": "b"
+    },
+    "V": {
+        "event_type": "button",
+        "details": {
+            "button_id": 1,
+            "type": "button"
+        },
+        "raw_str": "Button 1 Down",
+        "friendly_name": "a"
+    },
+    "1": {
+        "event_type": "hat",
+        "details": {
+            "hat_id": 0,
+            "type": "hat",
+            "value": [
+                0,
+                1
+            ]
+        },
+        "raw_str": "Hat 0 (0, 1)",
+        "friendly_name": "Hat 0 (0, 1)"
     }
 }

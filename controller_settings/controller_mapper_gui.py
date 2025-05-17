@@ -18,30 +18,35 @@ from pynput.keyboard import Controller as KeyboardController, Key
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
 
 # --- Configuration ---
-MAPPABLE_KEYS = ["W", "A", "S", "D", "1", "2", "3", "4", "5", "Q", "E", "V", "B", "SPACE", "SHIFT", "CTRL", "ALT"]
+MAPPABLE_KEYS = [
+    "W", "A", "S", "D", "1", "2", "3", "4", "5", "Q", "E", "V", "B",
+    "SPACE", "SHIFT", "CTRL", "ALT",
+    "MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"
+]
+EXCLUSIVE_ACTIONS = ["MENU_RETURN"]
 AXIS_THRESHOLD = 0.7
 
-# --- Path Configuration (Scenario 1: JSON in same dir as script) ---
-# Get the directory where the script is located
+# --- Path Configuration ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SETTINGS_DIR = SCRIPT_DIR # Mappings file will be in the same directory as the script
+SETTINGS_DIR = SCRIPT_DIR
 MAPPINGS_FILE = os.path.join(SETTINGS_DIR, "controller_mappings.json")
 
 logging.info(f"Script directory (and effective settings directory): {SCRIPT_DIR}")
 logging.info(f"Mappings file path: {MAPPINGS_FILE}")
 
 
-# Helper to convert pynput special keys (same as before)
+# Helper to convert pynput special keys
 def get_pynput_key(key_str):
     if key_str == "SPACE": return Key.space
     if key_str == "SHIFT": return Key.shift
     if key_str == "CTRL": return Key.ctrl
     if key_str == "ALT": return Key.alt
+    if key_str in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"]: return None
     if len(key_str) == 1: return key_str.lower()
     logging.warning(f"get_pynput_key: Unknown key string '{key_str}'")
     return None
 
-# PygameControllerThread class (largely unchanged, ensure logging is consistent)
+# PygameControllerThread class
 class PygameControllerThread(QThread):
     controllerEventCaptured = Signal(dict, str)
     mappedEventTriggered = Signal(str, bool)
@@ -79,7 +84,7 @@ class PygameControllerThread(QThread):
                             self.joystick = pygame.joystick.Joystick(0)
                             self.joystick.init()
                             name = self.joystick.get_name()
-                            self.controllerHotplug.emit(f"Controller connected: {name}")
+                            self.controllerHotplug.emit(f"Controller connected: {name} (GUID: {self.joystick.guid if hasattr(self.joystick, 'guid') else 'N/A'})")
                             logging.info(f"Controller connected: {name}")
                         except pygame.error as e:
                             logging.error(f"Error initializing joystick: {e}")
@@ -107,6 +112,7 @@ class PygameControllerThread(QThread):
                     time.sleep(1)
                     continue
                 self._last_joystick_count = current_joystick_count
+
                 for event in pygame.event.get():
                     if self.stop_flag.is_set(): break
                     event_details = None
@@ -114,20 +120,23 @@ class PygameControllerThread(QThread):
                     if event.type == pygame.JOYAXISMOTION:
                         axis_id = event.axis
                         value = event.value
-                        if value > AXIS_THRESHOLD:
-                            event_details = {"type": "axis", "axis_id": axis_id, "direction": 1}
-                            raw_event_str = f"Axis {axis_id} > {AXIS_THRESHOLD:.1f}"
-                        elif value < -AXIS_THRESHOLD:
-                            event_details = {"type": "axis", "axis_id": axis_id, "direction": -1}
-                            raw_event_str = f"Axis {axis_id} < -{AXIS_THRESHOLD:.1f}"
-                        else:
-                            for keyboard_key, mapping_info in list(self.mappings.items()):
-                                if mapping_info and mapping_info["event_type"] == "axis" and \
-                                   mapping_info["details"]["axis_id"] == axis_id:
-                                    if self.active_axis_keys.get(keyboard_key) == mapping_info["details"]["direction"]:
+                        for keyboard_key, mapping_info in list(self.mappings.items()):
+                            if mapping_info and mapping_info["event_type"] == "axis" and \
+                               mapping_info["details"]["axis_id"] == axis_id:
+                                mapped_direction = mapping_info["details"]["direction"]
+                                if (mapped_direction == 1 and value < AXIS_THRESHOLD) or \
+                                   (mapped_direction == -1 and value > -AXIS_THRESHOLD) or \
+                                   (abs(value) < 0.1):
+                                    if self.active_axis_keys.get(keyboard_key) == mapped_direction:
                                         self.mappedEventTriggered.emit(keyboard_key, False)
                                         if keyboard_key in self.active_axis_keys:
                                             del self.active_axis_keys[keyboard_key]
+                        if value > AXIS_THRESHOLD:
+                            event_details = {"type": "axis", "axis_id": axis_id, "direction": 1, "threshold": AXIS_THRESHOLD}
+                            raw_event_str = f"Axis {axis_id} > {AXIS_THRESHOLD:.1f}"
+                        elif value < -AXIS_THRESHOLD:
+                            event_details = {"type": "axis", "axis_id": axis_id, "direction": -1, "threshold": AXIS_THRESHOLD}
+                            raw_event_str = f"Axis {axis_id} < -{AXIS_THRESHOLD:.1f}"
                     elif event.type == pygame.JOYBUTTONDOWN:
                         event_details = {"type": "button", "button_id": event.button}
                         raw_event_str = f"Button {event.button} Down"
@@ -136,7 +145,6 @@ class PygameControllerThread(QThread):
                             if mapping_info and mapping_info["event_type"] == "button" and \
                                mapping_info["details"]["button_id"] == event.button:
                                 self.mappedEventTriggered.emit(keyboard_key, False)
-                                break
                     elif event.type == pygame.JOYHATMOTION:
                         hat_id = event.hat
                         hat_value_tuple = event.value
@@ -152,11 +160,13 @@ class PygameControllerThread(QThread):
                         if hat_value_tuple != (0,0):
                             event_details = {"type": "hat", "hat_id": hat_id, "value": list(hat_value_tuple)}
                             raw_event_str = f"Hat {hat_id} {hat_value_tuple}"
+
                     if self.is_listening_for_mapping and event_details:
                         logging.info(f"Event captured for mapping: {raw_event_str} -> {event_details}")
                         self.controllerEventCaptured.emit(event_details, raw_event_str)
                         self.is_listening_for_mapping = False
                     elif not self.is_listening_for_mapping and event_details:
+                        triggered_exclusive_action_this_event = False
                         for keyboard_key, mapping_info in self.mappings.items():
                             if not mapping_info: continue
                             match = False
@@ -174,6 +184,10 @@ class PygameControllerThread(QThread):
                                      tuple(stored_details["value"]) == tuple(current_details["value"]):
                                     match = True
                             if match:
+                                if triggered_exclusive_action_this_event and keyboard_key not in EXCLUSIVE_ACTIONS:
+                                    continue
+                                if keyboard_key in EXCLUSIVE_ACTIONS and triggered_exclusive_action_this_event and self.mappings[keyboard_key] != mapping_info :
+                                     continue
                                 if mapping_info["event_type"] == "axis":
                                     if self.active_axis_keys.get(keyboard_key) != mapping_info["details"]["direction"]:
                                         self.mappedEventTriggered.emit(keyboard_key, True)
@@ -184,7 +198,9 @@ class PygameControllerThread(QThread):
                                         self.active_hat_keys[keyboard_key] = list(event_details["value"])
                                 else: # Button
                                     self.mappedEventTriggered.emit(keyboard_key, True)
-                                break
+                                if keyboard_key in EXCLUSIVE_ACTIONS:
+                                    triggered_exclusive_action_this_event = True
+                                    break
                 time.sleep(0.01)
             except pygame.error as e:
                 logging.error(f"Pygame error in controller loop: {e}")
@@ -216,44 +232,42 @@ class PygameControllerThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Controller to Keyboard Mapper v0.4 (Path & Init Fix)")
-        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle("Controller to Keyboard Mapper v0.8 (UI Enhancements)")
+        self.setGeometry(100, 100, 800, 650)
 
         self.keyboard = KeyboardController()
         self.currently_pressed_keys = set()
         self.mappings = {}
+        self.current_listening_key = None
+        self.last_selected_row_for_mapping = -1 # To preserve scroll position
         logging.info("MainWindow initializing...")
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
 
-        # --- Initialize GUI elements that might be used by load_mappings FIRST ---
         self.status_label = QLabel("Initializing...")
         main_layout.addWidget(self.status_label)
 
-        self.debug_console = QTextEdit() # Create debug_console
+        self.debug_console = QTextEdit()
         self.debug_console.setReadOnly(True)
         self.debug_console.setFixedHeight(100)
-        # It will be added to layout later, but must exist for log_to_debug_console
 
-        # --- Now load mappings as status_label and debug_console exist ---
         self.load_mappings()
 
-        # --- Remaining GUI Element Setup ---
         mapping_controls_layout = QHBoxLayout()
         self.key_to_map_combo = QComboBox()
         self.key_to_map_combo.addItems(MAPPABLE_KEYS)
-        mapping_controls_layout.addWidget(QLabel("Keyboard Key:"))
+        mapping_controls_layout.addWidget(QLabel("Action/Key to Map:"))
         mapping_controls_layout.addWidget(self.key_to_map_combo)
         self.listen_button = QPushButton("Listen for Controller Input to Map")
-        self.listen_button.clicked.connect(self.start_listening_for_map)
+        self.listen_button.clicked.connect(self.start_listening_for_map_from_button) # Changed connect
         mapping_controls_layout.addWidget(self.listen_button)
         main_layout.addLayout(mapping_controls_layout)
 
         self.mappings_table = QTableWidget()
         self.mappings_table.setColumnCount(5)
-        self.mappings_table.setHorizontalHeaderLabels(["Key", "Controller Input", "Friendly Name", "Rename", "Clear"])
+        self.mappings_table.setHorizontalHeaderLabels(["Action/Key", "Controller Input", "Friendly Name", "Rename", "Clear"])
         self.mappings_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.mappings_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.mappings_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
@@ -272,11 +286,9 @@ class MainWindow(QMainWindow):
         file_buttons_layout.addWidget(load_button)
         main_layout.addLayout(file_buttons_layout)
 
-        # Add the debug console to the layout now
         main_layout.addWidget(QLabel("Debug Log:"))
         main_layout.addWidget(self.debug_console)
 
-        # --- Controller Thread ---
         self.controller_thread = PygameControllerThread(self.mappings)
         self.controller_thread.controllerEventCaptured.connect(self.on_controller_event_captured)
         self.controller_thread.mappedEventTriggered.connect(self.on_mapped_event_triggered)
@@ -286,7 +298,6 @@ class MainWindow(QMainWindow):
         self.refresh_mappings_table()
         logging.info("MainWindow initialized and controller thread started.")
 
-    # update_status_and_log, log_to_debug_console (same as before)
     def update_status_and_log(self, message):
         self.status_label.setText(message)
         self.log_to_debug_console(message)
@@ -296,52 +307,94 @@ class MainWindow(QMainWindow):
             logging.info(f"Status Update: {message}")
 
     def log_to_debug_console(self, message):
-        if hasattr(self, 'debug_console'): # Check if it exists
+        if hasattr(self, 'debug_console'):
             timestamp = time.strftime("%H:%M:%S", time.localtime())
             self.debug_console.append(f"[{timestamp}] {message}")
             self.debug_console.ensureCursorVisible()
-        else: # Fallback if somehow called too early (shouldn't happen with new init order)
+        else:
             logging.warning(f"Debug console not ready for message: {message}")
 
+    def start_listening_for_map_from_button(self):
+        """Initiates listening from the dedicated button click."""
+        key_to_map = self.key_to_map_combo.currentText()
+        self.initiate_listening_sequence(key_to_map)
 
-    # start_listening_for_map, on_controller_event_captured, on_mapped_event_triggered (same as before)
-    def start_listening_for_map(self):
-        self.current_listening_key = self.key_to_map_combo.currentText()
-        logging.debug(f"start_listening_for_map called for key: {self.current_listening_key}")
+    def initiate_listening_sequence(self, key_to_map_str, originating_row=-1):
+        """Core logic to start listening for a given key/action."""
+        if self.listen_button.text() == "Listening... (Press Controller Input)":
+            # Already listening, possibly from a double-click, don't interfere if it's for a different key
+            if self.current_listening_key and self.current_listening_key != key_to_map_str:
+                 QMessageBox.information(self, "Already Listening", f"Already listening for input for '{self.current_listening_key}'. Please complete or cancel that first.")
+                 return
+            elif not self.current_listening_key: # Should not happen if button text is "Listening..."
+                 self.reset_listening_ui() # Reset just in case of inconsistent state
+
+        self.current_listening_key = key_to_map_str
+        self.last_selected_row_for_mapping = originating_row # Store row for scroll preservation
+
+        logging.debug(f"initiate_listening_sequence for key: {self.current_listening_key}")
         if not self.current_listening_key:
-            QMessageBox.warning(self, "No Key Selected", "Please select a keyboard key to map.")
+            QMessageBox.warning(self, "No Key Selected", "Please select a keyboard key or menu action to map.")
+            self.reset_listening_ui()
             return
+
+        # Update dropdown if called from table double-click
+        if self.key_to_map_combo.currentText() != self.current_listening_key:
+            index = self.key_to_map_combo.findText(self.current_listening_key)
+            if index != -1:
+                self.key_to_map_combo.setCurrentIndex(index)
+            else:
+                logging.warning(f"Key '{self.current_listening_key}' not found in combo box during initiate_listening.")
+                # This case should ideally not happen if MAPPABLE_KEYS is the source for both.
+
         self.controller_thread.start_listening()
         self.update_status_and_log(f"Listening for controller input for '{self.current_listening_key}'...")
         self.listen_button.setText("Listening... (Press Controller Input)")
         self.listen_button.setEnabled(False)
         self.key_to_map_combo.setEnabled(False)
 
+
     def on_controller_event_captured(self, event_details, raw_event_str):
         logging.info(f"on_controller_event_captured: Key='{self.current_listening_key}', Raw='{raw_event_str}', Details={event_details}")
-        existing_key_for_this_controller_input = None
-        for key, mapping_info in self.mappings.items():
+
+        keys_to_unmap_due_to_conflict = []
+        is_current_key_exclusive = self.current_listening_key in EXCLUSIVE_ACTIONS
+
+        for existing_key, mapping_info in list(self.mappings.items()):
             if mapping_info and mapping_info["raw_str"] == raw_event_str:
-                if key != self.current_listening_key:
-                    existing_key_for_this_controller_input = key
-                break
-        if existing_key_for_this_controller_input:
-            reply = QMessageBox.question(self, "Input Already Mapped",
-                                         f"The controller input '{raw_event_str}' is already mapped to key '{existing_key_for_this_controller_input}'.\n"
-                                         f"Do you want to unmap it from '{existing_key_for_this_controller_input}' and map it to '{self.current_listening_key}'?",
+                if existing_key == self.current_listening_key:
+                    continue
+                is_existing_key_exclusive = existing_key in EXCLUSIVE_ACTIONS
+                if is_current_key_exclusive and is_existing_key_exclusive:
+                    keys_to_unmap_due_to_conflict.append(existing_key)
+                elif is_current_key_exclusive and not is_existing_key_exclusive:
+                    keys_to_unmap_due_to_conflict.append(existing_key)
+                elif not is_current_key_exclusive and is_existing_key_exclusive:
+                    QMessageBox.warning(self, "Mapping Conflict",
+                                        f"Controller input '{raw_event_str}' is already mapped to the exclusive action '{existing_key}'.\n"
+                                        f"Cannot map non-exclusive action '{self.current_listening_key}' to this input.\n"
+                                        f"Clear the mapping for '{existing_key}' first.")
+                    self.reset_listening_ui(preserve_scroll=True) # Use new scroll preservation
+                    return
+
+        if keys_to_unmap_due_to_conflict:
+            conflict_msg = (f"The controller input '{raw_event_str}' conflicts with existing mappings for '{self.current_listening_key}'. "
+                            f"The following will be unmapped:\n" +
+                            "\n".join([f"- {k}" for k in keys_to_unmap_due_to_conflict]) +
+                            f"\n\nProceed with mapping '{self.current_listening_key}' to this input?")
+
+            reply = QMessageBox.question(self, "Confirm Reassignment", conflict_msg,
                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.No:
-                self.update_status_and_log(f"Mapping for '{self.current_listening_key}' cancelled.")
-                self.listen_button.setText("Listen for Controller Input to Map")
-                self.listen_button.setEnabled(True)
-                self.key_to_map_combo.setEnabled(True)
-                self.current_listening_key = None
-                self.controller_thread.stop_listening()
+                self.update_status_and_log(f"Mapping for '{self.current_listening_key}' cancelled due to conflict.")
+                self.reset_listening_ui(preserve_scroll=True)
                 return
             else:
-                if existing_key_for_this_controller_input in self.mappings:
-                    logging.info(f"Unmapping '{raw_event_str}' from old key '{existing_key_for_this_controller_input}'")
-                    del self.mappings[existing_key_for_this_controller_input]
+                for key_to_remove in keys_to_unmap_due_to_conflict:
+                    if key_to_remove in self.mappings:
+                        logging.info(f"Unmapping '{key_to_remove}' due to conflict with '{self.current_listening_key}'.")
+                        del self.mappings[key_to_remove]
+
         if self.current_listening_key:
             self.mappings[self.current_listening_key] = {
                 "event_type": event_details["type"],
@@ -351,17 +404,44 @@ class MainWindow(QMainWindow):
             }
             self.update_status_and_log(f"Mapped '{raw_event_str}' to '{self.current_listening_key}'.")
             logging.info(f"New mapping: {self.current_listening_key} -> {self.mappings[self.current_listening_key]}")
-            self.refresh_mappings_table()
+            self.refresh_mappings_table(preserve_scroll=True, target_row_key=self.current_listening_key) # Ensure mapped row is visible
             self.current_listening_key = None
+        self.reset_listening_ui(preserve_scroll=True)
+
+
+    def reset_listening_ui(self, preserve_scroll=False):
         self.listen_button.setText("Listen for Controller Input to Map")
         self.listen_button.setEnabled(True)
         self.key_to_map_combo.setEnabled(True)
         self.controller_thread.stop_listening()
+        if self.current_listening_key: # If it was cancelled mid-process
+            self.current_listening_key = None
+        # Scroll preservation will be handled by refresh_mappings_table if preserve_scroll is True
+        if not preserve_scroll:
+            self.last_selected_row_for_mapping = -1
+
 
     def on_mapped_event_triggered(self, keyboard_key_str, is_press_event):
+        if keyboard_key_str == "MENU_CONFIRM":
+            if is_press_event:
+                self.log_to_debug_console(f"MENU_CONFIRM action triggered by controller.")
+                logging.info(f"MENU_CONFIRM action triggered by controller.")
+            return
+        if keyboard_key_str == "MENU_CANCEL":
+            if is_press_event:
+                self.log_to_debug_console(f"MENU_CANCEL action triggered by controller.")
+                logging.info(f"MENU_CANCEL action triggered by controller.")
+            return
+        if keyboard_key_str == "MENU_RETURN":
+            if is_press_event:
+                self.log_to_debug_console(f"MENU_RETURN action triggered by controller.")
+                logging.info(f"MENU_RETURN action triggered by controller.")
+            return
+
         pynput_key = get_pynput_key(keyboard_key_str)
         if not pynput_key:
-            logging.warning(f"Could not get pynput_key for '{keyboard_key_str}'")
+            if keyboard_key_str not in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"]:
+                 logging.warning(f"Could not get pynput_key for '{keyboard_key_str}' during trigger.")
             return
         try:
             if is_press_event:
@@ -373,14 +453,22 @@ class MainWindow(QMainWindow):
                     self.keyboard.release(pynput_key)
                     self.currently_pressed_keys.remove(pynput_key)
         except Exception as e:
-            logging.error(f"Pynput error for key '{keyboard_key_str}' (Press={is_press_event}): {e}")
+            logging.error(f"Pynput error for key '{keyboard_key_str}' (Pynput Key: {pynput_key}, Press Event: {is_press_event}): {e}")
 
+    def refresh_mappings_table(self, preserve_scroll=False, target_row_key=None):
+        logging.debug(f"Refreshing mappings table... Preserve scroll: {preserve_scroll}, Target key: {target_row_key}")
+        # Store current scroll position if preserving
+        current_v_scroll_value = self.mappings_table.verticalScrollBar().value() if preserve_scroll else -1
+        target_row_to_ensure_visible = -1
 
-    # refresh_mappings_table (same as before)
-    def refresh_mappings_table(self):
-        logging.debug("Refreshing mappings table...")
         self.mappings_table.setRowCount(0)
-        for keyboard_key in MAPPABLE_KEYS:
+        for i, keyboard_key in enumerate(MAPPABLE_KEYS):
+            if target_row_key and keyboard_key == target_row_key:
+                target_row_to_ensure_visible = i
+            elif preserve_scroll and self.last_selected_row_for_mapping == i and not target_row_key : # Prioritize target_row_key
+                 target_row_to_ensure_visible = i
+
+
             mapping_info = self.mappings.get(keyboard_key)
             row_position = self.mappings_table.rowCount()
             self.mappings_table.insertRow(row_position)
@@ -403,44 +491,78 @@ class MainWindow(QMainWindow):
                 empty_clear_button = QPushButton("---")
                 empty_clear_button.setEnabled(False)
                 self.mappings_table.setCellWidget(row_position, 4, empty_clear_button)
+
+        # Restore scroll position or ensure target row is visible
+        if target_row_to_ensure_visible != -1:
+            self.mappings_table.scrollToItem(self.mappings_table.item(target_row_to_ensure_visible, 0), QAbstractItemView.PositionAtCenter)
+            logging.debug(f"Scrolled to ensure row for key '{MAPPABLE_KEYS[target_row_to_ensure_visible]}' is visible.")
+        elif preserve_scroll and current_v_scroll_value != -1:
+            self.mappings_table.verticalScrollBar().setValue(current_v_scroll_value)
+            logging.debug(f"Restored vertical scroll to {current_v_scroll_value}")
+
+        if not preserve_scroll and not target_row_key: # Reset if not actively preserving
+             self.last_selected_row_for_mapping = -1
         logging.debug("Mappings table refresh complete.")
 
 
-    # handle_table_double_click, change_keyboard_key_assignment_prompt (same as before)
     def handle_table_double_click(self, row, column):
         current_keyboard_key_item = self.mappings_table.item(row, 0)
         if not current_keyboard_key_item: return
         current_keyboard_key = current_keyboard_key_item.text()
         logging.debug(f"Table double-clicked: Row={row}, Col={column}, Key='{current_keyboard_key}'")
-        if column == 0:
-            self.change_keyboard_key_assignment_prompt(current_keyboard_key)
-        elif column == 2:
+
+        if column == 0 : # Double click on "Action/Key" column
+            # If already listening for this exact key, do nothing to avoid interrupting.
+            if self.listen_button.text() == "Listening... (Press Controller Input)" and self.current_listening_key == current_keyboard_key:
+                logging.debug(f"Already listening for '{current_keyboard_key}', double-click ignored.")
+                return
+            self.initiate_listening_sequence(current_keyboard_key, originating_row=row)
+        elif column == 2: # Double click on "Friendly Name"
             if self.mappings.get(current_keyboard_key):
                 self.rename_friendly_name_prompt_button(current_keyboard_key)
+        # Could add double-click on "Controller Input" to also initiate listening for that key.
+        elif column == 1: # Double click on "Controller Input" column
+             if self.listen_button.text() == "Listening... (Press Controller Input)" and self.current_listening_key == current_keyboard_key:
+                logging.debug(f"Already listening for '{current_keyboard_key}', double-click ignored.")
+                return
+             self.initiate_listening_sequence(current_keyboard_key, originating_row=row)
+
 
     def change_keyboard_key_assignment_prompt(self, old_keyboard_key):
+        # This method is now less critical if double-click on Action/Key directly initiates re-mapping.
+        # However, it can still be a way to move an existing controller input to a new, unassigned Action/Key slot.
         logging.debug(f"change_keyboard_key_assignment_prompt for '{old_keyboard_key}'")
         current_mapping_data = self.mappings.get(old_keyboard_key)
         if not current_mapping_data:
-            QMessageBox.information(self, "Not Mapped", f"Key '{old_keyboard_key}' is not currently mapped.")
+            QMessageBox.information(self, "Not Mapped", f"Action/Key '{old_keyboard_key}' is not currently mapped. Double-click to map it.")
             return
+
         available_keys_for_reassign = [k for k in MAPPABLE_KEYS if k not in self.mappings or k == old_keyboard_key]
         available_keys_for_reassign.sort()
         try: current_selection_index = available_keys_for_reassign.index(old_keyboard_key)
         except ValueError: current_selection_index = 0
-        new_key, ok = QInputDialog.getItem(self, "Change Keyboard Key Assignment",
-                                           f"Select new keyboard key for controller input:\n'{current_mapping_data['raw_str']}' (currently '{old_keyboard_key}')",
+
+        new_key, ok = QInputDialog.getItem(self, "Change Action/Key Assignment",
+                                           f"Select new Action/Key for controller input:\n'{current_mapping_data['raw_str']}' (currently '{old_keyboard_key}')",
                                            available_keys_for_reassign, current_selection_index, False)
         if ok and new_key and new_key != old_keyboard_key:
+            if new_key in EXCLUSIVE_ACTIONS:
+                for k, v in self.mappings.items():
+                    if v['raw_str'] == current_mapping_data['raw_str'] and k != old_keyboard_key and k in EXCLUSIVE_ACTIONS:
+                        QMessageBox.critical(self, "Exclusivity Conflict",
+                                             f"Cannot reassign to exclusive action '{new_key}'.\n"
+                                             f"The controller input '{current_mapping_data['raw_str']}' is already mapped to another exclusive action: '{k}'.\n"
+                                             f"Please clear that mapping first.")
+                        return
+
             logging.info(f"Attempting to reassign mapping from '{old_keyboard_key}' to '{new_key}'")
             del self.mappings[old_keyboard_key]
             self.mappings[new_key] = current_mapping_data
-            self.refresh_mappings_table()
+            self.refresh_mappings_table(preserve_scroll=True, target_row_key=new_key)
             self.update_status_and_log(f"Mapping for '{current_mapping_data['raw_str']}' moved from '{old_keyboard_key}' to '{new_key}'.")
         elif ok and new_key == old_keyboard_key: logging.debug("Keyboard key assignment unchanged.")
         else: logging.debug("Keyboard key assignment cancelled.")
 
-    # rename_friendly_name_prompt_button, clear_mapping (same as before)
     def rename_friendly_name_prompt_button(self, keyboard_key):
         logging.debug(f"rename_friendly_name_prompt_button for key '{keyboard_key}'")
         mapping_info = self.mappings.get(keyboard_key)
@@ -451,7 +573,7 @@ class MainWindow(QMainWindow):
                                             QLineEdit.Normal, current_name)
             if ok and text:
                 mapping_info["friendly_name"] = text
-                self.refresh_mappings_table()
+                self.refresh_mappings_table(preserve_scroll=True, target_row_key=keyboard_key)
                 self.update_status_and_log(f"Renamed mapping for '{keyboard_key}'.")
                 logging.info(f"Mapping for '{keyboard_key}' renamed to '{text}'. Current mapping: {self.mappings[keyboard_key]}")
 
@@ -459,26 +581,12 @@ class MainWindow(QMainWindow):
         logging.debug(f"clear_mapping for key '{keyboard_key}'")
         if keyboard_key in self.mappings:
             del self.mappings[keyboard_key]
-            self.refresh_mappings_table()
+            self.refresh_mappings_table(preserve_scroll=True, target_row_key=keyboard_key) # Try to keep view near cleared item
             self.update_status_and_log(f"Cleared mapping for '{keyboard_key}'.")
             logging.info(f"Mapping for '{keyboard_key}' cleared.")
 
-
-    # save_mappings (ensure directory exists)
     def save_mappings(self):
         logging.info(f"Attempting to save mappings to {MAPPINGS_FILE}")
-        # Ensure the settings directory exists (SETTINGS_DIR is now SCRIPT_DIR, so it should exist)
-        # However, if SETTINGS_DIR were a sub-folder, this would be crucial:
-        # if not os.path.exists(SETTINGS_DIR):
-        #     try:
-        #         os.makedirs(SETTINGS_DIR)
-        #         logging.info(f"Created settings directory: {SETTINGS_DIR}")
-        #     except OSError as e:
-        #         logging.exception(f"Could not create settings directory {SETTINGS_DIR}:")
-        #         QMessageBox.critical(self, "Save Error", f"Could not create settings directory: {e}")
-        #         self.update_status_and_log(f"Error creating settings directory: {e}")
-        #         return
-
         logging.debug(f"Mappings to save: {json.dumps(self.mappings, indent=2)}")
         try:
             with open(MAPPINGS_FILE, 'w') as f:
@@ -489,7 +597,6 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Save Error", f"Could not save mappings: {e}")
             self.update_status_and_log(f"Error saving mappings: {e}")
 
-    # load_mappings (same as before, path is now corrected globally)
     def load_mappings(self):
         logging.info(f"Attempting to load mappings from {MAPPINGS_FILE}")
         temp_loaded_mappings = {}
@@ -528,7 +635,7 @@ class MainWindow(QMainWindow):
                         skipped_count += 1
             logging.info(f"Load complete. Loaded {loaded_count} valid mappings. Skipped {skipped_count} malformed/invalid entries.")
             logging.debug(f"Final self.mappings after load: {json.dumps(self.mappings, indent=2)}")
-            if hasattr(self, 'status_label') and self.status_label: # Ensure status_label exists
+            if hasattr(self, 'status_label') and self.status_label:
                 if file_found:
                     self.update_status_and_log(f"Loaded {loaded_count} mappings from {MAPPINGS_FILE}. Skipped {skipped_count}.")
         except FileNotFoundError:
@@ -549,12 +656,14 @@ class MainWindow(QMainWindow):
             if hasattr(self, 'status_label') and self.status_label:
                 self.update_status_and_log(f"Error loading mappings: {e}")
 
-    # load_mappings_and_refresh, closeEvent (same as before)
     def load_mappings_and_refresh(self):
         logging.info("load_mappings_and_refresh called.")
+        current_v_scroll_value = self.mappings_table.verticalScrollBar().value()
         self.load_mappings()
-        self.refresh_mappings_table()
+        self.refresh_mappings_table() # This will now try to preserve scroll due to default preserve_scroll=False not being overridden here
+        self.mappings_table.verticalScrollBar().setValue(current_v_scroll_value) # Explicitly restore after refresh
         self.update_status_and_log("Mappings reloaded and GUI updated.")
+
 
     def closeEvent(self, event):
         logging.info("Close event received. Shutting down.")
@@ -568,16 +677,13 @@ class MainWindow(QMainWindow):
                 logging.debug(f"Released key {pynput_key} on close.")
             except Exception as e:
                 logging.warning(f"Error releasing key {pynput_key} on close: {e}")
+        self.currently_pressed_keys.clear()
         self.save_mappings()
         event.accept()
         logging.info("Application closed.")
 
-
 if __name__ == "__main__":
     logging.info("Application starting...")
-    # For Scenario 1, SETTINGS_DIR is SCRIPT_DIR. The directory the script is in must exist.
-    # No need to os.makedirs(SCRIPT_DIR) as it inherently exists if the script is running.
-    # If you had a deeper SETTINGS_SUBDIR, then os.makedirs(SETTINGS_DIR, exist_ok=True) here would be good.
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
