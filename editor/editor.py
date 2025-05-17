@@ -1,7 +1,7 @@
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.19 (Added Rename Map functionality and menu event handler)
+## version 1.0.0.20 (Integrated Undo/Redo, Asset Properties Dialog foundation)
 Level Editor for the Platformer Game (Pygame Only).
 Allows creating, loading, and saving game levels visually.
 """
@@ -88,13 +88,13 @@ try:
     import editor_assets
     import editor_map_utils
     import editor_drawing
-    # Import the new handler and update modules
+    import editor_history # For Undo/Redo
     from editor_handlers_global import handle_global_events
     from editor_handlers_dialog import handle_dialog_events
-    from editor_handlers_menu import handle_menu_events, start_rename_map_flow # Import new function
+    from editor_handlers_menu import handle_menu_events, start_rename_map_flow
     from editor_handlers_map_editing import handle_editing_map_events
     from editor_updates import update_continuous_camera_pan, update_asset_palette_scroll_momentum
-    logger.debug("Successfully imported all editor-specific modules including new handlers.")
+    logger.debug("Successfully imported all editor-specific modules including new handlers and history.")
 except ImportError as e_editor_mod:
     logger.critical(f"Failed to import an editor-specific module. Error: {e_editor_mod}", exc_info=True)
     print(f"ERROR: Failed to import an editor module. Check sys.path and module names. Current sys.path: {sys.path}")
@@ -172,7 +172,7 @@ def editor_main():
         while running:
             loop_count += 1
             dt = editor_clock.tick(ED_CONFIG.C.FPS if hasattr(ED_CONFIG.C, 'FPS') else 60) / 1000.0
-            dt = min(dt, 0.1)
+            dt = min(dt, 0.1) # Cap dt to prevent large jumps
 
             mouse_pos = pygame.mouse.get_pos()
             events = pygame.event.get()
@@ -186,11 +186,15 @@ def editor_main():
             if editor_state.current_editor_mode == "editing_map" and not editor_state.active_dialog_type:
                 update_continuous_camera_pan(editor_state, map_view_section_rect, mouse_pos, dt)
 
+                # Calculate available height for the scrollable asset list
                 asset_list_visible_height = (
                     asset_palette_section_rect.height
-                    - ED_CONFIG.MINIMAP_AREA_HEIGHT
-                    - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2)
+                    - ED_CONFIG.ASSET_PALETTE_HEADER_AREA_HEIGHT # For the "Palette Options" dropdown
+                    - ED_CONFIG.MINIMAP_AREA_HEIGHT # Height of minimap area
+                    - (ED_CONFIG.BUTTON_HEIGHT_STANDARD * 0.8 + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING * 2) # For BG Color button
                 )
+                asset_list_visible_height = max(0, asset_list_visible_height) # Ensure non-negative
+
                 update_asset_palette_scroll_momentum(
                     editor_state,
                     dt,
@@ -219,10 +223,10 @@ def editor_main():
                 if not running: break
 
                 if editor_state.active_dialog_type:
-                    handle_dialog_events(event, editor_state)
+                    handle_dialog_events(event, editor_state, fonts) # Pass fonts for dialog drawing needs
                     if editor_state.active_dialog_type != previous_dialog_type:
                         logger.debug(f"Dialog type changed from '{previous_dialog_type}' to '{editor_state.active_dialog_type}' after handle_dialog_events.")
-                        if editor_state.current_editor_mode != previous_mode:
+                        if editor_state.current_editor_mode != previous_mode: # Dialog might change mode
                             logger.debug(f"Mode changed (likely via dialog callback) from '{previous_mode}' to '{editor_state.current_editor_mode}'. Triggering layout recalc.")
                             layout_needs_recalc = True
                 else: # No active dialog
@@ -231,7 +235,7 @@ def editor_main():
                             logger.info("Escape pressed in menu. Posting QUIT event.")
                             pygame.event.post(pygame.event.Event(pygame.QUIT))
                             continue
-                        handle_menu_events(event, editor_state, editor_screen) # This will now handle the rename button click too
+                        handle_menu_events(event, editor_state, editor_screen)
                     elif editor_state.current_editor_mode == "editing_map":
                         handle_editing_map_events(event, editor_state, asset_palette_section_rect, map_view_section_rect, editor_screen)
 
@@ -242,7 +246,7 @@ def editor_main():
             # --- End Event Processing ---
 
 
-            # --- Camera Momentum (if not handled by direct input/edge scroll) ---
+            # --- Camera Momentum ---
             if editor_state.current_editor_mode == "editing_map" and \
                not editor_state.active_dialog_type and \
                not editor_state.is_mouse_over_map_view and \
@@ -306,7 +310,7 @@ def editor_main():
                 ph_rect = pygame.Rect(menu_section_rect.right + ED_CONFIG.SECTION_PADDING, ED_CONFIG.SECTION_PADDING,
                                       current_screen_width - menu_section_rect.right - ED_CONFIG.SECTION_PADDING*2,
                                       current_screen_height - ED_CONFIG.SECTION_PADDING*2)
-                if ph_rect.width > 10 and ph_rect.height > 10:
+                if ph_rect.width > 10 and ph_rect.height > 10: 
                     pygame.draw.rect(editor_screen, (20,20,20), ph_rect)
                     f_large = fonts.get("large");
                     if f_large:
@@ -318,6 +322,7 @@ def editor_main():
 
             if editor_state.active_dialog_type:
                 editor_ui.draw_active_dialog(editor_screen, editor_state, fonts)
+
 
             f_tooltip = fonts.get("tooltip");
             if f_tooltip:
@@ -338,7 +343,7 @@ def editor_main():
         if logger: logger.info("Exiting editor_main. Calling pygame.quit().")
         else: print("Exiting editor_main. Calling pygame.quit().")
         pygame.quit()
-        if logger: logger.info("Editor session ended.") 
+        if logger: logger.info("Editor session ended.")
         else: print("Editor session ended.")
         sys.exit()
 

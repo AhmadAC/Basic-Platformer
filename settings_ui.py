@@ -74,7 +74,14 @@ def _draw_button(surface, id_key, text, rect, font, mouse_pos, current_selection
 
 def _display_key_mappings(surface, start_y, player_id_str, device_id_str, font, screen_width):
     """Displays current key mappings for the selected device."""
-    mappings = game_config.get_action_key_map(int(player_id_str[-1]), device_id_str)
+   # NEW LOGIC:
+    if player_id_str == "Player 1":
+        mappings = game_config.P1_MAPPINGS
+    elif player_id_str == "Player 2":
+        mappings = game_config.P2_MAPPINGS
+    else:
+        mappings = {} # Should not happen
+        print(f"SETTINGS_UI Error: Unknown player_id_str '{player_id_str}' in _display_key_mappings")
     
     col1_x = screen_width * 0.15
     col2_x = screen_width * 0.55 

@@ -1,4 +1,4 @@
 {
-    "p1_input_device": "keyboard_p1",
-    "p2_input_device": "keyboard_p2"
+    "p1_input_device": "joystick_0",
+    "p2_input_device": "keyboard_p1"
 }
