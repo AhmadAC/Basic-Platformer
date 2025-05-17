@@ -63,9 +63,9 @@ EXTERNAL_TO_INTERNAL_ACTION_MAP = {
     "WEAPON_2": "projectile2",
     "WEAPON_3": "projectile3",
     "WEAPON_4": "projectile4",
-    "WEAPON_DPAD_UP": "projectile4",
+    "WEAPON_DPAD_UP": "projectile4", # Often DPad Up is same as a weapon slot
     "WEAPON_DPAD_DOWN": "projectile5",
-    "WEAPON_DPAD_LEFT": "reset",      # Changed from "projectile6" to "reset"
+    "WEAPON_DPAD_LEFT": "projectile6",  # CORRECTED: Was "reset", now likely "projectile6"
     "WEAPON_DPAD_RIGHT": "projectile7",
     "MENU_CONFIRM": "menu_confirm",
     "MENU_CANCEL": "menu_cancel",
@@ -119,10 +119,11 @@ DEFAULT_JOYSTICK_FALLBACK_MAPPINGS = {
     "projectile1": {"type": "hat", "id": 0, "value": (0,1)},    # Dpad Up
     "projectile2": {"type": "hat", "id": 0, "value": (1,0)},    # Dpad Right
     "projectile3": {"type": "hat", "id": 0, "value": (0,-1)},   # Dpad Down
-    "projectile4": {"type": "hat", "id": 0, "value": (-1,0)},   # Dpad Left
-    "projectile5": {"type": "button", "id": 6}, # Example: Back/Select
-    "reset": {"type": "button", "id": 7}, # Example: Start/Options for reset - this is just a fallback example
-    "projectile7": {"type": "button", "id": 11}, # Example: R3/RSB
+    "projectile4": {"type": "hat", "id": 0, "value": (-1,0)},   # Dpad Left (often this is projectile4 or some other distinct weapon)
+    "projectile5": {"type": "button", "id": 6},                 # Example: Back/Select (could be projectile5)
+    "projectile6": {"type": "button", "id": 11},                # Example: R3/RSB (could be projectile6)
+    "reset": {"type": "button", "id": 7},                       # Example: Start/Options (could be reset) - this is just a fallback example
+    "projectile7": {"type": "axis", "id": 2, "value": 1, "threshold": AXIS_THRESHOLD_DEFAULT}, # Example LT/L2 (could be projectile7)
     "pause": {"type": "button", "id": 9}, # Typically Start/Options button (often ID 9 for Xbox, 7 for others)
     "menu_confirm": {"type": "button", "id": 0}, # A/Cross also confirms
     "menu_cancel": {"type": "button", "id": 1},  # B/Circle also cancels
@@ -176,6 +177,10 @@ def _translate_and_validate_joystick_mappings(raw_json_mappings):
         else:
             # print(f"Config Info: Unknown event_type '{event_type_from_json}' for '{json_key}'. Skipping.")
             continue # Skip unknown event types
+        
+        # If an internal action is already mapped, this will overwrite it.
+        # This is how "WEAPON_DPAD_LEFT" was overwriting "RESET" if both mapped to "reset".
+        # With the fix, they map to different internal actions ("projectile6" and "reset"), so no overwrite.
         translated_mappings[internal_action_name] = final_mapping_for_action
     return translated_mappings
 
@@ -189,17 +194,14 @@ def _load_external_joystick_mappings():
         with open(EXTERNAL_CONTROLLER_MAPPINGS_FILE_PATH, 'r') as f:
             raw_mappings = json.load(f)
         
-        # Before translating, ensure "RESET" from JSON maps correctly if present
-        # This is more of a direct fix if the controller_mapper_gui.py saves "RESET" as a key
-        # and EXTERNAL_TO_INTERNAL_ACTION_MAP already has "RESET": "reset".
-        
         LOADED_JOYSTICK_MAPPINGS = _translate_and_validate_joystick_mappings(raw_mappings)
         
         if LOADED_JOYSTICK_MAPPINGS:
             print(f"Config: Successfully loaded and translated {len(LOADED_JOYSTICK_MAPPINGS)} joystick mappings from '{EXTERNAL_CONTROLLER_MAPPINGS_FILENAME}'.")
-            # Example: Check if "reset" is now a mapped action
             if "reset" in LOADED_JOYSTICK_MAPPINGS:
                 print(f"  -> 'reset' action is mapped to: {LOADED_JOYSTICK_MAPPINGS['reset']}")
+            if "projectile6" in LOADED_JOYSTICK_MAPPINGS:
+                print(f"  -> 'projectile6' action is mapped to: {LOADED_JOYSTICK_MAPPINGS['projectile6']}")
             return True
         else:
             print(f"Config Warning: Loaded JSON from '{EXTERNAL_CONTROLLER_MAPPINGS_FILENAME}' but resulted in empty or invalid mappings after translation.")
@@ -243,7 +245,6 @@ def save_config():
 def load_config():
     global CURRENT_P1_INPUT_DEVICE, CURRENT_P2_INPUT_DEVICE, P1_MAPPINGS, P2_MAPPINGS
     
-    # Attempt to load external joystick mappings first. This populates LOADED_JOYSTICK_MAPPINGS.
     _load_external_joystick_mappings()
 
     filepath = _get_config_filepath()
@@ -262,10 +263,9 @@ def load_config():
     else:
         print(f"Config Info: File {filepath} not found. Using default device choices.")
 
-    num_joysticks = joystick_handler.get_joystick_count() # Get actual joystick count
+    num_joysticks = joystick_handler.get_joystick_count()
     print(f"Config: Number of joysticks detected by joystick_handler: {num_joysticks}")
 
-    # Validate P1's device choice
     if loaded_p1_device_choice.startswith("joystick_"):
         try:
             p1_joy_idx = int(loaded_p1_device_choice.split('_')[-1])
@@ -274,99 +274,84 @@ def load_config():
                 CURRENT_P1_INPUT_DEVICE = "joystick_0" if num_joysticks > 0 else DEFAULT_P1_INPUT_DEVICE
             else:
                 CURRENT_P1_INPUT_DEVICE = loaded_p1_device_choice
-        except ValueError: # If parsing fails
+        except ValueError:
             CURRENT_P1_INPUT_DEVICE = "joystick_0" if num_joysticks > 0 else DEFAULT_P1_INPUT_DEVICE
-    else: # Keyboard choice for P1
+    else:
         CURRENT_P1_INPUT_DEVICE = loaded_p1_device_choice
 
-    # Validate P2's device choice, considering P1's assignment
     if loaded_p2_device_choice.startswith("joystick_"):
         try:
             p2_joy_idx = int(loaded_p2_device_choice.split('_')[-1])
             p1_current_joy_idx = -1
             if CURRENT_P1_INPUT_DEVICE.startswith("joystick_"):
                 try: p1_current_joy_idx = int(CURRENT_P1_INPUT_DEVICE.split('_')[-1])
-                except ValueError: pass # Should not happen if P1 validation was correct
+                except ValueError: pass
 
             if not (0 <= p2_joy_idx < num_joysticks):
                 print(f"Config Warning: P2's saved joystick ID {p2_joy_idx} no longer available.")
-                # Assign P2 a different available joystick or fallback to keyboard
-                if num_joysticks == 1 and p1_current_joy_idx == 0: # P1 has the only joystick
+                if num_joysticks == 1 and p1_current_joy_idx == 0:
                     CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-                elif num_joysticks > 0 and p1_current_joy_idx != 0: # P1 is not joy0, P2 can be joy0
+                elif num_joysticks > 0 and p1_current_joy_idx != 0:
                     CURRENT_P2_INPUT_DEVICE = "joystick_0"
-                elif num_joysticks > 1 and p1_current_joy_idx == 0: # P1 is joy0, P2 can be joy1
+                elif num_joysticks > 1 and p1_current_joy_idx == 0:
                     CURRENT_P2_INPUT_DEVICE = "joystick_1"
-                else: # No joysticks available for P2
+                else:
                     CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-            elif p2_joy_idx == p1_current_joy_idx: # Conflict with P1
+            elif p2_joy_idx == p1_current_joy_idx:
                 print(f"Config Warning: P2 cannot use same joystick as P1 (ID {p1_current_joy_idx}).")
-                if num_joysticks > 1: # Try to assign another joystick
+                if num_joysticks > 1:
                     CURRENT_P2_INPUT_DEVICE = "joystick_1" if p1_current_joy_idx == 0 else "joystick_0"
-                else: # Only one joystick, P1 has it
+                else:
                     CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-            else: # Valid, non-conflicting joystick for P2
+            else:
                 CURRENT_P2_INPUT_DEVICE = loaded_p2_device_choice
-        except ValueError: # If parsing fails for P2 joy ID
+        except ValueError:
             CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-    else: # Keyboard choice for P2
+    else:
         if loaded_p2_device_choice == CURRENT_P1_INPUT_DEVICE and CURRENT_P1_INPUT_DEVICE == "keyboard_p1":
-            CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE # Force P2 to keyboard_p2 if P1 is keyboard_p1
+            CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
         else:
             CURRENT_P2_INPUT_DEVICE = loaded_p2_device_choice
             
     print(f"Config: Final device assignments: P1='{CURRENT_P1_INPUT_DEVICE}', P2='{CURRENT_P2_INPUT_DEVICE}'")
     
-    # After determining CURRENT_P1/P2_INPUT_DEVICE, update P1_MAPPINGS and P2_MAPPINGS
     update_player_mappings_from_device_choice()
     return True
 
 def update_player_mappings_from_device_choice():
     global P1_MAPPINGS, P2_MAPPINGS
     
-    # P1 Mappings
     if CURRENT_P1_INPUT_DEVICE == "keyboard_p1":
         P1_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
     elif CURRENT_P1_INPUT_DEVICE.startswith("joystick"):
         P1_MAPPINGS = LOADED_JOYSTICK_MAPPINGS.copy() if LOADED_JOYSTICK_MAPPINGS else DEFAULT_JOYSTICK_FALLBACK_MAPPINGS.copy()
         status_msg_p1 = "from controller_mappings.json" if LOADED_JOYSTICK_MAPPINGS else "using FALLBACK joystick mappings"
         print(f"Config: P1 assigned joystick mappings {status_msg_p1} for device '{CURRENT_P1_INPUT_DEVICE}'.")
-    else: # Should not happen if validation is correct
+    else:
         P1_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
 
-    # P2 Mappings
-    if CURRENT_P2_INPUT_DEVICE == "keyboard_p1": # P2 using P1's keyboard layout
+    if CURRENT_P2_INPUT_DEVICE == "keyboard_p1":
         P2_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
     elif CURRENT_P2_INPUT_DEVICE == "keyboard_p2":
         P2_MAPPINGS = DEFAULT_KEYBOARD_P2_MAPPINGS.copy()
     elif CURRENT_P2_INPUT_DEVICE.startswith("joystick"):
         P2_MAPPINGS = LOADED_JOYSTICK_MAPPINGS.copy() if LOADED_JOYSTICK_MAPPINGS else DEFAULT_JOYSTICK_FALLBACK_MAPPINGS.copy()
-        # Note: If P1 and P2 use different joysticks but want the same custom mapping,
-        # this logic correctly assigns the same LOADED_JOYSTICK_MAPPINGS to both.
-        # If they need *different* custom joystick mappings (e.g., P1 uses Xbox, P2 uses PS4 with different JSONs),
-        # this system would need expansion (e.g., per-joystick-GUID mapping files).
         status_msg_p2 = "from controller_mappings.json" if LOADED_JOYSTICK_MAPPINGS else "using FALLBACK joystick mappings"
         print(f"Config: P2 assigned joystick mappings {status_msg_p2} for device '{CURRENT_P2_INPUT_DEVICE}'.")
-    else: # Should not happen
+    else:
         P2_MAPPINGS = DEFAULT_KEYBOARD_P2_MAPPINGS.copy()
         
     print(f"Config: Player mappings updated. P1 using: {CURRENT_P1_INPUT_DEVICE}, P2 using: {CURRENT_P2_INPUT_DEVICE}")
 
-
-# Initial load when this module is imported
 if __name__ != "__main__":
-    # _load_external_joystick_mappings() is called by load_config() now.
-    # No need to call it separately here if load_config() will be called by main.py.
-    # If main.py doesn't call load_config() immediately, then this might be needed.
-    # For now, assume main.py calls load_config() early.
     pass
-else: # Test block
+else:
     print("--- Running config.py directly for testing ---")
-    pygame.init() # Needed for joystick events
-    joystick_handler.init_joysticks() # Initialize joysticks for testing
+    pygame.init()
+    joystick_handler.init_joysticks()
 
     print(f"\n--- Calling load_config() for test ---")
-    load_config() # This will internally call _load_external_joystick_mappings and update_player_mappings
+    load_config()
 
     print(f"\nAfter test load_config():")
     print(f"  AXIS_THRESHOLD_DEFAULT: {AXIS_THRESHOLD_DEFAULT}")
@@ -379,7 +364,8 @@ else: # Test block
     
     if LOADED_JOYSTICK_MAPPINGS:
         print(f"  LOADED_JOYSTICK_MAPPINGS (example - jump): {LOADED_JOYSTICK_MAPPINGS.get('jump')}")
-        print(f"  LOADED_JOYSTICK_MAPPINGS (example - reset): {LOADED_JOYSTICK_MAPPINGS.get('reset')}") # Check if reset is loaded
+        print(f"  LOADED_JOYSTICK_MAPPINGS (example - reset): {LOADED_JOYSTICK_MAPPINGS.get('reset')}")
+        print(f"  LOADED_JOYSTICK_MAPPINGS (example - projectile6): {LOADED_JOYSTICK_MAPPINGS.get('projectile6')}")
 
     joystick_handler.quit_joysticks()
     pygame.quit()
