@@ -134,18 +134,19 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Spawns
     "player1_spawn": {
         "source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn",
-        "tooltip": "P1 Spawn", "category": "spawn"
+        "tooltip": "P1", "category": "spawn"
     },
     "player2_spawn": {
         "source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn",
-        "tooltip": "P2 Spawn", "category": "spawn"
+        "tooltip": "P2", "category": "spawn"
     },
     # Enemies
     "enemy_cyan": {"source_file": "characters/cyan/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (Cyan)", "category": "enemy"},
+    "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (gray)", "category": "enemy"},
     "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "tooltip": "Enemy (Green)", "category": "enemy"},
     "enemy_pink": { "source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "tooltip": "Enemy (Pink)", "category": "enemy"},
     "enemy_purple": { "source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "tooltip": "Enemy (Purple)", "category": "enemy"},
-    "enemy_red": { "source_file": "characters/red/__Idle.gif", "game_type_id": "enemy_red", "tooltip": "Enemy (Red)", "category": "enemy"},
+    "enemy_orange": { "source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_red", "tooltip": "Enemy (Orange)", "category": "enemy"},
     "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "tooltip": "Enemy (Yellow)", "category": "enemy"},
     # Items
     "chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "tooltip": "Chest", "category": "item"},
@@ -236,12 +237,16 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "attack_damage": {"type": "int", "default": 2, "min": 0, "max": 10, "tooltip": "Damage dealt on contact."},
          "can_fly": {"type": "bool", "default": True}
     },
-    "enemy_red": {
+    "enemy_orange": {
         "health": {"type": "int", "default": 3, "min": 1, "max": 20},
         "is_aggressive": {"type": "bool", "default": True, "tooltip": "Will it chase player if in range?"},
         "aggro_range_tiles": {"type": "int", "default": 8, "min":0, "max": 30, "tooltip":"Range (tiles) to detect player."}
     },
     "enemy_yellow": {
+        "health": {"type": "int", "default": 3, "min": 1, "max": 20},
+        "move_speed": {"type": "float", "default": 150.0, "min": 10.0, "max": 400.0},
+    },
+        "enemy_gray": {
         "health": {"type": "int", "default": 3, "min": 1, "max": 20},
         "move_speed": {"type": "float", "default": 150.0, "min": 10.0, "max": 400.0},
     },

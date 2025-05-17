@@ -47,7 +47,7 @@ class Enemy(pygame.sprite.Sprite):
         self._valid_init = True
         character_base_asset_folder = 'characters'
         
-        available_enemy_colors = ['cyan', 'green', 'pink', 'purple', 'red', 'yellow']
+        available_enemy_colors = ['cyan', 'green', 'pink', 'purple', 'gray', 'yellow', 'orange']
         if not available_enemy_colors:
              warning(f"Enemy Warning (ID: {self.enemy_id}): No enemy colors defined! Defaulting to 'player1' assets.")
              available_enemy_colors = ['player1'] 
