@@ -4,7 +4,7 @@
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 1.0.0.9 (Stone smashed duration to 5s)
+# version 1.0.0.11 (Added 'reset' to JOYSTICK_EVENT_ACTIONS)
 import os
 import sys
 import pygame # For K_ constants
@@ -50,9 +50,9 @@ CHARACTER_ATTACK_STATE_DURATION = 480 # ms, general duration for an attack state
 
 # --- Item Constants ---
 CHEST_CLOSED_SPRITE_PATH = "characters/items/chest.gif"
-CHEST_OPEN_SPRITE_PATH = "characters/items/chest_open.gif" 
-CHEST_STAY_OPEN_DURATION_MS = 3000 
-CHEST_FADE_OUT_DURATION_MS = 1000  
+CHEST_OPEN_SPRITE_PATH = "characters/items/chest_open.gif"
+CHEST_STAY_OPEN_DURATION_MS = 3000
+CHEST_FADE_OUT_DURATION_MS = 1000
 
 
 # --- Projectile Constants ---
@@ -96,21 +96,21 @@ ICE_LIFESPAN = 2200 # ms
 ICE_SPRITE_PATH = "characters/weapons/ice.gif"
 ICE_DIMENSIONS = (40, 40)
 
-# Shadow Projectile (Key 6) 
+# Shadow Projectile (Key 6)
 SHADOW_PROJECTILE_DAMAGE = 45
 SHADOW_PROJECTILE_SPEED = 11
 SHADOW_PROJECTILE_COOLDOWN = 800 # ms
 SHADOW_PROJECTILE_LIFESPAN = 1700 # ms
 SHADOW_PROJECTILE_SPRITE_PATH = "characters/weapons/shadow095.gif"
-SHADOW_PROJECTILE_DIMENSIONS = (40, 40) 
+SHADOW_PROJECTILE_DIMENSIONS = (40, 40)
 
-# Grey Projectile (Key 7) 
+# Grey Projectile (Key 7)
 GREY_PROJECTILE_DAMAGE = 0 # Petrifies instead of direct damage
 GREY_PROJECTILE_SPEED = 13
 GREY_PROJECTILE_COOLDOWN = 750 # ms
 GREY_PROJECTILE_LIFESPAN = 1500 # ms
 GREY_PROJECTILE_SPRITE_PATH = "characters/weapons/grey.gif"
-GREY_PROJECTILE_DIMENSIONS = (40, 40) 
+GREY_PROJECTILE_DIMENSIONS = (40, 40)
 
 
 # --- Enemy Constants ---
@@ -221,8 +221,8 @@ P1_POISON_KEY = pygame.K_2
 P1_BOLT_KEY = pygame.K_3
 P1_BLOOD_KEY = pygame.K_4
 P1_ICE_KEY = pygame.K_5
-P1_SHADOW_PROJECTILE_KEY = pygame.K_6 
-P1_GREY_PROJECTILE_KEY = pygame.K_7   
+P1_SHADOW_PROJECTILE_KEY = pygame.K_6
+P1_GREY_PROJECTILE_KEY = pygame.K_7
 
 # --- Player 2 Projectile Keys ---
 P2_FIREBALL_KEY = pygame.K_KP_1
@@ -230,5 +230,24 @@ P2_POISON_KEY = pygame.K_KP_2
 P2_BOLT_KEY = pygame.K_KP_3
 P2_BLOOD_KEY = pygame.K_KP_4
 P2_ICE_KEY = pygame.K_KP_5
-P2_SHADOW_PROJECTILE_KEY = pygame.K_KP_6 
-P2_GREY_PROJECTILE_KEY = pygame.K_KP_7   
+P2_SHADOW_PROJECTILE_KEY = pygame.K_KP_6
+P2_GREY_PROJECTILE_KEY = pygame.K_KP_7
+
+# --- Input Handling Constants for Joysticks ---
+# Actions that, if mapped to a joystick HAT, should trigger a single event
+JOYSTICK_HAT_EVENT_ACTIONS = [
+    "projectile1", "projectile2", "projectile3", "projectile4",
+    "projectile5", "projectile6", "projectile7",
+    "menu_up", "menu_down", "menu_left", "menu_right",
+    "menu_confirm", "menu_cancel", "pause", "reset" # Added "reset"
+]
+
+# Actions that, if mapped to a joystick AXIS (and cross a threshold),
+# should trigger a single event.
+JOYSTICK_AXIS_EVENT_ACTIONS = [
+    "jump",
+    "attack1", "attack2", "dash", "roll", "interact",
+    "projectile1", "projectile2", "projectile3", "projectile4",
+    "projectile5", "projectile6", "projectile7",
+    "pause", "menu_confirm", "menu_cancel", "reset" # Added "reset"
+]

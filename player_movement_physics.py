@@ -44,15 +44,19 @@ def manage_player_state_timers_and_cooldowns(player):
             if slide_end_anim_key:
                 set_player_state(player, slide_end_anim_key)
             else: 
-                if player.is_holding_crouch_ability_key:
+                # For toggle, if player.is_crouching is still true (e.g. they didn't press crouch again), stay crouched.
+                if player.is_crouching: # Check the toggled state
                     set_player_state(player, 'crouch')
-                else:
-                    player.is_crouching = False 
+                else: # Otherwise, stand. player.is_holding_crouch_ability_key is for hold-to-crouch aiming.
                     set_player_state(player, 'idle')
 
+
     if player.is_taking_hit and current_time_ms - player.hit_timer > player.hit_cooldown:
-        if player.state != 'hit': 
+        if player.state != 'hit': # Only reset if not already in 'hit' state due to new hit
              player.is_taking_hit = False
+
+    # The conflicting block that prematurely stood the player up (for hold-to-crouch) has been removed here.
+    # Crouch toggle logic now correctly handles standing up via another crouch input event in player_input_handler.py
 
 
 def apply_player_movement_and_physics(player):
@@ -98,11 +102,11 @@ def apply_player_movement_and_physics(player):
                  if slide_end_key:
                      set_player_state(player, slide_end_key)
                  else:
-                     if player.is_holding_crouch_ability_key:
-                         player.is_crouching = True 
+                     # If slide ends and player was holding down (for aiming or continuous crouch hold)
+                     # and crouch toggle is still active, go to 'crouch'. Else 'idle'.
+                     if player.is_crouching: # Check toggled state
                          set_player_state(player, 'crouch')
                      else:
-                         player.is_crouching = False
                          set_player_state(player, 'idle')
 
         current_h_speed_limit = C.PLAYER_RUN_SPEED_LIMIT
@@ -124,11 +128,8 @@ def update_player_core_logic(player, dt_sec, platforms_group, ladders_group, haz
     """
     if not player._valid_init: return
     
-    # If petrified or smashed, skip all physics and core logic updates.
-    # Animation and timer for smashed disappearance are handled in Player.update() itself.
     if getattr(player, 'is_petrified', False):
         log_player_physics(player, "UPDATE_BLOCKED", "Player is petrified/smashed")
-        # player.animate() might still be called from Player.update() to show stone/smashed anim.
         return
 
     log_player_physics(player, "UPDATE_START")
@@ -155,17 +156,15 @@ def update_player_core_logic(player, dt_sec, platforms_group, ladders_group, haz
 
     manage_player_state_timers_and_cooldowns(player)
 
-    if player.is_crouching and not player.is_holding_crouch_ability_key:
-        if player.can_stand_up(platforms_group): 
-            player.is_crouching = False
-            if player.is_trying_to_move_left or player.is_trying_to_move_right:
-                set_player_state(player, 'run')
-            else:
-                set_player_state(player, 'idle')
-        else:
-            if player.state not in ['crouch', 'crouch_walk', 'crouch_attack', 'crouch_trans']:
-                is_moving = player.is_trying_to_move_left or player.is_trying_to_move_right
-                set_player_state(player, 'crouch_walk' if is_moving else 'crouch')
+    # For toggle crouch, standing up is handled by another crouch event in player_input_handler.
+    # The 'is_holding_crouch_ability_key' is now more for aiming or specific transitions like slide_end.
+    # If player.is_crouching is True (toggled on) and they are no longer "holding" the key
+    # (relevant for joysticks where "down" might be released but toggle state remains),
+    # they should remain crouching.
+    #
+    # The logic previously here:
+    # `if player.is_crouching and not player.is_holding_crouch_ability_key:`
+    # has been removed as it was for hold-to-crouch.
 
     check_player_ladder_collisions(player, ladders_group) 
     if player.on_ladder and not player.can_grab_ladder: 
@@ -190,7 +189,10 @@ def update_player_core_logic(player, dt_sec, platforms_group, ladders_group, haz
 
     if collided_horizontally_char: 
         log_player_physics(player, "X_CHAR_COLL_POST")
-        player.rect.midbottom = (round(player.pos.x), round(player.pos.y)) 
+        # Position needs to be re-synced from rect after character collision might have moved it
+        player.pos.x = player.rect.centerx 
+        player.pos.y = player.rect.bottom
+        # Re-check platform collisions on X if character collision occurred and moved the player
         check_player_platform_collisions(player, 'x', platforms_group) 
         log_player_physics(player, "X_PLAT_RECHECK")
 
@@ -202,14 +204,18 @@ def update_player_core_logic(player, dt_sec, platforms_group, ladders_group, haz
     log_player_physics(player, "Y_PLAT_COLL_DONE")
 
     collided_vertically_char = False
-    if not collided_horizontally_char:
+    if not collided_horizontally_char: # Only check Y char collision if no X char collision (to avoid double processing simple bumps)
         collided_vertically_char = check_player_character_collisions(player, 'y', all_other_char_sprites)
         if collided_vertically_char: 
             log_player_physics(player, "Y_CHAR_COLL_POST")
-            player.rect.midbottom = (round(player.pos.x), round(player.pos.y)) 
+            # Position re-sync after char collision
+            player.pos.x = player.rect.centerx 
+            player.pos.y = player.rect.bottom
+            # Re-check platform collisions on Y if character collision occurred and moved the player
             check_player_platform_collisions(player, 'y', platforms_group) 
             log_player_physics(player, "Y_PLAT_RECHECK")
 
+    # Final position sync after all X and Y collision resolutions for this frame
     player.pos = pygame.math.Vector2(player.rect.midbottom)
     log_player_physics(player, "FINAL_POS_SYNC")
 
@@ -222,4 +228,4 @@ def update_player_core_logic(player, dt_sec, platforms_group, ladders_group, haz
 
     update_player_animation(player)
     log_player_physics(player, "UPDATE_END")
-    if ENABLE_DETAILED_PHYSICS_LOGS: debug("------------------------------") 
+    if ENABLE_DETAILED_PHYSICS_LOGS: debug("------------------------------")

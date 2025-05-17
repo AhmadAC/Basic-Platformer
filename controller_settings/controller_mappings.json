@@ -22,15 +22,13 @@
         "friendly_name": "Axis 0 < -0.7"
     },
     "MOVE_DOWN": {
-        "event_type": "axis",
+        "event_type": "button",
         "details": {
-            "axis_id": 1,
-            "direction": 1,
-            "threshold": 0.7,
-            "type": "axis"
+            "button_id": 7,
+            "type": "button"
         },
-        "raw_str": "Axis 1 > 0.7",
-        "friendly_name": "Axis 1 > 0.7"
+        "raw_str": "Button 7 Down",
+        "friendly_name": "Button 7 Down"
     },
     "MOVE_RIGHT": {
         "event_type": "axis",
@@ -55,20 +53,20 @@
     "CROUCH": {
         "event_type": "button",
         "details": {
-            "button_id": 8,
-            "type": "button"
-        },
-        "raw_str": "Button 8 Down",
-        "friendly_name": "Button 8 Down"
-    },
-    "INTERACT": {
-        "event_type": "button",
-        "details": {
             "button_id": 7,
             "type": "button"
         },
         "raw_str": "Button 7 Down",
         "friendly_name": "Button 7 Down"
+    },
+    "INTERACT": {
+        "event_type": "button",
+        "details": {
+            "button_id": 3,
+            "type": "button"
+        },
+        "raw_str": "Button 3 Down",
+        "friendly_name": "Button 3 Down"
     },
     "ATTACK_PRIMARY": {
         "event_type": "button",
@@ -106,6 +104,15 @@
         "raw_str": "Button 5 Down",
         "friendly_name": "Button 5 Down"
     },
+    "RESET": {
+        "event_type": "button",
+        "details": {
+            "button_id": 6,
+            "type": "button"
+        },
+        "raw_str": "Button 6 Down",
+        "friendly_name": "Button 6 Down"
+    },
     "WEAPON_1": {
         "event_type": "axis",
         "details": {
@@ -128,7 +135,7 @@
         "raw_str": "Axis 5 < -0.7",
         "friendly_name": "Axis 5 < -0.7"
     },
-    "WEAPON_4": {
+    "WEAPON_DPAD_UP": {
         "event_type": "hat",
         "details": {
             "hat_id": 0,
@@ -142,30 +149,15 @@
         "friendly_name": "Hat 0 (0, 1)"
     },
     "WEAPON_DPAD_DOWN": {
-        "event_type": "hat",
+        "event_type": "axis",
         "details": {
-            "hat_id": 0,
-            "type": "hat",
-            "value": [
-                0,
-                -1
-            ]
+            "axis_id": 1,
+            "direction": 1,
+            "threshold": 0.7,
+            "type": "axis"
         },
-        "raw_str": "Hat 0 (0, -1)",
-        "friendly_name": "Hat 0 (0, -1)"
-    },
-    "WEAPON_DPAD_RIGHT": {
-        "event_type": "hat",
-        "details": {
-            "hat_id": 0,
-            "type": "hat",
-            "value": [
-                1,
-                0
-            ]
-        },
-        "raw_str": "Hat 0 (1, 0)",
-        "friendly_name": "Hat 0 (1, 0)"
+        "raw_str": "Axis 1 > 0.7",
+        "friendly_name": "Axis 1 > 0.7"
     },
     "WEAPON_DPAD_LEFT": {
         "event_type": "hat",
@@ -179,6 +171,19 @@
         },
         "raw_str": "Hat 0 (-1, 0)",
         "friendly_name": "Hat 0 (-1, 0)"
+    },
+    "WEAPON_DPAD_RIGHT": {
+        "event_type": "hat",
+        "details": {
+            "hat_id": 0,
+            "type": "hat",
+            "value": [
+                1,
+                0
+            ]
+        },
+        "raw_str": "Hat 0 (1, 0)",
+        "friendly_name": "Hat 0 (1, 0)"
     },
     "MENU_CONFIRM": {
         "event_type": "button",
