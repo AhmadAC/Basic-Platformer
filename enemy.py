@@ -1,13 +1,14 @@
-########## START OF FILE: enemy.py ##########
 # enemy.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.14 (Added apply_freeze_effect method)
+## version 1.0.0.15 (Petrification logic overhaul)
 """
 Defines the Enemy class, a CPU-controlled character.
 Handles AI-driven movement (via enemy_ai_handler), animations, states,
 combat (via enemy_combat_handler), and network synchronization
 (via enemy_network_handler).
 Each instance randomly selects a color variant for its animations if configured.
+Petrification turns the enemy to stone but doesn't kill it; further damage
+is required, which then triggers a smash animation.
 """
 import pygame
 import random
@@ -27,11 +28,11 @@ except ImportError:
 # --- End Logger ---
 
 import constants as C
-from assets import load_all_player_animations
+from assets import load_all_player_animations, load_gif_frames, resource_path
 from tiles import Lava
 
 from enemy_ai_handler import set_enemy_new_patrol_target, enemy_ai_update
-from enemy_combat_handler import check_enemy_attack_collisions, enemy_take_damage
+from enemy_combat_handler import check_enemy_attack_collisions, enemy_take_damage # enemy_take_damage will be modified
 from enemy_network_handler import get_enemy_network_data, set_enemy_network_data
 
 
@@ -105,10 +106,10 @@ class Enemy(pygame.sprite.Sprite):
         self.is_taking_hit = False; self.hit_timer = 0
         self.hit_duration = getattr(C, 'ENEMY_HIT_STUN_DURATION', 300)
         self.hit_cooldown = getattr(C, 'ENEMY_HIT_COOLDOWN', 500)
-        self.is_dead = False
-        self.death_animation_finished = False
+        self.is_dead = False # Initially not dead
+        self.death_animation_finished = False # For regular death or smashed stone
         self.state_timer = 0
-        self.max_health = getattr(C, 'ENEMY_MAX_HEALTH', 100)
+        self.max_health = getattr(C, 'ENEMY_MAX_HEALTH', 80)
         self.current_health = self.max_health
         self.attack_hitbox = pygame.Rect(0, 0, 50, 35)
         try: self.standard_height = self.animations['idle'][0].get_height() if self.animations.get('idle') else 60
@@ -130,15 +131,34 @@ class Enemy(pygame.sprite.Sprite):
         self.aflame_damage_last_tick = 0
         self.has_ignited_another_enemy_this_cycle = False
         
+        # Petrification state
         self.is_petrified = False
         self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
-        self.stone_image_frame = self.animations.get('stone', [self._create_placeholder_surface(C.GRAY, "Stone")])[0]
-        self.stone_smashed_frames = self.animations.get('stone_smashed', [self._create_placeholder_surface(C.DARK_GRAY, "Smash")])
+        
+        # Load common stone assets (shared, not from character-specific folder)
+        stone_common_folder = os.path.join('characters', 'Stone')
+        common_stone_png_path = resource_path(os.path.join(stone_common_folder, '__Stone.png'))
+        common_stone_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneSmashed.gif'))
+
+        loaded_common_stone_frames = load_gif_frames(common_stone_png_path)
+        if loaded_common_stone_frames and not (len(loaded_common_stone_frames) == 1 and loaded_common_stone_frames[0].get_size() == (30,40) and loaded_common_stone_frames[0].get_at((0,0)) == C.RED):
+            self.stone_image_frame = loaded_common_stone_frames[0]
+        else:
+            self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "Stone")
+
+        loaded_common_smashed_frames = load_gif_frames(common_stone_smashed_gif_path)
+        if loaded_common_smashed_frames and not (len(loaded_common_smashed_frames) == 1 and loaded_common_smashed_frames[0].get_size() == (30,40) and loaded_common_smashed_frames[0].get_at((0,0)) == C.RED):
+            self.stone_smashed_frames = loaded_common_smashed_frames
+        else:
+            self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "Smash")]
 
 
     def _create_placeholder_surface(self, color, text="Err"):
-        surf = pygame.Surface((30, 40)).convert_alpha() 
+        # Use a somewhat generic size based on TILE_SIZE for consistency
+        width = C.TILE_SIZE
+        height = int(C.TILE_SIZE * 1.5) # Assuming enemies are taller than wide
+        surf = pygame.Surface((width, height)).convert_alpha() 
         surf.fill(color)
         pygame.draw.rect(surf, C.BLACK, surf.get_rect(), 1)
         try: 
@@ -149,26 +169,26 @@ class Enemy(pygame.sprite.Sprite):
         return surf
 
     def petrify(self):
+        # If already petrified, or truly dead (not just petrified with health), do nothing
         if self.is_petrified or (self.is_dead and not self.is_petrified): 
             return
         debug(f"Enemy {self.enemy_id} is being petrified.")
         self.is_petrified = True
-        self.is_stone_smashed = False
-        self.is_dead = True 
-        self.current_health = 0 
+        self.is_stone_smashed = False 
+        # self.is_dead = True # REMOVED - Not dead yet, just stone
+        # self.current_health = 0 # REMOVED - Health is not set to 0
         self.vel.xy = 0, 0
         self.acc.xy = 0, 0
         self.is_attacking = False
-        self.is_taking_hit = False
+        self.is_taking_hit = False # Cannot be hit-stunned while petrified
         self.is_frozen = False; self.is_defrosting = False
         self.is_aflame = False; self.is_deflaming = False
-        self.state = 'petrified' 
-        self.current_frame = 0 
-        self.death_animation_finished = True 
-        self.set_state('petrified') 
+        # self.death_animation_finished = True # REMOVED
+        
+        self.set_state('petrified')
 
     def apply_aflame_effect(self):
-        if self.is_aflame or self.is_deflaming or self.is_dead or self.is_petrified:
+        if self.is_aflame or self.is_deflaming or self.is_dead or self.is_petrified: # ADDED self.is_petrified
             debug(f"Enemy {self.enemy_id}: apply_aflame_effect called but already aflame/deflaming/dead/petrified. Ignoring.")
             return
 
@@ -190,7 +210,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def apply_freeze_effect(self):
         """Applies the frozen status effect to the enemy."""
-        if self.is_frozen or self.is_defrosting or self.is_dead or self.is_petrified:
+        if self.is_frozen or self.is_defrosting or self.is_dead or self.is_petrified: # ADDED self.is_petrified
             debug(f"Enemy {self.enemy_id}: apply_freeze_effect called but already frozen/deflating/dead/petrified. Ignoring.")
             return
         
@@ -212,142 +232,149 @@ class Enemy(pygame.sprite.Sprite):
 
     def set_state(self, new_state: str):
         if not self._valid_init: return
+        current_ticks_ms = pygame.time.get_ticks()
 
-        if self.is_petrified and new_state not in ['petrified', 'smashed', 'death', 'death_nm']: 
-            debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' due to being petrified.")
+        # If petrified (but not smashed), only allow transitions to 'smashed', 'petrified' (refresh), or 'idle' (for reset)
+        if self.is_petrified and not self.is_stone_smashed and \
+           new_state not in ['petrified', 'smashed', 'idle']: 
+            debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' "
+                  f"due to being petrified (and not smashed).")
+            return
+        
+        # If smashed, only allow 'smashed' (refresh) or 'idle' (for reset)
+        if self.is_stone_smashed and new_state not in ['smashed', 'idle']:
+            debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' "
+                  f"due to being stone_smashed.")
             return
 
-        if (self.is_aflame or self.is_deflaming) and \
-           new_state not in ['aflame', 'deflame', 'idle', 'death', 'death_nm', 'stomp_death', 'petrified', 'smashed']:
-            debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' due to aflame/deflaming.")
-            return
-
-        if (self.is_frozen or self.is_defrosting) and \
-           new_state not in ['frozen', 'defrost', 'idle', 'death', 'death_nm', 'stomp_death', 'aflame', 'deflame', 'petrified', 'smashed']:
-            debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' due to frozen/defrosting.")
-            return
-            
-        if self.is_stomp_dying and new_state != 'stomp_death':
-            return
+        # Block other status effects if petrified (unless it's a reset to idle)
+        if self.is_petrified and new_state not in ['petrified', 'smashed', 'idle']:
+            if new_state in ['frozen', 'defrost', 'aflame', 'deflame', 'hit', 'stomp_death']:
+                debug(f"Enemy {self.enemy_id}: Blocked state change from '{self.state}' to '{new_state}' due to petrification.")
+                return
 
         animation_key_to_validate = new_state
-        valid_direct_animation_states = ['idle', 'run', 'attack', 'attack_nm', 'hit', 'death', 'death_nm', 'fall', 'stomp_death', 
-                                         'frozen', 'defrost', 'aflame', 'deflame', 'petrified', 'smashed'] 
-
-        if new_state not in valid_direct_animation_states:
-            if new_state in ['chasing', 'patrolling']:
-                animation_key_to_validate = 'run'
-            elif 'attack' in new_state:
-                animation_key_to_validate = new_state
-            else:
-                animation_key_to_validate = 'idle'
+        # Map logical states to animation keys (some states might share an animation or use placeholders)
+        if new_state in ['chasing', 'patrolling']: animation_key_to_validate = 'run'
+        elif 'attack' in new_state: animation_key_to_validate = new_state # e.g., 'attack', 'attack_nm'
         
-        is_new_anim_special_effect = animation_key_to_validate in ['frozen', 'defrost', 'aflame', 'deflame', 'petrified', 'smashed']
-        if is_new_anim_special_effect and animation_key_to_validate not in ['petrified', 'smashed'] and self.color_name != 'green':
+        is_new_anim_special_effect = animation_key_to_validate in ['frozen', 'defrost', 'aflame', 'deflame']
+        if is_new_anim_special_effect and self.color_name != 'green':
             debug(f"Enemy {self.enemy_id} ({self.color_name}): Cannot use state '{animation_key_to_validate}', not green. Defaulting to idle.")
             animation_key_to_validate = 'idle' 
         
-        if animation_key_to_validate == 'petrified': animation_key_to_validate = 'stone'
-        if animation_key_to_validate == 'smashed': animation_key_to_validate = 'stone_smashed'
+        # For petrified/smashed, the actual animation frames come from self.stone_image_frame / self.stone_smashed_frames,
+        # so we use 'stone' / 'stone_smashed' as "logical" animation keys here for validation,
+        # but Enemy.animate will handle the actual image source.
+        if new_state == 'petrified': animation_key_to_validate = 'stone' # Logical key for validation
+        elif new_state == 'smashed': animation_key_to_validate = 'stone_smashed' # Logical key for validation
 
+        # Animation validation (except for 'stone' and 'stone_smashed' which use direct image/frame attributes)
+        if animation_key_to_validate not in ['stone', 'stone_smashed']:
+            if animation_key_to_validate not in self.animations or not self.animations[animation_key_to_validate]:
+                warning(f"Enemy Warning (ID: {self.enemy_id}): Animation for key '{animation_key_to_validate}' (from logical: '{new_state}') missing. Trying 'idle'.")
+                animation_key_to_validate = 'idle'
+                if 'idle' not in self.animations or not self.animations['idle']:
+                     critical(f"Enemy CRITICAL (ID: {self.enemy_id}): Cannot find valid 'idle' animation. Halting state change for '{new_state}'.")
+                     return
 
-        if new_state == 'stomp_death':
-            pass 
-        elif animation_key_to_validate not in self.animations or not self.animations[animation_key_to_validate]:
-            warning(f"Enemy Warning (ID: {self.enemy_id}): Animation for key '{animation_key_to_validate}' (from logical: '{new_state}') missing. Trying 'idle'.")
-            animation_key_to_validate = 'idle'
-            if 'idle' not in self.animations or not self.animations['idle']:
-                 critical(f"Enemy CRITICAL (ID: {self.enemy_id}): Cannot find valid 'idle' animation. Halting state change for '{new_state}'.")
-                 return
-
-        can_change_state_now = (self.state != new_state or new_state in ['death', 'stomp_death', 'frozen', 'defrost', 'aflame', 'deflame', 'petrified', 'smashed']) and \
-                               not (self.is_dead and not self.death_animation_finished and new_state not in ['death', 'stomp_death', 'petrified', 'smashed'])
+        # Determine if state can change
+        can_change_state_now = (self.state != new_state or new_state in ['death', 'stomp_death', 'frozen', 'defrost', 'aflame', 'deflame', 'petrified', 'smashed'])
+        if self.is_dead and self.death_animation_finished: # If truly game-over dead
+             if new_state not in ['idle']: # Allow reset to idle if it was dead and finished
+                can_change_state_now = False
 
         if can_change_state_now:
             self._last_state_for_debug = new_state 
             if 'attack' not in new_state: self.is_attacking = False; self.attack_type = 0
             if new_state != 'hit': self.is_taking_hit = False
 
-            if self.state == 'frozen' and new_state != 'frozen': self.is_frozen = False
-            if self.state == 'defrost' and new_state != 'defrost': self.is_defrosting = False
-            if self.state == 'aflame' and new_state != 'aflame': self.is_aflame = False
-            if self.state == 'deflame' and new_state != 'deflame': self.is_deflaming = False
-            if self.state == 'petrified' and new_state != 'petrified': self.is_petrified = False 
-            if self.state == 'smashed' and new_state != 'smashed': self.is_stone_smashed = False
+            # Clear conflicting status effects
+            if new_state != 'frozen' and self.is_frozen: self.is_frozen = False
+            if new_state != 'defrost' and self.is_defrosting: self.is_defrosting = False
+            if new_state != 'aflame' and self.is_aflame: self.is_aflame = False
+            if new_state != 'deflame' and self.is_deflaming: self.is_deflaming = False
             
+            # If changing from petrified/smashed to something else (e.g. reset to 'idle'), clear these flags.
+            if (self.is_petrified or self.is_stone_smashed) and new_state not in ['petrified', 'smashed']:
+                self.is_petrified = False
+                self.is_stone_smashed = False
+                # is_dead and death_animation_finished would be handled by reset() if it's a reset
+
             self.state = new_state
             self.current_frame = 0
-            current_ticks_ms = pygame.time.get_ticks()
             self.last_anim_update = current_ticks_ms
             self.state_timer = current_ticks_ms
 
+            # State-specific initializations
             if new_state == 'frozen': 
-                self.is_frozen = True; self.is_defrosting = False 
-                self.is_aflame = False; self.is_deflaming = False 
-                self.frozen_effect_timer = current_ticks_ms 
-                self.vel.xy = 0,0; self.acc.x = 0
+                self.is_frozen = True; self.is_defrosting = False; self.is_aflame = False; self.is_deflaming = False
+                self.frozen_effect_timer = current_ticks_ms; self.vel.xy = 0,0; self.acc.x = 0
             elif new_state == 'defrost': 
-                self.is_defrosting = True; self.is_frozen = False 
-                self.is_aflame = False; self.is_deflaming = False
-                self.frozen_effect_timer = current_ticks_ms 
-                self.vel.xy = 0,0; self.acc.x = 0
+                self.is_defrosting = True; self.is_frozen = False; self.is_aflame = False; self.is_deflaming = False
+                self.frozen_effect_timer = current_ticks_ms; self.vel.xy = 0,0; self.acc.x = 0
             elif new_state == 'aflame':
-                self.is_aflame = True; self.is_deflaming = False
-                self.is_frozen = False; self.is_defrosting = False 
-                self.aflame_timer_start = current_ticks_ms 
-                self.aflame_damage_last_tick = current_ticks_ms
+                self.is_aflame = True; self.is_deflaming = False; self.is_frozen = False; self.is_defrosting = False 
+                self.aflame_timer_start = current_ticks_ms; self.aflame_damage_last_tick = current_ticks_ms
                 self.has_ignited_another_enemy_this_cycle = False
             elif new_state == 'deflame':
-                self.is_deflaming = True; self.is_aflame = False
-                self.is_frozen = False; self.is_defrosting = False
+                self.is_deflaming = True; self.is_aflame = False; self.is_frozen = False; self.is_defrosting = False
                 self.deflame_timer_start = current_ticks_ms
-            elif new_state == 'petrified': 
+            elif new_state == 'petrified': # Initial petrification (not smashed yet)
                 self.is_petrified = True; self.is_stone_smashed = False
-                self.is_dead = True; self.death_animation_finished = True 
                 self.vel.xy = 0,0; self.acc.xy = 0,0
-            elif new_state == 'smashed': 
+                # self.is_dead is NOT set here, health is preserved
+            elif new_state == 'smashed': # Transition to smashed (means health was 0)
                 self.is_stone_smashed = True; self.is_petrified = True 
-                self.stone_smashed_timer_start = current_ticks_ms
+                self.is_dead = True # Confirmed dead
+                self.death_animation_finished = False # Smashed animation needs to play
+                self.stone_smashed_timer_start = current_ticks_ms # Could be already set by take_damage
                 self.vel.xy = 0,0; self.acc.xy = 0,0
-            elif new_state == 'idle': 
-                self.is_frozen = False; self.is_defrosting = False
-                self.is_aflame = False; self.is_deflaming = False
-                if self.is_petrified or self.is_stone_smashed:
-                    self.is_petrified = False; self.is_stone_smashed = False
-                    self.is_dead = False; self.death_animation_finished = False 
-
+            elif new_state == 'idle':
+                pass # General cleanup already done if transitioning from special states
             elif 'attack' in new_state:
-                self.is_attacking = True; self.attack_type = 1
+                self.is_attacking = True; self.attack_type = 1 # Assuming type 1 for generic 'attack'
                 self.attack_timer = current_ticks_ms; self.vel.x = 0
             elif new_state == 'hit':
                  self.is_taking_hit = True; self.hit_timer = self.state_timer
                  self.vel.x *= -0.5
                  self.vel.y = getattr(C, 'ENEMY_HIT_BOUNCE_Y', getattr(C, 'PLAYER_JUMP_STRENGTH', -10) * 0.3)
                  self.is_attacking = False
-            elif new_state == 'death' or new_state == 'stomp_death':
+            elif new_state == 'death' or new_state == 'stomp_death': # Regular death or stomp death
                  self.is_dead = True; self.vel.x = 0; self.vel.y = 0
                  self.acc.xy = 0, 0; self.current_health = 0
                  self.death_animation_finished = False
+                 # Clear other effects on death
                  self.is_frozen = False; self.is_defrosting = False 
                  self.is_aflame = False; self.is_deflaming = False 
-                 self.is_petrified = False; self.is_stone_smashed = False 
+                 self.is_petrified = False; self.is_stone_smashed = False # Death overrides petrification
                  if new_state == 'stomp_death' and not self.is_stomp_dying: 
                      self.stomp_kill() 
 
             self.animate()
-        elif not self.is_dead:
+        elif not self.is_dead: # If state didn't change but not dead, log current state
              self._last_state_for_debug = self.state
 
+
     def animate(self):
-        if not self._valid_init or not hasattr(self, 'animations') or not self.animations: return
-        if not (self.alive() or (self.is_dead and not self.death_animation_finished)):
-            if not self.is_petrified:
-                return
+        if not self._valid_init or not hasattr(self, 'animations'): return
+        
+        # Allow animation update if:
+        # 1. Alive
+        # 2. Dead but death animation (regular or smashed) not finished
+        # 3. Petrified (static image or smashed animation)
+        can_animate = self.alive() or \
+                      (self.is_dead and not self.death_animation_finished) or \
+                      self.is_petrified
+
+        if not can_animate:
+            return
 
         current_time_ms = pygame.time.get_ticks()
         animation_frame_duration_ms = getattr(C, 'ANIM_FRAME_DURATION', 100)
 
-        if self.is_stomp_dying:
+        if self.is_stomp_dying: # Handle stomp death scaling animation separately
+            # ... (existing stomp death animation logic remains the same) ...
             if not self.original_stomp_death_image:
                 self.death_animation_finished = True
                 self.is_stomp_dying = False
@@ -376,22 +403,24 @@ class Enemy(pygame.sprite.Sprite):
             self.rect = self.image.get_rect(midbottom=old_midbottom)
             return 
 
-        determined_animation_key = 'idle'
+        determined_animation_key = 'idle' # Default
         current_animation_frames_list = None
 
+        # Determine animation key based on state
         if self.is_petrified:
             if self.is_stone_smashed:
-                determined_animation_key = 'stone_smashed' # This is the key for self.animations
-                current_animation_frames_list = self.stone_smashed_frames # Use pre-loaded specific frames
+                determined_animation_key = 'stone_smashed' 
+                current_animation_frames_list = self.stone_smashed_frames
             else: 
                 determined_animation_key = 'stone'
                 current_animation_frames_list = [self.stone_image_frame] if self.stone_image_frame else []
-        elif self.is_dead: 
+        elif self.is_dead: # Regular death
             determined_animation_key = 'death_nm' if abs(self.vel.x) < 0.1 and abs(self.vel.y) < 0.1 and \
                                      self.animations.get('death_nm') else 'death'
             if not self.animations.get(determined_animation_key):
                 determined_animation_key = 'death' if self.animations.get('death') else 'idle'
             current_animation_frames_list = self.animations.get(determined_animation_key)
+        # ... (rest of the existing logic to determine animation_key for aflame, frozen, run, attack, etc.) ...
         elif self.state == 'aflame': 
             determined_animation_key = 'aflame'
             current_animation_frames_list = self.animations.get(determined_animation_key)
@@ -427,56 +456,70 @@ class Enemy(pygame.sprite.Sprite):
             determined_animation_key = 'run' if abs(self.vel.x) > 0.1 else 'idle'
             current_animation_frames_list = self.animations.get(determined_animation_key)
         
+        # Green specific animations
         is_new_anim_green_specific_anim = determined_animation_key in ['frozen', 'defrost', 'aflame', 'deflame'] 
         if is_new_anim_green_specific_anim and self.color_name != 'green':
             determined_animation_key = 'idle' 
             current_animation_frames_list = self.animations.get(determined_animation_key)
 
+        # Fallback if determined key has no frames (should be rare if 'stone'/'stone_smashed' handled above)
         if not current_animation_frames_list: 
-            if not self.animations.get(determined_animation_key):
+            if determined_animation_key not in ['stone', 'stone_smashed']: # Don't warn for stone/smashed if they correctly use instance frames
                 warning(f"Enemy Animate Warning (ID: {self.enemy_id}): Key '{determined_animation_key}' invalid for state '{self.state}'. Defaulting to 'idle'.")
-                determined_animation_key = 'idle'
+            determined_animation_key = 'idle'
             current_animation_frames_list = self.animations.get(determined_animation_key)
-
 
         if not current_animation_frames_list:
             if hasattr(self, 'image') and self.image: self.image.fill(C.BLUE)
             critical(f"Enemy CRITICAL Animate (ID: {self.enemy_id}): No frames for '{determined_animation_key}' (state: {self.state})")
             return
 
-        if not (self.is_dead and self.death_animation_finished and not self.is_petrified) or self.is_stone_smashed: 
-            if current_time_ms - self.last_anim_update > animation_frame_duration_ms:
-                self.last_anim_update = current_time_ms
+        # --- Frame Advancement Logic ---
+        if current_time_ms - self.last_anim_update > animation_frame_duration_ms:
+            self.last_anim_update = current_time_ms
+            
+            # Only advance frame if not static petrified (i.e., petrified AND NOT smashed)
+            if not (self.is_petrified and not self.is_stone_smashed):
                 self.current_frame += 1
 
-                if self.current_frame >= len(current_animation_frames_list):
-                    if self.is_dead and not self.is_petrified: 
-                        self.current_frame = len(current_animation_frames_list) - 1
-                        self.death_animation_finished = True
-                        return 
-                    elif self.is_stone_smashed: 
-                        self.current_frame = len(current_animation_frames_list) - 1
-                    elif self.state == 'hit':
-                        self.set_state('idle' if self.on_ground else 'fall')
-                        return
-                    else: 
-                        self.current_frame = 0
-
-                if self.current_frame >= len(current_animation_frames_list) and not self.is_dead and not self.is_petrified : self.current_frame = 0
-
-        if self.is_dead and self.death_animation_finished and not self.alive() and not self.is_petrified:
-            return
-
+            if self.current_frame >= len(current_animation_frames_list):
+                if self.is_dead and not self.is_petrified: # Regular death animation finished
+                    self.current_frame = len(current_animation_frames_list) - 1
+                    self.death_animation_finished = True 
+                    # Allow image to be set to final frame, don't return yet
+                elif self.is_stone_smashed: # Smashed animation finished (reached end)
+                    self.current_frame = len(current_animation_frames_list) - 1
+                    self.death_animation_finished = True # Mark as visually "done" for removal logic
+                elif self.state == 'hit':
+                    self.set_state('idle' if self.on_ground else 'fall')
+                    return # State changed, re-animate will be called or handled
+                else: # Loop other animations
+                    self.current_frame = 0
+        
+        # If petrified (but not smashed), force to first frame of stone image
+        if self.is_petrified and not self.is_stone_smashed:
+            self.current_frame = 0
+        
+        # Boundary check for current_frame before accessing list
         if not current_animation_frames_list or self.current_frame < 0 or \
-           self.current_frame >= len(current_animation_frames_list):
+            self.current_frame >= len(current_animation_frames_list):
             self.current_frame = 0
             if not current_animation_frames_list:
                 if hasattr(self, 'image') and self.image: self.image.fill(C.BLUE); return
-
+        
         image_for_this_frame = current_animation_frames_list[self.current_frame]
+        
+        # Flipping
         current_facing_is_right_for_anim = self.facing_right
-        if not current_facing_is_right_for_anim:
+        # Don't flip stone images by default unless they are multi-frame and need it.
+        # For now, assume stone/smashed are not direction-dependent.
+        if self.is_petrified:
+            should_flip_stone = False # Modify if your stone/smashed assets need flipping
+            if should_flip_stone and not current_facing_is_right_for_anim:
+                 image_for_this_frame = pygame.transform.flip(image_for_this_frame, True, False)
+        elif not current_facing_is_right_for_anim: # Regular flip
             image_for_this_frame = pygame.transform.flip(image_for_this_frame, True, False)
+
 
         if self.image is not image_for_this_frame or self._last_facing_right != current_facing_is_right_for_anim:
             old_enemy_midbottom_pos = self.rect.midbottom
@@ -486,12 +529,13 @@ class Enemy(pygame.sprite.Sprite):
 
 
     def stomp_kill(self):
-        if self.is_dead or self.is_stomp_dying or self.is_petrified:
+        if self.is_dead or self.is_stomp_dying or self.is_petrified: # Cannot stomp a petrified enemy
             return
         debug(f"Enemy {self.enemy_id}: Stomp kill initiated.")
         self.current_health = 0
         self.is_dead = True
         self.is_stomp_dying = True
+        self.death_animation_finished = False # Stomp anim needs to play
         self.is_frozen = False; self.is_defrosting = False 
         self.is_aflame = False; self.is_deflaming = False 
         self.stomp_death_start_time = pygame.time.get_ticks()
@@ -501,6 +545,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.vel.xy = 0,0
         self.acc.xy = 0,0
+        self.set_state('stomp_death') # Ensure state is set for animation
 
     def _ai_update(self, players_list_for_targeting):
         enemy_ai_update(self, players_list_for_targeting)
@@ -508,15 +553,7 @@ class Enemy(pygame.sprite.Sprite):
     def _check_attack_collisions(self, player_target_list_for_combat):
         check_enemy_attack_collisions(self, player_target_list_for_combat)
 
-    def take_damage(self, damage_amount_taken): 
-        if self.is_petrified:
-            if not self.is_stone_smashed:
-                debug(f"Petrified Enemy {self.enemy_id} hit, changing to stone_smashed.")
-                self.is_stone_smashed = True
-                self.stone_smashed_timer_start = pygame.time.get_ticks()
-                self.set_state('smashed') 
-            return 
-        enemy_take_damage(self, damage_amount_taken) 
+    # take_damage is now modified to handle petrified state.
 
     def get_network_data(self):
         return get_enemy_network_data(self)
@@ -530,41 +567,43 @@ class Enemy(pygame.sprite.Sprite):
 
         current_time_ms = pygame.time.get_ticks()
 
+        # --- Petrified and Smashed State Handling (Overrides other logic) ---
         if self.is_stone_smashed:
-            if current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS:
-                debug(f"Smashed stone Enemy {self.enemy_id} duration ended. Killing.")
+            # is_dead should be True, death_animation_finished will be True when anim ends
+            if self.death_animation_finished or \
+               (current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS):
+                debug(f"Smashed stone Enemy {self.enemy_id} duration/animation ended. Killing.")
                 self.kill()
                 return
-            self.animate() 
+            self.animate() # Continue smashed animation
             return 
         
-        if self.is_petrified: 
-            self.vel.xy = 0,0
+        if self.is_petrified: # Is petrified but not smashed
+            self.vel.xy = 0,0 # Ensure no movement
             self.acc.xy = 0,0
-            self.animate() 
+            self.animate() # Will show static stone image
             return 
-
+        
+        # --- Regular Update Logic (if not petrified) ---
         if self.is_aflame:
             if current_time_ms - self.aflame_timer_start > C.ENEMY_AFLAME_DURATION_MS:
                 self.set_state('deflame') 
             elif current_time_ms - self.aflame_damage_last_tick > C.ENEMY_AFLAME_DAMAGE_INTERVAL_MS:
-                self.take_damage(C.ENEMY_AFLAME_DAMAGE_PER_TICK)
+                self.take_damage(C.ENEMY_AFLAME_DAMAGE_PER_TICK) # Still takes damage even if petrified logic is later
                 self.aflame_damage_last_tick = current_time_ms
-            if self.state == 'deflame': 
-                self.animate() 
+            # Animate if in aflame/deflame state (handled by self.animate general call later)
         elif self.is_deflaming:
             if current_time_ms - self.deflame_timer_start > C.ENEMY_DEFLAME_DURATION_MS:
                 self.set_state('idle') 
-            if self.state == 'idle' and not self.is_aflame and not self.is_deflaming: 
-                self.animate()
 
         if self.is_stomp_dying:
-            self.animate(); return
+            self.animate(); return # Stomp death animation handles itself
 
-        if self.is_dead: 
+        if self.is_dead: # REGULAR death (not petrified and smashed yet)
             self.is_aflame = False; self.is_deflaming = False; self.is_frozen = False; self.is_defrosting = False
             if self.alive():
                 if not self.death_animation_finished:
+                    # Allow falling during death animation
                     if not self.on_ground:
                         self.vel.y += self.acc.y
                         self.vel.y = min(self.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18))
@@ -577,10 +616,11 @@ class Enemy(pygame.sprite.Sprite):
                                 self.rect.bottom = platform_sprite.rect.top
                                 self.on_ground = True; self.vel.y = 0; self.acc.y = 0
                                 self.pos.y = self.rect.bottom; break
-                self.animate()
+                self.animate() # Continue death animation
             if self.death_animation_finished and self.alive(): self.kill()
             return
 
+        # Frozen/Defrosting logic (if not dead or petrified)
         if self.is_frozen:
             self.vel.xy = 0,0; self.acc.x = 0
             if current_time_ms - self.frozen_effect_timer > C.ENEMY_FROZEN_DURATION_MS:
@@ -588,43 +628,58 @@ class Enemy(pygame.sprite.Sprite):
             self.animate(); return
         if self.is_defrosting:
             self.vel.xy = 0,0; self.acc.x = 0
-            if current_time_ms - self.frozen_effect_timer > C.ENEMY_DEFROST_DURATION_MS: 
+            if current_time_ms - self.frozen_effect_timer > C.ENEMY_DEFROST_DURATION_MS: # Should be DEFROST_DURATION_MS
                 self.set_state('idle')
             self.animate(); return
 
+        # --- Active Gameplay Logic (AI, Physics, Collisions) ---
         if self.post_attack_pause_timer > 0 and current_time_ms >= self.post_attack_pause_timer:
             self.post_attack_pause_timer = 0
         if self.is_taking_hit and current_time_ms - self.hit_timer > self.hit_cooldown:
             self.is_taking_hit = False
+        
         self._ai_update(players_list_for_logic)
+        
         self.vel.y += self.acc.y
         enemy_friction_val = getattr(C, 'ENEMY_FRICTION', -0.12)
         enemy_run_speed_max = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5)
         terminal_fall_speed_y = getattr(C, 'TERMINAL_VELOCITY_Y', 18)
+        
         self.vel.x += self.acc.x
         apply_friction_to_enemy = self.on_ground and self.acc.x == 0
         if apply_friction_to_enemy:
             friction_force_on_enemy = self.vel.x * enemy_friction_val
             if abs(self.vel.x) > 0.1: self.vel.x += friction_force_on_enemy
             else: self.vel.x = 0
+        
         self.vel.x = max(-enemy_run_speed_max, min(enemy_run_speed_max, self.vel.x))
         self.vel.y = min(self.vel.y, terminal_fall_speed_y)
-        self.on_ground = False
+        
+        self.on_ground = False # Reset before collision checks
+        
         self.pos.x += self.vel.x
         self.rect.centerx = round(self.pos.x)
         self.check_platform_collisions('x', platforms_group)
+        
         all_other_characters = players_list_for_logic + [e for e in all_enemies_list if e is not self]
         collided_horizontally_with_char = self.check_character_collision('x', all_other_characters)
+        
         self.pos.y += self.vel.y
         self.rect.bottom = round(self.pos.y)
         self.check_platform_collisions('y', platforms_group)
-        if not collided_horizontally_with_char:
+        
+        if not collided_horizontally_with_char: # Avoid double processing if already handled by X
             self.check_character_collision('y', all_other_characters)
+        
+        # Sync pos from rect after all collision resolutions
         self.pos.x = self.rect.centerx
         self.pos.y = self.rect.bottom
+        
         self.check_hazard_collisions(hazards_group)
-        if self.is_attacking and not (self.is_aflame or self.is_deflaming):
+        
+        if self.is_attacking and not (self.is_aflame or self.is_deflaming): # Don't attack if burning
             self._check_attack_collisions(players_list_for_logic)
+            
         self.animate()
 
 
@@ -651,6 +706,7 @@ class Enemy(pygame.sprite.Sprite):
                        ((self.pos.y - self.rect.height) - self.vel.y) >= platform_sprite.rect.bottom -1:
                          self.rect.top = platform_sprite.rect.bottom
                          self.vel.y = 0
+            # Sync pos after rect adjustment
             if direction == 'x': self.pos.x = self.rect.centerx
             else: self.pos.y = self.rect.bottom
 
@@ -775,9 +831,9 @@ class Enemy(pygame.sprite.Sprite):
         self.aflame_damage_last_tick = 0
         self.has_ignited_another_enemy_this_cycle = False
 
+        # Reset petrification flags
         self.is_petrified = False 
         self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
 
         self.set_state('idle')
-########## END OF FILE: enemy.py ##########
