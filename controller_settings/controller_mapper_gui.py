@@ -18,12 +18,52 @@ from pynput.keyboard import Controller as KeyboardController, Key
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
 
 # --- Configuration ---
+# Internal keys used for saving and processing
 MAPPABLE_KEYS = [
+    "MOVE_UP", "MOVE_LEFT", "MOVE_DOWN", "MOVE_RIGHT", # WASD typically
+    "JUMP", "CROUCH", "INTERACT",
+    "ATTACK_PRIMARY", "ATTACK_SECONDARY", "DASH", "ROLL",
+    "WEAPON_1", "WEAPON_2", "WEAPON_3", "WEAPON_4", # Number keys
+    "WEAPON_DPAD_UP", "WEAPON_DPAD_DOWN", "WEAPON_DPAD_LEFT", "WEAPON_DPAD_RIGHT", # D-Pad weapons
+    "MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN",
+    # For direct key mappings if still desired alongside abstract actions:
     "W", "A", "S", "D", "1", "2", "3", "4", "5", "Q", "E", "V", "B",
     "SPACE", "SHIFT", "CTRL", "ALT",
-    "MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"
 ]
-EXCLUSIVE_ACTIONS = ["MENU_RETURN"]
+
+# User-friendly names for display in the UI
+GAME_ACTIONS_FRIENDLY_NAMES = {
+    "MOVE_UP": "Move UP/JUMP (W)",
+    "MOVE_LEFT": "Move Left (A)",
+    "MOVE_DOWN": "Move DOWN/Crouch (S)", # Assuming S might be crouch or move back
+    "MOVE_RIGHT": "Move Right (D)",
+    "JUMP": "Jump (L-Stick Up / Space)",
+    "CROUCH": "Crouch (L-Stick Down / Ctrl)", # More explicit crouch
+    "INTERACT": "Interact (E)",
+    "ATTACK_PRIMARY": "Primary Attack (LMB / V)",
+    "ATTACK_SECONDARY": "Secondary Attack (RMB / B)",
+    "DASH": "Dash (Shift)",
+    "ROLL": "Roll (Ctrl - if not crouch)",
+    "WEAPON_1": "Weapon Slot 1 (1)",
+    "WEAPON_2": "Weapon Slot 2 (2)",
+    "WEAPON_3": "Weapon Slot 3 (3)",
+    "WEAPON_4": "Weapon Slot 4 (4)",
+    "WEAPON_DPAD_UP": "Weapon D-Pad Up",
+    "WEAPON_DPAD_DOWN": "Weapon D-Pad Down",
+    "WEAPON_DPAD_LEFT": "Weapon D-Pad Left",
+    "WEAPON_DPAD_RIGHT": "Weapon D-Pad Right",
+    "MENU_CONFIRM": "Menu Confirm (Enter)",
+    "MENU_CANCEL": "Menu Cancel (Esc)",
+    "MENU_RETURN": "Return to Menu",
+    # Direct key mappings (can be kept for flexibility or specific needs)
+    "W": "Key W", "A": "Key A", "S": "Key S", "D": "Key D",
+    "1": "Key 1", "2": "Key 2", "3": "Key 3", "4": "Key 4", "5": "Key 5",
+    "Q": "Key Q", "E": "Key E", "V": "Key V", "B": "Key B",
+    "SPACE": "Key Space", "SHIFT": "Key Shift", "CTRL": "Key Ctrl", "ALT": "Key Alt",
+}
+
+
+EXCLUSIVE_ACTIONS = ["MENU_RETURN"] # Add other exclusive actions like "JUMP" if a controller input for jump shouldn't also fire a weapon
 AXIS_THRESHOLD = 0.7
 
 # --- Path Configuration ---
@@ -37,16 +77,37 @@ logging.info(f"Mappings file path: {MAPPINGS_FILE}")
 
 # Helper to convert pynput special keys
 def get_pynput_key(key_str):
+    # These direct key mappings are for when the MAPPABLE_KEY itself is a keyboard key
     if key_str == "SPACE": return Key.space
     if key_str == "SHIFT": return Key.shift
     if key_str == "CTRL": return Key.ctrl
     if key_str == "ALT": return Key.alt
-    if key_str in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"]: return None
-    if len(key_str) == 1: return key_str.lower()
-    logging.warning(f"get_pynput_key: Unknown key string '{key_str}'")
+
+    # Abstract actions do not directly map to a single pynput key via this function.
+    # Their corresponding keyboard keys (like 'W' for 'MOVE_UP') are simulated based on the action.
+    if key_str in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN",
+                   "MOVE_UP", "MOVE_LEFT", "MOVE_BDOWN", "MOVE_RIGHT",
+                   "JUMP", "CROUCH", "INTERACT", "ATTACK_PRIMARY", "ATTACK_SECONDARY",
+                   "DASH", "ROLL", "WEAPON_1", "WEAPON_2", "WEAPON_3", "WEAPON_4",
+                   "WEAPON_DPAD_UP", "WEAPON_DPAD_DOWN", "WEAPON_DPAD_LEFT", "WEAPON_DPAD_RIGHT"]:
+        # If the MAPPABLE_KEY is an abstract game action, check its friendly name
+        # to see if it has a typical keyboard equivalent to simulate.
+        friendly_name = GAME_ACTIONS_FRIENDLY_NAMES.get(key_str, "")
+        if "(W)" in friendly_name: return 'w'
+        if "(A)" in friendly_name: return 'a'
+        if "(S)" in friendly_name: return 's'
+        if "(D)" in friendly_name: return 'd'
+        if "(Space)" in friendly_name: return Key.space
+        # ... add more for other abstract actions if they have a single key equivalent for pynput
+        return None # Abstract actions without a direct single key simulation
+
+    if len(key_str) == 1 and key_str.isalnum(): # Single alphanumeric keys
+        return key_str.lower()
+
+    logging.warning(f"get_pynput_key: Unknown or non-simulatable key string '{key_str}'")
     return None
 
-# PygameControllerThread class
+# PygameControllerThread class (no changes needed here for UI display)
 class PygameControllerThread(QThread):
     controllerEventCaptured = Signal(dict, str)
     mappedEventTriggered = Signal(str, bool)
@@ -167,7 +228,7 @@ class PygameControllerThread(QThread):
                         self.is_listening_for_mapping = False
                     elif not self.is_listening_for_mapping and event_details:
                         triggered_exclusive_action_this_event = False
-                        for keyboard_key, mapping_info in self.mappings.items():
+                        for keyboard_key, mapping_info in self.mappings.items(): # keyboard_key is internal action name
                             if not mapping_info: continue
                             match = False
                             if mapping_info["event_type"] == event_details.get("type"):
@@ -232,14 +293,14 @@ class PygameControllerThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Controller to Keyboard Mapper v0.8 (UI Enhancements)")
-        self.setGeometry(100, 100, 800, 650)
+        self.setWindowTitle("Controller Mapper v0.9 (Friendly Action Names)")
+        self.setGeometry(100, 100, 850, 700) # Adjusted size for potentially longer names
 
         self.keyboard = KeyboardController()
         self.currently_pressed_keys = set()
-        self.mappings = {}
-        self.current_listening_key = None
-        self.last_selected_row_for_mapping = -1 # To preserve scroll position
+        self.mappings = {} # Stores {internal_action_key: mapping_info_dict}
+        self.current_listening_key = None # Internal action key string
+        self.last_selected_row_for_mapping = -1
         logging.info("MainWindow initializing...")
 
         central_widget = QWidget()
@@ -253,15 +314,19 @@ class MainWindow(QMainWindow):
         self.debug_console.setReadOnly(True)
         self.debug_console.setFixedHeight(100)
 
-        self.load_mappings()
+        self.load_mappings() # This populates self.mappings using internal keys
 
         mapping_controls_layout = QHBoxLayout()
         self.key_to_map_combo = QComboBox()
-        self.key_to_map_combo.addItems(MAPPABLE_KEYS)
+        # Populate ComboBox with friendly names, store internal key as item data
+        for internal_key in MAPPABLE_KEYS:
+            friendly_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_key, internal_key)
+            self.key_to_map_combo.addItem(friendly_name, userData=internal_key)
+
         mapping_controls_layout.addWidget(QLabel("Action/Key to Map:"))
         mapping_controls_layout.addWidget(self.key_to_map_combo)
         self.listen_button = QPushButton("Listen for Controller Input to Map")
-        self.listen_button.clicked.connect(self.start_listening_for_map_from_button) # Changed connect
+        self.listen_button.clicked.connect(self.start_listening_for_map_from_button)
         mapping_controls_layout.addWidget(self.listen_button)
         main_layout.addLayout(mapping_controls_layout)
 
@@ -269,9 +334,11 @@ class MainWindow(QMainWindow):
         self.mappings_table.setColumnCount(5)
         self.mappings_table.setHorizontalHeaderLabels(["Action/Key", "Controller Input", "Friendly Name", "Rename", "Clear"])
         self.mappings_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.mappings_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # Stretch all initially
+        self.mappings_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents) # Action/Key column to its content
         self.mappings_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
-        self.mappings_table.setColumnWidth(1, 150)
+        self.mappings_table.setColumnWidth(1, 150) # Controller Input
+        self.mappings_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents) # Friendly Name (controller input)
         self.mappings_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.mappings_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
         self.mappings_table.cellDoubleClicked.connect(self.handle_table_double_click)
@@ -315,96 +382,102 @@ class MainWindow(QMainWindow):
             logging.warning(f"Debug console not ready for message: {message}")
 
     def start_listening_for_map_from_button(self):
-        """Initiates listening from the dedicated button click."""
-        key_to_map = self.key_to_map_combo.currentText()
-        self.initiate_listening_sequence(key_to_map)
+        internal_key_to_map = self.key_to_map_combo.currentData() # Get internal key
+        if not internal_key_to_map:
+            friendly_name = self.key_to_map_combo.currentText()
+            logging.error(f"Could not get internal key for friendly name '{friendly_name}' from ComboBox.")
+            QMessageBox.critical(self, "Error", "Internal error: Could not determine action to map.")
+            return
+        self.initiate_listening_sequence(internal_key_to_map)
 
-    def initiate_listening_sequence(self, key_to_map_str, originating_row=-1):
-        """Core logic to start listening for a given key/action."""
+    def initiate_listening_sequence(self, internal_key_to_map_str, originating_row=-1):
         if self.listen_button.text() == "Listening... (Press Controller Input)":
-            # Already listening, possibly from a double-click, don't interfere if it's for a different key
-            if self.current_listening_key and self.current_listening_key != key_to_map_str:
-                 QMessageBox.information(self, "Already Listening", f"Already listening for input for '{self.current_listening_key}'. Please complete or cancel that first.")
+            if self.current_listening_key and self.current_listening_key != internal_key_to_map_str:
+                 QMessageBox.information(self, "Already Listening", f"Already listening for input for '{GAME_ACTIONS_FRIENDLY_NAMES.get(self.current_listening_key, self.current_listening_key)}'. Complete or cancel first.")
                  return
-            elif not self.current_listening_key: # Should not happen if button text is "Listening..."
-                 self.reset_listening_ui() # Reset just in case of inconsistent state
+            elif not self.current_listening_key:
+                 self.reset_listening_ui()
 
-        self.current_listening_key = key_to_map_str
-        self.last_selected_row_for_mapping = originating_row # Store row for scroll preservation
+        self.current_listening_key = internal_key_to_map_str
+        self.last_selected_row_for_mapping = originating_row
 
-        logging.debug(f"initiate_listening_sequence for key: {self.current_listening_key}")
+        logging.debug(f"initiate_listening_sequence for internal key: {self.current_listening_key}")
         if not self.current_listening_key:
-            QMessageBox.warning(self, "No Key Selected", "Please select a keyboard key or menu action to map.")
+            QMessageBox.warning(self, "No Action Selected", "Please select an action to map.")
             self.reset_listening_ui()
             return
 
-        # Update dropdown if called from table double-click
-        if self.key_to_map_combo.currentText() != self.current_listening_key:
-            index = self.key_to_map_combo.findText(self.current_listening_key)
-            if index != -1:
+        # Update dropdown to show the friendly name corresponding to the internal_key_to_map_str
+        index = self.key_to_map_combo.findData(self.current_listening_key)
+        if index != -1:
+            if self.key_to_map_combo.currentIndex() != index:
                 self.key_to_map_combo.setCurrentIndex(index)
-            else:
-                logging.warning(f"Key '{self.current_listening_key}' not found in combo box during initiate_listening.")
-                # This case should ideally not happen if MAPPABLE_KEYS is the source for both.
+        else:
+            logging.warning(f"Internal key '{self.current_listening_key}' not found in combo box data during initiate_listening.")
 
         self.controller_thread.start_listening()
-        self.update_status_and_log(f"Listening for controller input for '{self.current_listening_key}'...")
+        friendly_name_for_status = GAME_ACTIONS_FRIENDLY_NAMES.get(self.current_listening_key, self.current_listening_key)
+        self.update_status_and_log(f"Listening for controller input for '{friendly_name_for_status}'...")
         self.listen_button.setText("Listening... (Press Controller Input)")
         self.listen_button.setEnabled(False)
         self.key_to_map_combo.setEnabled(False)
 
 
     def on_controller_event_captured(self, event_details, raw_event_str):
-        logging.info(f"on_controller_event_captured: Key='{self.current_listening_key}', Raw='{raw_event_str}', Details={event_details}")
+        # self.current_listening_key is the internal key
+        friendly_name_current_key = GAME_ACTIONS_FRIENDLY_NAMES.get(self.current_listening_key, self.current_listening_key)
+        logging.info(f"on_controller_event_captured: Action='{friendly_name_current_key}' (Internal: {self.current_listening_key}), Raw='{raw_event_str}', Details={event_details}")
 
         keys_to_unmap_due_to_conflict = []
         is_current_key_exclusive = self.current_listening_key in EXCLUSIVE_ACTIONS
 
-        for existing_key, mapping_info in list(self.mappings.items()):
+        for existing_internal_key, mapping_info in list(self.mappings.items()):
             if mapping_info and mapping_info["raw_str"] == raw_event_str:
-                if existing_key == self.current_listening_key:
+                if existing_internal_key == self.current_listening_key:
                     continue
-                is_existing_key_exclusive = existing_key in EXCLUSIVE_ACTIONS
+                is_existing_key_exclusive = existing_internal_key in EXCLUSIVE_ACTIONS
+                friendly_name_existing_key = GAME_ACTIONS_FRIENDLY_NAMES.get(existing_internal_key, existing_internal_key)
+
                 if is_current_key_exclusive and is_existing_key_exclusive:
-                    keys_to_unmap_due_to_conflict.append(existing_key)
+                    keys_to_unmap_due_to_conflict.append(existing_internal_key)
                 elif is_current_key_exclusive and not is_existing_key_exclusive:
-                    keys_to_unmap_due_to_conflict.append(existing_key)
+                    keys_to_unmap_due_to_conflict.append(existing_internal_key)
                 elif not is_current_key_exclusive and is_existing_key_exclusive:
                     QMessageBox.warning(self, "Mapping Conflict",
-                                        f"Controller input '{raw_event_str}' is already mapped to the exclusive action '{existing_key}'.\n"
-                                        f"Cannot map non-exclusive action '{self.current_listening_key}' to this input.\n"
-                                        f"Clear the mapping for '{existing_key}' first.")
-                    self.reset_listening_ui(preserve_scroll=True) # Use new scroll preservation
+                                        f"Controller input '{raw_event_str}' is already mapped to the exclusive action '{friendly_name_existing_key}'.\n"
+                                        f"Cannot map non-exclusive action '{friendly_name_current_key}' to this input.\n"
+                                        f"Clear the mapping for '{friendly_name_existing_key}' first.")
+                    self.reset_listening_ui(preserve_scroll=True)
                     return
 
         if keys_to_unmap_due_to_conflict:
-            conflict_msg = (f"The controller input '{raw_event_str}' conflicts with existing mappings for '{self.current_listening_key}'. "
-                            f"The following will be unmapped:\n" +
-                            "\n".join([f"- {k}" for k in keys_to_unmap_due_to_conflict]) +
-                            f"\n\nProceed with mapping '{self.current_listening_key}' to this input?")
+            conflict_details = "\n".join([f"- {GAME_ACTIONS_FRIENDLY_NAMES.get(k, k)}" for k in keys_to_unmap_due_to_conflict])
+            conflict_msg = (f"The controller input '{raw_event_str}' conflicts with existing mappings for '{friendly_name_current_key}'. "
+                            f"The following will be unmapped:\n{conflict_details}"
+                            f"\n\nProceed with mapping '{friendly_name_current_key}' to this input?")
 
             reply = QMessageBox.question(self, "Confirm Reassignment", conflict_msg,
                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.No:
-                self.update_status_and_log(f"Mapping for '{self.current_listening_key}' cancelled due to conflict.")
+                self.update_status_and_log(f"Mapping for '{friendly_name_current_key}' cancelled due to conflict.")
                 self.reset_listening_ui(preserve_scroll=True)
                 return
             else:
                 for key_to_remove in keys_to_unmap_due_to_conflict:
                     if key_to_remove in self.mappings:
-                        logging.info(f"Unmapping '{key_to_remove}' due to conflict with '{self.current_listening_key}'.")
+                        logging.info(f"Unmapping '{GAME_ACTIONS_FRIENDLY_NAMES.get(key_to_remove, key_to_remove)}' (Internal: {key_to_remove}) due to conflict with '{friendly_name_current_key}'.")
                         del self.mappings[key_to_remove]
 
-        if self.current_listening_key:
+        if self.current_listening_key: # self.current_listening_key is internal key
             self.mappings[self.current_listening_key] = {
                 "event_type": event_details["type"],
                 "details": event_details,
                 "raw_str": raw_event_str,
-                "friendly_name": f"{raw_event_str}"
+                "friendly_name": f"{raw_event_str}" # This is the controller input's friendly name
             }
-            self.update_status_and_log(f"Mapped '{raw_event_str}' to '{self.current_listening_key}'.")
-            logging.info(f"New mapping: {self.current_listening_key} -> {self.mappings[self.current_listening_key]}")
-            self.refresh_mappings_table(preserve_scroll=True, target_row_key=self.current_listening_key) # Ensure mapped row is visible
+            self.update_status_and_log(f"Mapped '{raw_event_str}' to '{friendly_name_current_key}'.")
+            logging.info(f"New mapping: {friendly_name_current_key} (Internal: {self.current_listening_key}) -> {self.mappings[self.current_listening_key]}")
+            self.refresh_mappings_table(preserve_scroll=True, target_row_key=self.current_listening_key)
             self.current_listening_key = None
         self.reset_listening_ui(preserve_scroll=True)
 
@@ -414,204 +487,252 @@ class MainWindow(QMainWindow):
         self.listen_button.setEnabled(True)
         self.key_to_map_combo.setEnabled(True)
         self.controller_thread.stop_listening()
-        if self.current_listening_key: # If it was cancelled mid-process
+        if self.current_listening_key:
             self.current_listening_key = None
-        # Scroll preservation will be handled by refresh_mappings_table if preserve_scroll is True
         if not preserve_scroll:
             self.last_selected_row_for_mapping = -1
 
 
-    def on_mapped_event_triggered(self, keyboard_key_str, is_press_event):
-        if keyboard_key_str == "MENU_CONFIRM":
+    def on_mapped_event_triggered(self, internal_action_key_str, is_press_event):
+        # internal_action_key_str is the key from MAPPABLE_KEYS
+        action_display_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_action_key_str, internal_action_key_str)
+
+        if internal_action_key_str in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"]:
             if is_press_event:
-                self.log_to_debug_console(f"MENU_CONFIRM action triggered by controller.")
-                logging.info(f"MENU_CONFIRM action triggered by controller.")
-            return
-        if keyboard_key_str == "MENU_CANCEL":
-            if is_press_event:
-                self.log_to_debug_console(f"MENU_CANCEL action triggered by controller.")
-                logging.info(f"MENU_CANCEL action triggered by controller.")
-            return
-        if keyboard_key_str == "MENU_RETURN":
-            if is_press_event:
-                self.log_to_debug_console(f"MENU_RETURN action triggered by controller.")
-                logging.info(f"MENU_RETURN action triggered by controller.")
+                self.log_to_debug_console(f"{action_display_name} action triggered by controller.")
+                logging.info(f"{action_display_name} action triggered by controller.")
             return
 
-        pynput_key = get_pynput_key(keyboard_key_str)
-        if not pynput_key:
-            if keyboard_key_str not in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"]:
-                 logging.warning(f"Could not get pynput_key for '{keyboard_key_str}' during trigger.")
-            return
-        try:
-            if is_press_event:
-                if pynput_key not in self.currently_pressed_keys:
-                    self.keyboard.press(pynput_key)
-                    self.currently_pressed_keys.add(pynput_key)
-            else:
-                if pynput_key in self.currently_pressed_keys:
-                    self.keyboard.release(pynput_key)
-                    self.currently_pressed_keys.remove(pynput_key)
-        except Exception as e:
-            logging.error(f"Pynput error for key '{keyboard_key_str}' (Pynput Key: {pynput_key}, Press Event: {is_press_event}): {e}")
+        # For gameplay actions, simulate the *intended* keyboard key if applicable
+        # This part is tricky as abstract actions don't have one single key.
+        # The game itself will interpret these abstract actions.
+        # For this *mapper utility's pynput simulation*, we try to pick a common key.
+        pynput_key_to_simulate = None
+        if internal_action_key_str == "MOVE_UP": pynput_key_to_simulate = 'w'
+        elif internal_action_key_str == "MOVE_LEFT": pynput_key_to_simulate = 'a'
+        elif internal_action_key_str == "MOVE_DOWN": pynput_key_to_simulate = 's'
+        elif internal_action_key_str == "MOVE_RIGHT": pynput_key_to_simulate = 'd'
+        elif internal_action_key_str == "JUMP": pynput_key_to_simulate = Key.space
+        elif internal_action_key_str == "CROUCH": pynput_key_to_simulate = Key.ctrl # Example
+        # ... more specific pynput simulations for abstract actions if desired by the mapper tool ...
+        elif internal_action_key_str in ["W","A","S","D","SPACE","SHIFT","CTRL","ALT","1","2","3","4","5","Q","E","V","B"]:
+            pynput_key_to_simulate = get_pynput_key(internal_action_key_str) # Direct key mapping
 
-    def refresh_mappings_table(self, preserve_scroll=False, target_row_key=None):
-        logging.debug(f"Refreshing mappings table... Preserve scroll: {preserve_scroll}, Target key: {target_row_key}")
-        # Store current scroll position if preserving
+        if pynput_key_to_simulate:
+            try:
+                if is_press_event:
+                    if pynput_key_to_simulate not in self.currently_pressed_keys:
+                        self.keyboard.press(pynput_key_to_simulate)
+                        self.currently_pressed_keys.add(pynput_key_to_simulate)
+                        self.log_to_debug_console(f"Simulating Press: {action_display_name} -> Key {str(pynput_key_to_simulate)}")
+                else:
+                    if pynput_key_to_simulate in self.currently_pressed_keys:
+                        self.keyboard.release(pynput_key_to_simulate)
+                        self.currently_pressed_keys.remove(pynput_key_to_simulate)
+                        self.log_to_debug_console(f"Simulating Release: {action_display_name} -> Key {str(pynput_key_to_simulate)}")
+            except Exception as e:
+                logging.error(f"Pynput error for action '{action_display_name}' (Simulating: {pynput_key_to_simulate}, Press: {is_press_event}): {e}")
+        elif internal_action_key_str not in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"]:
+             # Log non-menu abstract actions that don't have a direct pynput simulation here
+             if is_press_event:
+                self.log_to_debug_console(f"Action Triggered (No Key Sim): {action_display_name}")
+
+
+    def refresh_mappings_table(self, preserve_scroll=False, target_row_key=None): # target_row_key is internal key
+        logging.debug(f"Refreshing mappings table... Preserve scroll: {preserve_scroll}, Target internal key: {target_row_key}")
         current_v_scroll_value = self.mappings_table.verticalScrollBar().value() if preserve_scroll else -1
         target_row_to_ensure_visible = -1
 
         self.mappings_table.setRowCount(0)
-        for i, keyboard_key in enumerate(MAPPABLE_KEYS):
-            if target_row_key and keyboard_key == target_row_key:
+        for i, internal_key in enumerate(MAPPABLE_KEYS): # Iterate internal keys to maintain order
+            friendly_display_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_key, internal_key)
+            if target_row_key and internal_key == target_row_key:
                 target_row_to_ensure_visible = i
-            elif preserve_scroll and self.last_selected_row_for_mapping == i and not target_row_key : # Prioritize target_row_key
+            elif preserve_scroll and self.last_selected_row_for_mapping == i and not target_row_key :
                  target_row_to_ensure_visible = i
 
-
-            mapping_info = self.mappings.get(keyboard_key)
+            mapping_info = self.mappings.get(internal_key) # Use internal key to get mapping
             row_position = self.mappings_table.rowCount()
             self.mappings_table.insertRow(row_position)
-            self.mappings_table.setItem(row_position, 0, QTableWidgetItem(keyboard_key))
+
+            # Store internal key as Qt.UserRole data for the first item (Action/Key display name)
+            action_item = QTableWidgetItem(friendly_display_name)
+            action_item.setData(Qt.UserRole, internal_key)
+            self.mappings_table.setItem(row_position, 0, action_item)
+
             if mapping_info:
                 self.mappings_table.setItem(row_position, 1, QTableWidgetItem(mapping_info["raw_str"]))
+                # mapping_info["friendly_name"] is the controller input's friendly name
                 self.mappings_table.setItem(row_position, 2, QTableWidgetItem(mapping_info["friendly_name"]))
+
                 rename_button = QPushButton("Rename")
-                rename_button.clicked.connect(lambda checked, k=keyboard_key: self.rename_friendly_name_prompt_button(k))
+                rename_button.clicked.connect(lambda checked, k_internal=internal_key: self.rename_friendly_name_prompt_button(k_internal))
                 self.mappings_table.setCellWidget(row_position, 3, rename_button)
+
                 clear_button = QPushButton("Clear")
-                clear_button.clicked.connect(lambda checked, k=keyboard_key: self.clear_mapping(k))
+                clear_button.clicked.connect(lambda checked, k_internal=internal_key: self.clear_mapping(k_internal))
                 self.mappings_table.setCellWidget(row_position, 4, clear_button)
             else:
                 self.mappings_table.setItem(row_position, 1, QTableWidgetItem("Not Mapped"))
                 self.mappings_table.setItem(row_position, 2, QTableWidgetItem(""))
-                empty_rename_button = QPushButton("---")
-                empty_rename_button.setEnabled(False)
+                empty_rename_button = QPushButton("---"); empty_rename_button.setEnabled(False)
                 self.mappings_table.setCellWidget(row_position, 3, empty_rename_button)
-                empty_clear_button = QPushButton("---")
-                empty_clear_button.setEnabled(False)
+                empty_clear_button = QPushButton("---"); empty_clear_button.setEnabled(False)
                 self.mappings_table.setCellWidget(row_position, 4, empty_clear_button)
 
-        # Restore scroll position or ensure target row is visible
         if target_row_to_ensure_visible != -1:
             self.mappings_table.scrollToItem(self.mappings_table.item(target_row_to_ensure_visible, 0), QAbstractItemView.PositionAtCenter)
-            logging.debug(f"Scrolled to ensure row for key '{MAPPABLE_KEYS[target_row_to_ensure_visible]}' is visible.")
+            logging.debug(f"Scrolled to ensure row for internal key '{MAPPABLE_KEYS[target_row_to_ensure_visible]}' is visible.")
         elif preserve_scroll and current_v_scroll_value != -1:
             self.mappings_table.verticalScrollBar().setValue(current_v_scroll_value)
             logging.debug(f"Restored vertical scroll to {current_v_scroll_value}")
 
-        if not preserve_scroll and not target_row_key: # Reset if not actively preserving
+        if not preserve_scroll and not target_row_key:
              self.last_selected_row_for_mapping = -1
         logging.debug("Mappings table refresh complete.")
 
 
     def handle_table_double_click(self, row, column):
-        current_keyboard_key_item = self.mappings_table.item(row, 0)
-        if not current_keyboard_key_item: return
-        current_keyboard_key = current_keyboard_key_item.text()
-        logging.debug(f"Table double-clicked: Row={row}, Col={column}, Key='{current_keyboard_key}'")
+        action_item = self.mappings_table.item(row, 0) # First column item
+        if not action_item: return
+        internal_key_clicked = action_item.data(Qt.UserRole) # Get internal key
+        friendly_name_clicked = action_item.text()
 
-        if column == 0 : # Double click on "Action/Key" column
-            # If already listening for this exact key, do nothing to avoid interrupting.
-            if self.listen_button.text() == "Listening... (Press Controller Input)" and self.current_listening_key == current_keyboard_key:
-                logging.debug(f"Already listening for '{current_keyboard_key}', double-click ignored.")
-                return
-            self.initiate_listening_sequence(current_keyboard_key, originating_row=row)
-        elif column == 2: # Double click on "Friendly Name"
-            if self.mappings.get(current_keyboard_key):
-                self.rename_friendly_name_prompt_button(current_keyboard_key)
-        # Could add double-click on "Controller Input" to also initiate listening for that key.
-        elif column == 1: # Double click on "Controller Input" column
-             if self.listen_button.text() == "Listening... (Press Controller Input)" and self.current_listening_key == current_keyboard_key:
-                logging.debug(f"Already listening for '{current_keyboard_key}', double-click ignored.")
-                return
-             self.initiate_listening_sequence(current_keyboard_key, originating_row=row)
-
-
-    def change_keyboard_key_assignment_prompt(self, old_keyboard_key):
-        # This method is now less critical if double-click on Action/Key directly initiates re-mapping.
-        # However, it can still be a way to move an existing controller input to a new, unassigned Action/Key slot.
-        logging.debug(f"change_keyboard_key_assignment_prompt for '{old_keyboard_key}'")
-        current_mapping_data = self.mappings.get(old_keyboard_key)
-        if not current_mapping_data:
-            QMessageBox.information(self, "Not Mapped", f"Action/Key '{old_keyboard_key}' is not currently mapped. Double-click to map it.")
+        if not internal_key_clicked:
+            logging.error(f"Internal key not found for clicked row {row} (Display: {friendly_name_clicked})")
             return
 
-        available_keys_for_reassign = [k for k in MAPPABLE_KEYS if k not in self.mappings or k == old_keyboard_key]
-        available_keys_for_reassign.sort()
-        try: current_selection_index = available_keys_for_reassign.index(old_keyboard_key)
-        except ValueError: current_selection_index = 0
+        logging.debug(f"Table double-clicked: Row={row}, Col={column}, Action='{friendly_name_clicked}' (Internal: '{internal_key_clicked}')")
 
-        new_key, ok = QInputDialog.getItem(self, "Change Action/Key Assignment",
-                                           f"Select new Action/Key for controller input:\n'{current_mapping_data['raw_str']}' (currently '{old_keyboard_key}')",
-                                           available_keys_for_reassign, current_selection_index, False)
-        if ok and new_key and new_key != old_keyboard_key:
-            if new_key in EXCLUSIVE_ACTIONS:
-                for k, v in self.mappings.items():
-                    if v['raw_str'] == current_mapping_data['raw_str'] and k != old_keyboard_key and k in EXCLUSIVE_ACTIONS:
-                        QMessageBox.critical(self, "Exclusivity Conflict",
-                                             f"Cannot reassign to exclusive action '{new_key}'.\n"
-                                             f"The controller input '{current_mapping_data['raw_str']}' is already mapped to another exclusive action: '{k}'.\n"
-                                             f"Please clear that mapping first.")
-                        return
+        if column == 0 or column == 1: # Double click on "Action/Key" or "Controller Input"
+            if self.listen_button.text() == "Listening... (Press Controller Input)" and self.current_listening_key == internal_key_clicked:
+                logging.debug(f"Already listening for '{friendly_name_clicked}', double-click ignored.")
+                return
+            self.initiate_listening_sequence(internal_key_clicked, originating_row=row)
+        elif column == 2: # Double click on controller input's "Friendly Name"
+            if self.mappings.get(internal_key_clicked): # Check mapping using internal key
+                self.rename_friendly_name_prompt_button(internal_key_clicked)
 
-            logging.info(f"Attempting to reassign mapping from '{old_keyboard_key}' to '{new_key}'")
-            del self.mappings[old_keyboard_key]
-            self.mappings[new_key] = current_mapping_data
-            self.refresh_mappings_table(preserve_scroll=True, target_row_key=new_key)
-            self.update_status_and_log(f"Mapping for '{current_mapping_data['raw_str']}' moved from '{old_keyboard_key}' to '{new_key}'.")
-        elif ok and new_key == old_keyboard_key: logging.debug("Keyboard key assignment unchanged.")
-        else: logging.debug("Keyboard key assignment cancelled.")
 
-    def rename_friendly_name_prompt_button(self, keyboard_key):
-        logging.debug(f"rename_friendly_name_prompt_button for key '{keyboard_key}'")
-        mapping_info = self.mappings.get(keyboard_key)
+    def change_keyboard_key_assignment_prompt(self, old_internal_key):
+        # This function might be less used now with double-click remapping, but kept for completeness
+        # It allows moving a controller's current mapping to a *different*, unassigned Action/Key slot
+        friendly_name_old_key = GAME_ACTIONS_FRIENDLY_NAMES.get(old_internal_key, old_internal_key)
+        logging.debug(f"change_keyboard_key_assignment_prompt for '{friendly_name_old_key}' (Internal: '{old_internal_key}')")
+        current_mapping_data = self.mappings.get(old_internal_key)
+
+        if not current_mapping_data:
+            QMessageBox.information(self, "Not Mapped", f"Action '{friendly_name_old_key}' is not currently mapped. Double-click its row to map it.")
+            return
+
+        # Create list of (Friendly Name, Internal Key) for QInputDialog
+        available_actions_for_reassign_data = []
+        for ik in MAPPABLE_KEYS:
+            if ik not in self.mappings or ik == old_internal_key: # Available if unmapped or is the current one
+                available_actions_for_reassign_data.append(
+                    (GAME_ACTIONS_FRIENDLY_NAMES.get(ik, ik), ik)
+                )
+        # Sort by friendly name for the dialog
+        available_actions_for_reassign_data.sort(key=lambda x: x[0])
+        
+        display_texts_for_dialog = [item[0] for item in available_actions_for_reassign_data]
+        internal_keys_ordered = [item[1] for item in available_actions_for_reassign_data]
+        
+        current_selection_index_dialog = 0
+        try:
+            current_selection_index_dialog = internal_keys_ordered.index(old_internal_key)
+        except ValueError:
+            logging.warning(f"Old internal key '{old_internal_key}' not found in sorted available keys for dialog.")
+
+        new_friendly_name_selected, ok = QInputDialog.getItem(self, "Change Action Assignment",
+            f"Controller input '{current_mapping_data['raw_str']}' is currently mapped to:\n'{friendly_name_old_key}'.\n\nMove this controller input to a new Action:",
+            display_texts_for_dialog, current_selection_index_dialog, False)
+
+        if ok and new_friendly_name_selected:
+            selected_dialog_idx = display_texts_for_dialog.index(new_friendly_name_selected)
+            new_internal_key = internal_keys_ordered[selected_dialog_idx]
+            friendly_name_new_key = GAME_ACTIONS_FRIENDLY_NAMES.get(new_internal_key, new_internal_key)
+
+            if new_internal_key != old_internal_key:
+                # Exclusivity check for the new target action
+                if new_internal_key in EXCLUSIVE_ACTIONS:
+                    for k_existing, v_existing in self.mappings.items():
+                        if v_existing['raw_str'] == current_mapping_data['raw_str'] and \
+                           k_existing != old_internal_key and k_existing in EXCLUSIVE_ACTIONS:
+                            QMessageBox.critical(self, "Exclusivity Conflict",
+                                f"Cannot reassign to exclusive action '{friendly_name_new_key}'.\n"
+                                f"The controller input '{current_mapping_data['raw_str']}' is already mapped to another exclusive action: '{GAME_ACTIONS_FRIENDLY_NAMES.get(k_existing, k_existing)}'.\n"
+                                f"Please clear that mapping first.")
+                            return
+
+                logging.info(f"Attempting to reassign mapping from '{friendly_name_old_key}' (Internal: {old_internal_key}) to '{friendly_name_new_key}' (Internal: {new_internal_key})")
+                del self.mappings[old_internal_key]
+                self.mappings[new_internal_key] = current_mapping_data
+                self.refresh_mappings_table(preserve_scroll=True, target_row_key=new_internal_key)
+                self.update_status_and_log(f"Mapping for '{current_mapping_data['raw_str']}' moved from '{friendly_name_old_key}' to '{friendly_name_new_key}'.")
+        else:
+            logging.debug("Action assignment cancelled or unchanged.")
+
+
+    def rename_friendly_name_prompt_button(self, internal_key): # internal_key is the key from MAPPABLE_KEYS
+        action_display_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_key, internal_key)
+        logging.debug(f"rename_friendly_name_prompt_button for action '{action_display_name}' (Internal: '{internal_key}')")
+        mapping_info = self.mappings.get(internal_key)
         if mapping_info:
-            current_name = mapping_info.get("friendly_name", mapping_info.get("raw_str", ""))
-            text, ok = QInputDialog.getText(self, "Rename Mapping",
-                                            f"Enter new friendly name for '{keyboard_key}' (mapped to {mapping_info['raw_str']}):",
-                                            QLineEdit.Normal, current_name)
-            if ok and text:
-                mapping_info["friendly_name"] = text
-                self.refresh_mappings_table(preserve_scroll=True, target_row_key=keyboard_key)
-                self.update_status_and_log(f"Renamed mapping for '{keyboard_key}'.")
-                logging.info(f"Mapping for '{keyboard_key}' renamed to '{text}'. Current mapping: {self.mappings[keyboard_key]}")
+            # Here, mapping_info["friendly_name"] is the controller input's custom name (e.g. "Jump Button")
+            # mapping_info["raw_str"] is the system-detected name (e.g. "Button 0 Down")
+            current_ctrl_input_friendly_name = mapping_info.get("friendly_name", mapping_info.get("raw_str", ""))
 
-    def clear_mapping(self, keyboard_key):
-        logging.debug(f"clear_mapping for key '{keyboard_key}'")
-        if keyboard_key in self.mappings:
-            del self.mappings[keyboard_key]
-            self.refresh_mappings_table(preserve_scroll=True, target_row_key=keyboard_key) # Try to keep view near cleared item
-            self.update_status_and_log(f"Cleared mapping for '{keyboard_key}'.")
-            logging.info(f"Mapping for '{keyboard_key}' cleared.")
+            text, ok = QInputDialog.getText(self, "Rename Controller Input Label",
+                f"Enter new label for controller input '{mapping_info['raw_str']}'\n(currently mapped to Action: '{action_display_name}'):",
+                QLineEdit.Normal, current_ctrl_input_friendly_name)
+            if ok and text:
+                mapping_info["friendly_name"] = text # Update the controller input's friendly name
+                self.refresh_mappings_table(preserve_scroll=True, target_row_key=internal_key)
+                self.update_status_and_log(f"Label for controller input mapped to '{action_display_name}' renamed.")
+                logging.info(f"Controller input for '{action_display_name}' (Internal: {internal_key}) relabeled to '{text}'.")
+
+
+    def clear_mapping(self, internal_key): # internal_key
+        action_display_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_key, internal_key)
+        logging.debug(f"clear_mapping for action '{action_display_name}' (Internal: '{internal_key}')")
+        if internal_key in self.mappings:
+            del self.mappings[internal_key]
+            self.refresh_mappings_table(preserve_scroll=True, target_row_key=internal_key)
+            self.update_status_and_log(f"Cleared mapping for '{action_display_name}'.")
+            logging.info(f"Mapping for '{action_display_name}' (Internal: {internal_key}) cleared.")
+
 
     def save_mappings(self):
         logging.info(f"Attempting to save mappings to {MAPPINGS_FILE}")
-        logging.debug(f"Mappings to save: {json.dumps(self.mappings, indent=2)}")
+        logging.debug(f"Mappings to save (using internal keys): {json.dumps(self.mappings, indent=2)}")
         try:
             with open(MAPPINGS_FILE, 'w') as f:
-                json.dump(self.mappings, f, indent=4)
+                json.dump(self.mappings, f, indent=4) # self.mappings uses internal keys
             self.update_status_and_log(f"Mappings saved to {MAPPINGS_FILE}")
         except Exception as e:
             logging.exception(f"Could not save mappings to {MAPPINGS_FILE}:")
             QMessageBox.critical(self, "Save Error", f"Could not save mappings: {e}")
             self.update_status_and_log(f"Error saving mappings: {e}")
 
+
     def load_mappings(self):
+        # Loads using internal keys from MAPPABLE_KEYS
         logging.info(f"Attempting to load mappings from {MAPPINGS_FILE}")
         temp_loaded_mappings = {}
         file_found = False
         try:
             with open(MAPPINGS_FILE, 'r') as f:
-                temp_loaded_mappings = json.load(f)
+                temp_loaded_mappings = json.load(f) # This loads with internal keys
                 file_found = True
-                logging.debug(f"Raw loaded mappings from file: {json.dumps(temp_loaded_mappings, indent=2)}")
+                logging.debug(f"Raw loaded mappings from file (should use internal keys): {json.dumps(temp_loaded_mappings, indent=2)}")
             self.mappings.clear()
             loaded_count = 0
             skipped_count = 0
-            for key_from_mappable_list in MAPPABLE_KEYS:
-                if key_from_mappable_list in temp_loaded_mappings:
-                    loaded_entry = temp_loaded_mappings[key_from_mappable_list]
+            for internal_key_from_mappable_list in MAPPABLE_KEYS: # Iterate through our defined internal keys
+                if internal_key_from_mappable_list in temp_loaded_mappings: # Check if this internal key exists in loaded file
+                    loaded_entry = temp_loaded_mappings[internal_key_from_mappable_list]
+                    # ... (validation logic remains the same, operating on internal_key_from_mappable_list) ...
                     if isinstance(loaded_entry, dict) and \
                        all(k_check in loaded_entry for k_check in ["event_type", "details", "raw_str", "friendly_name"]) and \
                        isinstance(loaded_entry.get("details"), dict) and \
@@ -625,20 +746,21 @@ class MainWindow(QMainWindow):
                         elif event_type == "axis" and "axis_id" in details and "direction" in details: valid_structure = True
                         elif event_type == "hat" and "hat_id" in details and "value" in details and isinstance(details["value"], list): valid_structure = True
                         if valid_structure:
-                            self.mappings[key_from_mappable_list] = loaded_entry
+                            self.mappings[internal_key_from_mappable_list] = loaded_entry
                             loaded_count += 1
                         else:
-                            logging.warning(f"Entry for '{key_from_mappable_list}' in {MAPPINGS_FILE} has invalid 'details' or 'event_type' structure. Skipping. Entry: {loaded_entry}")
+                            logging.warning(f"Entry for '{internal_key_from_mappable_list}' in {MAPPINGS_FILE} has invalid 'details' or 'event_type' structure. Skipping. Entry: {loaded_entry}")
                             skipped_count += 1
                     else:
-                        logging.warning(f"Entry for '{key_from_mappable_list}' in {MAPPINGS_FILE} is malformed or missing required keys. Skipping. Entry: {loaded_entry}")
+                        logging.warning(f"Entry for '{internal_key_from_mappable_list}' in {MAPPINGS_FILE} is malformed or missing required keys. Skipping. Entry: {loaded_entry}")
                         skipped_count += 1
+            # ... (rest of load_mappings logic) ...
             logging.info(f"Load complete. Loaded {loaded_count} valid mappings. Skipped {skipped_count} malformed/invalid entries.")
-            logging.debug(f"Final self.mappings after load: {json.dumps(self.mappings, indent=2)}")
+            logging.debug(f"Final self.mappings after load (internal keys): {json.dumps(self.mappings, indent=2)}")
             if hasattr(self, 'status_label') and self.status_label:
                 if file_found:
                     self.update_status_and_log(f"Loaded {loaded_count} mappings from {MAPPINGS_FILE}. Skipped {skipped_count}.")
-        except FileNotFoundError:
+        except FileNotFoundError: # ... (rest of exception handling as before) ...
             logging.info(f"Mappings file '{MAPPINGS_FILE}' not found. Starting fresh.")
             self.mappings.clear()
             if hasattr(self, 'status_label') and self.status_label:
@@ -660,8 +782,8 @@ class MainWindow(QMainWindow):
         logging.info("load_mappings_and_refresh called.")
         current_v_scroll_value = self.mappings_table.verticalScrollBar().value()
         self.load_mappings()
-        self.refresh_mappings_table() # This will now try to preserve scroll due to default preserve_scroll=False not being overridden here
-        self.mappings_table.verticalScrollBar().setValue(current_v_scroll_value) # Explicitly restore after refresh
+        self.refresh_mappings_table()
+        self.mappings_table.verticalScrollBar().setValue(current_v_scroll_value)
         self.update_status_and_log("Mappings reloaded and GUI updated.")
 
 

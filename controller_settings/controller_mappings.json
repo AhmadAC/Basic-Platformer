@@ -1,5 +1,5 @@
 {
-    "W": {
+    "MOVE_UP": {
         "event_type": "axis",
         "details": {
             "axis_id": 1,
@@ -8,9 +8,9 @@
             "type": "axis"
         },
         "raw_str": "Axis 1 < -0.7",
-        "friendly_name": "JSU"
+        "friendly_name": "Axis 1 < -0.7"
     },
-    "A": {
+    "MOVE_LEFT": {
         "event_type": "axis",
         "details": {
             "axis_id": 0,
@@ -19,9 +19,9 @@
             "type": "axis"
         },
         "raw_str": "Axis 0 < -0.7",
-        "friendly_name": "JSL"
+        "friendly_name": "Axis 0 < -0.7"
     },
-    "S": {
+    "MOVE_DOWN": {
         "event_type": "axis",
         "details": {
             "axis_id": 1,
@@ -30,9 +30,9 @@
             "type": "axis"
         },
         "raw_str": "Axis 1 > 0.7",
-        "friendly_name": "JSD"
+        "friendly_name": "Axis 1 > 0.7"
     },
-    "D": {
+    "MOVE_RIGHT": {
         "event_type": "axis",
         "details": {
             "axis_id": 0,
@@ -41,22 +41,107 @@
             "type": "axis"
         },
         "raw_str": "Axis 0 > 0.7",
-        "friendly_name": "JSR"
+        "friendly_name": "Axis 0 > 0.7"
     },
-    "2": {
+    "JUMP": {
+        "event_type": "button",
+        "details": {
+            "button_id": 1,
+            "type": "button"
+        },
+        "raw_str": "Button 1 Down",
+        "friendly_name": "Button 1 Down"
+    },
+    "CROUCH": {
+        "event_type": "button",
+        "details": {
+            "button_id": 8,
+            "type": "button"
+        },
+        "raw_str": "Button 8 Down",
+        "friendly_name": "Button 8 Down"
+    },
+    "INTERACT": {
+        "event_type": "button",
+        "details": {
+            "button_id": 7,
+            "type": "button"
+        },
+        "raw_str": "Button 7 Down",
+        "friendly_name": "Button 7 Down"
+    },
+    "ATTACK_PRIMARY": {
+        "event_type": "button",
+        "details": {
+            "button_id": 0,
+            "type": "button"
+        },
+        "raw_str": "Button 0 Down",
+        "friendly_name": "Button 0 Down"
+    },
+    "ATTACK_SECONDARY": {
+        "event_type": "button",
+        "details": {
+            "button_id": 2,
+            "type": "button"
+        },
+        "raw_str": "Button 2 Down",
+        "friendly_name": "Button 2 Down"
+    },
+    "DASH": {
+        "event_type": "button",
+        "details": {
+            "button_id": 4,
+            "type": "button"
+        },
+        "raw_str": "Button 4 Down",
+        "friendly_name": "Button 4 Down"
+    },
+    "ROLL": {
+        "event_type": "button",
+        "details": {
+            "button_id": 5,
+            "type": "button"
+        },
+        "raw_str": "Button 5 Down",
+        "friendly_name": "Button 5 Down"
+    },
+    "WEAPON_1": {
+        "event_type": "axis",
+        "details": {
+            "axis_id": 4,
+            "direction": 1,
+            "threshold": 0.7,
+            "type": "axis"
+        },
+        "raw_str": "Axis 4 > 0.7",
+        "friendly_name": "Axis 4 > 0.7"
+    },
+    "WEAPON_2": {
+        "event_type": "axis",
+        "details": {
+            "axis_id": 5,
+            "direction": -1,
+            "threshold": 0.7,
+            "type": "axis"
+        },
+        "raw_str": "Axis 5 < -0.7",
+        "friendly_name": "Axis 5 < -0.7"
+    },
+    "WEAPON_4": {
         "event_type": "hat",
         "details": {
             "hat_id": 0,
             "type": "hat",
             "value": [
-                1,
-                0
+                0,
+                1
             ]
         },
-        "raw_str": "Hat 0 (1, 0)",
-        "friendly_name": "Hat 0 (1, 0)"
+        "raw_str": "Hat 0 (0, 1)",
+        "friendly_name": "Hat 0 (0, 1)"
     },
-    "3": {
+    "WEAPON_DPAD_DOWN": {
         "event_type": "hat",
         "details": {
             "hat_id": 0,
@@ -69,18 +154,20 @@
         "raw_str": "Hat 0 (0, -1)",
         "friendly_name": "Hat 0 (0, -1)"
     },
-    "4": {
-        "event_type": "axis",
+    "WEAPON_DPAD_RIGHT": {
+        "event_type": "hat",
         "details": {
-            "axis_id": 5,
-            "direction": -1,
-            "threshold": 0.7,
-            "type": "axis"
+            "hat_id": 0,
+            "type": "hat",
+            "value": [
+                1,
+                0
+            ]
         },
-        "raw_str": "Axis 5 < -0.7",
-        "friendly_name": "ZR"
+        "raw_str": "Hat 0 (1, 0)",
+        "friendly_name": "Hat 0 (1, 0)"
     },
-    "5": {
+    "WEAPON_DPAD_LEFT": {
         "event_type": "hat",
         "details": {
             "hat_id": 0,
@@ -93,42 +180,6 @@
         "raw_str": "Hat 0 (-1, 0)",
         "friendly_name": "Hat 0 (-1, 0)"
     },
-    "Q": {
-        "event_type": "button",
-        "details": {
-            "button_id": 6,
-            "type": "button"
-        },
-        "raw_str": "Button 6 Down",
-        "friendly_name": "-"
-    },
-    "E": {
-        "event_type": "button",
-        "details": {
-            "button_id": 7,
-            "type": "button"
-        },
-        "raw_str": "Button 7 Down",
-        "friendly_name": "+"
-    },
-    "SPACE": {
-        "event_type": "button",
-        "details": {
-            "button_id": 9,
-            "type": "button"
-        },
-        "raw_str": "Button 9 Down",
-        "friendly_name": "RJS PRESS"
-    },
-    "SHIFT": {
-        "event_type": "button",
-        "details": {
-            "button_id": 4,
-            "type": "button"
-        },
-        "raw_str": "Button 4 Down",
-        "friendly_name": "Button 4 Down"
-    },
     "MENU_CONFIRM": {
         "event_type": "button",
         "details": {
@@ -136,7 +187,7 @@
             "type": "button"
         },
         "raw_str": "Button 1 Down",
-        "friendly_name": "a"
+        "friendly_name": "Button 1 Down"
     },
     "MENU_CANCEL": {
         "event_type": "button",
@@ -145,7 +196,7 @@
             "type": "button"
         },
         "raw_str": "Button 2 Down",
-        "friendly_name": "y"
+        "friendly_name": "Button 2 Down"
     },
     "MENU_RETURN": {
         "event_type": "button",
@@ -155,36 +206,5 @@
         },
         "raw_str": "Button 10 Down",
         "friendly_name": "Button 10 Down"
-    },
-    "B": {
-        "event_type": "button",
-        "details": {
-            "button_id": 0,
-            "type": "button"
-        },
-        "raw_str": "Button 0 Down",
-        "friendly_name": "b"
-    },
-    "V": {
-        "event_type": "button",
-        "details": {
-            "button_id": 1,
-            "type": "button"
-        },
-        "raw_str": "Button 1 Down",
-        "friendly_name": "a"
-    },
-    "1": {
-        "event_type": "hat",
-        "details": {
-            "hat_id": 0,
-            "type": "hat",
-            "value": [
-                0,
-                1
-            ]
-        },
-        "raw_str": "Hat 0 (0, 1)",
-        "friendly_name": "Hat 0 (0, 1)"
     }
 }

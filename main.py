@@ -75,7 +75,6 @@ try:
     import game_ui
     import config as game_config
     import joystick_handler
-    import settings_ui
     _main_print("INFO", "Platformer modules imported successfully.")
 except ImportError as e:
     _main_print("FATAL", f"Failed to import a required platformer module: {e}")
@@ -168,11 +167,6 @@ if __name__ == "__main__":
         _main_print("INFO", f"Main menu choice: '{menu_choice}'")
         if not app_status.app_running or menu_choice == "quit":
             app_status.app_running = False; break
-        if menu_choice == "settings":
-            _main_print("INFO", "Entering Control Settings screen...")
-            settings_ui.show_control_settings_screen(screen, main_clock, fonts, app_status, joystick_handler)
-            if not app_status.app_running: _main_print("INFO", "App quit during settings."); break
-            _main_print("INFO", "Exited Control Settings. Returning to main menu."); continue
         map_to_load_for_game: Optional[str] = None
         if menu_choice in ["couch_play", "host"]:
             _main_print("INFO", f"Mode '{menu_choice}' requires map selection. Opening map dialog...")

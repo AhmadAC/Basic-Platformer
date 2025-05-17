@@ -142,10 +142,9 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
         "join_lan": {"text": "Join LAN", "action": "join_lan"},
         "join_ip": {"text": "Join by IP", "action": "join_ip"},
         "couch_play": {"text": "Couch Play", "action": "couch_play"},
-        "settings": {"text": "Settings", "action": "settings"},
         "quit": {"text": "Quit", "action": "quit"}
     }
-    button_order = ["host", "join_lan", "join_ip", "couch_play", "settings", "quit"]
+    button_order = ["host", "join_lan", "join_ip", "couch_play", "quit"]
     selected_button_index = 0
 
     font_button = fonts.get("medium") or (pygame.font.Font(None, 30) if pygame.font.get_init() else None)
