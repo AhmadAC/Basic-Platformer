@@ -1,6 +1,6 @@
 # enemy.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.16 (Corrected petrification logic and 'now' variable)
+## version 1.0.0.18 (Petrified enemies fall with gravity)
 """
 Defines the Enemy class, a CPU-controlled character.
 Handles AI-driven movement (via enemy_ai_handler), animations, states,
@@ -8,7 +8,8 @@ combat (via enemy_combat_handler), and network synchronization
 (via enemy_network_handler).
 Each instance randomly selects a color variant for its animations if configured.
 Petrification turns the enemy to stone but doesn't kill it; further damage
-is required, which then triggers a smash animation.
+is required, which then triggers a smash animation. Petrified enemies are
+affected by gravity.
 """
 import pygame
 import random
@@ -29,11 +30,11 @@ except ImportError:
 # --- End Logger ---
 
 import constants as C
-from assets import load_all_player_animations, load_gif_frames, resource_path # Added load_gif_frames
+from assets import load_all_player_animations, load_gif_frames, resource_path 
 from tiles import Lava
 
 from enemy_ai_handler import set_enemy_new_patrol_target, enemy_ai_update
-from enemy_combat_handler import check_enemy_attack_collisions # enemy_take_damage is now part of Enemy class
+from enemy_combat_handler import check_enemy_attack_collisions 
 from enemy_network_handler import get_enemy_network_data, set_enemy_network_data
 
 
@@ -93,7 +94,7 @@ class Enemy(pygame.sprite.Sprite):
         self.pos = pygame.math.Vector2(start_x, start_y)
         self.vel = pygame.math.Vector2(0, 0)
         self.acc = pygame.math.Vector2(0, getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.8)))
-        self.facing_right = random.choice([True, False])
+        self.facing_right = random.choice([True, False]) # Initial facing direction
         self.on_ground = False
         self.ai_state = 'patrolling'
         self.patrol_target_x = start_x
@@ -136,6 +137,7 @@ class Enemy(pygame.sprite.Sprite):
         self.is_petrified = False
         self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
+        self.facing_at_petrification = self.facing_right # Store facing direction when petrified
         
         # Load common stone assets (shared, not from character-specific folder)
         stone_common_folder = os.path.join('characters', 'Stone')
@@ -144,15 +146,17 @@ class Enemy(pygame.sprite.Sprite):
 
         loaded_common_stone_frames = load_gif_frames(common_stone_png_path)
         if loaded_common_stone_frames and not (len(loaded_common_stone_frames) == 1 and loaded_common_stone_frames[0].get_size() == (30,40) and loaded_common_stone_frames[0].get_at((0,0)) == C.RED):
-            self.stone_image_frame = loaded_common_stone_frames[0]
+            self.stone_image_frame_original = loaded_common_stone_frames[0] # Store the original loaded frame
         else:
-            self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "Stone")
+            self.stone_image_frame_original = self._create_placeholder_surface(C.GRAY, "Stone")
+        self.stone_image_frame = self.stone_image_frame_original # Initially use the original
 
         loaded_common_smashed_frames = load_gif_frames(common_stone_smashed_gif_path)
         if loaded_common_smashed_frames and not (len(loaded_common_smashed_frames) == 1 and loaded_common_smashed_frames[0].get_size() == (30,40) and loaded_common_smashed_frames[0].get_at((0,0)) == C.RED):
-            self.stone_smashed_frames = loaded_common_smashed_frames
+            self.stone_smashed_frames_original = loaded_common_smashed_frames # Store original loaded frames
         else:
-            self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "Smash")]
+            self.stone_smashed_frames_original = [self._create_placeholder_surface(C.DARK_GRAY, "Smash")]
+        self.stone_smashed_frames = list(self.stone_smashed_frames_original) # Initially use copies
 
 
     def _create_placeholder_surface(self, color, text="Err"):
@@ -178,8 +182,10 @@ class Enemy(pygame.sprite.Sprite):
         self.is_stone_smashed = False 
         # self.is_dead = True # REMOVED - Not dead yet, just stone
         # self.current_health = 0 # REMOVED - Health is not set to 0
-        self.vel.xy = 0, 0
-        self.acc.xy = 0, 0
+        self.vel.x = 0  # Stop horizontal movement
+        self.acc.x = 0  # Stop horizontal acceleration
+        # self.vel.y and self.acc.y (gravity) remain for falling
+        self.facing_at_petrification = self.facing_right # Store current facing direction
         self.is_attacking = False
         self.is_taking_hit = False # Cannot be hit-stunned while petrified
         self.is_frozen = False; self.is_defrosting = False
@@ -325,14 +331,27 @@ class Enemy(pygame.sprite.Sprite):
                 self.deflame_timer_start = current_ticks_ms
             elif new_state == 'petrified': # Initial petrification (not smashed yet)
                 self.is_petrified = True; self.is_stone_smashed = False
-                self.vel.xy = 0,0; self.acc.xy = 0,0
+                self.vel.x = 0; self.acc.x = 0 # Stop horizontal
+                self.acc.y = getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.8)) # Ensure gravity is on
+                # self.facing_at_petrification was already set when petrify() was called
+                self.stone_image_frame = self.stone_image_frame_original # Ensure using the base stone image
+                if not self.facing_at_petrification: # Flip the base stone image if needed
+                    self.stone_image_frame = pygame.transform.flip(self.stone_image_frame_original, True, False)
                 # self.is_dead is NOT set here, health is preserved
             elif new_state == 'smashed': # Transition to smashed (means health was 0)
                 self.is_stone_smashed = True; self.is_petrified = True 
                 self.is_dead = True # Confirmed dead
                 self.death_animation_finished = False # Smashed animation needs to play
                 self.stone_smashed_timer_start = current_ticks_ms # Could be already set by take_damage
-                self.vel.xy = 0,0; self.acc.xy = 0,0
+                self.vel.xy = 0,0; self.acc.xy = 0,0 # Smashed doesn't fall
+                # Prepare smashed frames based on facing direction at petrification
+                self.stone_smashed_frames = []
+                for frame in self.stone_smashed_frames_original:
+                    if not self.facing_at_petrification:
+                        self.stone_smashed_frames.append(pygame.transform.flip(frame, True, False))
+                    else:
+                        self.stone_smashed_frames.append(frame)
+
             elif new_state == 'idle':
                 pass # General cleanup already done if transitioning from special states
             elif 'attack' in new_state:
@@ -408,10 +427,10 @@ class Enemy(pygame.sprite.Sprite):
         if self.is_petrified:
             if self.is_stone_smashed:
                 determined_animation_key = 'stone_smashed' 
-                current_animation_frames_list = self.stone_smashed_frames
+                current_animation_frames_list = self.stone_smashed_frames # Already pre-flipped if needed
             else: 
                 determined_animation_key = 'stone'
-                current_animation_frames_list = [self.stone_image_frame] if self.stone_image_frame else []
+                current_animation_frames_list = [self.stone_image_frame] if self.stone_image_frame else [] # Already pre-flipped
         elif self.is_dead: # Regular death
             determined_animation_key = 'death_nm' if abs(self.vel.x) < 0.1 and abs(self.vel.y) < 0.1 and \
                                      self.animations.get('death_nm') else 'death'
@@ -506,23 +525,21 @@ class Enemy(pygame.sprite.Sprite):
         
         image_for_this_frame = current_animation_frames_list[self.current_frame]
         
-        # Flipping
-        current_facing_is_right_for_anim = self.facing_right
-        # Don't flip stone images by default unless they are multi-frame and need it.
-        # For now, assume stone/smashed are not direction-dependent.
-        if self.is_petrified:
-            should_flip_stone = False # Modify if your stone/smashed assets need flipping
-            if should_flip_stone and not current_facing_is_right_for_anim:
-                 image_for_this_frame = pygame.transform.flip(image_for_this_frame, True, False)
-        elif not current_facing_is_right_for_anim: # Regular flip
+        # Flipping for regular animations
+        # For petrified/smashed states, the frames are already pre-oriented in self.stone_image_frame / self.stone_smashed_frames by set_state
+        current_display_facing_right = self.facing_right
+        if self.is_petrified: # Use the facing direction at the moment of petrification for stone visuals
+            current_display_facing_right = self.facing_at_petrification
+        
+        if not self.is_petrified and not current_display_facing_right: # Standard flip for non-petrified states
             image_for_this_frame = pygame.transform.flip(image_for_this_frame, True, False)
+        # Stone/Smashed images are already oriented (self.stone_image_frame and self.stone_smashed_frames are set in set_state)
 
-
-        if self.image is not image_for_this_frame or self._last_facing_right != current_facing_is_right_for_anim:
+        if self.image is not image_for_this_frame or self._last_facing_right != current_display_facing_right:
             old_enemy_midbottom_pos = self.rect.midbottom
             self.image = image_for_this_frame
             self.rect = self.image.get_rect(midbottom=old_enemy_midbottom_pos)
-            self._last_facing_right = current_facing_is_right_for_anim
+            self._last_facing_right = current_display_facing_right # Track the displayed facing direction
 
 
     def stomp_kill(self):
@@ -599,23 +616,30 @@ class Enemy(pygame.sprite.Sprite):
     def update(self, dt_sec, players_list_for_logic, platforms_group, hazards_group, all_enemies_list):
         if not self._valid_init: return
 
-        current_time_ms = pygame.time.get_ticks() # Define current_time_ms here
+        current_time_ms = pygame.time.get_ticks() 
 
         # --- Petrified and Smashed State Handling (Overrides other logic) ---
         if self.is_stone_smashed:
-            # is_dead should be True, death_animation_finished will be True when anim ends
             if self.death_animation_finished or \
-               (current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS): # USE current_time_ms
+               (current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS): 
                 debug(f"Smashed stone Enemy {self.enemy_id} duration/animation ended. Killing.")
                 self.kill()
                 return
-            self.animate() # Continue smashed animation
+            self.animate() 
             return 
         
         if self.is_petrified: # Is petrified but not smashed
-            self.vel.xy = 0,0 # Ensure no movement
-            self.acc.xy = 0,0
-            self.animate() # Will show static stone image
+            # Apply gravity
+            self.vel.y += self.acc.y # acc.y should be gravity
+            self.vel.y = min(self.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18)) # Terminal velocity
+            
+            self.on_ground = False # Reset before y-collision check
+            self.pos.y += self.vel.y
+            self.rect.bottom = round(self.pos.y)
+            self.check_platform_collisions('y', platforms_group) # Check for landing
+            self.pos.y = self.rect.bottom # Sync pos from rect after collision
+            
+            self.animate() # Will show static stone image (potentially flipped)
             return 
         
         # --- Regular Update Logic (if not petrified) ---
@@ -625,36 +649,33 @@ class Enemy(pygame.sprite.Sprite):
             elif current_time_ms - self.aflame_damage_last_tick > C.ENEMY_AFLAME_DAMAGE_INTERVAL_MS:
                 self.take_damage(C.ENEMY_AFLAME_DAMAGE_PER_TICK)
                 self.aflame_damage_last_tick = current_time_ms
-            # Animate if in aflame/deflame state (handled by self.animate general call later)
         elif self.is_deflaming:
             if current_time_ms - self.deflame_timer_start > C.ENEMY_DEFLAME_DURATION_MS:
                 self.set_state('idle') 
 
         if self.is_stomp_dying:
-            self.animate(); return # Stomp death animation handles itself
+            self.animate(); return 
 
         if self.is_dead: # REGULAR death (not petrified and not smashed yet)
             self.is_aflame = False; self.is_deflaming = False; self.is_frozen = False; self.is_defrosting = False
-            if self.alive(): # Check if sprite is still in any groups
+            if self.alive(): 
                 if not self.death_animation_finished:
-                    # Allow falling during death animation
                     if not self.on_ground:
                         self.vel.y += self.acc.y
                         self.vel.y = min(self.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18))
                         self.pos.y += self.vel.y
                         self.rect.bottom = round(self.pos.y)
-                        self.on_ground = False # Recalculate next time
+                        self.on_ground = False 
                         for platform_sprite in pygame.sprite.spritecollide(self, platforms_group, False):
                             if self.vel.y > 0 and self.rect.bottom > platform_sprite.rect.top and \
-                               (self.pos.y - self.vel.y) <= platform_sprite.rect.top + 1: # Check if feet were above
+                               (self.pos.y - self.vel.y) <= platform_sprite.rect.top + 1: 
                                 self.rect.bottom = platform_sprite.rect.top
                                 self.on_ground = True; self.vel.y = 0; self.acc.y = 0
-                                self.pos.y = self.rect.bottom; break # Landed
-                self.animate() # Continue death animation
-            if self.death_animation_finished and self.alive(): self.kill() # If animation done, remove from groups
+                                self.pos.y = self.rect.bottom; break 
+                self.animate() 
+            if self.death_animation_finished and self.alive(): self.kill() 
             return
 
-        # Frozen/Defrosting logic (if not dead or petrified)
         if self.is_frozen:
             self.vel.xy = 0,0; self.acc.x = 0
             if current_time_ms - self.frozen_effect_timer > C.ENEMY_FROZEN_DURATION_MS:
@@ -662,11 +683,10 @@ class Enemy(pygame.sprite.Sprite):
             self.animate(); return
         if self.is_defrosting:
             self.vel.xy = 0,0; self.acc.x = 0
-            if current_time_ms - (self.frozen_effect_timer + C.ENEMY_FROZEN_DURATION_MS) > C.ENEMY_DEFROST_DURATION_MS: # Correct timer check for defrost
+            if current_time_ms - (self.frozen_effect_timer) > (C.ENEMY_FROZEN_DURATION_MS + C.ENEMY_DEFROST_DURATION_MS): 
                 self.set_state('idle')
             self.animate(); return
 
-        # --- Active Gameplay Logic (AI, Physics, Collisions) ---
         if self.post_attack_pause_timer > 0 and current_time_ms >= self.post_attack_pause_timer:
             self.post_attack_pause_timer = 0
         if self.is_taking_hit and current_time_ms - self.hit_timer > self.hit_cooldown:
@@ -689,7 +709,7 @@ class Enemy(pygame.sprite.Sprite):
         self.vel.x = max(-enemy_run_speed_max, min(enemy_run_speed_max, self.vel.x))
         self.vel.y = min(self.vel.y, terminal_fall_speed_y)
         
-        self.on_ground = False # Reset before collision checks
+        self.on_ground = False 
         
         self.pos.x += self.vel.x
         self.rect.centerx = round(self.pos.x)
@@ -702,16 +722,15 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.bottom = round(self.pos.y)
         self.check_platform_collisions('y', platforms_group)
         
-        if not collided_horizontally_with_char: # Avoid double processing if already handled by X
+        if not collided_horizontally_with_char: 
             self.check_character_collision('y', all_other_characters)
         
-        # Sync pos from rect after all collision resolutions
         self.pos.x = self.rect.centerx
         self.pos.y = self.rect.bottom
         
         self.check_hazard_collisions(hazards_group)
         
-        if self.is_attacking and not (self.is_aflame or self.is_deflaming): # Don't attack if burning
+        if self.is_attacking and not (self.is_aflame or self.is_deflaming): 
             self._check_attack_collisions(players_list_for_logic)
             
         self.animate()
@@ -732,15 +751,14 @@ class Enemy(pygame.sprite.Sprite):
             elif direction == 'y':
                 if self.vel.y > 0: # Moving Down
                     if self.rect.bottom > platform_sprite.rect.top and \
-                       (self.pos.y - self.vel.y) <= platform_sprite.rect.top + 1: # Player's feet were at or above platform top
+                       (self.pos.y - self.vel.y) <= platform_sprite.rect.top + 1: 
                          self.rect.bottom = platform_sprite.rect.top
                          self.on_ground = True; self.vel.y = 0
                 elif self.vel.y < 0: # Moving Up
                     if self.rect.top < platform_sprite.rect.bottom and \
-                       ((self.pos.y - self.standard_height) - self.vel.y) >= platform_sprite.rect.bottom -1 : # Player's head was at or below platform bottom
+                       ((self.pos.y - self.standard_height) - self.vel.y) >= platform_sprite.rect.bottom -1 : 
                          self.rect.top = platform_sprite.rect.bottom
                          self.vel.y = 0
-            # Sync pos after rect adjustment
             if direction == 'x': self.pos.x = self.rect.centerx
             else: self.pos.y = self.rect.bottom
 
@@ -792,10 +810,10 @@ class Enemy(pygame.sprite.Sprite):
                         if hasattr(other_char_sprite, 'pos') and hasattr(other_char_sprite, 'rect') and can_push_other:
                             other_char_sprite.pos.x += (-push_direction_for_self * 1.5)
                             other_char_sprite.rect.centerx = round(other_char_sprite.pos.x)
-                            other_char_sprite.rect.bottom = round(other_char_sprite.pos.y) # Assumes other_char_sprite.pos is midbottom
-                            other_char_sprite.pos.x = other_char_sprite.rect.centerx # Re-sync pos from rect
+                            other_char_sprite.rect.bottom = round(other_char_sprite.pos.y) 
+                            other_char_sprite.pos.x = other_char_sprite.rect.centerx 
                             other_char_sprite.pos.y = other_char_sprite.rect.bottom
-                    self.pos.x = self.rect.centerx # Re-sync self pos from rect
+                    self.pos.x = self.rect.centerx 
                 elif direction == 'y': 
                     if self.vel.y > 0 and self.rect.bottom > other_char_sprite.rect.top and \
                        self.rect.centery < other_char_sprite.rect.centery: 
@@ -803,7 +821,7 @@ class Enemy(pygame.sprite.Sprite):
                     elif self.vel.y < 0 and self.rect.top < other_char_sprite.rect.bottom and \
                          self.rect.centery > other_char_sprite.rect.centery: 
                         self.rect.top = other_char_sprite.rect.bottom; self.vel.y = 0
-                    self.pos.y = self.rect.bottom # Re-sync self pos from rect
+                    self.pos.y = self.rect.bottom 
         return collision_occurred
 
 
@@ -820,12 +838,12 @@ class Enemy(pygame.sprite.Sprite):
                not damage_taken_from_hazard_this_frame:
                 self.take_damage(getattr(C, 'LAVA_DAMAGE', 50))
                 damage_taken_from_hazard_this_frame = True
-                if not self.is_dead: # If not killed by lava instantly
-                     self.vel.y = getattr(C, 'PLAYER_JUMP_STRENGTH', -15) * 0.3 # Bounce up slightly
+                if not self.is_dead: 
+                     self.vel.y = getattr(C, 'PLAYER_JUMP_STRENGTH', -15) * 0.3 
                      push_dir_from_lava_hazard = 1 if self.rect.centerx < hazard_sprite.rect.centerx else -1
-                     self.vel.x = -push_dir_from_lava_hazard * 4 # Bounce away horizontally
-                     self.on_ground = False # Now in air
-                break # Processed one hazard collision this frame
+                     self.vel.x = -push_dir_from_lava_hazard * 4 
+                     self.on_ground = False 
+                break 
 
 
     def reset(self):
@@ -869,5 +887,6 @@ class Enemy(pygame.sprite.Sprite):
         self.is_petrified = False 
         self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
+        self.facing_at_petrification = self.facing_right # Reset this too
 
         self.set_state('idle')
