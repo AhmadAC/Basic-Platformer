@@ -545,25 +545,34 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
 
         # Determine object dimensions and default color from palette definition
         obj_w_px, obj_h_px = ts, ts # Default to grid size
-        default_color_tuple = getattr(C, 'MAGENTA', (255,0,255)) # Fallback color
+        
+        # General default color, used if asset has no inherent color (like a GIF) or if specific defaults aren't met
+        default_color_tuple_for_this_asset = getattr(C, 'MAGENTA', (255,0,255)) 
 
         if asset_palette_entry.get("surface_params_dims_color"): # For basic colored rects
             w, h, c = asset_palette_entry["surface_params_dims_color"]
             obj_w_px, obj_h_px = w, h
-            default_color_tuple = c
+            default_color_tuple_for_this_asset = c
         elif asset_palette_entry.get("render_mode") == "half_tile": # For half-tiles
             half_type = asset_palette_entry.get("half_type")
-            default_color_tuple = asset_palette_entry.get("base_color_tuple", default_color_tuple)
+            default_color_tuple_for_this_asset = asset_palette_entry.get("base_color_tuple", default_color_tuple_for_this_asset)
             if half_type in ["left", "right"]: obj_w_px = ts // 2; obj_h_px = ts
             elif half_type in ["top", "bottom"]: obj_w_px = ts; obj_h_px = ts // 2
-        elif asset_palette_entry.get("original_size_pixels"): # For image-based assets
+        elif asset_palette_entry.get("original_size_pixels"): # For image-based assets (like the new lava GIF)
              obj_w_px, obj_h_px = asset_palette_entry["original_size_pixels"]
-        # Note: If none of these, it defaults to ts x ts, which is usually fine for spawns/items.
+             # For GIF based assets, if no override_color is set, specific game_type_id defaults will be used below.
+        # Note: If none of these, it defaults to ts x ts, and default_color_tuple_for_this_asset remains MAGENTA.
 
-        # Determine the color to export (override or default)
-        current_color_tuple = override_color if override_color else default_color_tuple
-        # Ensure color is a string tuple for the Python script, e.g., "(128,128,128)"
-        current_color_str = f"({current_color_tuple[0]},{current_color_tuple[1]},{current_color_tuple[2]})" if isinstance(current_color_tuple, (list, tuple)) and len(current_color_tuple)==3 else str(default_color_tuple)
+        # Determine the color to export (override or specific default or general default)
+        final_color_tuple_for_export = None
+        if override_color: # User explicitly set a color for this instance
+            final_color_tuple_for_export = override_color
+        elif game_type_id == "hazard_lava": # Specific default for lava if no override
+            final_color_tuple_for_export = getattr(C, 'ORANGE_RED', (255,69,0))
+        else: # General default from palette (if applicable) or magenta
+            final_color_tuple_for_export = default_color_tuple_for_this_asset
+        
+        current_color_str = f"({final_color_tuple_for_export[0]},{final_color_tuple_for_export[1]},{final_color_tuple_for_export[2]})" if isinstance(final_color_tuple_for_export, (list, tuple)) and len(final_color_tuple_for_export)==3 else str(getattr(C, 'MAGENTA', (255,0,255)))
 
 
         # Adjust spawn position for half-tiles if necessary
@@ -578,15 +587,12 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         all_placed_world_rects_for_bounds.append(current_obj_rect)
 
         # --- Categorize and generate code based on game_type_id ---
-        # (Using game_type_id from JSON/palette is more reliable than inferring from asset_key)
-        
-        # Check if this platform should be skipped due to lava conflict
         platform_game_type_keywords = {"platform_wall_gray", "platform_ledge_green"}
         is_platform_type = any(keyword in game_type_id for keyword in platform_game_type_keywords)
 
         if is_platform_type and (world_x, world_y) in lava_occupied_coords:
             logger.info(f"Export: Skipping platform '{game_type_id}' at ({world_x},{world_y}) because it's occupied by lava.")
-            continue # Skip this object
+            continue 
 
         if "platform_wall_gray" in game_type_id or "platform_ledge_green" in game_type_id:
             platform_export_type = 'ledge' if "ledge" in game_type_id else 'wall'
@@ -597,11 +603,10 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         elif game_type_id == "hazard_lava":
             hazards_code_lines.append(f"    hazards.add(Lava({export_x}, {export_y}, {obj_w_px}, {obj_h_px}, {current_color_str}))")
         elif game_type_id == "player1_spawn":
-            # Spawn pos is midbottom of the visual representation
             spawn_mid_x = export_x + obj_w_px // 2
             spawn_bottom_y = export_y + obj_h_px
             player1_spawn_str = f"player1_spawn = ({spawn_mid_x}, {spawn_bottom_y})"
-        elif "enemy" in game_type_id: # e.g., "enemy_cyan", "enemy_red"
+        elif "enemy" in game_type_id: 
             specific_enemy_color_id = game_type_id.split('_')[-1] if '_' in game_type_id else "unknown_enemy_color"
             spawn_mid_x = export_x + obj_w_px // 2
             spawn_bottom_y = export_y + obj_h_px
@@ -610,15 +615,13 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             chest_spawn_x_midbottom = export_x + obj_w_px // 2
             chest_spawn_y_midbottom = export_y + obj_h_px
             collectible_spawns_code_lines.append(f"    collectible_spawns_data.append({{'type': 'chest', 'pos': ({chest_spawn_x_midbottom}, {chest_spawn_y_midbottom})}})")
-        # Add other game_type_id conditions here (e.g., ladders, other items)
         else:
-            if not game_type_id.startswith("tool_"): # Ignore "tool_" types for export
+            if not game_type_id.startswith("tool_"): 
                 logger.warning(f"Unknown game_type_id '{game_type_id}' for object at ({world_x},{world_y}). Not exported to .py.")
 
 
     # Merge platforms and generate code lines
     platforms_code_lines = _merge_rect_objects(platform_objects_raw, "Platform", "platforms")
-    # Ladders would be similar if they were simple rects; if complex, export individually
     ladders_code_lines = [f"    # No ladders placed."]# Example if you add ladders
 
     platforms_code_str = "\n".join(platforms_code_lines)
@@ -651,17 +654,13 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     
     # Determine total map width for the game
     content_span_x = map_max_x_content - map_min_x_content
-    # Ensure map is at least as wide as editor's initial screen, plus padding
     game_map_total_width_pixels = int(max(ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, content_span_x + 2 * padding_px))
-    
-    # If content + padding exceeds this, expand total width
     if map_max_x_content + padding_px > game_map_total_width_pixels:
          game_map_total_width_pixels = int(map_max_x_content + padding_px)
-    # Ensure map_total_width_pixels is at least map_min_x_content + content_span_x + padding_px for right side too
-    if map_min_x_content > 0 : # If content doesn't start at 0
+    if map_min_x_content > 0 : 
         if game_map_total_width_pixels < map_max_x_content + padding_px:
              game_map_total_width_pixels = int(map_max_x_content + padding_px)
-    elif game_map_total_width_pixels < map_max_x_content : # Ensure it covers all content if content starts at 0
+    elif game_map_total_width_pixels < map_max_x_content : 
         game_map_total_width_pixels = int(map_max_x_content + padding_px)
 
 
@@ -671,7 +670,6 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     game_main_ground_y_reference = int(map_max_y_content) # Reference for where "ground" is considered
     game_main_ground_height_reference = int(C.TILE_SIZE) # Thickness of the ground boundary
 
-    # Ensure min_y is not below max_y, can happen with very small maps
     if game_level_min_y_absolute >= game_level_max_y_absolute:
         logger.warning(f"Calculated min_y_abs ({game_level_min_y_absolute}) >= max_y_abs ({game_level_max_y_absolute}). Adjusting max_y_abs.")
         game_level_max_y_absolute = game_level_min_y_absolute + C.TILE_SIZE * 5 # Ensure some height
@@ -713,29 +711,25 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         f"    map_total_width_pixels = {game_map_total_width_pixels}",
         f"    level_min_y_absolute = {game_level_min_y_absolute}",
         f"    level_max_y_absolute = {game_level_max_y_absolute}",
-        f"    main_ground_y_reference = {game_main_ground_y_reference}", # For reference, e.g. where default ground is
-        f"    main_ground_height_reference = {game_main_ground_height_reference}", # Thickness of that ground
+        f"    main_ground_y_reference = {game_main_ground_y_reference}", 
+        f"    main_ground_height_reference = {game_main_ground_height_reference}", 
         "",
-        "    _boundary_thickness = C.TILE_SIZE * 2", # Use a constant
+        "    _boundary_thickness = C.TILE_SIZE * 2", 
         "    _boundary_wall_height = level_max_y_absolute - level_min_y_absolute + (2 * _boundary_thickness)",
-        "    _boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))", # Fallback color
+        "    _boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))", 
         "",
     ]
     
-    # Add a filler wall on the right if map content doesn't reach map_total_width_pixels
-    # This ensures the camera doesn't show empty space if it pans to the far right.
-    filler_wall_x_start = map_max_x_content # Start filler where content ends
+    filler_wall_x_start = map_max_x_content 
     filler_wall_width = game_map_total_width_pixels - filler_wall_x_start
     
     if filler_wall_width > 0:
-        # Ensure filler wall covers the entire vertical span of the boundary box
-        filler_wall_y_expr_str = "level_min_y_absolute - _boundary_thickness" # Top of ceiling boundary
-        filler_wall_height_expr_str = "_boundary_wall_height" # Full height of boundary box
+        filler_wall_y_expr_str = "level_min_y_absolute - _boundary_thickness" 
+        filler_wall_height_expr_str = "_boundary_wall_height" 
         script_content_parts.extend([
             "    # Filler wall on the right to ensure no empty background padding",
             f"    platforms.add(Platform({filler_wall_x_start}, {filler_wall_y_expr_str}, {filler_wall_width}, {filler_wall_height_expr_str}, _boundary_color, platform_type='wall'))"
         ])
-        # For logging what these values would approximately be:
         log_calculated_boundary_thickness = C.TILE_SIZE * 2
         log_calculated_filler_wall_y = game_level_min_y_absolute - log_calculated_boundary_thickness
         log_calculated_filler_wall_height = (game_level_max_y_absolute - game_level_min_y_absolute) + (2 * log_calculated_boundary_thickness)
@@ -743,7 +737,6 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         logger.debug(f"Code for right-side filler wall generated: x={filler_wall_x_start}, y_expr='{filler_wall_y_expr_str}', w={filler_wall_width}, h_expr='{filler_wall_height_expr_str}', color_var_name='_boundary_color'")
         logger.debug(f"Approximate calculated values for filler wall (for logging ref): y_val_approx={log_calculated_filler_wall_y}, h_val_approx={log_calculated_filler_wall_height}, color_val_approx={log_boundary_color_value_for_debug}")
     
-    # Add boundary platforms
     script_content_parts.extend([
         "",
         "    # Boundary platforms (these define the absolute edges of the level area)",
@@ -761,7 +754,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         "            player1_spawn,",
         "            map_total_width_pixels, level_min_y_absolute, level_max_y_absolute,",
         "            main_ground_y_reference, main_ground_height_reference,",
-        "            LEVEL_SPECIFIC_BACKGROUND_COLOR)", # Return background color
+        "            LEVEL_SPECIFIC_BACKGROUND_COLOR)", 
         ])
 
     script_content = "\n".join(script_content_parts)
@@ -773,7 +766,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         success_msg = f"Map exported to game script: {os.path.basename(py_filepath_to_use)}"
         logger.info(success_msg)
         editor_state.set_status_message(success_msg)
-        editor_state.unsaved_changes = False # Export successful, consider it "saved"
+        editor_state.unsaved_changes = False 
         logger.debug(f"unsaved_changes set to False after .py export to '{py_filepath_to_use}'.")
         return True
     except IOError as e:
@@ -782,7 +775,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     except Exception as e:
         error_msg = f"Unexpected error during .py export to '{py_filepath_to_use}': {e}"
         logger.error(error_msg, exc_info=True)
-        traceback.print_exc() # Keep for detailed error
+        traceback.print_exc() 
 
     editor_state.set_status_message(error_msg, 4)
     return False
@@ -806,13 +799,12 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
 
     map_name_base = os.path.splitext(os.path.basename(json_filepath_to_delete))[0]
     py_filename_to_delete = map_name_base + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
-    # Assume .py is in the same directory as .json (ED_CONFIG.MAPS_DIRECTORY)
     py_filepath_to_delete = os.path.join(os.path.dirname(json_filepath_to_delete), py_filename_to_delete)
 
     deleted_json = False
     deleted_py = False
-    action_performed_json = False # Track if we attempted to delete
-    action_performed_py = False   # Track if we attempted to delete
+    action_performed_json = False 
+    action_performed_py = False   
 
     try:
         if os.path.exists(json_filepath_to_delete):
@@ -823,10 +815,10 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
         else:
             logger.warning(f"Editor map file not found for deletion: {json_filepath_to_delete}")
     except OSError as e:
-        action_performed_json = True # Attempt was made
+        action_performed_json = True 
         msg = f"Error deleting editor map file '{json_filepath_to_delete}': {e}"
         logger.error(msg, exc_info=True)
-        editor_state.set_status_message(msg, 4) # Set status message here
+        editor_state.set_status_message(msg, 4) 
 
     try:
         if os.path.exists(py_filepath_to_delete):
@@ -837,33 +829,32 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
         else:
             logger.warning(f"Game level file not found for deletion: {py_filepath_to_delete}")
     except OSError as e:
-        action_performed_py = True # Attempt was made
+        action_performed_py = True 
         msg = f"Error deleting game level file '{py_filepath_to_delete}': {e}"
         logger.error(msg, exc_info=True)
-        editor_state.set_status_message(msg, 4) # Set status message here
+        editor_state.set_status_message(msg, 4) 
 
 
-    # Determine final status message and success
     final_status_message = ""
     operation_successful = False
 
     if deleted_json and deleted_py:
         final_status_message = f"Map '{map_name_base}' JSON and PY files deleted."
         operation_successful = True
-    elif deleted_json: # Only JSON was deleted (PY might not have existed or failed)
+    elif deleted_json: 
         final_status_message = f"Map '{map_name_base}' JSON file deleted. PY not found or failed to delete."
-        operation_successful = True # Considered success if JSON is gone
-    elif deleted_py: # Only PY was deleted
+        operation_successful = True 
+    elif deleted_py: 
          final_status_message = f"Map '{map_name_base}' PY file deleted. JSON not found or failed to delete."
-         operation_successful = True # Considered success if PY is gone
-    elif not action_performed_json and not action_performed_py: # Neither file existed to begin with
+         operation_successful = True 
+    elif not action_performed_json and not action_performed_py: 
         final_status_message = f"Map '{map_name_base}' files not found."
-        operation_successful = True # No action needed, so "success" in terms of state
+        operation_successful = True 
     elif (action_performed_json and not deleted_json) or \
-         (action_performed_py and not deleted_py): # An attempt was made but failed for at least one
+         (action_performed_py and not deleted_py): 
         final_status_message = f"Failed to delete one or more files for map '{map_name_base}'. Check logs."
-        operation_successful = False # Explicit failure
-    else: # Should not be reached if logic is sound
+        operation_successful = False 
+    else: 
         final_status_message = f"Deletion status unclear for map '{map_name_base}'. Check logs."
         operation_successful = False
 

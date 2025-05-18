@@ -468,7 +468,7 @@ class Player(pygame.sprite.Sprite):
                 current_aim_direction.x = 1.0 if self.facing_right else -1.0
                 current_aim_direction.y = 0.0
             proj_dims = getattr(C, f"{projectile_config_name.upper()}_DIMENSIONS", (10,10))
-            offset_distance = (self.rect.width / 2) + (proj_dims[0] / 2) - 10
+            offset_distance = (self.rect.width / 2) + (proj_dims[0] / 2) - 30 ####
             if abs(current_aim_direction.y) > 0.8 * abs(current_aim_direction.x):
                 offset_distance = (self.rect.height / 2) + (proj_dims[1] / 2) - 10
             if current_aim_direction.length_squared() > 0:

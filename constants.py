@@ -91,7 +91,7 @@ BLOOD_DIMENSIONS = (40, 40)
 
 # Ice (Key 5)
 ICE_DAMAGE = 10 # Damage mainly from status effect, not direct impact
-ICE_SPEED = 7
+ICE_SPEED = 5
 ICE_COOLDOWN = 900 # ms
 ICE_LIFESPAN = 2200 # ms
 ICE_SPRITE_PATH = "characters/weapons/ice.gif"
@@ -107,7 +107,7 @@ SHADOW_PROJECTILE_DIMENSIONS = (40, 40)
 
 # Grey Projectile (Key 7)
 GREY_PROJECTILE_DAMAGE = 0 # Petrifies instead of direct damage
-GREY_PROJECTILE_SPEED = 13
+GREY_PROJECTILE_SPEED = 5
 GREY_PROJECTILE_COOLDOWN = 750 # ms
 GREY_PROJECTILE_LIFESPAN = 1500 # ms
 GREY_PROJECTILE_SPRITE_PATH = "characters/weapons/grey.gif"

@@ -142,11 +142,11 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     },
     # Enemies
     "enemy_cyan": {"source_file": "characters/cyan/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (Cyan)", "category": "enemy"},
-    "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (gray)", "category": "enemy"},
+    "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (gray)", "category": "enemy"}, # Note: game_type_id is enemy_cyan, intentional?
     "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "tooltip": "Enemy (Green)", "category": "enemy"},
     "enemy_pink": { "source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "tooltip": "Enemy (Pink)", "category": "enemy"},
     "enemy_purple": { "source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "tooltip": "Enemy (Purple)", "category": "enemy"},
-    "enemy_orange": { "source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_red", "tooltip": "Enemy (Orange)", "category": "enemy"},
+    "enemy_orange": { "source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_red", "tooltip": "Enemy (Orange)", "category": "enemy"}, # Note: game_type_id is enemy_red
     "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "tooltip": "Enemy (Yellow)", "category": "enemy"},
     # Items
     "chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "tooltip": "Chest", "category": "item"},
@@ -185,11 +185,17 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "platform_wall_gray_right_half": {"render_mode": "half_tile", "half_type": "right", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "colorable": True, "game_type_id": "platform_wall_gray_right_half", "tooltip": "Wall R-Half (Gray)", "category": "tile"},
     "platform_wall_gray_top_half": {"render_mode": "half_tile", "half_type": "top", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "colorable": True, "game_type_id": "platform_wall_gray_top_half", "tooltip": "Wall T-Half (Gray)", "category": "tile"},
     "platform_wall_gray_bottom_half": {"render_mode": "half_tile", "half_type": "bottom", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "colorable": True, "game_type_id": "platform_wall_gray_bottom_half", "tooltip": "Wall B-Half (Gray)", "category": "tile"},
+    
     # Hazards
-    "hazard_lava_tile": {
-        "surface_params": (TS, TS, getattr(C, 'ORANGE_RED', (255,69,0))), "colorable": True,
-        "game_type_id": "hazard_lava", "tooltip": "Lava Tile", "category": "hazard"
+    "hazard_lava_tile": { # MODIFIED HERE
+        "source_file": "characters/assets/lava.gif", # Path for resource_path
+        "game_type_id": "hazard_lava", 
+        "tooltip": "Lava Tile (Animated)", 
+        "category": "hazard"
+        # "colorable" property removed as tinting GIFs is complex and not handled by default.
+        # Original GIF size is 40x41. This will be used by editor_assets.py for original_size_pixels.
     },
+
     # Tools
     "platform_wall_gray_2x2_placer": { 
         "icon_type": "2x2_placer", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)),
