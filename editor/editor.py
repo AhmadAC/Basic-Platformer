@@ -10,6 +10,10 @@ import os
 import logging
 import traceback
 from typing import Optional, Tuple
+script_path = os.path.abspath(__file__)  # Absolute path to this script
+script_dir = os.path.dirname(script_path) # Directory of this script
+os.chdir(script_dir)
+
 
 # --- PySide6 Imports ---
 from PySide6.QtWidgets import (
