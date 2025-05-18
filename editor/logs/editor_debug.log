@@ -1,14 +1,24 @@
-2025-05-18 00:25:50,865 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
-2025-05-18 00:25:50,866 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
-2025-05-18 00:25:50,868 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
-2025-05-18 00:25:50,972 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers and history.
-2025-05-18 00:25:50,972 - INFO - editor.py:106 - editor_main - editor_main() started.
-2025-05-18 00:25:52,230 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
-2025-05-18 00:25:52,230 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
-2025-05-18 00:25:52,292 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
-2025-05-18 00:25:52,292 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
-2025-05-18 00:25:52,294 - DEBUG - editor_state.py:255 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-18 00:25:52,294 - DEBUG - editor_state.py:123 - __init__ - EditorState initialized.
-2025-05-18 00:25:52,299 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
-2025-05-18 00:25:52,300 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 250, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-18 00:25:52,300 - INFO - editor.py:170 - editor_main - Entering main loop.
+2025-05-18 21:19:39,267 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
+2025-05-18 21:19:39,267 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
+2025-05-18 21:19:39,270 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
+2025-05-18 21:19:39,374 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers and history.
+2025-05-18 21:19:39,375 - INFO - editor.py:106 - editor_main - editor_main() started.
+2025-05-18 21:19:39,489 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
+2025-05-18 21:19:39,489 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
+2025-05-18 21:19:39,611 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
+2025-05-18 21:19:39,614 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
+2025-05-18 21:19:39,616 - DEBUG - editor_state.py:255 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-18 21:19:39,616 - DEBUG - editor_state.py:123 - __init__ - EditorState initialized.
+2025-05-18 21:19:39,710 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
+2025-05-18 21:19:39,710 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 250, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-18 21:19:39,710 - INFO - editor.py:170 - editor_main - Entering main loop.
+2025-05-18 21:19:43,965 - INFO - editor_handlers_menu.py:282 - handle_menu_events - Menu: 'Load Map' button clicked.
+2025-05-18 21:19:43,966 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-18 21:19:44,031 - CRITICAL - editor.py:339 - editor_main - CRITICAL ERROR in editor_main: handle_dialog_events() takes 2 positional arguments but 3 were given
+Traceback (most recent call last):
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor.py", line 226, in editor_main
+    handle_dialog_events(event, editor_state, fonts) # Pass fonts for dialog drawing needs
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: handle_dialog_events() takes 2 positional arguments but 3 were given
+2025-05-18 21:19:44,042 - INFO - editor.py:343 - editor_main - Exiting editor_main. Calling pygame.quit().
+2025-05-18 21:19:44,156 - INFO - editor.py:346 - editor_main - Editor session ended.

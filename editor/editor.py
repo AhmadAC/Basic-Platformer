@@ -223,7 +223,7 @@ def editor_main():
                 if not running: break
 
                 if editor_state.active_dialog_type:
-                    handle_dialog_events(event, editor_state, fonts) # Pass fonts for dialog drawing needs
+                    handle_dialog_events(event, editor_state) 
                     if editor_state.active_dialog_type != previous_dialog_type:
                         logger.debug(f"Dialog type changed from '{previous_dialog_type}' to '{editor_state.active_dialog_type}' after handle_dialog_events.")
                         if editor_state.current_editor_mode != previous_mode: # Dialog might change mode

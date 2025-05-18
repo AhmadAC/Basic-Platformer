@@ -1,782 +1,377 @@
-[2025-05-18 21:15:35.448] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-18 21:15:35.448] INFO    PlatformerLogger: Assets: Successfully imported 'constants' as C and attributes.
-[2025-05-18 21:15:37.305] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters/player1'
-[2025-05-18 21:15:37.427] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters/player1'.
-[2025-05-18 21:15:37.444] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters/player2'
-[2025-05-18 21:15:37.541] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters/player2'.
-[2025-05-18 21:15:37.545] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Initialized with specified color: green
-[2025-05-18 21:15:37.545] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:37.607] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: -----------------------------------------------------------------
+[2025-05-18 21:20:30.481] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-18 21:20:30.481] INFO    PlatformerLogger: Assets: Successfully imported 'constants' as C and attributes.
+[2025-05-18 21:20:32.780] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters/player1'
+[2025-05-18 21:20:32.931] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters/player1'.
+[2025-05-18 21:20:32.935] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters/player2'
+[2025-05-18 21:20:33.050] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters/player2'.
+[2025-05-18 21:20:33.054] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Initialized with specified color: yellow
+[2025-05-18 21:20:33.054] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\yellow'
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\yellow' ---
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\yellow\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Burning.gif'
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\yellow\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Aflame_crouch.gif'
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\yellow\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Burning_crouch.gif'
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\yellow\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Deflame_crouch.gif'
+[2025-05-18 21:20:33.127] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: -----------------------------------------------------------------
 
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.607] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.607] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:37.609] DEBUG   PlatformerLogger: Enemy (ID: 0, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:37.609] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Initialized with specified color: green
-[2025-05-18 21:15:37.609] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:37.666] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: -----------------------------------------------------------------
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.127] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.127] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\yellow'.
+[2025-05-18 21:20:33.129] DEBUG   PlatformerLogger: Enemy (ID: 0, Color: yellow) main class initialized. Patrol target set.
+[2025-05-18 21:20:33.129] WARNING PlatformerLogger: EnemyBase Warning (ID: 1): Specified color 'red' not in available_colors. Choosing random from list: ['cyan', 'green', 'pink', 'purple', 'gray', 'yellow', 'orange']
+[2025-05-18 21:20:33.129] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\gray'
+[2025-05-18 21:20:33.196] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\gray' ---
+[2025-05-18 21:20:33.196] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\gray\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Burning.gif'
+[2025-05-18 21:20:33.196] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\gray\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Aflame_crouch.gif'
+[2025-05-18 21:20:33.196] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\gray\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Burning_crouch.gif'
+[2025-05-18 21:20:33.197] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\gray\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Deflame_crouch.gif'
+[2025-05-18 21:20:33.197] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-18 21:20:33.197] WARNING PlatformerLogger: -----------------------------------------------------------------
 
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.666] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.666] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:37.668] DEBUG   PlatformerLogger: Enemy (ID: 1, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:37.668] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Initialized with specified color: green
-[2025-05-18 21:15:37.668] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:37.724] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:37.725] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:37.725] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:37.725] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:37.725] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:37.725] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:37.725] WARNING PlatformerLogger: -----------------------------------------------------------------
+[2025-05-18 21:20:33.197] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\gray'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.197] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\gray'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.197] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\gray'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.197] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\gray'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.197] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\gray'.
+[2025-05-18 21:20:33.198] DEBUG   PlatformerLogger: Enemy (ID: 1, Color: gray) main class initialized. Patrol target set.
+[2025-05-18 21:20:33.199] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Initialized with specified color: purple
+[2025-05-18 21:20:33.199] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\purple'
+[2025-05-18 21:20:33.266] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\purple' ---
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\purple\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Burning.gif'
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\purple\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Aflame_crouch.gif'
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\purple\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Burning_crouch.gif'
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\purple\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Deflame_crouch.gif'
+[2025-05-18 21:20:33.267] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: -----------------------------------------------------------------
 
-[2025-05-18 21:15:37.725] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.725] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.725] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.726] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.726] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:37.727] DEBUG   PlatformerLogger: Enemy (ID: 2, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:37.727] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Initialized with specified color: green
-[2025-05-18 21:15:37.727] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:37.782] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:37.782] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:37.782] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:37.783] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:37.783] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:37.783] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:37.783] WARNING PlatformerLogger: -----------------------------------------------------------------
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\purple'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\purple'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\purple'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.267] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\purple'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.267] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\purple'.
+[2025-05-18 21:20:33.269] DEBUG   PlatformerLogger: Enemy (ID: 2, Color: purple) main class initialized. Patrol target set.
+[2025-05-18 21:20:33.269] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Initialized with specified color: pink
+[2025-05-18 21:20:33.269] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\pink'
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\pink' ---
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\pink\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning.gif'
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Aflame_crouch.gif'
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\pink\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning_crouch.gif'
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Deflame_crouch.gif'
+[2025-05-18 21:20:33.337] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: -----------------------------------------------------------------
 
-[2025-05-18 21:15:37.783] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.783] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.783] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.783] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.783] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:37.784] DEBUG   PlatformerLogger: Enemy (ID: 3, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:37.784] DEBUG   PlatformerLogger: EnemyBase (ID: 4): Initialized with specified color: green
-[2025-05-18 21:15:37.784] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: 
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.337] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.337] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\pink'.
+[2025-05-18 21:20:33.338] DEBUG   PlatformerLogger: Enemy (ID: 3, Color: pink) main class initialized. Patrol target set.
+[2025-05-18 21:20:33.339] DEBUG   PlatformerLogger: EnemyBase (ID: 4): Initialized with specified color: green
+[2025-05-18 21:20:33.339] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 21:20:33.406] WARNING PlatformerLogger: 
 --- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:37.841] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: -----------------------------------------------------------------
+[2025-05-18 21:20:33.406] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
+[2025-05-18 21:20:33.407] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
+[2025-05-18 21:20:33.407] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
+[2025-05-18 21:20:33.407] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
+[2025-05-18 21:20:33.407] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-18 21:20:33.407] WARNING PlatformerLogger: -----------------------------------------------------------------
 
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.841] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.842] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.842] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:37.843] DEBUG   PlatformerLogger: Enemy (ID: 4, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:37.843] DEBUG   PlatformerLogger: EnemyBase (ID: 5): Initialized with specified color: green
-[2025-05-18 21:15:37.843] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:37.899] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: -----------------------------------------------------------------
+[2025-05-18 21:20:33.407] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.407] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.407] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.407] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
+[2025-05-18 21:20:33.407] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
+[2025-05-18 21:20:33.409] DEBUG   PlatformerLogger: Enemy (ID: 4, Color: green) main class initialized. Patrol target set.
+[2025-05-18 21:20:33.409] DEBUG   PlatformerLogger: EnemyBase (ID: 5): Initialized with specified color: cyan
+[2025-05-18 21:20:33.409] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\cyan'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\cyan' ---
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'attack': Expected relative path (for resource_path): 'characters\cyan\__Attack.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Attack.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'attack2': Expected relative path (for resource_path): 'characters\cyan\__Attack2.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Attack2.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'attack_combo': Expected relative path (for resource_path): 'characters\cyan\__AttackCombo2hit.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__AttackCombo2hit.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'attack_nm': Expected relative path (for resource_path): 'characters\cyan\__AttackNoMovement.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__AttackNoMovement.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'attack2_nm': Expected relative path (for resource_path): 'characters\cyan\__Attack2NoMovement.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Attack2NoMovement.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'attack_combo_nm': Expected relative path (for resource_path): 'characters\cyan\__AttackComboNoMovement.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__AttackComboNoMovement.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'crouch': Expected relative path (for resource_path): 'characters\cyan\__Crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Crouch.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'crouch_trans': Expected relative path (for resource_path): 'characters\cyan\__CrouchTransition.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__CrouchTransition.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'crouch_walk': Expected relative path (for resource_path): 'characters\cyan\__CrouchWalk.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__CrouchWalk.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'crouch_attack': Expected relative path (for resource_path): 'characters\cyan\__CrouchAttack.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__CrouchAttack.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'dash': Expected relative path (for resource_path): 'characters\cyan\__Dash.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Dash.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'death': Expected relative path (for resource_path): 'characters\cyan\__Death.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Death.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'death_nm': Expected relative path (for resource_path): 'characters\cyan\__DeathNoMovement.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__DeathNoMovement.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'fall': Expected relative path (for resource_path): 'characters\cyan\__Fall.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Fall.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'hit': Expected relative path (for resource_path): 'characters\cyan\__Hit.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Hit.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'idle': Expected relative path (for resource_path): 'characters\cyan\__Idle.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Idle.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'jump': Expected relative path (for resource_path): 'characters\cyan\__Jump.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Jump.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'jump_fall_trans': Expected relative path (for resource_path): 'characters\cyan\__JumpFallInbetween.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__JumpFallInbetween.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'roll': Expected relative path (for resource_path): 'characters\cyan\__Roll.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Roll.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'run': Expected relative path (for resource_path): 'characters\cyan\__Run.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Run.gif'
+[2025-05-18 21:20:33.411] WARNING PlatformerLogger: - State 'slide': Expected relative path (for resource_path): 'characters\cyan\__SlideAll.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__SlideAll.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'slide_trans_start': Expected relative path (for resource_path): 'characters\cyan\__SlideTransitionStart.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__SlideTransitionStart.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'slide_trans_end': Expected relative path (for resource_path): 'characters\cyan\__SlideTransitionEnd.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__SlideTransitionEnd.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'turn': Expected relative path (for resource_path): 'characters\cyan\__TurnAround.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__TurnAround.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'wall_climb': Expected relative path (for resource_path): 'characters\cyan\__WallClimb.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__WallClimb.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'wall_climb_nm': Expected relative path (for resource_path): 'characters\cyan\__WallClimbNoMovement.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__WallClimbNoMovement.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'wall_hang': Expected relative path (for resource_path): 'characters\cyan\__WallHang.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__WallHang.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'wall_slide': Expected relative path (for resource_path): 'characters\cyan\__WallSlide.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__WallSlide.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'frozen': Expected relative path (for resource_path): 'characters\cyan\__Frozen.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Frozen.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'defrost': Expected relative path (for resource_path): 'characters\cyan\__Defrost.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Defrost.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'aflame': Expected relative path (for resource_path): 'characters\cyan\__Aflame.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Aflame.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\cyan\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Burning.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\cyan\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Aflame_crouch.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\cyan\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Burning_crouch.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'deflame': Expected relative path (for resource_path): 'characters\cyan\__Deflame.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Deflame.gif'
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\cyan\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Deflame_crouch.gif'
+[2025-05-18 21:20:33.412] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: -----------------------------------------------------------------
 
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.899] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.900] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:37.902] DEBUG   PlatformerLogger: Enemy (ID: 5, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:37.902] DEBUG   PlatformerLogger: EnemyBase (ID: 6): Initialized with specified color: green
-[2025-05-18 21:15:37.902] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:37.959] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:37.959] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:37.959] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:37.959] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:37.959] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:37.959] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:37.959] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-18 21:15:37.959] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.959] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.960] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.960] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:37.960] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:37.961] DEBUG   PlatformerLogger: Enemy (ID: 6, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:37.961] DEBUG   PlatformerLogger: EnemyBase (ID: 7): Initialized with specified color: green
-[2025-05-18 21:15:37.961] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:38.017] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:38.017] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:38.017] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:38.017] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:38.017] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:38.017] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:38.018] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-18 21:15:38.018] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:38.018] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:38.018] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:38.018] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:38.018] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:38.019] DEBUG   PlatformerLogger: Enemy (ID: 7, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:38.019] DEBUG   PlatformerLogger: EnemyBase (ID: 8): Initialized with specified color: green
-[2025-05-18 21:15:38.019] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-18 21:15:38.076] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:38.076] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-18 21:15:38.076] INFO    PlatformerLogger: Assets Info: Finished loading animations. 36 animation states processed for 'characters\green'.
-[2025-05-18 21:15:38.078] DEBUG   PlatformerLogger: Enemy (ID: 8, Color: green) main class initialized. Patrol target set.
-[2025-05-18 21:15:38.081] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(129.00,397.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(119, 359, 21, 38)> OnGround:False State:idle
-[2025-05-18 21:15:38.082] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,397.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 359, 21, 38)> OnGround:False State:idle
-[2025-05-18 21:15:38.082] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.082] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.082] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.082] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.082] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.082] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.083] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.083] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.083] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.704] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:38.705] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.705] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:38.705] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:38.840] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:38.840] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:39.089] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(132.00,440.00) Vel:( 0.98, 0.00) Acc:(0.50,0.70) Rect:<rect(117, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:15:39.089] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(188.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(178, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:39.138] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'attack'. Requested: 'attack'.
-[2025-05-18 21:15:39.190] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:39.190] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:39.190] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:39.190] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:39.191] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:39.191] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:39.323] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:39.323] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:39.473] DEBUG   PlatformerLogger: Enemy 0: Attack animation 'attack' looped/ended. AI will decide next state.
-[2025-05-18 21:15:39.623] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'attack' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:39.740] DEBUG   PlatformerLogger: Enemy 0: Stomp kill initiated by stomp_kill_enemy.
-[2025-05-18 21:15:39.740] WARNING PlatformerLogger: EnemyStateHandler (ID: 0, Color: green): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing or invalid. Animation handler will attempt fallback.
-[2025-05-18 21:15:39.740] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'stomp_death'. Requested: 'stomp_death'.
-[2025-05-18 21:15:39.758] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:39.759] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:39.759] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:39.759] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:40.095] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(295.00,389.00) Vel:( 1.15, 6.00) Acc:(0.00,0.70) Rect:<rect(281, 352, 29, 37)> OnGround:False State:jump_fall_trans
-[2025-05-18 21:15:40.095] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(188.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(178, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:40.144] DEBUG   PlatformerLogger: Enemy 0: Stomp squash duration (400ms) ended.
-[2025-05-18 21:15:40.245] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:40.245] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:40.246] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:40.246] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:40.246] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:40.246] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:40.246] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:40.246] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:40.378] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:40.378] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:40.732] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:40.733] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:40.813] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:40.814] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:40.866] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:40.867] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:41.102] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(303.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(293, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:41.103] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(188.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(174, 413, 29, 27)> OnGround:True State:crouch
-[2025-05-18 21:15:41.219] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:41.219] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:41.304] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:41.304] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:41.304] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:41.304] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:41.305] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:41.305] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:41.792] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:41.793] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:41.875] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:41.876] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:41.927] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:41.927] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:42.109] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(440.00,291.00) Vel:( 3.11, 1.80) Acc:(0.00,0.70) Rect:<rect(426, 254, 29, 37)> OnGround:False State:jump_fall_trans
-[2025-05-18 21:15:42.110] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(188.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(174, 413, 29, 27)> OnGround:True State:crouch
-[2025-05-18 21:15:42.278] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:42.278] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:42.362] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:42.363] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:42.412] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:42.413] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:42.776] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'attack'. Requested: 'attack'.
-[2025-05-18 21:15:42.848] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:42.848] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:42.927] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:42.927] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:43.116] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(486.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(471, 401, 30, 39)> OnGround:True State:hit
-[2025-05-18 21:15:43.117] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(188.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(174, 413, 29, 27)> OnGround:True State:crouch
-[2025-05-18 21:15:43.131] DEBUG   PlatformerLogger: Enemy 1: Attack animation 'attack' looped/ended. AI will decide next state.
-[2025-05-18 21:15:43.263] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'attack' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:43.416] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:43.416] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:43.466] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:43.467] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:43.467] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:43.899] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:43.900] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:44.117] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(654.00,331.00) Vel:( 6.79, 7.40) Acc:(0.00,0.70) Rect:<rect(640, 293, 29, 38)> OnGround:False State:fall
-[2025-05-18 21:15:44.118] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(188.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(174, 413, 29, 27)> OnGround:True State:crouch
-[2025-05-18 21:15:44.468] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:44.469] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:44.518] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:44.518] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:44.702] DEBUG   PlatformerLogger: Grey shot hit Player 1. Petrifying.
-[2025-05-18 21:15:44.766] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'attack'. Requested: 'attack'.
-[2025-05-18 21:15:44.950] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:44.950] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:44.950] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:44.951] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:45.101] DEBUG   PlatformerLogger: Enemy 1: Attack animation 'attack' looped/ended. AI will decide next state.
-[2025-05-18 21:15:45.134] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(181.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.00) Rect:<rect(160, 400, 42, 40)> OnGround:True State:death
-[2025-05-18 21:15:45.251] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'attack' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:45.436] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:45.436] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:45.452] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:45.570] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:45.571] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:45.602] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:45.602] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.003] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:46.003] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.053] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:46.053] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.120] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:46.120] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.137] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(181.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.00) Rect:<rect(160, 400, 42, 40)> OnGround:True State:death
-[2025-05-18 21:15:46.489] INFO    PlatformerLogger: Couch Play: Dev 'Q' key reset triggered.
-[2025-05-18 21:15:46.491] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Core attributes reset.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: Enemy (ID: 0) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Core attributes reset.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: Enemy (ID: 1) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Core attributes reset.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: Enemy (ID: 2) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Core attributes reset.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: Enemy (ID: 3) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyBase (ID: 4): Core attributes reset.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: Enemy (ID: 4) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyBase (ID: 5): Core attributes reset.
-[2025-05-18 21:15:46.517] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: Enemy (ID: 5) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: EnemyBase (ID: 6): Core attributes reset.
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: Enemy (ID: 6) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: EnemyBase (ID: 7): Core attributes reset.
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: Enemy (ID: 7) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: EnemyBase (ID: 8): Core attributes reset.
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:46.519] DEBUG   PlatformerLogger: Enemy (ID: 8) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:46.522] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(129.00,397.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(119, 359, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:46.522] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.522] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.522] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.523] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.523] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.523] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.523] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.523] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:46.523] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.123] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.123] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.123] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.123] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.123] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.123] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.124] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.124] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.124] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.124] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.124] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.124] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.141] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:47.239] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.239] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.523] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(242.00,324.00) Vel:( 2.62, 6.70) Acc:(0.00,0.70) Rect:<rect(228, 286, 29, 38)> OnGround:False State:fall
-[2025-05-18 21:15:47.605] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.606] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.639] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.639] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.655] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.656] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:47.886] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:47.886] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:48.050] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:48.050] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:48.115] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:48.115] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:48.147] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:48.167] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:48.167] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:48.167] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:48.167] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:48.400] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:48.400] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:48.532] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(356.00,291.00) Vel:( 7.00,-2.40) Acc:(0.50,0.70) Rect:<rect(342, 254, 29, 37)> OnGround:False State:jump_fall_trans
-[2025-05-18 21:15:48.633] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:48.633] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:48.650] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:48.650] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:49.117] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:49.117] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:49.150] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:49.332] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:49.333] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:49.465] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:49.465] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:49.548] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(507.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(497, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:49.716] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:49.716] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:50.143] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'attack'. Requested: 'attack'.
-[2025-05-18 21:15:50.159] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:50.192] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:50.193] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:50.260] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:50.260] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:50.477] DEBUG   PlatformerLogger: Enemy 0: Attack animation 'attack' looped/ended. AI will decide next state.
-[2025-05-18 21:15:50.558] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(507.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(492, 401, 30, 39)> OnGround:True State:hit
-[2025-05-18 21:15:50.625] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'attack' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:50.825] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.074] INFO    PlatformerLogger: Couch Play: Dev 'Q' key reset triggered.
-[2025-05-18 21:15:51.074] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Core attributes reset.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: Enemy (ID: 0) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Core attributes reset.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: Enemy (ID: 1) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Core attributes reset.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: Enemy (ID: 2) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Core attributes reset.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: Enemy (ID: 3) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyBase (ID: 4): Core attributes reset.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: Enemy (ID: 4) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyBase (ID: 5): Core attributes reset.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: Enemy (ID: 5) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyBase (ID: 6): Core attributes reset.
-[2025-05-18 21:15:51.084] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.085] DEBUG   PlatformerLogger: Enemy (ID: 6) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.085] DEBUG   PlatformerLogger: EnemyBase (ID: 7): Core attributes reset.
-[2025-05-18 21:15:51.085] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.085] DEBUG   PlatformerLogger: Enemy (ID: 7) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.085] DEBUG   PlatformerLogger: EnemyBase (ID: 8): Core attributes reset.
-[2025-05-18 21:15:51.085] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:51.085] DEBUG   PlatformerLogger: Enemy (ID: 8) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:51.087] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.087] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.087] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.087] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.087] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.087] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.088] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.088] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.088] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.171] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,412.00) Vel:( 0.00, 4.20) Acc:(0.00,0.70) Rect:<rect(175, 374, 29, 38)> OnGround:False State:fall
-[2025-05-18 21:15:51.570] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(145.00,355.00) Vel:( 3.43,-10.10) Acc:(0.50,0.70) Rect:<rect(133, 317, 25, 38)> OnGround:False State:jump
-[2025-05-18 21:15:51.689] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.689] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.690] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.691] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.691] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.691] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.691] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.691] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:51.836] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:51.837] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.168] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.168] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.168] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.168] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.169] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.169] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.184] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:52.470] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.470] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.587] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(462.00,440.00) Vel:( 2.01, 0.00) Acc:(0.50,0.70) Rect:<rect(447, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:15:52.638] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.639] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.655] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.655] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.655] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.656] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.737] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.737] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.737] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.737] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.737] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.737] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.806] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:52.807] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:52.920] DEBUG   PlatformerLogger: Grey shot hit Player 1. Petrifying.
-[2025-05-18 21:15:53.197] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:53.214] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:53.215] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.215] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:53.215] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.313] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:53.313] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.445] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:53.445] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.561] INFO    PlatformerLogger: Couch Play: Dev 'Q' key reset triggered.
-[2025-05-18 21:15:53.562] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
-[2025-05-18 21:15:53.572] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Core attributes reset.
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: Enemy (ID: 0) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Core attributes reset.
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: Enemy (ID: 1) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Core attributes reset.
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: Enemy (ID: 2) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Core attributes reset.
-[2025-05-18 21:15:53.573] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: Enemy (ID: 3) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyBase (ID: 4): Core attributes reset.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: Enemy (ID: 4) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyBase (ID: 5): Core attributes reset.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: Enemy (ID: 5) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyBase (ID: 6): Core attributes reset.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: Enemy (ID: 6) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyBase (ID: 7): Core attributes reset.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: Enemy (ID: 7) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyBase (ID: 8): Core attributes reset.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:53.574] DEBUG   PlatformerLogger: Enemy (ID: 8) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:53.576] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.577] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.577] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.577] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.577] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.577] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.577] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.577] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.577] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:53.595] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(129.00,399.00) Vel:( 0.00, 1.40) Acc:(0.00,0.70) Rect:<rect(115, 361, 29, 38)> OnGround:False State:idle
-[2025-05-18 21:15:54.177] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.177] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.177] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.177] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.178] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.210] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:54.278] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.278] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.495] DEBUG   PlatformerLogger: Enemy 0: Stomp kill initiated by stomp_kill_enemy.
-[2025-05-18 21:15:54.495] WARNING PlatformerLogger: EnemyStateHandler (ID: 0, Color: green): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing or invalid. Animation handler will attempt fallback.
-[2025-05-18 21:15:54.495] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
-[2025-05-18 21:15:54.595] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(316.00,370.00) Vel:( 3.19,-4.50) Acc:(0.00,0.70) Rect:<rect(304, 332, 25, 38)> OnGround:False State:jump
-[2025-05-18 21:15:54.661] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.661] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.662] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.662] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.694] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.694] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.759] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:54.759] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:54.911] DEBUG   PlatformerLogger: Enemy 0: Stomp squash duration (400ms) ended.
-[2025-05-18 21:15:55.210] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:55.227] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:55.227] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.227] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:55.227] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.243] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:55.244] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.244] DEBUG   PlatformerLogger: Grey shot hit Player 1. Petrifying.
-[2025-05-18 21:15:55.326] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:55.326] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.343] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:55.344] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.716] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:55.716] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.716] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:55.716] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.733] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:55.733] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.771] INFO    PlatformerLogger: Couch Play: Dev 'Q' key reset triggered.
-[2025-05-18 21:15:55.771] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
-[2025-05-18 21:15:55.780] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Core attributes reset.
-[2025-05-18 21:15:55.780] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.780] DEBUG   PlatformerLogger: Enemy (ID: 0) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Core attributes reset.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: Enemy (ID: 1) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Core attributes reset.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: Enemy (ID: 2) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Core attributes reset.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: Enemy (ID: 3) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyBase (ID: 4): Core attributes reset.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: Enemy (ID: 4) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyBase (ID: 5): Core attributes reset.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: Enemy (ID: 5) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyBase (ID: 6): Core attributes reset.
-[2025-05-18 21:15:55.781] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.782] DEBUG   PlatformerLogger: Enemy (ID: 6) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.782] DEBUG   PlatformerLogger: EnemyBase (ID: 7): Core attributes reset.
-[2025-05-18 21:15:55.782] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.782] DEBUG   PlatformerLogger: Enemy (ID: 7) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.782] DEBUG   PlatformerLogger: EnemyBase (ID: 8): Core attributes reset.
-[2025-05-18 21:15:55.782] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State change to 'idle' not allowed or already effectively in state and no change needed.
-[2025-05-18 21:15:55.782] DEBUG   PlatformerLogger: Enemy (ID: 8) fully reset. State: idle, AI State: patrolling
-[2025-05-18 21:15:55.784] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(129.00,397.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(119, 359, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:55.784] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.784] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.784] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.784] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.785] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.785] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.785] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.785] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:55.785] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.215] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:56.380] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.380] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.380] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.380] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.380] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.380] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.412] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.412] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:56.792] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(377.00,440.00) Vel:( 3.08, 0.00) Acc:(0.00,0.70) Rect:<rect(367, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:56.857] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:56.857] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.094] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.094] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.160] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.160] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.227] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:57.427] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.427] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.427] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.429] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.578] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.578] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.663] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.663] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.713] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.713] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.763] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.763] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.796] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(385.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(375, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:57.829] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.830] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:57.913] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:57.913] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:58.064] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:58.064] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:58.193] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:58.193] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:58.243] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:58.244] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:58.244] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:58.762] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:58.762] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:58.812] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(676.00,440.00) Vel:( 2.60, 0.00) Acc:(0.50,0.70) Rect:<rect(661, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:15:59.111] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:59.111] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:59.160] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:59.160] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:59.243] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:59.244] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:59.244] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:59.244] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:59.244] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:59.589] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:59.589] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:15:59.824] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(738.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(728, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:15:59.925] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:15:59.925] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:00.011] DEBUG   PlatformerLogger: Grey shot hit Enemy 0. Petrifying.
-[2025-05-18 21:16:00.011] DEBUG   PlatformerLogger: Enemy 0 is being petrified by petrify_enemy.
-[2025-05-18 21:16:00.011] WARNING PlatformerLogger: EnemyStateHandler (ID: 0, Color: green): Animation for logical state 'petrified' (maps to key 'petrified') potentially missing or invalid. Animation handler will attempt fallback.
-[2025-05-18 21:16:00.011] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'petrified'. Requested: 'petrified'.
-[2025-05-18 21:16:00.214] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:00.215] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:00.247] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:00.298] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:00.298] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:00.298] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:00.299] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:00.646] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:00.646] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:00.828] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(738.00,329.00) Vel:( 0.00,-8.00) Acc:(0.00,0.70) Rect:<rect(726, 291, 25, 38)> OnGround:False State:jump
-[2025-05-18 21:16:01.249] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:01.351] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:01.351] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:01.700] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:01.701] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:01.837] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(604.00,440.00) Vel:(-2.00, 0.00) Acc:(-0.50,0.70) Rect:<rect(589, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:16:02.255] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:02.406] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:02.406] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:02.753] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:02.753] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:02.853] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(421.00,440.00) Vel:(-2.00, 0.00) Acc:(-0.50,0.70) Rect:<rect(406, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:16:03.235] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:03.236] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:03.269] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:03.453] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:03.453] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:03.866] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(368.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(358, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:04.282] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:04.283] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:04.283] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:04.500] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:04.500] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:04.867] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(368.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(358, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:04.984] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:04.984] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:05.291] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(175, 409, 29, 31)> OnGround:True State:crouch_trans
-[2025-05-18 21:16:05.338] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:05.338] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:05.470] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:05.471] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:05.813] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:05.813] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:05.876] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(351.00,440.00) Vel:(-1.83, 0.00) Acc:(-0.50,0.70) Rect:<rect(336, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:16:06.307] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(175, 413, 29, 27)> OnGround:True State:crouch
-[2025-05-18 21:16:06.504] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:06.504] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:06.654] DEBUG   PlatformerLogger: Grey shot hit Player 2. Petrifying.
-[2025-05-18 21:16:06.886] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(326.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(316, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:07.557] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:07.557] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:07.901] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(305.00,440.00) Vel:(-1.89, 0.00) Acc:(-0.50,0.70) Rect:<rect(290, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:16:08.037] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:08.037] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:08.907] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(276.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(266, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:09.090] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:09.090] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:09.923] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(223.00,440.00) Vel:( 0.18, 0.00) Acc:(0.00,0.70) Rect:<rect(213, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:10.138] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:10.138] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:10.939] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(134.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(120, 404, 29, 36)> OnGround:True State:turn
-[2025-05-18 21:16:11.191] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:11.191] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:11.941] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(155.00,355.00) Vel:(-0.35,-10.10) Acc:(0.00,0.70) Rect:<rect(143, 317, 25, 38)> OnGround:False State:jump
-[2025-05-18 21:16:12.241] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:12.241] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:12.953] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(155.00,412.00) Vel:( 0.00,-13.60) Acc:(0.00,0.70) Rect:<rect(143, 374, 25, 38)> OnGround:False State:jump
-[2025-05-18 21:16:13.287] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:13.287] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:13.955] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(189.00,413.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 375, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:14.342] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:14.342] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:14.958] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(191.00,413.00) Vel:( 1.00, 0.00) Acc:(0.50,0.70) Rect:<rect(177, 385, 29, 28)> OnGround:True State:crouch_walk
-[2025-05-18 21:16:15.442] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:15.442] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:15.974] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(153.00,306.00) Vel:(-4.27, 4.60) Acc:(0.00,0.70) Rect:<rect(139, 268, 29, 38)> OnGround:False State:fall
-[2025-05-18 21:16:16.539] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:16.540] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:16.987] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(180.00,324.00) Vel:( 1.49, 6.70) Acc:(0.50,0.70) Rect:<rect(166, 286, 29, 38)> OnGround:False State:fall
-[2025-05-18 21:16:17.106] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:17.106] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:17.995] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(233.00,440.00) Vel:(-1.18, 0.00) Acc:(0.00,0.70) Rect:<rect(223, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:19.011] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(243.00,291.00) Vel:( 0.47, 1.80) Acc:(0.00,0.70) Rect:<rect(229, 254, 29, 37)> OnGround:False State:jump_fall_trans
-[2025-05-18 21:16:20.025] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(172.00,413.00) Vel:(-1.12, 0.00) Acc:(0.00,0.70) Rect:<rect(162, 375, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:21.034] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(304.00,440.00) Vel:( 3.18, 0.00) Acc:(0.50,0.70) Rect:<rect(289, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:16:22.043] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(289.00,440.00) Vel:(-1.83, 0.00) Acc:(-0.50,0.70) Rect:<rect(274, 401, 30, 39)> OnGround:True State:run
-[2025-05-18 21:16:23.050] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(264.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(224, 399, 80, 41)> OnGround:True State:attack2_nm
-[2025-05-18 21:16:23.317] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:23.317] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:24.054] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(246.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(206, 399, 80, 41)> OnGround:True State:attack2
-[2025-05-18 21:16:25.061] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(246.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(236, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:25.223] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:25.223] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:25.787] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-18 21:16:25.788] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-18 21:16:26.071] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(246.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(236, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:27.082] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(246.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(236, 402, 21, 38)> OnGround:True State:idle
-[2025-05-18 21:16:27.784] INFO    PlatformerLogger: Couch Play: Global ESC key pressed, treating as pause/exit mode.
-[2025-05-18 21:16:27.784] INFO    PlatformerLogger: Exiting Couch Play mode.
+[2025-05-18 21:20:33.412] CRITICAL PlatformerLogger: CRITICAL Assets Error: 'idle' animation file ('characters\cyan\__Idle.gif') for 'characters\cyan' not found or empty. Checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cyan\__Idle.gif'.
+[2025-05-18 21:20:33.412] WARNING PlatformerLogger: Assets: Returning None for 'characters\cyan' due to critical 'idle' animation failure.
+[2025-05-18 21:20:33.412] CRITICAL PlatformerLogger: EnemyBase CRITICAL (ID: 5, Color: cyan): Failed loading animations from 'characters\cyan'. Enemy invalid.
+[2025-05-18 21:20:33.414] CRITICAL PlatformerLogger: Enemy (ID: 5) did not initialize correctly in EnemyBase. Main Enemy class init incomplete.
+[2025-05-18 21:20:33.445] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:( 89.00,1917.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(79, 1879, 21, 38)> OnGround:False State:idle
+[2025-05-18 21:20:33.445] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1917.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1879, 21, 38)> OnGround:False State:idle
+[2025-05-18 21:20:33.445] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:33.446] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:33.446] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:33.446] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:33.446] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:33.659] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:33.659] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:34.062] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:34.062] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:34.062] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:34.062] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:34.311] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:34.311] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:34.397] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:34.397] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:34.445] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:( 89.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(79, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:34.446] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:35.443] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:35.443] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:35.459] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(219.00,1774.00) Vel:( 5.00, 2.50) Acc:(0.00,0.70) Rect:<rect(205, 1737, 29, 37)> OnGround:False State:jump_fall_trans
+[2025-05-18 21:20:35.460] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:36.176] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:36.176] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:36.460] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(426.00,1784.00) Vel:( 7.00,-5.20) Acc:(0.50,0.70) Rect:<rect(414, 1746, 25, 38)> OnGround:False State:jump
+[2025-05-18 21:20:36.460] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:36.493] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:36.493] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:36.907] DEBUG   PlatformerLogger: Enemy 3: Stomp kill initiated by stomp_kill_enemy.
+[2025-05-18 21:20:36.907] WARNING PlatformerLogger: EnemyStateHandler (ID: 3, Color: pink): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing or invalid. Animation handler will attempt fallback.
+[2025-05-18 21:20:36.908] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-18 21:20:36.974] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:36.974] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:37.308] DEBUG   PlatformerLogger: Enemy 3: Stomp squash duration (400ms) ended.
+[2025-05-18 21:20:37.476] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(790.00,1855.00) Vel:(-1.78,-4.25) Acc:(-0.50,0.70) Rect:<rect(773, 1796, 35, 59)> OnGround:False State:aflame
+[2025-05-18 21:20:37.476] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:37.728] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:37.728] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:37.812] DEBUG   PlatformerLogger: Enemy 4: Stomp kill initiated by stomp_kill_enemy.
+[2025-05-18 21:20:37.812] WARNING PlatformerLogger: EnemyStateHandler (ID: 4, Color: green): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing or invalid. Animation handler will attempt fallback.
+[2025-05-18 21:20:37.812] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-18 21:20:38.031] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:38.031] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:38.113] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:38.113] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:38.212] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-18 21:20:38.213] DEBUG   PlatformerLogger: Enemy 4: Stomp squash duration (400ms) ended.
+[2025-05-18 21:20:38.479] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(467.00,1960.00) Vel:( 1.92, 0.00) Acc:(0.50,0.70) Rect:<rect(450, 1904, 35, 56)> OnGround:True State:burning
+[2025-05-18 21:20:38.479] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:38.546] DEBUG   PlatformerLogger: Enemy 0: Attack animation 'attack' looped/ended. AI will decide next state.
+[2025-05-18 21:20:38.697] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:38.899] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:39.081] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:39.081] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:39.148] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-18 21:20:39.478] DEBUG   PlatformerLogger: Enemy 2: Attack animation 'attack' looped/ended. AI will decide next state.
+[2025-05-18 21:20:39.495] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(594.00,1960.00) Vel:(-0.89, 0.00) Acc:(-0.50,0.70) Rect:<rect(577, 1904, 35, 56)> OnGround:True State:burning
+[2025-05-18 21:20:39.495] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:39.561] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:39.561] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:39.627] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:39.841] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:39.960] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:39.960] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:40.375] DEBUG   PlatformerLogger: Enemy 0: Stomp kill initiated by stomp_kill_enemy.
+[2025-05-18 21:20:40.375] WARNING PlatformerLogger: EnemyStateHandler (ID: 0, Color: yellow): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing or invalid. Animation handler will attempt fallback.
+[2025-05-18 21:20:40.375] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-18 21:20:40.507] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(445.00,1883.00) Vel:( 5.14,-3.10) Acc:(0.50,0.70) Rect:<rect(428, 1824, 35, 59)> OnGround:False State:deflame
+[2025-05-18 21:20:40.507] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:40.606] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:40.606] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:40.790] DEBUG   PlatformerLogger: Enemy 0: Stomp squash duration (400ms) ended.
+[2025-05-18 21:20:41.089] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:41.089] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:41.486] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:41.486] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:41.519] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(815.00,1868.00) Vel:( 2.43, 8.80) Acc:(-0.50,0.70) Rect:<rect(798, 1809, 35, 59)> OnGround:False State:deflame
+[2025-05-18 21:20:41.519] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:41.569] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:41.570] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:42.183] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-18 21:20:42.513] DEBUG   PlatformerLogger: Enemy 2: Attack animation 'attack' looped/ended. AI will decide next state.
+[2025-05-18 21:20:42.528] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(567.00,1824.00) Vel:(-3.08,-5.20) Acc:(0.00,0.70) Rect:<rect(550, 1765, 35, 59)> OnGround:False State:deflame
+[2025-05-18 21:20:42.528] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:42.613] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:42.613] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:42.663] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:42.879] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:42.930] DEBUG   PlatformerLogger: Enemy 2: Stomp kill initiated by stomp_kill_enemy.
+[2025-05-18 21:20:42.930] WARNING PlatformerLogger: EnemyStateHandler (ID: 2, Color: purple): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing or invalid. Animation handler will attempt fallback.
+[2025-05-18 21:20:42.930] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-18 21:20:43.338] DEBUG   PlatformerLogger: Enemy 2: Stomp squash duration (400ms) ended.
+[2025-05-18 21:20:43.538] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(629.00,1919.00) Vel:( 4.10,-12.90) Acc:(0.50,0.70) Rect:<rect(617, 1881, 25, 38)> OnGround:False State:jump
+[2025-05-18 21:20:43.538] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:43.655] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:43.655] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:44.141] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:44.141] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:44.540] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(876.00,1960.00) Vel:( 0.00, 0.00) Acc:(0.00,0.00) Rect:<rect(855, 1920, 42, 40)> OnGround:True State:death
+[2025-05-18 21:20:44.540] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:45.190] INFO    PlatformerLogger: Couch Play: Dev 'Q' key reset triggered.
+[2025-05-18 21:20:45.190] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-18 21:20:45.213] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Core attributes reset.
+[2025-05-18 21:20:45.213] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State change to 'idle' not allowed or already effectively in state and no change needed.
+[2025-05-18 21:20:45.213] DEBUG   PlatformerLogger: Enemy (ID: 0) fully reset. State: idle, AI State: patrolling
+[2025-05-18 21:20:45.213] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Core attributes reset.
+[2025-05-18 21:20:45.213] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State change to 'idle' not allowed or already effectively in state and no change needed.
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: Enemy (ID: 1) fully reset. State: idle, AI State: patrolling
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Core attributes reset.
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State change to 'idle' not allowed or already effectively in state and no change needed.
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: Enemy (ID: 2) fully reset. State: idle, AI State: patrolling
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Core attributes reset.
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State change to 'idle' not allowed or already effectively in state and no change needed.
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: Enemy (ID: 3) fully reset. State: idle, AI State: patrolling
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: EnemyBase (ID: 4): Core attributes reset.
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State change to 'idle' not allowed or already effectively in state and no change needed.
+[2025-05-18 21:20:45.214] DEBUG   PlatformerLogger: Enemy (ID: 4) fully reset. State: idle, AI State: patrolling
+[2025-05-18 21:20:45.252] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:45.253] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:45.253] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:45.253] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:45.253] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:45.540] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:( 89.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(79, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:45.540] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:45.861] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:45.861] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:46.545] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(265.00,1880.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(255, 1842, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:46.545] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:46.595] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:46.595] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:47.558] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(332.00,1744.00) Vel:( 4.79,-5.20) Acc:(0.00,0.70) Rect:<rect(320, 1706, 25, 38)> OnGround:False State:jump
+[2025-05-18 21:20:47.558] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:47.856] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:47.857] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:48.057] DEBUG   PlatformerLogger: Enemy 0: Stomp kill initiated by stomp_kill_enemy.
+[2025-05-18 21:20:48.057] WARNING PlatformerLogger: EnemyStateHandler (ID: 0, Color: yellow): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing or invalid. Animation handler will attempt fallback.
+[2025-05-18 21:20:48.057] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-18 21:20:48.428] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-18 21:20:48.428] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-18 21:20:48.445] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-18 21:20:48.462] DEBUG   PlatformerLogger: Enemy 0: Stomp squash duration (400ms) ended.
+[2025-05-18 21:20:48.563] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(424.00,1908.00) Vel:(-2.28,-1.80) Acc:(0.00,0.70) Rect:<rect(410, 1870, 29, 38)> OnGround:False State:fall
+[2025-05-18 21:20:48.563] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:48.681] DEBUG   PlatformerLogger: Enemy 2: Stomp kill initiated by stomp_kill_enemy.
+[2025-05-18 21:20:48.681] WARNING PlatformerLogger: EnemyStateHandler (ID: 2, Color: purple): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing or invalid. Animation handler will attempt fallback.
+[2025-05-18 21:20:48.681] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'attack' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-18 21:20:48.763] DEBUG   PlatformerLogger: Enemy 3: Attack animation 'attack' looped/ended. AI will decide next state.
+[2025-05-18 21:20:48.779] DEBUG   PlatformerLogger: Enemy 1: Attack animation 'attack' looped/ended. AI will decide next state.
+[2025-05-18 21:20:48.909] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:48.925] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:49.090] DEBUG   PlatformerLogger: Enemy 2: Stomp squash duration (400ms) ended.
+[2025-05-18 21:20:49.125] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:49.141] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:49.240] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-18 21:20:49.570] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(429.00,1960.00) Vel:(-1.16, 0.00) Acc:(0.00,0.70) Rect:<rect(415, 1924, 29, 36)> OnGround:True State:turn
+[2025-05-18 21:20:49.570] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:49.571] DEBUG   PlatformerLogger: Enemy 4: Attack animation 'attack' looped/ended. AI will decide next state.
+[2025-05-18 21:20:49.724] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:49.938] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:50.572] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(328.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(318, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:50.572] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:51.139] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:51.139] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:51.587] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(259.00,1880.00) Vel:(-1.48, 0.00) Acc:(-0.50,0.70) Rect:<rect(244, 1841, 30, 39)> OnGround:True State:run
+[2025-05-18 21:20:51.587] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:52.191] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:52.192] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:52.587] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(234.00,1880.00) Vel:(-0.21, 0.00) Acc:(0.00,0.70) Rect:<rect(224, 1842, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:52.587] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:53.235] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:53.235] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:53.601] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(206.00,1880.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(196, 1842, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:53.601] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:53.715] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:53.715] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:54.614] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(209.00,1880.00) Vel:( 1.18, 0.00) Acc:(0.50,0.70) Rect:<rect(194, 1841, 30, 39)> OnGround:True State:run
+[2025-05-18 21:20:54.614] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:54.765] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:54.765] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:55.251] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:55.252] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:55.616] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(207.00,1819.00) Vel:(-1.40,10.90) Acc:(0.00,0.70) Rect:<rect(193, 1781, 29, 38)> OnGround:False State:fall
+[2025-05-18 21:20:55.616] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:56.295] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:56.295] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:56.564] INFO    PlatformerLogger: Player 1 interacted with chest. State changing to 'opening'.
+[2025-05-18 21:20:56.631] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(200.00,1880.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(190, 1842, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:56.632] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:57.352] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:57.352] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:57.633] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(213.00,1880.00) Vel:( 1.73, 0.00) Acc:(0.50,0.70) Rect:<rect(198, 1841, 30, 39)> OnGround:True State:run
+[2025-05-18 21:20:57.633] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:57.829] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:57.829] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:58.309] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:58.309] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:58.646] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(337.00,1920.00) Vel:(-0.68, 0.00) Acc:(0.00,0.70) Rect:<rect(327, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:58.647] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:59.363] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:59.363] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:20:59.648] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(315.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(305, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:59.649] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:20:59.853] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:20:59.853] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:00.654] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(315.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(305, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:00.654] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:00.903] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:00.903] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:01.369] DEBUG   PlatformerLogger: Chest state changed to: opened
+[2025-05-18 21:21:01.386] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:01.386] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:01.655] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(315.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(305, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:01.656] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:02.432] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:02.432] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:02.669] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(224.00,1880.00) Vel:(-0.07, 0.00) Acc:(-0.50,0.70) Rect:<rect(209, 1841, 30, 39)> OnGround:True State:run
+[2025-05-18 21:21:02.669] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:02.915] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:02.916] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:03.397] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:03.397] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:03.676] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(208.00,1880.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(198, 1842, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:03.677] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:04.375] DEBUG   PlatformerLogger: Chest state changed to: fading
+[2025-05-18 21:21:04.442] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:04.443] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:04.692] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(322.00,1920.00) Vel:( 0.15, 0.00) Acc:(0.00,0.70) Rect:<rect(312, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:04.692] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:04.927] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:04.927] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:05.409] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:05.410] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:05.692] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(322.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(312, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:05.692] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(149.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(139, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-18 21:21:06.453] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-18 21:21:06.453] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-18 21:21:06.572] INFO    PlatformerLogger: Couch Play: Global ESC key pressed, treating as pause/exit mode.
+[2025-05-18 21:21:06.572] INFO    PlatformerLogger: Exiting Couch Play mode.
