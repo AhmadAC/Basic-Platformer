@@ -1,3 +1,5 @@
+#################### START OF FILE: enemy_physics_handler.py ####################
+
 # enemy_physics_handler.py
 # -*- coding: utf-8 -*-
 """
@@ -157,16 +159,26 @@ def _check_enemy_hazard_collisions(enemy, hazards_group: pygame.sprite.Group):
        enemy.is_petrified or enemy.is_frozen: # Petrified or Frozen enemies are immune to standard hazards
         return
 
-    damage_taken_this_frame = False
+    damage_taken_this_frame = False # Keep using this flag name for consistency
     hazard_check_point = (enemy.rect.centerx, enemy.rect.bottom - 1) 
 
     for hazard in hazards_group:
         if isinstance(hazard, Lava) and hazard.rect.collidepoint(hazard_check_point):
-            if not damage_taken_this_frame:
-                if hasattr(enemy, 'take_damage'): 
-                    enemy.take_damage(getattr(C, 'LAVA_DAMAGE', 25)) 
-                damage_taken_this_frame = True
+            if not damage_taken_this_frame: # Process only once per collision check
+                
+                # --- MODIFICATION START ---
+                # Set enemy aflame
+                if hasattr(enemy, 'apply_aflame_effect'):
+                    enemy.apply_aflame_effect()
 
+                # Optional: Apply initial contact damage from lava as well
+                if getattr(C, 'LAVA_DAMAGE', 25) > 0 and hasattr(enemy, 'take_damage'):
+                    enemy.take_damage(getattr(C, 'LAVA_DAMAGE', 25))
+                # --- MODIFICATION END ---
+                
+                damage_taken_this_frame = True # Mark that an interaction with lava happened this frame
+
+                # Keep existing pushback logic
                 if not enemy.is_dead: 
                     enemy.vel.y = getattr(C, 'PLAYER_JUMP_STRENGTH', -15) * 0.3 
                     push_dir = 1 if enemy.rect.centerx < hazard.rect.centerx else -1
@@ -236,3 +248,5 @@ def update_enemy_physics_and_collisions(enemy, dt_sec, platforms_group, hazards_
     enemy.pos.y = enemy.rect.bottom 
 
     _check_enemy_hazard_collisions(enemy, hazards_group)
+
+#################### END OF FILE: enemy_physics_handler.py ####################

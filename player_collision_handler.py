@@ -1,3 +1,5 @@
+#################### START OF FILE: player_collision_handler.py ####################
+
 # player_collision_handler.py
 # -*- coding: utf-8 -*-
 """
@@ -253,7 +255,7 @@ def check_player_hazard_collisions(player, hazards_group: pygame.sprite.Group):
        player.is_petrified or player.is_frozen: # Petrified or Frozen players are immune to standard hazards
         return
 
-    damaged_this_frame = False
+    damaged_this_frame = False # Renamed from damage_taken_this_frame for clarity
     collided_hazards = pygame.sprite.spritecollide(player, hazards_group, False)
 
     for hazard in collided_hazards:
@@ -263,11 +265,22 @@ def check_player_hazard_collisions(player, hazards_group: pygame.sprite.Group):
             actual_overlap_width = min(player.rect.right, hazard.rect.right) - max(player.rect.left, hazard.rect.left)
 
             if player_feet_in_lava and actual_overlap_width >= min_horizontal_hazard_overlap:
-                if not damaged_this_frame:
+                if not damaged_this_frame: # Process only once per collision check
                     log_player_physics(player, f"HAZARD_COLL_LAVA", (player.rect.copy(), hazard.rect))
-                    if hasattr(player, 'take_damage'): player.take_damage(C.LAVA_DAMAGE)
-                    damaged_this_frame = True
+                    
+                    # --- MODIFICATION START ---
+                    # Set player aflame
+                    if hasattr(player, 'apply_aflame_effect'):
+                        player.apply_aflame_effect()
+                    
+                    # Optional: Apply initial contact damage from lava as well
+                    if C.LAVA_DAMAGE > 0 and hasattr(player, 'take_damage'):
+                        player.take_damage(C.LAVA_DAMAGE)
+                    # --- MODIFICATION END ---
+                        
+                    damaged_this_frame = True # Mark that an interaction with lava happened this frame
 
+                    # Keep existing pushback logic
                     if not player.is_dead: 
                          player.vel.y = C.PLAYER_JUMP_STRENGTH * 0.75 
                          if player.rect.centerx < hazard.rect.centerx:
@@ -276,6 +289,9 @@ def check_player_hazard_collisions(player, hazards_group: pygame.sprite.Group):
                              player.vel.x = getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7) * 0.6
                          player.on_ground = False
                          player.on_ladder = False
-                         if hasattr(player, 'set_state'): player.set_state('hit' if 'hit' in player.animations else 'jump') 
-                    break 
-        if damaged_this_frame: break
+                         # The state will be managed by apply_aflame_effect, so no need to set 'hit' or 'jump' here
+                         # if hasattr(player, 'set_state'): player.set_state('hit' if 'hit' in player.animations else 'jump') 
+                    break # Processed this lava collision
+        if damaged_this_frame: break # Stop checking other hazards if already interacted with lava
+
+#################### END OF FILE: player_collision_handler.py ####################
