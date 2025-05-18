@@ -1,7 +1,7 @@
 # player_movement_physics.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.4 (Allow player input influence during roll)
+## version 1.0.0.5 (Add speed multipliers for aflame/deflame player)
 Handles the core movement physics and state timer updates for the Player.
 This includes applying acceleration, velocity, friction, gravity, managing
 durations for states, and orchestrating collision checks and responses.
@@ -62,15 +62,34 @@ def apply_player_movement_and_physics(player):
         player.on_ladder or
         player.state == 'wall_hang' or
         (player.state == 'wall_climb' and player.vel.y <= C.PLAYER_WALL_CLIMB_SPEED + 0.1) or
-        player.is_dashing
+        player.is_dashing or
+        player.is_frozen or # MODIFIED: Frozen players ignore gravity
+        player.is_defrosting
     )
     if should_apply_gravity:
         player.vel.y += player.acc.y
 
     # --- Horizontal Movement and Physics ---
+    # MODIFIED: Determine base acceleration and speed limit, then apply multipliers
+    base_player_accel = C.PLAYER_ACCEL
+    base_player_run_speed_limit = C.PLAYER_RUN_SPEED_LIMIT
+
+    if player.is_aflame:
+        # Define PLAYER_AFLAME_ACCEL_MULTIPLIER and PLAYER_AFLAME_SPEED_MULTIPLIER in constants.py
+        # e.g., PLAYER_AFLAME_ACCEL_MULTIPLIER = 1.2
+        #       PLAYER_AFLAME_SPEED_MULTIPLIER = 1.1
+        base_player_accel *= getattr(C, 'PLAYER_AFLAME_ACCEL_MULTIPLIER', 1.0)
+        base_player_run_speed_limit *= getattr(C, 'PLAYER_AFLAME_SPEED_MULTIPLIER', 1.0)
+    elif player.is_deflaming:
+        # Define PLAYER_DEFLAME_ACCEL_MULTIPLIER and PLAYER_DEFLAME_SPEED_MULTIPLIER in constants.py
+        # e.g., PLAYER_DEFLAME_ACCEL_MULTIPLIER = 1.1
+        #       PLAYER_DEFLAME_SPEED_MULTIPLIER = 1.05
+        base_player_accel *= getattr(C, 'PLAYER_DEFLAME_ACCEL_MULTIPLIER', 1.0)
+        base_player_run_speed_limit *= getattr(C, 'PLAYER_DEFLAME_SPEED_MULTIPLIER', 1.0)
+
+
     if player.is_rolling:
-        # Player has some control during the roll
-        roll_control_accel_magnitude = C.PLAYER_ACCEL * C.PLAYER_ROLL_CONTROL_ACCEL_FACTOR
+        roll_control_accel_magnitude = base_player_accel * C.PLAYER_ROLL_CONTROL_ACCEL_FACTOR # Use modified base_player_accel
         nudge_accel_x = 0
 
         if player.is_trying_to_move_left and not player.is_trying_to_move_right:
@@ -79,39 +98,39 @@ def apply_player_movement_and_physics(player):
             nudge_accel_x = roll_control_accel_magnitude
 
         player.vel.x += nudge_accel_x
+        max_roll_speed_cap = C.PLAYER_ROLL_SPEED * 1.15 
+        min_roll_speed_cap = C.PLAYER_ROLL_SPEED * 0.4
 
-        # Cap the roll speed. The player.facing_right (set at roll start) determines primary direction.
-        # Allow slight boost or slowdown, but not full reversal easily.
-        # These caps are relative to the base PLAYER_ROLL_SPEED
-        max_roll_speed_cap = C.PLAYER_ROLL_SPEED * 1.15 # Allow 15% faster than base roll speed if pushing
-        min_roll_speed_cap = C.PLAYER_ROLL_SPEED * 0.4  # Can slow down to 40% if no input or opposite input
+        if player.vel.x > 0:
+            player.vel.x = min(player.vel.x, max_roll_speed_cap)
+            if player.facing_right: player.vel.x = max(player.vel.x, min_roll_speed_cap)
+        elif player.vel.x < 0:
+            player.vel.x = max(player.vel.x, -max_roll_speed_cap)
+            if not player.facing_right: player.vel.x = min(player.vel.x, -min_roll_speed_cap)
 
-        if player.vel.x > 0: # If current velocity is to the right
-            player.vel.x = min(player.vel.x, max_roll_speed_cap) # Cap max speed
-            if player.facing_right: # Original roll was right
-                 player.vel.x = max(player.vel.x, min_roll_speed_cap) # Don't slow below min if rolling right
-            # else: pass # If originally rolled left but now moving right, allow it to slow down more naturally
-        elif player.vel.x < 0: # If current velocity is to the left
-            player.vel.x = max(player.vel.x, -max_roll_speed_cap) # Cap max speed (negative)
-            if not player.facing_right: # Original roll was left
-                player.vel.x = min(player.vel.x, -min_roll_speed_cap) # Don't slow below min if rolling left
-            # else: pass
-
-        # Minimal passive slowdown during roll if no input is actively accelerating
         if nudge_accel_x == 0 and abs(player.vel.x) > 0.1:
-             player.vel.x *= 0.99 # Very light friction/drag during roll if no directional input
-             if abs(player.vel.x) < 0.5: # If it slows down too much from this passive drag
-                 player.vel.x = 0 # Stop horizontal motion if very slow (to avoid tiny drifts)
-
-
-    else: # Not rolling, apply normal horizontal physics
+             player.vel.x *= 0.99
+             if abs(player.vel.x) < 0.5: player.vel.x = 0
+    else: # Not rolling
         should_apply_horizontal_physics = not (
             player.is_dashing or
             player.on_ladder or
-            (player.state == 'wall_climb' and player.vel.y <= C.PLAYER_WALL_CLIMB_SPEED + 0.1)
+            (player.state == 'wall_climb' and player.vel.y <= C.PLAYER_WALL_CLIMB_SPEED + 0.1) or
+            player.is_frozen or # MODIFIED: Frozen players don't move
+            player.is_defrosting
         )
         if should_apply_horizontal_physics:
-            player.vel.x += player.acc.x
+            # Apply acceleration based on input (player.acc.x should be set by input handler using base_player_accel logic)
+            # The input handler will set player.acc.x using the non-multiplied C.PLAYER_ACCEL.
+            # We adjust it here if on fire.
+            actual_accel_to_apply = player.acc.x
+            if player.is_aflame:
+                actual_accel_to_apply *= getattr(C, 'PLAYER_AFLAME_ACCEL_MULTIPLIER', 1.0)
+            elif player.is_deflaming:
+                actual_accel_to_apply *= getattr(C, 'PLAYER_DEFLAME_ACCEL_MULTIPLIER', 1.0)
+
+            player.vel.x += actual_accel_to_apply
+
 
             friction_coeff = 0
             if player.on_ground and player.acc.x == 0 and not player.is_sliding and player.state != 'slide':
@@ -135,20 +154,24 @@ def apply_player_movement_and_physics(player):
                      if slide_end_key:
                          set_player_state(player, slide_end_key)
                      else:
-                         if player.is_crouching: # Check toggled state
+                         if player.is_crouching:
                              set_player_state(player, 'crouch')
                          else:
                              set_player_state(player, 'idle')
 
-            current_h_speed_limit = C.PLAYER_RUN_SPEED_LIMIT
+            current_h_speed_limit = base_player_run_speed_limit # Use the (potentially fire-modified) speed limit
             if player.is_crouching and player.state == 'crouch_walk':
                 current_h_speed_limit *= 0.6
 
             if not player.is_dashing and not player.is_rolling and not player.is_sliding and player.state != 'slide':
                 player.vel.x = max(-current_h_speed_limit, min(current_h_speed_limit, player.vel.x))
+        elif player.is_frozen or player.is_defrosting: # MODIFIED: Ensure no movement if frozen/defrosting
+            player.vel.x = 0
+            player.acc.x = 0
+
 
     # --- Vertical Velocity Cap (Terminal Velocity) ---
-    if player.vel.y > 0 and not player.on_ladder: # Only apply if moving downwards and not on ladder
+    if player.vel.y > 0 and not player.on_ladder:
         player.vel.y = min(player.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18))
 
 

@@ -1,14 +1,14 @@
 # player.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.11 (Integrated aflame/frozen status effects)
+## version 1.0.0.13 (Add crouched petrification visuals)
 Defines the Player class, handling core attributes, collision heights, and
 the ability to check for safe uncrouching.
 Delegates state, animation, physics, collisions, input, combat, and network handling
 to respective handler modules.
 """
 import pygame
-from typing import Dict, List, Optional, Any 
+from typing import Dict, List, Optional, Any
 import os
 import sys
 import math
@@ -20,7 +20,7 @@ from assets import load_all_player_animations, load_gif_frames, resource_path
 
 from player_state_handler import set_player_state
 from player_animation_handler import update_player_animation
-from player_movement_physics import update_player_core_logic
+from player_movement_physics import update_player_core_logic # Keep this
 from player_collision_handler import (
     check_player_platform_collisions,
     check_player_ladder_collisions,
@@ -47,7 +47,7 @@ class Player(pygame.sprite.Sprite):
         self._valid_init = True
         self.control_scheme: Optional[str] = None
         self.joystick_id_idx: Optional[int] = None
-        self.game_elements_ref_for_projectiles: Optional[Dict[str, Any]] = None 
+        self.game_elements_ref_for_projectiles: Optional[Dict[str, Any]] = None
 
 
         asset_folder = 'characters/player1' if self.player_id == 1 else 'characters/player2'
@@ -71,7 +71,8 @@ class Player(pygame.sprite.Sprite):
         self.is_petrified = False
         self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
-        self.facing_at_petrification = True # Default, will be set when petrified
+        self.facing_at_petrification = True
+        self.was_crouching_when_petrified = False # NEW FLAG
 
 
         if self.animations is None:
@@ -84,8 +85,15 @@ class Player(pygame.sprite.Sprite):
             self.standing_collision_height = 0
             self.crouching_collision_height = 0
             self.standard_height = 0
-            self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "StoneP_Fail")
-            self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "SmashP_Fail")]
+            # Initialize stone frames to placeholders even on animation load failure
+            self.stone_image_frame_original = self._create_placeholder_surface(C.GRAY, "StonePFail")
+            self.stone_image_frame = self.stone_image_frame_original
+            self.stone_smashed_frames_original = [self._create_placeholder_surface(C.DARK_GRAY, "SmashPFail")]
+            self.stone_smashed_frames = list(self.stone_smashed_frames_original)
+            self.stone_crouch_image_frame_original = self._create_placeholder_surface(C.GRAY, "SCrouchFail")
+            self.stone_crouch_image_frame = self.stone_crouch_image_frame_original
+            self.stone_crouch_smashed_frames_original = [self._create_placeholder_surface(C.DARK_GRAY, "SCSmashFail")]
+            self.stone_crouch_smashed_frames = list(self.stone_crouch_smashed_frames_original)
             return
 
         self.standing_collision_height = 0
@@ -172,14 +180,14 @@ class Player(pygame.sprite.Sprite):
         self.is_trying_to_move_left = False
         self.is_trying_to_move_right = False
         self.is_holding_climb_ability_key = False
-        self.is_holding_crouch_ability_key = False 
+        self.is_holding_crouch_ability_key = False
 
         self.fireball_cooldown_timer = 0
         self.poison_cooldown_timer = 0
         self.bolt_cooldown_timer = 0
         self.blood_cooldown_timer = 0
         self.ice_cooldown_timer = 0
-        self.shadow_cooldown_timer = 0 
+        self.shadow_cooldown_timer = 0
         self.grey_cooldown_timer = 0
 
         self.fireball_last_input_dir = pygame.math.Vector2(1.0, 0.0)
@@ -191,7 +199,7 @@ class Player(pygame.sprite.Sprite):
         self.bolt_key: Optional[int] = None
         self.blood_key: Optional[int] = None
         self.ice_key: Optional[int] = None
-        self.shadow_key: Optional[int] = None 
+        self.shadow_key: Optional[int] = None
         self.grey_key: Optional[int] = None
 
 
@@ -201,7 +209,7 @@ class Player(pygame.sprite.Sprite):
             self.bolt_key = C.P1_BOLT_KEY
             self.blood_key = C.P1_BLOOD_KEY
             self.ice_key = C.P1_ICE_KEY
-            self.shadow_key = C.P1_SHADOW_PROJECTILE_KEY 
+            self.shadow_key = C.P1_SHADOW_PROJECTILE_KEY
             self.grey_key = C.P1_GREY_PROJECTILE_KEY
         elif self.player_id == 2:
             self.fireball_key = C.P2_FIREBALL_KEY
@@ -209,29 +217,50 @@ class Player(pygame.sprite.Sprite):
             self.bolt_key = C.P2_BOLT_KEY
             self.blood_key = C.P2_BLOOD_KEY
             self.ice_key = C.P2_ICE_KEY
-            self.shadow_key = C.P2_SHADOW_PROJECTILE_KEY 
+            self.shadow_key = C.P2_SHADOW_PROJECTILE_KEY
             self.grey_key = C.P2_GREY_PROJECTILE_KEY
 
         # Load common stone assets
         stone_common_folder = os.path.join('characters', 'Stone')
+        # Standing Stone
         common_stone_png_path = resource_path(os.path.join(stone_common_folder, '__Stone.png'))
-        common_stone_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneSmashed.gif'))
-
         loaded_common_stone_frames = load_gif_frames(common_stone_png_path)
         if loaded_common_stone_frames and not (len(loaded_common_stone_frames) == 1 and loaded_common_stone_frames[0].get_size() == (30,40) and loaded_common_stone_frames[0].get_at((0,0)) == C.RED):
-            self.stone_image_frame = loaded_common_stone_frames[0]
-        elif 'stone' in self.animations and self.animations['stone']: 
-             self.stone_image_frame = self.animations['stone'][0]
-        else:
-            self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "StoneP")
+            self.stone_image_frame_original = loaded_common_stone_frames[0]
+        else: # Fallback to player's own 'petrified' anim if common fails, then placeholder
+            self.stone_image_frame_original = (self.animations.get('petrified') or [self._create_placeholder_surface(C.GRAY, "StoneP")])[0]
+        self.stone_image_frame = self.stone_image_frame_original # Current frame to use
 
+        # Standing Smashed Stone
+        common_stone_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneSmashed.gif'))
         loaded_common_smashed_frames = load_gif_frames(common_stone_smashed_gif_path)
         if loaded_common_smashed_frames and not (len(loaded_common_smashed_frames) == 1 and loaded_common_smashed_frames[0].get_size() == (30,40) and loaded_common_smashed_frames[0].get_at((0,0)) == C.RED):
-            self.stone_smashed_frames = loaded_common_smashed_frames
-        elif 'stone_smashed' in self.animations and self.animations['stone_smashed']: 
-            self.stone_smashed_frames = self.animations['stone_smashed']
-        else:
-            self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "SmashP")]
+            self.stone_smashed_frames_original = loaded_common_smashed_frames
+        else: # Fallback
+            self.stone_smashed_frames_original = (self.animations.get('smashed') or [self._create_placeholder_surface(C.DARK_GRAY, "SmashP")])
+        self.stone_smashed_frames = list(self.stone_smashed_frames_original) # Current frames to use
+
+        # Crouching Stone (NEW)
+        common_stone_crouch_png_path = resource_path(os.path.join(stone_common_folder, '__StoneCrouch.png'))
+        loaded_common_stone_crouch_frames = load_gif_frames(common_stone_crouch_png_path)
+        if loaded_common_stone_crouch_frames and not (len(loaded_common_stone_crouch_frames) == 1 and loaded_common_stone_crouch_frames[0].get_size() == (30,40) and loaded_common_stone_crouch_frames[0].get_at((0,0)) == C.RED):
+            self.stone_crouch_image_frame_original = loaded_common_stone_crouch_frames[0]
+        else: # Fallback to standing stone if crouch version fails
+            self.stone_crouch_image_frame_original = self.stone_image_frame_original
+            if Player.print_limiter.can_print(f"stone_crouch_load_fail_{player_id}"):
+                 print(f"PLAYER {player_id} WARNING: Failed to load __StoneCrouch.png, using standing stone image as fallback for crouch petrify.")
+        self.stone_crouch_image_frame = self.stone_crouch_image_frame_original
+
+        # Crouching Smashed Stone (NEW)
+        common_stone_crouch_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneCrouchSmashed.gif'))
+        loaded_common_crouch_smashed_frames = load_gif_frames(common_stone_crouch_smashed_gif_path)
+        if loaded_common_crouch_smashed_frames and not (len(loaded_common_crouch_smashed_frames) == 1 and loaded_common_crouch_smashed_frames[0].get_size() == (30,40) and loaded_common_crouch_smashed_frames[0].get_at((0,0)) == C.RED):
+            self.stone_crouch_smashed_frames_original = loaded_common_crouch_smashed_frames
+        else: # Fallback to standing smashed if crouch version fails
+            self.stone_crouch_smashed_frames_original = list(self.stone_smashed_frames_original)
+            if Player.print_limiter.can_print(f"stone_crouch_smashed_load_fail_{player_id}"):
+                print(f"PLAYER {player_id} WARNING: Failed to load __StoneCrouchSmashed.gif, using standing smashed frames as fallback.")
+        self.stone_crouch_smashed_frames = list(self.stone_crouch_smashed_frames_original)
 
 
         if not self._valid_init:
@@ -246,7 +275,7 @@ class Player(pygame.sprite.Sprite):
             font = pygame.font.Font(None, 18)
             text_surf = font.render(text, True, C.BLACK)
             surf.blit(text_surf, text_surf.get_rect(center=surf.get_rect().center))
-        except: pass 
+        except: pass
         return surf
 
     def apply_aflame_effect(self):
@@ -256,8 +285,14 @@ class Player(pygame.sprite.Sprite):
                 print(f"Player {self.player_id}: apply_aflame_effect called but already in conflicting state. Ignoring.")
             return
         if self.print_limiter.can_print(f"player_apply_aflame_{self.player_id}"):
-            print(f"Player {self.player_id}: Applying aflame effect.")
-        self.set_state('aflame') 
+            print(f"Player {self.player_id}: Applying aflame effect. Crouching: {self.is_crouching}")
+
+        # MODIFIED: Choose initial fire state based on crouching
+        if self.is_crouching:
+            self.set_state('aflame_crouch')
+        else:
+            self.set_state('burning') # 'burning' is the new looping standing fire state
+
         self.is_attacking = False; self.attack_type = 0
 
     def apply_freeze_effect(self):
@@ -279,27 +314,37 @@ class Player(pygame.sprite.Sprite):
         if self.is_aflame:
             if current_time_ms - self.aflame_timer_start > C.PLAYER_AFLAME_DURATION_MS:
                 if self.print_limiter.can_print(f"player_aflame_end_{self.player_id}"):
-                    print(f"Player {self.player_id}: Aflame duration ended. Transitioning to deflame.")
-                self.set_state('deflame')
+                    print(f"Player {self.player_id}: Aflame duration ended. Transitioning to deflame. Crouching: {self.is_crouching}")
+                self.is_aflame = False
+                self.is_deflaming = True
+                self.deflame_timer_start = current_time_ms
+                if self.is_crouching:
+                    self.set_state('deflame_crouch')
+                else:
+                    self.set_state('deflame')
             elif C.PLAYER_AFLAME_DAMAGE_PER_TICK > 0 and \
                  current_time_ms - self.aflame_damage_last_tick > C.PLAYER_AFLAME_DAMAGE_INTERVAL_MS:
-                self.take_damage(C.PLAYER_AFLAME_DAMAGE_PER_TICK) 
+                self.take_damage(C.PLAYER_AFLAME_DAMAGE_PER_TICK)
                 self.aflame_damage_last_tick = current_time_ms
         elif self.is_deflaming:
             if current_time_ms - self.deflame_timer_start > C.PLAYER_DEFLAME_DURATION_MS:
                 if self.print_limiter.can_print(f"player_deflame_end_{self.player_id}"):
-                    print(f"Player {self.player_id}: Deflame duration ended. Transitioning to idle/fall.")
-                self.set_state('idle' if self.on_ground else 'fall')
-        
+                    print(f"Player {self.player_id}: Deflame duration ended. Transitioning to normal. Crouching: {self.is_crouching}")
+                self.is_deflaming = False
+                if self.is_crouching:
+                    self.set_state('crouch')
+                else:
+                    self.set_state('idle' if self.on_ground else 'fall')
+
         # Frozen/Defrost
         if self.is_frozen:
-            self.vel.xy = 0,0; self.acc.x = 0 
+            self.vel.xy = 0,0; self.acc.x = 0
             if current_time_ms - self.frozen_effect_timer > C.PLAYER_FROZEN_DURATION_MS:
                 if self.print_limiter.can_print(f"player_frozen_end_{self.player_id}"):
                     print(f"Player {self.player_id}: Frozen duration ended. Transitioning to defrost.")
                 self.set_state('defrost')
         elif self.is_defrosting:
-            self.vel.xy = 0,0; self.acc.x = 0 
+            self.vel.xy = 0,0; self.acc.x = 0
             if current_time_ms - self.frozen_effect_timer > (C.PLAYER_FROZEN_DURATION_MS + C.PLAYER_DEFROST_DURATION_MS):
                 if self.print_limiter.can_print(f"player_defrost_end_{self.player_id}"):
                     print(f"Player {self.player_id}: Defrost duration ended. Transitioning to idle/fall.")
@@ -307,33 +352,34 @@ class Player(pygame.sprite.Sprite):
 
 
     def petrify(self):
-        if self.is_petrified or (self.is_dead and not self.is_petrified): 
+        if self.is_petrified or (self.is_dead and not self.is_petrified):
             return
-        print(f"Player {self.player_id} is being petrified.")
-        self.facing_at_petrification = self.facing_right # Store facing direction
+        print(f"Player {self.player_id} is being petrified. Crouching: {self.is_crouching}") # MODIFIED
+        self.facing_at_petrification = self.facing_right
+        self.was_crouching_when_petrified = self.is_crouching # MODIFIED: Set this flag
         self.is_petrified = True
         self.is_stone_smashed = False
-        self.is_dead = True 
+        self.is_dead = True
         self.current_health = 0
         self.vel.xy = 0,0
         self.acc.xy = 0,0
         self.is_attacking = False; self.attack_type = 0
         self.is_dashing = False; self.is_rolling = False; self.is_sliding = False
         self.on_ladder = False; self.is_taking_hit = False
-        self.is_aflame = False; self.is_deflaming = False # Clear other statuses
+        self.is_aflame = False; self.is_deflaming = False
         self.is_frozen = False; self.is_defrosting = False
 
-        self.state = 'petrified' 
-        self.current_frame = 0 
-        self.death_animation_finished = True 
-        set_player_state(self, 'petrified') 
+        self.state = 'petrified'
+        self.current_frame = 0
+        self.death_animation_finished = True
+        set_player_state(self, 'petrified') # This will trigger animation handler
 
     def smash_petrification(self):
         if self.is_petrified and not self.is_stone_smashed:
-            print(f"Player {self.player_id} (Petrified) is being smashed.")
+            print(f"Player {self.player_id} (Petrified, Crouching: {self.was_crouching_when_petrified}) is being smashed.") # MODIFIED
             self.is_stone_smashed = True
             self.stone_smashed_timer_start = pygame.time.get_ticks()
-            set_player_state(self, 'smashed') 
+            set_player_state(self, 'smashed') # Animation handler will use was_crouching_when_petrified
         elif Player.print_limiter.can_print(f"smash_petrify_fail_{self.player_id}"):
             print(f"Player {self.player_id}: smash_petrification called but not petrified or already smashed. State: petrified={self.is_petrified}, smashed={self.is_stone_smashed}")
 
@@ -345,7 +391,7 @@ class Player(pygame.sprite.Sprite):
 
     def can_stand_up(self, platforms_group: pygame.sprite.Group) -> bool:
         if not self.is_crouching or not self._valid_init:
-            return True 
+            return True
 
         if self.standing_collision_height <= self.crouching_collision_height:
             if Player.print_limiter.can_print(f"can_stand_up_height_issue_{self.player_id}"):
@@ -355,17 +401,17 @@ class Player(pygame.sprite.Sprite):
 
         current_feet_y = self.rect.bottom
         current_center_x = self.rect.centerx
-        standing_width = self.rect.width 
+        standing_width = self.rect.width
 
         potential_standing_rect = pygame.Rect(0, 0, standing_width, self.standing_collision_height)
-        potential_standing_rect.bottom = current_feet_y      
-        potential_standing_rect.centerx = current_center_x   
+        potential_standing_rect.bottom = current_feet_y
+        potential_standing_rect.centerx = current_center_x
 
         for platform in platforms_group:
             if potential_standing_rect.colliderect(platform.rect):
                 if platform.rect.bottom > potential_standing_rect.top and platform.rect.top < self.rect.top :
-                    return False 
-        return True 
+                    return False
+        return True
 
 
     def set_state(self, new_state: str):
@@ -385,14 +431,14 @@ class Player(pygame.sprite.Sprite):
             elif self.control_scheme == "keyboard_p2":
                 active_mappings_for_input = game_config.P2_MAPPINGS
             elif self.control_scheme.startswith("joystick_") and self.player_id == 1:
-                active_mappings_for_input = game_config.P1_MAPPINGS 
+                active_mappings_for_input = game_config.P1_MAPPINGS
             elif self.control_scheme.startswith("joystick_") and self.player_id == 2:
-                active_mappings_for_input = game_config.P2_MAPPINGS 
-            else: 
+                active_mappings_for_input = game_config.P2_MAPPINGS
+            else:
                 if Player.print_limiter.can_print(f"proc_input_fallback_map_{self.player_id}_{self.control_scheme}"):
                     print(f"Player {self.player_id}: process_input using default P1 keyboard map due to scheme '{self.control_scheme}'.")
                 active_mappings_for_input = game_config.DEFAULT_KEYBOARD_P1_MAPPINGS
-        else: 
+        else:
             if Player.print_limiter.can_print(f"proc_input_no_scheme_{self.player_id}"):
                 print(f"Player {self.player_id}: No control_scheme set in process_input. Using default P1 keyboard map.")
             active_mappings_for_input = game_config.DEFAULT_KEYBOARD_P1_MAPPINGS
@@ -407,8 +453,7 @@ class Player(pygame.sprite.Sprite):
 
 
     def _generic_fire_projectile(self, projectile_class, cooldown_attr_name, cooldown_const, projectile_config_name):
-        if not self._valid_init or self.is_dead or not self.alive() or getattr(self, 'is_petrified', False) or \
-           getattr(self, 'is_frozen', False) or getattr(self, 'is_aflame', False) or getattr(self, 'is_deflaming', False):
+        if not self._valid_init or self.is_dead or not self.alive() or getattr(self, 'is_petrified', False):
              return
         if self.projectile_sprites_group is None or self.all_sprites_group is None:
             if self.print_limiter.can_print(f"player_{self.player_id}_fire_{projectile_config_name}_no_group_ref"):
@@ -419,18 +464,18 @@ class Player(pygame.sprite.Sprite):
         last_fire_time = getattr(self, cooldown_attr_name, 0)
 
         if current_time_ms - last_fire_time >= cooldown_const:
-            setattr(self, cooldown_attr_name, current_time_ms) 
-            
+            setattr(self, cooldown_attr_name, current_time_ms)
+
             spawn_x, spawn_y = self.rect.centerx, self.rect.centery
-            
-            current_aim_direction = self.fireball_last_input_dir.copy() 
-            if current_aim_direction.length_squared() == 0: 
+
+            current_aim_direction = self.fireball_last_input_dir.copy()
+            if current_aim_direction.length_squared() == 0:
                 current_aim_direction.x = 1.0 if self.facing_right else -1.0
                 current_aim_direction.y = 0.0
 
-            proj_dims = getattr(C, f"{projectile_config_name.upper()}_DIMENSIONS", (10,10)) 
-            offset_distance = (self.rect.width / 2) + (proj_dims[0] / 2) - 10 
-            if abs(current_aim_direction.y) > 0.8 * abs(current_aim_direction.x): 
+            proj_dims = getattr(C, f"{projectile_config_name.upper()}_DIMENSIONS", (10,10))
+            offset_distance = (self.rect.width / 2) + (proj_dims[0] / 2) - 10
+            if abs(current_aim_direction.y) > 0.8 * abs(current_aim_direction.x):
                 offset_distance = (self.rect.height / 2) + (proj_dims[1] / 2) - 10
 
             if current_aim_direction.length_squared() > 0:
@@ -439,20 +484,20 @@ class Player(pygame.sprite.Sprite):
                 spawn_y += offset_vector.y
 
             new_projectile = projectile_class(spawn_x, spawn_y, current_aim_direction, self)
-            if hasattr(self, 'game_elements_ref_for_projectiles'): 
+            if hasattr(self, 'game_elements_ref_for_projectiles'):
                 new_projectile.game_elements_ref = self.game_elements_ref_for_projectiles
 
             self.projectile_sprites_group.add(new_projectile)
             self.all_sprites_group.add(new_projectile)
 
             if projectile_config_name == 'blood' and self.current_health > 0:
-                health_cost_percent = 0.05 
+                health_cost_percent = 0.05
                 health_cost_amount = self.current_health * health_cost_percent
                 self.current_health -= health_cost_amount
-                self.current_health = max(0, self.current_health) 
+                self.current_health = max(0, self.current_health)
                 if self.current_health <= 0 and not self.is_dead:
                     self.set_state('death')
-        
+
     def fire_fireball(self): self._generic_fire_projectile(Fireball, 'fireball_cooldown_timer', C.FIREBALL_COOLDOWN, 'fireball')
     def fire_poison(self): self._generic_fire_projectile(PoisonShot, 'poison_cooldown_timer', C.POISON_COOLDOWN, 'poison')
     def fire_bolt(self): self._generic_fire_projectile(BoltProjectile, 'bolt_cooldown_timer', C.BOLT_COOLDOWN, 'bolt')
@@ -475,10 +520,10 @@ class Player(pygame.sprite.Sprite):
         player_heal_to_full(self)
 
     def get_network_data(self):
-        return get_player_network_data(self)
+        return get_player_network_data(self) # Includes petrify flags
 
     def set_network_data(self, received_network_data):
-        set_player_network_data(self, received_network_data)
+        set_player_network_data(self, received_network_data) # Includes petrify flags
 
     def handle_network_input(self, network_input_data_dict):
         handle_player_network_input(self, network_input_data_dict)
@@ -490,20 +535,20 @@ class Player(pygame.sprite.Sprite):
            self.game_elements_ref_for_projectiles and \
            'platform_sprites' in self.game_elements_ref_for_projectiles:
             platforms_group_for_input = self.game_elements_ref_for_projectiles['platform_sprites']
-        
+
         processed_action_events = process_player_input_logic(self, keys_state, events, key_map, platforms_group_for_input)
 
         network_input_dict = {
             'left_held': self.is_trying_to_move_left,
             'right_held': self.is_trying_to_move_right,
             'up_held': self.is_holding_climb_ability_key,
-            'down_held': self.is_holding_crouch_ability_key, 
-            'is_crouching_state': self.is_crouching, 
+            'down_held': self.is_holding_crouch_ability_key,
+            'is_crouching_state': self.is_crouching,
             'fireball_aim_x': self.fireball_last_input_dir.x,
             'fireball_aim_y': self.fireball_last_input_dir.y
         }
         network_input_dict.update(processed_action_events)
-        
+
         return network_input_dict
 
 
@@ -521,38 +566,39 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, dt_sec, platforms_group, ladders_group, hazards_group,
                other_players_sprite_list, enemies_sprite_list):
-        
+
         current_time_ms_for_status = pygame.time.get_ticks()
         self.update_status_effects(current_time_ms_for_status)
 
-        if self.is_stone_smashed: 
+        if self.is_stone_smashed:
             if current_time_ms_for_status - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS:
-                self.kill() 
-                return 
-            self.animate() 
-            return 
+                self.kill()
+                return
+            self.animate()
+            return
 
-        if self.is_petrified: 
-            self.vel.xy = 0,0 
+        if self.is_petrified: # MODIFIED: Includes crouched petrified
+            self.vel.xy = 0,0
             self.acc.xy = 0,0
-            self.animate() 
-            return 
+            # Animation handler will select correct stone image based on was_crouching_when_petrified
+            self.animate()
+            return
 
         update_player_core_logic(self, dt_sec, platforms_group, ladders_group, hazards_group,
                                  other_players_sprite_list, enemies_sprite_list)
 
     def reset_state(self, spawn_position_tuple: tuple):
-        if not self._valid_init and self.animations is None: 
+        if not self._valid_init and self.animations is None:
             asset_folder = 'characters/player1' if self.player_id == 1 else 'characters/player2'
             self.animations = load_all_player_animations(relative_asset_folder=asset_folder)
             if self.animations is not None:
-                self._valid_init = True 
+                self._valid_init = True
                 try:
                     self.standing_collision_height = self.animations['idle'][0].get_height() if self.animations.get('idle') else 60
                     self.crouching_collision_height = self.animations['crouch'][0].get_height() if self.animations.get('crouch') else 30
                     if self.standing_collision_height == 0 or self.crouching_collision_height == 0 or \
                        self.crouching_collision_height >= self.standing_collision_height:
-                        self._valid_init = False 
+                        self._valid_init = False
                 except: self._valid_init = False
 
                 idle_frames = self.animations.get('idle')
@@ -561,7 +607,7 @@ class Player(pygame.sprite.Sprite):
             else:
                 if Player.print_limiter.can_print(f"player_reset_anim_fail_{self.player_id}"):
                     print(f"Player {self.player_id} Error: Failed to load animations during reset. Player remains invalid.")
-                return 
+                return
 
         self.pos = pygame.math.Vector2(spawn_position_tuple)
         self.rect.midbottom = (round(self.pos.x), round(self.pos.y))
@@ -584,7 +630,7 @@ class Player(pygame.sprite.Sprite):
         self.ice_cooldown_timer = 0
         self.shadow_cooldown_timer = 0
         self.grey_cooldown_timer = 0
-        self.fireball_last_input_dir = pygame.math.Vector2(1.0, 0.0) 
+        self.fireball_last_input_dir = pygame.math.Vector2(1.0, 0.0)
 
         self.is_aflame = False; self.aflame_timer_start = 0
         self.is_deflaming = False; self.deflame_timer_start = 0; self.aflame_damage_last_tick = 0
@@ -593,25 +639,43 @@ class Player(pygame.sprite.Sprite):
         self.is_petrified = False
         self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
-        self.facing_at_petrification = self.facing_right # Update this too
+        self.facing_at_petrification = self.facing_right
+        self.was_crouching_when_petrified = False # MODIFIED: Reset this flag
 
+        # Re-load stone assets in case they were modified (e.g. flipped)
         stone_common_folder = os.path.join('characters', 'Stone')
+        # Standing Stone
         common_stone_png_path = resource_path(os.path.join(stone_common_folder, '__Stone.png'))
-        common_stone_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneSmashed.gif'))
         loaded_common_stone_frames = load_gif_frames(common_stone_png_path)
         if loaded_common_stone_frames and not (len(loaded_common_stone_frames) == 1 and loaded_common_stone_frames[0].get_size() == (30,40) and loaded_common_stone_frames[0].get_at((0,0)) == C.RED):
-            self.stone_image_frame = loaded_common_stone_frames[0]
-        elif 'stone' in self.animations and self.animations['stone']: 
-             self.stone_image_frame = self.animations['stone'][0]
-        else:
-            self.stone_image_frame = self._create_placeholder_surface(C.GRAY, "StoneP_Reset")
+            self.stone_image_frame_original = loaded_common_stone_frames[0]
+        else: self.stone_image_frame_original = (self.animations.get('petrified') or [self._create_placeholder_surface(C.GRAY, "StoneP")])[0]
+        self.stone_image_frame = self.stone_image_frame_original
+
+        # Standing Smashed Stone
+        common_stone_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneSmashed.gif'))
         loaded_common_smashed_frames = load_gif_frames(common_stone_smashed_gif_path)
         if loaded_common_smashed_frames and not (len(loaded_common_smashed_frames) == 1 and loaded_common_smashed_frames[0].get_size() == (30,40) and loaded_common_smashed_frames[0].get_at((0,0)) == C.RED):
-            self.stone_smashed_frames = loaded_common_smashed_frames
-        elif 'stone_smashed' in self.animations and self.animations['stone_smashed']: 
-            self.stone_smashed_frames = self.animations['stone_smashed']
-        else:
-            self.stone_smashed_frames = [self._create_placeholder_surface(C.DARK_GRAY, "SmashP_Reset")]
+            self.stone_smashed_frames_original = loaded_common_smashed_frames
+        else: self.stone_smashed_frames_original = (self.animations.get('smashed') or [self._create_placeholder_surface(C.DARK_GRAY, "SmashP")])
+        self.stone_smashed_frames = list(self.stone_smashed_frames_original)
+
+        # Crouching Stone
+        common_stone_crouch_png_path = resource_path(os.path.join(stone_common_folder, '__StoneCrouch.png'))
+        loaded_common_stone_crouch_frames = load_gif_frames(common_stone_crouch_png_path)
+        if loaded_common_stone_crouch_frames and not (len(loaded_common_stone_crouch_frames) == 1 and loaded_common_stone_crouch_frames[0].get_size() == (30,40) and loaded_common_stone_crouch_frames[0].get_at((0,0)) == C.RED):
+            self.stone_crouch_image_frame_original = loaded_common_stone_crouch_frames[0]
+        else: self.stone_crouch_image_frame_original = self.stone_image_frame_original
+        self.stone_crouch_image_frame = self.stone_crouch_image_frame_original
+
+        # Crouching Smashed Stone
+        common_stone_crouch_smashed_gif_path = resource_path(os.path.join(stone_common_folder, '__StoneCrouchSmashed.gif'))
+        loaded_common_crouch_smashed_frames = load_gif_frames(common_stone_crouch_smashed_gif_path)
+        if loaded_common_crouch_smashed_frames and not (len(loaded_common_crouch_smashed_frames) == 1 and loaded_common_crouch_smashed_frames[0].get_size() == (30,40) and loaded_common_crouch_smashed_frames[0].get_at((0,0)) == C.RED):
+            self.stone_crouch_smashed_frames_original = loaded_common_crouch_smashed_frames
+        else: self.stone_crouch_smashed_frames_original = list(self.stone_smashed_frames_original)
+        self.stone_crouch_smashed_frames = list(self.stone_crouch_smashed_frames_original)
+
 
         if hasattr(self.image, 'set_alpha') and hasattr(self.image, 'get_alpha') and \
            self.image.get_alpha() is not None and self.image.get_alpha() < 255:

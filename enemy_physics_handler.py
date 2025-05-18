@@ -1,7 +1,7 @@
 # enemy_physics_handler.py
 # -*- coding: utf-8 -*-
 """
-# version 1.0.0.1
+# version 1.0.2 (Allow aflame/deflame physics, block only for frozen/defrosting)
 Handles enemy physics, including movement, gravity, friction,
 and collision detection/response with platforms, characters, and hazards.
 Ensures aflame enemies can ignite other characters.
@@ -9,7 +9,7 @@ Ensures aflame enemies can ignite other characters.
 import pygame
 import constants as C
 from tiles import Lava 
-from enemy import Enemy # Import Enemy to allow isinstance checks for enemy-to-enemy ignition
+import enemy as enemy_module_ref 
 
 try:
     from enemy_ai_handler import set_enemy_new_patrol_target
@@ -95,7 +95,7 @@ def _check_enemy_character_collision(enemy, direction: str, character_list: list
                not enemy.has_ignited_another_enemy_this_cycle and not is_other_petrified:
                 
                 # Specific logic for enemy-to-enemy ignition (only one)
-                if isinstance(other_char_sprite, Enemy):
+                if isinstance(other_char_sprite, enemy_module_ref.Enemy): # MODIFIED: enemy_module_ref.Enemy
                     debug(f"Enemy {enemy.enemy_id} (aflame) touched Enemy {getattr(other_char_sprite, 'enemy_id', 'Unknown')}. Igniting.")
                     other_char_sprite.apply_aflame_effect()
                     enemy.has_ignited_another_enemy_this_cycle = True 
@@ -173,6 +173,7 @@ def _check_enemy_hazard_collisions(enemy, hazards_group: pygame.sprite.Group):
                     enemy.vel.x = -push_dir * 4 
                     enemy.on_ground = False 
                 break 
+        if damage_taken_this_frame: break 
 
 
 # --- Main Physics and Collision Update Function ---
@@ -183,9 +184,10 @@ def update_enemy_physics_and_collisions(enemy, dt_sec, platforms_group, hazards_
     for the given enemy instance.
     This is called from the main Enemy.update() method if the enemy is not in an
     overriding state (like frozen, petrified, smashed, etc.).
+    MODIFIED: Now allows physics processing for aflame/deflaming states.
     """
     if not enemy._valid_init or enemy.is_dead or not enemy.alive() or \
-       enemy.is_petrified or enemy.is_frozen or enemy.is_defrosting:
+       enemy.is_petrified or enemy.is_frozen or enemy.is_defrosting: # MODIFIED: Removed aflame/deflaming from this blocking condition
         # Petrified, Frozen, Defrosting enemies have simplified or no physics handled here.
         # Gravity for petrified is in status_effects, others are stationary.
         return

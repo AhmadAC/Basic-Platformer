@@ -1,6 +1,7 @@
+
 # assets.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.7 (Treat frozen/defrost as standard animations for all characters)
+## version 1.0.0.8 (Add player burning/crouching fire animations)
 """
 Handles loading game assets, primarily animations from GIF files.
 Includes a helper function `resource_path` to ensure correct asset pathing
@@ -181,8 +182,13 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         # Status effect animations - now considered standard for any character
         'frozen': '__Frozen.gif',
         'defrost': '__Defrost.gif',
-        'aflame': '__Aflame.gif',
-        'deflame': '__Deflame.gif',
+        'aflame': '__Aflame.gif', # Original standing aflame, might be replaced by 'burning' for player
+        'deflame': '__Deflame.gif', # Original standing deflame
+        # Player-specific fire animations (NEW)
+        'burning': '__Burning.gif', # New looping standing/moving fire animation for player
+        'aflame_crouch': '__Aflame_crouch.gif', # New initial fire while crouching for player
+        'burning_crouch': '__Burning_crouch.gif', # New looping fire while crouching for player
+        'deflame_crouch': '__Deflame_crouch.gif', # New deflame while crouching for player
     }
 
     info(f"Assets Info: Attempting to load animations from relative folder: '{relative_asset_folder}'")
@@ -305,7 +311,7 @@ if __name__ == "__main__":
     loaded_player1_animations = load_all_player_animations(relative_asset_folder=player1_asset_folder)
     if loaded_player1_animations:
         info(f"Assets Test (Player 1): Successfully loaded animation data. Found states: {', '.join(k for k,v in loaded_player1_animations.items() if v)}")
-        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost']:
+        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame_crouch']: # Added new keys
             if anim_key in loaded_player1_animations and loaded_player1_animations[anim_key]:
                 first_frame = loaded_player1_animations[anim_key][0]
                 if first_frame.get_size() == (30,40) and first_frame.get_at((0,0)) == RED:
@@ -326,7 +332,7 @@ if __name__ == "__main__":
     loaded_green_animations = load_all_player_animations(relative_asset_folder=green_enemy_asset_folder)
     if loaded_green_animations:
         info(f"Assets Test (Green Enemy): Successfully loaded animation data. Found states: {', '.join(k for k,v in loaded_green_animations.items() if v)}")
-        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost']:
+        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost']: # Enemies don't use the new player-specific fire anims
             if anim_key in loaded_green_animations and loaded_green_animations[anim_key]:
                 first_frame = loaded_green_animations[anim_key][0]
                 if first_frame.get_size() == (30,40) and first_frame.get_at((0,0)) == RED:

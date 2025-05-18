@@ -1,7 +1,7 @@
 # enemy_status_effects.py
 # -*- coding: utf-8 -*-
 """
-# version 1.0.0.2 (Ensure aflame/deflame also return True from main update)
+# version 1.0.3 (Allow aflame/deflame to not block main enemy update loop)
 Handles the application and management of status effects for enemies,
 such as aflame, frozen, petrified, and stomp death.
 """
@@ -107,6 +107,7 @@ def update_enemy_status_effects(enemy, current_time_ms, platforms_group):
     False otherwise.
     """
     enemy_id_log = getattr(enemy, 'enemy_id', 'Unknown')
+    processed_aflame_or_deflame_this_tick = False # MODIFIED: Added flag
 
     # --- Petrified and Smashed State Handling (Highest Priority) ---
     if enemy.is_stone_smashed:
@@ -133,25 +134,29 @@ def update_enemy_status_effects(enemy, current_time_ms, platforms_group):
         return True
 
     # --- Aflame/Deflame Handling ---
-    if enemy.is_aflame:
+    # These effects modify behavior but don't completely halt other updates like petrify or frozen.
+    # They will return False at the end if they are active, allowing AI/physics to proceed.
+    if enemy.is_aflame: # MODIFIED: 'if' instead of 'elif'
+        processed_aflame_or_deflame_this_tick = True
         if current_time_ms - enemy.aflame_timer_start > C.ENEMY_AFLAME_DURATION_MS:
             debug(f"Enemy {enemy_id_log}: Aflame duration ended. Transitioning to deflame.")
             set_enemy_state(enemy, 'deflame')
-            return True # State changed, deflame will be handled by its own block or next update
+            # Since it's transitioning to deflame, let the deflame block handle the return or further processing
+            # No 'return True' here.
         elif current_time_ms - enemy.aflame_damage_last_tick > C.ENEMY_AFLAME_DAMAGE_INTERVAL_MS:
             if hasattr(enemy, 'take_damage'): 
                 enemy.take_damage(C.ENEMY_AFLAME_DAMAGE_PER_TICK)
             enemy.aflame_damage_last_tick = current_time_ms
         # AI handler will manage movement speed for aflame enemies.
-        return True # Aflame processing is active, blocks normal AI/physics (handled by AI instead)
 
-    if enemy.is_deflaming: # Changed to 'if' from 'elif' to allow processing even if just transitioned from aflame
+    if enemy.is_deflaming: # MODIFIED: 'if' instead of 'elif' in case it just transitioned from aflame
+        processed_aflame_or_deflame_this_tick = True
         if current_time_ms - enemy.deflame_timer_start > C.ENEMY_DEFLAME_DURATION_MS:
             debug(f"Enemy {enemy_id_log}: Deflame duration ended. Transitioning to idle.")
             set_enemy_state(enemy, 'idle') # Default to idle after deflame
-            return False # Deflame finished, allow normal processing
+            # Deflame finished, allow normal processing from this point
+            # No 'return False' here yet, as other high-priority effects might still be active below
         # AI handler will manage movement speed for deflaming enemies.
-        return True # Deflaming processing is active, blocks normal AI/physics (handled by AI instead)
 
     # --- Stomp Death Animation Handling ---
     if enemy.is_stomp_dying:
@@ -173,7 +178,8 @@ def update_enemy_status_effects(enemy, current_time_ms, platforms_group):
         if current_time_ms - enemy.frozen_effect_timer > (C.ENEMY_FROZEN_DURATION_MS + C.ENEMY_DEFROST_DURATION_MS):
             debug(f"Enemy {enemy_id_log}: Defrost duration ended. Transitioning to idle.")
             set_enemy_state(enemy, 'idle')
-            return False 
+            # Defrost finished, allow normal processing from this point
+            # No 'return False' here yet, as other high-priority effects might still be active below
         return True 
 
     # --- Regular Death Animation Handling (if not any of the above special deaths) ---
@@ -184,4 +190,10 @@ def update_enemy_status_effects(enemy, current_time_ms, platforms_group):
                 enemy.kill()
         return True 
 
-    return False
+    # MODIFIED: If aflame or deflaming was processed and no other overriding effect took precedence,
+    # it means those effects are active but should allow AI/Physics to proceed.
+    if processed_aflame_or_deflame_this_tick:
+        return False # Aflame/Deflame allow further processing by AI/Physics
+
+    return False # No overriding status effect is active or one that allows further processing (like aflame/deflame) has completed its check
+
