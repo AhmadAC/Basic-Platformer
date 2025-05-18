@@ -1,13 +1,49 @@
-2025-05-19 00:23:42,679 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully.
-2025-05-19 00:23:42,679 - INFO - editor.py:61 - <module> - Project root added to sys.path.
-2025-05-19 00:23:42,850 - DEBUG - editor.py:76 - <module> - Successfully imported all editor-specific modules.
-2025-05-19 00:23:42,850 - INFO - editor.py:640 - editor_main - editor_main() started for PySide6 application.
-2025-05-19 00:23:42,880 - DEBUG - editor.py:645 - editor_main - QApplication instance created.
-2025-05-19 00:23:42,880 - INFO - editor.py:85 - __init__ - Initializing EditorMainWindow...
-2025-05-19 00:23:42,880 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
-2025-05-19 00:23:42,880 - DEBUG - editor_state.py:66 - __init__ - EditorState initialized.
-2025-05-19 00:23:42,880 - DEBUG - editor.py:127 - init_ui - Initializing UI components...
-2025-05-19 00:23:42,880 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from state...
-2025-05-19 00:23:42,880 - DEBUG - map_view_widget.py:191 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000)
-2025-05-19 00:23:43,004 - DEBUG - editor.py:165 - init_ui - UI components initialized.
-2025-05-19 00:23:43,004 - DEBUG - editor.py:169 - create_actions - Creating actions...
+2025-05-19 00:27:25,965 - INFO - tempCodeRunnerFile.py:44 - <module> - Editor session started. Logging initialized successfully.
+2025-05-19 00:27:25,965 - INFO - tempCodeRunnerFile.py:61 - <module> - Project root added to sys.path.
+2025-05-19 00:27:26,072 - DEBUG - tempCodeRunnerFile.py:76 - <module> - Successfully imported all editor-specific modules.
+2025-05-19 00:27:26,072 - INFO - tempCodeRunnerFile.py:640 - editor_main - editor_main() started for PySide6 application.
+2025-05-19 00:27:26,105 - DEBUG - tempCodeRunnerFile.py:645 - editor_main - QApplication instance created.
+2025-05-19 00:27:26,105 - INFO - tempCodeRunnerFile.py:85 - __init__ - Initializing EditorMainWindow...
+2025-05-19 00:27:26,105 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
+2025-05-19 00:27:26,105 - DEBUG - editor_state.py:66 - __init__ - EditorState initialized.
+2025-05-19 00:27:26,105 - DEBUG - tempCodeRunnerFile.py:127 - init_ui - Initializing UI components...
+2025-05-19 00:27:26,106 - DEBUG - map_view_widget.py:179 - load_map_from_state - MapViewWidget: Loading map from state...
+2025-05-19 00:27:26,108 - DEBUG - map_view_widget.py:200 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.0, Offset: (0.0, 0.0)
+2025-05-19 00:27:26,142 - DEBUG - tempCodeRunnerFile.py:165 - init_ui - UI components initialized.
+2025-05-19 00:27:26,142 - DEBUG - tempCodeRunnerFile.py:169 - create_actions - Creating actions...
+2025-05-19 00:27:26,142 - DEBUG - tempCodeRunnerFile.py:191 - create_actions - Actions created.
+2025-05-19 00:27:26,142 - DEBUG - tempCodeRunnerFile.py:194 - create_menus - Creating menus...
+2025-05-19 00:27:26,149 - DEBUG - tempCodeRunnerFile.py:233 - create_menus - Menus created.
+2025-05-19 00:27:26,149 - DEBUG - tempCodeRunnerFile.py:236 - create_status_bar - Creating status bar...
+2025-05-19 00:27:26,152 - DEBUG - tempCodeRunnerFile.py:242 - create_status_bar - Status bar created.
+2025-05-19 00:27:26,152 - INFO - editor_assets.py:163 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-19 00:27:26,156 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'player1_spawn' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/player1/__Idle.gif'.
+2025-05-19 00:27:26,158 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'player1_spawn'. Creating fallback.
+2025-05-19 00:27:26,166 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'player2_spawn' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/player2/__Idle.gif'.
+2025-05-19 00:27:26,166 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'player2_spawn'. Creating fallback.
+2025-05-19 00:27:26,166 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'enemy_gray' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/gray/__Idle.gif'.
+2025-05-19 00:27:26,166 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'enemy_gray'. Creating fallback.
+2025-05-19 00:27:26,166 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'enemy_green' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/green/__Idle.gif'.
+2025-05-19 00:27:26,166 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'enemy_green'. Creating fallback.
+2025-05-19 00:27:26,166 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'enemy_pink' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/pink/__Idle.gif'.
+2025-05-19 00:27:26,166 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'enemy_pink'. Creating fallback.
+2025-05-19 00:27:26,166 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'enemy_purple' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/purple/__Idle.gif'.
+2025-05-19 00:27:26,166 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'enemy_purple'. Creating fallback.
+2025-05-19 00:27:26,166 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'enemy_orange' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/orange/__Idle.gif'.
+2025-05-19 00:27:26,166 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'enemy_orange'. Creating fallback.
+2025-05-19 00:27:26,166 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'enemy_yellow' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/yellow/__Idle.gif'.
+2025-05-19 00:27:26,166 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'enemy_yellow'. Creating fallback.
+2025-05-19 00:27:26,166 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'chest' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/items/chest.gif'.
+2025-05-19 00:27:26,166 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'chest'. Creating fallback.
+2025-05-19 00:27:26,178 - ERROR - editor_assets.py:219 - load_editor_palette_assets - Failed to load image for 'hazard_lava_tile' from 'C:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/assets/lava.gif'.
+2025-05-19 00:27:26,178 - WARNING - editor_assets.py:147 - get_asset_pixmap - Could not generate pixmap for 'hazard_lava_tile'. Creating fallback.
+2025-05-19 00:27:26,182 - INFO - editor_assets.py:278 - load_editor_palette_assets - Palette asset loading complete. Success: 23, Failed: 0.
+2025-05-19 00:27:26,182 - DEBUG - editor_ui_panels.py:60 - populate_assets - Populating asset palette UI...
+2025-05-19 00:27:26,182 - DEBUG - editor_ui_panels.py:92 - populate_assets - Asset palette UI populated with 29 displayable items.
+2025-05-19 00:27:26,182 - DEBUG - tempCodeRunnerFile.py:636 - restore_geometry_and_state - Window geometry and state restored.
+2025-05-19 00:27:26,182 - INFO - tempCodeRunnerFile.py:122 - __init__ - EditorMainWindow initialized.
+2025-05-19 00:27:26,182 - INFO - tempCodeRunnerFile.py:247 - show_status_message - Status: Editor started. Welcome!
+2025-05-19 00:27:32,760 - INFO - tempCodeRunnerFile.py:614 - closeEvent - Close event triggered.
+2025-05-19 00:27:32,774 - INFO - tempCodeRunnerFile.py:619 - closeEvent - Window geometry and state saved.
+2025-05-19 00:27:32,786 - INFO - tempCodeRunnerFile.py:665 - editor_main - QApplication event loop finished with exit code: 0
+2025-05-19 00:27:32,786 - INFO - tempCodeRunnerFile.py:681 - editor_main - Editor session ended.
