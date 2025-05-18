@@ -1,201 +1,278 @@
 # editor_assets.py
 # -*- coding: utf-8 -*-
 """
-## version 1.0.0.7 (Adjust palette height calculation for minimap)
-Handles loading and managing assets for the editor's palette.
+## version 2.0.2 (PySide6 Conversion - Added Qt import for enums)
+Handles loading and managing assets for the editor's palette using QPixmap and QMovie.
 """
-import pygame
 import os
 import sys
-import traceback
-from typing import Optional, List, Dict, Any
+import logging
+from typing import Optional, Dict, Any, Tuple, List
 
-# --- (Sys.path manipulation and assets import - keeping essential prints) ---
+from PySide6.QtGui import QPixmap, QImage, QPainter, QColor, QMovie
+from PySide6.QtCore import QRectF, QPointF, QSize, Qt # CORRECTED: Added Qt
+
+# --- (Sys.path manipulation) ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
-    # print(f"INFO ASSETS: Added '{parent_dir}' to sys.path for 'assets' module import.")
 
 try:
-    from assets import load_gif_frames, resource_path # Assuming this is in your project root/assets.py
+    from assets import resource_path
 except ImportError:
-    print("CRITICAL: 'assets' module not found. Using dummy functions.")
-    def load_gif_frames(path): return []
-    def resource_path(path): return os.path.join(parent_dir, path) # Basic fallback
-
+    print("CRITICAL ASSETS: 'assets' module (resource_path) not found. Using basic fallback.")
+    def resource_path(relative_path):
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        return os.path.join(base_path, relative_path)
 
 import editor_config as ED_CONFIG
 from editor_state import EditorState
 
+logger = logging.getLogger(__name__)
 
-def load_editor_palette_assets(editor_state: EditorState):
+def _create_colored_pixmap(width: int, height: int, color_tuple: Tuple[int,int,int]) -> QPixmap:
+    pixmap = QPixmap(max(1, width), max(1, height))
+    pixmap.fill(QColor(*color_tuple))
+    return pixmap
+
+def _create_half_tile_pixmap(base_size: int, half_type: str, color_tuple: Tuple[int,int,int]) -> QPixmap:
+    pixmap = QPixmap(base_size, base_size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setBrush(QColor(*color_tuple))
+    painter.setPen(Qt.GlobalColor.transparent)
+
+    rect_to_draw = None
+    if half_type == "left": rect_to_draw = QRectF(0, 0, base_size / 2, base_size)
+    elif half_type == "right": rect_to_draw = QRectF(base_size / 2, 0, base_size / 2, base_size)
+    elif half_type == "top": rect_to_draw = QRectF(0, 0, base_size, base_size / 2)
+    elif half_type == "bottom": rect_to_draw = QRectF(0, base_size / 2, base_size, base_size / 2)
+
+    if rect_to_draw:
+        painter.drawRect(rect_to_draw)
+    painter.end()
+    return pixmap
+
+def _create_icon_pixmap(base_size: int, icon_type: str, color_tuple: Tuple[int,int,int]) -> QPixmap:
+    pixmap = QPixmap(base_size, base_size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setBrush(QColor(*color_tuple))
+    painter.setPen(QColor(0,0,0))
+
+    if icon_type == "2x2_placer":
+        s = base_size
+        rect_size = s * 0.35
+        gap = s * 0.1
+        painter.drawRect(QRectF(gap, gap, rect_size, rect_size))
+        painter.drawRect(QRectF(s - gap - rect_size, gap, rect_size, rect_size))
+        painter.drawRect(QRectF(gap, s - gap - rect_size, rect_size, rect_size))
+        painter.drawRect(QRectF(s - gap - rect_size, s - gap - rect_size, rect_size, rect_size))
+    elif icon_type == "eraser":
+        s = base_size
+        painter.setBrush(QColor(*color_tuple))
+        painter.setPen(QColor(Qt.GlobalColor.black)) # Corrected: Qt.GlobalColor.black
+        painter.drawRect(QRectF(s * 0.1, s * 0.3, s * 0.8, s * 0.4))
+        painter.drawLine(QPointF(s*0.2, s*0.2), QPointF(s*0.8, s*0.8))
+        painter.drawLine(QPointF(s*0.2, s*0.8), QPointF(s*0.8, s*0.2))
+    elif icon_type == "color_swatch":
+        s = base_size
+        painter.setBrush(QColor(*color_tuple))
+        painter.setPen(QColor(Qt.GlobalColor.black)) # Corrected: Qt.GlobalColor.black
+        painter.drawRect(QRectF(s*0.1, s*0.1, s*0.8, s*0.8))
+    else:
+        painter.setPen(QColor(*color_tuple))
+        font = painter.font(); font.setPointSize(base_size // 2); painter.setFont(font)
+        painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "?") # Corrected: Qt.AlignmentFlag.AlignCenter
+
+    painter.end()
+    return pixmap
+
+def get_asset_pixmap(asset_editor_key: str,
+                     asset_data_entry: Dict[str, Any],
+                     target_size: QSize,
+                     override_color: Optional[Tuple[int,int,int]] = None) -> Optional[QPixmap]:
+    final_pixmap: Optional[QPixmap] = None
+    ts = ED_CONFIG.BASE_GRID_SIZE
+
+    color_to_use = override_color
+    if not color_to_use and asset_data_entry.get("colorable"):
+        color_to_use = asset_data_entry.get("base_color_tuple") or \
+                       (asset_data_entry.get("surface_params_dims_color")[2] if asset_data_entry.get("surface_params_dims_color") else None)
+
+    if "source_file" in asset_data_entry:
+        full_path = resource_path(asset_data_entry["source_file"])
+        if not os.path.exists(full_path):
+            logger.error(f"Assets Error: File NOT FOUND at '{full_path}' for asset '{asset_editor_key}' in get_asset_pixmap")
+            # Use ED_CONFIG.C.RED directly as it's defined as a tuple
+            return _create_colored_pixmap(target_size.width(), target_size.height(), ED_CONFIG.C.RED if hasattr(ED_CONFIG.C, 'RED') else (255,0,0))
+
+
+        if asset_data_entry["source_file"].lower().endswith(".gif"):
+            movie = QMovie(full_path)
+            if movie.isValid():
+                final_pixmap = movie.currentPixmap()
+            else:
+                logger.warning(f"QMovie could not load/is invalid for '{asset_editor_key}' from '{full_path}'. Trying QPixmap.")
+                final_pixmap = QPixmap(full_path)
+        else:
+            final_pixmap = QPixmap(full_path)
+
+        if final_pixmap and final_pixmap.isNull():
+            logger.error(f"Failed to load image for '{asset_editor_key}' from '{full_path}' using QPixmap.")
+            final_pixmap = None
+
+        if final_pixmap and color_to_use and asset_data_entry.get("colorable"):
+            temp_image = final_pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32)
+            painter = QPainter(temp_image)
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Multiply)
+            painter.fillRect(temp_image.rect(), QColor(*color_to_use, 128))
+            painter.end()
+            final_pixmap = QPixmap.fromImage(temp_image)
+
+    elif "surface_params" in asset_data_entry:
+        w, h, default_color = asset_data_entry["surface_params"]
+        final_pixmap = _create_colored_pixmap(w, h, color_to_use or default_color)
+    elif "render_mode" in asset_data_entry and asset_data_entry["render_mode"] == "half_tile":
+        half_type = asset_data_entry.get("half_type", "left")
+        default_color = asset_data_entry.get("base_color_tuple", ED_CONFIG.C.MAGENTA if hasattr(ED_CONFIG.C, 'MAGENTA') else (255,0,255))
+        final_pixmap = _create_half_tile_pixmap(ts, half_type, color_to_use or default_color)
+    elif "icon_type" in asset_data_entry:
+        icon_type = asset_data_entry["icon_type"]
+        default_color = asset_data_entry.get("base_color_tuple", ED_CONFIG.C.YELLOW if hasattr(ED_CONFIG.C, 'YELLOW') else (255,255,0))
+        final_pixmap = _create_icon_pixmap(ts, icon_type, color_to_use or default_color)
+
+    if not final_pixmap:
+        logger.warning(f"Could not generate pixmap for '{asset_editor_key}'. Creating fallback.")
+        final_pixmap = _create_colored_pixmap(ts, ts, ED_CONFIG.C.RED if hasattr(ED_CONFIG.C, 'RED') else (255,0,0))
+        painter = QPainter(final_pixmap)
+        painter.setPen(QColor(0,0,0))
+        painter.drawLine(0,0, ts, ts)
+        painter.drawLine(0,ts, ts, 0)
+        painter.end()
+
+    if final_pixmap and (final_pixmap.size() != target_size):
+        final_pixmap = final_pixmap.scaled(target_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation) # Corrected
+
+    return final_pixmap
+
+
+def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optional[Any] = None):
     editor_state.assets_palette.clear()
-    # print("INFO ASSETS: Loading editor palette assets...")
-    successful_loads = 0; failed_loads = 0
-    ts = ED_CONFIG.DEFAULT_GRID_SIZE
+    logger.info("Loading editor palette assets for Qt...")
+    successful_loads = 0
+    failed_loads = 0
+    target_thumb_size = QSize(ED_CONFIG.ASSET_THUMBNAIL_SIZE, ED_CONFIG.ASSET_THUMBNAIL_SIZE)
+    ts = ED_CONFIG.BASE_GRID_SIZE
 
-    for asset_key, asset_info in ED_CONFIG.EDITOR_PALETTE_ASSETS.items():
-        surf: Optional[pygame.Surface] = None
-        tooltip = asset_info.get("tooltip", asset_key)
-        game_type_id = asset_info.get("game_type_id", asset_key)
-        category = asset_info.get("category", "unknown")
+    for asset_key, asset_info_def in ED_CONFIG.EDITOR_PALETTE_ASSETS.items():
+        asset_data_entry: Dict[str, Any] = {
+            "game_type_id": asset_info_def.get("game_type_id", asset_key),
+            "category": asset_info_def.get("category", "unknown"),
+            "original_size_pixels": (ts, ts),
+            "places_asset_key": asset_info_def.get("places_asset_key"),
+            "colorable": asset_info_def.get("colorable", False),
+            "render_mode": asset_info_def.get("render_mode"),
+            "half_type": asset_info_def.get("half_type"),
+            "base_color_tuple": asset_info_def.get("base_color_tuple"),
+            "surface_params_dims_color": asset_info_def.get("surface_params"),
+            "name_in_palette": asset_info_def.get("name_in_palette", asset_key.replace("_", " ").title()) # Use name_in_palette or derive
+        }
+        # Ensure tooltip key is not in asset_data_entry as tooltips are removed
+        if "tooltip" in asset_data_entry: # Should not happen if ED_CONFIG is updated
+            del asset_data_entry["tooltip"]
+
+        pixmap_for_palette: Optional[QPixmap] = None
+        pixmap_for_cursor: Optional[QPixmap] = None
         original_w, original_h = ts, ts
 
-        if "source_file" in asset_info:
-            source_file_path = asset_info["source_file"]
+        fallback_red = ED_CONFIG.C.RED if hasattr(ED_CONFIG.C, 'RED') else (255,0,0)
+        fallback_magenta = ED_CONFIG.C.MAGENTA if hasattr(ED_CONFIG.C, 'MAGENTA') else (255,0,255)
+        fallback_yellow = ED_CONFIG.C.YELLOW if hasattr(ED_CONFIG.C, 'YELLOW') else (255,255,0)
+        fallback_blue = ED_CONFIG.C.BLUE if hasattr(ED_CONFIG.C, 'BLUE') else (0,0,255)
+
+
+        if "source_file" in asset_info_def:
+            source_file_path = asset_info_def["source_file"]
             try:
                 full_path = resource_path(source_file_path)
                 if not os.path.exists(full_path):
-                    print(f"Assets Error: File NOT FOUND at '{full_path}' for asset '{asset_key}'")
+                    logger.error(f"Assets Error: File NOT FOUND at '{full_path}' for asset '{asset_key}'")
+                    pixmap_for_palette = _create_colored_pixmap(ts, ts, fallback_red)
                 else:
-                    frames = load_gif_frames(full_path)
-                    if frames: surf = frames[0]
-                    # else: print(f"Warning ASSETS: load_gif_frames returned empty list for '{asset_key}' from '{full_path}'.")
-            except Exception as e: print(f"Error ASSETS: Loading '{asset_key}' from '{source_file_path}': {e}");
-        elif "surface_params" in asset_info:
-            try:
-                w, h, color = asset_info["surface_params"]
-                original_w, original_h = w, h
-                surf = pygame.Surface((max(1, w), max(1, h))); surf.fill(color)
-            except Exception as e: print(f"Error ASSETS: Creating surface for '{asset_key}': {e}");
-        elif "render_mode" in asset_info and asset_info["render_mode"] == "half_tile":
-            try:
-                surf = pygame.Surface((ts, ts), pygame.SRCALPHA)
-                surf.fill((0,0,0,0))
-                color = asset_info.get("base_color_tuple", getattr(ED_CONFIG.C, "MAGENTA", (255,0,255)))
-                half_type = asset_info.get("half_type", "left")
-                rect_to_draw = pygame.Rect(0,0,0,0)
-                if half_type == "left": rect_to_draw = pygame.Rect(0, 0, ts // 2, ts)
-                elif half_type == "right": rect_to_draw = pygame.Rect(ts // 2, 0, ts // 2, ts)
-                elif half_type == "top": rect_to_draw = pygame.Rect(0, 0, ts, ts // 2)
-                elif half_type == "bottom": rect_to_draw = pygame.Rect(0, ts // 2, ts, ts // 2)
-                pygame.draw.rect(surf, color, rect_to_draw)
-                original_w, original_h = ts, ts
-            except Exception as e: print(f"Error ASSETS: Creating half_tile surface for '{asset_key}': {e}");
-        elif "icon_type" in asset_info:
-            try:
-                surf = pygame.Surface((ts, ts), pygame.SRCALPHA)
-                surf.fill((0,0,0,0))
-                color = asset_info.get("base_color_tuple", getattr(ED_CONFIG.C, "YELLOW", (255,255,0)))
-                icon_type = asset_info["icon_type"]
-                if icon_type == "2x2_placer":
-                    pygame.draw.rect(surf, color, (ts*0.1, ts*0.1, ts*0.35, ts*0.35))
-                    pygame.draw.rect(surf, color, (ts*0.55, ts*0.1, ts*0.35, ts*0.35))
-                    pygame.draw.rect(surf, color, (ts*0.1, ts*0.55, ts*0.35, ts*0.35))
-                    pygame.draw.rect(surf, color, (ts*0.55, ts*0.55, ts*0.35, ts*0.35))
-                    pygame.draw.rect(surf, getattr(ED_CONFIG.C, "BLACK", (0,0,0)), (0,0,ts,ts), 1)
-                # Removed "triangle_tool" as it was for the color picker asset
-                original_w, original_h = ts, ts
-            except Exception as e: print(f"Error ASSETS: Creating icon surface for '{asset_key}': {e}");
+                    temp_pixmap = None
+                    if source_file_path.lower().endswith(".gif"):
+                        movie = QMovie(full_path)
+                        if movie.isValid() and movie.frameCount() > 0:
+                            temp_pixmap = movie.currentPixmap()
+                        else:
+                            logger.warning(f"QMovie failed for '{asset_key}'. Trying QPixmap.")
+                            temp_pixmap = QPixmap(full_path)
+                    else:
+                        temp_pixmap = QPixmap(full_path)
 
-        if not surf:
-            # print(f"Warning ASSETS: Surface for '{asset_key}' is None. Creating fallback.")
-            surf = pygame.Surface((ts, ts))
-            surf.fill(getattr(ED_CONFIG.C, 'RED', (255,0,0)))
-            pygame.draw.line(surf, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), (0,0), surf.get_size(), 1)
-            pygame.draw.line(surf, getattr(ED_CONFIG.C, 'BLACK', (0,0,0)), (0,surf.get_height()-1), (surf.get_width()-1,0), 1)
-            tooltip += " (Load Error)"; failed_loads += 1
+                    if temp_pixmap and not temp_pixmap.isNull():
+                        original_w, original_h = temp_pixmap.width(), temp_pixmap.height()
+                        pixmap_for_palette = temp_pixmap.scaled(target_thumb_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation) # Corrected
+                    else:
+                        logger.error(f"Failed to load image for '{asset_key}' from '{full_path}'.")
+                        pixmap_for_palette = _create_colored_pixmap(ts,ts, fallback_red)
+            except Exception as e:
+                logger.error(f"Error loading source_file for '{asset_key}': {e}", exc_info=True)
+                pixmap_for_palette = _create_colored_pixmap(ts,ts, fallback_red)
+
+        elif "surface_params" in asset_info_def:
+            w, h, color = asset_info_def["surface_params"]
+            original_w, original_h = w, h
+            pixmap_for_palette = _create_colored_pixmap(w, h, color)
+        elif "render_mode" in asset_info_def and asset_info_def["render_mode"] == "half_tile":
+            half_type = asset_info_def.get("half_type", "left")
+            color = asset_info_def.get("base_color_tuple", fallback_magenta)
+            original_w, original_h = ts, ts
+            pixmap_for_palette = _create_half_tile_pixmap(ts, half_type, color)
+        elif "icon_type" in asset_info_def:
+            icon_type = asset_info_def["icon_type"]
+            color = asset_info_def.get("base_color_tuple", fallback_yellow)
+            original_w, original_h = ts, ts
+            pixmap_for_palette = _create_icon_pixmap(ts, icon_type, color)
         else:
-            if asset_info.get("source_file"):
-                 original_w, original_h = surf.get_size()
-            successful_loads +=1
+            logger.warning(f"Asset '{asset_key}' has no defined source or generation method.")
+            pixmap_for_palette = _create_colored_pixmap(ts,ts, fallback_red)
 
-        scaled_surf = surf
-        if (asset_info.get("source_file") and (original_w > ED_CONFIG.ASSET_THUMBNAIL_MAX_WIDTH or original_h > ED_CONFIG.ASSET_THUMBNAIL_MAX_HEIGHT)) or \
-           (not asset_info.get("source_file") and (original_w != ED_CONFIG.ASSET_THUMBNAIL_MAX_WIDTH or original_h != ED_CONFIG.ASSET_THUMBNAIL_MAX_HEIGHT) and \
-            (original_w > ED_CONFIG.ASSET_THUMBNAIL_MAX_WIDTH or original_h > ED_CONFIG.ASSET_THUMBNAIL_MAX_HEIGHT)):
-            if original_w > ED_CONFIG.ASSET_THUMBNAIL_MAX_WIDTH or original_h > ED_CONFIG.ASSET_THUMBNAIL_MAX_HEIGHT:
-                ratio = min(ED_CONFIG.ASSET_THUMBNAIL_MAX_WIDTH / original_w if original_w > 0 else 1,
-                            ED_CONFIG.ASSET_THUMBNAIL_MAX_HEIGHT / original_h if original_h > 0 else 1)
-                new_w, new_h = max(1, int(original_w * ratio)), max(1, int(original_h * ratio))
-                try:
-                    scaled_surf = pygame.transform.smoothscale(surf, (new_w, new_h))
-                except Exception:
-                    # print(f"Error ASSETS: Scaling '{asset_key}' failed. Using original.");
-                    scaled_surf = surf
-        try:
-            final_surf_to_store = scaled_surf.convert_alpha() if scaled_surf.get_flags() & pygame.SRCALPHA else scaled_surf.convert()
-        except pygame.error as e:
-            # print(f"Error ASSETS: Converting surface for '{asset_key}' failed: {e}. Using unoptimized surface.");
-            final_surf_to_store = scaled_surf
+        asset_data_entry["original_size_pixels"] = (original_w, original_h)
 
-        editor_state.assets_palette[asset_key] = {
-            "image": final_surf_to_store, "game_type_id": game_type_id,
-            "tooltip": tooltip, "category": category,
-            "original_size_pixels": (original_w, original_h),
-            "places_asset_key": asset_info.get("places_asset_key"),
-            "colorable": asset_info.get("colorable", False), 
-            "render_mode": asset_info.get("render_mode"),
-            "half_type": asset_info.get("half_type"),
-            "base_color_tuple": asset_info.get("base_color_tuple"),
-            "surface_params_dims_color": asset_info.get("surface_params")
-        }
-    # print(f"INFO ASSETS: Palette loading done. Success: {successful_loads}, Failed: {failed_loads}.")
-    _calculate_asset_palette_total_height(editor_state)
+        if pixmap_for_palette and pixmap_for_palette.size() != target_thumb_size:
+             pixmap_for_palette = pixmap_for_palette.scaled(target_thumb_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation) # Corrected
+
+        cursor_base_pixmap = get_asset_pixmap(
+            asset_key, asset_info_def,
+            QSize(original_w, original_h)
+        )
+
+        if cursor_base_pixmap and not cursor_base_pixmap.isNull():
+            temp_image_for_cursor = cursor_base_pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32_Premultiplied)
+            painter = QPainter(temp_image_for_cursor)
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
+            painter.fillRect(temp_image_for_cursor.rect(), QColor(0, 0, 0, ED_CONFIG.CURSOR_ASSET_ALPHA))
+            painter.end()
+            pixmap_for_cursor = QPixmap.fromImage(temp_image_for_cursor)
+        else:
+            pixmap_for_cursor = _create_colored_pixmap(original_w, original_h, fallback_blue)
 
 
-def _calculate_asset_palette_total_height(editor_state: EditorState):
-    # This calculates the height of the *scrollable content* below the minimap
-    current_calc_y = ED_CONFIG.ASSET_PALETTE_ITEM_PADDING # Start padding for the first category
+        if pixmap_for_palette and not pixmap_for_palette.isNull():
+            asset_data_entry["q_pixmap"] = pixmap_for_palette
+            asset_data_entry["q_pixmap_cursor"] = pixmap_for_cursor
+            editor_state.assets_palette[asset_key] = asset_data_entry
+            successful_loads += 1
+        else:
+            logger.error(f"Failed to generate final palette pixmap for '{asset_key}'.")
+            fallback_pixmap = _create_colored_pixmap(target_thumb_size.width(), target_thumb_size.height(), fallback_red)
+            painter = QPainter(fallback_pixmap); painter.setPen(QColor(0,0,0)); painter.drawLine(0,0, fallback_pixmap.width(), fallback_pixmap.height()); painter.drawLine(0,fallback_pixmap.height(), fallback_pixmap.width(), 0); painter.end()
+            asset_data_entry["q_pixmap"] = fallback_pixmap
+            asset_data_entry["q_pixmap_cursor"] = fallback_pixmap.copy()
+            editor_state.assets_palette[asset_key] = asset_data_entry
+            failed_loads += 1
 
-    font_category = ED_CONFIG.FONT_CONFIG.get("medium")
-    font_tooltip = ED_CONFIG.FONT_CONFIG.get("small")
-    cat_font_h = font_category.get_height() if font_category else 28
-    tip_font_h = font_tooltip.get_height() if font_tooltip else 20
-
-    tooltip_text_v_offset = getattr(ED_CONFIG, 'ASSET_PALETTE_TOOLTIP_TEXT_V_OFFSET', 2)
-
-    categories_in_order = getattr(ED_CONFIG, 'EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER',
-                                  ["tool", "tile", "hazard", "item", "enemy", "spawn", "unknown"])
-
-    categorized_assets_present: Dict[str, List[Dict[str, Any]]] = {cat_name: [] for cat_name in categories_in_order}
-    # Ensure all expected keys exist
-    for cat_name in ["tool", "tile", "hazard", "item", "enemy", "spawn", "unknown"]:
-        if cat_name not in categorized_assets_present:
-            categorized_assets_present[cat_name] = []
-
-
-    for asset_key, data in editor_state.assets_palette.items():
-        category_name = data.get("category", "unknown")
-        categorized_assets_present.get(category_name, categorized_assets_present["unknown"]).append(data)
-
-    for category_name in categories_in_order:
-        assets_in_this_category = categorized_assets_present.get(category_name, [])
-        if not assets_in_this_category:
-            continue
-
-        current_calc_y += cat_font_h + ED_CONFIG.ASSET_PALETTE_ITEM_PADDING # Height for category title
-
-        if category_name == "spawn" and \
-           any(d.get("game_type_id") == "player1_spawn" for d in assets_in_this_category) and \
-           any(d.get("game_type_id") == "player2_spawn" for d in assets_in_this_category):
-            # ... (spawn specific layout logic, already uses asset_data["image"].get_height()) ...
-            p1_data = next((d for d in assets_in_this_category if d.get("game_type_id") == "player1_spawn"), None)
-            p2_data = next((d for d in assets_in_this_category if d.get("game_type_id") == "player2_spawn"), None)
-            max_img_h = 0
-            if p1_data and p1_data.get("image"): max_img_h = max(max_img_h, p1_data["image"].get_height())
-            if p2_data and p2_data.get("image"): max_img_h = max(max_img_h, p2_data["image"].get_height())
-
-            if max_img_h > 0:
-                current_calc_y += max_img_h
-                current_calc_y += tip_font_h + tooltip_text_v_offset
-                current_calc_y += ED_CONFIG.ASSET_PALETTE_ITEM_PADDING
-            assets_in_this_category = [d for d in assets_in_this_category if d.get("game_type_id") not in ["player1_spawn", "player2_spawn"]]
-
-
-        for asset_data in assets_in_this_category: # Process remaining or all other items
-            asset_img = asset_data.get("image")
-            if not asset_img:
-                continue
-            current_calc_y += asset_img.get_height()
-            current_calc_y += tip_font_h + tooltip_text_v_offset
-            current_calc_y += ED_CONFIG.ASSET_PALETTE_ITEM_PADDING
-
-        current_calc_y += ED_CONFIG.ASSET_PALETTE_ITEM_PADDING # Extra padding after the entire category block
-
-    asset_palette_bottom_overhang_px = getattr(ED_CONFIG, 'ASSET_PALETTE_BOTTOM_OVERHANG_PX', 72)
-    current_calc_y += asset_palette_bottom_overhang_px
-
-    editor_state.total_asset_palette_content_height = current_calc_y # This is for the scrollable part
-    # print(f"INFO ASSETS: Calculated total asset palette SCROLLABLE content height: {editor_state.total_asset_palette_content_height}")
+    logger.info(f"Palette asset loading complete. Success: {successful_loads}, Failed: {failed_loads}.")

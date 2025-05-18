@@ -1,9 +1,11 @@
-# editor/editor_history.py
+# editor_history.py
 # -*- coding: utf-8 -*-
 """
+## version 2.0.0 (PySide6 Conversion)
 Manages undo/redo functionality for the Level Editor.
+Core logic remains largely UI-agnostic.
 """
-import pygame
+# import pygame # No longer needed for set_caption here
 import json
 import logging
 from typing import List, Dict, Any, Optional, cast
@@ -23,11 +25,11 @@ def get_map_snapshot(editor_state: EditorState) -> Dict[str, Any]:
         "map_height_tiles": editor_state.map_height_tiles,
         "grid_size": editor_state.grid_size,
         "background_color": list(editor_state.background_color),
-        "placed_objects": [obj.copy() for obj in editor_state.placed_objects], # Deep copy list of dicts
-        "camera_offset_x": editor_state.camera_offset_x,
-        "camera_offset_y": editor_state.camera_offset_y,
+        "placed_objects": [obj.copy() for obj in editor_state.placed_objects],
+        "camera_offset_x": editor_state.camera_offset_x, # Still relevant for QGraphicsView scene coords
+        "camera_offset_y": editor_state.camera_offset_y, # Still relevant for QGraphicsView scene coords
+        "zoom_level": editor_state.zoom_level, # NEW: Store zoom level for Qt MapView
         "show_grid": editor_state.show_grid,
-        # Ensure asset_specific_variables are deep copied if they contain mutable structures
         "asset_specific_variables": {k: v.copy() for k, v in editor_state.asset_specific_variables.items()}
     }
     # Convert Pygame color tuples in placed_objects to lists for JSON consistency
@@ -41,131 +43,126 @@ def restore_map_from_snapshot(editor_state: EditorState, snapshot: Dict[str, Any
     editor_state.map_name_for_function = snapshot.get("map_name_for_function", "untitled_map")
     editor_state.map_width_tiles = snapshot.get("map_width_tiles", ED_CONFIG.DEFAULT_MAP_WIDTH_TILES)
     editor_state.map_height_tiles = snapshot.get("map_height_tiles", ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES)
-    editor_state.grid_size = snapshot.get("grid_size", ED_CONFIG.DEFAULT_GRID_SIZE)
-    
-    bg_color_data = snapshot.get("background_color", list(ED_CONFIG.DEFAULT_BACKGROUND_COLOR))
-    editor_state.background_color = tuple(cast(List[int], bg_color_data)) # type: ignore
+    editor_state.grid_size = snapshot.get("grid_size", ED_CONFIG.BASE_GRID_SIZE) # Use BASE_GRID_SIZE
 
-    # Ensure override_color is a tuple after loading
+    bg_color_data = snapshot.get("background_color", list(ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE))
+    editor_state.background_color = tuple(cast(List[int], bg_color_data))
+
     loaded_objects = snapshot.get("placed_objects", [])
     restored_objects = []
     for obj_data in loaded_objects:
         new_obj = obj_data.copy()
         if "override_color" in new_obj and isinstance(new_obj["override_color"], list):
-            new_obj["override_color"] = tuple(new_obj["override_color"]) # type: ignore
+            new_obj["override_color"] = tuple(new_obj["override_color"])
+        # Ensure 'properties' key exists if asset has editable vars, even if empty
+        game_id = new_obj.get("game_type_id")
+        if game_id and game_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES and "properties" not in new_obj:
+            new_obj["properties"] = {} # Initialize if missing
         restored_objects.append(new_obj)
     editor_state.placed_objects = restored_objects
 
     editor_state.camera_offset_x = snapshot.get("camera_offset_x", 0)
     editor_state.camera_offset_y = snapshot.get("camera_offset_y", 0)
+    editor_state.zoom_level = snapshot.get("zoom_level", 1.0) # NEW: Restore zoom level
     editor_state.show_grid = snapshot.get("show_grid", True)
-    
-    # Restore asset_specific_variables
+
     editor_state.asset_specific_variables = {k: v.copy() for k, v in snapshot.get("asset_specific_variables", {}).items()}
 
-    editor_state.recreate_map_content_surface()
-    editor_state.minimap_needs_regeneration = True
+    # UI updates are now triggered by the caller of undo/redo (e.g., EditorMainWindow)
+    # This includes refreshing the MapViewWidget, minimap, and window title.
+    # editor_state.recreate_map_content_surface() # Pygame specific
+    # editor_state.minimap_needs_regeneration = True # Minimap refresh signal would be handled by Qt minimap widget
     editor_state.unsaved_changes = True # Restoring state implies a change from current
-    pygame.display.set_caption(f"Editor - {editor_state.map_name_for_function}.py*")
-    logger.info(f"Map state restored. Unsaved changes: {editor_state.unsaved_changes}")
+    # pygame.display.set_caption(f"Editor - {editor_state.map_name_for_function}.py*") # Handled by EditorMainWindow
+
+    logger.info(f"Map state restored from snapshot. Unsaved changes: {editor_state.unsaved_changes}")
 
 
 def push_undo_state(editor_state: EditorState):
     """Saves the current map state to the undo stack."""
-    if not hasattr(editor_state, 'undo_stack'):
+    if not hasattr(editor_state, 'undo_stack'): # Should be initialized in EditorState.__init__
         editor_state.undo_stack = []
-    if not hasattr(editor_state, 'redo_stack'):
+    if not hasattr(editor_state, 'redo_stack'): # Should be initialized in EditorState.__init__
         editor_state.redo_stack = []
 
     snapshot = get_map_snapshot(editor_state)
     try:
-        serialized_snapshot = json.dumps(snapshot) # Test serialization
+        # Test serialization (optional, but good for catching issues early)
+        # json.dumps(snapshot)
+        # Store the Python dict directly; serialization to string is only for file saving.
+        # Storing dicts avoids repeated dumps/loads for undo/redo.
+        editor_state.undo_stack.append(snapshot) # Store the dict, not JSON string
     except TypeError as e:
-        logger.error(f"Failed to serialize map state for undo: {e}. Snapshot: {snapshot}", exc_info=True)
-        editor_state.set_status_message("Error: Could not save undo state (serialization failed).", 3)
+        logger.error(f"Failed to create map state snapshot for undo: {e}. Snapshot: {snapshot}", exc_info=True)
+        # editor_state.set_status_message("Error: Could not save undo state (snapshot failed).", 3) # Handled by MainWindow
         return
 
-    editor_state.undo_stack.append(serialized_snapshot)
     if len(editor_state.undo_stack) > MAX_HISTORY_STATES:
         editor_state.undo_stack.pop(0)
-    
-    # Clear redo stack whenever a new action is performed
+
     if editor_state.redo_stack:
         editor_state.redo_stack.clear()
         logger.debug("Cleared redo stack due to new action.")
     logger.debug(f"Pushed state to undo stack. Size: {len(editor_state.undo_stack)}")
 
-def undo(editor_state: EditorState):
-    """Restores the previous map state from the undo stack."""
+def undo(editor_state: EditorState) -> bool:
+    """
+    Restores the previous map state from the undo stack.
+    Returns True if undo was performed, False otherwise.
+    """
     if not hasattr(editor_state, 'undo_stack') or not editor_state.undo_stack:
-        editor_state.set_status_message("Nothing to undo.", 2)
         logger.debug("Undo called, but undo stack is empty.")
-        return
+        return False
 
-    # Save current state to redo stack before undoing
     current_snapshot_for_redo = get_map_snapshot(editor_state)
     try:
-        serialized_current_snapshot = json.dumps(current_snapshot_for_redo)
+        # json.dumps(current_snapshot_for_redo) # Test serialization (optional)
+        if not hasattr(editor_state, 'redo_stack'): editor_state.redo_stack = []
+        editor_state.redo_stack.append(current_snapshot_for_redo) # Store dict
+        if len(editor_state.redo_stack) > MAX_HISTORY_STATES:
+            editor_state.redo_stack.pop(0)
     except TypeError as e:
-        logger.error(f"Failed to serialize current map state for redo: {e}", exc_info=True)
-        editor_state.set_status_message("Error: Could not save redo state (serialization failed).", 3)
-        return
+        logger.error(f"Failed to create current map state snapshot for redo: {e}", exc_info=True)
+        return False # Cannot proceed if current state can't be saved for redo
 
-    if not hasattr(editor_state, 'redo_stack'):
-        editor_state.redo_stack = []
-    editor_state.redo_stack.append(serialized_current_snapshot)
-    if len(editor_state.redo_stack) > MAX_HISTORY_STATES:
-        editor_state.redo_stack.pop(0)
-
-    # Pop from undo stack and restore
-    serialized_snapshot_to_restore = editor_state.undo_stack.pop()
+    snapshot_to_restore = editor_state.undo_stack.pop() # This is a dict
     try:
-        snapshot_to_restore = json.loads(serialized_snapshot_to_restore)
         restore_map_from_snapshot(editor_state, snapshot_to_restore)
-        editor_state.set_status_message("Undo successful.", 2)
         logger.info(f"Undo successful. Undo stack size: {len(editor_state.undo_stack)}, Redo stack size: {len(editor_state.redo_stack)}")
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to decode snapshot from undo stack: {e}", exc_info=True)
-        editor_state.set_status_message("Error: Could not restore undo state (deserialization failed).", 3)
-        # Attempt to put the problematic state back if something went wrong, or just log and lose it
-        # For simplicity, we'll lose it from undo stack to prevent repeated errors. Redo stack still has previous current.
+        return True
     except Exception as e:
         logger.error(f"Unexpected error during undo restore: {e}", exc_info=True)
-        editor_state.set_status_message("Error: Unexpected error during undo.", 3)
+        # Attempt to put the problematic state back onto undo stack if restore failed mid-way?
+        # Or just log and lose it. For simplicity, we'll consider it popped.
+        # The redo stack still has the state *before* this failed undo.
+        return False
 
 
-def redo(editor_state: EditorState):
-    """Restores the next map state from the redo stack."""
+def redo(editor_state: EditorState) -> bool:
+    """
+    Restores the next map state from the redo stack.
+    Returns True if redo was performed, False otherwise.
+    """
     if not hasattr(editor_state, 'redo_stack') or not editor_state.redo_stack:
-        editor_state.set_status_message("Nothing to redo.", 2)
         logger.debug("Redo called, but redo stack is empty.")
-        return
+        return False
 
-    # Save current state to undo stack before redoing
     current_snapshot_for_undo = get_map_snapshot(editor_state)
     try:
-        serialized_current_snapshot = json.dumps(current_snapshot_for_undo)
+        # json.dumps(current_snapshot_for_undo) # Test serialization (optional)
+        if not hasattr(editor_state, 'undo_stack'): editor_state.undo_stack = []
+        editor_state.undo_stack.append(current_snapshot_for_undo) # Store dict
+        if len(editor_state.undo_stack) > MAX_HISTORY_STATES:
+            editor_state.undo_stack.pop(0)
     except TypeError as e:
-        logger.error(f"Failed to serialize current map state for undo (during redo): {e}", exc_info=True)
-        editor_state.set_status_message("Error: Could not save undo state for redo (serialization failed).", 3)
-        return
-        
-    if not hasattr(editor_state, 'undo_stack'):
-        editor_state.undo_stack = []
-    editor_state.undo_stack.append(serialized_current_snapshot)
-    if len(editor_state.undo_stack) > MAX_HISTORY_STATES:
-        editor_state.undo_stack.pop(0)
+        logger.error(f"Failed to create current map state for undo (during redo): {e}", exc_info=True)
+        return False
 
-    # Pop from redo stack and restore
-    serialized_snapshot_to_restore = editor_state.redo_stack.pop()
+    snapshot_to_restore = editor_state.redo_stack.pop() # This is a dict
     try:
-        snapshot_to_restore = json.loads(serialized_snapshot_to_restore)
         restore_map_from_snapshot(editor_state, snapshot_to_restore)
-        editor_state.set_status_message("Redo successful.", 2)
         logger.info(f"Redo successful. Undo stack size: {len(editor_state.undo_stack)}, Redo stack size: {len(editor_state.redo_stack)}")
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to decode snapshot from redo stack: {e}", exc_info=True)
-        editor_state.set_status_message("Error: Could not restore redo state (deserialization failed).", 3)
+        return True
     except Exception as e:
         logger.error(f"Unexpected error during redo restore: {e}", exc_info=True)
-        editor_state.set_status_message("Error: Unexpected error during redo.", 3)
+        return False
