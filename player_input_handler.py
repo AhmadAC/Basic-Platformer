@@ -1,7 +1,7 @@
 # player_input_handler.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.1.5 (Reset/Pause events process even if player is dead/stunned)
+version 1.0.1.6 (Block game actions if player is frozen/aflame/deflaming)
 Handles processing of player input and translating it to actions.
 """
 import pygame
@@ -19,12 +19,18 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
     current_time_ms = pygame.time.get_ticks()
     player_id_str = f"P{player.player_id}"
 
+    # Game actions are blocked if player is dead, in hit stun, petrified, frozen, or actively deflaming/aflame (unless it's a specific interruptible anim)
     is_input_blocked_for_game_actions = player.is_dead or \
                                        (player.is_taking_hit and current_time_ms - player.hit_timer < player.hit_duration) or \
-                                       getattr(player, 'is_petrified', False)
+                                       getattr(player, 'is_petrified', False) or \
+                                       getattr(player, 'is_frozen', False) or \
+                                       (getattr(player, 'is_aflame', False) and player.state == 'aflame') or \
+                                       (getattr(player, 'is_deflaming', False) and player.state == 'deflame') or \
+                                       (getattr(player, 'is_defrosting', False) and player.state == 'defrost')
 
-    action_state = {action: False for action in game_config.GAME_ACTIONS} # For continuous holds
-    action_events = {action: False for action in game_config.GAME_ACTIONS} # For single-press events
+
+    action_state = {action: False for action in game_config.GAME_ACTIONS} 
+    action_events = {action: False for action in game_config.GAME_ACTIONS} 
 
     is_joystick_input_type = player.control_scheme and player.control_scheme.startswith("joystick_")
     joystick_instance = None
@@ -37,24 +43,19 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
             is_joystick_input_type = False
 
     # --- Part 1: Process universal events (reset, pause) regardless of player game action state ---
-    # This loop populates action_events["reset"] and action_events["pause"] if they occur
     for event in pygame_events:
-        if not is_joystick_input_type: # Keyboard
+        if not is_joystick_input_type: 
             if event.type == pygame.KEYDOWN:
-                # Check for "reset"
-                # P1/P2 specific reset keys (K_6, K_KP_6) are mapped to player.shadow_key
-                # The generic "reset" action from key_map will also work.
                 if (player.shadow_key and event.key == player.shadow_key) or \
                    (active_mappings.get("reset") == event.key):
                     action_events["reset"] = True
                     if input_print_limiter.can_print(f"kb_event_{player_id_str}_reset"):
                         print(f"INPUT_HANDLER ({player_id_str}): KB KeyDown '{pygame.key.name(event.key)}' -> Event 'reset'")
-                # Check for "pause" (mapped to MENU_RETURN)
                 elif active_mappings.get("pause") == event.key:
                     action_events["pause"] = True
                     if input_print_limiter.can_print(f"kb_event_{player_id_str}_pause"):
                         print(f"INPUT_HANDLER ({player_id_str}): KB KeyDown '{pygame.key.name(event.key)}' -> Event 'pause'")
-        else: # Joystick
+        else: 
             if joystick_instance:
                 event_is_for_this_joystick = False
                 if event.type in [pygame.JOYAXISMOTION, pygame.JOYBALLMOTION, pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP, pygame.JOYHATMOTION]:
@@ -62,7 +63,6 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
                     elif hasattr(event, 'joy') and event.joy == player.joystick_id_idx: event_is_for_this_joystick = True
 
                 if event_is_for_this_joystick:
-                    # Check for reset/pause events from joystick
                     for action_name_check in ["reset", "pause"]:
                         mapping = active_mappings.get(action_name_check)
                         if isinstance(mapping, dict):
@@ -90,16 +90,15 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
         player.acc.x = 0
         player.is_trying_to_move_left = False
         player.is_trying_to_move_right = False
-        # Return only the potentially populated reset/pause events
         return {"reset": action_events.get("reset", False), "pause": action_events.get("pause", False)}
 
-    # --- Part 2: Populate action_state (continuous held inputs) for non-blocked player ---
-    if not is_joystick_input_type: # Keyboard
+    # --- Part 2: Populate action_state (continuous held inputs) ---
+    if not is_joystick_input_type: 
         for action_name in ["left", "right", "up", "down"]:
             key_code = active_mappings.get(action_name)
             if key_code is not None and isinstance(key_code, int):
                 action_state[action_name] = keys_pressed_from_pygame[key_code]
-    else: # Joystick
+    else: 
         if joystick_instance:
             for action_name in ["left", "right", "up", "down"]:
                 mapping_details = active_mappings.get(action_name)
@@ -116,9 +115,8 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
     
     current_joystick_up_state_for_jump = action_state.get("up", False) if is_joystick_input_type else False
 
-    # --- Part 3: Populate remaining action_events (pressed-once) for non-blocked player ---
+    # --- Part 3: Populate remaining action_events (pressed-once) ---
     for event in pygame_events:
-        # Skip reset/pause events as they are already handled in Part 1
         is_reset_or_pause_event_key = False
         if not is_joystick_input_type and event.type == pygame.KEYDOWN:
             if (player.shadow_key and event.key == player.shadow_key) or \
@@ -130,12 +128,8 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
                 if (isinstance(active_mappings.get("reset"), dict) and active_mappings["reset"].get("type") == "button" and active_mappings["reset"].get("id") == event.button) or \
                    (isinstance(active_mappings.get("pause"), dict) and active_mappings["pause"].get("type") == "button" and active_mappings["pause"].get("id") == event.button):
                     is_reset_or_pause_event_key = True
-            # Similar checks for hat/axis if reset/pause mapped to them
+        if is_reset_or_pause_event_key: continue
 
-        if is_reset_or_pause_event_key:
-            continue # Already handled in Part 1
-
-        # Process other game actions
         if not is_joystick_input_type:
             if event.type == pygame.KEYDOWN:
                 for action_name, key_code in active_mappings.items():
@@ -148,7 +142,7 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
                         if input_print_limiter.can_print(f"kb_event_{player_id_str}_{action_name}_gameaction"):
                              print(f"INPUT_HANDLER ({player_id_str}): KB KeyDown '{pygame.key.name(event.key)}' -> Event '{action_name}' (Game Action)")
                         break
-        else: # Joystick
+        else: 
             if joystick_instance:
                 event_is_for_this_joystick = False
                 if event.type in [pygame.JOYAXISMOTION, pygame.JOYBALLMOTION, pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP, pygame.JOYHATMOTION]:
@@ -218,7 +212,8 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
     player_intends_horizontal_move = False
     can_control_horizontal = not (player.is_dashing or player.is_rolling or player.is_sliding or player.on_ladder or
                                  (player.is_attacking and player.state.endswith('_nm')) or
-                                 player.state in ['turn','hit','death','death_nm','wall_climb','wall_climb_nm','wall_hang'])
+                                 player.state in ['turn','hit','death','death_nm','wall_climb','wall_climb_nm','wall_hang',
+                                                  'aflame', 'deflame', 'frozen', 'defrost']) # Add status effects
     if can_control_horizontal:
         if player.is_trying_to_move_left and not player.is_trying_to_move_right:
             player.acc.x = -C.PLAYER_ACCEL; player_intends_horizontal_move = True
@@ -237,7 +232,8 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
     joystick_up_just_pressed_for_jump = is_joystick_input_type and current_joystick_up_state_for_jump and not getattr(player, '_prev_joystick_up_state', False)
     if action_events.get("jump") or joystick_up_just_pressed_for_jump:
         can_jump_now = not player.is_attacking and not player.is_rolling and not player.is_sliding and \
-                       not player.is_dashing and player.state not in ['turn','hit','death','death_nm']
+                       not player.is_dashing and player.state not in ['turn','hit','death','death_nm', 
+                                                                     'aflame', 'deflame', 'frozen', 'defrost']
         if can_jump_now:
             if player.is_crouching:
                 if player.can_stand_up(platforms_group): player.is_crouching = False
@@ -265,13 +261,15 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
                                  abs(player.vel.x) > C.PLAYER_RUN_SPEED_LIMIT * 0.6 and \
                                  not player.is_sliding and not player.is_attacking and \
                                  not player.is_rolling and not player.is_dashing and \
-                                 not player.on_ladder and player.state not in ['turn','hit']
+                                 not player.on_ladder and player.state not in ['turn','hit', 
+                                                                               'aflame', 'deflame', 'frozen', 'defrost']
             if can_slide_now:
                 player.set_state('slide_trans_start' if player.animations.get('slide_trans_start') else 'slide')
             else:
                 can_crouch_now = player.on_ground and not player.on_ladder and not player.is_sliding and \
                                    not (player.is_dashing or player.is_rolling or player.is_attacking or \
-                                        player.state in ['turn','hit','death','death_nm'])
+                                        player.state in ['turn','hit','death','death_nm', 
+                                                         'aflame', 'deflame', 'frozen', 'defrost'])
                 if can_crouch_now:
                     player.is_crouching = True
                     player.set_state('crouch_trans' if player.animations.get('crouch_trans') else 'crouch')
@@ -281,7 +279,8 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
 
     if action_events.get("attack1"):
         can_attack_melee = not player.is_attacking and not player.is_dashing and not player.is_rolling and \
-                           not player.is_sliding and not player.on_ladder and player.state not in ['turn','hit']
+                           not player.is_sliding and not player.on_ladder and \
+                           player.state not in ['turn','hit', 'aflame', 'deflame', 'frozen', 'defrost']
         if can_attack_melee:
             player.attack_type = 4 if player.is_crouching else 1
             anim_key_attack1 = 'crouch_attack' if player.is_crouching else \
@@ -290,7 +289,8 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
 
     if action_events.get("attack2"):
         can_attack_melee2 = not player.is_dashing and not player.is_rolling and not player.is_sliding and \
-                            not player.on_ladder and player.state not in ['turn','hit']
+                            not player.on_ladder and player.state not in ['turn','hit', 
+                                                                         'aflame', 'deflame', 'frozen', 'defrost']
         if can_attack_melee2:
             is_moving_for_attack2 = player_intends_horizontal_move
             if player.is_crouching and not player.is_attacking :
@@ -302,12 +302,14 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
 
     if action_events.get("dash"):
         if player.on_ground and not player.is_dashing and not player.is_rolling and not player.is_attacking and \
-           not player.is_crouching and not player.on_ladder and player.state not in ['turn','hit']:
+           not player.is_crouching and not player.on_ladder and \
+           player.state not in ['turn','hit', 'aflame', 'deflame', 'frozen', 'defrost']:
             player.set_state('dash')
 
     if action_events.get("roll"):
         if player.on_ground and not player.is_rolling and not player.is_dashing and not player.is_attacking and \
-           not player.is_crouching and not player.on_ladder and player.state not in ['turn','hit']:
+           not player.is_crouching and not player.on_ladder and \
+           player.state not in ['turn','hit', 'aflame', 'deflame', 'frozen', 'defrost']:
             player.set_state('roll')
 
     if action_events.get("interact"):
@@ -320,7 +322,8 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
 
     can_fire_projectiles = not player.is_crouching and not player.is_attacking and not player.is_dashing and \
                            not player.is_rolling and not player.is_sliding and not player.on_ladder and \
-                           player.state not in ['turn','hit','death','death_nm','wall_climb','wall_hang','wall_slide']
+                           player.state not in ['turn','hit','death','death_nm','wall_climb','wall_hang','wall_slide',
+                                                'aflame', 'deflame', 'frozen', 'defrost']
     if can_fire_projectiles:
         if action_events.get("projectile1"): player.fire_fireball()
         elif action_events.get("projectile2"): player.fire_poison()
@@ -333,7 +336,8 @@ def process_player_input_logic(player, keys_pressed_from_pygame, pygame_events,
                                         player.is_taking_hit or player.state in [
                                             'jump','turn','death','death_nm','hit','jump_fall_trans', 'crouch_trans',
                                             'slide_trans_start','slide_trans_end', 'wall_climb','wall_climb_nm',
-                                            'wall_hang','wall_slide', 'ladder_idle','ladder_climb']
+                                            'wall_hang','wall_slide', 'ladder_idle','ladder_climb',
+                                            'aflame', 'deflame', 'frozen', 'defrost'] 
     if not is_in_override_state_for_movement:
         if player.on_ladder:
             if abs(player.vel.y) > 0.1 and player.state != 'ladder_climb': player.set_state('ladder_climb')

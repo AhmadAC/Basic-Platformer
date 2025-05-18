@@ -1,7 +1,7 @@
 # enemy_status_effects.py
 # -*- coding: utf-8 -*-
 """
-# version 1.0.0.1
+# version 1.0.0.2 (Ensure aflame/deflame also return True from main update)
 Handles the application and management of status effects for enemies,
 such as aflame, frozen, petrified, and stomp death.
 """
@@ -18,7 +18,7 @@ except ImportError:
         if hasattr(enemy, 'set_state'): # If the old method still exists on enemy
             enemy.set_state(new_state)
         else:
-            print(f"CRITICAL STATUS_EFFECTS: enemy_state_handler.set_enemy_state not found for P{enemy.enemy_id}")
+            print(f"CRITICAL STATUS_EFFECTS: enemy_state_handler.set_enemy_state not found for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')}")
 
 
 try:
@@ -36,28 +36,28 @@ except ImportError:
 
 def apply_aflame_effect(enemy):
     """Applies the 'aflame' status effect to the enemy."""
-    if enemy.is_aflame or enemy.is_deflaming or enemy.is_dead or enemy.is_petrified:
-        debug(f"Enemy {enemy.enemy_id}: apply_aflame_effect called but already in conflicting state. Ignoring.")
+    if enemy.is_aflame or enemy.is_deflaming or enemy.is_dead or enemy.is_petrified or enemy.is_frozen or enemy.is_defrosting:
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_aflame_effect called but already in conflicting state. Ignoring.")
         return
 
-    debug(f"Enemy {enemy.enemy_id} ({enemy.color_name}): Applying aflame effect.")
-    # The set_enemy_state function will handle setting flags and timers.
+    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} ({getattr(enemy, 'color_name', 'N/A')}): Applying aflame effect.")
+    
+    enemy.has_ignited_another_enemy_this_cycle = False 
     set_enemy_state(enemy, 'aflame')
-    # Additional direct effects if needed (e.g., immediate slowdown)
-    enemy.vel.x *= 0.5
-    enemy.is_attacking = False # Interrupt current attack
+    # Speed change is handled by AI handler checking is_aflame flag.
+    # Interrupt current attack
+    enemy.is_attacking = False 
     enemy.attack_type = 0
 
 
 def apply_freeze_effect(enemy):
     """Applies the 'frozen' status effect to the enemy."""
-    if enemy.is_frozen or enemy.is_defrosting or enemy.is_dead or enemy.is_petrified:
-        debug(f"Enemy {enemy.enemy_id}: apply_freeze_effect called but already in conflicting state. Ignoring.")
+    if enemy.is_frozen or enemy.is_defrosting or enemy.is_dead or enemy.is_petrified or enemy.is_aflame or enemy.is_deflaming:
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_freeze_effect called but already in conflicting state. Ignoring.")
         return
 
-    debug(f"Enemy {enemy.enemy_id} ({enemy.color_name}): Applying freeze effect.")
+    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} ({getattr(enemy, 'color_name', 'N/A')}): Applying freeze effect.")
     set_enemy_state(enemy, 'frozen')
-    # Additional direct effects
     enemy.vel.xy = 0,0
     enemy.acc.x = 0
     enemy.is_attacking = False
@@ -67,37 +67,32 @@ def apply_freeze_effect(enemy):
 def petrify_enemy(enemy):
     """Applies the 'petrified' status effect to the enemy."""
     if enemy.is_petrified or (enemy.is_dead and not enemy.is_petrified):
-        debug(f"Enemy {enemy.enemy_id}: petrify_enemy called but already petrified or truly dead. Ignoring.")
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: petrify_enemy called but already petrified or truly dead. Ignoring.")
         return
-    debug(f"Enemy {enemy.enemy_id} is being petrified by petrify_enemy.")
-    # facing_at_petrification should be set before calling set_enemy_state
+    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} is being petrified by petrify_enemy.")
     enemy.facing_at_petrification = enemy.facing_right
     set_enemy_state(enemy, 'petrified')
-    # Additional direct effects
     enemy.vel.x = 0
     enemy.acc.x = 0
-    # Gravity is handled by physics update if petrified
 
 
 def smash_petrified_enemy(enemy):
     """Transitions a petrified enemy to the 'smashed' state."""
     if enemy.is_petrified and not enemy.is_stone_smashed:
-        debug(f"Petrified Enemy {enemy.enemy_id} is being smashed by smash_petrified_enemy.")
+        debug(f"Petrified Enemy {getattr(enemy, 'enemy_id', 'N/A')} is being smashed by smash_petrified_enemy.")
         set_enemy_state(enemy, 'smashed')
     else:
-        debug(f"Enemy {enemy.enemy_id}: smash_petrified_enemy called but not petrified or already smashed.")
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: smash_petrified_enemy called but not petrified or already smashed.")
 
 
 def stomp_kill_enemy(enemy):
     """Initiates the stomp death sequence for the enemy."""
-    if enemy.is_dead or enemy.is_stomp_dying or enemy.is_petrified:
-        debug(f"Enemy {enemy.enemy_id}: stomp_kill_enemy called but already in conflicting state. Ignoring.")
+    if enemy.is_dead or enemy.is_stomp_dying or enemy.is_petrified or enemy.is_aflame or enemy.is_frozen:
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: stomp_kill_enemy called but already in conflicting state. Ignoring.")
         return
-    debug(f"Enemy {enemy.enemy_id}: Stomp kill initiated by stomp_kill_enemy.")
-    # set_enemy_state('stomp_death') will handle flags and timers.
+    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Stomp kill initiated by stomp_kill_enemy.")
     set_enemy_state(enemy, 'stomp_death')
-    # Additional direct effects
-    enemy.current_health = 0 # Ensure health is 0
+    enemy.current_health = 0 
     enemy.vel.xy = 0,0
     enemy.acc.xy = 0,0
 
@@ -111,77 +106,82 @@ def update_enemy_status_effects(enemy, current_time_ms, platforms_group):
     Returns True if a status effect is active and handling the update (blocking further AI/physics),
     False otherwise.
     """
+    enemy_id_log = getattr(enemy, 'enemy_id', 'Unknown')
 
     # --- Petrified and Smashed State Handling (Highest Priority) ---
     if enemy.is_stone_smashed:
         if enemy.death_animation_finished or \
            (current_time_ms - enemy.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS):
-            debug(f"Smashed stone Enemy {enemy.enemy_id} duration/animation ended. Killing sprite.")
-            enemy.kill() # Remove from sprite groups
-        # Animation is handled by enemy_animation_handler
-        return True # Smashed state takes precedence
+            debug(f"Smashed stone Enemy {enemy_id_log} duration/animation ended. Killing sprite.")
+            enemy.kill() 
+        return True 
 
-    if enemy.is_petrified: # Is petrified but not smashed
-        # Gravity for petrified enemies is handled in the main physics update
-        # enemy_physics_handler will check is_petrified and apply gravity if true.
-        # Animation is handled by enemy_animation_handler
-        return True # Petrified state takes precedence
+    if enemy.is_petrified: 
+        # Apply gravity if not on ground
+        if not enemy.on_ground:
+            enemy.vel.y += getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.7)) # Use enemy gravity, fallback to player
+            enemy.vel.y = min(enemy.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18))
+            enemy.pos.y += enemy.vel.y
+            enemy.rect.midbottom = (round(enemy.pos.x), round(enemy.pos.y))
+            # Basic ground collision for falling stone
+            for platform_sprite in pygame.sprite.spritecollide(enemy, platforms_group, False):
+                 if enemy.vel.y > 0 and enemy.rect.bottom > platform_sprite.rect.top and \
+                    (enemy.pos.y - enemy.vel.y) <= platform_sprite.rect.top + 1:
+                      enemy.rect.bottom = platform_sprite.rect.top
+                      enemy.on_ground = True; enemy.vel.y = 0; enemy.acc.y = 0
+                      enemy.pos.y = enemy.rect.bottom; break
+        return True
 
     # --- Aflame/Deflame Handling ---
     if enemy.is_aflame:
         if current_time_ms - enemy.aflame_timer_start > C.ENEMY_AFLAME_DURATION_MS:
-            debug(f"Enemy {enemy.enemy_id}: Aflame duration ended. Transitioning to deflame.")
+            debug(f"Enemy {enemy_id_log}: Aflame duration ended. Transitioning to deflame.")
             set_enemy_state(enemy, 'deflame')
-            return True # State changed, deflame will be handled next relevant update
+            return True # State changed, deflame will be handled by its own block or next update
         elif current_time_ms - enemy.aflame_damage_last_tick > C.ENEMY_AFLAME_DAMAGE_INTERVAL_MS:
-            if hasattr(enemy, 'take_damage'): # Ensure method exists
+            if hasattr(enemy, 'take_damage'): 
                 enemy.take_damage(C.ENEMY_AFLAME_DAMAGE_PER_TICK)
             enemy.aflame_damage_last_tick = current_time_ms
-        # Movement/AI for aflame is handled in enemy_ai_handler
-        return True # Aflame processing is active
+        # AI handler will manage movement speed for aflame enemies.
+        return True # Aflame processing is active, blocks normal AI/physics (handled by AI instead)
 
-    elif enemy.is_deflaming:
+    if enemy.is_deflaming: # Changed to 'if' from 'elif' to allow processing even if just transitioned from aflame
         if current_time_ms - enemy.deflame_timer_start > C.ENEMY_DEFLAME_DURATION_MS:
-            debug(f"Enemy {enemy.enemy_id}: Deflame duration ended. Transitioning to idle.")
-            set_enemy_state(enemy, 'idle')
+            debug(f"Enemy {enemy_id_log}: Deflame duration ended. Transitioning to idle.")
+            set_enemy_state(enemy, 'idle') # Default to idle after deflame
             return False # Deflame finished, allow normal processing
-        # Movement/AI for deflaming is handled in enemy_ai_handler
-        return True # Deflaming processing is active
+        # AI handler will manage movement speed for deflaming enemies.
+        return True # Deflaming processing is active, blocks normal AI/physics (handled by AI instead)
 
     # --- Stomp Death Animation Handling ---
     if enemy.is_stomp_dying:
-        # The visual scaling is handled in enemy_animation_handler.
-        # Here we just check if it should be considered "finished" for game logic.
-        if enemy.death_animation_finished: # This flag is set by the animation handler
-            debug(f"Enemy {enemy.enemy_id}: Stomp death animation reported as finished. Killing sprite.")
+        if enemy.death_animation_finished: 
+            debug(f"Enemy {enemy_id_log}: Stomp death animation reported as finished. Killing sprite.")
             enemy.kill()
-        return True # Stomp dying takes precedence
+        return True 
 
     # --- Frozen/Defrost Handling ---
     if enemy.is_frozen:
-        enemy.vel.xy = 0,0; enemy.acc.x = 0 # Ensure no movement
+        enemy.vel.xy = 0,0; enemy.acc.x = 0 
         if current_time_ms - enemy.frozen_effect_timer > C.ENEMY_FROZEN_DURATION_MS:
-            debug(f"Enemy {enemy.enemy_id}: Frozen duration ended. Transitioning to defrost.")
+            debug(f"Enemy {enemy_id_log}: Frozen duration ended. Transitioning to defrost.")
             set_enemy_state(enemy, 'defrost')
-        return True # Frozen processing is active
+        return True 
 
     if enemy.is_defrosting:
-        enemy.vel.xy = 0,0; enemy.acc.x = 0 # Ensure no movement
-        # Defrost duration is relative to when freeze started
+        enemy.vel.xy = 0,0; enemy.acc.x = 0 
         if current_time_ms - enemy.frozen_effect_timer > (C.ENEMY_FROZEN_DURATION_MS + C.ENEMY_DEFROST_DURATION_MS):
-            debug(f"Enemy {enemy.enemy_id}: Defrost duration ended. Transitioning to idle.")
+            debug(f"Enemy {enemy_id_log}: Defrost duration ended. Transitioning to idle.")
             set_enemy_state(enemy, 'idle')
-            return False # Defrost finished, allow normal processing
-        return True # Defrosting processing is active
+            return False 
+        return True 
 
     # --- Regular Death Animation Handling (if not any of the above special deaths) ---
-    if enemy.is_dead: # and not any of the above special states
-        if enemy.alive(): # Check if sprite is still in groups
+    if enemy.is_dead: 
+        if enemy.alive(): 
             if enemy.death_animation_finished:
-                debug(f"Enemy {enemy.enemy_id}: Regular death animation finished. Killing sprite.")
+                debug(f"Enemy {enemy_id_log}: Regular death animation finished. Killing sprite.")
                 enemy.kill()
-            # Physics for falling while dead (if applicable) can be in enemy_physics_handler
-            # or simplified here if death state implies no complex physics
-        return True # Dead processing takes precedence
+        return True 
 
-    return False # No overriding status effect was actively managed this frame
+    return False

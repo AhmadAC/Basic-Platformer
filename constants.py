@@ -4,7 +4,7 @@
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 1.0.0.11 (Added 'reset' to JOYSTICK_EVENT_ACTIONS)
+# version 1.0.0.12 (Added Player aflame/frozen constants and Enemy speed multipliers)
 import os
 import sys
 import pygame # For K_ constants
@@ -90,7 +90,7 @@ BLOOD_SPRITE_PATH = "characters/weapons/blood.gif"
 BLOOD_DIMENSIONS = (40, 40)
 
 # Ice (Key 5)
-ICE_DAMAGE = 10
+ICE_DAMAGE = 10 # Damage mainly from status effect, not direct impact
 ICE_SPEED = 7
 ICE_COOLDOWN = 900 # ms
 ICE_LIFESPAN = 2200 # ms
@@ -129,6 +129,8 @@ ENEMY_HIT_COOLDOWN = 500 # ms (invulnerability after being hit)
 ENEMY_HIT_BOUNCE_Y = PLAYER_JUMP_STRENGTH * 0.3
 ENEMY_STOMP_DEATH_DURATION = 300 # ms, visual duration of stomp death scale effect
 ENEMY_POST_ATTACK_PAUSE_DURATION = 200 # ms, brief pause after an enemy attack animation finishes
+ENEMY_AFLAME_SPEED_MULTIPLIER = 1.3  # NEW: Enemies move faster when aflame
+ENEMY_DEFLAME_SPEED_MULTIPLIER = 1.2 # NEW: Enemies move faster (but less so) when deflaming
 
 # --- Enemy Status Effect Constants ---
 ENEMY_AFLAME_DURATION_MS = 3000
@@ -140,6 +142,15 @@ ENEMY_DEFROST_DURATION_MS = 1000
 
 # --- Petrification Constants ---
 STONE_SMASHED_DURATION_MS = 5000 # Time for smashed stone to disappear (Player and Statue)
+
+
+# --- Player Status Effect Constants --- NEW SECTION
+PLAYER_AFLAME_DURATION_MS = 2500
+PLAYER_DEFLAME_DURATION_MS = 1500
+PLAYER_AFLAME_DAMAGE_PER_TICK = 3 # Player takes 3 damage per second while aflame
+PLAYER_AFLAME_DAMAGE_INTERVAL_MS = 1000
+PLAYER_FROZEN_DURATION_MS = 2800
+PLAYER_DEFROST_DURATION_MS = 1200
 
 
 # --- Colors ---
@@ -223,7 +234,7 @@ P1_POISON_KEY = pygame.K_2
 P1_BOLT_KEY = pygame.K_3
 P1_BLOOD_KEY = pygame.K_4
 P1_ICE_KEY = pygame.K_5
-P1_SHADOW_PROJECTILE_KEY = pygame.K_6
+P1_SHADOW_PROJECTILE_KEY = pygame.K_6 # This is also P1 Reset Key
 # P1_GREY_PROJECTILE_KEY = pygame.K_7
 P1_GREY_PROJECTILE_KEY = pygame.K_1
 
@@ -233,7 +244,7 @@ P2_POISON_KEY = pygame.K_KP_2
 P2_BOLT_KEY = pygame.K_KP_3
 P2_BLOOD_KEY = pygame.K_KP_4
 P2_ICE_KEY = pygame.K_KP_5
-P2_SHADOW_PROJECTILE_KEY = pygame.K_KP_6
+P2_SHADOW_PROJECTILE_KEY = pygame.K_KP_6 # This is also P2 Reset Key
 P2_GREY_PROJECTILE_KEY = pygame.K_KP_7
 
 # --- Input Handling Constants for Joysticks ---

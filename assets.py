@@ -1,8 +1,6 @@
-########## START OF FILE: assets.py ##########
-
 # assets.py
 # -*- coding: utf-8 -*-
-## version 1.0.0.6 (Added aflame/deflame animations for green enemy)
+## version 1.0.0.7 (Treat frozen/defrost as standard animations for all characters)
 """
 Handles loading game assets, primarily animations from GIF files.
 Includes a helper function `resource_path` to ensure correct asset pathing
@@ -159,8 +157,11 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
     Loads all defined animations for a character.
     'relative_asset_folder' is the path relative to where general assets are found
     (e.g., project root in dev, sys._MEIPASS when bundled).
+    'frozen', 'defrost', 'aflame', 'deflame' are now considered standard animations
+    and will be loaded if present for any character type.
     """
     animations_dict: Dict[str, List[pygame.Surface]] = {}
+    # Standardized animation keys. All characters (players, enemies) can potentially have these.
     animation_filenames_map = {
         'attack': '__Attack.gif', 'attack2': '__Attack2.gif', 'attack_combo': '__AttackCombo2hit.gif',
         'attack_nm': '__AttackNoMovement.gif', 'attack2_nm': '__Attack2NoMovement.gif',
@@ -177,11 +178,11 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         'turn': '__TurnAround.gif',
         'wall_climb': '__WallClimb.gif', 'wall_climb_nm': '__WallClimbNoMovement.gif',
         'wall_hang': '__WallHang.gif', 'wall_slide': '__WallSlide.gif',
-        # Green enemy specific animations
+        # Status effect animations - now considered standard for any character
         'frozen': '__Frozen.gif',
         'defrost': '__Defrost.gif',
-        'aflame': '__Aflame.gif',    # New
-        'deflame': '__Deflame.gif',  # New
+        'aflame': '__Aflame.gif',
+        'deflame': '__Deflame.gif',
     }
 
     info(f"Assets Info: Attempting to load animations from relative folder: '{relative_asset_folder}'")
@@ -192,14 +193,12 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
          absolute_gif_path = resource_path(relative_path_to_gif_for_resource_path)
 
          if not os.path.exists(absolute_gif_path):
-             is_green_enemy_folder = 'characters/green' in relative_asset_folder.replace('\\', '/')
-             is_new_anim = anim_state_name in ['frozen', 'defrost', 'aflame', 'deflame'] # Updated list
-             
-             if not (is_new_anim and not is_green_enemy_folder):
-                missing_files_log.append(
-                    (anim_state_name, relative_path_to_gif_for_resource_path, absolute_gif_path)
-                )
-             animations_dict[anim_state_name] = []
+             # No special conditions here anymore for missing files; all are treated the same.
+             # If a standard animation (including status effects) is missing, log it.
+             missing_files_log.append(
+                 (anim_state_name, relative_path_to_gif_for_resource_path, absolute_gif_path)
+             )
+             animations_dict[anim_state_name] = [] # Ensure key exists even if file is missing
              continue
 
          loaded_animation_frames = load_gif_frames(absolute_gif_path)
@@ -209,16 +208,16 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
             (len(animations_dict[anim_state_name]) == 1 and \
              animations_dict[anim_state_name][0].get_size() == (30,40) and \
              animations_dict[anim_state_name][0].get_at((0,0)) == RED):
-             warning(f"Assets Warning: Failed to load frames for state '{anim_state_name}' from existing file '{absolute_gif_path}'. RED Placeholder used.")
+             warning(f"Assets Warning: Failed to load frames for state '{anim_state_name}' from existing file '{absolute_gif_path}' for '{relative_asset_folder}'. RED Placeholder used.")
 
     if missing_files_log:
-        warning("\n--- Assets: Missing Animation Files Detected ---")
+        warning(f"\n--- Assets: Missing Animation Files Detected for '{relative_asset_folder}' ---")
         try: base_path_for_log = sys._MEIPASS
         except AttributeError: base_path_for_log = os.path.abspath(".")
         for name, rel_path, res_path_checked in missing_files_log:
             warning(f"- State '{name}': Expected relative path (for resource_path): '{rel_path}', Resolved path checked: '{res_path_checked}'")
         info(f"(Asset loading base path used by resource_path for these assets: '{base_path_for_log}')")
-        warning("--------------------------------------------\n")
+        warning("-----------------------------------------------------------------\n")
 
     idle_anim_is_missing_or_placeholder = (
         'idle' not in animations_dict or
@@ -232,14 +231,15 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         idle_file_rel_path_for_resource_path = os.path.join(relative_asset_folder, animation_filenames_map.get('idle', '__Idle.gif'))
         idle_file_abs_path_checked = resource_path(idle_file_rel_path_for_resource_path)
         if 'idle' not in animations_dict or not animations_dict['idle']:
-            critical(f"CRITICAL Assets Error: 'idle' animation file ('{idle_file_rel_path_for_resource_path}') not found or empty. Checked: '{idle_file_abs_path_checked}'.")
+            critical(f"CRITICAL Assets Error: 'idle' animation file ('{idle_file_rel_path_for_resource_path}') for '{relative_asset_folder}' not found or empty. Checked: '{idle_file_abs_path_checked}'.")
         else:
-            critical(f"CRITICAL Assets Error: 'idle' animation failed to load correctly (is RED placeholder) from '{idle_file_abs_path_checked}'.")
-        warning("Assets: Returning None due to critical 'idle' animation failure.")
+            critical(f"CRITICAL Assets Error: 'idle' animation for '{relative_asset_folder}' failed to load correctly (is RED placeholder) from '{idle_file_abs_path_checked}'.")
+        warning(f"Assets: Returning None for '{relative_asset_folder}' due to critical 'idle' animation failure.")
         return None
 
+    # Generate blue placeholders for any other missing/failed standard animations
     for anim_name_check in animation_filenames_map:
-        if anim_name_check == 'idle': continue
+        if anim_name_check == 'idle': continue # Already handled critically
 
         animation_is_missing_or_placeholder = (
             anim_name_check not in animations_dict or
@@ -250,14 +250,12 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         )
 
         if animation_is_missing_or_placeholder:
-            is_green_enemy_folder_ph = 'characters/green' in relative_asset_folder.replace('\\', '/')
-            is_new_anim_ph = anim_name_check in ['frozen', 'defrost', 'aflame', 'deflame'] # Updated list
-
-            if not (is_new_anim_ph and not is_green_enemy_folder_ph):
-                if anim_name_check not in animations_dict or not animations_dict[anim_name_check]:
-                     warning(f"Assets Warning: Animation state '{anim_name_check}' (file missing). Providing a BLUE placeholder.")
-                else:
-                     warning(f"Assets Warning: Animation state '{anim_name_check}' (load failed, is RED placeholder). Using a BLUE placeholder.")
+            # All animations in animation_filenames_map are now considered standard.
+            # No special checks for folder type or animation name here.
+            if anim_name_check not in animations_dict or not animations_dict[anim_name_check]:
+                 warning(f"Assets Warning: Animation state '{anim_name_check}' (file missing for '{relative_asset_folder}'). Providing a BLUE placeholder.")
+            else: # Failed to load correctly (is RED placeholder)
+                 warning(f"Assets Warning: Animation state '{anim_name_check}' (load failed for '{relative_asset_folder}', is RED placeholder). Using a BLUE placeholder.")
 
             blue_placeholder = pygame.Surface((30, 40)).convert_alpha()
             blue_placeholder.fill(BLUE)
@@ -301,26 +299,47 @@ if __name__ == "__main__":
         error(f"Error creating test map file/dir: {e_test_map}")
         critical(f"Make sure the directory for MAPS_DIR_FOR_TESTING ('{MAPS_DIR_FOR_TESTING}') is writable or exists.")
 
-    # --- Testing animation loading ---
-    test_character_asset_folder = os.path.join('characters', 'player1') # This is relative for resource_path
-    info(f"\n--- Testing load_all_player_animations with relative folder: '{test_character_asset_folder}' ---")
-
-    loaded_player_animations = load_all_player_animations(relative_asset_folder=test_character_asset_folder)
-
-    if loaded_player_animations:
-        info(f"\nAssets Test: Successfully loaded animation data dictionary.")
-        if 'idle' in loaded_player_animations and loaded_player_animations['idle']:
-            info(f"Idle animation loaded with {len(loaded_player_animations['idle'])} frames.")
-            first_idle_frame = loaded_player_animations['idle'][0]
-            if first_idle_frame.get_size() == (30, 40): # Standard placeholder size
-                 if first_idle_frame.get_at((0,0)) == RED:
-                     warning("Assets Test WARNING: 'idle' animation appears to be the RED (load failure) placeholder!")
-                 elif first_idle_frame.get_at((0,0)) == BLUE:
-                     warning("Assets Test WARNING: 'idle' animation appears to be a BLUE (non-critical missing) placeholder! (This shouldn't happen for idle due to critical check)")
-        else:
-            error("Assets Test ERROR: 'idle' animation missing or empty in the returned dictionary (after critical check).")
+    # --- Testing animation loading for player1 ---
+    player1_asset_folder = os.path.join('characters', 'player1')
+    info(f"\n--- Testing load_all_player_animations for Player 1: '{player1_asset_folder}' ---")
+    loaded_player1_animations = load_all_player_animations(relative_asset_folder=player1_asset_folder)
+    if loaded_player1_animations:
+        info(f"Assets Test (Player 1): Successfully loaded animation data. Found states: {', '.join(k for k,v in loaded_player1_animations.items() if v)}")
+        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost']:
+            if anim_key in loaded_player1_animations and loaded_player1_animations[anim_key]:
+                first_frame = loaded_player1_animations[anim_key][0]
+                if first_frame.get_size() == (30,40) and first_frame.get_at((0,0)) == RED:
+                     warning(f"Assets Test (Player 1) WARNING: Animation '{anim_key}' is RED placeholder.")
+                elif first_frame.get_size() == (30,40) and first_frame.get_at((0,0)) == BLUE:
+                     warning(f"Assets Test (Player 1) WARNING: Animation '{anim_key}' is BLUE (missing) placeholder.")
+                else:
+                     info(f"Assets Test (Player 1): Animation '{anim_key}' loaded with {len(loaded_player1_animations[anim_key])} frames.")
+            else:
+                warning(f"Assets Test (Player 1) WARNING: Animation '{anim_key}' missing or empty after load.")
     else:
-        error("\nAssets Test: Animation loading failed (load_all_player_animations returned None). Likely due to critical 'idle' animation issue.")
+        error("\nAssets Test (Player 1): Animation loading FAILED (returned None). Likely critical 'idle' issue.")
+
+
+    # --- Testing animation loading for green enemy ---
+    green_enemy_asset_folder = os.path.join('characters', 'green')
+    info(f"\n--- Testing load_all_player_animations for Green Enemy: '{green_enemy_asset_folder}' ---")
+    loaded_green_animations = load_all_player_animations(relative_asset_folder=green_enemy_asset_folder)
+    if loaded_green_animations:
+        info(f"Assets Test (Green Enemy): Successfully loaded animation data. Found states: {', '.join(k for k,v in loaded_green_animations.items() if v)}")
+        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost']:
+            if anim_key in loaded_green_animations and loaded_green_animations[anim_key]:
+                first_frame = loaded_green_animations[anim_key][0]
+                if first_frame.get_size() == (30,40) and first_frame.get_at((0,0)) == RED:
+                     warning(f"Assets Test (Green Enemy) WARNING: Animation '{anim_key}' is RED placeholder.")
+                elif first_frame.get_size() == (30,40) and first_frame.get_at((0,0)) == BLUE:
+                     warning(f"Assets Test (Green Enemy) WARNING: Animation '{anim_key}' is BLUE (missing) placeholder.")
+                else:
+                     info(f"Assets Test (Green Enemy): Animation '{anim_key}' loaded with {len(loaded_green_animations[anim_key])} frames.")
+            else:
+                warning(f"Assets Test (Green Enemy) WARNING: Animation '{anim_key}' missing or empty after load.")
+    else:
+        error("\nAssets Test (Green Enemy): Animation loading FAILED (returned None). Likely critical 'idle' issue.")
+
 
     pygame.quit()
     info("Assets.py direct run test finished.")
