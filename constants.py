@@ -201,7 +201,10 @@ def get_maps_directory():
         project_root_guess = os.path.abspath(os.path.join(os.path.dirname(__file__)))
         dev_maps_path = os.path.join(project_root_guess, 'maps')
         return dev_maps_path
-
+PLAYER_AFLAME_ACCEL_MULTIPLIER = 1.15
+PLAYER_AFLAME_SPEED_MULTIPLIER = 1.1
+PLAYER_DEFLAME_ACCEL_MULTIPLIER = 1.1
+PLAYER_DEFLAME_SPEED_MULTIPLIER = 1.05
 MAPS_DIR = get_maps_directory()
 # In constants.py
 ENEMY_STOMP_SQUASH_DURATION_MS = 400

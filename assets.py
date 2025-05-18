@@ -1,3 +1,4 @@
+#################### START OF FILE: assets.py ####################
 
 # assets.py
 # -*- coding: utf-8 -*-
@@ -83,21 +84,11 @@ def resource_path(relative_path: str) -> str:
         str: The absolute path to the resource.
     """
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        # For a one-folder build, _MEIPASS is the directory containing the executable
-        # UNLESS you are in a --onefile build, then it's a temp dir.
-        # If your files are in `_internal` and `_internal` is what `sys._MEIPASS` points to,
-        # then `relative_path` should be like `characters/player1/idle.gif` and it will resolve
-        # to `_MEIPASS/characters/player1/idle.gif`.
         base_path = sys._MEIPASS
-        # debug(f"Assets (resource_path): Running bundled. sys._MEIPASS = {base_path}")
     except AttributeError:
-        # Not bundled, running in normal Python environment
-        base_path = os.path.abspath(".") # Project root
-        # debug(f"Assets (resource_path): Running in dev. os.path.abspath('.') = {base_path}")
+        base_path = os.path.abspath(".")
 
     full_asset_path = os.path.join(base_path, relative_path)
-    # debug(f"Assets (resource_path): relative='{relative_path}', base='{base_path}', full='{full_asset_path}'")
     return full_asset_path
 # ----------------------------------------------------
 
@@ -117,52 +108,40 @@ def load_gif_frames(full_path_to_gif_file: str) -> List[pygame.Surface]:
             try:
                 pil_gif_image.seek(frame_index)
                 current_pil_frame = pil_gif_image.copy()
-                # Ensure frame is RGBA for consistent transparency handling
                 rgba_pil_frame = current_pil_frame.convert('RGBA')
                 frame_pixel_data = rgba_pil_frame.tobytes()
                 frame_dimensions = rgba_pil_frame.size
                 pygame_surface_frame = pygame.image.frombuffer(frame_pixel_data, frame_dimensions, "RGBA")
-                pygame_surface_frame = pygame_surface_frame.convert_alpha() # Optimize for Pygame
+                pygame_surface_frame = pygame_surface_frame.convert_alpha()
                 loaded_frames.append(pygame_surface_frame)
                 frame_index += 1
             except EOFError:
-                break # End of frames
+                break
             except Exception as e_frame:
                 error(f"Assets Error: Processing frame {frame_index} in '{full_path_to_gif_file}': {e_frame}")
-                frame_index += 1 # Try next frame
+                frame_index += 1
 
         if not loaded_frames:
              error(f"Assets Error: No frames loaded from '{full_path_to_gif_file}'. Creating a RED placeholder.")
              placeholder_surface = pygame.Surface((30, 40)).convert_alpha()
-             placeholder_surface.fill(RED) # Use RED from constants or fallback
-             pygame.draw.rect(placeholder_surface, BLACK, placeholder_surface.get_rect(), 1) # Use BLACK
+             placeholder_surface.fill(RED)
+             pygame.draw.rect(placeholder_surface, BLACK, placeholder_surface.get_rect(), 1)
              return [placeholder_surface]
-
         return loaded_frames
-
     except FileNotFoundError:
         error(f"Assets Error: GIF file not found at provided path: '{full_path_to_gif_file}'")
     except Exception as e_load:
         error(f"Assets Error: Loading GIF '{full_path_to_gif_file}' with Pillow: {e_load}")
 
-    # Fallback placeholder if any error occurs during loading
     placeholder_surface_on_error = pygame.Surface((30, 40)).convert_alpha()
-    placeholder_surface_on_error.fill(RED) # Use RED
-    pygame.draw.rect(placeholder_surface_on_error, BLACK, placeholder_surface_on_error.get_rect(), 2) # Use BLACK
+    placeholder_surface_on_error.fill(RED)
+    pygame.draw.rect(placeholder_surface_on_error, BLACK, placeholder_surface_on_error.get_rect(), 2)
     return [placeholder_surface_on_error]
 
 
 # --- Player/Enemy Animation Loading Function ---
 def load_all_player_animations(relative_asset_folder: str = 'characters/player1') -> Optional[Dict[str, List[pygame.Surface]]]:
-    """
-    Loads all defined animations for a character.
-    'relative_asset_folder' is the path relative to where general assets are found
-    (e.g., project root in dev, sys._MEIPASS when bundled).
-    'frozen', 'defrost', 'aflame', 'deflame' are now considered standard animations
-    and will be loaded if present for any character type.
-    """
     animations_dict: Dict[str, List[pygame.Surface]] = {}
-    # Standardized animation keys. All characters (players, enemies) can potentially have these.
     animation_filenames_map = {
         'attack': '__Attack.gif', 'attack2': '__Attack2.gif', 'attack_combo': '__AttackCombo2hit.gif',
         'attack_nm': '__AttackNoMovement.gif', 'attack2_nm': '__Attack2NoMovement.gif',
@@ -179,16 +158,16 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         'turn': '__TurnAround.gif',
         'wall_climb': '__WallClimb.gif', 'wall_climb_nm': '__WallClimbNoMovement.gif',
         'wall_hang': '__WallHang.gif', 'wall_slide': '__WallSlide.gif',
-        # Status effect animations - now considered standard for any character
         'frozen': '__Frozen.gif',
         'defrost': '__Defrost.gif',
-        'aflame': '__Aflame.gif', # Original standing aflame, might be replaced by 'burning' for player
-        'deflame': '__Deflame.gif', # Original standing deflame
-        # Player-specific fire animations (NEW)
-        'burning': '__Burning.gif', # New looping standing/moving fire animation for player
-        'aflame_crouch': '__Aflame_crouch.gif', # New initial fire while crouching for player
-        'burning_crouch': '__Burning_crouch.gif', # New looping fire while crouching for player
-        'deflame_crouch': '__Deflame_crouch.gif', # New deflame while crouching for player
+        'aflame': '__Aflame.gif',       # Initial standing fire (plays once then to 'burning')
+        'burning': '__Burning.gif',     # Looping standing/moving fire
+        'aflame_crouch': '__Aflame_crouch.gif', # Initial fire while crouching (plays once then to 'burning_crouch')
+        'burning_crouch': '__Burning_crouch.gif',# Looping fire while crouching
+        'deflame': '__Deflame.gif',     # Standing fire going out
+        'deflame_crouch': '__Deflame_crouch.gif',# Crouched fire going out
+        # Note: 'petrified' and 'smashed' are common assets loaded directly in Player/Enemy classes,
+        # but could be listed here if character-specific versions were desired.
     }
 
     info(f"Assets Info: Attempting to load animations from relative folder: '{relative_asset_folder}'")
@@ -199,12 +178,10 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
          absolute_gif_path = resource_path(relative_path_to_gif_for_resource_path)
 
          if not os.path.exists(absolute_gif_path):
-             # No special conditions here anymore for missing files; all are treated the same.
-             # If a standard animation (including status effects) is missing, log it.
              missing_files_log.append(
                  (anim_state_name, relative_path_to_gif_for_resource_path, absolute_gif_path)
              )
-             animations_dict[anim_state_name] = [] # Ensure key exists even if file is missing
+             animations_dict[anim_state_name] = []
              continue
 
          loaded_animation_frames = load_gif_frames(absolute_gif_path)
@@ -234,6 +211,7 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
     )
 
     if idle_anim_is_missing_or_placeholder:
+        # ... (critical error handling for missing idle) ...
         idle_file_rel_path_for_resource_path = os.path.join(relative_asset_folder, animation_filenames_map.get('idle', '__Idle.gif'))
         idle_file_abs_path_checked = resource_path(idle_file_rel_path_for_resource_path)
         if 'idle' not in animations_dict or not animations_dict['idle']:
@@ -243,9 +221,9 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         warning(f"Assets: Returning None for '{relative_asset_folder}' due to critical 'idle' animation failure.")
         return None
 
-    # Generate blue placeholders for any other missing/failed standard animations
+
     for anim_name_check in animation_filenames_map:
-        if anim_name_check == 'idle': continue # Already handled critically
+        if anim_name_check == 'idle': continue
 
         animation_is_missing_or_placeholder = (
             anim_name_check not in animations_dict or
@@ -256,11 +234,9 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         )
 
         if animation_is_missing_or_placeholder:
-            # All animations in animation_filenames_map are now considered standard.
-            # No special checks for folder type or animation name here.
             if anim_name_check not in animations_dict or not animations_dict[anim_name_check]:
                  warning(f"Assets Warning: Animation state '{anim_name_check}' (file missing for '{relative_asset_folder}'). Providing a BLUE placeholder.")
-            else: # Failed to load correctly (is RED placeholder)
+            else:
                  warning(f"Assets Warning: Animation state '{anim_name_check}' (load failed for '{relative_asset_folder}', is RED placeholder). Using a BLUE placeholder.")
 
             blue_placeholder = pygame.Surface((30, 40)).convert_alpha()
@@ -276,6 +252,7 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
 
 # --- Example Usage (if assets.py is run directly for testing) ---
 if __name__ == "__main__":
+    # ... (Keep your existing __main__ block for testing, ensuring it checks for the new animation keys if player1 is tested)
     info("Running assets.py directly for testing...")
     pygame.init() # Pygame init is needed for Surface creation
 
@@ -287,17 +264,14 @@ if __name__ == "__main__":
 
     # --- Testing map path resolution (using C.MAPS_DIR directly) ---
     info("\n--- Testing map path resolution (using C.MAPS_DIR from constants) ---")
-    # MAPS_DIR_FOR_TESTING was set at the top from C.MAPS_DIR or fallback
+    MAPS_DIR_FOR_TESTING = C.MAPS_DIR if hasattr(C, "MAPS_DIR") else "maps" # Ensure defined
     test_map_filename = "test_map.py"
     absolute_map_path_for_test = os.path.join(MAPS_DIR_FOR_TESTING, test_map_filename)
     info(f"Absolute path for map '{test_map_filename}' (using C.MAPS_DIR): {absolute_map_path_for_test}")
-    # Create dummy map dir and file for testing
     try:
-        # Ensure the maps directory (determined by C.MAPS_DIR) exists
         if not os.path.exists(MAPS_DIR_FOR_TESTING):
             info(f"Attempting to create test maps directory: {MAPS_DIR_FOR_TESTING}")
             os.makedirs(MAPS_DIR_FOR_TESTING)
-        # Create the dummy file within that directory
         with open(absolute_map_path_for_test, "w") as f:
             f.write("# Test map file created by assets.py test block")
         info(f"Does map file exist after creation at '{absolute_map_path_for_test}'? {os.path.exists(absolute_map_path_for_test)}")
@@ -305,13 +279,12 @@ if __name__ == "__main__":
         error(f"Error creating test map file/dir: {e_test_map}")
         critical(f"Make sure the directory for MAPS_DIR_FOR_TESTING ('{MAPS_DIR_FOR_TESTING}') is writable or exists.")
 
-    # --- Testing animation loading for player1 ---
     player1_asset_folder = os.path.join('characters', 'player1')
     info(f"\n--- Testing load_all_player_animations for Player 1: '{player1_asset_folder}' ---")
     loaded_player1_animations = load_all_player_animations(relative_asset_folder=player1_asset_folder)
     if loaded_player1_animations:
         info(f"Assets Test (Player 1): Successfully loaded animation data. Found states: {', '.join(k for k,v in loaded_player1_animations.items() if v)}")
-        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame_crouch']: # Added new keys
+        for anim_key in ['idle', 'aflame', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame', 'deflame_crouch', 'frozen', 'defrost']:
             if anim_key in loaded_player1_animations and loaded_player1_animations[anim_key]:
                 first_frame = loaded_player1_animations[anim_key][0]
                 if first_frame.get_size() == (30,40) and first_frame.get_at((0,0)) == RED:
@@ -325,14 +298,13 @@ if __name__ == "__main__":
     else:
         error("\nAssets Test (Player 1): Animation loading FAILED (returned None). Likely critical 'idle' issue.")
 
-
-    # --- Testing animation loading for green enemy ---
     green_enemy_asset_folder = os.path.join('characters', 'green')
     info(f"\n--- Testing load_all_player_animations for Green Enemy: '{green_enemy_asset_folder}' ---")
+    # ... (enemy test remains the same as they don't use the new player-specific fire anims) ...
     loaded_green_animations = load_all_player_animations(relative_asset_folder=green_enemy_asset_folder)
     if loaded_green_animations:
         info(f"Assets Test (Green Enemy): Successfully loaded animation data. Found states: {', '.join(k for k,v in loaded_green_animations.items() if v)}")
-        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost']: # Enemies don't use the new player-specific fire anims
+        for anim_key in ['idle', 'aflame', 'deflame', 'frozen', 'defrost']:
             if anim_key in loaded_green_animations and loaded_green_animations[anim_key]:
                 first_frame = loaded_green_animations[anim_key][0]
                 if first_frame.get_size() == (30,40) and first_frame.get_at((0,0)) == RED:
@@ -346,6 +318,7 @@ if __name__ == "__main__":
     else:
         error("\nAssets Test (Green Enemy): Animation loading FAILED (returned None). Likely critical 'idle' issue.")
 
-
     pygame.quit()
     info("Assets.py direct run test finished.")
+
+#################### END OF MODIFIED FILE: assets.py ####################

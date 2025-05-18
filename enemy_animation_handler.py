@@ -237,11 +237,11 @@ def update_enemy_animation(enemy):
         image_for_this_frame = pygame.transform.flip(image_for_this_frame, True, False)
 
     # Debug print as before
-    if enemy.state == 'deflame' or (enemy.is_aflame and determined_key == 'aflame'):
-        print(f"ENEMY_ANIMATE_DEBUG (ID {enemy.enemy_id}, Color {enemy.color_name}): "
-              f"LogicState='{enemy.state}', AnimKey='{determined_key}', "
-              f"FramesOK={current_frames_list is not None and len(current_frames_list) > 0 and animation_is_actually_valid}, "
-              f"FrameIdx={enemy.current_frame}, is_aflame={enemy.is_aflame}, is_deflaming={enemy.is_deflaming}")
+    # if enemy.state == 'deflame' or (enemy.is_aflame and determined_key == 'aflame'):
+    #     print(f"ENEMY_ANIMATE_DEBUG (ID {enemy.enemy_id}, Color {enemy.color_name}): "
+    #           f"LogicState='{enemy.state}', AnimKey='{determined_key}', "
+    #           f"FramesOK={current_frames_list is not None and len(current_frames_list) > 0 and animation_is_actually_valid}, "
+    #           f"FrameIdx={enemy.current_frame}, is_aflame={enemy.is_aflame}, is_deflaming={enemy.is_deflaming}")
 
     # Update image only if it has actually changed or facing changed
     if enemy.image is not image_for_this_frame or enemy._last_facing_right != current_display_facing_right:
