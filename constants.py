@@ -203,8 +203,14 @@ def get_maps_directory():
         return dev_maps_path
 
 MAPS_DIR = get_maps_directory()
+# In constants.py
+ENEMY_STOMP_SQUASH_DURATION_MS = 400
 
-
+# --- Player Speed Multipliers (NEW) ---
+PLAYER_AFLAME_ACCEL_MULTIPLIER = 1.15 # Example: 15% faster acceleration when aflame
+PLAYER_AFLAME_SPEED_MULTIPLIER = 1.1  # Example: 10% faster top speed when aflame
+PLAYER_DEFLAME_ACCEL_MULTIPLIER = 1.1 # Example: 10% faster acceleration when deflaming
+PLAYER_DEFLAME_SPEED_MULTIPLIER = 1.05 # Example: 5% faster top speed when deflaming
 # --- Network Constants ---
 SERVER_IP_BIND = '0.0.0.0'
 SERVER_PORT_TCP = 5555
