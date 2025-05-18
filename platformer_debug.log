@@ -1,0 +1,90 @@
+[2025-05-18 15:02:47.229] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-18 15:02:47.229] INFO    PlatformerLogger: Assets: Successfully imported 'constants' as C and attributes.
+[2025-05-18 15:02:49.214] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters/player1'
+[2025-05-18 15:02:49.338] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters/player1'.
+[2025-05-18 15:02:49.347] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters/player2'
+[2025-05-18 15:02:49.421] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters/player2'.
+[2025-05-18 15:02:49.423] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Initialized with specified color: green
+[2025-05-18 15:02:49.424] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.497] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.499] DEBUG   PlatformerLogger: Enemy (ID: 0, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.499] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Initialized with specified color: green
+[2025-05-18 15:02:49.499] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.554] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.556] DEBUG   PlatformerLogger: Enemy (ID: 1, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.556] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Initialized with specified color: green
+[2025-05-18 15:02:49.556] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.610] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.612] DEBUG   PlatformerLogger: Enemy (ID: 2, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.612] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Initialized with specified color: green
+[2025-05-18 15:02:49.612] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.666] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.668] DEBUG   PlatformerLogger: Enemy (ID: 3, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.668] DEBUG   PlatformerLogger: EnemyBase (ID: 4): Initialized with specified color: green
+[2025-05-18 15:02:49.668] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.723] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.724] DEBUG   PlatformerLogger: Enemy (ID: 4, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.724] DEBUG   PlatformerLogger: EnemyBase (ID: 5): Initialized with specified color: green
+[2025-05-18 15:02:49.724] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.779] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.780] DEBUG   PlatformerLogger: Enemy (ID: 5, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.780] DEBUG   PlatformerLogger: EnemyBase (ID: 6): Initialized with specified color: green
+[2025-05-18 15:02:49.780] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.836] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.837] DEBUG   PlatformerLogger: Enemy (ID: 6, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.837] DEBUG   PlatformerLogger: EnemyBase (ID: 7): Initialized with specified color: green
+[2025-05-18 15:02:49.838] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.892] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.894] DEBUG   PlatformerLogger: Enemy (ID: 7, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.894] DEBUG   PlatformerLogger: EnemyBase (ID: 8): Initialized with specified color: green
+[2025-05-18 15:02:49.894] INFO    PlatformerLogger: Assets Info: Attempting to load animations from relative folder: 'characters\green'
+[2025-05-18 15:02:49.949] INFO    PlatformerLogger: Assets Info: Finished loading animations. 32 animation states processed for 'characters\green'.
+[2025-05-18 15:02:49.950] DEBUG   PlatformerLogger: Enemy (ID: 8, Color: green) main class initialized. Patrol target set.
+[2025-05-18 15:02:49.953] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(129.00,397.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(119, 359, 21, 38)> OnGround:False State:idle
+[2025-05-18 15:02:49.953] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,397.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 359, 21, 38)> OnGround:False State:idle
+[2025-05-18 15:02:49.953] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:49.959] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:49.959] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:49.959] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:49.960] DEBUG   PlatformerLogger: EnemyStateHandler (ID 4): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:49.960] DEBUG   PlatformerLogger: EnemyStateHandler (ID 5): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:49.960] DEBUG   PlatformerLogger: EnemyStateHandler (ID 6): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:49.960] DEBUG   PlatformerLogger: EnemyStateHandler (ID 7): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:49.961] DEBUG   PlatformerLogger: EnemyStateHandler (ID 8): State changing from 'idle' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:50.394] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'patrolling' to 'chasing'. Requested: 'chasing'.
+[2025-05-18 15:02:50.959] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(292.00,324.00) Vel:( 5.66, 6.70) Acc:(0.00,0.70) Rect:<rect(278, 286, 29, 38)> OnGround:False State:fall
+[2025-05-18 15:02:50.959] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(189.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(179, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:50.993] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'chasing' to 'attack_nm'. Requested: 'attack_nm'.
+[2025-05-18 15:02:51.482] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'attack_nm' to 'idle'. Requested: 'idle'.
+[2025-05-18 15:02:51.683] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'chasing'. Requested: 'chasing'.
+[2025-05-18 15:02:51.952] DEBUG   PlatformerLogger: Enemy 0: Stomp kill initiated by stomp_kill_enemy.
+[2025-05-18 15:02:51.952] WARNING PlatformerLogger: EnemyStateHandler (ID: 0, Color: green): Animation for logical state 'stomp_death' (maps to key 'stomp_death') missing or invalid. State will be set, but animation might fallback in handler.
+[2025-05-18 15:02:51.952] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'chasing' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-18 15:02:51.952] DEBUG   PlatformerLogger: Enemy 0: stomp_kill_enemy called but already in conflicting state. Ignoring.
+[2025-05-18 15:02:51.967] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(230.00,399.00) Vel:(-1.25,-8.00) Acc:(0.50,0.70) Rect:<rect(218, 361, 25, 38)> OnGround:False State:jump
+[2025-05-18 15:02:51.967] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(185.00,440.00) Vel:(-1.16, 0.00) Acc:(0.00,0.70) Rect:<rect(175, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:52.982] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(346.00,440.00) Vel:( 2.00, 0.00) Acc:(0.50,0.70) Rect:<rect(331, 401, 30, 39)> OnGround:True State:run
+[2025-05-18 15:02:52.982] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(183.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(173, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:53.985] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(676.00,440.00) Vel:( 2.08, 0.00) Acc:(0.50,0.70) Rect:<rect(661, 401, 30, 39)> OnGround:True State:run
+[2025-05-18 15:02:53.985] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(183.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(173, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:55.000] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(859.00,440.00) Vel:( 2.00, 0.00) Acc:(0.50,0.70) Rect:<rect(844, 401, 30, 39)> OnGround:True State:run
+[2025-05-18 15:02:55.001] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(183.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(173, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:55.950] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'patrolling' to 'chasing'. Requested: 'chasing'.
+[2025-05-18 15:02:56.001] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(987.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(977, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:56.001] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(183.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(173, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:56.003] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'chasing' to 'hit'. Requested: 'hit'.
+[2025-05-18 15:02:56.003] DEBUG   PlatformerLogger: Projectile with 'aflame' effect hit green Enemy 1. Applying aflame effect.
+[2025-05-18 15:02:56.003] DEBUG   PlatformerLogger: Enemy 1 (green): Applying aflame effect.
+[2025-05-18 15:02:56.004] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'hit' to 'aflame'. Requested: 'aflame'.
+[2025-05-18 15:02:57.015] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(944.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(934, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:57.015] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(183.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(173, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:57.015] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'aflame' to 'hit'. Requested: 'hit'.
+[2025-05-18 15:02:57.098] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'hit' to 'fall'. Requested: 'fall'.
+[2025-05-18 15:02:57.115] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'fall' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:57.362] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'patrolling' to 'chasing'. Requested: 'chasing'.
+[2025-05-18 15:02:57.783] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'chasing' to 'patrolling'. Requested: 'patrolling'.
+[2025-05-18 15:02:58.015] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:(923.00,296.00) Vel:( 0.00,-3.80) Acc:(0.00,0.70) Rect:<rect(909, 259, 29, 37)> OnGround:False State:jump_fall_trans
+[2025-05-18 15:02:58.015] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(183.00,440.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(173, 402, 21, 38)> OnGround:True State:idle
+[2025-05-18 15:02:58.381] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'patrolling' to 'chasing'. Requested: 'chasing'.
+[2025-05-18 15:02:58.545] INFO    PlatformerLogger: Couch Play: Global ESC key pressed, treating as pause/exit mode.
+[2025-05-18 15:02:58.545] INFO    PlatformerLogger: Exiting Couch Play mode.

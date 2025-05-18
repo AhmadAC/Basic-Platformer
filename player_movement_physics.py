@@ -183,7 +183,6 @@ def update_player_core_logic(player, dt_sec, platforms_group, ladders_group, haz
                             player.pos = pygame.math.Vector2(player.rect.midbottom); break
             update_player_animation(player)
         log_player_physics(player, "UPDATE_END", "Player is dead")
-        if ENABLE_DETAILED_PHYSICS_LOGS: debug("------------------------------")
         return
 
     manage_player_state_timers_and_cooldowns(player)
@@ -245,4 +244,3 @@ def update_player_core_logic(player, dt_sec, platforms_group, ladders_group, haz
 
     update_player_animation(player)
     log_player_physics(player, "UPDATE_END")
-    if ENABLE_DETAILED_PHYSICS_LOGS: debug("------------------------------")

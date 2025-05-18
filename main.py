@@ -8,6 +8,11 @@ import pygame
 import traceback
 from typing import Dict, Optional, Any
 
+script_path = os.path.abspath(__file__)  # Absolute path to this script
+script_dir = os.path.dirname(script_path) # Directory of this script
+os.chdir(script_dir)
+
+
 _maps_package_import_path_added = "None"
 _maps_package_physical_location_debug = "Not determined"
 _is_frozen = getattr(sys, 'frozen', False)

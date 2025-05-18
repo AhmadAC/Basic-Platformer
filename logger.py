@@ -5,7 +5,7 @@ import os
 import time # Added for robust timestamping
 
 # --- GLOBAL LOGGING ENABLE/DISABLE SWITCH ---
-LOGGING_ENABLED = False
+LOGGING_ENABLED = True
 # --- ---
 
 # --- CONFIGURATION FOR DETAILED PHYSICS LOGS ---
