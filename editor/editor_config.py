@@ -141,8 +141,7 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
         "tooltip": "P2", "category": "spawn"
     },
     # Enemies
-    "enemy_cyan": {"source_file": "characters/cyan/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (Cyan)", "category": "enemy"},
-    "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_cyan", "tooltip": "Enemy (gray)", "category": "enemy"}, # Note: game_type_id is enemy_cyan, intentional?
+    "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_gray", "tooltip": "Enemy (gray)", "category": "enemy"},
     "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "tooltip": "Enemy (Green)", "category": "enemy"},
     "enemy_pink": { "source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "tooltip": "Enemy (Pink)", "category": "enemy"},
     "enemy_purple": { "source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "tooltip": "Enemy (Purple)", "category": "enemy"},
@@ -221,12 +220,7 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "move_speed": {"type": "float", "default": 300.0, "min": 50.0, "max": 1000.0, "tooltip": "P2: Movement speed in pixels/sec."},
         "jump_strength": {"type": "float", "default": -900.0, "min": -1500.0, "max": -300.0, "tooltip": "P2: Initial vertical velocity for jump."}
     },
-    "enemy_cyan": {
-        "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "tooltip": "Horizontal patrol distance in tiles (0 for stationary)."},
-        "move_speed": {"type": "float", "default": 100.0, "min": 10.0, "max": 300.0, "tooltip": "Speed during patrol."},
-        "health": {"type": "int", "default": 3, "min": 1, "max": 20, "tooltip": "Enemy health points."},
-        "can_fly": {"type": "bool", "default": False, "tooltip": "Can this enemy fly over gaps?"}
-    },
+
     "enemy_green": {
         "patrol_range_tiles": {"type": "int", "default": 6, "min": 0, "max": 50},
         "move_speed": {"type": "float", "default": 80.0, "min": 10.0, "max": 300.0},

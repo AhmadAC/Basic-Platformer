@@ -1,24 +1,48 @@
-2025-05-18 21:19:39,267 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
-2025-05-18 21:19:39,267 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
-2025-05-18 21:19:39,270 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
-2025-05-18 21:19:39,374 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers and history.
-2025-05-18 21:19:39,375 - INFO - editor.py:106 - editor_main - editor_main() started.
-2025-05-18 21:19:39,489 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
-2025-05-18 21:19:39,489 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
-2025-05-18 21:19:39,611 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
-2025-05-18 21:19:39,614 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
-2025-05-18 21:19:39,616 - DEBUG - editor_state.py:255 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-18 21:19:39,616 - DEBUG - editor_state.py:123 - __init__ - EditorState initialized.
-2025-05-18 21:19:39,710 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
-2025-05-18 21:19:39,710 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 250, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-18 21:19:39,710 - INFO - editor.py:170 - editor_main - Entering main loop.
-2025-05-18 21:19:43,965 - INFO - editor_handlers_menu.py:282 - handle_menu_events - Menu: 'Load Map' button clicked.
-2025-05-18 21:19:43,966 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-18 21:19:44,031 - CRITICAL - editor.py:339 - editor_main - CRITICAL ERROR in editor_main: handle_dialog_events() takes 2 positional arguments but 3 were given
-Traceback (most recent call last):
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor.py", line 226, in editor_main
-    handle_dialog_events(event, editor_state, fonts) # Pass fonts for dialog drawing needs
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TypeError: handle_dialog_events() takes 2 positional arguments but 3 were given
-2025-05-18 21:19:44,042 - INFO - editor.py:343 - editor_main - Exiting editor_main. Calling pygame.quit().
-2025-05-18 21:19:44,156 - INFO - editor.py:346 - editor_main - Editor session ended.
+2025-05-18 22:41:26,848 - INFO - editor.py:44 - <module> - Editor session started. Logging initialized successfully to file.
+2025-05-18 22:41:26,849 - DEBUG - editor.py:65 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
+2025-05-18 22:41:26,852 - INFO - editor.py:70 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
+2025-05-18 22:41:26,982 - DEBUG - editor.py:97 - <module> - Successfully imported all editor-specific modules including new handlers and history.
+2025-05-18 22:41:26,982 - INFO - editor.py:106 - editor_main - editor_main() started.
+2025-05-18 22:41:28,372 - DEBUG - editor.py:109 - editor_main - pygame.init() called.
+2025-05-18 22:41:28,372 - DEBUG - editor.py:116 - editor_main - pygame.font.init() confirmed or already initialized.
+2025-05-18 22:41:28,457 - INFO - editor.py:126 - editor_main - Editor screen created: (1280, 720)
+2025-05-18 22:41:28,457 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
+2025-05-18 22:41:28,458 - DEBUG - editor_state.py:255 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-18 22:41:28,459 - DEBUG - editor_state.py:123 - __init__ - EditorState initialized.
+2025-05-18 22:41:28,517 - DEBUG - editor.py:136 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
+2025-05-18 22:41:28,517 - DEBUG - editor.py:167 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 250, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-18 22:41:28,517 - INFO - editor.py:170 - editor_main - Entering main loop.
+2025-05-18 22:41:29,701 - INFO - editor_handlers_menu.py:282 - handle_menu_events - Menu: 'Load Map' button clicked.
+2025-05-18 22:41:29,702 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-18 22:41:36,977 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CANCELLED
+2025-05-18 22:41:36,977 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-18 22:41:36,977 - DEBUG - editor_handlers_dialog.py:126 - handle_dialog_events - Calling cancel_callback for 'file_load'.
+2025-05-18 22:41:36,977 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-18 22:41:36,977 - DEBUG - editor.py:228 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
+2025-05-18 22:41:37,793 - INFO - editor_handlers_menu.py:294 - handle_menu_events - Menu: 'Rename Map' button clicked.
+2025-05-18 22:41:37,793 - INFO - editor_handlers_menu.py:212 - start_rename_map_flow - Starting rename map flow.
+2025-05-18 22:41:37,794 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
+2025-05-18 22:41:39,520 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
+2025-05-18 22:41:39,521 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
+2025-05-18 22:41:39,521 - DEBUG - editor_handlers_dialog.py:122 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\11.json'
+2025-05-18 22:41:39,521 - INFO - editor_handlers_menu.py:193 - _handle_rename_select_map - Map selected for rename (path from dialog): 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\11.json'
+2025-05-18 22:41:39,521 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
+2025-05-18 22:41:39,522 - DEBUG - editor.py:228 - editor_main - Dialog type changed from 'file_load' to 'text_input' after handle_dialog_events.
+2025-05-18 22:42:08,040 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CANCELLED
+2025-05-18 22:42:08,040 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
+2025-05-18 22:42:08,040 - DEBUG - editor_handlers_dialog.py:126 - handle_dialog_events - Calling cancel_callback for 'text_input'.
+2025-05-18 22:42:08,041 - INFO - editor_state.py:267 - set_status_message - Status message set: 'Rename cancelled.' for 1s
+2025-05-18 22:42:08,041 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-18 22:42:08,041 - DEBUG - editor.py:228 - editor_main - Dialog type changed from 'text_input' to 'None' after handle_dialog_events.
+2025-05-18 22:42:09,672 - INFO - editor_handlers_menu.py:227 - handle_menu_events - Menu: 'New Map' button clicked.
+2025-05-18 22:42:09,673 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'None' to 'text_input'
+2025-05-18 22:42:13,926 - DEBUG - editor_handlers_dialog.py:117 - handle_dialog_events - Dialog 'text_input' outcome: CANCELLED
+2025-05-18 22:42:13,927 - DEBUG - editor_state.py:154 - active_dialog_type - Changing active_dialog_type from 'text_input' to 'None'
+2025-05-18 22:42:13,927 - DEBUG - editor_handlers_dialog.py:126 - handle_dialog_events - Calling cancel_callback for 'text_input'.
+2025-05-18 22:42:13,927 - DEBUG - editor_handlers_dialog.py:131 - handle_dialog_events - No new dialog active. Cleaning up dialog state.
+2025-05-18 22:42:13,927 - DEBUG - editor.py:228 - editor_main - Dialog type changed from 'text_input' to 'None' after handle_dialog_events.
+2025-05-18 22:42:14,982 - INFO - editor.py:235 - editor_main - Escape pressed in menu. Posting QUIT event.
+2025-05-18 22:42:14,999 - INFO - editor_handlers_global.py:18 - handle_global_events - pygame.QUIT event received.
+2025-05-18 22:42:14,999 - INFO - editor.py:221 - editor_main - handle_global_events returned False (QUIT). Setting running=False.
+2025-05-18 22:42:14,999 - INFO - editor.py:343 - editor_main - Exiting editor_main. Calling pygame.quit().
+2025-05-18 22:42:15,333 - INFO - editor.py:346 - editor_main - Editor session ended.

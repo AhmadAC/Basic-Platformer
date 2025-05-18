@@ -790,12 +790,6 @@
             "game_type_id": "platform_ledge_green"
         },
         {
-            "asset_editor_key": "enemy_cyan",
-            "world_x": 760,
-            "world_y": 360,
-            "game_type_id": "enemy_cyan"
-        },
-        {
             "asset_editor_key": "enemy_pink",
             "world_x": 400,
             "world_y": 440,

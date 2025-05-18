@@ -4636,12 +4636,6 @@
             "game_type_id": "platform_wall_gray"
         },
         {
-            "asset_editor_key": "enemy_cyan",
-            "world_x": 520.0,
-            "world_y": 3800.0,
-            "game_type_id": "enemy_cyan"
-        },
-        {
             "asset_editor_key": "enemy_green",
             "world_x": 640,
             "world_y": 3800.0,

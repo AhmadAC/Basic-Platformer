@@ -71,7 +71,6 @@ def load_map_bigmap1(initial_screen_width, initial_screen_height):
     enemy_spawns_data.append({'pos': (409, 1957), 'patrol': None, 'enemy_color_id': 'purple'})
     enemy_spawns_data.append({'pos': (449, 1957), 'patrol': None, 'enemy_color_id': 'pink'})
     enemy_spawns_data.append({'pos': (489, 1957.0), 'patrol': None, 'enemy_color_id': 'green'})
-    enemy_spawns_data.append({'pos': (529.0, 1957), 'patrol': None, 'enemy_color_id': 'cyan'})
     collectible_spawns_data.append({'type': 'chest', 'pos': (1306.0, 1919)})
 
     # --- Level Dimensions for Game Camera & Boundaries ---

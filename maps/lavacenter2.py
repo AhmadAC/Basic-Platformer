@@ -55,7 +55,6 @@ def load_map_lavacenter2(initial_screen_width, initial_screen_height):
     hazards.add(Lava(880, 760, 40, 40, (255,69,0)))
     hazards.add(Lava(920, 760, 40, 40, (255,69,0)))
     hazards.add(Lava(960, 760, 40, 40, (255,69,0)))
-    enemy_spawns_data.append({'pos': (769, 397), 'patrol': None, 'enemy_color_id': 'cyan'})
     enemy_spawns_data.append({'pos': (409, 477), 'patrol': None, 'enemy_color_id': 'pink'})
     enemy_spawns_data.append({'pos': (689, 597), 'patrol': None, 'enemy_color_id': 'red'})
     collectible_spawns_data.append({'type': 'chest', 'pos': (466, 239)})

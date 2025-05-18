@@ -2872,12 +2872,6 @@
             "game_type_id": "enemy_green"
         },
         {
-            "asset_editor_key": "enemy_cyan",
-            "world_x": 520.0,
-            "world_y": 1920,
-            "game_type_id": "enemy_cyan"
-        },
-        {
             "asset_editor_key": "chest",
             "world_x": 1280.0,
             "world_y": 1880,

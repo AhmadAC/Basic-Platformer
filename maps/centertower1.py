@@ -35,9 +35,6 @@ def load_map_centertower1(initial_screen_width, initial_screen_height):
     platforms.add(Platform(1120.0, 0, 80, 760, (128,128,128), platform_type='wall'))
     # No ladders placed.
     # No hazards placed.
-    enemy_spawns_data.append({'pos': (289.0, 757), 'patrol': None, 'enemy_color_id': 'cyan'})
-    enemy_spawns_data.append({'pos': (169.0, 757), 'patrol': None, 'enemy_color_id': 'cyan'})
-    enemy_spawns_data.append({'pos': (169.0, 677), 'patrol': None, 'enemy_color_id': 'cyan'})
     enemy_spawns_data.append({'pos': (729.0, 677), 'patrol': None, 'enemy_color_id': 'pink'})
     enemy_spawns_data.append({'pos': (729.0, 717), 'patrol': None, 'enemy_color_id': 'pink'})
     enemy_spawns_data.append({'pos': (929.0, 717), 'patrol': None, 'enemy_color_id': 'pink'})

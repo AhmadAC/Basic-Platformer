@@ -933,24 +933,8 @@
             "world_y": 520,
             "game_type_id": "platform_wall_gray_left_half"
         },
-        {
-            "asset_editor_key": "enemy_cyan",
-            "world_x": 280.0,
-            "world_y": 720,
-            "game_type_id": "enemy_cyan"
-        },
-        {
-            "asset_editor_key": "enemy_cyan",
-            "world_x": 160.0,
-            "world_y": 720,
-            "game_type_id": "enemy_cyan"
-        },
-        {
-            "asset_editor_key": "enemy_cyan",
-            "world_x": 160.0,
-            "world_y": 640,
-            "game_type_id": "enemy_cyan"
-        },
+
+
         {
             "asset_editor_key": "enemy_pink",
             "world_x": 720.0,
