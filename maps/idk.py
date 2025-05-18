@@ -4,7 +4,7 @@ import pygame
 from tiles import Platform, Ladder, Lava
 import constants as C
 
-LEVEL_SPECIFIC_BACKGROUND_COLOR = (173, 216, 230)
+LEVEL_SPECIFIC_BACKGROUND_COLOR = (205, 255, 248)
 
 def load_map_idk(initial_screen_width, initial_screen_height):
     """
@@ -44,13 +44,27 @@ def load_map_idk(initial_screen_width, initial_screen_height):
     enemy_spawns_data.append({'pos': (290.0, 758), 'patrol': None, 'enemy_color_id': 'pink'})
     enemy_spawns_data.append({'pos': (370, 718), 'patrol': None, 'enemy_color_id': 'green'})
     enemy_spawns_data.append({'pos': (410.0, 758), 'patrol': None, 'enemy_color_id': 'gray'})
+    enemy_spawns_data.append({'pos': (450, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (490, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (530, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (570, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (610, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (650, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (690, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (730, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (770, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (810, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (850, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (890, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (930, 798), 'patrol': None, 'enemy_color_id': 'purple'})
+    enemy_spawns_data.append({'pos': (970, 798), 'patrol': None, 'enemy_color_id': 'purple'})
     collectible_spawns_data.append({'type': 'chest', 'pos': (675.0, 450.0)})
 
     # --- Level Dimensions for Game Camera & Boundaries ---
     map_total_width_pixels = 1320
     level_min_y_absolute = 80
-    level_max_y_absolute = 758
-    main_ground_y_reference = 758
+    level_max_y_absolute = 798
+    main_ground_y_reference = 798
     main_ground_height_reference = 40
 
     _boundary_thickness = C.TILE_SIZE * 2

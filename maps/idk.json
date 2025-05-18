@@ -4,9 +4,9 @@
     "map_height_tiles": 20,
     "grid_size": 40,
     "background_color": [
-        173,
-        216,
-        230
+        205,
+        255,
+        248
     ],
     "placed_objects": [
         {
@@ -446,9 +446,93 @@
             "world_x": 400.0,
             "world_y": 720,
             "game_type_id": "enemy_gray"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 440,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 480,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 520,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 560,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 600,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 640,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 680,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 720,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 760,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 800,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 840,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 880,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 920,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 960,
+            "world_y": 760,
+            "game_type_id": "enemy_purple"
         }
     ],
     "camera_offset_x": 0,
-    "camera_offset_y": 81.0,
+    "camera_offset_y": 0,
     "show_grid": true
 }

@@ -1,149 +1,20 @@
-2025-05-18 23:07:20,955 - INFO - editor.py:46 - <module> - Editor session started. Logging initialized successfully to file.
-2025-05-18 23:07:20,956 - DEBUG - editor.py:69 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path for module imports.
-2025-05-18 23:07:20,958 - INFO - editor.py:74 - <module> - Successfully imported 'constants as C_imported'. TILE_SIZE: 40
-2025-05-18 23:07:21,028 - DEBUG - editor.py:102 - <module> - Successfully imported all editor-specific modules including new handlers and history.
-2025-05-18 23:07:21,028 - INFO - editor.py:111 - editor_main - editor_main() started.
-2025-05-18 23:07:22,292 - DEBUG - editor.py:114 - editor_main - pygame.init() called.
-2025-05-18 23:07:22,292 - DEBUG - editor.py:124 - editor_main - pygame.font.init() confirmed or already initialized.
-2025-05-18 23:07:22,396 - INFO - editor.py:136 - editor_main - Editor screen created: (1280, 720)
-2025-05-18 23:07:22,396 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
-2025-05-18 23:07:22,398 - DEBUG - editor_state.py:274 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-18 23:07:22,398 - DEBUG - editor_state.py:139 - __init__ - EditorState initialized.
-2025-05-18 23:07:22,436 - DEBUG - editor.py:149 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded: small=True, medium=True, large=True, tooltip=True
-2025-05-18 23:07:22,436 - DEBUG - editor.py:190 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 250, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-18 23:07:22,436 - INFO - editor.py:194 - editor_main - Entering main editor loop.
-2025-05-18 23:07:23,911 - INFO - editor_handlers_menu.py:282 - handle_menu_events - Menu: 'Load Map' button clicked.
-2025-05-18 23:07:23,911 - DEBUG - editor_state.py:170 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-18 23:07:25,928 - DEBUG - editor_handlers_dialog.py:273 - handle_dialog_events - Dialog 'file_load' outcome: CONFIRMED
-2025-05-18 23:07:25,929 - DEBUG - editor_state.py:170 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
-2025-05-18 23:07:25,929 - DEBUG - editor_handlers_dialog.py:286 - handle_dialog_events - Calling confirm_callback for 'file_load' with value: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.json'
-2025-05-18 23:07:25,929 - DEBUG - editor_handlers_menu.py:284 - on_file_sel - Attempting to load map from: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.json
-2025-05-18 23:07:25,929 - INFO - editor_map_utils.py:208 - load_map_from_json - Loading map from JSON: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.json'
-2025-05-18 23:07:25,930 - DEBUG - editor_map_utils.py:218 - load_map_from_json - Successfully read JSON data from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.json'.
-2025-05-18 23:07:25,930 - DEBUG - editor_map_utils.py:241 - load_map_from_json - Loading 73 objects from JSON.
-2025-05-18 23:07:25,930 - DEBUG - editor_map_utils.py:278 - load_map_from_json - Auto-correction: Found 14 lava coordinates for checking: {(1000.0, 400.0), (280, 480.0), (1000.0, 200.0), (280, 280.0), (1000.0, 280.0), (280, 360.0), (280, 440.0), (1000.0, 360.0), (1000.0, 160.0), (280, 240.0), (1000.0, 240.0), (280, 320.0), (1000.0, 320.0), (280, 400.0)}
-2025-05-18 23:07:25,932 - DEBUG - editor_state.py:274 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
-2025-05-18 23:07:25,932 - INFO - editor_map_utils.py:325 - load_map_from_json - Map 'idk' loaded from idk.json.. map_name_for_function='idk', current_map_filename (py)='c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.py', current_json_filename='c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.json', unsaved_changes=False
-2025-05-18 23:07:25,932 - INFO - editor_state.py:299 - set_status_message - Status message set: 'Map 'idk' loaded from idk.json.' for 3.0s
-2025-05-18 23:07:25,932 - DEBUG - editor_state.py:149 - current_editor_mode - Changing editor mode from 'menu' to 'editing_map'
-2025-05-18 23:07:25,932 - DEBUG - editor_handlers_dialog.py:301 - handle_dialog_events - Dialog closed. General dialog state should have been reset by active_dialog_type setter.
-2025-05-18 23:07:25,933 - DEBUG - editor.py:260 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
-2025-05-18 23:07:25,933 - DEBUG - editor.py:262 - editor_main - Mode changed (likely via dialog callback) from 'menu' to 'editing_map'. Triggering layout recalc.
-2025-05-18 23:07:25,933 - DEBUG - editor.py:276 - editor_main - Mode changed from 'menu' to 'editing_map' after specific event handlers. Triggering layout recalc.
-2025-05-18 23:07:25,933 - DEBUG - editor.py:332 - editor_main - Recalculating layout. Current Mode: 'editing_map', Screen: 1280x720
-2025-05-18 23:07:25,933 - DEBUG - editor.py:336 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 250, 700)>, Map=<rect(270, 10, 1000, 700)>
-2025-05-18 23:07:26,898 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-2647.06, -441.18) based on mouse velocity (-1764.705882352941, -294.11764705882354)
-2025-05-18 23:07:37,163 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (83, 372). Selected asset: 'None'
-2025-05-18 23:07:37,163 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-18 23:07:37,999 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (80, 375). Selected asset: 'None'
-2025-05-18 23:07:38,000 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
-2025-05-18 23:07:38,770 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (190, 494). Selected asset: 'None'
-2025-05-18 23:07:38,770 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-18 23:07:39,708 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (152, 374). Selected asset: 'None'
-2025-05-18 23:07:39,708 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:40,461 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (153, 482). Selected asset: 'None'
-2025-05-18 23:07:40,461 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
-2025-05-18 23:07:40,994 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (173, 413). Selected asset: 'None'
-2025-05-18 23:07:40,994 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:41,580 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (192, 543). Selected asset: 'None'
-2025-05-18 23:07:41,580 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:42,211 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=5 at (178, 489). Selected asset: 'None'
-2025-05-18 23:07:42,211 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=-1, kick=2000.0, new momentum=2000.0
-2025-05-18 23:07:42,647 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=4 at (179, 480). Selected asset: 'None'
-2025-05-18 23:07:42,647 - DEBUG - editor_handlers_map_editing.py:163 - handle_editing_map_events - Asset palette MOUSEWHEEL: event.y=1, kick=-2000.0, new momentum=-2000.0
-2025-05-18 23:07:43,229 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (193, 483). Selected asset: 'None'
-2025-05-18 23:07:43,229 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:45,163 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (126, 30). Selected asset: 'None'
-2025-05-18 23:07:45,164 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:46,108 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-882.35, 0.00) based on mouse velocity (-588.2352941176471, 0.0)
-2025-05-18 23:07:46,628 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (197, 28). Selected asset: 'None'
-2025-05-18 23:07:46,628 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:47,545 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-468.75, -1500.00) based on mouse velocity (-312.5, -1000.0)
-2025-05-18 23:07:48,066 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (193, 40). Selected asset: 'None'
-2025-05-18 23:07:48,066 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:48,248 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (193, 40). Selected asset: 'None'
-2025-05-18 23:07:48,248 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:48,782 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (166, 37). Selected asset: 'None'
-2025-05-18 23:07:48,782 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:49,248 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=3 at (168, 32). Selected asset: 'None'
-2025-05-18 23:07:49,761 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (105, 32). Selected asset: 'None'
-2025-05-18 23:07:49,761 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:51,234 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (163, 691). Selected asset: 'None'
-2025-05-18 23:07:51,234 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:51,234 - INFO - editor_handlers_map_editing.py:183 - handle_editing_map_events - BG Color button clicked.
-2025-05-18 23:07:51,235 - DEBUG - editor_state.py:170 - active_dialog_type - Changing active_dialog_type from 'None' to 'color_picker'
-2025-05-18 23:07:52,560 - DEBUG - editor_handlers_dialog.py:273 - handle_dialog_events - Dialog 'color_picker' outcome: CANCELLED
-2025-05-18 23:07:52,560 - DEBUG - editor_state.py:170 - active_dialog_type - Changing active_dialog_type from 'color_picker' to 'None'
-2025-05-18 23:07:52,560 - DEBUG - editor_handlers_dialog.py:292 - handle_dialog_events - Calling cancel_callback for 'color_picker'.
-2025-05-18 23:07:52,560 - INFO - editor_state.py:299 - set_status_message - Status message set: 'BG Color selection cancelled.' for 3.0s
-2025-05-18 23:07:52,560 - DEBUG - editor_handlers_dialog.py:301 - handle_dialog_events - Dialog closed. General dialog state should have been reset by active_dialog_type setter.
-2025-05-18 23:07:52,560 - DEBUG - editor.py:260 - editor_main - Dialog type changed from 'color_picker' to 'None' after handle_dialog_events.
-2025-05-18 23:07:53,314 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (170, 712). Selected asset: 'None'
-2025-05-18 23:07:53,812 - DEBUG - editor_handlers_map_editing.py:167 - handle_editing_map_events - MOUSEBUTTONDOWN event.button=1 at (178, 697). Selected asset: 'None'
-2025-05-18 23:07:53,812 - DEBUG - editor_handlers_map_editing.py:180 - handle_editing_map_events - Left click in asset palette section.
-2025-05-18 23:07:53,812 - INFO - editor_handlers_map_editing.py:183 - handle_editing_map_events - BG Color button clicked.
-2025-05-18 23:07:53,813 - DEBUG - editor_state.py:170 - active_dialog_type - Changing active_dialog_type from 'None' to 'color_picker'
-2025-05-18 23:07:55,419 - DEBUG - editor_handlers_dialog.py:273 - handle_dialog_events - Dialog 'color_picker' outcome: CANCELLED
-2025-05-18 23:07:55,420 - DEBUG - editor_state.py:170 - active_dialog_type - Changing active_dialog_type from 'color_picker' to 'None'
-2025-05-18 23:07:55,420 - DEBUG - editor_handlers_dialog.py:292 - handle_dialog_events - Calling cancel_callback for 'color_picker'.
-2025-05-18 23:07:55,420 - INFO - editor_state.py:299 - set_status_message - Status message set: 'BG Color selection cancelled.' for 3.0s
-2025-05-18 23:07:55,420 - DEBUG - editor_handlers_dialog.py:301 - handle_dialog_events - Dialog closed. General dialog state should have been reset by active_dialog_type setter.
-2025-05-18 23:07:55,420 - DEBUG - editor.py:260 - editor_main - Dialog type changed from 'color_picker' to 'None' after handle_dialog_events.
-2025-05-18 23:07:56,006 - DEBUG - editor_updates.py:68 - update_continuous_camera_pan - Mouse exited map view. Initiated camera fling with momentum: (-882.35, 882.35) based on mouse velocity (-588.2352941176471, 588.2352941176471)
-2025-05-18 23:07:58,330 - INFO - editor_handlers_map_editing.py:316 - handle_editing_map_events - Ctrl+S pressed: Save All attempt.
-2025-05-18 23:07:58,330 - INFO - editor_map_utils.py:119 - save_map_to_json - Saving map to JSON. Map name from state: 'idk'
-2025-05-18 23:07:58,330 - DEBUG - editor_map_utils.py:135 - save_map_to_json - Attempting to save JSON to: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.json' using map name 'idk'
-2025-05-18 23:07:58,331 - DEBUG - editor_map_utils.py:171 - save_map_to_json - Data to save (first object example): {'asset_editor_key': 'platform_wall_gray', 'world_x': 320, 'world_y': 440, 'game_type_id': 'platform_wall_gray'}
-2025-05-18 23:07:58,333 - INFO - editor_map_utils.py:177 - save_map_to_json - Editor data saved to: idk.json
-2025-05-18 23:07:58,333 - INFO - editor_state.py:299 - set_status_message - Status message set: 'Editor data saved to: idk.json' for 3.0s
-2025-05-18 23:07:58,333 - INFO - editor_map_utils.py:472 - export_map_to_game_python_script - Exporting map. Map name from state: 'idk'
-2025-05-18 23:07:58,333 - DEBUG - editor_map_utils.py:501 - export_map_to_game_python_script - Exporting to function 'load_map_idk' in file 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.py'
-2025-05-18 23:07:58,333 - DEBUG - editor_map_utils.py:517 - export_map_to_game_python_script - Processing 73 objects for .py export.
-2025-05-18 23:07:58,333 - DEBUG - editor_map_utils.py:527 - export_map_to_game_python_script - Export: Identified 14 lava-occupied coordinates for platform check: {(1000.0, 400.0), (280, 480.0), (1000.0, 200.0), (280, 280.0), (1000.0, 280.0), (280, 360.0), (280, 440.0), (1000.0, 360.0), (1000.0, 160.0), (280, 240.0), (1000.0, 240.0), (280, 320.0), (1000.0, 320.0), (280, 400.0)}
-2025-05-18 23:07:58,334 - WARNING - editor_map_utils.py:620 - export_map_to_game_python_script - Unknown game_type_id 'player2_spawn' for object at (760,400). Not exported to .py.
-2025-05-18 23:07:58,334 - DEBUG - editor_map_utils.py:633 - export_map_to_game_python_script - Generated code lines - Platforms (merged): 3, Hazards: 14, Enemies: 6, Collectibles: 1
-2025-05-18 23:07:58,334 - DEBUG - editor_map_utils.py:677 - export_map_to_game_python_script - Export boundaries - map_min_x_content: 40, map_max_x_content: 1200
-2025-05-18 23:07:58,334 - DEBUG - editor_map_utils.py:678 - export_map_to_game_python_script - Export boundaries - TotalWidthPx: 1320, MinYAbs: 80, MaxYAbs: 758
-2025-05-18 23:07:58,334 - DEBUG - editor_map_utils.py:737 - export_map_to_game_python_script - Code for right-side filler wall generated: x=1200, y_expr='level_min_y_absolute - _boundary_thickness', w=120, h_expr='_boundary_wall_height', color_var_name='_boundary_color'
-2025-05-18 23:07:58,334 - DEBUG - editor_map_utils.py:738 - export_map_to_game_python_script - Approximate calculated values for filler wall (for logging ref): y_val_approx=0, h_val_approx=838, color_val_approx=(50, 50, 50)
-2025-05-18 23:07:58,334 - DEBUG - editor_map_utils.py:761 - export_map_to_game_python_script - Final .py script content (first 500 chars):
-# Level: idk
-# Generated by Platformer Level Editor (Optimized Export)
-import pygame
-from tiles import Platform, Ladder, Lava
-import constants as C
-
-LEVEL_SPECIFIC_BACKGROUND_COLOR = (173, 216, 230)
-
-def load_map_idk(initial_screen_width, initial_screen_height):
-    """
-    Loads the 'idk' level.
-    """
-    print(f"Loading map: load_map_idk...")
-    platforms = pygame.sprite.Group()
-    ladders = pygame.sprite.Group()
-    hazards = pygame.sprite.Group()
-    enemy_spawns_data = []
-    collectibl...
-2025-05-18 23:07:58,335 - INFO - editor_map_utils.py:767 - export_map_to_game_python_script - Map exported to game script: idk.py
-2025-05-18 23:07:58,335 - INFO - editor_state.py:299 - set_status_message - Status message set: 'Map exported to game script: idk.py' for 3.0s
-2025-05-18 23:07:58,335 - DEBUG - editor_map_utils.py:770 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\idk.py'.
-2025-05-18 23:07:59,080 - INFO - editor_handlers_map_editing.py:293 - handle_editing_map_events - Escape pressed: No asset selected, attempting to go to menu.
-2025-05-18 23:07:59,080 - DEBUG - editor_state.py:149 - current_editor_mode - Changing editor mode from 'editing_map' to 'menu'
-2025-05-18 23:07:59,080 - DEBUG - editor_state.py:311 - reset_map_context - Resetting map context (for new map or exiting edit mode).
-2025-05-18 23:07:59,080 - DEBUG - editor_state.py:348 - reset_map_context - Map context reset complete. Current map name: 'untitled_map'.
-2025-05-18 23:07:59,081 - DEBUG - editor.py:276 - editor_main - Mode changed from 'editing_map' to 'menu' after specific event handlers. Triggering layout recalc.
-2025-05-18 23:07:59,081 - DEBUG - editor.py:332 - editor_main - Recalculating layout. Current Mode: 'menu', Screen: 1280x720
-2025-05-18 23:07:59,081 - DEBUG - editor.py:336 - editor_main - New Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 250, 700)>, Map=<rect(300, 10, 970, 700)>
-2025-05-18 23:08:00,593 - INFO - editor_handlers_menu.py:282 - handle_menu_events - Menu: 'Load Map' button clicked.
-2025-05-18 23:08:00,594 - DEBUG - editor_state.py:170 - active_dialog_type - Changing active_dialog_type from 'None' to 'file_load'
-2025-05-18 23:08:01,174 - DEBUG - editor_handlers_dialog.py:273 - handle_dialog_events - Dialog 'file_load' outcome: CANCELLED
-2025-05-18 23:08:01,174 - DEBUG - editor_state.py:170 - active_dialog_type - Changing active_dialog_type from 'file_load' to 'None'
-2025-05-18 23:08:01,174 - DEBUG - editor_handlers_dialog.py:292 - handle_dialog_events - Calling cancel_callback for 'file_load'.
-2025-05-18 23:08:01,174 - DEBUG - editor_handlers_dialog.py:301 - handle_dialog_events - Dialog closed. General dialog state should have been reset by active_dialog_type setter.
-2025-05-18 23:08:01,174 - DEBUG - editor.py:260 - editor_main - Dialog type changed from 'file_load' to 'None' after handle_dialog_events.
-2025-05-18 23:08:02,064 - INFO - editor.py:267 - editor_main - Escape pressed in menu mode. Posting QUIT event.
-2025-05-18 23:08:02,081 - INFO - editor_handlers_global.py:18 - handle_global_events - pygame.QUIT event received.
-2025-05-18 23:08:02,081 - INFO - editor.py:251 - editor_main - handle_global_events returned False (QUIT). Setting running=False.
-2025-05-18 23:08:02,081 - INFO - editor.py:397 - editor_main - Exiting editor_main. Calling pygame.quit().
-2025-05-18 23:08:02,418 - INFO - editor.py:400 - editor_main - Editor session ended.
+2025-05-18 23:23:30,686 - INFO - editor.py:56 - <module> - Editor session started. Logging initialized successfully to file.
+2025-05-18 23:23:30,686 - DEBUG - editor.py:70 - <module> - Added project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' to sys.path.
+2025-05-18 23:23:30,702 - INFO - editor.py:72 - <module> - Successfully imported 'constants as C_imported'.
+2025-05-18 23:23:30,859 - DEBUG - editor.py:93 - <module> - Successfully imported all editor-specific modules.
+2025-05-18 23:23:30,918 - DEBUG - editor.py:112 - editor_main - QApplication instance created for PySide6 dialogs.
+2025-05-18 23:23:30,918 - INFO - editor.py:121 - editor_main - editor_main() started (after QApplication init attempt).
+2025-05-18 23:23:32,309 - DEBUG - editor.py:124 - editor_main - pygame.init() called.
+2025-05-18 23:23:32,309 - DEBUG - editor.py:132 - editor_main - pygame.font.init() confirmed or already initialized.
+2025-05-18 23:23:32,391 - INFO - editor.py:142 - editor_main - Editor screen created: (1280, 720)
+2025-05-18 23:23:32,391 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState...
+2025-05-18 23:23:32,393 - DEBUG - editor_state.py:274 - recreate_map_content_surface - Recreated map_content_surface: 1200x800
+2025-05-18 23:23:32,394 - DEBUG - editor_state.py:139 - __init__ - EditorState initialized.
+2025-05-18 23:23:32,477 - DEBUG - editor.py:153 - editor_main - Fonts from ED_CONFIG.FONT_CONFIG loaded.
+2025-05-18 23:23:32,477 - DEBUG - editor.py:187 - editor_main - Initial Layout - Menu=<rect(10, 10, 280, 700)>, Assets=<rect(10, 10, 250, 700)>, Map=<rect(300, 10, 970, 700)>
+2025-05-18 23:23:32,477 - INFO - editor.py:190 - editor_main - Entering main editor loop.
+2025-05-18 23:23:41,772 - INFO - editor_handlers_global.py:18 - handle_global_events - pygame.QUIT event received.
+2025-05-18 23:23:41,772 - INFO - editor.py:238 - editor_main - handle_global_events returned False (QUIT).
+2025-05-18 23:23:41,772 - INFO - editor.py:384 - editor_main - Exiting editor_main. Calling pygame.quit().
+2025-05-18 23:23:42,076 - DEBUG - editor.py:390 - editor_main - QApplication instance exists. For standalone scripts, explicit quit is often not strictly necessary as Python's exit handles it. No explicit q_application_instance.quit() will be called here to avoid issues if run in an integrated Qt environment.
+2025-05-18 23:23:42,081 - INFO - editor.py:396 - editor_main - Editor session ended.
