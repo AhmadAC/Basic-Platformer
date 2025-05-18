@@ -119,7 +119,11 @@ class EditorState:
         self.key_repeat_interval_ms: int = 50 # Interval (ms) between subsequent repeats
         self.key_held_down: Optional[int] = None # Stores the pygame.K_ key code of the key being held for repeat
         self.key_held_down_timer_start: float = 0.0 # pygame.time.get_ticks() when key was pressed/last repeat
-        self.key_repeat_action_performed_this_frame: bool = False # Flag to prevent multiple repeats in one frame due to event vs poll timing
+        # This flag indicates if a repeat action has already happened *within the current key_repeat_interval_ms*
+        # or if the *initial* action from KEYDOWN has occurred for the current hold.
+        # It helps differentiate the first action (from KEYDOWN or initial delay) from subsequent interval-based repeats.
+        self.key_repeat_action_performed_this_frame: bool = False 
+        self._key_repeat_initial_delay_passed: bool = False # Tracks if the initial longer delay has passed for current key hold
 
         # --- Miscellaneous State ---
         self.map_name_for_function_input: str = "" # Temporary storage for map name during new map creation flow
@@ -173,6 +177,7 @@ class EditorState:
                 self.asset_palette_scroll_momentum = 0.0
                 self.key_held_down = None # Reset key repeat when a new dialog opens/type changes
                 self.key_repeat_action_performed_this_frame = False
+                self._key_repeat_initial_delay_passed = False
             else: # Dialog is closing (value is None)
                 self.dialog_input_text_selected = False # Reset text selection state
                 # Reset specific dialog states when *any* dialog closes to ensure clean slate
@@ -182,6 +187,7 @@ class EditorState:
                 self.dialog_asset_properties_dropdown_open = False
                 self.key_held_down = None # Reset key repeat state
                 self.key_repeat_action_performed_this_frame = False
+                self._key_repeat_initial_delay_passed = False
 
 
             # Clean up UI element rects associated with the closing dialog
@@ -334,4 +340,9 @@ class EditorState:
         self.redo_stack.clear()
         # Reset UI elements related to specific map editing
         self.asset_palette_options_dropdown_open = False
+        # Reset key repeat state
+        self.key_held_down = None
+        self.key_repeat_action_performed_this_frame = False
+        self._key_repeat_initial_delay_passed = False
+        
         logger.debug(f"Map context reset complete. Current map name: '{self.map_name_for_function}'.")

@@ -1,5 +1,5 @@
 {
-    "map_name_for_function": "my_map",
+    "map_name_for_function": "idk",
     "map_width_tiles": 30,
     "map_height_tiles": 20,
     "grid_size": 40,
@@ -77,26 +77,8 @@
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 480,
-            "world_y": 520,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 520,
-            "world_y": 520,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
             "world_x": 560,
             "world_y": 480,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 560,
-            "world_y": 520,
             "game_type_id": "platform_wall_gray"
         },
         {
@@ -107,32 +89,14 @@
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 600,
-            "world_y": 520,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
             "world_x": 640,
             "world_y": 480,
             "game_type_id": "platform_wall_gray"
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 640,
-            "world_y": 520,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
             "world_x": 680,
             "world_y": 480,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 680,
-            "world_y": 520,
             "game_type_id": "platform_wall_gray"
         },
         {
@@ -149,26 +113,8 @@
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 720,
-            "world_y": 520,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 760,
-            "world_y": 520,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
             "world_x": 800,
             "world_y": 480,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 800,
-            "world_y": 520,
             "game_type_id": "platform_wall_gray"
         },
         {
@@ -179,20 +125,8 @@
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 840,
-            "world_y": 520,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
             "world_x": 880,
             "world_y": 480,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 880,
-            "world_y": 520,
             "game_type_id": "platform_wall_gray"
         },
         {
@@ -203,20 +137,8 @@
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 920,
-            "world_y": 520,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
             "world_x": 960,
             "world_y": 480,
-            "game_type_id": "platform_wall_gray"
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 960,
-            "world_y": 520,
             "game_type_id": "platform_wall_gray"
         },
         {
@@ -298,48 +220,6 @@
             "game_type_id": "player2_spawn"
         },
         {
-            "asset_editor_key": "enemy_red",
-            "world_x": 640,
-            "world_y": 160,
-            "game_type_id": "enemy_red"
-        },
-        {
-            "asset_editor_key": "enemy_red",
-            "world_x": 640,
-            "world_y": 200,
-            "game_type_id": "enemy_red"
-        },
-        {
-            "asset_editor_key": "enemy_red",
-            "world_x": 640,
-            "world_y": 280,
-            "game_type_id": "enemy_red"
-        },
-        {
-            "asset_editor_key": "enemy_red",
-            "world_x": 640,
-            "world_y": 240,
-            "game_type_id": "enemy_red"
-        },
-        {
-            "asset_editor_key": "enemy_red",
-            "world_x": 640,
-            "world_y": 320,
-            "game_type_id": "enemy_red"
-        },
-        {
-            "asset_editor_key": "enemy_red",
-            "world_x": 640,
-            "world_y": 360,
-            "game_type_id": "enemy_red"
-        },
-        {
-            "asset_editor_key": "enemy_red",
-            "world_x": 640,
-            "world_y": 400,
-            "game_type_id": "enemy_red"
-        },
-        {
             "asset_editor_key": "hazard_lava_tile",
             "world_x": 280,
             "world_y": 240.0,
@@ -379,12 +259,6 @@
             "asset_editor_key": "hazard_lava_tile",
             "world_x": 280,
             "world_y": 480.0,
-            "game_type_id": "hazard_lava"
-        },
-        {
-            "asset_editor_key": "hazard_lava_tile",
-            "world_x": 280,
-            "world_y": 520.0,
             "game_type_id": "hazard_lava"
         },
         {
@@ -430,19 +304,151 @@
             "game_type_id": "hazard_lava"
         },
         {
-            "asset_editor_key": "hazard_lava_tile",
-            "world_x": 1000.0,
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 960,
             "world_y": 440.0,
-            "game_type_id": "hazard_lava"
+            "game_type_id": "platform_wall_gray"
         },
         {
-            "asset_editor_key": "hazard_lava_tile",
-            "world_x": 1000.0,
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000,
+            "world_y": 440.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000,
             "world_y": 480.0,
-            "game_type_id": "hazard_lava"
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "chest",
+            "world_x": 640.0,
+            "world_y": 400.0,
+            "game_type_id": "chest"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 120,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 160,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 200,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 240,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 280,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 320,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 960,
+            "world_y": 640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000,
+            "world_y": 640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040,
+            "world_y": 640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080,
+            "world_y": 640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1120,
+            "world_y": 640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 640.0,
+            "game_type_id": "platform_wall_gray"
+        },
+        {
+            "asset_editor_key": "enemy_yellow",
+            "world_x": 40,
+            "world_y": 720.0,
+            "game_type_id": "enemy_yellow"
+        },
+        {
+            "asset_editor_key": "enemy_orange",
+            "world_x": 120,
+            "world_y": 720.0,
+            "game_type_id": "enemy_red"
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 200,
+            "world_y": 720.0,
+            "game_type_id": "enemy_purple"
+        },
+        {
+            "asset_editor_key": "enemy_pink",
+            "world_x": 280.0,
+            "world_y": 720,
+            "game_type_id": "enemy_pink"
+        },
+        {
+            "asset_editor_key": "enemy_green",
+            "world_x": 360,
+            "world_y": 680,
+            "game_type_id": "enemy_green"
+        },
+        {
+            "asset_editor_key": "enemy_gray",
+            "world_x": 400.0,
+            "world_y": 720,
+            "game_type_id": "enemy_gray"
         }
     ],
     "camera_offset_x": 0,
-    "camera_offset_y": 40,
+    "camera_offset_y": 81.0,
     "show_grid": true
 }
