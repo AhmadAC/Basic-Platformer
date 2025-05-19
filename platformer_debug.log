@@ -1,1 +1,91 @@
-[2025-05-19 16:53:44.891] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-19 18:01:58.959] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-19 18:02:02.401] INFO    PlatformerLogger: GameSetup: Initializing elements. Mode: 'couch_play', Screen: 960x680, Requested Map: 'bigmap1'
+[2025-05-19 18:02:02.403] DEBUG   PlatformerLogger: GameSetup: Initial projectile_sprites count: 0
+[2025-05-19 18:02:02.403] DEBUG   PlatformerLogger: GameSetup: Initial all_sprites count: 0
+[2025-05-19 18:02:02.404] DEBUG   PlatformerLogger: GameSetup: Clearing sprite groups (except projectile_sprites and all_sprites initially)...
+[2025-05-19 18:02:02.404] DEBUG   PlatformerLogger: GameSetup: After clearing, projectile_sprites count: 0
+[2025-05-19 18:02:02.405] DEBUG   PlatformerLogger: GameSetup: After clearing, all_sprites count: 0
+[2025-05-19 18:02:02.405] DEBUG   PlatformerLogger: GameSetup: Attempting to load map module 'maps.bigmap1' and call function 'load_map_bigmap1'
+[2025-05-19 18:02:02.442] DEBUG   PlatformerLogger: GameSetup: Level geometry loaded. Width: 4200, MinY: -80, MaxY: 2040, P1 Spawn: (90.0, 1918.0), P2 Spawn: (150.0, 1918.0), BG Color: (173, 216, 230), Statues: 0
+[2025-05-19 18:02:02.694] DEBUG   PlatformerLogger: GameSetup: Before setting proj groups for P1: projectile_sprites count 0, all_sprites count 53
+[2025-05-19 18:02:02.694] DEBUG   PlatformerLogger: GameSetup: Before setting proj groups for P2: projectile_sprites count 0, all_sprites count 53
+[2025-05-19 18:02:02.694] DEBUG   PlatformerLogger: GameSetup: Spawning 4 enemies from level data...
+[2025-05-19 18:02:02.694] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Initialized with specified color: yellow
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\yellow' ---
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\yellow\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Burning.gif'
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\yellow\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Aflame_crouch.gif'
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\yellow\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Burning_crouch.gif'
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\yellow\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Deflame_crouch.gif'
+[2025-05-19 18:02:02.751] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: -----------------------------------------------------------------
+
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.751] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.753] DEBUG   PlatformerLogger: Enemy (ID: 0, Color: yellow) main class initialized. Patrol target set.
+[2025-05-19 18:02:02.753] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Initialized with specified color: purple
+[2025-05-19 18:02:02.809] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\purple' ---
+[2025-05-19 18:02:02.809] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\purple\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Burning.gif'
+[2025-05-19 18:02:02.809] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\purple\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Aflame_crouch.gif'
+[2025-05-19 18:02:02.809] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\purple\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Burning_crouch.gif'
+[2025-05-19 18:02:02.810] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\purple\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Deflame_crouch.gif'
+[2025-05-19 18:02:02.810] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-19 18:02:02.810] WARNING PlatformerLogger: -----------------------------------------------------------------
+
+[2025-05-19 18:02:02.810] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.810] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.810] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.810] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.811] DEBUG   PlatformerLogger: Enemy (ID: 1, Color: purple) main class initialized. Patrol target set.
+[2025-05-19 18:02:02.811] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Initialized with specified color: pink
+[2025-05-19 18:02:02.867] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\pink' ---
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\pink\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning.gif'
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Aflame_crouch.gif'
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\pink\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning_crouch.gif'
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Deflame_crouch.gif'
+[2025-05-19 18:02:02.868] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: -----------------------------------------------------------------
+
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.868] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.869] DEBUG   PlatformerLogger: Enemy (ID: 2, Color: pink) main class initialized. Patrol target set.
+[2025-05-19 18:02:02.870] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Initialized with specified color: green
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\green' ---
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
+[2025-05-19 18:02:02.926] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: -----------------------------------------------------------------
+
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.926] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
+[2025-05-19 18:02:02.928] DEBUG   PlatformerLogger: Enemy (ID: 3, Color: green) main class initialized. Patrol target set.
+[2025-05-19 18:02:02.943] DEBUG   PlatformerLogger: GameSetup: Chest spawned from level data at (1280, 1880) (midbottom: (1315.0, 1930))
+[2025-05-19 18:02:02.943] DEBUG   PlatformerLogger: GameSetup: Final counts before return - AllSprites: 58, Projectiles: 0, Statues: 0
+[2025-05-19 18:02:02.944] INFO    PlatformerLogger: CouchPlayLogic: Entering Couch Play mode.
+[2025-05-19 18:02:02.945] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:( 90.00,1918.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(80, 1880, 21, 38)> OnGround:False State:idle
+[2025-05-19 18:02:02.945] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(150.00,1918.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(140, 1880, 21, 38)> OnGround:False State:idle
+[2025-05-19 18:02:02.945] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-19 18:02:02.946] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-19 18:02:02.946] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-19 18:02:02.946] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-19 18:02:03.955] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:( 90.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(80, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-19 18:02:03.956] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(150.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(140, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-19 18:02:04.968] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:( 90.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(80, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-19 18:02:04.968] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(150.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(140, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-19 18:02:05.971] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:( 90.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(80, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-19 18:02:05.973] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(150.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(140, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-19 18:02:06.988] DEBUG   PlatformerLogger: P1 PHYS: UPDATE_START       | Pos:( 90.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(80, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-19 18:02:06.989] DEBUG   PlatformerLogger: P2 PHYS: UPDATE_START       | Pos:(150.00,1920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.70) Rect:<rect(140, 1882, 21, 38)> OnGround:True State:idle
+[2025-05-19 18:02:07.355] INFO    PlatformerLogger: Couch Play: Global ESC key pressed, treating as pause/exit mode.
+[2025-05-19 18:02:07.356] INFO    PlatformerLogger: CouchPlayLogic: Exiting Couch Play mode.
