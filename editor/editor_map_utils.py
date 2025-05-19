@@ -43,7 +43,9 @@ logger = logging.getLogger(__name__)
 
 def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
                        map_width_tiles: int, map_height_tiles: int):
-    # ... (init_new_map_state content remains the same as version 2.0.3)
+    """
+    Initializes the editor_state for a new, empty map with the given parameters.
+    """
     logger.info(f"Initializing new map state. Name: '{map_name_for_function}', Size: {map_width_tiles}x{map_height_tiles}")
 
     clean_map_name = map_name_for_function # Assumed cleaned by caller
@@ -80,8 +82,8 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
                 f"current_json_filename='{editor_state.current_json_filename}', "
                 f"unsaved_changes={editor_state.unsaved_changes}")
 
+
 def ensure_maps_directory_exists() -> bool:
-    # ... (ensure_maps_directory_exists content remains the same as version 2.0.3)
     maps_dir_abs = ED_CONFIG.MAPS_DIRECTORY
     if not os.path.exists(maps_dir_abs):
         logger.info(f"Maps directory '{maps_dir_abs}' does not exist. Attempting to create.")
@@ -97,8 +99,8 @@ def ensure_maps_directory_exists() -> bool:
         return False
     return True
 
+
 def save_map_to_json(editor_state: EditorState) -> bool:
-    # ... (save_map_to_json content remains the same as version 2.0.3)
     logger.info(f"Saving map to JSON. Map name from state: '{editor_state.map_name_for_function}'")
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
         msg = "Map name is not set or is 'untitled_map'. Cannot save JSON."
@@ -146,8 +148,8 @@ def save_map_to_json(editor_state: EditorState) -> bool:
         logger.error(error_msg, exc_info=True)
     return False
 
+
 def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
-    # ... (load_map_from_json content remains the same as version 2.0.3)
     logger.info(f"Loading map from JSON: '{json_filepath}'")
     if not os.path.exists(json_filepath) or not os.path.isfile(json_filepath):
         error_msg = f"JSON map file not found or is not a file: '{json_filepath}'"
@@ -185,8 +187,8 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
         logger.error(error_msg, exc_info=True)
     return False
 
+
 def _merge_rect_objects(objects_raw: List[Dict[str, Any]], class_name_for_export: str, sprite_group_name: str) -> List[str]:
-    # ... (_merge_rect_objects content remains the same as version 2.0.3)
     if not objects_raw:
         return [f"    # No {class_name_for_export.lower()}s placed."]
 
@@ -299,7 +301,9 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         logger.error(f"{msg} PY export aborted.")
         return False
 
-    function_name_str_for_map_file = f"load_map_{editor_state.map_name_for_function}" # Store the string value
+    # This variable holds the string name of the function, e.g., "load_map_test1"
+    # It's used to construct the Python code for the map file.
+    function_name_str_for_map_file = f"load_map_{editor_state.map_name_for_function}"
     logger.debug(f"Exporting to function '{function_name_str_for_map_file}' in file '{py_filepath_to_use}'")
 
     platform_objects_raw: List[Dict[str, Any]] = []
@@ -337,7 +341,9 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         if asset_entry.get("surface_params"):
             dims_color_tuple = asset_entry["surface_params"]
             if isinstance(dims_color_tuple, tuple) and len(dims_color_tuple) == 3:
-                w, h, c = dims_color_tuple; obj_w, obj_h = w, h; default_color = c
+                w_param, h_param, c_param = dims_color_tuple
+                obj_w, obj_h = int(w_param), int(h_param)
+                default_color = c_param
         elif asset_entry.get("render_mode") == "half_tile":
             default_color = asset_entry.get("base_color_tuple", default_color)
             ht = asset_entry.get("half_type")
@@ -522,7 +528,6 @@ def {function_name_str_for_map_file}(initial_screen_width, initial_screen_height
 
 
 def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) -> bool:
-    # ... (delete_map_files content remains the same as version 2.0.3)
     logger.info(f"Attempting to delete map files. Base JSON path: {json_filepath_to_delete}")
     if not json_filepath_to_delete.endswith(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
         msg = f"Invalid file type for deletion: {json_filepath_to_delete}."

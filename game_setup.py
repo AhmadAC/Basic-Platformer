@@ -3,7 +3,7 @@
 """
 Handles initialization of game elements, levels, and entities.
 version 1.0.0.8 (Set player control_scheme and joystick_id_idx from game_config)
-version 1.0.0.9 (Fix TypeError in P2 spawn calculation due to misaligned tuple unpacking)
+version 1.0.0.9 (Corrected map data unpacking to fix TypeError)
 """
 import sys
 import pygame
@@ -14,7 +14,7 @@ from player import Player
 from enemy import Enemy
 from items import Chest
 from statue import Statue # Import the Statue class
-import levels as LevelLoader # Assuming levels.py has your map loading functions
+# import levels as LevelLoader # Not used directly if using importlib
 from camera import Camera
 from typing import Dict, Optional, Any, Tuple, List
 import importlib
@@ -57,12 +57,13 @@ def initialize_game_elements(current_width: int, current_height: int,
     """
     info(f"GameSetup: Initializing elements. Mode: '{for_game_mode}', Screen: {current_width}x{current_height}, Requested Map: '{map_module_name}'")
 
+    # Initialize sprite groups
     platform_sprites = pygame.sprite.Group()
     ladder_sprites = pygame.sprite.Group()
     hazard_sprites = pygame.sprite.Group()
-    enemy_sprites = pygame.sprite.Group()
-    collectible_sprites = pygame.sprite.Group()
-    statue_objects_list: List[Statue] = []
+    enemy_sprites = pygame.sprite.Group() # For enemies specifically
+    collectible_sprites = pygame.sprite.Group() # For chests, etc.
+    statue_objects_list: List[Statue] = [] # List to hold Statue instances
 
     projectile_sprites_from_existing = existing_sprites_groups.get('projectile_sprites') if existing_sprites_groups else None
     all_sprites_from_existing = existing_sprites_groups.get('all_sprites') if existing_sprites_groups else None
@@ -99,6 +100,7 @@ def initialize_game_elements(current_width: int, current_height: int,
     debug(f"GameSetup: After clearing, all_sprites count: {len(all_sprites.sprites())}")
 
     enemy_list: List[Enemy] = []
+
     level_data_loaded_successfully = False
     target_map_name_for_load = map_module_name if map_module_name else DEFAULT_LEVEL_MODULE_NAME # Fallback here
 
@@ -106,9 +108,9 @@ def initialize_game_elements(current_width: int, current_height: int,
     local_enemy_spawns_data_list: List[Dict[str,Any]] = []
     collectible_spawns_data_list: List[Dict[str,Any]] = []
     statue_spawns_data_list: List[Dict[str,Any]] = []
-    p1_spawn_props_loaded: Dict[str, Any] = {} # Initialize
 
     player1_spawn_pos = (100, current_height - (C.TILE_SIZE * 2))
+    player1_props_for_init = {} # Default player1 properties
     player2_spawn_pos = (150, current_height - (C.TILE_SIZE * 2))
 
     level_pixel_width = current_width
@@ -135,33 +137,50 @@ def initialize_game_elements(current_width: int, current_height: int,
             load_level_function = getattr(map_module, expected_level_load_func_name)
             level_data_tuple = load_level_function(current_width, current_height)
 
-            # Define constants for unpacking based on the tuple structure from editor_map_utils.py
+            # Define constants for tuple unpacking based on editor_map_utils.py return structure:
             # (platforms, ladders, hazards, enemy_spawns, collectible_spawns,
             #  p1_spawn_pos, p1_spawn_props,
             #  map_total_width, level_min_y, level_max_y,
             #  ground_y, ground_h,
             #  LEVEL_BG_COLOR,
             #  statue_spawns_data)
-            NUM_BASE_ELEMENTS_BEFORE_OPTIONAL = 12 # Number of elements up to ground_platform_height
+            # Total: 14 elements
+            IDX_PLATFORMS = 0
+            IDX_LADDERS = 1
+            IDX_HAZARDS = 2
+            IDX_ENEMY_SPAWNS = 3
+            IDX_COLLECTIBLE_SPAWNS = 4
+            IDX_P1_SPAWN_POS = 5
             IDX_P1_SPAWN_PROPS = 6
             IDX_MAP_TOTAL_WIDTH = 7
-            IDX_LEVEL_BG_COLOR = 12
-            IDX_STATUES = 13 # Index if all previous are present
+            IDX_LEVEL_MIN_Y = 8
+            IDX_LEVEL_MAX_Y = 9
+            IDX_GROUND_Y_REF = 10
+            IDX_GROUND_H_REF = 11
+            IDX_BG_COLOR = 12
+            IDX_STATUE_SPAWNS = 13
+            
+            MIN_EXPECTED_ELEMENTS_FROM_MAP = IDX_BG_COLOR + 1 # Expect at least up to background color
+            EXPECTED_ELEMENTS_WITH_STATUES = IDX_STATUE_SPAWNS + 1
 
-            if level_data_tuple and len(level_data_tuple) >= NUM_BASE_ELEMENTS_BEFORE_OPTIONAL:
-                platform_data_group                 = level_data_tuple[0]
-                ladder_data_group                   = level_data_tuple[1]
-                hazard_data_group                   = level_data_tuple[2]
-                local_enemy_spawns_data_list_loaded = level_data_tuple[3]
-                collectible_spawns_data_list_loaded = level_data_tuple[4]
-                p1_spawn_tuple                      = level_data_tuple[5]
-                p1_spawn_props_loaded               = level_data_tuple[IDX_P1_SPAWN_PROPS] # Correctly get props
-                lvl_total_width_pixels_loaded       = level_data_tuple[IDX_MAP_TOTAL_WIDTH]
-                lvl_min_y_abs_loaded                = level_data_tuple[8]
-                lvl_max_y_abs_loaded                = level_data_tuple[9]
-                main_ground_y_reference_loaded      = level_data_tuple[10]
-                main_ground_height_reference_loaded = level_data_tuple[11]
-
+            if level_data_tuple and len(level_data_tuple) >= MIN_EXPECTED_ELEMENTS_FROM_MAP:
+                platform_data_group = level_data_tuple[IDX_PLATFORMS]
+                ladder_data_group = level_data_tuple[IDX_LADDERS]
+                hazard_data_group = level_data_tuple[IDX_HAZARDS]
+                local_enemy_spawns_data_list_loaded = level_data_tuple[IDX_ENEMY_SPAWNS]
+                collectible_spawns_data_list_loaded = level_data_tuple[IDX_COLLECTIBLE_SPAWNS]
+                p1_spawn_tuple = level_data_tuple[IDX_P1_SPAWN_POS]
+                p1_spawn_props_loaded = level_data_tuple[IDX_P1_SPAWN_PROPS] # Correctly get props
+                lvl_total_width_pixels_loaded = level_data_tuple[IDX_MAP_TOTAL_WIDTH] # Now this is an int
+                lvl_min_y_abs_loaded = level_data_tuple[IDX_LEVEL_MIN_Y]
+                lvl_max_y_abs_loaded = level_data_tuple[IDX_LEVEL_MAX_Y]
+                main_ground_y_reference_loaded = level_data_tuple[IDX_GROUND_Y_REF]
+                main_ground_height_reference_loaded = level_data_tuple[IDX_GROUND_H_REF]
+                
+                level_background_color_loaded = level_data_tuple[IDX_BG_COLOR]
+                if isinstance(level_background_color_loaded, (tuple, list)) and len(level_background_color_loaded) == 3:
+                    level_background_color = level_background_color_loaded
+                
                 platform_sprites.add(platform_data_group.sprites() if platform_data_group else [])
                 ladder_sprites.add(ladder_data_group.sprites() if ladder_data_group else [])
                 hazard_sprites.add(hazard_data_group.sprites() if hazard_data_group else [])
@@ -170,33 +189,26 @@ def initialize_game_elements(current_width: int, current_height: int,
                 collectible_spawns_data_list = collectible_spawns_data_list_loaded if collectible_spawns_data_list_loaded else []
 
                 player1_spawn_pos = p1_spawn_tuple
+                player1_props_for_init = p1_spawn_props_loaded if isinstance(p1_spawn_props_loaded, dict) else {}
+
                 p2_spawn_x = p1_spawn_tuple[0] + C.TILE_SIZE * 1.5
-                
-                # Ensure lvl_total_width_pixels_loaded is a number before arithmetic
-                if not isinstance(lvl_total_width_pixels_loaded, (int, float)):
-                    error(f"GameSetup Error: lvl_total_width_pixels_loaded is not a number, it's a {type(lvl_total_width_pixels_loaded)}. Value: {lvl_total_width_pixels_loaded}")
-                    # Fallback or raise error
-                    lvl_total_width_pixels_loaded = current_width # Fallback to screen width
-                
-                if p2_spawn_x + (C.TILE_SIZE / 2) > lvl_total_width_pixels_loaded - C.TILE_SIZE:
-                    p2_spawn_x = lvl_total_width_pixels_loaded - C.TILE_SIZE * 2.5
-                if p2_spawn_x - (C.TILE_SIZE / 2) < C.TILE_SIZE:
-                    p2_spawn_x = C.TILE_SIZE * 2.5
+                if lvl_total_width_pixels_loaded is not None and isinstance(lvl_total_width_pixels_loaded, (int, float)): # Check type
+                    if p2_spawn_x + (C.TILE_SIZE / 2) > lvl_total_width_pixels_loaded - C.TILE_SIZE:
+                        p2_spawn_x = lvl_total_width_pixels_loaded - C.TILE_SIZE * 2.5
+                    if p2_spawn_x - (C.TILE_SIZE / 2) < C.TILE_SIZE:
+                        p2_spawn_x = C.TILE_SIZE * 2.5
+                else:
+                    warning(f"GameSetup: lvl_total_width_pixels_loaded is not a number ({lvl_total_width_pixels_loaded}), cannot adjust P2 spawn X relative to map width.")
                 player2_spawn_pos = (p2_spawn_x, p1_spawn_tuple[1])
 
-                level_pixel_width = lvl_total_width_pixels_loaded
-                lvl_min_y_abs = lvl_min_y_abs_loaded
-                lvl_max_y_abs = lvl_max_y_abs_loaded
-                ground_level_y = main_ground_y_reference_loaded
-                ground_platform_height = main_ground_height_reference_loaded
+                level_pixel_width = lvl_total_width_pixels_loaded if isinstance(lvl_total_width_pixels_loaded, (int, float)) else current_width
+                lvl_min_y_abs = lvl_min_y_abs_loaded if isinstance(lvl_min_y_abs_loaded, (int, float)) else 0
+                lvl_max_y_abs = lvl_max_y_abs_loaded if isinstance(lvl_max_y_abs_loaded, (int, float)) else current_height
+                ground_level_y = main_ground_y_reference_loaded if isinstance(main_ground_y_reference_loaded, (int,float)) else current_height - C.TILE_SIZE
+                ground_platform_height = main_ground_height_reference_loaded if isinstance(main_ground_height_reference_loaded, (int,float)) else C.TILE_SIZE
 
-                if len(level_data_tuple) > IDX_LEVEL_BG_COLOR and \
-                   isinstance(level_data_tuple[IDX_LEVEL_BG_COLOR], (tuple, list)) and \
-                   len(level_data_tuple[IDX_LEVEL_BG_COLOR]) == 3:
-                    level_background_color = level_data_tuple[IDX_LEVEL_BG_COLOR]
-
-                if len(level_data_tuple) > IDX_STATUES: # Check if statue data exists
-                    statue_spawns_data_list_from_map = level_data_tuple[IDX_STATUES]
+                if len(level_data_tuple) >= EXPECTED_ELEMENTS_WITH_STATUES:
+                    statue_spawns_data_list_from_map = level_data_tuple[IDX_STATUE_SPAWNS]
                     if isinstance(statue_spawns_data_list_from_map, list):
                         statue_spawns_data_list = statue_spawns_data_list_from_map
                     else:
@@ -206,7 +218,7 @@ def initialize_game_elements(current_width: int, current_height: int,
                 level_data_loaded_successfully = True
                 loaded_map_name_return = target_map_name_for_load
             else:
-                critical(f"GameSetup CRITICAL Error: Map '{target_map_name_for_load}' function '{expected_level_load_func_name}' did not return enough data elements (expected at least {NUM_BASE_ELEMENTS_BEFORE_OPTIONAL}). Got {len(level_data_tuple) if level_data_tuple else 'None'}.")
+                critical(f"GameSetup CRITICAL Error: Map '{target_map_name_for_load}' function '{expected_level_load_func_name}' did not return enough data elements (expected at least {MIN_EXPECTED_ELEMENTS_FROM_MAP}). Got {len(level_data_tuple) if level_data_tuple else 'None'}.")
 
         except ImportError:
             critical(f"GameSetup CRITICAL Error: Could not import map module 'maps.{target_map_name_for_load}'. Path issue?"); traceback.print_exc()
@@ -222,7 +234,7 @@ def initialize_game_elements(current_width: int, current_height: int,
             else:
                 critical(f"GameSetup FATAL: Default map '{DEFAULT_LEVEL_MODULE_NAME}' also failed to load. Cannot proceed."); return None
     else:
-        debug("GameSetup: No map module name provided. Skipping level geometry loading.")
+        debug("GameSetup: No map module name provided. Skipping level geometry loading. Players/camera shells will be created if mode requires.")
         loaded_map_name_return = None
 
     all_sprites.add(platform_sprites.sprites(), ladder_sprites.sprites(), hazard_sprites.sprites())
@@ -237,6 +249,7 @@ def initialize_game_elements(current_width: int, current_height: int,
             try: player1.joystick_id_idx = int(player1.control_scheme.split('_')[-1])
             except (IndexError, ValueError): player1.joystick_id_idx = None
         all_sprites.add(player1)
+        # Apply player1_props_for_init here if needed, e.g., player1.apply_properties(player1_props_for_init)
 
     if for_game_mode == "couch_play":
         player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2)
@@ -259,10 +272,13 @@ def initialize_game_elements(current_width: int, current_height: int,
     debug(f"GameSetup: Before setting proj groups for P1: projectile_sprites count {len(projectile_sprites.sprites())}, all_sprites count {len(all_sprites.sprites())}")
     if player1 and hasattr(player1, 'set_projectile_group_references'):
         player1.set_projectile_group_references(projectile_sprites, all_sprites)
+        player1.game_elements_ref_for_projectiles = {"projectile_sprites": projectile_sprites, "all_sprites": all_sprites} # Simplified ref
 
     debug(f"GameSetup: Before setting proj groups for P2: projectile_sprites count {len(projectile_sprites.sprites())}, all_sprites count {len(all_sprites.sprites())}")
     if player2 and hasattr(player2, 'set_projectile_group_references'):
         player2.set_projectile_group_references(projectile_sprites, all_sprites)
+        player2.game_elements_ref_for_projectiles = {"projectile_sprites": projectile_sprites, "all_sprites": all_sprites} # Simplified ref
+
 
     if (for_game_mode == "host" or for_game_mode == "couch_play") and local_enemy_spawns_data_list:
         debug(f"GameSetup: Spawning {len(local_enemy_spawns_data_list)} enemies from level data...")
@@ -287,7 +303,6 @@ def initialize_game_elements(current_width: int, current_height: int,
                 statue_pos_center_x, statue_pos_center_y = statue_data['pos']
                 custom_initial_img_path = statue_data.get('initial_image_path')
                 custom_smashed_anim_path = statue_data.get('smashed_anim_path')
-
                 new_statue = Statue(statue_pos_center_x, statue_pos_center_y, statue_id=statue_id,
                                     initial_image_path=custom_initial_img_path,
                                     smashed_anim_path=custom_smashed_anim_path)
@@ -324,6 +339,7 @@ def initialize_game_elements(current_width: int, current_height: int,
             else: debug("GameSetup: Random chest spawn also failed or returned None.")
 
     camera_instance = Camera(level_pixel_width, lvl_min_y_abs, lvl_max_y_abs, current_width, current_height)
+
     debug(f"GameSetup: Final counts before return - AllSprites: {len(all_sprites.sprites())}, Projectiles: {len(projectile_sprites.sprites())}, Statues: {len(statue_objects_list)}")
 
     game_elements_dict = {
@@ -340,7 +356,7 @@ def initialize_game_elements(current_width: int, current_height: int,
         "ground_level_y": ground_level_y,
         "ground_platform_height": ground_platform_height,
         "player1_spawn_pos": player1_spawn_pos,
-        "player1_spawn_props": p1_spawn_props_loaded, # Store loaded props
+        "player1_spawn_props": player1_props_for_init, # Store the loaded props
         "player2_spawn_pos": player2_spawn_pos,
         "enemy_spawns_data_cache": local_enemy_spawns_data_list,
         "level_background_color": level_background_color,
@@ -350,37 +366,45 @@ def initialize_game_elements(current_width: int, current_height: int,
 
 
 def spawn_chest(all_platform_sprites_group: pygame.sprite.Group, main_ground_y_surface_level: int) -> Optional[Chest]:
+    """
+    Spawns a chest randomly on a suitable 'ledge' platform.
+    If no suitable ledges are found, returns None.
+    """
     if Chest is None:
         warning("GameSetup (spawn_chest): Chest class is None, cannot spawn."); return None
+
     try:
         ledge_platforms = [
             p for p in all_platform_sprites_group
             if hasattr(p, 'platform_type') and p.platform_type == "ledge" and
                p.rect.width > C.TILE_SIZE * 1.25
         ]
+
         if not ledge_platforms:
             debug("GameSetup (spawn_chest): No suitable 'ledge' platforms found for chest spawn."); return None
-        
+
         candidate_platforms = list(ledge_platforms)
         if not candidate_platforms:
             debug("GameSetup (spawn_chest): No candidate ledges after filtering (if any)."); return None
 
         chosen_platform = random.choice(candidate_platforms)
+
         inset = C.TILE_SIZE * 0.5
         min_cx = chosen_platform.rect.left + inset
         max_cx = chosen_platform.rect.right - inset
+
         cx = random.randint(int(min_cx), int(max_cx)) if min_cx < max_cx else chosen_platform.rect.centerx
         cy = chosen_platform.rect.top
-        
+
         debug(f"GameSetup (spawn_chest): Attempting to spawn chest at calculated pos (midbottom): ({cx},{cy}) on platform {chosen_platform.rect}")
         new_chest = Chest(cx, cy)
-        
+
         if hasattr(new_chest, '_valid_init') and new_chest._valid_init:
             debug(f"GameSetup (spawn_chest): Random chest spawned on ledge at {new_chest.rect.topleft} (midbottom: ({cx},{cy}))")
             return new_chest
         else:
             warning(f"GameSetup (spawn_chest): New chest created at ({cx},{cy}) failed _valid_init.")
-            
+
     except Exception as e:
         error(f"GameSetup Error in spawn_chest: {e}"); traceback.print_exc()
     return None

@@ -1,389 +1,56 @@
-2025-05-19 16:24:42,036 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
-2025-05-19 16:24:42,037 - INFO - editor.py:59 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
-2025-05-19 16:24:42,037 - WARNING - editor.py:76 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
-2025-05-19 16:24:42,110 - INFO - editor_assets.py:27 - <module> - EditorAssets: Successfully imported 'resource_path' from 'assets' module.
-2025-05-19 16:24:42,360 - DEBUG - editor.py:85 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
-2025-05-19 16:24:42,361 - INFO - editor.py:642 - editor_main - editor_main() started for PySide6 application.
-2025-05-19 16:24:42,462 - DEBUG - editor.py:644 - editor_main - QApplication instance created.
-2025-05-19 16:24:42,466 - INFO - editor.py:96 - __init__ - Initializing EditorMainWindow...
-2025-05-19 16:24:42,466 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
-2025-05-19 16:24:42,466 - DEBUG - editor_state.py:55 - __init__ - EditorState initialized.
-2025-05-19 16:24:42,467 - DEBUG - editor.py:133 - init_ui - Initializing UI components...
-2025-05-19 16:24:42,487 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 16:24:42,487 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 16:24:42,487 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 16:24:42,497 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
-2025-05-19 16:24:42,497 - DEBUG - map_view_widget.py:145 - __init__ - MapViewWidget initialized.
-2025-05-19 16:24:42,646 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:24:42,649 - DEBUG - editor.py:180 - init_ui - UI components initialized.
-2025-05-19 16:24:42,649 - DEBUG - editor.py:185 - create_actions - Creating actions...
-2025-05-19 16:24:42,654 - DEBUG - editor.py:213 - create_actions - Actions created.
-2025-05-19 16:24:42,654 - DEBUG - editor.py:217 - create_menus - Creating menus...
-2025-05-19 16:24:42,661 - DEBUG - editor.py:255 - create_menus - Menus created.
-2025-05-19 16:24:42,661 - DEBUG - editor.py:259 - create_status_bar - Creating status bar...
-2025-05-19 16:24:42,662 - DEBUG - editor.py:266 - create_status_bar - Status bar created.
-2025-05-19 16:24:42,662 - INFO - editor_assets.py:207 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-19 16:24:42,662 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player1_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
-2025-05-19 16:24:42,663 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Attempting Qt load...
-2025-05-19 16:24:42,675 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player2_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
-2025-05-19 16:24:42,676 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Attempting Qt load...
-2025-05-19 16:24:42,677 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_gray' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
-2025-05-19 16:24:42,677 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Attempting Qt load...
-2025-05-19 16:24:42,678 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_green' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
-2025-05-19 16:24:42,678 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Attempting Qt load...
-2025-05-19 16:24:42,679 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_pink' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
-2025-05-19 16:24:42,680 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Attempting Qt load...
-2025-05-19 16:24:42,681 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_purple' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
-2025-05-19 16:24:42,682 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Attempting Qt load...
-2025-05-19 16:24:42,684 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_orange' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
-2025-05-19 16:24:42,685 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Attempting Qt load...
-2025-05-19 16:24:42,686 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_yellow' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
-2025-05-19 16:24:42,686 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Attempting Qt load...
-2025-05-19 16:24:42,687 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'chest' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
-2025-05-19 16:24:42,687 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Attempting Qt load...
-2025-05-19 16:24:42,688 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_idle' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
-2025-05-19 16:24:42,689 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Attempting Qt load...
-2025-05-19 16:24:42,691 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_crouch' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
-2025-05-19 16:24:42,692 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Attempting Qt load...
-2025-05-19 16:24:42,694 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'hazard_lava_tile' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
-2025-05-19 16:24:42,694 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Attempting Qt load...
-2025-05-19 16:24:42,697 - INFO - editor_assets.py:356 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
-2025-05-19 16:24:42,701 - DEBUG - editor_ui_panels.py:151 - populate_assets - Populating asset palette UI with filter: 'All'...
-2025-05-19 16:24:42,704 - DEBUG - editor_ui_panels.py:176 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
-2025-05-19 16:24:42,833 - DEBUG - editor.py:635 - restore_geometry_and_state - Window geometry and/or state restored.
-2025-05-19 16:24:42,911 - INFO - editor.py:128 - __init__ - EditorMainWindow initialized.
-2025-05-19 16:24:42,911 - INFO - editor.py:272 - show_status_message - Status: Editor started. Welcome!
-2025-05-19 16:24:42,970 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:33,831 - DEBUG - minimap_widget.py:191 - mousePressEvent - Minimap: Started dragging view rect. Offset: PySide6.QtCore.QPointF(99.000000, 52.541000)
-2025-05-19 16:25:33,833 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (364, 703)
-2025-05-19 16:25:33,846 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (376, 685)
-2025-05-19 16:25:33,848 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (407, 666)
-2025-05-19 16:25:33,860 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (488, 623)
-2025-05-19 16:25:33,872 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (637, 585)
-2025-05-19 16:25:33,882 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (799, 536)
-2025-05-19 16:25:33,891 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (923, 498)
-2025-05-19 16:25:33,899 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (985, 480)
-2025-05-19 16:25:33,907 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1035, 461)
-2025-05-19 16:25:33,913 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1053, 461)
-2025-05-19 16:25:33,916 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1060, 461)
-2025-05-19 16:25:33,922 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1078, 455)
-2025-05-19 16:25:33,929 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1097, 449)
-2025-05-19 16:25:33,938 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1109, 436)
-2025-05-19 16:25:33,938 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1116, 436)
-2025-05-19 16:25:33,943 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1128, 436)
-2025-05-19 16:25:33,951 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1134, 424)
-2025-05-19 16:25:33,957 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1147, 418)
-2025-05-19 16:25:33,964 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1165, 418)
-2025-05-19 16:25:33,967 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1171, 411)
-2025-05-19 16:25:33,973 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1184, 405)
-2025-05-19 16:25:33,980 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1221, 399)
-2025-05-19 16:25:33,987 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1234, 387)
-2025-05-19 16:25:33,988 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1246, 387)
-2025-05-19 16:25:33,993 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1258, 380)
-2025-05-19 16:25:33,998 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1277, 380)
-2025-05-19 16:25:34,000 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1283, 380)
-2025-05-19 16:25:34,002 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1296, 380)
-2025-05-19 16:25:34,006 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1308, 380)
-2025-05-19 16:25:34,010 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1308, 380)
-2025-05-19 16:25:34,018 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1321, 380)
-2025-05-19 16:25:34,267 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1321, 387)
-2025-05-19 16:25:34,276 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1321, 399)
-2025-05-19 16:25:34,284 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1321, 411)
-2025-05-19 16:25:34,298 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1314, 418)
-2025-05-19 16:25:34,304 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1314, 424)
-2025-05-19 16:25:34,311 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1308, 430)
-2025-05-19 16:25:34,320 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1308, 436)
-2025-05-19 16:25:34,326 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1302, 436)
-2025-05-19 16:25:34,331 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1302, 449)
-2025-05-19 16:25:34,354 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1296, 449)
-2025-05-19 16:25:34,363 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1289, 449)
-2025-05-19 16:25:34,371 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1289, 461)
-2025-05-19 16:25:34,378 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1283, 461)
-2025-05-19 16:25:34,382 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1271, 461)
-2025-05-19 16:25:34,387 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1265, 461)
-2025-05-19 16:25:34,390 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1252, 461)
-2025-05-19 16:25:34,395 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1246, 461)
-2025-05-19 16:25:34,399 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1227, 461)
-2025-05-19 16:25:34,405 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1221, 461)
-2025-05-19 16:25:34,409 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1209, 467)
-2025-05-19 16:25:34,416 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1196, 473)
-2025-05-19 16:25:34,423 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1171, 480)
-2025-05-19 16:25:34,430 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1165, 480)
-2025-05-19 16:25:34,434 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1147, 480)
-2025-05-19 16:25:34,438 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1140, 486)
-2025-05-19 16:25:34,446 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1134, 486)
-2025-05-19 16:25:34,453 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1122, 498)
-2025-05-19 16:25:34,459 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1109, 498)
-2025-05-19 16:25:34,465 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1097, 505)
-2025-05-19 16:25:34,472 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1091, 505)
-2025-05-19 16:25:34,472 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1084, 505)
-2025-05-19 16:25:34,476 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1084, 511)
-2025-05-19 16:25:34,491 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1078, 511)
-2025-05-19 16:25:34,499 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1072, 511)
-2025-05-19 16:25:34,503 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1060, 511)
-2025-05-19 16:25:34,508 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1060, 511)
-2025-05-19 16:25:34,514 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1047, 511)
-2025-05-19 16:25:34,520 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1041, 511)
-2025-05-19 16:25:34,523 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1035, 511)
-2025-05-19 16:25:34,530 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1029, 511)
-2025-05-19 16:25:34,582 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1022, 511)
-2025-05-19 16:25:34,591 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1016, 511)
-2025-05-19 16:25:34,595 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (1010, 511)
-2025-05-19 16:25:34,601 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (998, 511)
-2025-05-19 16:25:34,606 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (991, 511)
-2025-05-19 16:25:34,611 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (979, 511)
-2025-05-19 16:25:34,616 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (973, 511)
-2025-05-19 16:25:34,620 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (960, 511)
-2025-05-19 16:25:34,624 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (960, 511)
-2025-05-19 16:25:34,627 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (948, 511)
-2025-05-19 16:25:34,631 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (942, 511)
-2025-05-19 16:25:34,638 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (929, 511)
-2025-05-19 16:25:34,644 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (923, 511)
-2025-05-19 16:25:34,648 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (911, 511)
-2025-05-19 16:25:34,653 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (904, 511)
-2025-05-19 16:25:34,659 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (898, 511)
-2025-05-19 16:25:34,671 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (892, 511)
-2025-05-19 16:25:34,691 - DEBUG - minimap_widget.py:219 - mouseMoveEvent - Minimap: Dragging view rect to center map at (886, 511)
-2025-05-19 16:25:34,784 - DEBUG - minimap_widget.py:227 - mouseReleaseEvent - Minimap: Stopped dragging view rect.
-2025-05-19 16:25:37,486 - INFO - editor.py:383 - load_map - Load Map action triggered.
-2025-05-19 16:25:43,832 - INFO - editor_map_utils.py:151 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/level_default.json'
-2025-05-19 16:25:43,832 - DEBUG - editor_map_utils.py:162 - load_map_from_json - Successfully read JSON data from 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/level_default.json'.
-2025-05-19 16:25:43,833 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-19 16:25:43,833 - INFO - editor_map_utils.py:174 - load_map_from_json - Map 'level_default' loaded from level_default.json.. map_name_for_function='level_default', current_map_filename (py)='c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\level_default.py', current_json_filename='C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/level_default.json', unsaved_changes=True
-2025-05-19 16:25:43,833 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 16:25:43,833 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 16:25:43,833 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 16:25:43,834 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
-2025-05-19 16:25:43,836 - INFO - editor.py:272 - show_status_message - Status: Map 'level_default' loaded.
-2025-05-19 16:25:43,836 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 1
-2025-05-19 16:25:45,954 - DEBUG - map_view_widget.py:633 - on_asset_selected - MapView: on_asset_selected received key: 'platform_wall_gray'
-2025-05-19 16:25:45,955 - INFO - editor_state.py:75 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray'
-2025-05-19 16:25:45,955 - DEBUG - map_view_widget.py:643 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_wall_gray'
-2025-05-19 16:25:45,957 - INFO - editor.py:272 - show_status_message - Status: Asset selected: Wall (Gray)
-2025-05-19 16:25:46,469 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'platform_wall_gray', Item under mouse: None, Grid Coords: (15,21)
-2025-05-19 16:25:46,469 - DEBUG - map_view_widget.py:360 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (15,21).
-2025-05-19 16:25:46,469 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(15,21), FirstAction=True, Continuous=False
-2025-05-19 16:25:46,469 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,469 - DEBUG - map_view_widget.py:487 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 16:25:46,470 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 2
-2025-05-19 16:25:46,470 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (15,21), world (600.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,470 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 1
-2025-05-19 16:25:46,470 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,471 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (15,21) with color None.
-2025-05-19 16:25:46,471 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,471 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,471 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,471 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,472 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,481 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,653 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(16,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,653 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,653 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (16,21), world (640.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,654 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 2
-2025-05-19 16:25:46,654 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,654 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (16,21) with color None.
-2025-05-19 16:25:46,654 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,654 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,654 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,654 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,654 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,657 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,662 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(17,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,662 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,662 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (17,21), world (680.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,662 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 3
-2025-05-19 16:25:46,662 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,663 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (17,21) with color None.
-2025-05-19 16:25:46,663 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,663 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,663 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,663 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,663 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,665 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,675 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(18,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,676 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,676 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (18,21), world (720.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,676 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 4
-2025-05-19 16:25:46,676 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,676 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (18,21) with color None.
-2025-05-19 16:25:46,676 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,676 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,676 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,676 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,676 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,678 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,691 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(19,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,691 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,691 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (19,21), world (760.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,691 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 5
-2025-05-19 16:25:46,691 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,691 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (19,21) with color None.
-2025-05-19 16:25:46,691 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,692 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,692 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,692 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,692 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,697 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,705 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(20,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,705 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,705 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (20,21), world (800.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,705 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 6
-2025-05-19 16:25:46,705 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,705 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (20,21) with color None.
-2025-05-19 16:25:46,705 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,705 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,705 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,705 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,706 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,707 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,721 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(21,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,721 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,721 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (21,21), world (840.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,721 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 7
-2025-05-19 16:25:46,721 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,721 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (21,21) with color None.
-2025-05-19 16:25:46,721 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,721 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,721 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,721 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,721 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,723 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,733 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(22,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,733 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,733 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (22,21), world (880.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,733 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 8
-2025-05-19 16:25:46,733 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,733 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (22,21) with color None.
-2025-05-19 16:25:46,733 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,733 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,733 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,733 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,733 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,735 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,748 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(23,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,748 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,748 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (23,21), world (920.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,748 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 9
-2025-05-19 16:25:46,748 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,748 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (23,21) with color None.
-2025-05-19 16:25:46,748 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,748 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,748 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,748 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,749 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,750 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,755 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(24,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,755 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,755 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (24,21), world (960.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,755 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 10
-2025-05-19 16:25:46,755 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,756 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (24,21) with color None.
-2025-05-19 16:25:46,756 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,756 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,756 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,756 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,756 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,759 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,770 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(25,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,770 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,770 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (25,21), world (1000.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,770 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 11
-2025-05-19 16:25:46,770 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,770 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (25,21) with color None.
-2025-05-19 16:25:46,770 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,770 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,770 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,770 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,770 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,775 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:46,789 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(26,21), FirstAction=False, Continuous=True
-2025-05-19 16:25:46,789 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 16:25:46,789 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (26,21), world (1040.0,840.0). IsSpawn: False
-2025-05-19 16:25:46,789 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 12
-2025-05-19 16:25:46,789 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 16:25:46,789 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (26,21) with color None.
-2025-05-19 16:25:46,789 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:46,789 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:46,790 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:46,790 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:46,790 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:46,792 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:48,479 - DEBUG - map_view_widget.py:633 - on_asset_selected - MapView: on_asset_selected received key: 'player1_spawn'
-2025-05-19 16:25:48,479 - INFO - editor_state.py:75 - selected_asset_editor_key - selected_asset_editor_key changed to: 'player1_spawn'
-2025-05-19 16:25:48,479 - DEBUG - map_view_widget.py:643 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'player1_spawn'
-2025-05-19 16:25:48,490 - INFO - editor.py:272 - show_status_message - Status: Asset selected: Player 1 Spawn
-2025-05-19 16:25:49,191 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'player1_spawn', Item under mouse: QGraphicsLineItem, Grid Coords: (17,19)
-2025-05-19 16:25:49,191 - DEBUG - map_view_widget.py:360 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (17,19).
-2025-05-19 16:25:49,191 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='player1_spawn', Grid=(17,19), FirstAction=True, Continuous=False
-2025-05-19 16:25:49,191 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'player1_spawn' (derived from palette key 'player1_spawn')
-2025-05-19 16:25:49,191 - DEBUG - map_view_widget.py:487 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 16:25:49,191 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 3
-2025-05-19 16:25:49,191 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'player1_spawn' (GameID: player1_spawn) at grid (17,19), world (680.0,760.0). IsSpawn: True
-2025-05-19 16:25:49,191 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 13
-2025-05-19 16:25:49,192 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(21, 38)). Creating and adding item to scene.
-2025-05-19 16:25:49,192 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'player1_spawn' at grid (17,19) with color None.
-2025-05-19 16:25:49,192 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:49,192 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:49,192 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:49,192 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:49,192 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:49,200 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:50,189 - DEBUG - map_view_widget.py:633 - on_asset_selected - MapView: on_asset_selected received key: 'player2_spawn'
-2025-05-19 16:25:50,189 - INFO - editor_state.py:75 - selected_asset_editor_key - selected_asset_editor_key changed to: 'player2_spawn'
-2025-05-19 16:25:50,189 - DEBUG - map_view_widget.py:643 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'player2_spawn'
-2025-05-19 16:25:50,190 - INFO - editor.py:272 - show_status_message - Status: Asset selected: Player 2 Spawn
-2025-05-19 16:25:50,736 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'player2_spawn', Item under mouse: None, Grid Coords: (21,19)
-2025-05-19 16:25:50,736 - DEBUG - map_view_widget.py:360 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (21,19).
-2025-05-19 16:25:50,736 - DEBUG - map_view_widget.py:464 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='player2_spawn', Grid=(21,19), FirstAction=True, Continuous=False
-2025-05-19 16:25:50,736 - DEBUG - map_view_widget.py:478 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'player2_spawn' (derived from palette key 'player2_spawn')
-2025-05-19 16:25:50,736 - DEBUG - map_view_widget.py:487 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 16:25:50,737 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 4
-2025-05-19 16:25:50,737 - DEBUG - map_view_widget.py:511 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'player2_spawn' (GameID: player2_spawn) at grid (21,19), world (840.0,760.0). IsSpawn: True
-2025-05-19 16:25:50,737 - DEBUG - map_view_widget.py:553 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 14
-2025-05-19 16:25:50,737 - DEBUG - map_view_widget.py:563 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(21, 38)). Creating and adding item to scene.
-2025-05-19 16:25:50,738 - INFO - map_view_widget.py:568 - _place_single_object_on_map - MapView: Placed 'player2_spawn' at grid (21,19) with color None.
-2025-05-19 16:25:50,738 - DEBUG - map_view_widget.py:501 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 16:25:50,738 - DEBUG - editor.py:283 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 16:25:50,738 - DEBUG - editor.py:291 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
-2025-05-19 16:25:50,738 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 16:25:50,738 - DEBUG - editor.py:294 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: True
-2025-05-19 16:25:50,749 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 16:25:53,724 - INFO - editor.py:401 - save_map_json - Save Map (JSON) action triggered.
-2025-05-19 16:25:53,724 - INFO - editor_map_utils.py:102 - save_map_to_json - Saving map to JSON. Map name from state: 'level_default'
-2025-05-19 16:25:53,724 - DEBUG - editor_map_utils.py:121 - save_map_to_json - Attempting to save JSON to: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/level_default.json' using map name 'level_default'
-2025-05-19 16:25:53,724 - DEBUG - editor_map_utils.py:132 - save_map_to_json - Data to save (first object example from snapshot): {'asset_editor_key': 'platform_wall_gray', 'world_x': 600, 'world_y': 840, 'game_type_id': 'platform_wall_gray', 'properties': {}}
-2025-05-19 16:25:53,726 - INFO - editor_map_utils.py:139 - save_map_to_json - Editor data saved to: level_default.json
-2025-05-19 16:25:53,726 - INFO - editor.py:272 - show_status_message - Status: Editor data saved: level_default.json.
-2025-05-19 16:25:59,665 - INFO - editor.py:414 - export_map_py - Export Map (PY) action triggered.
-2025-05-19 16:25:59,665 - INFO - editor_map_utils.py:281 - export_map_to_game_python_script - Exporting map. Map name from state: 'level_default'
-2025-05-19 16:25:59,665 - DEBUG - editor_map_utils.py:303 - export_map_to_game_python_script - Exporting to function 'load_map_level_default' in file 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\level_default.py'
-2025-05-19 16:25:59,672 - INFO - editor_map_utils.py:511 - export_map_to_game_python_script - Map exported to game script: level_default.py
-2025-05-19 16:25:59,672 - DEBUG - editor_map_utils.py:513 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\level_default.py'.
-2025-05-19 16:25:59,672 - INFO - editor.py:272 - show_status_message - Status: Map exported for game: level_default.py.
-2025-05-19 16:26:06,088 - INFO - editor.py:383 - load_map - Load Map action triggered.
-2025-05-19 16:26:12,340 - INFO - editor_map_utils.py:151 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/test1.json'
-2025-05-19 16:26:12,341 - DEBUG - editor_map_utils.py:162 - load_map_from_json - Successfully read JSON data from 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/test1.json'.
-2025-05-19 16:26:12,341 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-19 16:26:12,341 - INFO - editor_map_utils.py:174 - load_map_from_json - Map 'test1' loaded from test1.json.. map_name_for_function='test1', current_map_filename (py)='c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\test1.py', current_json_filename='C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/test1.json', unsaved_changes=True
-2025-05-19 16:26:12,341 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 16:26:12,341 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 16:26:12,342 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 16:26:12,347 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (-50.0, -264.0)
-2025-05-19 16:26:12,348 - INFO - editor.py:272 - show_status_message - Status: Map 'test1' loaded.
-2025-05-19 16:26:12,348 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 5
-2025-05-19 16:26:14,866 - INFO - editor.py:401 - save_map_json - Save Map (JSON) action triggered.
-2025-05-19 16:26:14,866 - INFO - editor_map_utils.py:102 - save_map_to_json - Saving map to JSON. Map name from state: 'test1'
-2025-05-19 16:26:14,866 - DEBUG - editor_map_utils.py:121 - save_map_to_json - Attempting to save JSON to: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/test1.json' using map name 'test1'
-2025-05-19 16:26:14,866 - DEBUG - editor_map_utils.py:132 - save_map_to_json - Data to save (first object example from snapshot): {'asset_editor_key': 'platform_wall_gray', 'world_x': 160, 'world_y': 160, 'game_type_id': 'platform_wall_gray', 'properties': {}, 'override_color': [170, 0, 0]}
-2025-05-19 16:26:14,871 - INFO - editor_map_utils.py:139 - save_map_to_json - Editor data saved to: test1.json
-2025-05-19 16:26:14,871 - INFO - editor.py:272 - show_status_message - Status: Editor data saved: test1.json.
-2025-05-19 16:26:17,689 - INFO - editor.py:414 - export_map_py - Export Map (PY) action triggered.
-2025-05-19 16:26:17,689 - INFO - editor_map_utils.py:281 - export_map_to_game_python_script - Exporting map. Map name from state: 'test1'
-2025-05-19 16:26:17,689 - DEBUG - editor_map_utils.py:303 - export_map_to_game_python_script - Exporting to function 'load_map_test1' in file 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\test1.py'
-2025-05-19 16:26:17,692 - INFO - editor_map_utils.py:511 - export_map_to_game_python_script - Map exported to game script: test1.py
-2025-05-19 16:26:17,692 - DEBUG - editor_map_utils.py:513 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\test1.py'.
-2025-05-19 16:26:17,693 - INFO - editor.py:272 - show_status_message - Status: Map exported for game: test1.py.
-2025-05-19 16:26:20,391 - INFO - editor.py:603 - closeEvent - Close event triggered for main window.
-2025-05-19 16:26:20,392 - INFO - editor.py:612 - closeEvent - Window geometry and state saved.
-2025-05-19 16:26:20,446 - INFO - editor.py:651 - editor_main - QApplication event loop finished with exit code: 0
-2025-05-19 16:26:20,446 - INFO - editor.py:659 - editor_main - Editor session ended.
+2025-05-19 16:50:50,274 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
+2025-05-19 16:50:50,275 - INFO - editor.py:59 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
+2025-05-19 16:50:50,275 - WARNING - editor.py:76 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
+2025-05-19 16:50:50,339 - INFO - editor_assets.py:27 - <module> - EditorAssets: Successfully imported 'resource_path' from 'assets' module.
+2025-05-19 16:50:50,361 - DEBUG - editor.py:85 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
+2025-05-19 16:50:50,362 - INFO - editor.py:615 - editor_main - editor_main() started for PySide6 application.
+2025-05-19 16:50:50,400 - DEBUG - editor.py:617 - editor_main - QApplication instance created.
+2025-05-19 16:50:50,401 - INFO - editor.py:97 - __init__ - Initializing EditorMainWindow...
+2025-05-19 16:50:50,401 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
+2025-05-19 16:50:50,401 - DEBUG - editor_state.py:55 - __init__ - EditorState initialized.
+2025-05-19 16:50:50,401 - DEBUG - editor.py:133 - init_ui - Initializing UI components...
+2025-05-19 16:50:50,403 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 16:50:50,403 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 16:50:50,403 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 16:50:50,404 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-19 16:50:50,404 - DEBUG - map_view_widget.py:145 - __init__ - MapViewWidget initialized.
+2025-05-19 16:50:50,447 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
+2025-05-19 16:50:50,447 - DEBUG - editor.py:177 - init_ui - UI components initialized.
+2025-05-19 16:50:50,447 - DEBUG - editor.py:180 - create_actions - Creating actions...
+2025-05-19 16:50:50,448 - DEBUG - editor.py:207 - create_actions - Actions created.
+2025-05-19 16:50:50,448 - DEBUG - editor.py:210 - create_menus - Creating menus...
+2025-05-19 16:50:50,450 - DEBUG - editor.py:248 - create_menus - Menus created.
+2025-05-19 16:50:50,450 - DEBUG - editor.py:251 - create_status_bar - Creating status bar...
+2025-05-19 16:50:50,450 - DEBUG - editor.py:258 - create_status_bar - Status bar created.
+2025-05-19 16:50:50,450 - INFO - editor_assets.py:207 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-19 16:50:50,450 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player1_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
+2025-05-19 16:50:50,450 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Attempting Qt load...
+2025-05-19 16:50:50,451 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player2_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
+2025-05-19 16:50:50,451 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Attempting Qt load...
+2025-05-19 16:50:50,452 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_gray' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
+2025-05-19 16:50:50,452 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Attempting Qt load...
+2025-05-19 16:50:50,453 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_green' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
+2025-05-19 16:50:50,453 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Attempting Qt load...
+2025-05-19 16:50:50,453 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_pink' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
+2025-05-19 16:50:50,453 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Attempting Qt load...
+2025-05-19 16:50:50,454 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_purple' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
+2025-05-19 16:50:50,454 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Attempting Qt load...
+2025-05-19 16:50:50,454 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_orange' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
+2025-05-19 16:50:50,456 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Attempting Qt load...
+2025-05-19 16:50:50,456 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_yellow' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
+2025-05-19 16:50:50,456 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Attempting Qt load...
+2025-05-19 16:50:50,457 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'chest' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
+2025-05-19 16:50:50,457 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Attempting Qt load...
+2025-05-19 16:50:50,458 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_idle' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
+2025-05-19 16:50:50,459 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Attempting Qt load...
+2025-05-19 16:50:50,460 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_crouch' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
+2025-05-19 16:50:50,460 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Attempting Qt load...
+2025-05-19 16:50:50,462 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'hazard_lava_tile' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
+2025-05-19 16:50:50,462 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Attempting Qt load...
+2025-05-19 16:50:50,463 - INFO - editor_assets.py:356 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
+2025-05-19 16:50:50,464 - DEBUG - editor_ui_panels.py:151 - populate_assets - Populating asset palette UI with filter: 'All'...
+2025-05-19 16:50:50,464 - DEBUG - editor_ui_panels.py:176 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
+2025-05-19 16:50:50,503 - DEBUG - editor.py:609 - restore_geometry_and_state - Window geometry and/or state restored.
+2025-05-19 16:50:50,576 - INFO - editor.py:129 - __init__ - EditorMainWindow initialized.
+2025-05-19 16:50:50,577 - INFO - editor.py:263 - show_status_message - Status: Editor started. Welcome!
+2025-05-19 16:50:50,654 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
