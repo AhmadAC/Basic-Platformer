@@ -3,16 +3,16 @@
 """
 Custom Qt Widgets for UI Panels (Asset Palette, Properties Editor)
 in the PySide6 Level Editor.
-Version 2.0.5 (Properties text wrapping fix, Asset palette 3-col refinement)
+Version 2.0.6 (Asset Palette Paint Color Button)
 """
 import logging
 from typing import Optional, Dict, Any, List, Tuple
 
 from PySide6.QtWidgets import (
-    QWidget, QListWidget, QListWidgetItem, QVBoxLayout,
+    QWidget, QListWidget, QListWidgetItem, QVBoxLayout, QHBoxLayout, # Added QHBoxLayout
     QLabel, QLineEdit, QCheckBox, QComboBox, QPushButton, QScrollArea,
     QFormLayout, QSpinBox, QDoubleSpinBox, QColorDialog,
-    QGroupBox, QSizePolicy # Added QSizePolicy
+    QGroupBox, QSizePolicy 
 )
 from PySide6.QtGui import QIcon, QPalette, QColor, QPixmap
 from PySide6.QtCore import Qt, Signal, Slot, QSize
@@ -27,6 +27,9 @@ logger = logging.getLogger(__name__)
 class AssetPaletteWidget(QWidget):
     asset_selected = Signal(str)
     tool_selected = Signal(str)
+    # Signal to notify main window when paint color changes, so status bar can update
+    paint_color_changed_for_status = Signal(str)
+
 
     def __init__(self, editor_state: EditorState, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -38,10 +41,22 @@ class AssetPaletteWidget(QWidget):
         self.main_layout.setContentsMargins(2,2,2,2)
         self.main_layout.setSpacing(3) 
 
+        # --- Category Filter and Paint Color Button Area ---
+        filter_area_layout = QHBoxLayout()
+        
         self.category_filter_combo = QComboBox(self)
         self.category_filter_combo.addItem("All") 
         self.category_filter_combo.currentIndexChanged.connect(self._on_category_filter_changed)
-        self.main_layout.addWidget(self.category_filter_combo)
+        filter_area_layout.addWidget(self.category_filter_combo, 1) # Combo takes more space
+
+        self.paint_color_button = QPushButton("Paint Color")
+        self.paint_color_button.setToolTip("Set the color for the next placed colorable asset.")
+        self.paint_color_button.clicked.connect(self._on_select_paint_color)
+        self._update_paint_color_button_visuals() # Initialize button appearance
+        filter_area_layout.addWidget(self.paint_color_button, 0) # Button takes less space
+
+        self.main_layout.addLayout(filter_area_layout)
+        # --- End Filter Area ---
 
         self.asset_list_widget = QListWidget(self)
         self.asset_list_widget.setIconSize(QSize(ED_CONFIG.ASSET_PALETTE_ICON_SIZE_W, ED_CONFIG.ASSET_PALETTE_ICON_SIZE_H))
@@ -57,6 +72,41 @@ class AssetPaletteWidget(QWidget):
             QListWidget::item:selected { border: 1px solid #333; background-color: #c0d5eA; }
         """)
         self.main_layout.addWidget(self.asset_list_widget)
+
+    def _update_paint_color_button_visuals(self):
+        color_tuple = self.editor_state.current_selected_asset_paint_color
+        if color_tuple:
+            q_color = QColor(*color_tuple)
+            palette = self.paint_color_button.palette()
+            palette.setColor(QPalette.ColorRole.Button, q_color)
+            luma = 0.299 * color_tuple[0] + 0.587 * color_tuple[1] + 0.114 * color_tuple[2]
+            text_q_color = QColor(Qt.GlobalColor.black) if luma > 128 else QColor(Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.ButtonText, text_q_color)
+            self.paint_color_button.setPalette(palette)
+            self.paint_color_button.setAutoFillBackground(True)
+            self.paint_color_button.setText(f"RGB: {color_tuple}")
+            self.paint_color_button.setStyleSheet("QPushButton { border: 1px solid black; min-height: 20px; padding: 2px; }")
+        else:
+            self.paint_color_button.setAutoFillBackground(False) # Revert to default
+            self.paint_color_button.setText("Paint Color")
+            self.paint_color_button.setStyleSheet("") # Revert to default stylesheet
+        self.paint_color_button.update()
+
+
+    @Slot()
+    def _on_select_paint_color(self):
+        current_q_color = QColor(*self.editor_state.current_selected_asset_paint_color) if self.editor_state.current_selected_asset_paint_color else QColor(Qt.GlobalColor.white)
+        new_q_color = QColorDialog.getColor(current_q_color, self, "Select Asset Paint Color")
+        if new_q_color.isValid():
+            self.editor_state.current_selected_asset_paint_color = new_q_color.getRgb()[:3]
+            status_msg = f"Asset paint color set to: {self.editor_state.current_selected_asset_paint_color}"
+        else:
+            # self.editor_state.current_selected_asset_paint_color = None # Optionally clear if dialog cancelled
+            status_msg = "Asset paint color selection cancelled."
+        
+        self._update_paint_color_button_visuals()
+        self.paint_color_changed_for_status.emit(status_msg)
+
 
     def _populate_category_combo_if_needed(self):
         if self.categories_populated_in_combo or not self.editor_state.assets_palette:
@@ -90,9 +140,6 @@ class AssetPaletteWidget(QWidget):
         if not self.editor_state.assets_palette: return
         
         logger.debug(f"Populating asset palette UI with filter: '{current_filter_text}'...")
-
-        # Cell width to encourage 3 columns. Icon W (32) + padding.
-        # (Dock typical min width 250 - (2*spacing 5)) / 3 items = ~80.
         item_cell_width = 85 
         item_cell_height = ED_CONFIG.ASSET_PALETTE_ICON_SIZE_H + 20 
         self.asset_list_widget.setGridSize(QSize(item_cell_width, item_cell_height))
@@ -143,7 +190,8 @@ class AssetPaletteWidget(QWidget):
     def clear_selection(self):
         self.asset_list_widget.clearSelection()
 
-# --- PropertiesEditorDockWidget ---
+# --- PropertiesEditorDockWidget (No changes needed here for this request) ---
+# ... (rest of PropertiesEditorDockWidget remains the same as version 2.0.5) ...
 class PropertiesEditorDockWidget(QWidget):
     properties_changed = Signal(dict)
 
@@ -162,7 +210,7 @@ class PropertiesEditorDockWidget(QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_widget = QWidget()
         self.form_layout = QFormLayout(self.scroll_widget)
-        self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop) # AlignTop for labels
+        self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop) 
         self.form_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
         self.form_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
         self.scroll_area.setWidget(self.scroll_widget)
@@ -381,8 +429,8 @@ class PropertiesEditorDockWidget(QWidget):
             checkbox.stateChanged.connect(lambda state_int, vn=var_name: self._on_property_value_changed(vn, state_int == Qt.CheckState.Checked.value))
         
         if widget:
-            if not isinstance(widget, QCheckBox): # CheckBox has its own label text
-                widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred) # For non-checkbox field widgets
+            if not isinstance(widget, QCheckBox): 
+                widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred) 
                 layout.addRow(property_name_label, widget)
             else: layout.addRow(widget)
             self.input_widgets[var_name] = widget

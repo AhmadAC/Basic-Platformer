@@ -25,9 +25,8 @@ logger = None
 log_file_path_for_error_msg = "editor_qt_debug.log"
 try:
     import editor_config as ED_CONFIG
-    # Corrected: script_dir for logs should be where editor.py is
     current_script_dir_for_logs = os.path.dirname(os.path.abspath(__file__))
-    logs_dir = os.path.join(current_script_dir_for_logs, 'logs') # logs subdir within 'editor'
+    logs_dir = os.path.join(current_script_dir_for_logs, 'logs') 
     if not os.path.exists(logs_dir): os.makedirs(logs_dir)
     log_file_path_for_error_msg = os.path.join(logs_dir, ED_CONFIG.LOG_FILE_NAME if hasattr(ED_CONFIG, "LOG_FILE_NAME") else "editor_qt_debug.log")
 
@@ -38,7 +37,7 @@ try:
         format=ED_CONFIG.LOG_FORMAT if hasattr(ED_CONFIG, "LOG_FORMAT") else '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s',
         handlers=[logging.FileHandler(log_file_path_for_error_msg, mode='w')]
     )
-    logger = logging.getLogger(__name__) # Use __name__ for the logger specific to this file
+    logger = logging.getLogger(__name__) 
     logger.info("Editor session started. Logging initialized successfully.")
     print(f"LOGGING INITIALIZED. Log file at: {log_file_path_for_error_msg}")
 except Exception as e_log:
@@ -50,13 +49,7 @@ except Exception as e_log:
 # --- End Logger Setup ---
 
 # --- sys.path modification ---
-# This should ensure that the project root (Platformer/) is in sys.path
-# so that `import constants` and `from assets import resource_path` work.
 try:
-    # Assuming editor.py is in ProjectRoot/editor/editor.py
-    # os.path.abspath(__file__) -> .../ProjectRoot/editor/editor.py
-    # os.path.dirname(os.path.abspath(__file__)) -> .../ProjectRoot/editor/
-    # os.path.dirname(os.path.dirname(os.path.abspath(__file__))) -> .../ProjectRoot/
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
@@ -67,18 +60,18 @@ except Exception as e_imp:
     sys.exit(1)
 # --- End sys.path modification ---
 
-# --- Editor module imports (should be relative to 'editor' package if run as part of it) ---
+# --- Editor module imports ---
 try:
-    from .editor_state import EditorState # Use relative import if editor is a package
+    from .editor_state import EditorState 
     from . import editor_assets
     from . import editor_map_utils
     from . import editor_history
-    from .map_view_widget import MapViewWidget, MapObjectItem # Ensure MapObjectItem is imported if used directly
+    from .map_view_widget import MapViewWidget, MapObjectItem 
     from .editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
     if logger: logger.debug("Successfully imported all editor-specific modules (using relative imports).")
 except ImportError as e_editor_mod_rel:
     logger.warning(f"Relative import failed for editor modules: {e_editor_mod_rel}. Trying absolute...")
-    try: # Fallback to absolute imports (might work if 'editor' dir is directly in PYTHONPATH or project root added by IDE)
+    try: 
         from editor_state import EditorState
         import editor_assets
         import editor_map_utils
@@ -103,20 +96,18 @@ class EditorMainWindow(QMainWindow):
         self.setGeometry(50, 50, ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT)
 
         self.init_ui()
-        self.create_actions() # Actions must be created before menus
+        self.create_actions() 
         self.create_menus()
         self.create_status_bar()
 
-        # Ensure docks have object names for state saving
         self.asset_palette_dock.setObjectName("AssetPaletteDock")
         self.properties_editor_dock.setObjectName("PropertiesEditorDock")
-
 
         editor_assets.load_editor_palette_assets(self.editor_state, self)
         self.asset_palette_widget.populate_assets()
         
         self.update_window_title()
-        self.update_edit_actions_enabled_state() # Initial state for actions
+        self.update_edit_actions_enabled_state() 
 
         if not self.restore_geometry_and_state():
             self.showMaximized()
@@ -129,7 +120,6 @@ class EditorMainWindow(QMainWindow):
         logger.info("EditorMainWindow initialized.")
         self.show_status_message("Editor started. Welcome!", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2)
 
-
     def init_ui(self):
         logger.debug("Initializing UI components...")
         self.map_view_widget = MapViewWidget(self.editor_state, self)
@@ -140,18 +130,20 @@ class EditorMainWindow(QMainWindow):
         self.asset_palette_dock.setWidget(self.asset_palette_widget)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.asset_palette_dock)
         self.asset_palette_dock.setMinimumWidth(max(200, ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH - 50))
-        self.asset_palette_dock.setMaximumWidth(ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH + 100) # Control max width too
+        self.asset_palette_dock.setMaximumWidth(ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH + 100) 
 
         self.properties_editor_dock = QDockWidget("Properties", self)
         self.properties_editor_widget = PropertiesEditorDockWidget(self.editor_state, self)
         self.properties_editor_dock.setWidget(self.properties_editor_widget)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.properties_editor_dock)
-        self.properties_editor_dock.setMinimumWidth(280) # Increased minimum width for properties
+        self.properties_editor_dock.setMinimumWidth(280) 
 
         # Connect signals
         self.asset_palette_widget.asset_selected.connect(self.map_view_widget.on_asset_selected)
         self.asset_palette_widget.asset_selected.connect(self.properties_editor_widget.display_asset_properties)
         self.asset_palette_widget.tool_selected.connect(self.map_view_widget.on_tool_selected)
+        self.asset_palette_widget.paint_color_changed_for_status.connect(self.show_status_message) # Connect new signal
+
         self.map_view_widget.map_object_selected_for_properties.connect(self.properties_editor_widget.display_map_object_properties)
         self.map_view_widget.map_content_changed.connect(self.handle_map_content_changed)
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
@@ -169,9 +161,8 @@ class EditorMainWindow(QMainWindow):
         self.export_map_action = QAction("&Export Map for Game...", self, shortcut=QKeySequence("Ctrl+E"), statusTip="Export map to game format (.py)", triggered=self.export_map_py)
         self.save_all_action = QAction("Save &All (JSON & PY)", self, shortcut=QKeySequence("Ctrl+Shift+S"), statusTip="Save editor data and export for game", triggered=self.save_all)
         
-        # New Export as Image action
         self.export_map_as_image_action = QAction("Export Map as &Image...", self,
-                                                  shortcut="Ctrl+Shift+P", # Changed from I to avoid conflict if any
+                                                  shortcut="Ctrl+Shift+P", 
                                                   statusTip="Export the current map view as a PNG image",
                                                   triggered=self.export_map_as_image)
 
@@ -191,7 +182,6 @@ class EditorMainWindow(QMainWindow):
         self.rename_map_action = QAction("&Rename Current Map...", self, statusTip="Rename the current map's files", triggered=self.rename_map)
         self.delete_map_file_action = QAction("&Delete Map File...", self, statusTip="Delete a map's .json and .py files", triggered=self.delete_map_file)
 
-        # Initial state setting for actions is now done in __init__ AFTER create_actions
         logger.debug("Actions created.")
 
     def create_menus(self):
@@ -208,7 +198,7 @@ class EditorMainWindow(QMainWindow):
         file_menu.addAction(self.export_map_action)
         file_menu.addAction(self.save_all_action)
         file_menu.addSeparator()
-        file_menu.addAction(self.export_map_as_image_action) # Add new action
+        file_menu.addAction(self.export_map_as_image_action) 
         file_menu.addSeparator()
         file_menu.addAction(self.exit_action)
 
@@ -305,7 +295,6 @@ class EditorMainWindow(QMainWindow):
         self.zoom_out_action.setEnabled(map_active)
         self.zoom_reset_action.setEnabled(map_active)
         
-        # Enable export as image if map has content
         map_has_content = bool(self.editor_state.placed_objects or self.editor_state.current_json_filename)
         self.export_map_as_image_action.setEnabled(map_has_content)
         logger.debug(f"UpdateEditActions: export_map_as_image_action.setEnabled({map_has_content})")
@@ -333,7 +322,7 @@ class EditorMainWindow(QMainWindow):
             invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']
             if any(char in clean_map_name for char in invalid_chars): QMessageBox.warning(self, "Invalid Name", f"Map name '{clean_map_name}' has invalid chars."); return
             project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            maps_abs_dir = os.path.join(project_root_for_maps, ED_CONFIG.MAPS_DIRECTORY) # Ensure absolute path
+            maps_abs_dir = os.path.join(project_root_for_maps, ED_CONFIG.MAPS_DIRECTORY) 
             potential_json_path = os.path.join(maps_abs_dir, clean_map_name + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION)
             if os.path.exists(potential_json_path): QMessageBox.warning(self, "Name Exists", f"JSON '{os.path.basename(potential_json_path)}' exists."); return
             size_str, ok_size = QInputDialog.getText(self, "Map Size", "Enter map size (Width,Height in tiles):", text=f"{ED_CONFIG.DEFAULT_MAP_WIDTH_TILES},{ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES}")
@@ -555,7 +544,6 @@ class EditorMainWindow(QMainWindow):
     def closeEvent(self, event):
         logger.info("Close event triggered for main window.")
         if self.confirm_unsaved_changes("exit the editor"):
-            # Ensure dock widgets have object names before saving state
             if not self.asset_palette_dock.objectName(): self.asset_palette_dock.setObjectName("AssetPaletteDock")
             if not self.properties_editor_dock.objectName(): self.properties_editor_dock.setObjectName("PropertiesEditorDock")
             
@@ -582,9 +570,6 @@ class EditorMainWindow(QMainWindow):
         return restored
 
 def editor_main():
-    # Explicitly set current working directory to where editor.py is,
-    # so relative paths for logs ('./logs') work as expected from this script's location.
-    # This was previously at the top of the file, moving here for clarity.
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     logger.info("editor_main() started for PySide6 application.")
@@ -602,7 +587,7 @@ def editor_main():
         QMessageBox.critical(None,"Editor Critical Error", f"{e_main_loop}\n\nCheck log:\n{log_file_path_for_error_msg}")
         exit_code = 1
     finally:
-        if hasattr(main_window, 'isVisible') and main_window.isVisible(): # Ensure main_window exists and is visible
+        if hasattr(main_window, 'isVisible') and main_window.isVisible(): 
             main_window.save_geometry_and_state()
         logger.info("Editor session ended.")
     return exit_code

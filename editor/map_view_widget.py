@@ -84,12 +84,16 @@ class MapObjectItem(QGraphicsPixmapItem):
                     )
                     if colored_pixmap and not colored_pixmap.isNull():
                         self.setPixmap(colored_pixmap)
-                    elif self.initial_pixmap and not self.initial_pixmap.isNull():
+                    elif self.initial_pixmap and not self.initial_pixmap.isNull(): # Fallback to initial if coloring fails
                         self.setPixmap(self.initial_pixmap)
+                    else: # Absolute fallback if initial_pixmap is also bad
+                        fallback_pix = QPixmap(int(target_w), int(target_h))
+                        fallback_pix.fill(Qt.GlobalColor.magenta)
+                        self.setPixmap(fallback_pix)
                 except Exception as e:
                     logger.error(f"Error updating visual for {self.editor_key} with color {new_color.name()}: {e}", exc_info=True)
                     if self.initial_pixmap and not self.initial_pixmap.isNull(): self.setPixmap(self.initial_pixmap)
-        elif self.initial_pixmap and not self.initial_pixmap.isNull():
+        elif self.initial_pixmap and not self.initial_pixmap.isNull(): # Revert to original if no specific update
              self.setPixmap(self.initial_pixmap)
 
 
@@ -137,7 +141,7 @@ class MapViewWidget(QGraphicsView):
         self.map_scene.selectionChanged.connect(self.on_scene_selection_changed)
         
         self.load_map_from_state()
-        logger.debug("MapViewWidget initialized.") # MOVED Log after load_map_from_state
+        logger.debug("MapViewWidget initialized.") 
 
     @Slot(dict)
     def _handle_internal_object_move_for_unsaved_changes(self, moved_object_data_ref: dict):
@@ -153,7 +157,7 @@ class MapViewWidget(QGraphicsView):
         self.map_scene.blockSignals(False)
         self._grid_lines.clear()
         self._map_object_items.clear()
-        if self._hover_preview_item: # Ensure hover item is also cleared from scene if it exists
+        if self._hover_preview_item: 
             if self._hover_preview_item.scene():
                 self.map_scene.removeItem(self._hover_preview_item)
             self._hover_preview_item = None
@@ -191,12 +195,12 @@ class MapViewWidget(QGraphicsView):
         gs = self.editor_state.grid_size; scene_rect = self.map_scene.sceneRect()
         map_w_px, map_h_px = scene_rect.width(), scene_rect.height()
         start_x, start_y = scene_rect.left(), scene_rect.top()
-        for x_val in range(int(start_x), int(start_x + map_w_px) + gs, gs): # Adjusted range end
+        for x_val in range(int(start_x), int(start_x + map_w_px) + gs, gs): 
             x_coord = float(x_val)
             if x_coord > start_x + map_w_px + 1e-6 : continue
             line = self.map_scene.addLine(x_coord, start_y, x_coord, start_y + map_h_px, pen)
             line.setZValue(-1); self._grid_lines.append(line)
-        for y_val in range(int(start_y), int(start_y + map_h_px) + gs, gs): # Adjusted range end
+        for y_val in range(int(start_y), int(start_y + map_h_px) + gs, gs): 
             y_coord = float(y_val)
             if y_coord > start_y + map_h_px + 1e-6 : continue
             line = self.map_scene.addLine(start_x, y_coord, start_x + map_w_px, y_coord, pen)
@@ -234,7 +238,7 @@ class MapViewWidget(QGraphicsView):
                 if map_obj_item.pos() != QPointF(world_x, world_y): map_obj_item.setPos(QPointF(world_x, world_y))
                 map_obj_item.editor_key = asset_key
                 map_obj_item.game_type_id = str(obj_data.get("game_type_id"))
-                map_obj_item.map_object_data_ref = obj_data
+                map_obj_item.map_object_data_ref = obj_data # Ensure MapObjectItem always has the current ref
             else:
                 map_obj_item = MapObjectItem(asset_key, str(obj_data.get("game_type_id")), pixmap_to_draw, int(world_x), int(world_y), obj_data)
                 self.map_scene.addItem(map_obj_item)
@@ -247,7 +251,7 @@ class MapViewWidget(QGraphicsView):
         scene_pos = self.screen_to_scene_coords(screen_pos_qpoint)
         gs = self.editor_state.grid_size
         if gs <= 0: return (int(scene_pos.x()), int(scene_pos.y()))
-        grid_tx = int(scene_pos.x() // gs) # Integer division for grid cells
+        grid_tx = int(scene_pos.x() // gs) 
         grid_ty = int(scene_pos.y() // gs)
         return grid_tx, grid_ty
     def snap_to_grid(self, world_x: float, world_y: float) -> Tuple[float, float]:
@@ -267,12 +271,11 @@ class MapViewWidget(QGraphicsView):
     def reset_zoom(self):
         view_center_scene = self.mapToScene(self.viewport().rect().center())
         self.resetTransform()
-        self.editor_state.camera_offset_x = 0.0 # Reset camera offset logic
+        self.editor_state.camera_offset_x = 0.0 
         self.editor_state.camera_offset_y = 0.0
         self.editor_state.zoom_level = 1.0
-        self.translate(0,0) # Ensure translation is reset if camera_offset is truly 0,0
-        self.centerOn(view_center_scene) # Re-center
-        # After centerOn, scrollbars might change, so update camera_offset based on them
+        self.translate(0,0) 
+        self.centerOn(view_center_scene) 
         self.editor_state.camera_offset_x = float(self.horizontalScrollBar().value())
         self.editor_state.camera_offset_y = float(self.verticalScrollBar().value())
         self._emit_zoom_update_status()
@@ -395,10 +398,10 @@ class MapViewWidget(QGraphicsView):
         self.editor_state.last_painted_tile_coords = None; self.editor_state.last_erased_tile_coords = None; self.editor_state.last_colored_tile_coords = None
         if self.dragMode() == QGraphicsView.DragMode.RubberBandDrag: self.setDragMode(QGraphicsView.DragMode.NoDrag)
         super().mouseReleaseEvent(event)
-    def enterEvent(self, event: QFocusEvent):
+    def enterEvent(self, event: QFocusEvent): # Changed type hint to QFocusEvent
         if not self.edge_scroll_timer.isActive(): self.edge_scroll_timer.start()
         super().enterEvent(event)
-    def leaveEvent(self, event: QFocusEvent):
+    def leaveEvent(self, event: QFocusEvent): # Changed type hint to QFocusEvent
         if self.edge_scroll_timer.isActive(): self.edge_scroll_timer.stop()
         self._edge_scroll_dx = 0; self._edge_scroll_dy = 0
         if self._hover_preview_item: self._hover_preview_item.setVisible(False)
@@ -432,13 +435,8 @@ class MapViewWidget(QGraphicsView):
             logger.error(f"MapView (_perform_place_action): Asset data for palette key '{asset_key}' not found in editor_state.assets_palette. Cannot place.")
             return
         
-        # --- CORRECTED LOGIC for actual_asset_key_to_place ---
         places_asset_key_value = asset_data_from_palette.get("places_asset_key") 
-        if places_asset_key_value and isinstance(places_asset_key_value, str) and places_asset_key_value.strip():
-            actual_asset_key_to_place = places_asset_key_value.strip()
-        else:
-            actual_asset_key_to_place = asset_key
-        # --- END CORRECTED LOGIC ---
+        actual_asset_key_to_place = places_asset_key_value.strip() if places_asset_key_value and isinstance(places_asset_key_value, str) and places_asset_key_value.strip() else asset_key
         
         logger.debug(f"MapView (_perform_place_action): Resolved actual_asset_key_to_place: '{actual_asset_key_to_place}' (derived from palette key '{asset_key}')")
 
@@ -480,15 +478,27 @@ class MapViewWidget(QGraphicsView):
                 if obj.get("world_x") == int(world_x_float) and \
                    obj.get("world_y") == int(world_y_float) and \
                    obj.get("asset_editor_key") == asset_to_place_key: 
-                    logger.debug(f"MapView (_place_single_object): Identical object '{asset_to_place_key}' already at ({grid_x},{grid_y}). Placement skipped.")
-                    return False 
+                    if asset_definition_for_placement.get("colorable") and \
+                       self.editor_state.current_selected_asset_paint_color and \
+                       obj.get("override_color") != self.editor_state.current_selected_asset_paint_color:
+                        obj["override_color"] = self.editor_state.current_selected_asset_paint_color
+                        item_id = id(obj)
+                        if item_id in self._map_object_items:
+                            self._map_object_items[item_id].update_visuals(new_color=QColor(*obj["override_color"]), editor_state=self.editor_state)
+                        logger.info(f"MapView (_place_single_object): Updated color of existing '{asset_to_place_key}' at ({grid_x},{grid_y}) to {obj['override_color']}.")
+                        return True 
+                    else:
+                        logger.debug(f"MapView (_place_single_object): Identical object '{asset_to_place_key}' (or non-colorable update) already at ({grid_x},{grid_y}). Placement skipped.")
+                        return False 
 
         new_object_map_data: Dict[str, Any] = {
             "asset_editor_key": asset_to_place_key, "world_x": int(world_x_float), "world_y": int(world_y_float), 
             "game_type_id": game_id, "properties": {}
         }
-        if asset_definition_for_placement.get("colorable") and self.editor_state.current_tile_paint_color:
-            new_object_map_data["override_color"] = self.editor_state.current_tile_paint_color
+        
+        if asset_definition_for_placement.get("colorable") and self.editor_state.current_selected_asset_paint_color:
+            new_object_map_data["override_color"] = self.editor_state.current_selected_asset_paint_color
+        
         if game_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES:
             new_object_map_data["properties"] = {k: v_def["default"] for k, v_def in ED_CONFIG.EDITABLE_ASSET_VARIABLES[game_id].items()}
         
@@ -510,7 +520,7 @@ class MapViewWidget(QGraphicsView):
 
         if not item_pixmap or item_pixmap.isNull():
             logger.error(f"MapView (_place_single_object): FAILED to get valid pixmap for MapObjectItem '{asset_to_place_key}'. Pixmap is null. Cannot create scene item.")
-            if new_object_map_data in self.editor_state.placed_objects: self.editor_state.placed_objects.remove(new_object_map_data)
+            if new_object_map_data in self.editor_state.placed_objects: self.editor_state.placed_objects.remove(new_object_map_data) 
             return False
 
         logger.debug(f"MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: {item_pixmap.size()}). Creating and adding item to scene.")
@@ -518,7 +528,7 @@ class MapViewWidget(QGraphicsView):
         self.map_scene.addItem(map_object_scene_item)
         self._map_object_items[id(new_object_map_data)] = map_object_scene_item
         
-        logger.info(f"MapView: Placed '{asset_to_place_key}' at grid ({grid_x},{grid_y}).")
+        logger.info(f"MapView: Placed '{asset_to_place_key}' at grid ({grid_x},{grid_y}) with color {new_object_map_data.get('override_color')}.")
         return True
 
     def _perform_erase_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
@@ -537,27 +547,35 @@ class MapViewWidget(QGraphicsView):
                 del self._map_object_items[item_id]
             self.map_content_changed.emit(); self.editor_state.last_erased_tile_coords = (grid_x, grid_y)
             logger.info(f"MapView: Erased object at grid ({grid_x},{grid_y}).")
+
     def _perform_color_tile_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
         if not self.editor_state.current_tile_paint_color: return
         if continuous and (grid_x, grid_y) == self.editor_state.last_colored_tile_coords: return
-        world_x_snapped = float(grid_x * self.editor_state.grid_size); world_y_snapped = float(grid_y * self.editor_state.grid_size)
+        
+        world_x_snapped = float(grid_x * self.editor_state.grid_size)
+        world_y_snapped = float(grid_y * self.editor_state.grid_size)
         colored_something_this_call = False
-        for obj_data in reversed(self.editor_state.placed_objects):
+
+        for obj_data in reversed(self.editor_state.placed_objects): 
             if obj_data.get("world_x") == int(world_x_snapped) and obj_data.get("world_y") == int(world_y_snapped):
                 asset_key = str(obj_data.get("asset_editor_key"))
                 asset_info = self.editor_state.assets_palette.get(asset_key)
                 if asset_info and asset_info.get("colorable"):
-                    new_color_tuple = self.editor_state.current_tile_paint_color
+                    new_color_tuple = self.editor_state.current_tile_paint_color 
                     if obj_data.get("override_color") != new_color_tuple:
                         if is_first_action: editor_history.push_undo_state(self.editor_state)
                         obj_data["override_color"] = new_color_tuple
                         item_id = id(obj_data)
                         if item_id in self._map_object_items:
                             self._map_object_items[item_id].update_visuals(new_color=QColor(*new_color_tuple), editor_state=self.editor_state)
-                        colored_something_this_call = True; break 
+                        colored_something_this_call = True
+                        break 
+        
         if colored_something_this_call:
-            self.map_content_changed.emit(); self.editor_state.last_colored_tile_coords = (grid_x, grid_y)
-            logger.info(f"MapView: Colored object at grid ({grid_x},{grid_y}) to {self.editor_state.current_tile_paint_color}.")
+            self.map_content_changed.emit()
+            self.editor_state.last_colored_tile_coords = (grid_x, grid_y)
+            logger.info(f"MapView (Color Picker Tool): Colored object at grid ({grid_x},{grid_y}) to {self.editor_state.current_tile_paint_color}.")
+
     def delete_selected_map_objects(self):
         selected_items = self.map_scene.selectedItems()
         if not selected_items: return
@@ -573,11 +591,11 @@ class MapViewWidget(QGraphicsView):
         self.map_content_changed.emit(); self.map_object_selected_for_properties.emit(None)
         if hasattr(self.parent_window, 'show_status_message'): self.parent_window.show_status_message(f"Deleted {len(data_refs_to_remove)} object(s).")
 
+
     @Slot(str)
     def on_asset_selected(self, asset_editor_key: Optional[str]):
         logger.debug(f"MapView: on_asset_selected received key: '{asset_editor_key}'")
         self.editor_state.selected_asset_editor_key = asset_editor_key
-        self.editor_state.current_tile_paint_color = None 
         self.current_tool = "place" 
         asset_name_display = "None"
         if asset_editor_key:
@@ -593,36 +611,64 @@ class MapViewWidget(QGraphicsView):
         logger.debug(f"MapView: on_tool_selected received tool_key: '{tool_key}'")
         self.editor_state.selected_asset_editor_key = None 
         if self._hover_preview_item: self._hover_preview_item.setVisible(False)
+        
         tool_data = self.editor_state.assets_palette.get(str(tool_key))
         tool_name_for_status = tool_data.get("name_in_palette", tool_key.replace("tool_", "").replace("_", " ").title()) if tool_data else tool_key
-        if tool_key == "tool_eraser": self.current_tool = "erase"; self.editor_state.current_tile_paint_color = None
+
+        if tool_key == "tool_eraser": 
+            self.current_tool = "erase"
+            self.editor_state.current_tile_paint_color = None 
         elif tool_key == "tool_tile_color_picker":
             self.current_tool = "color_pick"
             if self.parent_window: 
-                initial_c = self.editor_state.current_tile_paint_color or ED_CONFIG.C.BLUE 
+                initial_c = self.editor_state.current_selected_asset_paint_color or \
+                            self.editor_state.current_tile_paint_color or \
+                            ED_CONFIG.C.BLUE 
                 current_q_color = QColor(*initial_c)
-                new_q_color = QColorDialog.getColor(current_q_color, self.parent_window, "Select Tile Paint Color")
+                new_q_color = QColorDialog.getColor(current_q_color, self.parent_window, "Select Tile Paint Color (for Color Picker Tool)")
+                
                 self.editor_state.current_tile_paint_color = new_q_color.getRgb()[:3] if new_q_color.isValid() else None
-                status_msg_color = f"Paint color: {self.editor_state.current_tile_paint_color}" if self.editor_state.current_tile_paint_color else "Paint color selection cancelled."
+                
+                status_msg_color = f"Color Picker Tool paint: {self.editor_state.current_tile_paint_color}" if self.editor_state.current_tile_paint_color else "Color Picker Tool paint selection cancelled."
                 if hasattr(self.parent_window, 'show_status_message'): self.parent_window.show_status_message(status_msg_color)
-        elif tool_key == "platform_wall_gray_2x2_placer": # Handle specific placer tool
-            self.current_tool = "place" # It's a place action
-            self.editor_state.selected_asset_editor_key = tool_key # Select the tool itself as the 'asset'
+        elif tool_key == "platform_wall_gray_2x2_placer": 
+            self.current_tool = "place" 
+            self.editor_state.selected_asset_editor_key = tool_key 
             logger.debug(f"MapView: 2x2 Placer tool selected. Tool mode: '{self.current_tool}', Selected Key: '{tool_key}'")
         else: 
-            self.current_tool = "select"; self.editor_state.current_tile_paint_color = None
+            self.current_tool = "select"
+            self.editor_state.current_tile_paint_color = None 
         logger.debug(f"MapView: current_tool set to '{self.current_tool}'")
 
     @Slot(dict)
     def on_object_properties_changed(self, changed_object_data_ref: Dict[str, Any]):
-        item_id = id(changed_object_data_ref)
-        logger.debug(f"MapView: on_object_properties_changed for data_ref ID {item_id}")
-        if item_id in self._map_object_items:
-            map_item = self._map_object_items[item_id]
+        map_item_found: Optional[MapObjectItem] = None
+        for item_candidate in self._map_object_items.values():
+            if item_candidate.map_object_data_ref is changed_object_data_ref:
+                map_item_found = item_candidate
+                break
+        
+        if map_item_found:
+            logger.debug(f"MapView: on_object_properties_changed - Found MapObjectItem by identity: {map_item_found.editor_key} (Data ID: {id(changed_object_data_ref)})")
             new_color_tuple = changed_object_data_ref.get("override_color")
-            map_item.update_visuals(new_color=QColor(*new_color_tuple) if new_color_tuple else None, editor_state=self.editor_state)
-            logger.debug(f"MapView: Visuals updated for item {map_item.editor_key}")
-        else: logger.warning(f"MapView: on_object_properties_changed - MapObjectItem for data_ref ID {item_id} not found.")
+            map_item_found.update_visuals(new_color=QColor(*new_color_tuple) if new_color_tuple else None, editor_state=self.editor_state)
+            logger.debug(f"MapView: Visuals updated for item {map_item_found.editor_key}")
+        else:
+            logger.warning(f"MapView: on_object_properties_changed - MapObjectItem for received data_ref (ID: {id(changed_object_data_ref)}) not found by identity in _map_object_items.")
+            wx = changed_object_data_ref.get("world_x"); wy = changed_object_data_ref.get("world_y"); akey = changed_object_data_ref.get("asset_editor_key")
+            if wx is not None and wy is not None and akey is not None:
+                for item_candidate in self._map_object_items.values():
+                    if item_candidate.map_object_data_ref.get("world_x") == wx and \
+                       item_candidate.map_object_data_ref.get("world_y") == wy and \
+                       item_candidate.map_object_data_ref.get("asset_editor_key") == akey:
+                        logger.info(f"MapView: Found item by fallback coords/key: {akey}. Updating its visuals.")
+                        item_candidate.map_object_data_ref.update(changed_object_data_ref) 
+                        new_color_tuple = changed_object_data_ref.get("override_color")
+                        item_candidate.update_visuals(new_color=QColor(*new_color_tuple) if new_color_tuple else None, editor_state=self.editor_state)
+                        map_item_found = item_candidate 
+                        break
+            if not map_item_found:
+                 logger.error(f"MapView: Still could not find item for property change after fallback. Data: {changed_object_data_ref}")
         self.map_content_changed.emit()
 
     @Slot()
