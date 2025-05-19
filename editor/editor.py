@@ -4,7 +4,6 @@
 ## version 2.0.3 (PySide6 Conversion - Added Export as Image, Save Action Debug)
 Level Editor for the Platformer Game (PySide6 Version).
 Allows creating, loading, and saving game levels visually.
-editor config and map utils use pygame
 """
 import sys
 import os
@@ -141,12 +140,13 @@ class EditorMainWindow(QMainWindow):
         self.asset_palette_dock.setWidget(self.asset_palette_widget)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.asset_palette_dock)
         self.asset_palette_dock.setMinimumWidth(max(200, ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH - 50))
+        self.asset_palette_dock.setMaximumWidth(ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH + 100) # Control max width too
 
         self.properties_editor_dock = QDockWidget("Properties", self)
         self.properties_editor_widget = PropertiesEditorDockWidget(self.editor_state, self)
         self.properties_editor_dock.setWidget(self.properties_editor_widget)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.properties_editor_dock)
-        self.properties_editor_dock.setMinimumWidth(220) # Ensure enough space for properties
+        self.properties_editor_dock.setMinimumWidth(280) # Increased minimum width for properties
 
         # Connect signals
         self.asset_palette_widget.asset_selected.connect(self.map_view_widget.on_asset_selected)
