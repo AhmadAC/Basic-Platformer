@@ -147,7 +147,6 @@ def find_server_on_lan(client_state_obj: ClientState,
 
 def run_client_mode(client_state_obj: ClientState, 
                     game_elements_ref: Dict[str, Any],
-                    # Callbacks for UI updates, replacing direct Pygame drawing
                     ui_status_update_callback: Optional[callable] = None, # (title, message, progress_float)
                     target_ip_port_str: Optional[str] = None,
                     # FPS and dt_sec will be managed by main Qt loop
@@ -311,7 +310,6 @@ def run_client_mode(client_state_obj: ClientState,
     info(f"Client: Map '{client_state_obj.server_selected_map_name}' present. Initializing game elements...")
     if ui_status_update_callback: ui_status_update_callback("Loading Level...", f"Initializing '{client_state_obj.server_selected_map_name}'", 100.0)
     
-    # Game setup now uses screen dimensions from the main app, not Pygame screen
     screen_width_main_app, screen_height_main_app = C.TILE_SIZE*20, C.TILE_SIZE*15 # Placeholder, main app provides this
     # In real app, these dimensions would be passed in or obtained from a shared config/state.
     # For now, using placeholders.

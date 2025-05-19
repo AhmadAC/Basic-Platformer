@@ -6,7 +6,7 @@
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 2.0.0 (PySide6 Refactor - Removed pygame K_ constants)
+# version 2.0.0
 import os
 import sys
 
@@ -194,7 +194,6 @@ LAVA_DAMAGE = 25       # Damage per hit from lava (can be time-based via hit coo
 def get_maps_directory():
     """
     Determines the absolute path to the 'maps' directory for file operations.
-    This remains the same as it's based on sys and os, not Pygame.
     """
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
         bundle_dir_meipass = sys._MEIPASS
@@ -237,13 +236,13 @@ PLAYER_HIT_COOLDOWN = 600 # ms
 
 # --- Player 1 Projectile Keys (as strings for PySide6 QKeySequence compatibility) ---
 # These are defaults; actual mapping handled by config.py
-P1_FIREBALL_KEY = "7"       # Was pygame.K_7 (then pygame.K_1)
+P1_FIREBALL_KEY = "7"       
 P1_POISON_KEY = "2"
 P1_BOLT_KEY = "3"
 P1_BLOOD_KEY = "4"
 P1_ICE_KEY = "5"
 P1_SHADOW_PROJECTILE_KEY = "6" # This is also P1 Reset Key (or will be mapped in config)
-P1_GREY_PROJECTILE_KEY = "1"    # Was pygame.K_1 (then pygame.K_7)
+P1_GREY_PROJECTILE_KEY = "1"    
 
 # --- Player 2 Projectile Keys (as strings for PySide6 QKeySequence compatibility) ---
 P2_FIREBALL_KEY = "Num+1"     # Keypad 1

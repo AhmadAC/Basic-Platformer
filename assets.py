@@ -2,7 +2,7 @@
 
 # assets.py
 # -*- coding: utf-8 -*-
-## version 2.0.0 (PySide6 Refactor - QPixmap/QImage, removed pygame)
+## version 2.0.0 
 """
 Handles loading game assets, primarily animations from GIF files using Pillow and PySide6.
 Includes a helper function `resource_path` to ensure correct asset pathing.

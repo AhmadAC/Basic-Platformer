@@ -4,7 +4,6 @@
 # -*- coding: utf-8 -*-
 """
 Handles initialization of game elements, levels, and entities for PySide6.
-Translates map data from (currently) Pygame-based level files into
 PySide6-compatible game object structures.
 """
 # version 2.0.0 (PySide6 Refactor)
@@ -97,15 +96,13 @@ def initialize_game_elements(current_width: int, current_height: int,
 
             load_level_function = getattr(map_module, expected_level_load_func_name)
             
-            # The loaded map function still returns Pygame sprite groups and Pygame-based values
             pg_platforms, pg_ladders, pg_hazards, enemy_spawns_raw, collectible_spawns_raw, \
             p1_spawn_raw, p1_props_raw, map_width_raw, min_y_raw, max_y_raw, \
             ground_y_raw, ground_h_raw, bg_color_raw, statues_raw = \
-                load_level_function(current_width, current_height) # Call the Pygame map loader
+                load_level_function(current_width, current_height) 
 
-            # --- Translate Pygame map data to PySide6-compatible objects ---
             if pg_platforms:
-                for pg_plat in pg_platforms: # pg_plat is a pygame.sprite.Sprite (Platform from old tiles.py)
+                for pg_plat in pg_platforms: 
                     platforms_list.append(Platform(float(pg_plat.rect.x), float(pg_plat.rect.y),
                                                    float(pg_plat.rect.width), float(pg_plat.rect.height),
                                                    pg_plat.color, pg_plat.platform_type))
@@ -144,7 +141,7 @@ def initialize_game_elements(current_width: int, current_height: int,
             if isinstance(bg_color_raw, (tuple, list)) and len(bg_color_raw) == 3:
                 level_background_color = bg_color_raw
 
-            debug(f"GameSetup: Pygame level data translated. Platforms: {len(platforms_list)}, Ladders: {len(ladders_list)}, Hazards: {len(hazards_list)}")
+            debug(f"GameSetup: Platforms: {len(platforms_list)}, Ladders: {len(ladders_list)}, Hazards: {len(hazards_list)}")
             level_data_loaded_successfully = True
             loaded_map_name_return = target_map_name_for_load
 
@@ -203,9 +200,9 @@ def initialize_game_elements(current_width: int, current_height: int,
         debug(f"GameSetup: Spawning {len(local_enemy_spawns_data_list)} enemies from level data...")
         for i, spawn_info in enumerate(local_enemy_spawns_data_list):
             try:
-                patrol_rect_data = spawn_info.get('patrol') # This is pygame.Rect from map file
+                patrol_rect_data = spawn_info.get('patrol') # 
                 patrol_qrectf: Optional[QRectF] = None
-                if patrol_rect_data: # Convert pygame.Rect data to QRectF
+                if patrol_rect_data: # 
                     patrol_qrectf = QRectF(float(patrol_rect_data.x), float(patrol_rect_data.y),
                                            float(patrol_rect_data.width), float(patrol_rect_data.height))
                 
@@ -298,7 +295,5 @@ def spawn_chest_qt(platforms_list_qt: List[Platform], main_ground_y_surface: flo
     except Exception as e: error(f"GameSetup Error in spawn_chest_qt: {e}"); traceback.print_exc()
     return None
 
-# Remove old Pygame-based spawn_chest if it's no longer needed or rename it.
-# For clarity, I've created spawn_chest_qt.
 
 #################### END OF FILE: game_setup.py ####################

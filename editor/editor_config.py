@@ -3,7 +3,7 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.3 (PySide6 Refactor - Removed Pygame Font Init)
+## version 2.0.3 
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 """
 import sys
@@ -21,7 +21,7 @@ if project_root_dir not in sys.path:
     print(f"DEBUG editor_config: Added '{project_root_dir}' to sys.path for constants import.")
 
 try:
-    import constants as C # Your main game constants (now Pygame-free)
+    import constants as C 
     print(f"DEBUG editor_config: Successfully imported 'constants' module. TILE_SIZE from C: {getattr(C, 'TILE_SIZE', 'Not Found')}")
 except ImportError as e:
     print(f"CRITICAL CONFIG ERROR: Failed to import 'constants as C' from '{project_root_dir}'. Error: {e}")
@@ -193,7 +193,8 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
 DEFAULT_MAP_WIDTH_TILES = 40
 DEFAULT_MAP_HEIGHT_TILES = 25
 DEFAULT_BACKGROUND_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'LIGHT_BLUE', (173,216,230))
-
+# In editor_config.py
+MINIMAP_OBJECT_REPRESENTATION_SIZE_PX = 2.0 # Or 1.0 or 3.0, experiment for best visibility
 # --- Qt Font Configuration (Examples) ---
 FONT_FAMILY_UI_DEFAULT = "Arial"
 FONT_SIZE_SMALL = 9

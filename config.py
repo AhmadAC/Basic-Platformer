@@ -7,7 +7,7 @@ Configuration for game settings, primarily controls.
 Allows defining default keyboard and joystick mappings, and storing current selections.
 Handles loading custom joystick mappings from controller_mappings.json.
 """
-# version 2.0.0 (PySide6 Refactor - Removed pygame constants and joystick init)
+# version 2.0.0 
 import json
 import os
 # joystick_handler will be refactored later for PySide6
@@ -332,8 +332,7 @@ def update_player_mappings_from_device_choice():
     print(f"Config: Player mappings updated. P1 using: {CURRENT_P1_INPUT_DEVICE}, P2 using: {CURRENT_P2_INPUT_DEVICE}")
 
 if __name__ == "__main__":
-    # Pygame is not initialized here for direct testing of this module
-    print("--- Running config.py directly for testing (PySide6 refactor - No Pygame init) ---")
+    print("--- Running config.py directly for testing (PySide6) ---")
     
     # Simulate joystick_handler being initialized if you want to test joystick count logic
     # For a true test, joystick_handler.py would need its PySide6-compatible version.

@@ -1,14 +1,13 @@
-#################### START OF FILE: couch_play_logic.py ####################
-
 # couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
 Handles game logic for local couch co-op mode using PySide6.
 UI rendering and input capture are handled by the main Qt application.
 """
-# version 2.0.0 (PySide6 Refactor)
+# version 2.0.1 
 
-from typing import Dict, List, Any, Optional # Added Optional, List
+import time # For monotonic timer
+from typing import Dict, List, Any, Optional
 
 # Game imports (refactored classes and modules)
 try:
@@ -28,15 +27,13 @@ from items import Chest # Refactored
 from statue import Statue # Refactored
 import config as game_config # Refactored
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_couch_play = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_couch_play) * 1000)
+# --- Monotonic Timer ---
+# It's good practice to initialize this once when the module is loaded.
+_start_time_couch_play_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    """Returns monotonic time in milliseconds since module load or a fixed point."""
+    return int((time.monotonic() - _start_time_couch_play_monotonic) * 1000)
+# --- End Monotonic Timer ---
 
 
 def run_couch_play_mode(
@@ -53,55 +50,37 @@ def run_couch_play_mode(
     Runs one tick of the game loop for couch co-op mode.
     This function will be called repeatedly by a QTimer in the main application.
     """
-    info("CouchPlayLogic: Executing one tick of Couch Play mode.")
-    # Pygame.display.set_caption is now handled by main Qt window
+    # info("CouchPlayLogic: Executing one tick of Couch Play mode.") # Can be spammy, debug if needed
 
     p1: Optional[Any] = game_elements_ref.get("player1")
     p2: Optional[Any] = game_elements_ref.get("player2")
     
-    dt_sec = dt_sec_provider() # Get delta time from the main loop
-    # now_ticks_couch = get_current_ticks() # Current game time (if needed for logic beyond dt)
+    dt_sec = dt_sec_provider()
+    current_game_time_ms = get_current_ticks_monotonic() # Use monotonic timer
 
-    # --- Process Input (via callbacks from main Qt app) ---
-    # The main Qt app handles QKeyEvents, QGamepadEvents, etc., and translates them
-    # into action event dictionaries for each player via the provided callbacks.
-    
     p1_action_events: Dict[str, bool] = {}
     if p1 and p1._valid_init:
         p1_action_events = get_p1_input_callback(p1, game_elements_ref.get("platforms_list", []))
 
     p2_action_events: Dict[str, bool] = {}
-    if p2 and p2._valid_init and p2.control_scheme is not None:
+    if p2 and p2._valid_init and hasattr(p2, 'control_scheme') and p2.control_scheme is not None:
         p2_action_events = get_p2_input_callback(p2, game_elements_ref.get("platforms_list", []))
 
-    # Check for universal actions (reset game, pause/exit mode)
-    # Pause in couch mode usually means exit to main menu for the app.
-    # The callbacks themselves might set app_status_obj.app_running = False if Escape is hit.
     if p1_action_events.get("pause") or p2_action_events.get("pause"):
         info("Couch Play: Pause action detected. Signaling app to exit mode.")
-        # The main app loop will see app_status_obj.app_running change or handle this signal
-        # to transition away from couch play mode.
         if show_status_message_callback: show_status_message_callback("Exiting Couch Play...")
-        return False # Signal to the caller (main loop) to stop this mode
+        return False
 
     host_requested_reset = p1_action_events.get("reset", False)
     p2_requested_reset = p2_action_events.get("reset", False)
     
-    # Developer reset key (e.g., "Q") might be handled by the get_p1_input_callback too
-    # For simplicity, we rely on the "reset" action event from input processing.
-
-    # --- Game Action Logic ---
-    if host_requested_reset or p2_requested_reset: # Either player can request reset
+    if host_requested_reset or p2_requested_reset:
         info("Couch Play: Game state reset initiated.")
-        # reset_game_state now operates on lists and Qt-based objects
         game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
-        # Ensure players are in all_renderable_objects if reset and alive
         all_renderables = game_elements_ref.get("all_renderable_objects", [])
         if p1 and p1._valid_init and not p1.alive() and p1 not in all_renderables: all_renderables.append(p1)
         if p2 and p2._valid_init and not p2.alive() and p2 not in all_renderables: all_renderables.append(p2)
 
-
-    # --- Update P1 (Host player) ---
     if p1 and p1._valid_init: 
         other_players_for_p1 = [char for char in [p2] if char and char._valid_init and char.alive() and char is not p1]
         p1.game_elements_ref_for_projectiles = game_elements_ref 
@@ -111,7 +90,6 @@ def run_couch_play_mode(
                   other_players_for_p1,
                   game_elements_ref.get("enemy_list", []))
 
-    # --- Update P2 (Second local player) ---
     if p2 and p2._valid_init:
         other_players_for_p2 = [char for char in [p1] if char and char._valid_init and char.alive() and char is not p2]
         p2.game_elements_ref_for_projectiles = game_elements_ref
@@ -121,17 +99,15 @@ def run_couch_play_mode(
                   other_players_for_p2,
                   game_elements_ref.get("enemy_list", []))
 
-    # --- Update Enemies ---
     active_players_for_ai = [char for char in [p1, p2] if char and char._valid_init and not char.is_dead and char.alive()]
-    # Iterate over a copy if enemies can be removed during update
     for enemy_couch in list(game_elements_ref.get("enemy_list", [])): 
         if enemy_couch._valid_init:
             if hasattr(enemy_couch, 'is_petrified') and enemy_couch.is_petrified:
-                if hasattr(enemy_couch, 'update_enemy_status_effects'): # Assuming Enemy has this method
-                     enemy_couch.update_enemy_status_effects(get_current_ticks(), game_elements_ref.get("platforms_list", []))
-                enemy_couch.animate()
-                if enemy_couch.is_dead and enemy_couch.death_animation_finished and enemy_couch.alive():
-                    enemy_couch.kill() # Will set _alive = False
+                if hasattr(enemy_couch, 'update_enemy_status_effects'):
+                     enemy_couch.update_enemy_status_effects(current_game_time_ms, game_elements_ref.get("platforms_list", []))
+                if hasattr(enemy_couch, 'animate'): enemy_couch.animate() # Ensure animation still ticks for petrified visual
+                if enemy_couch.is_dead and hasattr(enemy_couch,'death_animation_finished') and enemy_couch.death_animation_finished and enemy_couch.alive():
+                    enemy_couch.kill()
                 continue
 
             enemy_couch.update(dt_sec, active_players_for_ai,
@@ -140,68 +116,64 @@ def run_couch_play_mode(
                                game_elements_ref.get("enemy_list", []))
             if enemy_couch.is_dead and hasattr(enemy_couch, 'death_animation_finished') and \
                enemy_couch.death_animation_finished and enemy_couch.alive():
-                debug(f"Couch Play: Auto-killing enemy {enemy_couch.enemy_id} as death anim finished.")
+                # debug(f"Couch Play: Auto-killing enemy {getattr(enemy_couch, 'enemy_id', 'N/A')} as death anim finished.")
                 enemy_couch.kill()
-    # Prune dead enemies from main list and render list
+    
     game_elements_ref["enemy_list"] = [e for e in game_elements_ref.get("enemy_list", []) if e.alive()]
     game_elements_ref["all_renderable_objects"] = [obj for obj in game_elements_ref.get("all_renderable_objects", []) if not (isinstance(obj, Enemy) and not obj.alive())]
 
-
-    # --- Update Statues ---
     statue_list_couch: List[Statue] = game_elements_ref.get("statue_objects", [])
-    for statue_instance in statue_list_couch:
+    for statue_instance in list(statue_list_couch): # Iterate copy if statues can be removed
         if hasattr(statue_instance, 'update'):
-            statue_instance.update(dt_sec)
-    game_elements_ref["statue_objects"] = [s for s in statue_list_couch if s.alive()]
-    game_elements_ref["all_renderable_objects"] = [obj for obj in game_elements_ref.get("all_renderable_objects", []) if not (isinstance(obj, Statue) and not obj.alive())]
+            statue_instance.update(dt_sec) # Pass dt_sec if statue update uses it
+            if not statue_instance.alive():
+                if statue_instance in statue_list_couch: statue_list_couch.remove(statue_instance)
+                if statue_instance in game_elements_ref.get("all_renderable_objects", []):
+                    game_elements_ref.get("all_renderable_objects", []).remove(statue_instance)
+    game_elements_ref["statue_objects"] = statue_list_couch # Update with pruned list
 
-
-    # --- Update Projectiles ---
-    hittable_targets_couch_list: List[Any] = [] # Build list of hittable objects
+    hittable_targets_couch_list: List[Any] = []
     if p1 and p1.alive() and p1._valid_init and not getattr(p1, 'is_petrified', False): hittable_targets_couch_list.append(p1)
     if p2 and p2.alive() and p2._valid_init and not getattr(p2, 'is_petrified', False): hittable_targets_couch_list.append(p2)
     for enemy_target in game_elements_ref.get("enemy_list", []):
         if enemy_target and enemy_target.alive() and enemy_target._valid_init and not getattr(enemy_target, 'is_petrified', False):
             hittable_targets_couch_list.append(enemy_target)
-    for statue_target_couch in statue_list_couch:
+    for statue_target_couch in game_elements_ref.get("statue_objects", []): # Use the potentially pruned list
         if statue_target_couch.alive() and hasattr(statue_target_couch, 'is_smashed') and not statue_target_couch.is_smashed:
             hittable_targets_couch_list.append(statue_target_couch)
     
     projectiles_list_ref: List[Any] = game_elements_ref.get("projectiles_list", [])
-    for proj_instance in list(projectiles_list_ref): # Iterate copy
+    for proj_instance in list(projectiles_list_ref):
         if hasattr(proj_instance, 'update'):
             proj_instance.update(dt_sec, game_elements_ref.get("platforms_list", []), hittable_targets_couch_list)
-            if not proj_instance.alive(): # If projectile killed itself
+            if not proj_instance.alive():
                 if proj_instance in projectiles_list_ref: projectiles_list_ref.remove(proj_instance)
-                if proj_instance in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).remove(proj_instance)
+                if proj_instance in game_elements_ref.get("all_renderable_objects",[]):
+                     game_elements_ref.get("all_renderable_objects",[]).remove(proj_instance)
 
-
-    # --- Update Collectibles (Chests, etc.) ---
     collectible_list_ref: List[Chest] = game_elements_ref.get("collectible_list", [])
-    for collectible in list(collectible_list_ref): # Iterate copy
+    for collectible in list(collectible_list_ref):
         if hasattr(collectible, 'update'):
-            collectible.update(dt_sec)
+            collectible.update(dt_sec) # Pass dt_sec if Chest update uses it
             if not collectible.alive():
                 if collectible in collectible_list_ref: collectible_list_ref.remove(collectible)
-                if collectible in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).remove(collectible)
+                if collectible in game_elements_ref.get("all_renderable_objects",[]):
+                    game_elements_ref.get("all_renderable_objects",[]).remove(collectible)
                 if game_elements_ref.get("current_chest") is collectible: game_elements_ref["current_chest"] = None
 
-
-    # --- Chest Interaction Logic ---
     couch_current_chest = game_elements_ref.get("current_chest")
     if isinstance(couch_current_chest, Chest) and couch_current_chest.alive() and \
        not couch_current_chest.is_collected_flag_internal:
         player_interacted_chest: Optional[Any] = None
         if p1 and p1._valid_init and not p1.is_dead and p1.alive() and not getattr(p1, 'is_petrified', False) and \
-           p1.rect.intersects(couch_current_chest.rect) and p1_action_events.get("interact", False):
+           hasattr(p1, 'rect') and p1.rect.intersects(couch_current_chest.rect) and p1_action_events.get("interact", False):
             player_interacted_chest = p1
         elif p2 and p2._valid_init and not p2.is_dead and p2.alive() and not getattr(p2, 'is_petrified', False) and \
-             p2.rect.intersects(couch_current_chest.rect) and p2_action_events.get("interact", False):
+             hasattr(p2, 'rect') and p2.rect.intersects(couch_current_chest.rect) and p2_action_events.get("interact", False):
             player_interacted_chest = p2
         if player_interacted_chest:
             couch_current_chest.collect(player_interacted_chest)
 
-    # --- Update Camera ---
     couch_camera = game_elements_ref.get("camera")
     if couch_camera:
         focus_target = None
@@ -213,9 +185,11 @@ def run_couch_play_mode(
         if focus_target: couch_camera.update(focus_target)
         else: couch_camera.static_update()
 
-    # --- Rendering is handled by the GameSceneWidget in the main Qt app ---
-    # The main app will call GameSceneWidget.update() which triggers its paintEvent.
+    # Prune all_renderable_objects list from any other dead entities not specifically handled above
+    # This is a general cleanup pass.
+    game_elements_ref["all_renderable_objects"] = [
+        obj for obj in game_elements_ref.get("all_renderable_objects", [])
+        if hasattr(obj, 'alive') and obj.alive()
+    ]
 
-    return True # Indicate couch play tick was successful and should continue
-
-#################### END OF FILE: couch_play_logic.py ####################
+    return True

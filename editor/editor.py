@@ -169,9 +169,10 @@ class EditorMainWindow(QMainWindow):
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
         self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed)
 
+# ...
         if self.minimap_widget:
-            self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_full_update)
-
+            self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_view_rect_update_and_repaint) # <--- CORRECTED
+# ...
         self.setDockOptions(QMainWindow.DockOption.AnimatedDocks | QMainWindow.DockOption.AllowNestedDocks | QMainWindow.DockOption.AllowTabbedDocks | QMainWindow.DockOption.VerticalTabs)
         self.map_view_widget.setFocus()
         logger.debug("UI components initialized.")

@@ -1,1 +1,37 @@
-[2025-05-19 23:12:19.097] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 00:08:37.671] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 00:08:38.452] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
+[2025-05-20 00:08:38.453] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
+[2025-05-20 00:08:38.486] INFO    PlatformerLogger: MAIN PySide6: Application starting...
+[2025-05-20 00:08:38.486] INFO    PlatformerLogger: MAIN PySide6: Initial window size: 1088x600
+[2025-05-20 00:08:38.486] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
+[2025-05-20 00:08:38.486] INFO    PlatformerLogger: Keyboard mapping translation complete.
+[2025-05-20 00:08:38.510] INFO    PlatformerLogger: Switching view to: menu
+[2025-05-20 00:08:39.883] INFO    PlatformerLogger: Switching view to: settings
+[2025-05-20 00:08:39.930] ERROR   PlatformerLogger: Exception creating controls mapper instance: 'MainWindow' object has no attribute 'log_to_debug_console'
+Traceback (most recent call last):
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\controller_settings\controller_mapper_gui.py", line 314, in _load_mappings_from_file
+    self.log_to_debug_console(f"Mappings loaded from {MAPPINGS_FILE}")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute 'log_to_debug_console'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\main.py", line 278, in _ensure_controls_mapper_instance
+    self.actual_controls_window_instance = ActualControlsWindow() # This also might manage its own app loop if run standalone
+                                           ^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\controller_settings\controller_mapper_gui.py", line 297, in __init__
+    self._load_mappings_from_file() # Load mappings at startup
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\controller_settings\controller_mapper_gui.py", line 321, in _load_mappings_from_file
+    self.log_to_debug_console(f"Error loading mappings: {e}. Using empty mappings.")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute 'log_to_debug_console'
+[2025-05-20 00:08:44.038] INFO    PlatformerLogger: Switching view to: menu
+[2025-05-20 00:08:45.419] INFO    PlatformerLogger: Close event received. Shutting down application.
+[2025-05-20 00:08:45.419] INFO    PlatformerLogger: APP_STATUS: quit_app() called.
+[2025-05-20 00:08:45.419] DEBUG   PlatformerLogger: APP_STATUS: Requesting QApplication.quit().
+[2025-05-20 00:08:45.419] INFO    PlatformerLogger: Stopping game mode: None
+[2025-05-20 00:08:45.419] INFO    PlatformerLogger: Game mode 'None' stopped and cleaned.
+[2025-05-20 00:08:45.419] INFO    PlatformerLogger: MAIN PySide6: Application terminated via closeEvent.
+[2025-05-20 00:08:45.468] INFO    PlatformerLogger: MAIN PySide6: QApplication event loop finished. Exit code: 0

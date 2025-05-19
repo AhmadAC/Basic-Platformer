@@ -36,7 +36,7 @@ def process_player_input_logic_pyside(
     
     if not player._valid_init: return {}
 
-    current_time_ms = get_input_handler_ticks() # Use local timer if Pygame ticks are fully removed
+    current_time_ms = get_input_handler_ticks() 
     player_id_str = f"P{player.player_id}"
 
     is_on_fire_visual = player.state in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame', 'deflame_crouch']

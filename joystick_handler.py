@@ -57,7 +57,6 @@ def init_joysticks():
         # For now, let's simulate finding them. This part is tricky without a persistent manager.
         
         # The `inputs` library doesn't have a simple "list all gamepads without opening them" function
-        # in the same way Pygame or QGamepadManager does. You typically try to open one.
         # For a multi-joystick setup, users might need to specify which /dev/input/eventX to use,
         # or we iterate through potential event paths.
 
@@ -235,7 +234,6 @@ def get_joystick_instance(joystick_index: int) -> Optional[GamePad]:
                         print(f"JOY_HANDLER: (Placeholder) Found potential gamepad: {device_name} at {device_path}")
                         # This doesn't actually add it to `_gamepads_devices` in a way that
                         # `get_joystick_instance(0)` would then return it.
-                        # This highlights the mismatch of the Pygame-style joystick API with `inputs`.
 
                 except UnpluggedError:
                     print("JOY_HANDLER: No gamepad found or unplugged during initial check for index 0.")

@@ -13,7 +13,7 @@ from typing import Optional, Any # Added Optional and Any
 from PySide6.QtGui import QPixmap, QColor, QPainter, QPen
 from PySide6.QtCore import QRectF, QPointF, Qt
 
-# Import game constants (already Pygame-free)
+# Import game constants
 import constants as C
 
 class Platform:

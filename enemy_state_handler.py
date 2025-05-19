@@ -1,20 +1,18 @@
-#################### START OF FILE: enemy_state_handler.py ####################
-
 # enemy_state_handler.py
 # -*- coding: utf-8 -*-
 """
 Handles enemy state transitions and associated logic for PySide6.
 """
-# version 2.0.0 (PySide6 Refactor)
+# version 2.0.1 
 
-from typing import Optional # For type hinting if needed
+import time # For monotonic timer
+from typing import Optional
 
 # PySide6 imports
-from PySide6.QtCore import QPointF # For QPointF type usage
+from PySide6.QtCore import QPointF
 
 # Game imports
 import constants as C
-# from utils import PrintLimiter # If needed for enemy-specific logging limits
 
 try:
     from enemy_animation_handler import update_enemy_animation
@@ -25,7 +23,7 @@ except ImportError:
         else:
             print(f"CRITICAL ENEMY_STATE_HANDLER: enemy_animation_handler.update_enemy_animation not found for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')}")
 
-# Logger import (assuming logger.py is accessible and refactored if needed)
+# Logger import
 try:
     from logger import info, debug, warning, error, critical
 except ImportError:
@@ -36,15 +34,12 @@ except ImportError:
     def error(msg): print(f"ERROR: {msg}")
     def critical(msg): print(f"CRITICAL: {msg}")
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_enemy_state = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_enemy_state) * 1000)
+# --- Monotonic Timer ---
+_start_time_enemy_state_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    """Returns monotonic time in milliseconds since module load or a fixed point."""
+    return int((time.monotonic() - _start_time_enemy_state_monotonic) * 1000)
+# --- End Monotonic Timer ---
 
 
 def set_enemy_state(enemy, new_state: str):
@@ -52,125 +47,134 @@ def set_enemy_state(enemy, new_state: str):
     Sets the enemy's logical state, handling transitions and state-specific initializations.
     Calls update_enemy_animation to refresh visuals if the state changes.
     """
-    if not enemy._valid_init:
+    if not getattr(enemy, '_valid_init', False): # Safer check
         debug(f"EnemyStateHandler: Attempted to set state on invalid enemy {getattr(enemy, 'enemy_id', 'N/A')}. Ignoring.")
         return
 
-    current_ticks_ms = get_current_ticks()
+    current_ticks_ms = get_current_ticks_monotonic() # Use monotonic timer
     original_requested_state = new_state
     enemy_id_log = getattr(enemy, 'enemy_id', 'Unknown')
+    current_enemy_state = getattr(enemy, 'state', 'idle') # Get current state safely
 
     # Guard Clauses for Overriding States
-    if enemy.is_petrified and not enemy.is_stone_smashed and \
-       new_state not in ['petrified', 'smashed', 'idle']: # Allow reset to idle
-        debug(f"EnemyStateHandler (ID {enemy_id_log}): Blocked state change from '{enemy.state}' to '{new_state}' due to being petrified (not smashed).")
+    if getattr(enemy, 'is_petrified', False) and not getattr(enemy, 'is_stone_smashed', False) and \
+       new_state not in ['petrified', 'smashed', 'idle']:
+        debug(f"EnemyStateHandler (ID {enemy_id_log}): Blocked state change from '{current_enemy_state}' to '{new_state}' due to being petrified (not smashed).")
         return
-    if enemy.is_stone_smashed and new_state not in ['smashed', 'idle']: # Allow reset to idle
-        debug(f"EnemyStateHandler (ID {enemy_id_log}): Blocked state change from '{enemy.state}' to '{new_state}' due to being stone_smashed.")
+    if getattr(enemy, 'is_stone_smashed', False) and new_state not in ['smashed', 'idle']:
+        debug(f"EnemyStateHandler (ID {enemy_id_log}): Blocked state change from '{current_enemy_state}' to '{new_state}' due to being stone_smashed.")
         return
-    if enemy.is_petrified and new_state not in ['petrified', 'smashed', 'idle']:
+    # Corrected logic for petrified blocking other status effects
+    if getattr(enemy, 'is_petrified', False) and not getattr(enemy, 'is_stone_smashed', False): # If petrified (and not yet smashed)
         if new_state in ['frozen', 'defrost', 'aflame', 'deflame', 'hit', 'stomp_death']:
-            debug(f"EnemyStateHandler (ID {enemy_id_log}): Blocked state change from '{enemy.state}' to '{new_state}' due to petrification.")
+            debug(f"EnemyStateHandler (ID {enemy_id_log}): Blocked state change from '{current_enemy_state}' to '{new_state}' due to petrification.")
             return
 
-    # Animation Key Validation (for logging/warning)
     animation_key_to_check = new_state
     if new_state in ['chasing', 'patrolling']: animation_key_to_check = 'run'
     elif 'attack' in new_state: animation_key_to_check = new_state
 
-    if animation_key_to_check not in ['stone', 'stone_smashed']: # These are special, handled by enemy_base loading
-        if not enemy.animations or animation_key_to_check not in enemy.animations or not enemy.animations[animation_key_to_check]:
+    enemy_animations = getattr(enemy, 'animations', None)
+    if animation_key_to_check not in ['stone', 'stone_smashed']:
+        if not enemy_animations or animation_key_to_check not in enemy_animations or not enemy_animations.get(animation_key_to_check):
             warning(f"EnemyStateHandler (ID: {enemy_id_log}, Color: {getattr(enemy, 'color_name', 'N/A')}): "
                     f"Animation for logical state '{new_state}' (maps to key '{animation_key_to_check}') potentially missing. Animation handler will attempt fallback.")
 
-    # Determine if State Can Change
-    can_change_state_now = (enemy.state != new_state or
+    can_change_state_now = (current_enemy_state != new_state or
                             new_state in ['death', 'stomp_death', 'frozen', 'defrost',
                                           'aflame', 'deflame', 'petrified', 'smashed', 'hit'])
-    if enemy.is_dead and enemy.death_animation_finished and not enemy.is_stone_smashed:
+    if getattr(enemy, 'is_dead', False) and getattr(enemy, 'death_animation_finished', False) and not getattr(enemy, 'is_stone_smashed', False):
          if new_state not in ['idle']: can_change_state_now = False
 
     if not can_change_state_now:
-        if enemy.state == new_state: update_enemy_animation(enemy) # Refresh animation
+        if current_enemy_state == new_state: update_enemy_animation(enemy)
         return
 
-    state_is_actually_changing = (enemy.state != new_state)
+    state_is_actually_changing = (current_enemy_state != new_state)
     if state_is_actually_changing:
-        debug(f"EnemyStateHandler (ID {enemy_id_log}): State changing from '{enemy.state}' to '{new_state}'. Requested: '{original_requested_state}'.")
-    enemy._last_state_for_debug = new_state
+        debug(f"EnemyStateHandler (ID {enemy_id_log}): State changing from '{current_enemy_state}' to '{new_state}'. Requested: '{original_requested_state}'.")
+    
+    # Using setattr for _last_state_for_debug in case it's not pre-defined
+    setattr(enemy, '_last_state_for_debug', new_state)
 
-    # Clear Conflicting Flags
-    if new_state != 'aflame': enemy.is_aflame = False
-    if new_state != 'deflame': enemy.is_deflaming = False
-    if new_state != 'frozen': enemy.is_frozen = False
-    if new_state != 'defrost': enemy.is_defrosting = False
+    # Clear Conflicting Flags (using setattr for safety if attributes don't exist, though they should for an Enemy)
+    if new_state != 'aflame': setattr(enemy, 'is_aflame', False)
+    if new_state != 'deflame': setattr(enemy, 'is_deflaming', False)
+    if new_state != 'frozen': setattr(enemy, 'is_frozen', False)
+    if new_state != 'defrost': setattr(enemy, 'is_defrosting', False)
     if new_state not in ['petrified', 'smashed']:
-        if enemy.is_petrified: enemy.is_petrified = False
-        if enemy.is_stone_smashed: enemy.is_stone_smashed = False
-    if new_state != 'stomp_death': enemy.is_stomp_dying = False
-    if 'attack' not in new_state: enemy.is_attacking = False; enemy.attack_type = 0
-    if new_state != 'hit' and enemy.is_taking_hit:
-        if current_ticks_ms - enemy.hit_timer >= enemy.hit_cooldown:
-            enemy.is_taking_hit = False
+        if getattr(enemy, 'is_petrified', False): setattr(enemy, 'is_petrified', False)
+        if getattr(enemy, 'is_stone_smashed', False): setattr(enemy, 'is_stone_smashed', False)
+    if new_state != 'stomp_death': setattr(enemy, 'is_stomp_dying', False)
+    if 'attack' not in new_state:
+        setattr(enemy, 'is_attacking', False); setattr(enemy, 'attack_type', 0)
+    if new_state != 'hit' and getattr(enemy, 'is_taking_hit', False):
+        if current_ticks_ms - getattr(enemy, 'hit_timer', 0) >= getattr(enemy, 'hit_cooldown', 500):
+            setattr(enemy, 'is_taking_hit', False)
 
     enemy.state = new_state
-    if state_is_actually_changing or new_state in ['hit', 'attack', 'attack_nm']:
+    if state_is_actually_changing or new_state in ['hit', 'attack', 'attack_nm']: # attack_nm was missing
         enemy.current_frame = 0
         enemy.last_anim_update = current_ticks_ms
     enemy.state_timer = current_ticks_ms
 
     # State-Specific Initializations
     if new_state == 'aflame':
-        if not enemy.is_aflame:
+        if not getattr(enemy, 'is_aflame', False): # Check if already aflame to avoid resetting timers
             enemy.aflame_timer_start = current_ticks_ms
             enemy.aflame_damage_last_tick = current_ticks_ms
             enemy.has_ignited_another_enemy_this_cycle = False
         enemy.is_aflame = True
     elif new_state == 'deflame':
-        if not enemy.is_deflaming: enemy.deflame_timer_start = current_ticks_ms
+        if not getattr(enemy, 'is_deflaming', False): enemy.deflame_timer_start = current_ticks_ms
         enemy.is_deflaming = True
     elif new_state == 'frozen':
-        if not enemy.is_frozen: enemy.frozen_effect_timer = current_ticks_ms
+        if not getattr(enemy, 'is_frozen', False): enemy.frozen_effect_timer = current_ticks_ms
         enemy.is_frozen = True
-        enemy.vel = QPointF(0,0); enemy.acc.setX(0.0)
+        if hasattr(enemy, 'vel'): enemy.vel = QPointF(0,0)
+        if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
     elif new_state == 'defrost':
         enemy.is_defrosting = True
-        enemy.vel = QPointF(0,0); enemy.acc.setX(0.0)
+        if hasattr(enemy, 'vel'): enemy.vel = QPointF(0,0)
+        if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
     elif new_state == 'petrified':
-        if not enemy.is_petrified: enemy.facing_at_petrification = enemy.facing_right
+        if not getattr(enemy, 'is_petrified', False): enemy.facing_at_petrification = enemy.facing_right
         enemy.is_petrified = True
-        enemy.vel.setX(0.0); enemy.acc.setX(0.0)
-        enemy.acc.setY(float(getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.8))))
-        # Stone image assignment (original or flipped) happens in animation_handler based on facing_at_petrification
+        if hasattr(enemy, 'vel') and hasattr(enemy.vel, 'setX'): enemy.vel.setX(0.0)
+        if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX') and hasattr(enemy.acc, 'setY'):
+            enemy.acc.setX(0.0)
+            enemy.acc.setY(float(getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.8))))
     elif new_state == 'smashed':
-        if not enemy.is_stone_smashed:
+        if not getattr(enemy, 'is_stone_smashed', False):
             enemy.stone_smashed_timer_start = current_ticks_ms
             enemy.death_animation_finished = False
-        enemy.is_stone_smashed = True; enemy.is_petrified = True
+        enemy.is_stone_smashed = True; enemy.is_petrified = True # Smashed implies petrified
         enemy.is_dead = True
-        enemy.vel = QPointF(0,0); enemy.acc = QPointF(0,0)
+        if hasattr(enemy, 'vel'): enemy.vel = QPointF(0,0)
+        if hasattr(enemy, 'acc'): enemy.acc = QPointF(0,0)
     elif 'attack' in new_state:
-        if not enemy.is_attacking: enemy.attack_timer = current_ticks_ms
+        if not getattr(enemy, 'is_attacking', False): enemy.attack_timer = current_ticks_ms
         enemy.is_attacking = True
-        enemy.vel.setX(0.0) # Most enemy attacks are stationary
+        if hasattr(enemy, 'vel') and hasattr(enemy.vel, 'setX'): enemy.vel.setX(0.0)
     elif new_state == 'hit':
-        if not enemy.is_taking_hit: enemy.hit_timer = enemy.state_timer
+        if not getattr(enemy, 'is_taking_hit', False): enemy.hit_timer = enemy.state_timer # Use state_timer if just entering hit
         enemy.is_taking_hit = True
-        enemy.is_attacking = False; enemy.attack_type = 0
-    elif new_state == 'death' or new_state == 'stomp_death':
-        if not enemy.is_dead:
+        setattr(enemy, 'is_attacking', False); setattr(enemy, 'attack_type', 0)
+    elif new_state == 'death' or new_state == 'stomp_death': # Ensure 'death_nm' also handled if it's a separate key
+        if not getattr(enemy, 'is_dead', False):
             enemy.is_dead = True; enemy.current_health = 0
             enemy.death_animation_finished = False
-            enemy.is_frozen = False; enemy.is_defrosting = False # Clear other statuses on death
-            enemy.is_aflame = False; enemy.is_deflaming = False
-            enemy.is_petrified = False; enemy.is_stone_smashed = False
-            if new_state == 'stomp_death' and not enemy.is_stomp_dying:
-                from enemy_status_effects import stomp_kill_enemy # Avoid circular import at top level
+            # Clear other conflicting statuses
+            setattr(enemy, 'is_frozen', False); setattr(enemy, 'is_defrosting', False)
+            setattr(enemy, 'is_aflame', False); setattr(enemy, 'is_deflaming', False)
+            setattr(enemy, 'is_petrified', False); setattr(enemy, 'is_stone_smashed', False)
+            if new_state == 'stomp_death' and not getattr(enemy, 'is_stomp_dying', False):
+                # Lazy import to break potential cycles if enemy_status_effects imports this module
+                from enemy_status_effects import stomp_kill_enemy 
                 stomp_kill_enemy(enemy)
-        enemy.vel = QPointF(0,0); enemy.acc = QPointF(0,0)
+        if hasattr(enemy, 'vel'): enemy.vel = QPointF(0,0)
+        if hasattr(enemy, 'acc'): enemy.acc = QPointF(0,0)
     elif new_state == 'idle':
-        pass
+        pass # No specific action for idle, just sets the state
 
     update_enemy_animation(enemy)
-
-#################### END OF FILE: enemy_state_handler.py ####################

@@ -1,22 +1,21 @@
-#################### START OF FILE: enemy.py ####################
-
 # enemy.py
 # -*- coding: utf-8 -*-
-## version 2.0.1 (PySide6 Refactor - Added missing imports)
+## version 2.0.2
 """
 Defines the main Enemy class, which coordinates various handlers for AI,
 physics, combat, state, animation, status effects, and network communication.
 Inherits core attributes and methods from EnemyBase.
 """
-from typing import Optional, List # Added Optional, List
+import time # For monotonic timer
+from typing import Optional, List, Any # Ensure Any is imported if used for type hints
 
 # Game constants
-import constants as C # Added constants import
+import constants as C
 
-# --- Import Base Class (will be refactored for PySide6) ---
+# --- Import Base Class ---
 from enemy_base import EnemyBase
 
-# --- Import Handler Modules (these will also need PySide6 adaptation) ---
+# --- Import Handler Modules ---
 try:
     from logger import info, debug, warning, error, critical
 except ImportError:
@@ -44,30 +43,32 @@ try:
     from enemy_physics_handler import update_enemy_physics_and_collisions
 except ImportError as e:
     critical(f"ENEMY (Main) CRITICAL: Failed to import one or more handler modules: {e}")
-    raise
+    raise # Re-raise to halt execution if critical handlers are missing
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_enemy_main = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_enemy_main) * 1000)
+# --- Monotonic Timer ---
+_start_time_enemy_main_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    """Returns monotonic time in milliseconds since module load or a fixed point."""
+    return int((time.monotonic() - _start_time_enemy_main_monotonic) * 1000)
+# --- End Monotonic Timer ---
 
 
 class Enemy(EnemyBase):
-    def __init__(self, start_x: float, start_y: float, patrol_area=None, # patrol_area will be QRectF
-                 enemy_id=None, color_name: Optional[str] = None):
+    def __init__(self, start_x: float, start_y: float, patrol_area: Optional[Any] = None, # patrol_area should be QRectF
+                 enemy_id: Optional[Any] = None, color_name: Optional[str] = None):
         super().__init__(start_x, start_y, patrol_area, enemy_id, color_name)
         
         if not self._valid_init:
             critical(f"Enemy (ID: {self.enemy_id}) did not initialize correctly in EnemyBase. Main Enemy class init incomplete.")
             return
         
-        set_enemy_new_patrol_target(self)
-        debug(f"Enemy (ID: {self.enemy_id}, Color: {self.color_name}) main class initialized. Patrol target set.")
+        # Call set_enemy_new_patrol_target only if enemy is valid and has the necessary attributes
+        if hasattr(self, 'pos') and hasattr(self, 'rect'): # Basic check
+            set_enemy_new_patrol_target(self)
+        else:
+            warning(f"Enemy (ID: {self.enemy_id}): pos or rect not fully initialized by EnemyBase. Patrol target not set initially by Enemy class.")
+
+        debug(f"Enemy (ID: {self.enemy_id}, Color: {getattr(self, 'color_name', 'N/A')}) main class initialized.")
 
     def apply_aflame_effect(self): apply_aflame_to_enemy(self)
     def apply_freeze_effect(self): apply_freeze_to_enemy(self)
@@ -87,57 +88,69 @@ class Enemy(EnemyBase):
                platforms_list: list, 
                hazards_list: list,   
                all_enemies_list: list):
-        if not self._valid_init or not self._alive: 
+        if not self._valid_init or not self._alive: # Use self._alive if it's the primary flag from EnemyBase
             return
 
-        current_time_ms = get_current_ticks()
+        current_time_ms = get_current_ticks_monotonic() # Use monotonic timer
 
+        # update_enemy_status_effects returns True if an effect overrides normal updates
         if update_enemy_status_effects(self, current_time_ms, platforms_list): 
-            if self.is_petrified and not self.is_stone_smashed and not self.on_ground:
-                update_enemy_physics_and_collisions(self, dt_sec, platforms_list, hazards_list, [])
-            update_enemy_animation(self)
-            if self.is_dead and self.death_animation_finished and self.alive():
-                self.kill()
+            # If petrified and falling, physics might still apply
+            if getattr(self, 'is_petrified', False) and not getattr(self, 'is_stone_smashed', False) and not getattr(self, 'on_ground', True):
+                # Ensure all necessary attributes for physics are present
+                if hasattr(self, 'vel') and hasattr(self, 'pos') and hasattr(self, 'rect'):
+                    update_enemy_physics_and_collisions(self, dt_sec, platforms_list, hazards_list, [])
+            
+            if hasattr(self, 'animate'): self.animate() # Animation still runs for visual status effects
+
+            if getattr(self, 'is_dead', False) and getattr(self, 'death_animation_finished', False) and self.alive(): # Use self.alive()
+                if hasattr(self, 'kill'): self.kill()
             return
 
-        if self.is_dead:
-            if self.alive():
-                if not self.death_animation_finished:
-                    if not self.on_ground:
+        if getattr(self, 'is_dead', False):
+            if self.alive(): # Still "alive" in terms of needing processing (e.g., death animation)
+                if not getattr(self, 'death_animation_finished', True):
+                    if not getattr(self, 'on_ground', True) and hasattr(self, 'vel') and hasattr(self, 'acc') and hasattr(self, 'pos'):
                         self.vel.setY(self.vel.y() + self.acc.y()) 
                         self.vel.setY(min(self.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
                         self.pos.setY(self.pos.y() + self.vel.y())
-                        self._update_rect_from_image_and_pos() 
+                        if hasattr(self, '_update_rect_from_image_and_pos'): self._update_rect_from_image_and_pos()
                         
-                        self.on_ground = False
+                        self.on_ground = False # Assume not on ground until collision check
                         for platform_obj in platforms_list: 
-                            if hasattr(platform_obj, 'rect') and self.rect.intersects(platform_obj.rect):
+                            if hasattr(platform_obj, 'rect') and hasattr(self, 'rect') and self.rect.intersects(platform_obj.rect):
                                 if self.vel.y() > 0 and self.rect.bottom() > platform_obj.rect.top() and \
-                                   (self.pos.y() - self.vel.y()) <= platform_obj.rect.top() + 1:
+                                   (self.pos.y() - self.vel.y()) <= platform_obj.rect.top() + 1: # Was above before this frame's Y move
                                     self.rect.moveBottom(platform_obj.rect.top())
-                                    self.on_ground = True; self.vel.setY(0.0); self.acc.setY(0.0)
+                                    self.on_ground = True; self.vel.setY(0.0)
+                                    if hasattr(self.acc, 'setY'): self.acc.setY(0.0)
                                     self.pos.setY(self.rect.bottom()); break
-                update_enemy_animation(self)
-                if self.death_animation_finished:
-                    self.kill()
+                
+                if hasattr(self, 'animate'): self.animate()
+                if getattr(self, 'death_animation_finished', False):
+                    if hasattr(self, 'kill'): self.kill()
             return
 
         enemy_ai_update(self, players_list_for_logic)
         update_enemy_physics_and_collisions(
             self, dt_sec, platforms_list, hazards_list,
-            players_list_for_logic + [e for e in all_enemies_list if e is not self]
+            players_list_for_logic + [e for e in all_enemies_list if e is not self and hasattr(e, 'alive') and e.alive()] # Ensure others are alive
         )
-        if self.is_attacking:
+        if getattr(self, 'is_attacking', False):
             check_enemy_attack_collisions(self, players_list_for_logic)
-        update_enemy_animation(self)
+        
+        if hasattr(self, 'animate'): self.animate()
 
-        if self.is_dead and self.death_animation_finished and self.alive():
-            self.kill()
+        if getattr(self, 'is_dead', False) and getattr(self, 'death_animation_finished', False) and self.alive():
+            if hasattr(self, 'kill'): self.kill()
 
     def reset(self):
-        super().reset() 
-        set_enemy_new_patrol_target(self)
-        set_enemy_state(self, 'idle')
-        debug(f"Enemy (ID: {self.enemy_id}) fully reset. State: {self.state}, AI State: {self.ai_state}")
-
-#################### END OF FILE: enemy.py ####################
+        super().reset() # Calls EnemyBase.reset()
+        # EnemyBase.reset should set _valid_init and _alive appropriately
+        if self._valid_init:
+            if hasattr(self, 'pos') and hasattr(self, 'rect'): # Ensure necessary for patrol target
+                 set_enemy_new_patrol_target(self)
+            set_enemy_state(self, 'idle')
+            debug(f"Enemy (ID: {self.enemy_id}) fully reset. State: {getattr(self, 'state', 'N/A')}, AI State: {getattr(self, 'ai_state', 'N/A')}")
+        else:
+            warning(f"Enemy (ID: {self.enemy_id}): Reset called, but _valid_init is False. State not fully reset.")
