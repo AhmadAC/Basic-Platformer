@@ -1,65 +1,147 @@
-2025-05-19 09:55:12,508 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
-2025-05-19 09:55:12,509 - INFO - editor.py:65 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
-2025-05-19 09:55:12,510 - WARNING - editor.py:81 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
-2025-05-19 09:55:12,582 - INFO - editor_assets.py:27 - <module> - EditorAssets: Successfully imported 'resource_path' from 'assets' module.
-2025-05-19 09:55:12,660 - DEBUG - editor.py:89 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
-2025-05-19 09:55:12,661 - INFO - editor.py:590 - editor_main - editor_main() started for PySide6 application.
-2025-05-19 09:55:12,760 - DEBUG - editor.py:592 - editor_main - QApplication instance created.
-2025-05-19 09:55:12,770 - INFO - editor.py:98 - __init__ - Initializing EditorMainWindow...
-2025-05-19 09:55:12,770 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
-2025-05-19 09:55:12,770 - DEBUG - editor_state.py:66 - __init__ - EditorState initialized.
-2025-05-19 09:55:12,773 - DEBUG - editor.py:135 - init_ui - Initializing UI components...
-2025-05-19 09:55:12,795 - DEBUG - map_view_widget.py:164 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 09:55:12,796 - DEBUG - map_view_widget.py:148 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 09:55:12,796 - DEBUG - map_view_widget.py:161 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 09:55:12,804 - DEBUG - map_view_widget.py:178 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
-2025-05-19 09:55:12,804 - DEBUG - map_view_widget.py:140 - __init__ - MapViewWidget initialized.
-2025-05-19 09:55:12,926 - DEBUG - editor.py:162 - init_ui - UI components initialized.
-2025-05-19 09:55:12,926 - DEBUG - editor.py:165 - create_actions - Creating actions...
-2025-05-19 09:55:12,928 - DEBUG - editor.py:195 - create_actions - Actions created.
-2025-05-19 09:55:12,928 - DEBUG - editor.py:198 - create_menus - Creating menus...
-2025-05-19 09:55:12,934 - DEBUG - editor.py:234 - create_menus - Menus created.
-2025-05-19 09:55:12,934 - DEBUG - editor.py:237 - create_status_bar - Creating status bar...
-2025-05-19 09:55:12,936 - DEBUG - editor.py:244 - create_status_bar - Status bar created.
-2025-05-19 09:55:12,936 - INFO - editor_assets.py:207 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-19 09:55:12,936 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player1_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
-2025-05-19 09:55:12,937 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:55:12,943 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player2_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
-2025-05-19 09:55:12,943 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:55:12,944 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_gray' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
-2025-05-19 09:55:12,944 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:55:12,944 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_green' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
-2025-05-19 09:55:12,945 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:55:12,945 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_pink' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
-2025-05-19 09:55:12,945 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:55:12,946 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_purple' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
-2025-05-19 09:55:12,946 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:55:12,947 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_orange' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
-2025-05-19 09:55:12,947 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:55:12,948 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_yellow' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
-2025-05-19 09:55:12,948 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:55:12,949 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'chest' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
-2025-05-19 09:55:12,949 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Attempting Qt load...
-2025-05-19 09:55:12,950 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_idle' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
-2025-05-19 09:55:12,950 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Attempting Qt load...
-2025-05-19 09:55:12,951 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_crouch' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
-2025-05-19 09:55:12,951 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Attempting Qt load...
-2025-05-19 09:55:12,954 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'hazard_lava_tile' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
-2025-05-19 09:55:12,954 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Attempting Qt load...
-2025-05-19 09:55:12,956 - INFO - editor_assets.py:356 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
-2025-05-19 09:55:12,956 - DEBUG - editor_ui_panels.py:59 - populate_assets - Populating asset palette UI...
-2025-05-19 09:55:12,962 - DEBUG - editor_ui_panels.py:105 - populate_assets - Asset palette UI populated with 32 displayable items.
-2025-05-19 09:55:12,962 - DEBUG - editor.py:284 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=0, map_is_properly_loaded_or_newly_named=False, unsaved_changes=False
-2025-05-19 09:55:12,962 - DEBUG - editor.py:292 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:55:12,962 - DEBUG - editor.py:311 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(False)
-2025-05-19 09:55:13,044 - DEBUG - editor.py:581 - restore_geometry_and_state - Window geometry and/or state restored.
-2025-05-19 09:55:13,105 - INFO - editor.py:130 - __init__ - EditorMainWindow initialized.
-2025-05-19 09:55:13,105 - INFO - editor.py:249 - show_status_message - Status: Editor started. Welcome!
-2025-05-19 09:55:19,607 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'platform_wall_gray'
-2025-05-19 09:55:19,607 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray'
-2025-05-19 09:55:19,607 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_wall_gray'
-2025-05-19 09:55:19,608 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Wall (Gray)
-2025-05-19 09:57:19,894 - INFO - editor.py:556 - closeEvent - Close event triggered for main window.
-2025-05-19 09:57:19,895 - INFO - editor.py:564 - closeEvent - Window geometry and state saved.
-2025-05-19 09:57:19,923 - INFO - editor.py:599 - editor_main - QApplication event loop finished with exit code: 0
-2025-05-19 09:57:19,924 - INFO - editor.py:607 - editor_main - Editor session ended.
+2025-05-19 10:04:02,314 - INFO - editor.py:42 - <module> - Editor session started. Logging initialized successfully.
+2025-05-19 10:04:02,314 - INFO - editor.py:64 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
+2025-05-19 10:04:02,314 - WARNING - editor.py:80 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
+2025-05-19 10:04:02,458 - INFO - editor_assets.py:27 - <module> - EditorAssets: Successfully imported 'resource_path' from 'assets' module.
+2025-05-19 10:04:02,539 - DEBUG - editor.py:88 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
+2025-05-19 10:04:02,540 - INFO - editor.py:590 - editor_main - editor_main() started for PySide6 application.
+2025-05-19 10:04:02,566 - DEBUG - editor.py:592 - editor_main - QApplication instance created.
+2025-05-19 10:04:02,566 - INFO - editor.py:97 - __init__ - Initializing EditorMainWindow...
+2025-05-19 10:04:02,566 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
+2025-05-19 10:04:02,567 - DEBUG - editor_state.py:66 - __init__ - EditorState initialized.
+2025-05-19 10:04:02,567 - DEBUG - editor.py:134 - init_ui - Initializing UI components...
+2025-05-19 10:04:02,567 - DEBUG - map_view_widget.py:164 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 10:04:02,567 - DEBUG - map_view_widget.py:148 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 10:04:02,568 - DEBUG - map_view_widget.py:161 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 10:04:02,569 - DEBUG - map_view_widget.py:178 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-19 10:04:02,569 - DEBUG - map_view_widget.py:140 - __init__ - MapViewWidget initialized.
+2025-05-19 10:04:02,606 - DEBUG - editor.py:162 - init_ui - UI components initialized.
+2025-05-19 10:04:02,607 - DEBUG - editor.py:165 - create_actions - Creating actions...
+2025-05-19 10:04:02,608 - DEBUG - editor.py:195 - create_actions - Actions created.
+2025-05-19 10:04:02,608 - DEBUG - editor.py:198 - create_menus - Creating menus...
+2025-05-19 10:04:02,609 - DEBUG - editor.py:234 - create_menus - Menus created.
+2025-05-19 10:04:02,609 - DEBUG - editor.py:237 - create_status_bar - Creating status bar...
+2025-05-19 10:04:02,609 - DEBUG - editor.py:244 - create_status_bar - Status bar created.
+2025-05-19 10:04:02,609 - INFO - editor_assets.py:207 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-19 10:04:02,609 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player1_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
+2025-05-19 10:04:02,610 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Attempting Qt load...
+2025-05-19 10:04:02,611 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player2_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
+2025-05-19 10:04:02,611 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Attempting Qt load...
+2025-05-19 10:04:02,613 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_gray' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
+2025-05-19 10:04:02,613 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Attempting Qt load...
+2025-05-19 10:04:02,615 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_green' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
+2025-05-19 10:04:02,615 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Attempting Qt load...
+2025-05-19 10:04:02,616 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_pink' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
+2025-05-19 10:04:02,616 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Attempting Qt load...
+2025-05-19 10:04:02,618 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_purple' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
+2025-05-19 10:04:02,618 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Attempting Qt load...
+2025-05-19 10:04:02,619 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_orange' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
+2025-05-19 10:04:02,619 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Attempting Qt load...
+2025-05-19 10:04:02,621 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_yellow' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
+2025-05-19 10:04:02,621 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Attempting Qt load...
+2025-05-19 10:04:02,622 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'chest' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
+2025-05-19 10:04:02,622 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Attempting Qt load...
+2025-05-19 10:04:02,624 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_idle' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
+2025-05-19 10:04:02,624 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Attempting Qt load...
+2025-05-19 10:04:02,625 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_crouch' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
+2025-05-19 10:04:02,625 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Attempting Qt load...
+2025-05-19 10:04:02,627 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'hazard_lava_tile' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
+2025-05-19 10:04:02,627 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Attempting Qt load...
+2025-05-19 10:04:02,629 - INFO - editor_assets.py:356 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
+2025-05-19 10:04:02,631 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'All'...
+2025-05-19 10:04:02,631 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
+2025-05-19 10:04:02,631 - DEBUG - editor.py:284 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=0, map_is_properly_loaded_or_newly_named=False, unsaved_changes=False
+2025-05-19 10:04:02,631 - DEBUG - editor.py:292 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
+2025-05-19 10:04:02,631 - DEBUG - editor.py:311 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(False)
+2025-05-19 10:04:02,675 - DEBUG - editor.py:581 - restore_geometry_and_state - Window geometry and/or state restored.
+2025-05-19 10:04:02,727 - INFO - editor.py:129 - __init__ - EditorMainWindow initialized.
+2025-05-19 10:04:02,727 - INFO - editor.py:249 - show_status_message - Status: Editor started. Welcome!
+2025-05-19 10:04:11,082 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'Enemy'...
+2025-05-19 10:04:11,082 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 6 items for filter 'Enemy'.
+2025-05-19 10:04:16,448 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'Spawn'...
+2025-05-19 10:04:16,448 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 2 items for filter 'Spawn'.
+2025-05-19 10:04:19,627 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'player1_spawn'
+2025-05-19 10:04:19,628 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'player1_spawn'
+2025-05-19 10:04:19,628 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'player1_spawn'
+2025-05-19 10:04:19,630 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Player 1 Spawn
+2025-05-19 10:04:20,290 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'player2_spawn'
+2025-05-19 10:04:20,291 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'player2_spawn'
+2025-05-19 10:04:20,291 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'player2_spawn'
+2025-05-19 10:04:20,292 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Player 2 Spawn
+2025-05-19 10:04:22,159 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'Enemy'...
+2025-05-19 10:04:22,159 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 6 items for filter 'Enemy'.
+2025-05-19 10:04:22,818 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'enemy_gray'
+2025-05-19 10:04:22,818 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'enemy_gray'
+2025-05-19 10:04:22,818 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'enemy_gray'
+2025-05-19 10:04:22,819 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Enemy Gray
+2025-05-19 10:04:23,293 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'enemy_green'
+2025-05-19 10:04:23,293 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'enemy_green'
+2025-05-19 10:04:23,293 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'enemy_green'
+2025-05-19 10:04:23,294 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Enemy Green
+2025-05-19 10:04:24,538 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'enemy_orange'
+2025-05-19 10:04:24,539 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'enemy_orange'
+2025-05-19 10:04:24,539 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'enemy_orange'
+2025-05-19 10:04:24,540 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Enemy Orange (Red)
+2025-05-19 10:04:25,005 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'enemy_pink'
+2025-05-19 10:04:25,005 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'enemy_pink'
+2025-05-19 10:04:25,005 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'enemy_pink'
+2025-05-19 10:04:25,005 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Enemy Pink
+2025-05-19 10:04:25,785 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'enemy_yellow'
+2025-05-19 10:04:25,786 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'enemy_yellow'
+2025-05-19 10:04:25,786 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'enemy_yellow'
+2025-05-19 10:04:25,786 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Enemy Yellow
+2025-05-19 10:04:26,308 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'enemy_purple'
+2025-05-19 10:04:26,308 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'enemy_purple'
+2025-05-19 10:04:26,308 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'enemy_purple'
+2025-05-19 10:04:26,309 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Enemy Purple
+2025-05-19 10:04:29,425 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'Object'...
+2025-05-19 10:04:29,425 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 2 items for filter 'Object'.
+2025-05-19 10:04:30,027 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'object_stone_crouch'
+2025-05-19 10:04:30,027 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'object_stone_crouch'
+2025-05-19 10:04:30,027 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'object_stone_crouch'
+2025-05-19 10:04:30,028 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Stone Crouch Block
+2025-05-19 10:04:31,825 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'object_stone_idle'
+2025-05-19 10:04:31,825 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'object_stone_idle'
+2025-05-19 10:04:31,825 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'object_stone_idle'
+2025-05-19 10:04:31,825 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Stone Block
+2025-05-19 10:04:35,875 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'Item'...
+2025-05-19 10:04:35,875 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 1 items for filter 'Item'.
+2025-05-19 10:04:36,458 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'chest'
+2025-05-19 10:04:36,458 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'chest'
+2025-05-19 10:04:36,458 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'chest'
+2025-05-19 10:04:36,459 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Chest
+2025-05-19 10:04:39,570 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'Hazard'...
+2025-05-19 10:04:39,570 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 1 items for filter 'Hazard'.
+2025-05-19 10:04:40,362 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'hazard_lava_tile'
+2025-05-19 10:04:40,362 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'hazard_lava_tile'
+2025-05-19 10:04:40,362 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'hazard_lava_tile'
+2025-05-19 10:04:40,363 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Lava Tile
+2025-05-19 10:04:43,703 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'Tile'...
+2025-05-19 10:04:43,704 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 10 items for filter 'Tile'.
+2025-05-19 10:04:45,384 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'platform_ledge_gray_one_fourth'
+2025-05-19 10:04:45,384 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_ledge_gray_one_fourth'
+2025-05-19 10:04:45,384 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_ledge_gray_one_fourth'
+2025-05-19 10:04:45,385 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Ledge 1/4 (Gray)
+2025-05-19 10:04:45,820 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'platform_ledge_gray_one_third'
+2025-05-19 10:04:45,820 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_ledge_gray_one_third'
+2025-05-19 10:04:45,821 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_ledge_gray_one_third'
+2025-05-19 10:04:45,822 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Ledge 1/3 (Gray)
+2025-05-19 10:04:46,409 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'platform_ledge_green_full'
+2025-05-19 10:04:46,409 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_ledge_green_full'
+2025-05-19 10:04:46,409 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_ledge_green_full'
+2025-05-19 10:04:46,410 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Ledge (Green)
+2025-05-19 10:04:48,042 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'platform_wall_gray'
+2025-05-19 10:04:48,042 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray'
+2025-05-19 10:04:48,043 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_wall_gray'
+2025-05-19 10:04:48,044 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Wall (Gray)
+2025-05-19 10:04:49,135 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'platform_ledge_gray_one_fourth'
+2025-05-19 10:04:49,135 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_ledge_gray_one_fourth'
+2025-05-19 10:04:49,135 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_ledge_gray_one_fourth'
+2025-05-19 10:04:49,136 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Ledge 1/4 (Gray)
+2025-05-19 10:05:20,685 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'Tool'...
+2025-05-19 10:05:20,685 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 3 items for filter 'Tool'.
+2025-05-19 10:05:26,230 - DEBUG - editor_ui_panels.py:103 - populate_assets - Populating asset palette UI with filter: 'All'...
+2025-05-19 10:05:26,230 - DEBUG - editor_ui_panels.py:134 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
+2025-05-19 10:05:39,590 - INFO - editor.py:556 - closeEvent - Close event triggered for main window.
+2025-05-19 10:05:39,591 - INFO - editor.py:564 - closeEvent - Window geometry and state saved.
+2025-05-19 10:05:39,607 - INFO - editor.py:599 - editor_main - QApplication event loop finished with exit code: 0
+2025-05-19 10:05:39,607 - INFO - editor.py:607 - editor_main - Editor session ended.
