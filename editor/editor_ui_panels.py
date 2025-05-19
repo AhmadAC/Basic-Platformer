@@ -3,7 +3,7 @@
 """
 Custom Qt Widgets for UI Panels (Asset Palette, Properties Editor)
 in the PySide6 Level Editor.
-Version 2.0.7 (Paint Color button text static, background indicates color)
+Version 2.0.8 (Paint Color button text truly static)
 """
 import logging
 from typing import Optional, Dict, Any, List, Tuple
@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget, QListWidget, QListWidgetItem, QVBoxLayout, QHBoxLayout, 
     QLabel, QLineEdit, QCheckBox, QComboBox, QPushButton, QScrollArea,
     QFormLayout, QSpinBox, QDoubleSpinBox, QColorDialog,
-    QGroupBox, QSizePolicy 
+    QGroupBox, QSizePolicy, QApplication # QApplication needed for palette reset
 )
 from PySide6.QtGui import QIcon, QPalette, QColor, QPixmap
 from PySide6.QtCore import Qt, Signal, Slot, QSize
@@ -72,28 +72,33 @@ class AssetPaletteWidget(QWidget):
 
     def _update_paint_color_button_visuals(self):
         color_tuple = self.editor_state.current_selected_asset_paint_color
-        # Keep button text static
+        
+        # --- CORRECTED: Keep button text static ---
         self.paint_color_button.setText("Paint Color") 
+        # --- END CORRECTION ---
 
         if color_tuple:
             q_color = QColor(*color_tuple)
-            palette = self.paint_color_button.palette()
+            palette = self.paint_color_button.palette() 
             palette.setColor(QPalette.ColorRole.Button, q_color)
             
-            # Determine text color for contrast
             luma = 0.299 * color_tuple[0] + 0.587 * color_tuple[1] + 0.114 * color_tuple[2]
             text_q_color = QColor(Qt.GlobalColor.black) if luma > 128 else QColor(Qt.GlobalColor.white)
             palette.setColor(QPalette.ColorRole.ButtonText, text_q_color)
             
             self.paint_color_button.setPalette(palette)
             self.paint_color_button.setAutoFillBackground(True)
-            # Ensure border is visible if color is very light/dark like the default button bg
             self.paint_color_button.setStyleSheet("QPushButton { border: 1px solid #555; min-height: 20px; padding: 2px; }")
         else:
-            # Revert to default appearance
             self.paint_color_button.setAutoFillBackground(False) 
-            self.paint_color_button.setPalette(QWidget().palette()) # Get a default palette from a temporary default QWidget
-            self.paint_color_button.setStyleSheet("") # Revert to default stylesheet
+            # Reset to a default widget palette if no custom color is set
+            # Check if QApplication instance exists before accessing its style
+            app_instance = QApplication.instance()
+            if app_instance:
+                self.paint_color_button.setPalette(app_instance.style().standardPalette())
+            else: # Fallback if no app instance (should not happen in normal execution)
+                self.paint_color_button.setPalette(QWidget().palette())
+            self.paint_color_button.setStyleSheet("") 
         
         self.paint_color_button.update()
 
@@ -106,11 +111,12 @@ class AssetPaletteWidget(QWidget):
             self.editor_state.current_selected_asset_paint_color = new_q_color.getRgb()[:3]
             status_msg = f"Asset paint color set to: {self.editor_state.current_selected_asset_paint_color}"
         else:
-            status_msg = "Asset paint color selection cancelled." # Or keep previous color
+            status_msg = "Asset paint color selection cancelled." 
         
         self._update_paint_color_button_visuals()
         self.paint_color_changed_for_status.emit(status_msg)
 
+    # ... (rest of AssetPaletteWidget remains the same) ...
     def _populate_category_combo_if_needed(self):
         if self.categories_populated_in_combo or not self.editor_state.assets_palette:
             return

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ## version 2.0.1 (PySide6 Conversion - Corrected Import)
+## version 2.0.2 (NameError fix for effective_min_x_for_bounds in export)
 Utility functions for map operations in the Level Editor,
 including initializing new maps, saving/loading editor-specific
 map data (JSON), and exporting maps to game-compatible Python scripts.
@@ -24,8 +25,9 @@ try:
     from tiles import Platform, Ladder, Lava # Or whatever your game tile classes are
 except ImportError as e_proj_imp:
     print(f"EDITOR_MAP_UTILS CRITICAL Error importing project modules (constants/tiles): {e_proj_imp}")
-    class FallbackConstants: TILE_SIZE = 32; GRAY = (128,128,128); DARK_GREEN=(0,100,0); ORANGE_RED=(255,69,0); DARK_GRAY=(50,50,50); LIGHT_BLUE=(173,216,230)
+    class FallbackConstants: TILE_SIZE = 32; GRAY = (128,128,128); DARK_GREEN=(0,100,0); ORANGE_RED=(255,69,0); DARK_GRAY=(50,50,50); LIGHT_BLUE=(173,216,230); MAGENTA=(255,0,255); EDITOR_SCREEN_INITIAL_WIDTH=1000
     C = FallbackConstants()
+    # Define dummy classes if tiles import fails
     class Platform: pass
     class Ladder: pass
     class Lava: pass
@@ -59,9 +61,14 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
 
     py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
     json_filename = editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
+    
+    # Ensure MAPS_DIRECTORY is treated as an absolute path or resolved correctly
+    # This depends on how ED_CONFIG.MAPS_DIRECTORY is defined (it comes from C.MAPS_DIR)
+    # C.MAPS_DIR is now dynamically set to an absolute path in constants.py
+    maps_base_dir = ED_CONFIG.MAPS_DIRECTORY 
 
-    editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
-    editor_state.current_json_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, json_filename)
+    editor_state.current_map_filename = os.path.join(maps_base_dir, py_filename)
+    editor_state.current_json_filename = os.path.join(maps_base_dir, json_filename)
 
     editor_state.undo_stack.clear()
     editor_state.redo_stack.clear()
@@ -74,16 +81,20 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
 
 
 def ensure_maps_directory_exists() -> bool:
-    maps_dir = ED_CONFIG.MAPS_DIRECTORY
-    if not os.path.exists(maps_dir):
-        logger.info(f"Maps directory '{maps_dir}' does not exist. Attempting to create.")
+    # MAPS_DIRECTORY is expected to be an absolute path from constants.py (via ED_CONFIG)
+    maps_dir_abs = ED_CONFIG.MAPS_DIRECTORY
+    if not os.path.exists(maps_dir_abs):
+        logger.info(f"Maps directory '{maps_dir_abs}' does not exist. Attempting to create.")
         try:
-            os.makedirs(maps_dir)
-            logger.info(f"Successfully created maps directory: {maps_dir}")
+            os.makedirs(maps_dir_abs)
+            logger.info(f"Successfully created maps directory: {maps_dir_abs}")
             return True
         except OSError as e:
-            logger.error(f"Error creating maps directory {maps_dir}: {e}", exc_info=True)
+            logger.error(f"Error creating maps directory {maps_dir_abs}: {e}", exc_info=True)
             return False
+    elif not os.path.isdir(maps_dir_abs):
+        logger.error(f"Path '{maps_dir_abs}' exists but is not a directory.")
+        return False
     return True
 
 
@@ -91,41 +102,48 @@ def save_map_to_json(editor_state: EditorState) -> bool:
     logger.info(f"Saving map to JSON. Map name from state: '{editor_state.map_name_for_function}'")
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
         msg = "Map name is not set or is 'untitled_map'. Cannot save JSON."
-        editor_state.set_status_message(f"Error: {msg}") # Duration handled by Qt status bar
+        # editor_state.set_status_message(f"Error: {msg}") # Status message handled by Qt main window
         logger.error(msg)
         return False
 
     if not ensure_maps_directory_exists():
         msg = f"Could not create or access maps directory: {ED_CONFIG.MAPS_DIRECTORY}"
-        editor_state.set_status_message(f"Error: {msg}")
+        # editor_state.set_status_message(f"Error: {msg}")
         logger.error(f"{msg} JSON save aborted.")
         return False
 
-    json_filename = editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
-    json_filepath = os.path.join(ED_CONFIG.MAPS_DIRECTORY, json_filename)
+    # Use the already absolute path from editor_state
+    json_filepath = editor_state.current_json_filename
+    if not json_filepath or \
+       os.path.basename(json_filepath) != (editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
+        # Re-derive if inconsistent (should ideally be set by new_map or load_map)
+        logger.warning(f"JSON filepath re-derived for save. State name: '{editor_state.map_name_for_function}', Stored: '{json_filepath}'.")
+        json_filename = editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
+        json_filepath = os.path.join(ED_CONFIG.MAPS_DIRECTORY, json_filename) # Use absolute base
+        editor_state.current_json_filename = json_filepath
+
+
     logger.debug(f"Attempting to save JSON to: '{json_filepath}' using map name '{editor_state.map_name_for_function}'")
 
     data_to_save = editor_history.get_map_snapshot(editor_state)
-    # Ensure 'properties' are correctly included for each object if they exist from editor_state
-    # get_map_snapshot should ideally already handle this by copying from editor_state.placed_objects correctly
     for i, obj_in_snapshot in enumerate(data_to_save["placed_objects"]):
         if i < len(editor_state.placed_objects):
             obj_from_state = editor_state.placed_objects[i]
             if "properties" in obj_from_state:
                  obj_in_snapshot["properties"] = obj_from_state["properties"].copy()
-            elif "properties" in obj_in_snapshot: # Remove if not in current state but in old snapshot
+            elif "properties" in obj_in_snapshot: 
                  del obj_in_snapshot["properties"]
 
 
     logger.debug(f"Data to save (first object example from snapshot): {data_to_save['placed_objects'][0] if data_to_save['placed_objects'] else 'No objects'}")
+    error_msg = "" # Initialize error_msg
 
     try:
         with open(json_filepath, "w") as f:
             json.dump(data_to_save, f, indent=4)
-        success_msg = f"Editor data saved to: {json_filename}"
+        success_msg = f"Editor data saved to: {os.path.basename(json_filepath)}"
         logger.info(success_msg)
-        editor_state.set_status_message(success_msg)
-        editor_state.current_json_filename = json_filepath
+        # editor_state.set_status_message(success_msg) # Handled by Qt window
         return True
     except IOError as e:
         error_msg = f"IOError saving map to JSON '{json_filepath}': {e}"
@@ -134,7 +152,7 @@ def save_map_to_json(editor_state: EditorState) -> bool:
         error_msg = f"Unexpected error saving map to JSON '{json_filepath}': {e}"
         logger.error(error_msg, exc_info=True)
 
-    editor_state.set_status_message(error_msg)
+    # editor_state.set_status_message(error_msg) # Handled by Qt window
     return False
 
 
@@ -143,8 +161,10 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
     if not os.path.exists(json_filepath) or not os.path.isfile(json_filepath):
         error_msg = f"JSON map file not found or is not a file: '{json_filepath}'"
         logger.error(error_msg)
-        editor_state.set_status_message(error_msg)
+        # editor_state.set_status_message(error_msg) # Handled by Qt window
         return False
+    
+    error_msg = "" # Initialize error_msg
 
     try:
         with open(json_filepath, 'r') as f:
@@ -153,28 +173,19 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
 
         editor_history.restore_map_from_snapshot(editor_state, data_snapshot)
 
-        # Auto-correction logic for lava/platforms can be added here if necessary
-        # It would involve iterating editor_state.placed_objects and modifying it.
-        # If any modifications are made, set editor_state.unsaved_changes = True.
-        # Example conceptual placeholder:
-        # corrections_made = _perform_lava_platform_autocorrect(editor_state)
-        # if corrections_made:
-        #     editor_state.unsaved_changes = True
-        #     editor_state.set_status_message("Map auto-corrected on load.", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT)
-
         py_filename_for_state = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
-        editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename_for_state)
-        editor_state.current_json_filename = json_filepath
+        editor_state.current_map_filename = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename_for_state) # Use absolute base
+        editor_state.current_json_filename = json_filepath # This is already absolute
 
-        if not editor_state.unsaved_changes: # If restore_map_from_snapshot or auto-correct didn't set it
-            editor_state.unsaved_changes = False # Explicitly false after clean load
+        if not editor_state.unsaved_changes: 
+            editor_state.unsaved_changes = False 
 
         success_msg = f"Map '{editor_state.map_name_for_function}' loaded from {os.path.basename(json_filepath)}."
         logger.info(f"{success_msg}. map_name_for_function='{editor_state.map_name_for_function}', "
                     f"current_map_filename (py)='{editor_state.current_map_filename}', "
                     f"current_json_filename='{editor_state.current_json_filename}', "
                     f"unsaved_changes={editor_state.unsaved_changes}")
-        editor_state.set_status_message(success_msg)
+        # editor_state.set_status_message(success_msg) # Handled by Qt window
         return True
 
     except json.JSONDecodeError as e:
@@ -184,7 +195,7 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
         error_msg = f"Unexpected error loading map from JSON '{json_filepath}': {e}"
         logger.error(error_msg, exc_info=True)
 
-    editor_state.set_status_message(error_msg)
+    # editor_state.set_status_message(error_msg) # Handled by Qt window
     return False
 
 
@@ -261,28 +272,23 @@ def _merge_rect_objects(objects_raw: List[Dict[str, Any]], class_name_for_export
     if not final_blocks_data:
          return [f"    # No {class_name_for_export.lower()} objects placed (empty after merge attempt)."]
     for block in final_blocks_data:
-        # Ensure color is a string representation of a tuple for export
         color_str = str(block['color'])
-        if not (color_str.startswith('(') and color_str.endswith(')')): # Basic check if it's already tuple-like string
-            # If it was a QColor string or something else, convert it back
-            # This part is tricky without knowing exactly how colors are stored after QColor conversion
-            # Assuming block['color'] should be a tuple (R,G,B) or a string like "(R,G,B)"
+        if not (color_str.startswith('(') and color_str.endswith(')')):
             try:
-                # Attempt to eval if it's a string like "(R,G,B)"
                 parsed_color = eval(color_str)
                 if isinstance(parsed_color, tuple) and len(parsed_color) == 3:
                     color_str = str(parsed_color)
-                else: # Fallback if eval fails or isn't a 3-tuple
-                    color_str = str(ED_CONFIG.C.MAGENTA) # Fallback color
+                else:
+                    color_str = str(getattr(C, 'MAGENTA', (255,0,255)))
             except:
-                color_str = str(ED_CONFIG.C.MAGENTA) # Fallback color
+                color_str = str(getattr(C, 'MAGENTA', (255,0,255)))
 
         if class_name_for_export == "Platform":
             code_lines.append(f"    {sprite_group_name}.add({class_name_for_export}({block['x']}, {block['y']}, {block['w']}, {block['h']}, {color_str}, platform_type='{block['type']}'))")
         else:
             code_lines.append(f"    {sprite_group_name}.add({class_name_for_export}({block['x']}, {block['y']}, {block['w']}, {block['h']}, {color_str}))")
 
-    if not code_lines: # Should be redundant
+    if not code_lines:
         return [f"    # No {class_name_for_export.lower()}s placed."]
     return code_lines
 
@@ -293,7 +299,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
 
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
         msg = "Map name is not set or is 'untitled_map'. Cannot export .py."
-        editor_state.set_status_message(f"Error: {msg}")
+        # editor_state.set_status_message(f"Error: {msg}") # Handled by Qt window
         logger.error(msg)
         return False
 
@@ -302,12 +308,12 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
        os.path.basename(py_filepath_to_use) != (editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION):
         logger.warning(f"PY filepath for export re-derived. State name: '{editor_state.map_name_for_function}', Stored: '{py_filepath_to_use}'.")
         py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
-        py_filepath_to_use = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename)
+        py_filepath_to_use = os.path.join(ED_CONFIG.MAPS_DIRECTORY, py_filename) # Use absolute base
         editor_state.current_map_filename = py_filepath_to_use
 
     if not ensure_maps_directory_exists():
         msg = f"Could not create/access maps directory: {ED_CONFIG.MAPS_DIRECTORY} for .py export."
-        editor_state.set_status_message(f"Error: {msg}")
+        # editor_state.set_status_message(f"Error: {msg}") # Handled by Qt window
         logger.error(f"{msg} PY export aborted.")
         return False
 
@@ -315,18 +321,20 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     logger.debug(f"Exporting to function '{function_name}' in file '{py_filepath_to_use}'")
 
     platform_objects_raw: List[Dict[str, Any]] = []
+    ladder_objects_raw: List[Dict[str, Any]] = [] # For ladders
     hazards_code_lines: List[str] = []
     enemy_spawns_code_lines: List[str] = []
     collectible_spawns_code_lines: List[str] = []
+    statue_spawns_code_lines: List[str] = [] # For statues
 
     default_spawn_world_x = (editor_state.map_width_tiles // 2) * ts + ts // 2
-    default_spawn_world_y = (editor_state.map_height_tiles - 2 + 1) * ts
+    default_spawn_world_y = (editor_state.map_height_tiles - 2 + 1) * ts # -2 tiles up, then +1 tile height
     player1_spawn_pos_str = f"player1_spawn_pos = ({default_spawn_world_x}, {default_spawn_world_y})"
-    player1_spawn_props_str = "player1_spawn_props = {}" # Default empty
+    player1_spawn_props_str = "player1_spawn_props = {}" 
 
     all_placed_world_rects_for_bounds: List[pygame.Rect] = []
     lava_occupied_coords = set()
-    for obj in editor_state.placed_objects: # First pass for lava
+    for obj in editor_state.placed_objects: 
         if obj.get("game_type_id") == "hazard_lava":
             wx, wy = obj.get("world_x"), obj.get("world_y")
             if wx is not None and wy is not None: lava_occupied_coords.add((wx, wy))
@@ -335,7 +343,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         game_id = obj_data.get("game_type_id")
         wx, wy = obj_data.get("world_x"), obj_data.get("world_y")
         asset_key = obj_data.get("asset_editor_key")
-        override_color = obj_data.get("override_color") # This should be a tuple (R,G,B)
+        override_color = obj_data.get("override_color")
         obj_props = obj_data.get("properties", {})
 
         if not all([game_id, wx is not None, wy is not None, asset_key]): continue
@@ -343,9 +351,11 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         if not asset_entry: continue
 
         obj_w, obj_h = ts, ts
-        default_color = ED_CONFIG.C.MAGENTA # Fallback color for export
-        if asset_entry.get("surface_params_dims_color"):
-            w, h, c = asset_entry["surface_params_dims_color"]; obj_w, obj_h = w, h; default_color = c
+        default_color = getattr(C, 'MAGENTA', (255,0,255))
+        if asset_entry.get("surface_params"):
+            dims_color_tuple = asset_entry["surface_params"]
+            if isinstance(dims_color_tuple, tuple) and len(dims_color_tuple) == 3:
+                w, h, c = dims_color_tuple; obj_w, obj_h = w, h; default_color = c
         elif asset_entry.get("render_mode") == "half_tile":
             default_color = asset_entry.get("base_color_tuple", default_color)
             ht = asset_entry.get("half_type")
@@ -355,8 +365,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             obj_w, obj_h = asset_entry["original_size_pixels"]
 
         final_color_export = override_color or \
-                             (ED_CONFIG.C.ORANGE_RED if game_id == "hazard_lava" else default_color)
-        color_str_export = str(final_color_export) # Ensure it's a string like "(R,G,B)"
+                             (getattr(C, 'ORANGE_RED', (255,69,0)) if game_id == "hazard_lava" else default_color)
+        color_str_export = str(final_color_export)
 
         ex, ey = wx, wy
         if asset_entry.get("render_mode") == "half_tile":
@@ -365,42 +375,57 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             elif ht == "bottom": ey = wy + ts // 2
 
         all_placed_world_rects_for_bounds.append(pygame.Rect(ex, ey, obj_w, obj_h))
-
-        platform_kws = {"platform_wall_gray", "platform_ledge_green"}
-        is_plat = any(kw in game_id for kw in platform_kws)
-        if is_plat and (wx, wy) in lava_occupied_coords: continue
-
         props_export_str = f"{{{', '.join([f'{repr(k)}: {repr(v)}' for k,v in obj_props.items()])}}}"
 
-        if is_plat:
-            plat_type = 'ledge' if "ledge" in game_id else 'wall'
+        platform_kws = {"platform_wall", "platform_ledge"} # General keywords
+        is_platform = any(kw in game_id for kw in platform_kws)
+        
+        # Ensure platforms are not placed directly on top of lava visually
+        if is_platform and (wx, wy) in lava_occupied_coords:
+            logger.warning(f"Skipping platform '{game_id}' at ({wx},{wy}) due to lava overlap.")
+            continue
+        
+        # Handle object types
+        if is_platform:
+            plat_type = 'ledge' if "ledge" in game_id else ('wall' if "wall" in game_id else 'generic')
             platform_objects_raw.append({'x': ex, 'y': ey, 'w': obj_w, 'h': obj_h,
-                                         'color': final_color_export, 'type': plat_type}) # Store tuple for _merge
+                                         'color': final_color_export, 'type': plat_type})
         elif game_id == "hazard_lava":
             hazards_code_lines.append(f"    hazards.add(Lava({ex}, {ey}, {obj_w}, {obj_h}, {color_str_export}))")
         elif game_id == "player1_spawn":
             spawn_mid_x, spawn_bot_y = ex + obj_w // 2, ey + obj_h
             player1_spawn_pos_str = f"player1_spawn_pos = ({spawn_mid_x}, {spawn_bot_y})"
             player1_spawn_props_str = f"player1_spawn_props = {props_export_str}"
+        elif game_id == "player2_spawn": # Handle P2 spawn similarly if needed, or derive from P1
+            pass # For now, P2 spawn is derived from P1 in game_setup
         elif "enemy" in game_id:
-            col_id = game_id.split('_')[-1]
+            col_id = game_id.split('_')[-1] # Assume color ID is last part
             smx, sby = ex + obj_w // 2, ey + obj_h
             enemy_spawns_code_lines.append(f"    enemy_spawns_data.append({{'pos': ({smx}, {sby}), 'patrol': None, 'enemy_color_id': '{col_id}', 'properties': {props_export_str}}})")
         elif game_id == "chest":
             smx, sby = ex + obj_w // 2, ey + obj_h
             collectible_spawns_code_lines.append(f"    collectible_spawns_data.append({{'type': 'chest', 'pos': ({smx}, {sby}), 'properties': {props_export_str}}})")
+        elif game_id.startswith("object_stone_"): # Example for Statues
+            statue_id = f"{asset_key}_{wx}_{wy}" # Generate a unique ID for the statue
+            smx, sby = ex + obj_w // 2, ey + obj_h # Assume midbottom for Statue, adjust if Statue expects center
+            # Statue class takes center_x, center_y for its constructor.
+            # If ex, ey from editor are topleft, adjust to center:
+            statue_center_x_export = ex + obj_w / 2
+            statue_center_y_export = ey + obj_h / 2
+            statue_spawns_code_lines.append(f"    statue_spawns_data.append({{'id': '{statue_id}', 'pos': ({statue_center_x_export}, {statue_center_y_export}), 'properties': {props_export_str}}})")
+        elif "ladder" in game_id: # If you add ladders to palette
+             ladder_objects_raw.append({'x': ex, 'y': ey, 'w': obj_w, 'h': obj_h, 'color': final_color_export})
 
-    # ... (Rest of the export function, including _merge_rect_objects call and script string generation)
-    # This part should be largely the same, ensure color strings are "(R,G,B)" format in the final script.
+
     platforms_code_lines = _merge_rect_objects(platform_objects_raw, "Platform", "platforms")
-    ladders_code_lines = ["    # No ladders placed."] # Placeholder
+    ladders_code_lines = _merge_rect_objects(ladder_objects_raw, "Ladder", "ladders") # Merge ladders
     platforms_code_str = "\n".join(platforms_code_lines)
     ladders_code_str = "\n".join(ladders_code_lines)
     hazards_code_str = "\n".join(hazards_code_lines) if hazards_code_lines else "    # No hazards placed."
     enemy_spawns_code_str = "\n".join(enemy_spawns_code_lines) if enemy_spawns_code_lines else "    # No enemy spawns defined."
     collectible_spawns_code_str = "\n".join(collectible_spawns_code_lines) if collectible_spawns_code_lines else "    # No collectible spawns defined."
+    statue_spawns_code_str = "\n".join(statue_spawns_code_lines) if statue_spawns_code_lines else "    # No statue spawns defined."
 
-    # Calculate level boundaries
     map_min_x_content, map_max_x_content = 0, editor_state.get_map_pixel_width()
     map_min_y_content, map_max_y_content = 0, editor_state.get_map_pixel_height()
 
@@ -411,35 +436,35 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         map_max_y_content = max(r.bottom for r in all_placed_world_rects_for_bounds)
 
     padding_px = ED_CONFIG.C.TILE_SIZE * 2
-    game_map_total_width_pixels = int(max(ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, map_max_x_content - map_min_x_content + 2 * padding_px))
-    # Adjust if content pushes boundaries
+    game_map_total_width_pixels = int(max(getattr(ED_CONFIG.C, "EDITOR_SCREEN_INITIAL_WIDTH", 1000), map_max_x_content - map_min_x_content + 2 * padding_px))
     if map_max_x_content + padding_px > game_map_total_width_pixels:
          game_map_total_width_pixels = int(map_max_x_content + padding_px)
-    # Ensure map starts at or before 0 if min_x_content is negative (not typical for tile maps but robust)
     if map_min_x_content < 0:
         game_map_total_width_pixels = int(max(game_map_total_width_pixels, map_max_x_content - map_min_x_content + padding_px))
-
 
     game_level_min_y_absolute = int(map_min_y_content - padding_px)
     game_level_max_y_absolute = int(map_max_y_content)
     game_main_ground_y_reference = int(map_max_y_content)
     game_main_ground_height_reference = int(ED_CONFIG.C.TILE_SIZE)
 
-    if game_level_min_y_absolute >= game_level_max_y_absolute: # Ensure some space
+    if game_level_min_y_absolute >= game_level_max_y_absolute:
         game_level_max_y_absolute = game_level_min_y_absolute + ED_CONFIG.C.TILE_SIZE * 5
 
+    effective_min_x_for_bounds = min(0, map_min_x_content)
+    boundary_width_expression_eval = game_map_total_width_pixels - effective_min_x_for_bounds # Pre-calculate
 
-    # Construct the Python script content
     script_content = f"""\
 # Level: {editor_state.map_name_for_function}
 # Generated by Platformer Level Editor (PySide6 Version - Optimized Export)
 import pygame
 from tiles import Platform, Ladder, Lava # Make sure these match your game's tile classes
+from statue import Statue # For statue objects
 import constants as C
 
 LEVEL_SPECIFIC_BACKGROUND_COLOR = {editor_state.background_color}
 {player1_spawn_pos_str}
 {player1_spawn_props_str}
+# Note: P2 spawn is derived by game_setup.py from P1 spawn and level width.
 
 def {function_name}(initial_screen_width, initial_screen_height):
     \"\"\"Loads the '{editor_state.map_name_for_function}' level.\"\"\"
@@ -449,6 +474,7 @@ def {function_name}(initial_screen_width, initial_screen_height):
     hazards = pygame.sprite.Group()
     enemy_spawns_data = []
     collectible_spawns_data = []
+    statue_spawns_data = [] # For Statues
 
     # --- Placed Objects (merged where possible) ---
 {platforms_code_str}
@@ -456,6 +482,7 @@ def {function_name}(initial_screen_width, initial_screen_height):
 {hazards_code_str}
 {enemy_spawns_code_str}
 {collectible_spawns_code_str}
+{statue_spawns_code_str}
 
     # --- Level Dimensions for Game Camera & Boundaries ---
     map_total_width_pixels = {game_map_total_width_pixels}
@@ -466,59 +493,51 @@ def {function_name}(initial_screen_width, initial_screen_height):
 
     _boundary_thickness = C.TILE_SIZE * 2
     _boundary_wall_height = level_max_y_absolute - level_min_y_absolute + (2 * _boundary_thickness)
-    # Ensure height is positive if level_min_y_absolute is very large (e.g. map is high up)
     _boundary_wall_height = max(_boundary_thickness * 2, _boundary_wall_height)
-
-
     _boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))
 """
-    # Filler wall logic
-    # Content might not start at 0,0. The boundaries should enclose the content.
-    # Effective content start for boundaries:
-    effective_min_x_for_bounds = min(0, map_min_x_content) # If content starts left of origin
+    filler_wall_y_expr_val = game_level_min_y_absolute - ED_CONFIG.C.TILE_SIZE * 2 # Pre-calculate this
+    filler_wall_height_expr_val = game_level_max_y_absolute - game_level_min_y_absolute + (2 * ED_CONFIG.C.TILE_SIZE * 2)
+    filler_wall_height_expr_val = max((ED_CONFIG.C.TILE_SIZE * 2) * 2, filler_wall_height_expr_val)
 
-    # Filler wall on the right (if needed, to extend to map_total_width_pixels)
-    # This should fill from the rightmost content (map_max_x_content) to map_total_width_pixels
-    filler_wall_right_x_start = map_max_x_content
-    filler_wall_right_width = game_map_total_width_pixels - filler_wall_right_x_start
-    filler_wall_y_expr = "level_min_y_absolute - _boundary_thickness"
-    filler_wall_height_expr = "_boundary_wall_height"
 
-    if filler_wall_right_width > 0:
-        script_content += f"""
-    # Filler wall on the far right (if map_total_width_pixels extends beyond content)
-    platforms.add(Platform({filler_wall_right_x_start}, {filler_wall_y_expr}, {filler_wall_right_width}, {filler_wall_height_expr}, _boundary_color, platform_type='wall'))
+    if map_max_x_content < game_map_total_width_pixels:
+        filler_wall_right_x_start = map_max_x_content
+        filler_wall_right_width = game_map_total_width_pixels - filler_wall_right_x_start
+        if filler_wall_right_width > 0:
+            script_content += f"""
+    # Filler wall on the far right
+    platforms.add(Platform({filler_wall_right_x_start}, {filler_wall_y_expr_val}, {filler_wall_right_width}, {filler_wall_height_expr_val}, _boundary_color, platform_type='wall'))
 """
-    # Filler wall on the left (if map_total_width_pixels implies space before effective_min_x_for_bounds)
-    # This is less common if map_total_width_pixels is calculated based on content spanning from map_min_x_content.
-    # However, if map_min_x_content is > 0, there might be a gap from 0 to map_min_x_content.
-    if effective_min_x_for_bounds > 0: # If content starts to the right of origin
+    if effective_min_x_for_bounds > 0:
         filler_wall_left_width = effective_min_x_for_bounds
         script_content += f"""
-    # Filler wall on the far left (if content starts after origin)
-    platforms.add(Platform(0, {filler_wall_y_expr}, {filler_wall_left_width}, {filler_wall_height_expr}, _boundary_color, platform_type='wall'))
+    # Filler wall on the far left
+    platforms.add(Platform(0, {filler_wall_y_expr_val}, {filler_wall_left_width}, {filler_wall_height_expr_val}, _boundary_color, platform_type='wall'))
 """
 
     script_content += f"""
-    # Boundary platforms (ensure these use effective_min_x_for_bounds if map doesn't start at 0)
-    platforms.add(Platform({effective_min_x_for_bounds}, level_min_y_absolute - _boundary_thickness, map_total_width_pixels - effective_min_x_for_bounds, _boundary_thickness, _boundary_color, platform_type="boundary_wall_top"))
-    platforms.add(Platform({effective_min_x_for_bounds}, level_max_y_absolute, map_total_width_pixels - effective_min_x_for_bounds, _boundary_thickness, _boundary_color, platform_type="boundary_wall_bottom"))
+    # Boundary platforms
+    platforms.add(Platform({effective_min_x_for_bounds}, level_min_y_absolute - _boundary_thickness, {boundary_width_expression_eval}, _boundary_thickness, _boundary_color, platform_type="boundary_wall_top"))
+    platforms.add(Platform({effective_min_x_for_bounds}, level_max_y_absolute, {boundary_width_expression_eval}, _boundary_thickness, _boundary_color, platform_type="boundary_wall_bottom"))
     platforms.add(Platform(effective_min_x_for_bounds - _boundary_thickness, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, _boundary_color, platform_type="boundary_wall_left"))
     platforms.add(Platform(map_total_width_pixels, level_min_y_absolute - _boundary_thickness, _boundary_thickness, _boundary_wall_height, _boundary_color, platform_type="boundary_wall_right"))
 
-    print(f"Map '{{function_name}}' loaded with: {{len(platforms)}} platforms, {{len(ladders)}} ladders, {{len(hazards)}} hazards.")
+    print(f"Map '{{function_name}}' loaded with: {{len(platforms)}} platforms, {{len(ladders)}} ladders, {{len(hazards)}} hazards, {{len(statue_spawns_data)}} statues.")
     return (platforms, ladders, hazards, enemy_spawns_data, collectible_spawns_data,
-            player1_spawn_pos, player1_spawn_props, # Ensure these are the global vars from the file
+            player1_spawn_pos, player1_spawn_props,
             map_total_width_pixels, level_min_y_absolute, level_max_y_absolute,
             main_ground_y_reference, main_ground_height_reference,
-            LEVEL_SPECIFIC_BACKGROUND_COLOR)
+            LEVEL_SPECIFIC_BACKGROUND_COLOR,
+            statue_spawns_data) # Return statue data as well
 """
+    error_msg = "" # Initialize error_msg
     try:
         with open(py_filepath_to_use, "w") as f:
             f.write(script_content)
         success_msg = f"Map exported to game script: {os.path.basename(py_filepath_to_use)}"
         logger.info(success_msg)
-        editor_state.set_status_message(success_msg)
+        # editor_state.set_status_message(success_msg) # Handled by Qt
         editor_state.unsaved_changes = False
         logger.debug(f"unsaved_changes set to False after .py export to '{py_filepath_to_use}'.")
         return True
@@ -529,7 +548,7 @@ def {function_name}(initial_screen_width, initial_screen_height):
         error_msg = f"Unexpected error during .py export to '{py_filepath_to_use}': {e}"
         logger.error(error_msg, exc_info=True)
 
-    editor_state.set_status_message(error_msg)
+    # editor_state.set_status_message(error_msg) # Handled by Qt
     return False
 
 
@@ -538,7 +557,7 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
     if not json_filepath_to_delete.endswith(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
         msg = f"Invalid file type for deletion: {json_filepath_to_delete}."
         logger.error(msg)
-        editor_state.set_status_message(msg)
+        # editor_state.set_status_message(msg) # Handled by Qt
         return False
 
     map_name_base = os.path.splitext(os.path.basename(json_filepath_to_delete))[0]
@@ -546,7 +565,7 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
     py_filepath_to_delete = os.path.join(os.path.dirname(json_filepath_to_delete), py_filename_to_delete)
 
     deleted_json, deleted_py = False, False
-    action_json, action_py = False, False
+    action_json, action_py = False, False # Track if deletion was attempted
 
     try:
         if os.path.exists(json_filepath_to_delete):
@@ -555,7 +574,7 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
         else: logger.warning(f"Not found for deletion: {json_filepath_to_delete}")
     except OSError as e:
         action_json = True; msg = f"Error deleting '{json_filepath_to_delete}': {e}"
-        logger.error(msg, exc_info=True); editor_state.set_status_message(msg)
+        logger.error(msg, exc_info=True)#; editor_state.set_status_message(msg) # Handled by Qt
 
     try:
         if os.path.exists(py_filepath_to_delete):
@@ -564,15 +583,15 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
         else: logger.warning(f"Not found for deletion: {py_filepath_to_delete}")
     except OSError as e:
         action_py = True; msg = f"Error deleting '{py_filepath_to_delete}': {e}"
-        logger.error(msg, exc_info=True); editor_state.set_status_message(msg)
+        logger.error(msg, exc_info=True)#; editor_state.set_status_message(msg) # Handled by Qt
 
     success = False
     final_msg = ""
     if deleted_json and deleted_py: final_msg = f"Map '{map_name_base}' JSON & PY deleted."; success = True
     elif deleted_json: final_msg = f"Map '{map_name_base}' JSON deleted. PY missing/error."; success = True
     elif deleted_py: final_msg = f"Map '{map_name_base}' PY deleted. JSON missing/error."; success = True
-    elif not action_json and not action_py: final_msg = f"Map '{map_name_base}' files not found."; success = True
+    elif not action_json and not action_py: final_msg = f"Map '{map_name_base}' files not found."; success = True # No action needed
     else: final_msg = f"Failed to delete one or more files for '{map_name_base}'. Check logs."
 
-    editor_state.set_status_message(final_msg)
+    # editor_state.set_status_message(final_msg) # Handled by Qt
     return success

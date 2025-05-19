@@ -2,6 +2,7 @@
 # game_ui.py
 # -*- coding: utf-8 -*-
 ## version 1.0.0.15 (Align with Mapper utility for MENU_CONFIRM/CANCEL keys)
+## version 1.0.0.16 (Hide level_default from map selection dialog)
 """
 Functions for drawing User Interface elements like health bars, player HUDs,
 main menus, input dialogs, and the main game scene.
@@ -134,8 +135,8 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
     current_w, current_h = screen_surface.get_size()
     font_title = fonts.get("large") or (pygame.font.Font(None, 60) if pygame.font.get_init() else None)
     if not font_title: return "quit"
-    title_surf = pygame.Surface((0,0))
-    title_rect = title_surf.get_rect(center=(current_w // 2, current_h // 5))
+    title_surf = pygame.Surface((0,0)) # Placeholder, not used for rendering directly
+    title_rect = title_surf.get_rect(center=(current_w // 2, current_h // 5)) # Used for y-pos calculation
 
     menu_buttons = {
         "host": {"text": "Host Game", "action": "host"},
@@ -159,7 +160,7 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
     color_button_selected_hover_bg = pygame.Color(color_button_selected_bg).lerp(pygame.Color(color_button_hover_bg), 0.5) # type: ignore
 
     joystick_menu_nav_instance = None
-    active_joystick_map_for_menu = game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS # Start with fallback
+    active_joystick_map_for_menu = game_config.DEFAULT_JOYSTICK_FALLBACK_MAPPINGS
     p1_device = game_config.CURRENT_P1_INPUT_DEVICE
 
     if p1_device.startswith("joystick_"):
@@ -167,19 +168,15 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
             p1_joy_id = int(p1_device.split("_")[-1])
             if 0 <= p1_joy_id < joystick_handler.get_joystick_count():
                 joystick_menu_nav_instance = joystick_handler.get_joystick_instance(p1_joy_id)
-                # Ensure P1_MAPPINGS is used if P1 is the joystick for menu
                 active_joystick_map_for_menu = game_config.P1_MAPPINGS
         except (ValueError, IndexError): pass
 
-    # If P1 is not the menu joystick, or no P1 joystick, try joystick 0 generally
     if not joystick_menu_nav_instance and joystick_handler.get_joystick_count() > 0:
         joystick_menu_nav_instance = joystick_handler.get_joystick_instance(0)
-        # Determine map for joystick 0 if it's not already set by P1 config
         if game_config.CURRENT_P1_INPUT_DEVICE == "joystick_0" and active_joystick_map_for_menu is not game_config.P1_MAPPINGS:
              active_joystick_map_for_menu = game_config.P1_MAPPINGS
         elif game_config.CURRENT_P2_INPUT_DEVICE == "joystick_0":
              active_joystick_map_for_menu = game_config.P2_MAPPINGS
-        # If joystick 0 is active but not explicitly P1 or P2, it already defaulted to FALLBACK_MAPPINGS
 
     if joystick_menu_nav_instance:
         map_name = "Fallback"
@@ -193,11 +190,20 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
     last_joy_nav_time = 0
     axis_y_was_active_negative = False
     axis_y_was_active_positive = False
-    buttons_top_margin = current_h * 0.15
+    buttons_top_margin = current_h * 0.15 # Recalculate based on current height
 
     def update_btn_geo():
+        nonlocal buttons_top_margin # Ensure we are using the potentially updated current_h
         current_w_local, current_h_local = screen_surface.get_size()
-        btn_y = buttons_top_margin
+        buttons_top_margin = current_h_local * 0.25 # Adjusted for better centering with title
+        
+        # Dynamic Title
+        title_text = "Platformer Adventure LAN"
+        dynamic_title_surf = font_title.render(title_text, True, color_text_normal) # type: ignore
+        dynamic_title_rect = dynamic_title_surf.get_rect(center=(current_w_local // 2, current_h_local * 0.1))
+        
+        btn_y = dynamic_title_rect.bottom + title_gap # Start buttons below title
+
         for key_ordered in button_order:
             props = menu_buttons[key_ordered]
             props["rect"] = pygame.Rect(0, 0, button_w, button_h)
@@ -213,15 +219,16 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
         mouse_pos = pygame.mouse.get_pos()
         current_time_ms_menu = pygame.time.get_ticks()
         can_trigger_new_joy_nav = (current_time_ms_menu - last_joy_nav_time > JOY_NAV_COOLDOWN_MS)
+        
+        current_w, current_h = screen_surface.get_size() # Get current size for rendering
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: app_status_obj.app_running = False; selected_action = "quit"
             if event.type == pygame.VIDEORESIZE and not (screen_surface.get_flags() & pygame.FULLSCREEN):
                 try:
-                    current_w, current_h = max(320,event.w), max(240,event.h)
-                    screen_surface = pygame.display.set_mode((current_w,current_h), pygame.RESIZABLE|pygame.DOUBLEBUF)
-                    buttons_top_margin = current_h * 0.15
-                    update_btn_geo()
+                    # current_w and current_h are updated from screen_surface.get_size() at start of loop
+                    screen_surface = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE|pygame.DOUBLEBUF)
+                    update_btn_geo() # Recalculate button positions based on new size
                 except pygame.error as e: print(f"Menu resize error: {e}")
 
             if event.type == pygame.KEYDOWN:
@@ -234,42 +241,38 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
                     selected_action = menu_buttons[button_order[selected_button_index]]["action"]
 
             if joystick_menu_nav_instance and hasattr(event, 'joy') and event.joy == joystick_menu_nav_instance.get_id():
-                # Use "MENU_CONFIRM" and "MENU_CANCEL" from the mapper utility
-                confirm_mapping = active_joystick_map_for_menu.get("MENU_CONFIRM", {})
-                cancel_mapping = active_joystick_map_for_menu.get("MENU_CANCEL", {})
+                confirm_mapping = active_joystick_map_for_menu.get("menu_confirm", {})
+                cancel_mapping = active_joystick_map_for_menu.get("menu_cancel", {})
 
                 is_confirm_from_config = confirm_mapping.get("type") == "button"
-                effective_confirm_button_id = confirm_mapping.get("id") if is_confirm_from_config else 1 # Default A (Button 1)
+                effective_confirm_button_id = confirm_mapping.get("id") if is_confirm_from_config else 1 
 
                 is_cancel_from_config = cancel_mapping.get("type") == "button"
-                effective_cancel_button_id = cancel_mapping.get("id") if is_cancel_from_config else 2 # Default Y (Button 2)
+                effective_cancel_button_id = cancel_mapping.get("id") if is_cancel_from_config else 2 
 
                 if event.type == pygame.JOYBUTTONDOWN:
                     if event.button == effective_confirm_button_id:
                         selected_action = menu_buttons[button_order[selected_button_index]]["action"]
-                        source_confirm = "config (MENU_CONFIRM)" if is_confirm_from_config else "default (A=1)"
+                        source_confirm = "config (menu_confirm)" if is_confirm_from_config else "default (A=1)"
                         print(f"GAME_UI: MainMenu Joystick Confirm (Button {event.button}, effective: {effective_confirm_button_id}, source: {source_confirm}) -> Action: {selected_action}")
                     elif event.button == effective_cancel_button_id:
                         selected_action = "quit"
-                        source_cancel = "config (MENU_CANCEL)" if is_cancel_from_config else "default (Y=2)"
+                        source_cancel = "config (menu_cancel)" if is_cancel_from_config else "default (Y=2)"
                         print(f"GAME_UI: MainMenu Joystick Cancel (Button {event.button}, effective: {effective_cancel_button_id}, source: {source_cancel}) -> Quitting")
 
                 if event.type == pygame.JOYHATMOTION:
-                    # Hat navigation logic remains the same, using "menu_up" / "menu_down" from config
-                    # as these are navigational, not primary actions like confirm/cancel.
-                    # If you want these also driven by "MENU_UP", "MENU_DOWN" from mapper, this part needs adjustment too.
                     menu_up_hat_cfg = active_joystick_map_for_menu.get("menu_up", {})
                     menu_down_hat_cfg = active_joystick_map_for_menu.get("menu_down", {})
 
-                    if event.hat == menu_up_hat_cfg.get("id", 0) and can_trigger_new_joy_nav: # Default hat 0
+                    if event.hat == menu_up_hat_cfg.get("id", 0) and can_trigger_new_joy_nav: 
                         hat_y_val = event.value[1]
-                        expected_up_val = menu_up_hat_cfg.get("value", (0,0))[1] # Default (0,0) if not set
+                        expected_up_val = menu_up_hat_cfg.get("value", (0,0))[1] 
                         expected_down_val = menu_down_hat_cfg.get("value", (0,0))[1]
 
                         if hat_y_val == expected_up_val and expected_up_val != 0:
                             selected_button_index = (selected_button_index - 1 + len(button_order)) % len(button_order)
                             last_joy_nav_time = current_time_ms_menu
-                        elif hat_y_val == expected_down_val and expected_down_val != 0 : # Assuming down is on same hat
+                        elif hat_y_val == expected_down_val and expected_down_val != 0 : 
                             selected_button_index = (selected_button_index + 1) % len(button_order)
                             last_joy_nav_time = current_time_ms_menu
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -279,7 +282,6 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
                         selected_button_index = i; selected_action = props_mouse["action"]; break
 
         if joystick_menu_nav_instance:
-            # Axis navigation logic also remains, using "up"/"down" or "menu_up"/"menu_down" from config.
             menu_nav_axis_cfg_up = active_joystick_map_for_menu.get("up", active_joystick_map_for_menu.get("menu_up",{}))
             menu_nav_axis_id = menu_nav_axis_cfg_up.get("id", active_joystick_map_for_menu.get("up", {}).get("id", 1) )
             menu_nav_axis_threshold = menu_nav_axis_cfg_up.get("threshold", game_config.AXIS_THRESHOLD_DEFAULT)
@@ -306,6 +308,13 @@ def show_main_menu(screen_surface: pygame.Surface, clock_obj: pygame.time.Clock,
 
         if not app_status_obj.app_running: break
         screen_surface.fill(color_bg)
+        
+        # Render Title
+        title_text_render = "Platformer Adventure LAN" # Keep title static or fetch dynamically
+        rendered_title_surf = font_title.render(title_text_render, True, color_text_normal) # type: ignore
+        rendered_title_rect = rendered_title_surf.get_rect(center=(current_w // 2, current_h * 0.1))
+        screen_surface.blit(rendered_title_surf, rendered_title_rect)
+
         for i, key_ordered_draw in enumerate(button_order):
             props_draw = menu_buttons[key_ordered_draw]
             if "rect" in props_draw:
@@ -333,22 +342,25 @@ def select_map_dialog(screen: pygame.Surface, clock_obj: pygame.time.Clock,
                       fonts: Dict[str, Optional[pygame.font.Font]],
                       app_status: Any) -> Optional[str]:
     print("GAME_UI: Opening select_map_dialog...")
-    map_module_names: List[str] = []
+    map_module_names_unfiltered: List[str] = []
     global MAPS_DIRECTORY_GAME_UI
     if os.path.exists(MAPS_DIRECTORY_GAME_UI) and os.path.isdir(MAPS_DIRECTORY_GAME_UI):
         try:
             for f_name in os.listdir(MAPS_DIRECTORY_GAME_UI):
                 if f_name.endswith(".py") and f_name != "__init__.py":
-                    map_module_names.append(f_name[:-3])
-            map_module_names.sort(); print(f"GAME_UI: Found maps: {map_module_names}")
+                    map_module_names_unfiltered.append(f_name[:-3])
+            # Filter out 'level_default'
+            map_module_names = [m for m in map_module_names_unfiltered if m != "level_default"]
+            map_module_names.sort()
+            print(f"GAME_UI: Found selectable maps: {map_module_names}")
         except OSError as e: print(f"GAME_UI Error: Could not read maps directory '{MAPS_DIRECTORY_GAME_UI}': {e}"); map_module_names = []
-    else: print(f"GAME_UI Warning: Maps directory '{MAPS_DIRECTORY_GAME_UI}' not found.")
+    else: print(f"GAME_UI Warning: Maps directory '{MAPS_DIRECTORY_GAME_UI}' not found."); map_module_names = []
 
     if not map_module_names:
         font_medium = fonts.get("medium") or (pygame.font.Font(None, 36) if pygame.font.get_init() else None)
         if font_medium:
             screen_w, screen_h = screen.get_size(); screen.fill(getattr(C, 'BLACK', (0,0,0)))
-            msg_surf = font_medium.render(f"No Maps Found in '{MAPS_DIRECTORY_GAME_UI}/' folder.", True, getattr(C, 'RED', (255,0,0)))
+            msg_surf = font_medium.render(f"No Selectable Maps Found in '{os.path.basename(MAPS_DIRECTORY_GAME_UI)}/' folder.", True, getattr(C, 'RED', (255,0,0)))
             screen.blit(msg_surf, msg_surf.get_rect(center=(screen_w//2, screen_h//2)))
             pygame.display.flip(); pygame.time.wait(2500)
         return None
@@ -418,27 +430,27 @@ def select_map_dialog(screen: pygame.Surface, clock_obj: pygame.time.Clock,
                     current_page = min(max_pages - 1, current_page + 1); selected_index = current_page * maps_per_page
 
             if joy_map_dialog_instance and hasattr(event, 'joy') and event.joy == joy_map_dialog_instance.get_id():
-                confirm_mapping_dialog = active_joy_map_for_map_dialog.get("MENU_CONFIRM", {})
-                cancel_mapping_dialog = active_joy_map_for_map_dialog.get("MENU_CANCEL", {})
+                confirm_mapping_dialog = active_joy_map_for_map_dialog.get("menu_confirm", {})
+                cancel_mapping_dialog = active_joy_map_for_map_dialog.get("menu_cancel", {})
 
                 is_confirm_from_config_dialog = confirm_mapping_dialog.get("type") == "button"
-                effective_confirm_btn_id = confirm_mapping_dialog.get("id") if is_confirm_from_config_dialog else 1 # Default A (Button 1)
+                effective_confirm_btn_id = confirm_mapping_dialog.get("id") if is_confirm_from_config_dialog else 1 
 
                 is_cancel_from_config_dialog = cancel_mapping_dialog.get("type") == "button"
-                effective_cancel_btn_id = cancel_mapping_dialog.get("id") if is_cancel_from_config_dialog else 2 # Default Y (Button 2)
+                effective_cancel_btn_id = cancel_mapping_dialog.get("id") if is_cancel_from_config_dialog else 2 
 
                 if event.type == pygame.JOYBUTTONDOWN:
                     if event.button == effective_confirm_btn_id:
                         if 0 <= selected_index < len(map_module_names):
-                            source_confirm = "config (MENU_CONFIRM)" if is_confirm_from_config_dialog else "default (A=1)"
+                            source_confirm = "config (menu_confirm)" if is_confirm_from_config_dialog else "default (A=1)"
                             print(f"GAME_UI: MapSelect Joystick Confirm (Button {event.button}, effective: {effective_confirm_btn_id}, source: {source_confirm})")
                             return map_module_names[selected_index]
                     elif event.button == effective_cancel_btn_id:
-                        source_cancel = "config (MENU_CANCEL)" if is_cancel_from_config_dialog else "default (Y=2)"
+                        source_cancel = "config (menu_cancel)" if is_cancel_from_config_dialog else "default (Y=2)"
                         print(f"GAME_UI: MapSelect Joystick Cancel (Button {event.button}, effective: {effective_cancel_btn_id}, source: {source_cancel})")
                         dialog_active = False; return None
 
-                if event.type == pygame.JOYHATMOTION: # Hat nav
+                if event.type == pygame.JOYHATMOTION: 
                     menu_up_hat_cfg_dialog = active_joy_map_for_map_dialog.get("menu_up", {})
                     menu_down_hat_cfg_dialog = active_joy_map_for_map_dialog.get("menu_down", {})
                     if event.hat == menu_up_hat_cfg_dialog.get("id",0) and can_trigger_joy_nav_map_dialog:
@@ -462,7 +474,7 @@ def select_map_dialog(screen: pygame.Surface, clock_obj: pygame.time.Clock,
                     if item_rect_click.collidepoint(mouse_pos): selected_index = _start_idx_click + i; return map_name_item
                     _current_btn_y_click += button_height + button_spacing
 
-        if joy_map_dialog_instance: # Polled Axis
+        if joy_map_dialog_instance: 
             axis_cfg_up = active_joy_map_for_map_dialog.get("up", active_joy_map_for_map_dialog.get("menu_up",{}))
             axis_id = axis_cfg_up.get("id", 1)
             axis_thresh = axis_cfg_up.get("threshold", game_config.AXIS_THRESHOLD_DEFAULT)
@@ -547,4 +559,96 @@ def draw_download_dialog(screen: pygame.Surface, fonts: dict, title: str, messag
             text_rect_p = text_surf_prog.get_rect(center=(bar_x + bar_width / 2, bar_y + bar_height / 2))
             screen.blit(text_surf_prog, text_rect_p)
     pygame.display.flip()
+
+# Function get_server_ip_input_dialog remains unchanged as it doesn't list maps.
+def get_server_ip_input_dialog(screen: pygame.Surface, clock_obj: pygame.time.Clock,
+                               fonts: Dict[str, Optional[pygame.font.Font]], app_status: Any,
+                               default_input_text: str = "127.0.0.1:5555") -> Optional[str]:
+    # ... (function content is unchanged) ...
+    input_text = default_input_text
+    dialog_active = True
+    input_font = fonts.get("medium") or pygame.font.Font(None, 36)
+    if not input_font: return None # Critical if font missing
+    
+    title_font = fonts.get("large") or pygame.font.Font(None, 48)
+    instr_font = fonts.get("small") or pygame.font.Font(None, 24)
+    
+    color_white = getattr(C, 'WHITE', (255,255,255))
+    color_black = getattr(C, 'BLACK', (0,0,0))
+    color_gray = getattr(C, 'GRAY', (128,128,128))
+    color_input_bg = getattr(C, 'DARK_GRAY', (50,50,50))
+    color_input_border = getattr(C, 'LIGHT_GRAY', (200,200,200))
+    
+    text_cursor_visible = True
+    text_cursor_timer = pygame.time.get_ticks()
+    TEXT_CURSOR_BLINK_MS = 500
+    
+    check_pygame_scrap_init_status() # Update global scrap status
+    can_paste = PYPERCLIP_AVAILABLE_UI_MODULE or SCRAP_INITIALIZED_UI_MODULE
+
+    while dialog_active and app_status.app_running:
+        screen_w, screen_h = screen.get_size()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: app_status.app_running = False; dialog_active = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE: dialog_active = False; return None
+                if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER: dialog_active = False; return input_text
+                if event.key == pygame.K_BACKSPACE: input_text = input_text[:-1]
+                elif event.key == pygame.K_v and (pygame.key.get_mods() & pygame.KMOD_CTRL):
+                    if can_paste:
+                        try:
+                            if PYPERCLIP_AVAILABLE_UI_MODULE: pasted_text = pyperclip.paste()
+                            elif SCRAP_INITIALIZED_UI_MODULE: 
+                                paste_type = pygame.scrap.get_types()[0] # Get first available type
+                                pasted_bytes = pygame.scrap.get(paste_type)
+                                pasted_text = pasted_bytes.decode('utf-8', 'replace').replace('\x00','') if pasted_bytes else ""
+                            else: pasted_text = ""
+                            input_text += pasted_text.strip()
+                        except Exception as e: print(f"Error pasting: {e}")
+                elif event.unicode.isprintable(): input_text += event.unicode
+        
+        if not app_status.app_running: break
+        
+        # Blinking cursor
+        if pygame.time.get_ticks() - text_cursor_timer > TEXT_CURSOR_BLINK_MS:
+            text_cursor_visible = not text_cursor_visible
+            text_cursor_timer = pygame.time.get_ticks()
+            
+        screen.fill(color_black)
+        if title_font:
+            title_surf = title_font.render("Enter Server IP & Port", True, color_white)
+            title_rect = title_surf.get_rect(center=(screen_w//2, screen_h * 0.3))
+            screen.blit(title_surf, title_rect)
+
+        if instr_font:
+            paste_instr_text = "(Ctrl+V to paste)" if can_paste else "(Pasting not available)"
+            instr_text = f"Format: IP_ADDRESS:PORT (e.g., 192.168.1.100:5555). ESC to cancel. {paste_instr_text}"
+            instr_surf = instr_font.render(instr_text, True, color_gray)
+            instr_rect_y_offset = title_font.get_height() // 2 + 15 if title_font else 40
+            instr_rect = instr_surf.get_rect(center=(screen_w//2, screen_h * 0.3 + instr_rect_y_offset))
+            screen.blit(instr_surf, instr_rect)
+
+        input_box_width = screen_w * 0.6
+        input_box_height = input_font.get_height() + 20
+        input_box_rect = pygame.Rect(0, 0, input_box_width, input_box_height)
+        input_box_y_offset = instr_font.get_height() + 25 if instr_font and title_font else 70
+        input_box_rect.center = (screen_w // 2, screen_h * 0.3 + instr_rect_y_offset + input_box_y_offset)
+        
+        pygame.draw.rect(screen, color_input_bg, input_box_rect, border_radius=5)
+        pygame.draw.rect(screen, color_input_border, input_box_rect, 2, border_radius=5)
+        
+        text_surface = input_font.render(input_text, True, color_white)
+        text_rect = text_surface.get_rect(midleft=(input_box_rect.left + 10, input_box_rect.centery))
+        screen.blit(text_surface, text_rect)
+        
+        # Draw cursor
+        if text_cursor_visible:
+            cursor_x = text_rect.right + 2
+            cursor_y_start = input_box_rect.top + 5
+            cursor_y_end = input_box_rect.bottom - 5
+            pygame.draw.line(screen, color_white, (cursor_x, cursor_y_start), (cursor_x, cursor_y_end), 2)
+
+        pygame.display.flip()
+        clock_obj.tick(30)
+    return None
 ########## END OF FILE: game_ui.py ##########

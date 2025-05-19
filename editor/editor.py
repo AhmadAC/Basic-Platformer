@@ -1,7 +1,8 @@
 # editor.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.5 (Restored missing UI setup methods)
+## version 2.0.6 (Minimap docking order corrected)
+## version 2.0.7 (Hide level_default from editor interactions)
 Level Editor for the Platformer Game (PySide6 Version).
 Allows creating, loading, and saving game levels visually.
 """
@@ -86,6 +87,8 @@ except ImportError as e_editor_mod_rel:
         sys.exit(f"ImportError for editor module. Check log: {log_file_path_for_error_msg}")
 # --- End Editor module imports ---
 
+RESERVED_MAP_NAME = "level_default"
+
 class EditorMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -97,10 +100,10 @@ class EditorMainWindow(QMainWindow):
         self.setWindowTitle("Platformer Level Editor (PySide6)")
         self.setGeometry(50, 50, ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT)
 
-        self.init_ui() # map_view_widget is created here
-        self.create_actions() # RESTORED CALL
-        self.create_menus()   # RESTORED CALL
-        self.create_status_bar() # RESTORED CALL
+        self.init_ui() 
+        self.create_actions() 
+        self.create_menus()   
+        self.create_status_bar() 
 
         self.asset_palette_dock.setObjectName("AssetPaletteDock")
         self.properties_editor_dock.setObjectName("PropertiesEditorDock")
@@ -136,24 +139,26 @@ class EditorMainWindow(QMainWindow):
         self.asset_palette_dock.setMinimumWidth(max(200, ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH - 50))
         self.asset_palette_dock.setMaximumWidth(ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH + 100) 
 
+        # Properties Dock
         self.properties_editor_dock = QDockWidget("Properties", self)
         self.properties_editor_widget = PropertiesEditorDockWidget(self.editor_state, self)
         self.properties_editor_dock.setWidget(self.properties_editor_widget)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.properties_editor_dock)
         self.properties_editor_dock.setMinimumWidth(280) 
 
+        # Minimap Dock (if enabled)
         if ED_CONFIG.MINIMAP_ENABLED:
             self.minimap_dock = QDockWidget("Minimap", self)
             self.minimap_widget = MinimapWidget(self.editor_state, self.map_view_widget, self)
             self.minimap_dock.setWidget(self.minimap_widget)
+            
             self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.minimap_dock)
-            self.tabifyDockWidget(self.properties_editor_dock, self.minimap_dock) 
-            self.minimap_dock.resize(self.minimap_widget.preferredSize())
+            self.splitDockWidget(self.minimap_dock, self.properties_editor_dock, Qt.Orientation.Vertical)
+            self.minimap_dock.setFixedHeight(ED_CONFIG.MINIMAP_DEFAULT_HEIGHT + 35) 
         else:
             self.minimap_dock = None
             self.minimap_widget = None
 
-        # Connect signals
         self.asset_palette_widget.asset_selected.connect(self.map_view_widget.on_asset_selected)
         self.asset_palette_widget.asset_selected.connect(self.properties_editor_widget.display_asset_properties)
         self.asset_palette_widget.tool_selected.connect(self.map_view_widget.on_tool_selected)
@@ -172,7 +177,6 @@ class EditorMainWindow(QMainWindow):
         self.map_view_widget.setFocus()
         logger.debug("UI components initialized.")
 
-    # --- RESTORED METHODS ---
     def create_actions(self):
         logger.debug("Creating actions...")
         self.new_map_action = QAction("&New Map...", self, shortcut=QKeySequence.StandardKey.New, statusTip="Create a new map", triggered=self.new_map)
@@ -192,7 +196,7 @@ class EditorMainWindow(QMainWindow):
         self.redo_action = QAction("&Redo", self, shortcut=QKeySequence.StandardKey.Redo, statusTip="Redo last undone action", triggered=self.redo)
 
         self.toggle_grid_action = QAction("Toggle &Grid", self, shortcut="Ctrl+G", statusTip="Show/Hide grid", triggered=self.toggle_grid, checkable=True)
-        self.toggle_grid_action.setChecked(self.editor_state.show_grid) # Initial check state
+        self.toggle_grid_action.setChecked(self.editor_state.show_grid) 
         self.change_bg_color_action = QAction("Change &Background Color...", self, statusTip="Change map background color", triggered=self.change_background_color)
 
         self.zoom_in_action = QAction("Zoom &In", self, shortcut=QKeySequence.StandardKey.ZoomIn, statusTip="Zoom in on the map", triggered=self.map_view_widget.zoom_in)
@@ -237,7 +241,7 @@ class EditorMainWindow(QMainWindow):
         view_menu.addSeparator()
         view_menu.addAction(self.asset_palette_dock.toggleViewAction())
         view_menu.addAction(self.properties_editor_dock.toggleViewAction())
-        if ED_CONFIG.MINIMAP_ENABLED and self.minimap_dock: 
+        if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock: 
             view_menu.addAction(self.minimap_dock.toggleViewAction())
 
         help_menu = self.menu_bar.addMenu("&Help")
@@ -254,7 +258,6 @@ class EditorMainWindow(QMainWindow):
         self.status_bar.addPermanentWidget(self.map_coords_label)
         self.map_view_widget.mouse_moved_on_map.connect(self.update_map_coords_status)
         logger.debug("Status bar created.")
-    # --- END RESTORED METHODS ---
 
     @Slot(str)
     def show_status_message(self, message: str, timeout: int = ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT):
@@ -293,25 +296,20 @@ class EditorMainWindow(QMainWindow):
         self.setWindowTitle(title)
 
     def update_edit_actions_enabled_state(self):
+        is_reserved_map = (self.editor_state.map_name_for_function == RESERVED_MAP_NAME)
+        
         map_is_properly_loaded_or_newly_named = bool(
             self.editor_state.current_json_filename or \
             (self.editor_state.map_name_for_function != "untitled_map" and \
              self.editor_state.placed_objects)
         )
         
-        logger.debug(f"UpdateEditActions: current_json_filename='{self.editor_state.current_json_filename}', "
-                     f"map_name='{self.editor_state.map_name_for_function}', "
-                     f"placed_objects_count={len(self.editor_state.placed_objects)}, "
-                     f"map_is_properly_loaded_or_newly_named={map_is_properly_loaded_or_newly_named}, "
-                     f"unsaved_changes={self.editor_state.unsaved_changes}")
-
-        can_save = map_is_properly_loaded_or_newly_named and self.editor_state.unsaved_changes
+        can_save = map_is_properly_loaded_or_newly_named and self.editor_state.unsaved_changes and not is_reserved_map
         self.save_map_action.setEnabled(can_save)
-        logger.debug(f"UpdateEditActions: save_map_action.setEnabled({can_save})")
-
-        self.export_map_action.setEnabled(map_is_properly_loaded_or_newly_named)
-        self.save_all_action.setEnabled(map_is_properly_loaded_or_newly_named)
-        self.rename_map_action.setEnabled(bool(self.editor_state.current_json_filename))
+        
+        self.export_map_action.setEnabled(map_is_properly_loaded_or_newly_named and not is_reserved_map)
+        self.save_all_action.setEnabled(map_is_properly_loaded_or_newly_named and not is_reserved_map)
+        self.rename_map_action.setEnabled(bool(self.editor_state.current_json_filename) and not is_reserved_map)
 
         self.undo_action.setEnabled(len(self.editor_state.undo_stack) > 0)
         self.redo_action.setEnabled(len(self.editor_state.redo_stack) > 0)
@@ -325,10 +323,9 @@ class EditorMainWindow(QMainWindow):
         
         map_has_content = bool(self.editor_state.placed_objects or self.editor_state.current_json_filename)
         self.export_map_as_image_action.setEnabled(map_has_content)
-        logger.debug(f"UpdateEditActions: export_map_as_image_action.setEnabled({map_has_content})")
 
     def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool:
-        if self.editor_state.unsaved_changes:
+        if self.editor_state.unsaved_changes and self.editor_state.map_name_for_function != RESERVED_MAP_NAME:
             reply = QMessageBox.question(self, "Unsaved Changes",
                                          f"You have unsaved changes. Do you want to save before you {action_description}?",
                                          QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
@@ -346,6 +343,9 @@ class EditorMainWindow(QMainWindow):
         if ok and map_name:
             clean_map_name = map_name.strip().lower().replace(" ", "_").replace("-", "_")
             if not clean_map_name: QMessageBox.warning(self, "Invalid Name", "Map name cannot be empty."); return
+            if clean_map_name == RESERVED_MAP_NAME: # MODIFIED
+                QMessageBox.warning(self, "Reserved Name", f"'{RESERVED_MAP_NAME}' is a reserved map name and cannot be used for new maps.")
+                return
             invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']
             if any(char in clean_map_name for char in invalid_chars): QMessageBox.warning(self, "Invalid Name", f"Map name '{clean_map_name}' has invalid chars."); return
             project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -376,6 +376,12 @@ class EditorMainWindow(QMainWindow):
         json_filter = f"Editor Map Files (*{ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION})"
         file_path, _ = QFileDialog.getOpenFileName(self, "Load Map", maps_abs_dir, json_filter)
         if file_path:
+            # MODIFICATION: Check if trying to load the reserved map
+            if os.path.basename(file_path) == RESERVED_MAP_NAME + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION:
+                QMessageBox.information(self, "Reserved Map", f"'{RESERVED_MAP_NAME}' is a system map and cannot be directly edited.")
+                self.show_status_message(f"Loading of '{RESERVED_MAP_NAME}' disallowed.")
+                return
+
             if editor_map_utils.load_map_from_json(self.editor_state, file_path):
                 self.map_view_widget.load_map_from_state(); self.asset_palette_widget.clear_selection()
                 self.properties_editor_widget.clear_display(); self.update_window_title()
@@ -387,9 +393,15 @@ class EditorMainWindow(QMainWindow):
     @Slot()
     def save_map_json(self) -> bool:
         logger.info("Save Map (JSON) action triggered.")
+        # MODIFICATION: Prevent saving as reserved name
+        if self.editor_state.map_name_for_function == RESERVED_MAP_NAME:
+            QMessageBox.warning(self, "Reserved Name", f"Cannot save map as '{RESERVED_MAP_NAME}'. This name is reserved.")
+            self.show_status_message(f"Save cancelled: '{RESERVED_MAP_NAME}' is reserved.")
+            return False
+            
         if not self.editor_state.map_name_for_function or self.editor_state.map_name_for_function == "untitled_map":
             self.show_status_message("Map is untitled. Performing initial Save All.", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2)
-            return self.save_all()
+            return self.save_all() # Save All will ask for a name
         if editor_map_utils.save_map_to_json(self.editor_state):
             self.show_status_message(f"Editor data saved: {os.path.basename(self.editor_state.current_json_filename)}.")
             self.update_window_title(); self.update_edit_actions_enabled_state()
@@ -399,6 +411,12 @@ class EditorMainWindow(QMainWindow):
     @Slot()
     def export_map_py(self) -> bool:
         logger.info("Export Map (PY) action triggered.")
+        # MODIFICATION: Prevent exporting as reserved name
+        if self.editor_state.map_name_for_function == RESERVED_MAP_NAME:
+            QMessageBox.warning(self, "Reserved Name", f"Cannot export map as '{RESERVED_MAP_NAME}'. This name is reserved.")
+            self.show_status_message(f"Export cancelled: '{RESERVED_MAP_NAME}' is reserved.")
+            return False
+
         if not self.editor_state.current_json_filename:
              QMessageBox.warning(self, "Cannot Export", "No map is currently loaded/saved. Save the map first (JSON)."); return False
         if editor_map_utils.export_map_to_game_python_script(self.editor_state):
@@ -415,6 +433,11 @@ class EditorMainWindow(QMainWindow):
             map_name, ok = QInputDialog.getText(self, "Save Map As", "Enter map name for saving all files:")
             if ok and map_name:
                 clean_map_name = map_name.strip().lower().replace(" ", "_").replace("-", "_")
+                # MODIFICATION: Prevent initial save as reserved name
+                if clean_map_name == RESERVED_MAP_NAME:
+                    QMessageBox.warning(self, "Reserved Name", f"Cannot save map as '{RESERVED_MAP_NAME}'. This name is reserved.")
+                    self.show_status_message("Save All cancelled: name is reserved.")
+                    return False
                 if not clean_map_name or any(c in clean_map_name for c in ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']):
                     QMessageBox.warning(self, "Invalid Name", "Map name is invalid or empty."); return False
                 self.editor_state.map_name_for_function = clean_map_name
@@ -426,6 +449,13 @@ class EditorMainWindow(QMainWindow):
                 self.editor_state.current_map_filename = os.path.join(maps_abs_dir, py_fn)
                 self.update_window_title()
             else: self.show_status_message("Save All cancelled: map name not provided."); return False
+        
+        # MODIFICATION: Double-check before saving existing map as reserved name (should be caught by above but defensive)
+        if self.editor_state.map_name_for_function == RESERVED_MAP_NAME:
+            QMessageBox.warning(self, "Reserved Name", f"Cannot save map as '{RESERVED_MAP_NAME}'. This name is reserved.")
+            self.show_status_message(f"Save All cancelled: '{RESERVED_MAP_NAME}' is reserved.")
+            return False
+
         if self.save_map_json():
             if self.export_map_py():
                 self.show_status_message("Map saved (JSON & PY)."); return True
@@ -436,9 +466,18 @@ class EditorMainWindow(QMainWindow):
         logger.info("Rename Map action triggered.")
         if not self.editor_state.current_json_filename: QMessageBox.information(self, "Rename Map", "No map loaded to rename."); return
         old_base_name = self.editor_state.map_name_for_function
+        # MODIFICATION: Prevent renaming the reserved map
+        if old_base_name == RESERVED_MAP_NAME:
+            QMessageBox.information(self, "Rename Map", f"Cannot rename the reserved map '{RESERVED_MAP_NAME}'.")
+            return
+
         new_name_str, ok = QInputDialog.getText(self, "Rename Map", f"Enter new name for '{old_base_name}':", text=old_base_name)
         if ok and new_name_str:
             clean_new_name = new_name_str.strip().lower().replace(" ", "_").replace("-", "_")
+            # MODIFICATION: Prevent renaming TO the reserved name
+            if clean_new_name == RESERVED_MAP_NAME:
+                QMessageBox.warning(self, "Reserved Name", f"Cannot rename map to '{RESERVED_MAP_NAME}'. This name is reserved.")
+                return
             if not clean_new_name or any(c in clean_new_name for c in ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']): QMessageBox.warning(self, "Invalid Name", "New map name invalid."); return
             if clean_new_name == old_base_name: self.show_status_message("Rename cancelled: name unchanged."); return
             project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -475,6 +514,12 @@ class EditorMainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Map to Delete", maps_abs_dir, json_filter)
         if file_path:
             map_name_to_delete = os.path.splitext(os.path.basename(file_path))[0]
+            # MODIFICATION: Prevent deleting the reserved map
+            if map_name_to_delete == RESERVED_MAP_NAME:
+                QMessageBox.information(self, "Reserved Map", f"Cannot delete the reserved map '{RESERVED_MAP_NAME}'.")
+                self.show_status_message(f"Deletion of '{RESERVED_MAP_NAME}' disallowed.")
+                return
+
             reply = QMessageBox.warning(self, "Confirm Delete", f"Delete all files for map '{map_name_to_delete}'?\nCannot be undone.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if reply == QMessageBox.StandardButton.Yes:
                 if editor_map_utils.delete_map_files(self.editor_state, file_path):
