@@ -1,51 +1,82 @@
-2025-05-19 22:46:19,295 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
-2025-05-19 22:46:19,296 - INFO - editor.py:59 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
-2025-05-19 22:46:19,296 - WARNING - editor.py:76 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
-2025-05-19 22:46:19,377 - INFO - editor_assets.py:30 - <module> - EditorAssets: Successfully imported 'resource_path' from root 'assets' module.
-2025-05-19 22:46:19,437 - DEBUG - editor.py:85 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
-2025-05-19 22:46:19,438 - INFO - editor.py:615 - editor_main - editor_main() started for PySide6 application.
-2025-05-19 22:46:19,552 - DEBUG - editor.py:617 - editor_main - QApplication instance created.
-2025-05-19 22:46:19,564 - INFO - editor.py:97 - __init__ - Initializing EditorMainWindow...
-2025-05-19 22:46:19,564 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
-2025-05-19 22:46:19,564 - DEBUG - editor_state.py:55 - __init__ - EditorState initialized.
-2025-05-19 22:46:19,566 - DEBUG - editor.py:133 - init_ui - Initializing UI components...
-2025-05-19 22:46:19,589 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 22:46:19,589 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 22:46:19,590 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 22:46:19,601 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
-2025-05-19 22:46:19,601 - DEBUG - map_view_widget.py:145 - __init__ - MapViewWidget initialized.
-2025-05-19 22:46:19,770 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 22:46:19,772 - DEBUG - editor.py:177 - init_ui - UI components initialized.
-2025-05-19 22:46:19,772 - DEBUG - editor.py:180 - create_actions - Creating actions...
-2025-05-19 22:46:19,777 - DEBUG - editor.py:207 - create_actions - Actions created.
-2025-05-19 22:46:19,777 - DEBUG - editor.py:210 - create_menus - Creating menus...
-2025-05-19 22:46:19,783 - DEBUG - editor.py:248 - create_menus - Menus created.
-2025-05-19 22:46:19,783 - DEBUG - editor.py:251 - create_status_bar - Creating status bar...
-2025-05-19 22:46:19,784 - DEBUG - editor.py:258 - create_status_bar - Status bar created.
-2025-05-19 22:46:19,784 - INFO - editor_assets.py:212 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-19 22:46:19,965 - INFO - editor_assets.py:318 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
-2025-05-19 22:46:19,968 - DEBUG - editor_ui_panels.py:151 - populate_assets - Populating asset palette UI with filter: 'All'...
-2025-05-19 22:46:19,970 - DEBUG - editor_ui_panels.py:176 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
-2025-05-19 22:46:20,101 - DEBUG - editor.py:609 - restore_geometry_and_state - Window geometry and/or state restored.
-2025-05-19 22:46:20,176 - INFO - editor.py:129 - __init__ - EditorMainWindow initialized.
-2025-05-19 22:46:20,176 - INFO - editor.py:263 - show_status_message - Status: Editor started. Welcome!
-2025-05-19 22:46:20,262 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 22:46:22,251 - INFO - editor.py:368 - load_map - Load Map action triggered.
-2025-05-19 22:46:24,362 - INFO - editor_map_utils.py:118 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/11.json'
-2025-05-19 22:46:24,363 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-19 22:46:24,363 - INFO - editor_map_utils.py:134 - load_map_from_json - Map '11' loaded from 11.json.
-2025-05-19 22:46:24,363 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 22:46:24,363 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 22:46:24,365 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 22:46:24,402 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1200.000000, 800.000000), Zoom: 1.00, Offset: (0.0, 100.0)
-2025-05-19 22:46:24,403 - INFO - editor.py:263 - show_status_message - Status: Map '11' loaded.
-2025-05-19 22:46:24,403 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 1
-2025-05-19 22:46:27,613 - INFO - editor.py:399 - export_map_py - Export Map (PY) action triggered.
-2025-05-19 22:46:27,613 - INFO - editor_map_utils.py:208 - export_map_to_game_python_script - Exporting map. Map name from state: '11'
-2025-05-19 22:46:27,614 - DEBUG - editor_map_utils.py:230 - export_map_to_game_python_script - Exporting to function 'load_map_11' in file 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\11.py'
-2025-05-19 22:46:27,616 - INFO - editor_map_utils.py:404 - export_map_to_game_python_script - Map exported to game script: 11.py
-2025-05-19 22:46:27,616 - INFO - editor.py:263 - show_status_message - Status: Map exported for game: 11.py.
-2025-05-19 22:46:29,312 - INFO - editor.py:580 - closeEvent - Close event triggered for main window.
-2025-05-19 22:46:29,315 - INFO - editor.py:589 - closeEvent - Window geometry and state saved.
-2025-05-19 22:46:29,357 - INFO - editor.py:624 - editor_main - QApplication event loop finished with exit code: 0
-2025-05-19 22:46:29,357 - INFO - editor.py:632 - editor_main - Editor session ended.
+2025-05-19 23:12:19,036 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
+2025-05-19 23:12:19,036 - INFO - editor.py:59 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
+2025-05-19 23:12:19,037 - WARNING - editor.py:76 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
+2025-05-19 23:12:19,098 - INFO - editor_assets.py:30 - <module> - EditorAssets: Successfully imported 'resource_path' from root 'assets' module.
+2025-05-19 23:12:19,159 - DEBUG - editor.py:85 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
+2025-05-19 23:12:19,160 - INFO - editor.py:615 - editor_main - editor_main() started for PySide6 application.
+2025-05-19 23:12:19,188 - DEBUG - editor.py:617 - editor_main - QApplication instance created.
+2025-05-19 23:12:19,189 - INFO - editor.py:97 - __init__ - Initializing EditorMainWindow...
+2025-05-19 23:12:19,189 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
+2025-05-19 23:12:19,189 - DEBUG - editor_state.py:55 - __init__ - EditorState initialized.
+2025-05-19 23:12:19,190 - DEBUG - editor.py:133 - init_ui - Initializing UI components...
+2025-05-19 23:12:19,195 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 23:12:19,195 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 23:12:19,195 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 23:12:19,199 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-19 23:12:19,199 - DEBUG - map_view_widget.py:145 - __init__ - MapViewWidget initialized.
+2025-05-19 23:12:19,275 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
+2025-05-19 23:12:19,276 - DEBUG - editor.py:177 - init_ui - UI components initialized.
+2025-05-19 23:12:19,276 - DEBUG - editor.py:180 - create_actions - Creating actions...
+2025-05-19 23:12:19,277 - DEBUG - editor.py:207 - create_actions - Actions created.
+2025-05-19 23:12:19,278 - DEBUG - editor.py:210 - create_menus - Creating menus...
+2025-05-19 23:12:19,283 - DEBUG - editor.py:248 - create_menus - Menus created.
+2025-05-19 23:12:19,283 - DEBUG - editor.py:251 - create_status_bar - Creating status bar...
+2025-05-19 23:12:19,283 - DEBUG - editor.py:258 - create_status_bar - Status bar created.
+2025-05-19 23:12:19,283 - INFO - editor_assets.py:212 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-19 23:12:19,408 - INFO - editor_assets.py:318 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
+2025-05-19 23:12:19,409 - DEBUG - editor_ui_panels.py:151 - populate_assets - Populating asset palette UI with filter: 'All'...
+2025-05-19 23:12:19,409 - DEBUG - editor_ui_panels.py:176 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
+2025-05-19 23:12:19,451 - DEBUG - editor.py:609 - restore_geometry_and_state - Window geometry and/or state restored.
+2025-05-19 23:12:19,521 - INFO - editor.py:129 - __init__ - EditorMainWindow initialized.
+2025-05-19 23:12:19,521 - INFO - editor.py:263 - show_status_message - Status: Editor started. Welcome!
+2025-05-19 23:12:19,576 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
+2025-05-19 23:12:21,698 - INFO - editor.py:368 - load_map - Load Map action triggered.
+2025-05-19 23:12:24,481 - INFO - editor_map_utils.py:119 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/11.json'
+2025-05-19 23:12:24,482 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-19 23:12:24,482 - INFO - editor_map_utils.py:135 - load_map_from_json - Map '11' loaded from 11.json.
+2025-05-19 23:12:24,482 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 23:12:24,483 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 23:12:24,503 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 23:12:24,537 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1200.000000, 800.000000), Zoom: 1.00, Offset: (0.0, 100.0)
+2025-05-19 23:12:24,537 - INFO - editor.py:263 - show_status_message - Status: Map '11' loaded.
+2025-05-19 23:12:24,538 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 1
+2025-05-19 23:12:29,819 - INFO - editor.py:477 - delete_map_file - Delete Map File action triggered.
+2025-05-19 23:12:35,913 - INFO - editor_map_utils.py:463 - delete_map_files - Attempting to delete map files. Base JSON path: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/11.json
+2025-05-19 23:12:35,913 - INFO - editor_map_utils.py:473 - delete_map_files - Deleted: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/11.json
+2025-05-19 23:12:35,914 - INFO - editor_map_utils.py:475 - delete_map_files - Deleted: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps\11.py
+2025-05-19 23:12:35,914 - INFO - editor_map_utils.py:479 - delete_map_files - Map '11' files deletion process complete. JSON deleted: True, PY deleted: True
+2025-05-19 23:12:35,914 - INFO - editor.py:263 - show_status_message - Status: Map '11' files deleted.
+2025-05-19 23:12:35,914 - DEBUG - editor_state.py:88 - reset_map_context - Resetting map context.
+2025-05-19 23:12:35,914 - DEBUG - editor_state.py:112 - reset_map_context - Map context reset complete. Current map name: 'untitled_map'.
+2025-05-19 23:12:35,914 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 23:12:35,914 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 23:12:35,915 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 23:12:35,918 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-19 23:12:38,476 - INFO - editor.py:368 - load_map - Load Map action triggered.
+2025-05-19 23:12:40,697 - INFO - editor_map_utils.py:119 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/bigmap1.json'
+2025-05-19 23:12:40,699 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-19 23:12:40,699 - INFO - editor_map_utils.py:135 - load_map_from_json - Map 'bigmap1' loaded from bigmap1.json.
+2025-05-19 23:12:40,699 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 23:12:40,699 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 23:12:40,699 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 23:12:40,777 - WARNING - map_view_widget.py:233 - draw_placed_objects - DrawPlaced: Asset info for key 'enemy_red' not found in palette state.
+2025-05-19 23:12:40,853 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 4000.000000, 2000.000000), Zoom: 1.00, Offset: (0.0, 1300.0)
+2025-05-19 23:12:40,854 - INFO - editor.py:263 - show_status_message - Status: Map 'bigmap1' loaded.
+2025-05-19 23:12:40,854 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 1
+2025-05-19 23:12:44,062 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: None, Grid Coords: (13,45)
+2025-05-19 23:12:44,062 - DEBUG - map_view_widget.py:366 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-19 23:12:45,094 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: None, Grid Coords: (14,42)
+2025-05-19 23:12:45,094 - DEBUG - map_view_widget.py:366 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-19 23:12:49,741 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: MapObjectItem, Grid Coords: (12,48)
+2025-05-19 23:12:49,741 - DEBUG - map_view_widget.py:355 - mousePressEvent - MapView: Left click on MapObjectItem. Starting drag possibility.
+2025-05-19 23:12:49,744 - DEBUG - map_view_widget.py:714 - on_scene_selection_changed - MapView: Scene selection changed. Selected 1 MapObjectItem: player2_spawn
+2025-05-19 23:12:51,398 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: MapObjectItem, Grid Coords: (16,39)
+2025-05-19 23:12:51,399 - DEBUG - map_view_widget.py:355 - mousePressEvent - MapView: Left click on MapObjectItem. Starting drag possibility.
+2025-05-19 23:13:35,212 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: MapObjectItem, Grid Coords: (15,36)
+2025-05-19 23:13:35,212 - DEBUG - map_view_widget.py:355 - mousePressEvent - MapView: Left click on MapObjectItem. Starting drag possibility.
+2025-05-19 23:13:41,800 - DEBUG - map_view_widget.py:348 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: MapObjectItem, Grid Coords: (15,35)
+2025-05-19 23:13:41,800 - DEBUG - map_view_widget.py:355 - mousePressEvent - MapView: Left click on MapObjectItem. Starting drag possibility.
+2025-05-19 23:14:16,752 - INFO - editor.py:580 - closeEvent - Close event triggered for main window.
+2025-05-19 23:14:16,762 - INFO - editor.py:589 - closeEvent - Window geometry and state saved.
+2025-05-19 23:14:16,796 - INFO - editor.py:624 - editor_main - QApplication event loop finished with exit code: 0
+2025-05-19 23:14:16,796 - INFO - editor.py:632 - editor_main - Editor session ended.

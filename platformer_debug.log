@@ -1,12 +1,1 @@
-[2025-05-19 22:59:58.711] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-19 22:59:58.711] INFO    PlatformerLogger: MAIN PySide6: Path added to sys.path for 'maps' package import: None
-[2025-05-19 22:59:58.711] INFO    PlatformerLogger: MAIN PySide6: Physical location check for 'maps' package: Dev - Expected at: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps (Found, project root in sys.path for 'maps' import)
-[2025-05-19 22:59:59.497] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
-[2025-05-19 22:59:59.497] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
-[2025-05-19 22:59:59.525] INFO    PlatformerLogger: MAIN PySide6: Application starting...
-[2025-05-19 22:59:59.526] INFO    PlatformerLogger: MAIN PySide6: Initial window size: 960x600
-[2025-05-19 23:00:00.928] INFO    PlatformerLogger: Close event received. Shutting down application.
-[2025-05-19 23:00:00.928] INFO    PlatformerLogger: Stopping game mode: None
-[2025-05-19 23:00:00.928] INFO    PlatformerLogger: Game mode 'None' stopped.
-[2025-05-19 23:00:00.929] INFO    PlatformerLogger: MAIN PySide6: Application terminated.
-[2025-05-19 23:00:00.975] INFO    PlatformerLogger: MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-19 23:12:19.097] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
