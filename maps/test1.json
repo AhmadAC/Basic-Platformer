@@ -905,8 +905,8 @@
             }
         }
     ],
-    "camera_offset_x": 50.0,
-    "camera_offset_y": 264.0,
+    "camera_offset_x": -50.0,
+    "camera_offset_y": -264.0,
     "zoom_level": 1.0,
     "show_grid": true,
     "asset_specific_variables": {}

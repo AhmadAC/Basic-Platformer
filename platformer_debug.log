@@ -1,1 +1,19 @@
-[2025-05-19 15:42:41.398] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-19 15:59:29.477] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-19 15:59:33.641] INFO    PlatformerLogger: GameSetup: Initializing elements. Mode: 'couch_play', Screen: 960x680, Requested Map: 'test1'
+[2025-05-19 15:59:33.641] DEBUG   PlatformerLogger: GameSetup: Initial projectile_sprites count: 0
+[2025-05-19 15:59:33.641] DEBUG   PlatformerLogger: GameSetup: Initial all_sprites count: 0
+[2025-05-19 15:59:33.642] DEBUG   PlatformerLogger: GameSetup: Clearing sprite groups (except projectile_sprites and all_sprites initially)...
+[2025-05-19 15:59:33.642] DEBUG   PlatformerLogger: GameSetup: After clearing, projectile_sprites count: 0
+[2025-05-19 15:59:33.642] DEBUG   PlatformerLogger: GameSetup: After clearing, all_sprites count: 0
+[2025-05-19 15:59:33.642] DEBUG   PlatformerLogger: GameSetup: Attempting to load map module 'maps.test1' and call function 'load_map_test1'
+[2025-05-19 15:59:33.660] CRITICAL PlatformerLogger: GameSetup CRITICAL Error: Unexpected error loading map 'test1': name 'function_name' is not defined
+[2025-05-19 15:59:33.664] WARNING PlatformerLogger: GameSetup Warning: Failed to load map 'test1'. Trying default map 'level_default'.
+[2025-05-19 15:59:33.664] INFO    PlatformerLogger: GameSetup: Initializing elements. Mode: 'couch_play', Screen: 960x680, Requested Map: 'level_default'
+[2025-05-19 15:59:33.665] DEBUG   PlatformerLogger: GameSetup: Initial projectile_sprites count: 0
+[2025-05-19 15:59:33.665] DEBUG   PlatformerLogger: GameSetup: Initial all_sprites count: 0
+[2025-05-19 15:59:33.665] DEBUG   PlatformerLogger: GameSetup: Clearing sprite groups (except projectile_sprites and all_sprites initially)...
+[2025-05-19 15:59:33.665] DEBUG   PlatformerLogger: GameSetup: After clearing, projectile_sprites count: 0
+[2025-05-19 15:59:33.665] DEBUG   PlatformerLogger: GameSetup: After clearing, all_sprites count: 0
+[2025-05-19 15:59:33.665] DEBUG   PlatformerLogger: GameSetup: Attempting to load map module 'maps.level_default' and call function 'load_map_level_default'
+[2025-05-19 15:59:33.670] CRITICAL PlatformerLogger: GameSetup CRITICAL Error: Unexpected error loading map 'level_default': name 'effective_min_x_for_bounds' is not defined
+[2025-05-19 15:59:33.674] CRITICAL PlatformerLogger: GameSetup FATAL: Default map 'level_default' also failed to load. Cannot proceed.
