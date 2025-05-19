@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Custom Qt Widget for the Map View in the PySide6 Level Editor.
-Version 2.0.2 (Corrected placement logic, extensive logging)
+Version 2.0.3 (Minimap integration signals and methods)
 """
 import logging
 from typing import Optional, Dict, Any, List, Tuple
@@ -102,6 +102,7 @@ class MapViewWidget(QGraphicsView):
     map_object_selected_for_properties = Signal(object)
     map_content_changed = Signal()
     object_graphically_moved_signal = Signal(dict)
+    view_changed = Signal() # NEW SIGNAL for minimap
 
     def __init__(self, editor_state: EditorState, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -146,7 +147,7 @@ class MapViewWidget(QGraphicsView):
     @Slot(dict)
     def _handle_internal_object_move_for_unsaved_changes(self, moved_object_data_ref: dict):
         logger.debug(f"MapView: Received object_graphically_moved_signal for object data ID: {id(moved_object_data_ref)}. Emitting map_content_changed.")
-        self.map_content_changed.emit()
+        self.map_content_changed.emit() # This will also trigger minimap content redraw
 
     def clear_scene(self):
         logger.debug("MapViewWidget: Clearing scene...")
@@ -181,9 +182,11 @@ class MapViewWidget(QGraphicsView):
         self.draw_placed_objects()
         logger.debug(f"MapViewWidget: Map loaded. Scene rect: {self.map_scene.sceneRect()}, Zoom: {self.editor_state.zoom_level:.2f}, Offset: ({self.editor_state.camera_offset_x:.1f}, {self.editor_state.camera_offset_y:.1f})")
         self.viewport().update()
+        self.view_changed.emit() # Notify minimap of new map state
 
     def update_background_color(self):
         self.map_scene.setBackgroundBrush(QColor(*self.editor_state.background_color))
+        self.view_changed.emit() # Background color change affects overall view
 
     def draw_grid(self):
         for line in self._grid_lines:
@@ -214,6 +217,7 @@ class MapViewWidget(QGraphicsView):
             for line in self._grid_lines: line.setVisible(False)
         elif is_visible : self.draw_grid()
         self.viewport().update()
+        self.view_changed.emit() # Grid visibility change affects overall view
 
     def draw_placed_objects(self):
         current_data_ids = {id(obj_data) for obj_data in self.editor_state.placed_objects}
@@ -238,12 +242,13 @@ class MapViewWidget(QGraphicsView):
                 if map_obj_item.pos() != QPointF(world_x, world_y): map_obj_item.setPos(QPointF(world_x, world_y))
                 map_obj_item.editor_key = asset_key
                 map_obj_item.game_type_id = str(obj_data.get("game_type_id"))
-                map_obj_item.map_object_data_ref = obj_data # Ensure MapObjectItem always has the current ref
+                map_obj_item.map_object_data_ref = obj_data 
             else:
                 map_obj_item = MapObjectItem(asset_key, str(obj_data.get("game_type_id")), pixmap_to_draw, int(world_x), int(world_y), obj_data)
                 self.map_scene.addItem(map_obj_item)
                 self._map_object_items[item_data_id] = map_obj_item
         self.viewport().update()
+        # self.view_changed.emit() # map_content_changed signal already covers this for minimap content
 
     def screen_to_scene_coords(self, screen_pos_qpoint: QPointF) -> QPointF:
         return self.mapToScene(screen_pos_qpoint.toPoint())
@@ -264,9 +269,15 @@ class MapViewWidget(QGraphicsView):
         grid_coords = self.screen_to_grid_coords(QPointF(float(viewport_center_point.x()), float(viewport_center_point.y())))
         self.mouse_moved_on_map.emit((scene_center_point.x(), scene_center_point.y(), grid_coords[0], grid_coords[1], self.editor_state.zoom_level))
     @Slot()
-    def zoom_in(self): self.scale_view(ED_CONFIG.ZOOM_FACTOR_INCREMENT)
+    def zoom_in(self): 
+        self.scale_view(ED_CONFIG.ZOOM_FACTOR_INCREMENT)
+        self.view_changed.emit()
+
     @Slot()
-    def zoom_out(self): self.scale_view(ED_CONFIG.ZOOM_FACTOR_DECREMENT)
+    def zoom_out(self): 
+        self.scale_view(ED_CONFIG.ZOOM_FACTOR_DECREMENT)
+        self.view_changed.emit()
+
     @Slot()
     def reset_zoom(self):
         view_center_scene = self.mapToScene(self.viewport().rect().center())
@@ -279,6 +290,8 @@ class MapViewWidget(QGraphicsView):
         self.editor_state.camera_offset_x = float(self.horizontalScrollBar().value())
         self.editor_state.camera_offset_y = float(self.verticalScrollBar().value())
         self._emit_zoom_update_status()
+        self.view_changed.emit()
+
     def scale_view(self, factor: float):
         current_zoom = self.transform().m11() ; new_zoom = current_zoom * factor
         if abs(current_zoom) < 1e-5 and factor < 1.0: return
@@ -289,22 +302,40 @@ class MapViewWidget(QGraphicsView):
             self.editor_state.zoom_level = self.transform().m11()
             self.editor_state.camera_offset_x = float(self.horizontalScrollBar().value()); self.editor_state.camera_offset_y = float(self.verticalScrollBar().value())
             self._emit_zoom_update_status()
+            # self.view_changed.emit() is called by wrappers (zoom_in/out/reset)
+
     def pan_view_by_scrollbars(self, dx_pixels: int, dy_pixels: int):
         h_bar = self.horizontalScrollBar(); v_bar = self.verticalScrollBar()
         h_bar.setValue(h_bar.value() + dx_pixels); v_bar.setValue(v_bar.value() + dy_pixels)
         self.editor_state.camera_offset_x = float(h_bar.value()); self.editor_state.camera_offset_y = float(v_bar.value())
+        self.view_changed.emit() 
+
+    def center_on_map_coords(self, map_coords_p_qpointf: QPointF):
+        self.centerOn(map_coords_p_qpointf)
+        self.editor_state.camera_offset_x = float(self.horizontalScrollBar().value())
+        self.editor_state.camera_offset_y = float(self.verticalScrollBar().value())
+        self.editor_state.zoom_level = self.transform().m11() 
+        self.view_changed.emit()
+
+    def get_visible_scene_rect(self) -> QRectF:
+        return self.mapToScene(self.viewport().rect()).boundingRect()
+
     def keyPressEvent(self, event: QKeyEvent):
         key = event.key(); modifiers = event.modifiers()
+        pan_changed_by_key = False
         if modifiers & Qt.KeyboardModifier.ControlModifier:
             if key == Qt.Key.Key_Plus or key == Qt.Key.Key_Equal: self.zoom_in(); event.accept(); return
             elif key == Qt.Key.Key_Minus: self.zoom_out(); event.accept(); return
             elif key == Qt.Key.Key_0: self.reset_zoom(); event.accept(); return
         pan_pixel_step = int(ED_CONFIG.KEY_PAN_SPEED_UNITS_PER_SECOND / 60.0); dx_pixels, dy_pixels = 0, 0
-        if key == Qt.Key.Key_A: dx_pixels = -pan_pixel_step
-        elif key == Qt.Key.Key_D: dx_pixels = pan_pixel_step
-        elif key == Qt.Key.Key_W: dy_pixels = -pan_pixel_step
-        elif key == Qt.Key.Key_S and not (modifiers & Qt.KeyboardModifier.ControlModifier): dy_pixels = pan_pixel_step
-        if dx_pixels != 0 or dy_pixels != 0: self.pan_view_by_scrollbars(dx_pixels, dy_pixels); event.accept(); return
+        if key == Qt.Key.Key_A: dx_pixels = -pan_pixel_step; pan_changed_by_key = True
+        elif key == Qt.Key.Key_D: dx_pixels = pan_pixel_step; pan_changed_by_key = True
+        elif key == Qt.Key.Key_W: dy_pixels = -pan_pixel_step; pan_changed_by_key = True
+        elif key == Qt.Key.Key_S and not (modifiers & Qt.KeyboardModifier.ControlModifier): dy_pixels = pan_pixel_step; pan_changed_by_key = True
+        
+        if pan_changed_by_key: 
+            self.pan_view_by_scrollbars(dx_pixels, dy_pixels); event.accept(); return
+        
         if key == Qt.Key.Key_Delete: self.delete_selected_map_objects(); event.accept(); return
         super().keyPressEvent(event)
 
@@ -380,6 +411,7 @@ class MapViewWidget(QGraphicsView):
             self.pan_view_by_scrollbars(int(-delta.x()), int(-delta.y())); event.accept(); return
         self._check_edge_scroll(event.position())
         if not event.isAccepted(): super().mouseMoveEvent(event)
+        
     def mouseReleaseEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton and self._is_dragging_map_object:
             self._is_dragging_map_object = False
@@ -394,18 +426,22 @@ class MapViewWidget(QGraphicsView):
         if event.button() == Qt.MouseButton.MiddleButton and self.middle_mouse_panning:
             self.middle_mouse_panning = False; self.setDragMode(QGraphicsView.DragMode.NoDrag); self.unsetCursor()
             self.editor_state.camera_offset_x = float(self.horizontalScrollBar().value()); self.editor_state.camera_offset_y = float(self.verticalScrollBar().value())
+            self.view_changed.emit() 
             event.accept(); return
         self.editor_state.last_painted_tile_coords = None; self.editor_state.last_erased_tile_coords = None; self.editor_state.last_colored_tile_coords = None
         if self.dragMode() == QGraphicsView.DragMode.RubberBandDrag: self.setDragMode(QGraphicsView.DragMode.NoDrag)
         super().mouseReleaseEvent(event)
-    def enterEvent(self, event: QFocusEvent): # Changed type hint to QFocusEvent
+        
+    def enterEvent(self, event: QFocusEvent):
         if not self.edge_scroll_timer.isActive(): self.edge_scroll_timer.start()
         super().enterEvent(event)
-    def leaveEvent(self, event: QFocusEvent): # Changed type hint to QFocusEvent
+        
+    def leaveEvent(self, event: QFocusEvent):
         if self.edge_scroll_timer.isActive(): self.edge_scroll_timer.stop()
         self._edge_scroll_dx = 0; self._edge_scroll_dy = 0
         if self._hover_preview_item: self._hover_preview_item.setVisible(False)
         super().leaveEvent(event)
+        
     def _check_edge_scroll(self, mouse_pos_viewport: QPointF):
         self._edge_scroll_dx = 0; self._edge_scroll_dy = 0; zone = ED_CONFIG.EDGE_SCROLL_ZONE_THICKNESS; view_rect = self.viewport().rect()
         if mouse_pos_viewport.x() < zone: self._edge_scroll_dx = -1
@@ -415,6 +451,7 @@ class MapViewWidget(QGraphicsView):
         should_be_active = (self._edge_scroll_dx != 0 or self._edge_scroll_dy != 0)
         if should_be_active and not self.edge_scroll_timer.isActive(): self.edge_scroll_timer.start()
         elif not should_be_active and self.edge_scroll_timer.isActive(): self.edge_scroll_timer.stop()
+        
     @Slot()
     def perform_edge_scroll(self):
         if self._edge_scroll_dx != 0 or self._edge_scroll_dy != 0:
@@ -590,7 +627,6 @@ class MapViewWidget(QGraphicsView):
         self.map_scene.clearSelection()
         self.map_content_changed.emit(); self.map_object_selected_for_properties.emit(None)
         if hasattr(self.parent_window, 'show_status_message'): self.parent_window.show_status_message(f"Deleted {len(data_refs_to_remove)} object(s).")
-
 
     @Slot(str)
     def on_asset_selected(self, asset_editor_key: Optional[str]):

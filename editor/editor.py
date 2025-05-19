@@ -1,7 +1,7 @@
 # editor.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.3 (PySide6 Conversion - Added Export as Image, Save Action Debug)
+## version 2.0.5 (Restored missing UI setup methods)
 Level Editor for the Platformer Game (PySide6 Version).
 Allows creating, loading, and saving game levels visually.
 """
@@ -68,6 +68,7 @@ try:
     from . import editor_history
     from .map_view_widget import MapViewWidget, MapObjectItem 
     from .editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
+    if ED_CONFIG.MINIMAP_ENABLED: from .minimap_widget import MinimapWidget 
     if logger: logger.debug("Successfully imported all editor-specific modules (using relative imports).")
 except ImportError as e_editor_mod_rel:
     logger.warning(f"Relative import failed for editor modules: {e_editor_mod_rel}. Trying absolute...")
@@ -78,6 +79,7 @@ except ImportError as e_editor_mod_rel:
         import editor_history
         from map_view_widget import MapViewWidget, MapObjectItem
         from editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
+        if ED_CONFIG.MINIMAP_ENABLED: from minimap_widget import MinimapWidget
         if logger: logger.debug("Successfully imported all editor-specific modules (using absolute imports as fallback).")
     except ImportError as e_editor_mod_abs:
         if logger: logger.critical(f"Failed to import an editor-specific module (both relative and absolute): {e_editor_mod_abs}", exc_info=True)
@@ -95,13 +97,15 @@ class EditorMainWindow(QMainWindow):
         self.setWindowTitle("Platformer Level Editor (PySide6)")
         self.setGeometry(50, 50, ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT)
 
-        self.init_ui()
-        self.create_actions() 
-        self.create_menus()
-        self.create_status_bar()
+        self.init_ui() # map_view_widget is created here
+        self.create_actions() # RESTORED CALL
+        self.create_menus()   # RESTORED CALL
+        self.create_status_bar() # RESTORED CALL
 
         self.asset_palette_dock.setObjectName("AssetPaletteDock")
         self.properties_editor_dock.setObjectName("PropertiesEditorDock")
+        if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock:
+            self.minimap_dock.setObjectName("MinimapDock")
 
         editor_assets.load_editor_palette_assets(self.editor_state, self)
         self.asset_palette_widget.populate_assets()
@@ -122,7 +126,7 @@ class EditorMainWindow(QMainWindow):
 
     def init_ui(self):
         logger.debug("Initializing UI components...")
-        self.map_view_widget = MapViewWidget(self.editor_state, self)
+        self.map_view_widget = MapViewWidget(self.editor_state, self) 
         self.setCentralWidget(self.map_view_widget)
 
         self.asset_palette_dock = QDockWidget("Asset Palette", self)
@@ -138,21 +142,37 @@ class EditorMainWindow(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.properties_editor_dock)
         self.properties_editor_dock.setMinimumWidth(280) 
 
+        if ED_CONFIG.MINIMAP_ENABLED:
+            self.minimap_dock = QDockWidget("Minimap", self)
+            self.minimap_widget = MinimapWidget(self.editor_state, self.map_view_widget, self)
+            self.minimap_dock.setWidget(self.minimap_widget)
+            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.minimap_dock)
+            self.tabifyDockWidget(self.properties_editor_dock, self.minimap_dock) 
+            self.minimap_dock.resize(self.minimap_widget.preferredSize())
+        else:
+            self.minimap_dock = None
+            self.minimap_widget = None
+
         # Connect signals
         self.asset_palette_widget.asset_selected.connect(self.map_view_widget.on_asset_selected)
         self.asset_palette_widget.asset_selected.connect(self.properties_editor_widget.display_asset_properties)
         self.asset_palette_widget.tool_selected.connect(self.map_view_widget.on_tool_selected)
-        self.asset_palette_widget.paint_color_changed_for_status.connect(self.show_status_message) # Connect new signal
+        self.asset_palette_widget.paint_color_changed_for_status.connect(self.show_status_message)
 
         self.map_view_widget.map_object_selected_for_properties.connect(self.properties_editor_widget.display_map_object_properties)
         self.map_view_widget.map_content_changed.connect(self.handle_map_content_changed)
+        
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
-        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed)
+        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed) 
 
-        self.setDockOptions(QMainWindow.DockOption.AnimatedDocks | QMainWindow.DockOption.AllowNestedDocks | QMainWindow.DockOption.AllowTabbedDocks)
+        if self.minimap_widget:
+            self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_full_update)
+
+        self.setDockOptions(QMainWindow.DockOption.AnimatedDocks | QMainWindow.DockOption.AllowNestedDocks | QMainWindow.DockOption.AllowTabbedDocks | QMainWindow.DockOption.VerticalTabs)
         self.map_view_widget.setFocus()
         logger.debug("UI components initialized.")
 
+    # --- RESTORED METHODS ---
     def create_actions(self):
         logger.debug("Creating actions...")
         self.new_map_action = QAction("&New Map...", self, shortcut=QKeySequence.StandardKey.New, statusTip="Create a new map", triggered=self.new_map)
@@ -172,7 +192,7 @@ class EditorMainWindow(QMainWindow):
         self.redo_action = QAction("&Redo", self, shortcut=QKeySequence.StandardKey.Redo, statusTip="Redo last undone action", triggered=self.redo)
 
         self.toggle_grid_action = QAction("Toggle &Grid", self, shortcut="Ctrl+G", statusTip="Show/Hide grid", triggered=self.toggle_grid, checkable=True)
-        self.toggle_grid_action.setChecked(self.editor_state.show_grid)
+        self.toggle_grid_action.setChecked(self.editor_state.show_grid) # Initial check state
         self.change_bg_color_action = QAction("Change &Background Color...", self, statusTip="Change map background color", triggered=self.change_background_color)
 
         self.zoom_in_action = QAction("Zoom &In", self, shortcut=QKeySequence.StandardKey.ZoomIn, statusTip="Zoom in on the map", triggered=self.map_view_widget.zoom_in)
@@ -217,6 +237,8 @@ class EditorMainWindow(QMainWindow):
         view_menu.addSeparator()
         view_menu.addAction(self.asset_palette_dock.toggleViewAction())
         view_menu.addAction(self.properties_editor_dock.toggleViewAction())
+        if ED_CONFIG.MINIMAP_ENABLED and self.minimap_dock: 
+            view_menu.addAction(self.minimap_dock.toggleViewAction())
 
         help_menu = self.menu_bar.addMenu("&Help")
         about_action = QAction("&About", self, statusTip="Show editor information", triggered=self.about_dialog)
@@ -232,6 +254,7 @@ class EditorMainWindow(QMainWindow):
         self.status_bar.addPermanentWidget(self.map_coords_label)
         self.map_view_widget.mouse_moved_on_map.connect(self.update_map_coords_status)
         logger.debug("Status bar created.")
+    # --- END RESTORED METHODS ---
 
     @Slot(str)
     def show_status_message(self, message: str, timeout: int = ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT):
@@ -251,6 +274,11 @@ class EditorMainWindow(QMainWindow):
         self.editor_state.unsaved_changes = True
         self.update_window_title()
         self.update_edit_actions_enabled_state()
+        
+        if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_widget') and self.minimap_widget:
+             logger.debug("Notifying minimap to redraw content due to map change via handle_map_content_changed.")
+             self.minimap_widget.schedule_map_content_redraw()
+        
         logger.debug(f"EditorMainWindow: After handle_map_content_changed - unsaved_changes: {self.editor_state.unsaved_changes}, save_map_action enabled: {self.save_map_action.isEnabled()}")
 
     def update_window_title(self):
@@ -298,7 +326,6 @@ class EditorMainWindow(QMainWindow):
         map_has_content = bool(self.editor_state.placed_objects or self.editor_state.current_json_filename)
         self.export_map_as_image_action.setEnabled(map_has_content)
         logger.debug(f"UpdateEditActions: export_map_as_image_action.setEnabled({map_has_content})")
-
 
     def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool:
         if self.editor_state.unsaved_changes:
@@ -546,6 +573,8 @@ class EditorMainWindow(QMainWindow):
         if self.confirm_unsaved_changes("exit the editor"):
             if not self.asset_palette_dock.objectName(): self.asset_palette_dock.setObjectName("AssetPaletteDock")
             if not self.properties_editor_dock.objectName(): self.properties_editor_dock.setObjectName("PropertiesEditorDock")
+            if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock and not self.minimap_dock.objectName():
+                self.minimap_dock.setObjectName("MinimapDock")
             
             self.settings.setValue("geometry", self.saveGeometry())
             self.settings.setValue("windowState", self.saveState())
@@ -556,6 +585,9 @@ class EditorMainWindow(QMainWindow):
     def save_geometry_and_state(self):
         if not self.asset_palette_dock.objectName(): self.asset_palette_dock.setObjectName("AssetPaletteDock")
         if not self.properties_editor_dock.objectName(): self.properties_editor_dock.setObjectName("PropertiesEditorDock")
+        if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock and not self.minimap_dock.objectName():
+            self.minimap_dock.setObjectName("MinimapDock")
+            
         self.settings.setValue("geometry", self.saveGeometry())
         self.settings.setValue("windowState", self.saveState())
         logger.debug("Window geometry and state explicitly saved.")
@@ -564,8 +596,8 @@ class EditorMainWindow(QMainWindow):
         geom = self.settings.value("geometry")
         state = self.settings.value("windowState")
         restored = False
-        if geom is not None: self.restoreGeometry(geom); restored = True # type: ignore
-        if state is not None: self.restoreState(state); restored = True # type: ignore
+        if geom is not None: self.restoreGeometry(geom); restored = True 
+        if state is not None: self.restoreState(state); restored = True 
         if restored: logger.debug("Window geometry and/or state restored.")
         return restored
 
