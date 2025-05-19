@@ -1,13 +1,14 @@
+#################### START OF FILE: constants.py ####################
+
 # constants.py
 # -*- coding: utf-8 -*-
 """
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 1.0.0.12 (Added Player aflame/frozen constants and Enemy speed multipliers)
+# version 2.0.0 (PySide6 Refactor - Removed pygame K_ constants)
 import os
 import sys
-import pygame # For K_ constants
 
 # --- Gameplay / Physics ---
 PLAYER_ROLL_CONTROL_ACCEL_FACTOR = 0.4
@@ -18,7 +19,7 @@ PLAYER_GRAVITY = 0.7
 PLAYER_JUMP_STRENGTH = -15
 PLAYER_RUN_SPEED_LIMIT = 7
 PLAYER_DASH_SPEED = 18
-PLAYER_ROLL_SPEED = 14# MODIFIED: Was 9
+PLAYER_ROLL_SPEED = 14
 PLAYER_WALL_SLIDE_SPEED = 2
 PLAYER_WALL_CLIMB_SPEED = -4    # Negative for upward movement
 PLAYER_LADDER_CLIMB_SPEED = 3
@@ -129,8 +130,9 @@ ENEMY_HIT_COOLDOWN = 500 # ms (invulnerability after being hit)
 ENEMY_HIT_BOUNCE_Y = PLAYER_JUMP_STRENGTH * 0.3
 ENEMY_STOMP_DEATH_DURATION = 300 # ms, visual duration of stomp death scale effect
 ENEMY_POST_ATTACK_PAUSE_DURATION = 200 # ms, brief pause after an enemy attack animation finishes
-ENEMY_AFLAME_SPEED_MULTIPLIER = 1.3  # NEW: Enemies move faster when aflame
-ENEMY_DEFLAME_SPEED_MULTIPLIER = 1.2 # NEW: Enemies move faster (but less so) when deflaming
+ENEMY_AFLAME_SPEED_MULTIPLIER = 1.3
+ENEMY_DEFLAME_SPEED_MULTIPLIER = 1.2
+ENEMY_STOMP_SQUASH_DURATION_MS = 400 # Visual duration of stomp squash effect
 
 # --- Enemy Status Effect Constants ---
 ENEMY_AFLAME_DURATION_MS = 3000
@@ -144,16 +146,22 @@ ENEMY_DEFROST_DURATION_MS = 1000
 STONE_SMASHED_DURATION_MS = 5000 # Time for smashed stone to disappear (Player and Statue)
 
 
-# --- Player Status Effect Constants --- NEW SECTION
+# --- Player Status Effect Constants ---
 PLAYER_AFLAME_DURATION_MS = 3000
 PLAYER_DEFLAME_DURATION_MS = 3000
-PLAYER_AFLAME_DAMAGE_PER_TICK = 5 # Player takes 3 damage per second while aflame
+PLAYER_AFLAME_DAMAGE_PER_TICK = 5 # Player takes damage per second while aflame
 PLAYER_AFLAME_DAMAGE_INTERVAL_MS = 1000
 PLAYER_FROZEN_DURATION_MS = 2800
 PLAYER_DEFROST_DURATION_MS = 1200
 
+# --- Player Speed Multipliers (When Aflame/Deflaming) ---
+PLAYER_AFLAME_ACCEL_MULTIPLIER = 1.15 # Example: 15% faster acceleration when aflame
+PLAYER_AFLAME_SPEED_MULTIPLIER = 1.1  # Example: 10% faster top speed when aflame
+PLAYER_DEFLAME_ACCEL_MULTIPLIER = 1.1 # Example: 10% faster acceleration when deflaming
+PLAYER_DEFLAME_SPEED_MULTIPLIER = 1.05 # Example: 5% faster top speed when deflaming
 
-# --- Colors ---
+
+# --- Colors (RGB Tuples) ---
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -186,6 +194,7 @@ LAVA_DAMAGE = 25       # Damage per hit from lava (can be time-based via hit coo
 def get_maps_directory():
     """
     Determines the absolute path to the 'maps' directory for file operations.
+    This remains the same as it's based on sys and os, not Pygame.
     """
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
         bundle_dir_meipass = sys._MEIPASS
@@ -201,19 +210,9 @@ def get_maps_directory():
         project_root_guess = os.path.abspath(os.path.join(os.path.dirname(__file__)))
         dev_maps_path = os.path.join(project_root_guess, 'maps')
         return dev_maps_path
-PLAYER_AFLAME_ACCEL_MULTIPLIER = 1.15
-PLAYER_AFLAME_SPEED_MULTIPLIER = 1.1
-PLAYER_DEFLAME_ACCEL_MULTIPLIER = 1.1
-PLAYER_DEFLAME_SPEED_MULTIPLIER = 1.05
-MAPS_DIR = get_maps_directory()
-# In constants.py
-ENEMY_STOMP_SQUASH_DURATION_MS = 400
 
-# --- Player Speed Multipliers (NEW) ---
-PLAYER_AFLAME_ACCEL_MULTIPLIER = 1.15 # Example: 15% faster acceleration when aflame
-PLAYER_AFLAME_SPEED_MULTIPLIER = 1.1  # Example: 10% faster top speed when aflame
-PLAYER_DEFLAME_ACCEL_MULTIPLIER = 1.1 # Example: 10% faster acceleration when deflaming
-PLAYER_DEFLAME_SPEED_MULTIPLIER = 1.05 # Example: 5% faster top speed when deflaming
+MAPS_DIR = get_maps_directory()
+
 # --- Network Constants ---
 SERVER_IP_BIND = '0.0.0.0'
 SERVER_PORT_TCP = 5555
@@ -229,48 +228,46 @@ PLAYER_SELF_DAMAGE = 10
 
 # --- Player Ability Durations/Cooldowns ---
 PLAYER_DASH_DURATION = 150 # ms
-PLAYER_ROLL_DURATION = 1000 # ms # MODIFIED: Was 300
+PLAYER_ROLL_DURATION = 1000 # ms
 PLAYER_SLIDE_DURATION = 400 # ms
 PLAYER_WALL_CLIMB_DURATION = 500 # ms
 PLAYER_COMBO_WINDOW = 250 # ms
 PLAYER_HIT_STUN_DURATION = 300 # ms
 PLAYER_HIT_COOLDOWN = 600 # ms
 
-# --- Player 1 Projectile Keys ---
-# P1_FIREBALL_KEY = pygame.K_1
-P1_FIREBALL_KEY = pygame.K_7
-P1_POISON_KEY = pygame.K_2
-P1_BOLT_KEY = pygame.K_3
-P1_BLOOD_KEY = pygame.K_4
-P1_ICE_KEY = pygame.K_5
-P1_SHADOW_PROJECTILE_KEY = pygame.K_6 # This is also P1 Reset Key
-# P1_GREY_PROJECTILE_KEY = pygame.K_7
-P1_GREY_PROJECTILE_KEY = pygame.K_1
+# --- Player 1 Projectile Keys (as strings for PySide6 QKeySequence compatibility) ---
+# These are defaults; actual mapping handled by config.py
+P1_FIREBALL_KEY = "7"       # Was pygame.K_7 (then pygame.K_1)
+P1_POISON_KEY = "2"
+P1_BOLT_KEY = "3"
+P1_BLOOD_KEY = "4"
+P1_ICE_KEY = "5"
+P1_SHADOW_PROJECTILE_KEY = "6" # This is also P1 Reset Key (or will be mapped in config)
+P1_GREY_PROJECTILE_KEY = "1"    # Was pygame.K_1 (then pygame.K_7)
 
-# --- Player 2 Projectile Keys ---
-P2_FIREBALL_KEY = pygame.K_KP_1
-P2_POISON_KEY = pygame.K_KP_2
-P2_BOLT_KEY = pygame.K_KP_3
-P2_BLOOD_KEY = pygame.K_KP_4
-P2_ICE_KEY = pygame.K_KP_5
-P2_SHADOW_PROJECTILE_KEY = pygame.K_KP_6 # This is also P2 Reset Key
-P2_GREY_PROJECTILE_KEY = pygame.K_KP_7
+# --- Player 2 Projectile Keys (as strings for PySide6 QKeySequence compatibility) ---
+P2_FIREBALL_KEY = "Num+1"     # Keypad 1
+P2_POISON_KEY = "Num+2"       # Keypad 2
+P2_BOLT_KEY = "Num+3"         # Keypad 3
+P2_BLOOD_KEY = "Num+4"        # Keypad 4
+P2_ICE_KEY = "Num+5"          # Keypad 5
+P2_SHADOW_PROJECTILE_KEY = "Num+6" # Keypad 6 (also P2 Reset Key)
+P2_GREY_PROJECTILE_KEY = "Num+7"    # Keypad 7
 
-# --- Input Handling Constants for Joysticks ---
-# Actions that, if mapped to a joystick HAT, should trigger a single event
+# --- Input Handling Constants for Joysticks (Action names - these are fine) ---
 JOYSTICK_HAT_EVENT_ACTIONS = [
     "projectile1", "projectile2", "projectile3", "projectile4",
     "projectile5", "projectile6", "projectile7",
     "menu_up", "menu_down", "menu_left", "menu_right",
-    "menu_confirm", "menu_cancel", "pause", "reset" # Added "reset"
+    "menu_confirm", "menu_cancel", "pause", "reset"
 ]
 
-# Actions that, if mapped to a joystick AXIS (and cross a threshold),
-# should trigger a single event.
 JOYSTICK_AXIS_EVENT_ACTIONS = [
     "jump",
     "attack1", "attack2", "dash", "roll", "interact",
     "projectile1", "projectile2", "projectile3", "projectile4",
     "projectile5", "projectile6", "projectile7",
-    "pause", "menu_confirm", "menu_cancel", "reset" # Added "reset"
+    "pause", "menu_confirm", "menu_cancel", "reset"
 ]
+
+#################### END OF FILE: constants.py ####################

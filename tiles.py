@@ -1,87 +1,115 @@
+#################### START OF FILE: tiles.py ####################
+
 # tiles.py
 # -*- coding: utf-8 -*-
 """
 Defines classes for static and interactive tiles in the game world.
+Refactored for PySide6.
 """
-# version 1.0.0.1 (Added platform_type to Platform class)
-import pygame
-# Import all necessary constants, including DARK_GREEN if not already present
-from constants import GRAY, BLUE, ORANGE_RED, DARK_GREEN 
+# version 2.0.2 (PySide6 Refactor - Added missing typing imports)
 
-class Platform(pygame.sprite.Sprite):
-    """ 
+from typing import Optional, Any # Added Optional and Any
+
+from PySide6.QtGui import QPixmap, QColor, QPainter, QPen
+from PySide6.QtCore import QRectF, QPointF, Qt
+
+# Import game constants (already Pygame-free)
+import constants as C
+
+class Platform:
+    """
     Standard solid platform.
     Can be tagged with a platform_type (e.g., "ground", "ledge", "wall").
+    Image is a simple colored rectangle using QPixmap.
     """
-    def __init__(self, x, y, width, height, color=GRAY, platform_type="generic"):
-        super().__init__()
-        
-        # Ensure valid dimensions for the surface
-        surf_width = max(1, int(width))
-        surf_height = max(1, int(height))
-        
-        self.image = pygame.Surface((surf_width, surf_height))
-        self.image.fill(color)
-        self.rect = self.image.get_rect(topleft=(x, y))
-        
-        self.color = color # Store the color, can be useful for debugging or logic
-        self.platform_type = platform_type # Store the type of platform
+    def __init__(self, x: float, y: float, width: float, height: float,
+                 color_tuple: tuple = C.GRAY, platform_type: str = "generic"):
+
+        self.width = max(1.0, float(width))
+        self.height = max(1.0, float(height))
+
+        self.image = QPixmap(int(self.width), int(self.height))
+        self.image.fill(QColor(*color_tuple))
+
+        self.rect = QRectF(float(x), float(y), self.width, self.height)
+
+        self.color_tuple = color_tuple
+        self.platform_type = platform_type
+
+        # For potential QGraphicsScene integration
+        self._graphics_item_ref: Optional[Any] = None # Could be QGraphicsPixmapItem
 
         if width <= 0 or height <= 0:
             print(f"Warning: Platform created with non-positive dimensions: w={width}, h={height} at ({x},{y}). Using 1x1.")
-            # Surface already created with max(1,...) dimensions, rect is based on original x,y
 
 
-class Ladder(pygame.sprite.Sprite):
-    """ Climbable ladder area. """
-    def __init__(self, x, y, width, height):
-        super().__init__()
-        # Ensure valid dimensions
-        width = max(1, int(width))
-        height = max(1, int(height))
-        self.image = pygame.Surface((width, height)).convert_alpha()
-        self.image.fill((0, 0, 0, 0)) # Fully transparent background
-        self.image.set_alpha(100) # Make semi-transparent visually
+class Ladder:
+    """
+    Climbable ladder area.
+    Visually represented with rungs and rails on a QPixmap.
+    """
+    def __init__(self, x: float, y: float, width: float, height: float):
+        self.width = max(1.0, float(width))
+        self.height = max(1.0, float(height))
 
-        # Draw visual cues (rungs, rails)
-        rung_color = (40, 40, 180, 200) # Slightly transparent dark blue
-        num_rungs = int(height / 15)
-        if num_rungs > 0: # Avoid division by zero if height is too small
-            rung_spacing = height / num_rungs
-            for i in range(1, num_rungs + 1): # Iterate to include a rung near the top
-                rung_y = i * rung_spacing
-                # Ensure rung_y is within bounds before drawing
-                if rung_y < height -1 : # -1 to keep it within the surface
-                    pygame.draw.line(self.image, rung_color, (0, rung_y), (width, rung_y), 2)
-        
-        # Draw side rails (ensure lines are within surface bounds)
-        # Use min/max to prevent drawing outside the surface if width is very small
+        self.image = QPixmap(int(self.width), int(self.height))
+        self.image.fill(QColor(0, 0, 0, 0)) # Transparent background
+
+        painter = QPainter(self.image)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+
+        rung_qcolor = QColor(40, 40, 180, 200) # Semi-transparent dark blue
+        pen = QPen(rung_qcolor)
+
+        num_rungs = int(self.height / 15)
+        if num_rungs > 0:
+            rung_spacing = self.height / num_rungs
+            pen.setWidth(2)
+            painter.setPen(pen)
+            for i in range(1, num_rungs + 1):
+                rung_y_pos = i * rung_spacing
+                if rung_y_pos < self.height - 1:
+                    painter.drawLine(QPointF(0, rung_y_pos), QPointF(self.width, rung_y_pos))
+
         rail_thickness = 3
-        left_rail_x = min(rail_thickness -1, width -1) # If width=1, rail is at x=0
-        right_rail_x = max(0, width - rail_thickness)   # If width=1, rail is at x=0
-        
-        pygame.draw.line(self.image, rung_color, (left_rail_x, 0), (left_rail_x, height), rail_thickness)
-        if width > rail_thickness * 2: # Only draw second rail if there's space
-             pygame.draw.line(self.image, rung_color, (right_rail_x, 0), (right_rail_x, height), rail_thickness)
+        pen.setWidth(rail_thickness)
+        painter.setPen(pen)
 
-        self.rect = self.image.get_rect(topleft=(x, y))
+        left_rail_x = min(float(rail_thickness / 2.0), self.width - float(rail_thickness / 2.0))
+        if self.width >= rail_thickness:
+            painter.drawLine(QPointF(left_rail_x, 0), QPointF(left_rail_x, self.height))
 
-class Lava(pygame.sprite.Sprite):
-    """ Dangerous lava tile that damages characters. """
-    def __init__(self, x, y, width, height, color=ORANGE_RED):
-        super().__init__()
-        # Ensure valid dimensions
-        width = max(1, int(width))
-        height = max(1, int(height))
-        self.image = pygame.Surface((width, height))
-        self.image.fill(color)
-        self.rect = self.image.get_rect(topleft=(x, y))
-        # Optional: Add visual effect like simple noise/flicker
-        # import random
-        # for _ in range(int(width*height*0.05)): # Add some darker spots
-        #      px = random.randint(0, width-1)
-        #      py = random.randint(0, height-1)
-        #      dark_color_r = max(0, color[0]-random.randint(30,70))
-        #      dark_color_g = max(0, color[1]-random.randint(10,40))
-        #      dark_color_b = max(0, color[2]-random.randint(0,20))
-        #      self.image.set_at((px, py), (dark_color_r, dark_color_g, dark_color_b))
+        if self.width > rail_thickness * 1.5:
+            right_rail_x = max(float(rail_thickness / 2.0), self.width - float(rail_thickness / 2.0))
+            painter.drawLine(QPointF(right_rail_x, 0), QPointF(right_rail_x, self.height))
+
+        painter.end()
+
+        self.rect = QRectF(float(x), float(y), self.width, self.height)
+        self._graphics_item_ref: Optional[Any] = None
+
+
+class Lava:
+    """
+    Dangerous lava tile that damages characters.
+    Image is a simple colored rectangle using QPixmap.
+    """
+    def __init__(self, x: float, y: float, width: float, height: float, color_tuple: tuple = C.ORANGE_RED):
+        self.width = max(1.0, float(width))
+        self.height = max(1.0, float(height))
+
+        self.image = QPixmap(int(self.width), int(self.height))
+        self.image.fill(QColor(*color_tuple))
+
+        self.rect = QRectF(float(x), float(y), self.width, self.height)
+        self.color_tuple = color_tuple
+        self._graphics_item_ref: Optional[Any] = None
+
+        if width <= 0 or height <= 0:
+            print(f"Warning: Lava created with non-positive dimensions: w={width}, h={height} at ({x},{y}). Using 1x1.")
+
+    def get_qpixmap(self) -> QPixmap:
+        """Returns the QPixmap representation."""
+        return self.image
+
+#################### END OF FILE: tiles.py ####################
