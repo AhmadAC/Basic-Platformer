@@ -1,0 +1,233 @@
+{
+    "map_name_for_function": "ttt",
+    "map_width_tiles": 40,
+    "map_height_tiles": 25,
+    "grid_size": 40,
+    "background_color": [
+        173,
+        216,
+        230
+    ],
+    "placed_objects": [
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 120,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 240,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 280,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 320,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 360,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 400,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 440,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 480,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 520,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 560,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 600,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 640,
+            "world_y": 240,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "chest",
+            "world_x": 200,
+            "world_y": 200,
+            "game_type_id": "chest",
+            "properties": {
+                "item_type": "coin",
+                "item_quantity": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 400,
+            "world_y": 200,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 400,
+            "world_y": 120,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 440,
+            "world_y": 160,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 480,
+            "world_y": 120,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 520,
+            "world_y": 160,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "player1_spawn",
+            "world_x": 600,
+            "world_y": 200,
+            "game_type_id": "player1_spawn",
+            "properties": {
+                "max_health": 100,
+                "move_speed": 300.0,
+                "jump_strength": -900.0
+            }
+        },
+        {
+            "asset_editor_key": "player2_spawn",
+            "world_x": 520,
+            "world_y": 400,
+            "game_type_id": "player2_spawn",
+            "properties": {
+                "max_health": 100,
+                "move_speed": 300.0,
+                "jump_strength": -900.0
+            }
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 440,
+            "world_y": 440,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 480,
+            "world_y": 440,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 520,
+            "world_y": 440,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 560,
+            "world_y": 440,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 600,
+            "world_y": 440,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 120,
+            "world_y": 160,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_full",
+            "world_x": 560,
+            "world_y": 320,
+            "game_type_id": "platform_ledge_green",
+            "properties": {}
+        }
+    ],
+    "camera_offset_x": 9.0,
+    "camera_offset_y": 36.0,
+    "zoom_level": 1.0,
+    "show_grid": true,
+    "asset_specific_variables": {}
+}

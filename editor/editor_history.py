@@ -5,7 +5,6 @@
 Manages undo/redo functionality for the Level Editor.
 Core logic remains largely UI-agnostic.
 """
-# import pygame # No longer needed for set_caption here
 import json
 import logging
 from typing import List, Dict, Any, Optional, cast
@@ -32,7 +31,7 @@ def get_map_snapshot(editor_state: EditorState) -> Dict[str, Any]:
         "show_grid": editor_state.show_grid,
         "asset_specific_variables": {k: v.copy() for k, v in editor_state.asset_specific_variables.items()}
     }
-    # Convert Pygame color tuples in placed_objects to lists for JSON consistency
+    # Convert  color tuples in placed_objects to lists for JSON consistency
     for obj in snapshot["placed_objects"]:
         if "override_color" in obj and isinstance(obj["override_color"], tuple):
             obj["override_color"] = list(obj["override_color"])
@@ -70,10 +69,8 @@ def restore_map_from_snapshot(editor_state: EditorState, snapshot: Dict[str, Any
 
     # UI updates are now triggered by the caller of undo/redo (e.g., EditorMainWindow)
     # This includes refreshing the MapViewWidget, minimap, and window title.
-    # editor_state.recreate_map_content_surface() # Pygame specific
     # editor_state.minimap_needs_regeneration = True # Minimap refresh signal would be handled by Qt minimap widget
     editor_state.unsaved_changes = True # Restoring state implies a change from current
-    # pygame.display.set_caption(f"Editor - {editor_state.map_name_for_function}.py*") # Handled by EditorMainWindow
 
     logger.info(f"Map state restored from snapshot. Unsaved changes: {editor_state.unsaved_changes}")
 

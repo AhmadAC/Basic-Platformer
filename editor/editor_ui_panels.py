@@ -3,7 +3,7 @@
 """
 Custom Qt Widgets for UI Panels (Asset Palette, Properties Editor)
 in the PySide6 Level Editor.
-Version 2.0.2 (Refined QGroupBox and QLabel deletion handling)
+Version 2.0.3 (Word wrap for properties, refined clearing)
 """
 import logging
 from typing import Optional, Dict, Any, List, Tuple
@@ -23,7 +23,7 @@ import editor_history
 
 logger = logging.getLogger(__name__)
 
-# --- AssetPaletteWidget (Keep as is from your last full version) ---
+# --- AssetPaletteWidget ---
 class AssetPaletteWidget(QWidget):
     asset_selected = Signal(str)
     tool_selected = Signal(str)
@@ -78,8 +78,8 @@ class AssetPaletteWidget(QWidget):
                         list_item.setData(Qt.ItemDataRole.UserRole, key)
                         fm = self.asset_list_widget.fontMetrics()
                         text_width = fm.horizontalAdvance(item_text)
-                        item_width = max(ED_CONFIG.ASSET_PALETTE_ICON_SIZE_W + 10, text_width + 10)
-                        item_height = ED_CONFIG.ASSET_PALETTE_ICON_SIZE_H + fm.height() + 15
+                        item_width = max(ED_CONFIG.ASSET_PALETTE_ICON_SIZE_W + 10, text_width + 10) 
+                        item_height = ED_CONFIG.ASSET_PALETTE_ICON_SIZE_H + fm.height() + 10
                         list_item.setSizeHint(QSize(item_width, item_height))
                         self.asset_list_widget.addItem(list_item)
                     else:
@@ -106,7 +106,6 @@ class AssetPaletteWidget(QWidget):
     def clear_selection(self):
         self.asset_list_widget.clearSelection()
 
-
 # --- PropertiesEditorDockWidget ---
 class PropertiesEditorDockWidget(QWidget):
     properties_changed = Signal(dict)
@@ -128,53 +127,51 @@ class PropertiesEditorDockWidget(QWidget):
         self.form_layout = QFormLayout(self.scroll_widget)
         self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
         self.form_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
+        self.form_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
         self.scroll_area.setWidget(self.scroll_widget)
         self.main_layout.addWidget(self.scroll_area)
         
-        # Placeholder label setup
         self.no_selection_label = QLabel("Select an object or asset to see properties.")
         self.no_selection_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.no_selection_label.setWordWrap(True)
-        # This container will hold the label and will be shown/hidden
+        
         self.no_selection_container = QWidget()
         no_sel_layout = QVBoxLayout(self.no_selection_container)
         no_sel_layout.addWidget(self.no_selection_label)
         no_sel_layout.addStretch()
-        # Add the container to the form_layout permanently
         self.form_layout.addRow(self.no_selection_container)
         
         self.clear_display()
 
     def _clear_dynamic_widgets_from_form(self):
-        """Removes all dynamically added widgets/rows from form_layout, preserving the placeholder."""
-        self.input_widgets.clear() # Clear references to old input widgets first
-        
-        # Iterate backwards to safely remove rows
+        self.input_widgets.clear()
         for i in range(self.form_layout.rowCount() - 1, -1, -1):
-            # Get the widget in the "field" role for the current row
-            # QFormLayout.ItemRole can be LabelRole or FieldRole
+            field_item_widget = None
             field_item = self.form_layout.itemAt(i, QFormLayout.FieldRole)
-            if field_item:
-                field_widget = field_item.widget()
-                # If the field widget of this row IS the placeholder container, skip this row
-                if field_widget is self.no_selection_container:
-                    continue
-            
-            # If it's not the placeholder row, remove the entire row (label and field)
-            # QFormLayout.takeRow(i) removes the row and returns a QFormLayout.TakeRowResult
-            # which contains the labelItem and fieldItem. Their widgets need to be deleted.
-            row_result = self.form_layout.takeRow(i)
-            if row_result.labelItem and row_result.labelItem.widget():
-                row_result.labelItem.widget().deleteLater()
-            if row_result.fieldItem and row_result.fieldItem.widget():
-                # This field_widget could be a QLabel, QLineEdit, QSpinBox, or a QGroupBox
-                row_result.fieldItem.widget().deleteLater()
+            label_item = self.form_layout.itemAt(i, QFormLayout.LabelRole)
 
+            if field_item: field_widget = field_item.widget()
+            else: field_widget = None
+            
+            label_widget = None
+            if label_item: label_widget = label_item.widget()
+
+            if field_widget is self.no_selection_container or label_widget is self.no_selection_container:
+                continue
+            if field_widget is self.no_selection_label or label_widget is self.no_selection_label:
+                continue
+            
+            row_result = self.form_layout.takeRow(i)
+            if row_result:
+                if row_result.labelItem and row_result.labelItem.widget():
+                    row_result.labelItem.widget().deleteLater()
+                if row_result.fieldItem and row_result.fieldItem.widget():
+                    row_result.fieldItem.widget().deleteLater()
 
     @Slot(object)
     def display_map_object_properties(self, map_object_data_ref: Optional[Dict[str, Any]]):
         self._clear_dynamic_widgets_from_form()
-        self.current_object_data_ref = None
+        self.current_object_data_ref = None 
         self.current_asset_type_for_defaults = None
 
         if not map_object_data_ref or not isinstance(map_object_data_ref, dict):
@@ -188,21 +185,29 @@ class PropertiesEditorDockWidget(QWidget):
         game_type_id = str(map_object_data_ref.get("game_type_id", "Unknown"))
         asset_editor_key = str(map_object_data_ref.get("asset_editor_key", "N/A"))
         
-        # Add Title Label for the object
         title_label = QLabel(f"Object Properties: {game_type_id}")
-        font = title_label.font(); font.setBold(True); font.setPointSize(ED_CONFIG.FONT_SIZE_MEDIUM); title_label.setFont(font)
+        title_label.setWordWrap(True)
+        font_title = title_label.font(); font_title.setBold(True); font_title.setPointSize(ED_CONFIG.FONT_SIZE_MEDIUM); title_label.setFont(font_title)
         self.form_layout.addRow(title_label)
 
-        self.form_layout.addRow("Asset Key:", QLabel(asset_editor_key))
-        self.form_layout.addRow("Coords (X,Y):", QLabel(f"({map_object_data_ref.get('world_x')}, {map_object_data_ref.get('world_y')})"))
+        asset_key_label_text = QLabel("Asset Key:")
+        asset_key_label_text.setWordWrap(True)
+        asset_key_value_label = QLabel(asset_editor_key)
+        asset_key_value_label.setWordWrap(True)
+        self.form_layout.addRow(asset_key_label_text, asset_key_value_label)
+        
+        coords_label_text = QLabel("Coords (X,Y):")
+        coords_value_label = QLabel(f"({map_object_data_ref.get('world_x')}, {map_object_data_ref.get('world_y')})")
+        self.form_layout.addRow(coords_label_text, coords_value_label)
 
         asset_palette_data = self.editor_state.assets_palette.get(asset_editor_key)
         if asset_palette_data and asset_palette_data.get("colorable"):
+            color_label_text = QLabel("Color:")
             color_button = QPushButton()
             self.input_widgets["_color_button"] = color_button
-            self._update_color_button_visuals(color_button, map_object_data_ref)
-            color_button.clicked.connect(lambda _checked=False, obj_ref=map_object_data_ref: self._change_object_color(obj_ref))
-            self.form_layout.addRow("Color:", color_button)
+            self._update_color_button_visuals(color_button, map_object_data_ref) 
+            color_button.clicked.connect(lambda _checked=False, obj_ref=map_object_data_ref: self._change_object_color(obj_ref)) 
+            self.form_layout.addRow(color_label_text, color_button)
 
         object_custom_props = map_object_data_ref.get("properties")
         if not isinstance(object_custom_props, dict):
@@ -211,15 +216,17 @@ class PropertiesEditorDockWidget(QWidget):
         if game_type_id and game_type_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES:
             prop_definitions = ED_CONFIG.EDITABLE_ASSET_VARIABLES[game_type_id]
             if prop_definitions:
-                props_group = QGroupBox("Custom Properties") # This is a QWidget
-                props_layout = QFormLayout(props_group) # QGroupBox has its own layout
-                props_layout.setContentsMargins(2,5,2,5)
+                props_group = QGroupBox("Custom Properties")
+                props_group.setFlat(False) 
+                props_layout = QFormLayout(props_group)
+                props_layout.setContentsMargins(6, 10, 6, 6); props_layout.setSpacing(6)
                 for var_name, definition in prop_definitions.items():
                     current_value = object_custom_props.get(var_name, definition["default"])
                     self._create_property_field(var_name, definition, current_value, props_layout)
-                self.form_layout.addRow(props_group) # Add the QGroupBox to the main form_layout
+                self.form_layout.addRow(props_group)
         else:
             no_props_label = QLabel("No custom properties for this object type.")
+            no_props_label.setWordWrap(True)
             no_props_label.setStyleSheet("QLabel { font-style: italic; }")
             self.form_layout.addRow(no_props_label)
 
@@ -230,7 +237,7 @@ class PropertiesEditorDockWidget(QWidget):
         self.current_asset_type_for_defaults = None
 
         if not asset_editor_key:
-            if not self.current_object_data_ref:
+            if not self.current_object_data_ref: 
                 self.no_selection_label.setText("Select an object or asset...")
                 self.no_selection_container.setVisible(True)
             return
@@ -238,72 +245,77 @@ class PropertiesEditorDockWidget(QWidget):
         self.no_selection_container.setVisible(False)
         self.current_asset_type_for_defaults = asset_editor_key
         
-        asset_data = self.editor_state.assets_palette.get(str(asset_editor_key))
+        asset_data = self.editor_state.assets_palette.get(str(asset_editor_key)) 
         if not asset_data: return
 
         game_type_id = str(asset_data.get("game_type_id", "Unknown"))
-        title_label = QLabel(f"Asset Type: {asset_data.get('name_in_palette', game_type_id)}")
-        font = title_label.font(); font.setBold(True); font.setPointSize(ED_CONFIG.FONT_SIZE_MEDIUM); title_label.setFont(font)
-        self.form_layout.addRow(title_label) # Add to main form_layout
+        asset_name_display = asset_data.get('name_in_palette', game_type_id)
+        title_label = QLabel(f"Asset Type: {asset_name_display}")
+        title_label.setWordWrap(True)
+        font_title = title_label.font(); font_title.setBold(True); font_title.setPointSize(ED_CONFIG.FONT_SIZE_MEDIUM); title_label.setFont(font_title)
+        self.form_layout.addRow(title_label)
 
         if asset_data.get("colorable"):
-             self.form_layout.addRow("Colorable:", QLabel("Yes (by tool or properties)"))
+             colorable_label_text = QLabel("Colorable:")
+             colorable_label_text.setWordWrap(True)
+             colorable_info_label = QLabel("Yes (by tool or properties)")
+             colorable_info_label.setWordWrap(True)
+             self.form_layout.addRow(colorable_label_text, colorable_info_label)
+             
              default_color_val = asset_data.get("base_color_tuple")
              if not default_color_val:
-                 _sp = asset_data.get("surface_params") # Consistent key
+                 _sp = asset_data.get("surface_params")
                  if _sp and isinstance(_sp, tuple) and len(_sp) == 3:
                      default_color_val = _sp[2]
              if default_color_val:
-                self.form_layout.addRow("Default Asset Color:", QLabel(str(default_color_val)))
+                default_color_label_text = QLabel("Default Asset Color:")
+                default_color_label_text.setWordWrap(True)
+                default_color_value_label = QLabel(str(default_color_val))
+                self.form_layout.addRow(default_color_label_text, default_color_value_label)
 
         if game_type_id and game_type_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES:
             props_group = QGroupBox("Default Editable Properties")
+            props_group.setFlat(False)
             props_layout = QFormLayout(props_group)
-            props_layout.setContentsMargins(2,5,2,5)
+            props_layout.setContentsMargins(6,10,6,6); props_layout.setSpacing(6)
             prop_definitions = ED_CONFIG.EDITABLE_ASSET_VARIABLES[game_type_id]
             for var_name, definition in prop_definitions.items():
+                prop_name_label = QLabel(definition.get('label', var_name.replace('_', ' ').title()) + ":")
+                prop_name_label.setWordWrap(True)
                 default_val_label = QLabel(str(definition["default"]))
-                props_layout.addRow(f"{definition.get('label', var_name.replace('_', ' ').title())}:", default_val_label)
+                default_val_label.setWordWrap(True)
+                props_layout.addRow(prop_name_label, default_val_label)
             self.form_layout.addRow(props_group)
         else:
             no_props_label = QLabel("No editable default properties for this asset type.")
+            no_props_label.setWordWrap(True)
             no_props_label.setStyleSheet("QLabel { font-style: italic; }")
             self.form_layout.addRow(no_props_label)
 
     def clear_display(self):
-        """Shows the placeholder text when no specific object or asset properties are to be displayed."""
         self._clear_dynamic_widgets_from_form()
         self.current_object_data_ref = None
         self.current_asset_type_for_defaults = None
         self.no_selection_label.setText("Select an object on the map or an asset type from the palette to see its properties.")
         self.no_selection_container.setVisible(True)
 
-
-    # _update_color_button_visuals, _create_property_field, _on_line_edit_finished, 
-    # _on_property_value_changed, _change_object_color methods remain IDENTICAL
-    # to your last provided full version of editor_ui_panels.py, so they are omitted here for brevity
-    # but should be included in your actual file.
     def _update_color_button_visuals(self, button: QPushButton, object_data_ref: Optional[Dict[str, Any]]):
         if not object_data_ref: return
-
         color_tuple = object_data_ref.get("override_color")
         is_overridden = bool(color_tuple)
-
         if not color_tuple: 
             asset_key = object_data_ref.get("asset_editor_key")
             asset_palette_data = self.editor_state.assets_palette.get(str(asset_key))
             if asset_palette_data:
                 color_tuple = asset_palette_data.get("base_color_tuple")
                 if not color_tuple:
-                    _sp = asset_palette_data.get("surface_params") # Consistent key
+                    _sp = asset_palette_data.get("surface_params") 
                     if _sp and isinstance(_sp, tuple) and len(_sp) == 3:
                         color_tuple = _sp[2]
             if not color_tuple: color_tuple = (128,128,128)
-
         button_text = f"RGB: {color_tuple}"
         if not is_overridden: button_text += " (Default)"
         button.setText(button_text)
-            
         if color_tuple:
             q_color = QColor(*color_tuple)
             palette = button.palette()
@@ -317,10 +329,12 @@ class PropertiesEditorDockWidget(QWidget):
             button.update()
 
     def _create_property_field(self, var_name: str, definition: Dict[str, Any], current_value: Any, layout: QFormLayout):
-        label_text = definition.get("label", var_name.replace("_", " ").title())
+        label_text_for_field = definition.get("label", var_name.replace("_", " ").title())
+        property_name_label = QLabel(label_text_for_field + ":")
+        property_name_label.setWordWrap(True) 
+        
         widget: Optional[QWidget] = None
         prop_type = definition["type"]
-
         if prop_type == "int":
             spinner = QSpinBox(); widget = spinner
             spinner.setMinimum(definition.get("min", -2147483648)); spinner.setMaximum(definition.get("max", 2147483647))
@@ -347,23 +361,23 @@ class PropertiesEditorDockWidget(QWidget):
                 line_edit = QLineEdit(str(current_value)); widget = line_edit
                 line_edit.editingFinished.connect(lambda le=line_edit, vn=var_name: self._on_line_edit_finished(vn, le.text()))
         elif prop_type == "bool":
-            checkbox = QCheckBox(label_text); widget = checkbox
+            checkbox = QCheckBox(label_text_for_field); widget = checkbox 
             try: checkbox.setChecked(bool(current_value))
             except: checkbox.setChecked(bool(definition["default"]))
             checkbox.stateChanged.connect(lambda state_int, vn=var_name: self._on_property_value_changed(vn, state_int == Qt.CheckState.Checked.value))
-
+        
         if widget:
             if isinstance(widget, QCheckBox): layout.addRow(widget)
-            else: layout.addRow(label_text + ":", widget)
+            else: layout.addRow(property_name_label, widget)
             self.input_widgets[var_name] = widget
-        else: layout.addRow(label_text + ":", QLabel(f"Unsupported type: {prop_type}"))
+        else: layout.addRow(property_name_label, QLabel(f"Unsupported type: {prop_type}"))
 
     def _on_line_edit_finished(self, var_name: str, text_value: str):
         self._on_property_value_changed(var_name, text_value)
 
     def _on_property_value_changed(self, var_name: str, new_value: Any):
         if self.current_object_data_ref:
-            if "properties" not in self.current_object_data_ref or not isinstance(self.current_object_data_ref.get("properties"), dict) :
+            if "properties" not in self.current_object_data_ref or not isinstance(self.current_object_data_ref.get("properties"), dict):
                 self.current_object_data_ref["properties"] = {}
             game_type_id = str(self.current_object_data_ref.get("game_type_id"))
             definition = ED_CONFIG.EDITABLE_ASSET_VARIABLES.get(game_type_id, {}).get(var_name)
@@ -402,8 +416,7 @@ class PropertiesEditorDockWidget(QWidget):
                 current_color_tuple = asset_palette_data.get("base_color_tuple")
                 if not current_color_tuple:
                      _sp = asset_palette_data.get("surface_params")
-                     if _sp and isinstance(_sp, tuple) and len(_sp) == 3:
-                         current_color_tuple = _sp[2]
+                     if _sp and isinstance(_sp, tuple) and len(_sp) == 3: current_color_tuple = _sp[2]
             if not current_color_tuple: current_color_tuple = (128,128,128)
         q_current_color = QColor(*current_color_tuple)
         new_q_color = QColorDialog.getColor(q_current_color, self, "Select Object Color")
