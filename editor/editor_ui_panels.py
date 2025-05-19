@@ -3,7 +3,7 @@
 """
 Custom Qt Widgets for UI Panels (Asset Palette, Properties Editor)
 in the PySide6 Level Editor.
-Version 2.0.3 (Word wrap for properties, refined clearing)
+Version 2.0.4 (Asset Palette category filter, 3-column layout attempt, Properties title consistency)
 """
 import logging
 from typing import Optional, Dict, Any, List, Tuple
@@ -32,9 +32,16 @@ class AssetPaletteWidget(QWidget):
         super().__init__(parent)
         self.editor_state = editor_state
         self.parent_window = parent
+        self.categories_populated_in_combo = False
 
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(2,2,2,2)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(2,2,2,2)
+        self.main_layout.setSpacing(3) # Spacing between combo and list
+
+        self.category_filter_combo = QComboBox(self)
+        self.category_filter_combo.addItem("All") # Initial item
+        self.category_filter_combo.currentIndexChanged.connect(self._on_category_filter_changed)
+        self.main_layout.addWidget(self.category_filter_combo)
 
         self.asset_list_widget = QListWidget(self)
         self.asset_list_widget.setIconSize(QSize(ED_CONFIG.ASSET_PALETTE_ICON_SIZE_W, ED_CONFIG.ASSET_PALETTE_ICON_SIZE_H))
@@ -42,49 +49,93 @@ class AssetPaletteWidget(QWidget):
         self.asset_list_widget.setFlow(QListWidget.Flow.LeftToRight)
         self.asset_list_widget.setWrapping(True)
         self.asset_list_widget.setResizeMode(QListWidget.ResizeMode.Adjust)
-        self.asset_list_widget.setSpacing(5)
+        self.asset_list_widget.setSpacing(5) 
         self.asset_list_widget.itemClicked.connect(self.on_item_clicked)
         self.asset_list_widget.setStyleSheet("""
             QListWidget::item { padding: 4px; border: 1px solid transparent; }
             QListWidget::item:hover { background-color: #e0e0e0; }
             QListWidget::item:selected { border: 1px solid #333; background-color: #c0d5eA; }
         """)
-        self.layout.addWidget(self.asset_list_widget)
+        self.main_layout.addWidget(self.asset_list_widget)
 
-    def populate_assets(self):
+    def _populate_category_combo_if_needed(self):
+        if self.categories_populated_in_combo or not self.editor_state.assets_palette:
+            return
+
+        all_asset_categories = set()
+        for data in self.editor_state.assets_palette.values():
+            all_asset_categories.add(data.get("category", "unknown"))
+
+        combo_items = ["All"]
+        # Add categories in preferred order
+        for cat_name_ordered in ED_CONFIG.EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER:
+            if cat_name_ordered in all_asset_categories:
+                combo_items.append(cat_name_ordered.title())
+                all_asset_categories.discard(cat_name_ordered)
+
+        # Add any remaining categories (e.g., "unknown" if not in preferred order list)
+        for remaining_cat in sorted(list(all_asset_categories)):
+             combo_items.append(remaining_cat.title())
+
+        self.category_filter_combo.blockSignals(True)
+        current_text_selection = self.category_filter_combo.currentText()
+        self.category_filter_combo.clear()
+        self.category_filter_combo.addItems(combo_items)
+
+        idx = self.category_filter_combo.findText(current_text_selection)
+        if idx != -1:
+            self.category_filter_combo.setCurrentIndex(idx)
+        else: # If previous text not found, default to "All"
+            self.category_filter_combo.setCurrentIndex(0)
+        self.category_filter_combo.blockSignals(False)
+        self.categories_populated_in_combo = True
+
+    def populate_assets(self, filter_override: Optional[str] = None):
+        self._populate_category_combo_if_needed()
+
+        current_filter_text = filter_override if filter_override is not None else self.category_filter_combo.currentText()
+
         self.asset_list_widget.clear()
         if not self.editor_state.assets_palette:
             logger.warning("Asset palette in state is empty. Cannot populate UI.")
             return
-        logger.debug("Populating asset palette UI...")
-        categorized_assets: Dict[str, List[Tuple[str, Dict[str, Any]]]] = {}
+        
+        logger.debug(f"Populating asset palette UI with filter: '{current_filter_text}'...")
+
+        # Define cell size for grid layout
+        # Icon width + padding on both sides. Aim for 3 columns in typical dock.
+        item_cell_width = ED_CONFIG.ASSET_PALETTE_ICON_SIZE_W + 2 * 8 
+        # Icon height + padding for tooltip space/breathing room
+        item_cell_height = ED_CONFIG.ASSET_PALETTE_ICON_SIZE_H + 20 
+        self.asset_list_widget.setGridSize(QSize(item_cell_width, item_cell_height))
+        self.asset_list_widget.setUniformItemSizes(True)
+
+        assets_to_display: List[Tuple[str, Dict[str, Any]]] = []
         for key, data in self.editor_state.assets_palette.items():
             category = data.get("category", "unknown")
-            categorized_assets.setdefault(category, []).append((key, data))
-        for category_name in ED_CONFIG.EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER:
-            if category_name in categorized_assets:
-                header_item = QListWidgetItem(f"--- {category_name.title()} ---")
-                font = header_item.font()
-                font.setBold(ED_CONFIG.FONT_CATEGORY_TITLE_BOLD)
-                font.setPointSize(ED_CONFIG.FONT_CATEGORY_TITLE_SIZE)
-                header_item.setFont(font)
-                header_item.setFlags(Qt.ItemFlag.NoItemFlags)
-                self.asset_list_widget.addItem(header_item)
-                for key, data in sorted(categorized_assets[category_name], key=lambda x: x[0]):
-                    pixmap: Optional[QPixmap] = data.get("q_pixmap")
-                    if pixmap and not pixmap.isNull():
-                        item_text = data.get("name_in_palette", key.replace("_", " ").title())
-                        list_item = QListWidgetItem(QIcon(pixmap), item_text)
-                        list_item.setData(Qt.ItemDataRole.UserRole, key)
-                        fm = self.asset_list_widget.fontMetrics()
-                        text_width = fm.horizontalAdvance(item_text)
-                        item_width = max(ED_CONFIG.ASSET_PALETTE_ICON_SIZE_W + 10, text_width + 10) 
-                        item_height = ED_CONFIG.ASSET_PALETTE_ICON_SIZE_H + fm.height() + 10
-                        list_item.setSizeHint(QSize(item_width, item_height))
-                        self.asset_list_widget.addItem(list_item)
-                    else:
-                        logger.warning(f"Asset '{key}' missing valid QPixmap, not added to palette.")
-        logger.debug(f"Asset palette UI populated with {self.asset_list_widget.count()} displayable items.")
+            # Match against raw category name or titleized version from combo
+            if current_filter_text.lower() == "all" or \
+               category.lower() == current_filter_text.lower() or \
+               category.title().lower() == current_filter_text.lower():
+                assets_to_display.append((key, data))
+        
+        assets_to_display.sort(key=lambda x: x[0]) # Sort alphabetically by key
+
+        for key, data in assets_to_display:
+            pixmap: Optional[QPixmap] = data.get("q_pixmap")
+            if pixmap and not pixmap.isNull():
+                item_text_for_tooltip = data.get("name_in_palette", key.replace("_", " ").title())
+                list_item = QListWidgetItem(QIcon(pixmap), "") # No visible text on item
+                list_item.setToolTip(item_text_for_tooltip) # Tooltip for name
+                list_item.setData(Qt.ItemDataRole.UserRole, key)
+                self.asset_list_widget.addItem(list_item)
+            else:
+                logger.warning(f"Asset '{key}' missing valid QPixmap, not added to palette.")
+        logger.debug(f"Asset palette UI populated with {self.asset_list_widget.count()} items for filter '{current_filter_text}'.")
+
+    @Slot(int)
+    def _on_category_filter_changed(self, index: int):
+        self.populate_assets() # populate_assets will read current text from combo
 
     @Slot(QListWidgetItem)
     def on_item_clicked(self, item: QListWidgetItem):
@@ -147,15 +198,12 @@ class PropertiesEditorDockWidget(QWidget):
         self.input_widgets.clear()
         for i in range(self.form_layout.rowCount() - 1, -1, -1):
             field_item_widget = None
-            field_item = self.form_layout.itemAt(i, QFormLayout.FieldRole)
-            label_item = self.form_layout.itemAt(i, QFormLayout.LabelRole)
+            field_item = self.form_layout.itemAt(i, QFormLayout.ItemRole.FieldRole)
+            label_item = self.form_layout.itemAt(i, QFormLayout.ItemRole.LabelRole)
 
-            if field_item: field_widget = field_item.widget()
-            else: field_widget = None
+            field_widget = field_item.widget() if field_item else None
+            label_widget = label_item.widget() if label_item else None
             
-            label_widget = None
-            if label_item: label_widget = label_item.widget()
-
             if field_widget is self.no_selection_container or label_widget is self.no_selection_container:
                 continue
             if field_widget is self.no_selection_label or label_widget is self.no_selection_label:
@@ -182,10 +230,20 @@ class PropertiesEditorDockWidget(QWidget):
         self.no_selection_container.setVisible(False)
         self.current_object_data_ref = map_object_data_ref
         
-        game_type_id = str(map_object_data_ref.get("game_type_id", "Unknown"))
         asset_editor_key = str(map_object_data_ref.get("asset_editor_key", "N/A"))
+        game_type_id_str = str(map_object_data_ref.get("game_type_id", "Unknown"))
+
+        display_name_for_title = game_type_id_str 
+        asset_data_for_title = self.editor_state.assets_palette.get(asset_editor_key)
+        if asset_data_for_title:
+            name_from_palette = asset_data_for_title.get("name_in_palette")
+            if name_from_palette:
+                display_name_for_title = name_from_palette
         
-        title_label = QLabel(f"Object Properties: {game_type_id}")
+        if display_name_for_title == game_type_id_str and "_" in display_name_for_title: 
+            display_name_for_title = display_name_for_title.replace("_", " ").title()
+        
+        title_label = QLabel(f"Object Properties: {display_name_for_title}")
         title_label.setWordWrap(True)
         font_title = title_label.font(); font_title.setBold(True); font_title.setPointSize(ED_CONFIG.FONT_SIZE_MEDIUM); title_label.setFont(font_title)
         self.form_layout.addRow(title_label)
@@ -197,12 +255,15 @@ class PropertiesEditorDockWidget(QWidget):
         self.form_layout.addRow(asset_key_label_text, asset_key_value_label)
         
         coords_label_text = QLabel("Coords (X,Y):")
+        coords_label_text.setWordWrap(True) 
         coords_value_label = QLabel(f"({map_object_data_ref.get('world_x')}, {map_object_data_ref.get('world_y')})")
+        coords_value_label.setWordWrap(True) 
         self.form_layout.addRow(coords_label_text, coords_value_label)
 
         asset_palette_data = self.editor_state.assets_palette.get(asset_editor_key)
         if asset_palette_data and asset_palette_data.get("colorable"):
             color_label_text = QLabel("Color:")
+            color_label_text.setWordWrap(True)
             color_button = QPushButton()
             self.input_widgets["_color_button"] = color_button
             self._update_color_button_visuals(color_button, map_object_data_ref) 
@@ -213,8 +274,8 @@ class PropertiesEditorDockWidget(QWidget):
         if not isinstance(object_custom_props, dict):
              object_custom_props = {}; map_object_data_ref["properties"] = object_custom_props
 
-        if game_type_id and game_type_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES:
-            prop_definitions = ED_CONFIG.EDITABLE_ASSET_VARIABLES[game_type_id]
+        if game_type_id_str and game_type_id_str in ED_CONFIG.EDITABLE_ASSET_VARIABLES:
+            prop_definitions = ED_CONFIG.EDITABLE_ASSET_VARIABLES[game_type_id_str]
             if prop_definitions:
                 props_group = QGroupBox("Custom Properties")
                 props_group.setFlat(False) 
@@ -250,6 +311,9 @@ class PropertiesEditorDockWidget(QWidget):
 
         game_type_id = str(asset_data.get("game_type_id", "Unknown"))
         asset_name_display = asset_data.get('name_in_palette', game_type_id)
+        if asset_name_display == game_type_id and "_" in asset_name_display: # Beautify if using game_type_id
+            asset_name_display = asset_name_display.replace("_", " ").title()
+            
         title_label = QLabel(f"Asset Type: {asset_name_display}")
         title_label.setWordWrap(True)
         font_title = title_label.font(); font_title.setBold(True); font_title.setPointSize(ED_CONFIG.FONT_SIZE_MEDIUM); title_label.setFont(font_title)
@@ -271,6 +335,7 @@ class PropertiesEditorDockWidget(QWidget):
                 default_color_label_text = QLabel("Default Asset Color:")
                 default_color_label_text.setWordWrap(True)
                 default_color_value_label = QLabel(str(default_color_val))
+                default_color_value_label.setWordWrap(True)
                 self.form_layout.addRow(default_color_label_text, default_color_value_label)
 
         if game_type_id and game_type_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES:
@@ -379,8 +444,10 @@ class PropertiesEditorDockWidget(QWidget):
         if self.current_object_data_ref:
             if "properties" not in self.current_object_data_ref or not isinstance(self.current_object_data_ref.get("properties"), dict):
                 self.current_object_data_ref["properties"] = {}
+            
             game_type_id = str(self.current_object_data_ref.get("game_type_id"))
             definition = ED_CONFIG.EDITABLE_ASSET_VARIABLES.get(game_type_id, {}).get(var_name)
+            
             if definition:
                 prop_type = definition["type"]
                 current_stored_value = self.current_object_data_ref["properties"].get(var_name, definition["default"])
@@ -400,6 +467,7 @@ class PropertiesEditorDockWidget(QWidget):
                         elif isinstance(widget_to_revert, QComboBox): widget_to_revert.setCurrentText(str(current_stored_value))
                         elif isinstance(widget_to_revert, QCheckBox): widget_to_revert.setChecked(bool(current_stored_value))
                     return
+
                 if current_stored_value != typed_new_value:
                     editor_history.push_undo_state(self.editor_state)
                     self.current_object_data_ref["properties"][var_name] = typed_new_value

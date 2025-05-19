@@ -1,375 +1,65 @@
-2025-05-19 09:45:09,950 - INFO - editor.py:42 - <module> - Editor session started. Logging initialized successfully.
-2025-05-19 09:45:09,951 - INFO - editor.py:64 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
-2025-05-19 09:45:09,952 - WARNING - editor.py:80 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
-2025-05-19 09:45:10,402 - INFO - editor_assets.py:27 - <module> - EditorAssets: Successfully imported 'resource_path' from 'assets' module.
-2025-05-19 09:45:10,578 - DEBUG - editor.py:88 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
-2025-05-19 09:45:10,579 - INFO - editor.py:589 - editor_main - editor_main() started for PySide6 application.
-2025-05-19 09:45:10,689 - DEBUG - editor.py:591 - editor_main - QApplication instance created.
-2025-05-19 09:45:10,697 - INFO - editor.py:97 - __init__ - Initializing EditorMainWindow...
-2025-05-19 09:45:10,697 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
-2025-05-19 09:45:10,697 - DEBUG - editor_state.py:66 - __init__ - EditorState initialized.
-2025-05-19 09:45:10,701 - DEBUG - editor.py:134 - init_ui - Initializing UI components...
-2025-05-19 09:45:10,720 - DEBUG - map_view_widget.py:164 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 09:45:10,720 - DEBUG - map_view_widget.py:148 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 09:45:10,720 - DEBUG - map_view_widget.py:161 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 09:45:10,728 - DEBUG - map_view_widget.py:178 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
-2025-05-19 09:45:10,728 - DEBUG - map_view_widget.py:140 - __init__ - MapViewWidget initialized.
-2025-05-19 09:45:12,537 - DEBUG - editor.py:161 - init_ui - UI components initialized.
-2025-05-19 09:45:12,537 - DEBUG - editor.py:164 - create_actions - Creating actions...
-2025-05-19 09:45:12,548 - DEBUG - editor.py:194 - create_actions - Actions created.
-2025-05-19 09:45:12,548 - DEBUG - editor.py:197 - create_menus - Creating menus...
-2025-05-19 09:45:12,560 - DEBUG - editor.py:233 - create_menus - Menus created.
-2025-05-19 09:45:12,560 - DEBUG - editor.py:236 - create_status_bar - Creating status bar...
-2025-05-19 09:45:12,563 - DEBUG - editor.py:243 - create_status_bar - Status bar created.
-2025-05-19 09:45:12,563 - INFO - editor_assets.py:207 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-19 09:45:12,563 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player1_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
-2025-05-19 09:45:12,564 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:45:12,580 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player2_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
-2025-05-19 09:45:12,580 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:45:12,584 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_gray' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
-2025-05-19 09:45:12,585 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:45:12,589 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_green' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
-2025-05-19 09:45:12,590 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:45:12,592 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_pink' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
-2025-05-19 09:45:12,592 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:45:12,596 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_purple' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
-2025-05-19 09:45:12,597 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:45:12,600 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_orange' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
-2025-05-19 09:45:12,600 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:45:12,604 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_yellow' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
-2025-05-19 09:45:12,607 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Attempting Qt load...
-2025-05-19 09:45:12,615 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'chest' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
-2025-05-19 09:45:12,616 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Attempting Qt load...
-2025-05-19 09:45:12,620 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_idle' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
-2025-05-19 09:45:12,620 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Attempting Qt load...
-2025-05-19 09:45:12,626 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_crouch' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
-2025-05-19 09:45:12,626 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Attempting Qt load...
-2025-05-19 09:45:12,631 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'hazard_lava_tile' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
-2025-05-19 09:45:12,631 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Attempting Qt load...
-2025-05-19 09:45:12,636 - INFO - editor_assets.py:356 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
-2025-05-19 09:45:12,637 - DEBUG - editor_ui_panels.py:59 - populate_assets - Populating asset palette UI...
-2025-05-19 09:45:12,644 - DEBUG - editor_ui_panels.py:87 - populate_assets - Asset palette UI populated with 32 displayable items.
-2025-05-19 09:45:12,644 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=0, map_is_properly_loaded_or_newly_named=False, unsaved_changes=False
-2025-05-19 09:45:12,644 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:12,644 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(False)
-2025-05-19 09:45:12,707 - DEBUG - editor.py:580 - restore_geometry_and_state - Window geometry and/or state restored.
-2025-05-19 09:45:12,746 - INFO - editor.py:129 - __init__ - EditorMainWindow initialized.
-2025-05-19 09:45:12,746 - INFO - editor.py:248 - show_status_message - Status: Editor started. Welcome!
-2025-05-19 09:45:32,375 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'object_stone_crouch'
-2025-05-19 09:45:32,375 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'object_stone_crouch'
-2025-05-19 09:45:32,376 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'object_stone_crouch'
-2025-05-19 09:45:32,379 - INFO - editor.py:248 - show_status_message - Status: Asset selected: Stone Crouch Block
-2025-05-19 09:45:33,894 - DEBUG - map_view_widget.py:314 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'object_stone_crouch', Item under mouse: None, Grid Coords: (7,14)
-2025-05-19 09:45:33,894 - DEBUG - map_view_widget.py:326 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (7,14).
-2025-05-19 09:45:33,894 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='object_stone_crouch', Grid=(7,14), FirstAction=True, Continuous=False
-2025-05-19 09:45:33,895 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'object_stone_crouch' (derived from palette key 'object_stone_crouch')
-2025-05-19 09:45:33,895 - DEBUG - map_view_widget.py:452 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 09:45:33,895 - DEBUG - editor_history.py:106 - push_undo_state - Pushed state to undo stack. Size: 1
-2025-05-19 09:45:33,895 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'object_stone_crouch' (GameID: object_stone_crouch) at grid (7,14), world (280.0,560.0). IsSpawn: False
-2025-05-19 09:45:33,896 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 1
-2025-05-19 09:45:33,898 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(34, 27)). Creating and adding item to scene.
-2025-05-19 09:45:33,901 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'object_stone_crouch' at grid (7,14).
-2025-05-19 09:45:33,901 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:33,901 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:33,902 - DEBUG - editor.py:259 - handle_map_content_changed - Map content changed, unsaved_changes was False, now set to True.
-2025-05-19 09:45:33,902 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=1, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:33,902 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:33,902 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:33,904 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:35,210 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'object_stone_idle'
-2025-05-19 09:45:35,211 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'object_stone_idle'
-2025-05-19 09:45:35,211 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'object_stone_idle'
-2025-05-19 09:45:35,214 - INFO - editor.py:248 - show_status_message - Status: Asset selected: Stone Block
-2025-05-19 09:45:36,028 - DEBUG - map_view_widget.py:314 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'object_stone_idle', Item under mouse: QGraphicsLineItem, Grid Coords: (9,14)
-2025-05-19 09:45:36,028 - DEBUG - map_view_widget.py:326 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (9,14).
-2025-05-19 09:45:36,028 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='object_stone_idle', Grid=(9,14), FirstAction=True, Continuous=False
-2025-05-19 09:45:36,028 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'object_stone_idle' (derived from palette key 'object_stone_idle')
-2025-05-19 09:45:36,029 - DEBUG - map_view_widget.py:452 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 09:45:36,029 - DEBUG - editor_history.py:106 - push_undo_state - Pushed state to undo stack. Size: 2
-2025-05-19 09:45:36,029 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'object_stone_idle' (GameID: object_stone_idle) at grid (9,14), world (360.0,560.0). IsSpawn: False
-2025-05-19 09:45:36,029 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 2
-2025-05-19 09:45:36,030 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(33, 36)). Creating and adding item to scene.
-2025-05-19 09:45:36,030 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'object_stone_idle' at grid (9,14).
-2025-05-19 09:45:36,030 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:36,030 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:36,030 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=2, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:36,030 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:36,030 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:36,030 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:36,882 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'enemy_green'
-2025-05-19 09:45:36,882 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'enemy_green'
-2025-05-19 09:45:36,882 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'enemy_green'
-2025-05-19 09:45:36,884 - INFO - editor.py:248 - show_status_message - Status: Asset selected: Enemy Green
-2025-05-19 09:45:38,339 - DEBUG - map_view_widget.py:314 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'enemy_green', Item under mouse: QGraphicsPixmapItem, Grid Coords: (6,17)
-2025-05-19 09:45:38,339 - DEBUG - map_view_widget.py:326 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (6,17).
-2025-05-19 09:45:38,339 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='enemy_green', Grid=(6,17), FirstAction=True, Continuous=False
-2025-05-19 09:45:38,339 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'enemy_green' (derived from palette key 'enemy_green')
-2025-05-19 09:45:38,340 - DEBUG - map_view_widget.py:452 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 09:45:38,340 - DEBUG - editor_history.py:106 - push_undo_state - Pushed state to undo stack. Size: 3
-2025-05-19 09:45:38,340 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'enemy_green' (GameID: enemy_green) at grid (6,17), world (240.0,680.0). IsSpawn: False
-2025-05-19 09:45:38,340 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 3
-2025-05-19 09:45:38,341 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(21, 38)). Creating and adding item to scene.
-2025-05-19 09:45:38,341 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'enemy_green' at grid (6,17).
-2025-05-19 09:45:38,341 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:38,341 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:38,341 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=3, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:38,341 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:38,341 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:38,341 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:39,328 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'chest'
-2025-05-19 09:45:39,328 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'chest'
-2025-05-19 09:45:39,328 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'chest'
-2025-05-19 09:45:39,329 - INFO - editor.py:248 - show_status_message - Status: Asset selected: Chest
-2025-05-19 09:45:40,176 - DEBUG - map_view_widget.py:314 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'chest', Item under mouse: None, Grid Coords: (11,17)
-2025-05-19 09:45:40,176 - DEBUG - map_view_widget.py:326 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (11,17).
-2025-05-19 09:45:40,177 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='chest', Grid=(11,17), FirstAction=True, Continuous=False
-2025-05-19 09:45:40,177 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'chest' (derived from palette key 'chest')
-2025-05-19 09:45:40,177 - DEBUG - map_view_widget.py:452 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 09:45:40,177 - DEBUG - editor_history.py:106 - push_undo_state - Pushed state to undo stack. Size: 4
-2025-05-19 09:45:40,177 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'chest' (GameID: chest) at grid (11,17), world (440.0,680.0). IsSpawn: False
-2025-05-19 09:45:40,177 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 4
-2025-05-19 09:45:40,180 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(70, 50)). Creating and adding item to scene.
-2025-05-19 09:45:40,181 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'chest' at grid (11,17).
-2025-05-19 09:45:40,181 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:40,182 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:40,187 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=4, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:40,187 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:40,187 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:40,189 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:41,316 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'hazard_lava_tile'
-2025-05-19 09:45:41,316 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'hazard_lava_tile'
-2025-05-19 09:45:41,316 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'hazard_lava_tile'
-2025-05-19 09:45:41,317 - INFO - editor.py:248 - show_status_message - Status: Asset selected: Lava Tile
-2025-05-19 09:45:42,370 - DEBUG - map_view_widget.py:314 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'hazard_lava_tile', Item under mouse: QGraphicsPixmapItem, Grid Coords: (5,20)
-2025-05-19 09:45:42,371 - DEBUG - map_view_widget.py:326 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (5,20).
-2025-05-19 09:45:42,371 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(5,20), FirstAction=True, Continuous=False
-2025-05-19 09:45:42,371 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,371 - DEBUG - map_view_widget.py:452 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 09:45:42,371 - DEBUG - editor_history.py:106 - push_undo_state - Pushed state to undo stack. Size: 5
-2025-05-19 09:45:42,371 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (5,20), world (200.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,371 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 5
-2025-05-19 09:45:42,372 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,372 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (5,20).
-2025-05-19 09:45:42,372 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,372 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,372 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=5, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,372 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,372 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,372 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,475 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(6,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,475 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,475 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (6,20), world (240.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,475 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 6
-2025-05-19 09:45:42,476 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,476 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (6,20).
-2025-05-19 09:45:42,476 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,476 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,476 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=6, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,476 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,476 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,476 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,495 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(7,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,495 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,495 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (7,20), world (280.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,495 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 7
-2025-05-19 09:45:42,495 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,496 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (7,20).
-2025-05-19 09:45:42,496 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,496 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,496 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=7, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,496 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,496 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,496 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,515 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(8,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,515 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,515 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (8,20), world (320.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,515 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 8
-2025-05-19 09:45:42,516 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,516 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (8,20).
-2025-05-19 09:45:42,516 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,516 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,516 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=8, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,517 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,517 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,517 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,570 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(9,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,572 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,572 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (9,20), world (360.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,572 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 9
-2025-05-19 09:45:42,572 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,572 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (9,20).
-2025-05-19 09:45:42,572 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,572 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,572 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=9, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,572 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,573 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,573 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,702 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(10,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,702 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,702 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (10,20), world (400.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,702 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 10
-2025-05-19 09:45:42,703 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,703 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (10,20).
-2025-05-19 09:45:42,704 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,704 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,704 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=10, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,704 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,704 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,704 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,738 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(11,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,738 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,739 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (11,20), world (440.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,739 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 11
-2025-05-19 09:45:42,739 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,739 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (11,20).
-2025-05-19 09:45:42,739 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,739 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,739 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=11, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,739 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,739 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,740 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,766 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(12,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,766 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,766 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (12,20), world (480.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,766 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 12
-2025-05-19 09:45:42,767 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,767 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (12,20).
-2025-05-19 09:45:42,767 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,767 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,767 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=12, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,767 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,767 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,767 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,815 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(13,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,815 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,815 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (13,20), world (520.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,815 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 13
-2025-05-19 09:45:42,816 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,816 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (13,20).
-2025-05-19 09:45:42,816 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,816 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,816 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=13, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,816 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,816 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,816 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:42,986 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='hazard_lava_tile', Grid=(14,20), FirstAction=False, Continuous=True
-2025-05-19 09:45:42,986 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'hazard_lava_tile' (derived from palette key 'hazard_lava_tile')
-2025-05-19 09:45:42,986 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'hazard_lava_tile' (GameID: hazard_lava) at grid (14,20), world (560.0,800.0). IsSpawn: False
-2025-05-19 09:45:42,986 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 14
-2025-05-19 09:45:42,986 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 41)). Creating and adding item to scene.
-2025-05-19 09:45:42,987 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'hazard_lava_tile' at grid (14,20).
-2025-05-19 09:45:42,987 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:42,987 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:42,987 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=14, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:42,987 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:42,987 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:42,987 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:45,354 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'platform_wall_gray'
-2025-05-19 09:45:45,355 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray'
-2025-05-19 09:45:45,355 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_wall_gray'
-2025-05-19 09:45:45,356 - INFO - editor.py:248 - show_status_message - Status: Asset selected: Wall (Gray)
-2025-05-19 09:45:46,708 - DEBUG - map_view_widget.py:314 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'platform_wall_gray', Item under mouse: None, Grid Coords: (8,8)
-2025-05-19 09:45:46,709 - DEBUG - map_view_widget.py:326 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (8,8).
-2025-05-19 09:45:46,709 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(8,8), FirstAction=True, Continuous=False
-2025-05-19 09:45:46,709 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 09:45:46,709 - DEBUG - map_view_widget.py:452 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
-2025-05-19 09:45:46,709 - DEBUG - editor_history.py:106 - push_undo_state - Pushed state to undo stack. Size: 6
-2025-05-19 09:45:46,709 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (8,8), world (320.0,320.0). IsSpawn: False
-2025-05-19 09:45:46,709 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 15
-2025-05-19 09:45:46,709 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 09:45:46,709 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (8,8).
-2025-05-19 09:45:46,710 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:46,710 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:46,710 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=15, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:46,710 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:46,710 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:46,710 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:46,805 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(9,8), FirstAction=False, Continuous=True
-2025-05-19 09:45:46,805 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 09:45:46,805 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (9,8), world (360.0,320.0). IsSpawn: False
-2025-05-19 09:45:46,805 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 16
-2025-05-19 09:45:46,805 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 09:45:46,805 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (9,8).
-2025-05-19 09:45:46,805 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:46,805 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:46,805 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=16, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:46,805 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:46,806 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:46,806 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:46,820 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(10,8), FirstAction=False, Continuous=True
-2025-05-19 09:45:46,820 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 09:45:46,820 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (10,8), world (400.0,320.0). IsSpawn: False
-2025-05-19 09:45:46,820 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 17
-2025-05-19 09:45:46,821 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 09:45:46,821 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (10,8).
-2025-05-19 09:45:46,821 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:46,821 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:46,821 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=17, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:46,821 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:46,821 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:46,821 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:46,828 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(10,9), FirstAction=False, Continuous=True
-2025-05-19 09:45:46,829 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 09:45:46,829 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (10,9), world (400.0,360.0). IsSpawn: False
-2025-05-19 09:45:46,829 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 18
-2025-05-19 09:45:46,829 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 09:45:46,829 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (10,9).
-2025-05-19 09:45:46,829 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:46,829 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:46,829 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=18, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:46,830 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:46,830 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:46,830 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:46,833 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(11,9), FirstAction=False, Continuous=True
-2025-05-19 09:45:46,833 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 09:45:46,833 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (11,9), world (440.0,360.0). IsSpawn: False
-2025-05-19 09:45:46,833 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 19
-2025-05-19 09:45:46,834 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 09:45:46,834 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (11,9).
-2025-05-19 09:45:46,834 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:46,834 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:46,834 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=19, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:46,834 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:46,834 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:46,834 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:46,844 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(12,9), FirstAction=False, Continuous=True
-2025-05-19 09:45:46,844 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 09:45:46,844 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (12,9), world (480.0,360.0). IsSpawn: False
-2025-05-19 09:45:46,844 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 20
-2025-05-19 09:45:46,844 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 09:45:46,845 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (12,9).
-2025-05-19 09:45:46,845 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:46,845 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:46,845 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=20, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:46,845 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:46,845 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:46,845 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:46,860 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(13,9), FirstAction=False, Continuous=True
-2025-05-19 09:45:46,860 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 09:45:46,860 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (13,9), world (520.0,360.0). IsSpawn: False
-2025-05-19 09:45:46,860 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 21
-2025-05-19 09:45:46,860 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 09:45:46,860 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (13,9).
-2025-05-19 09:45:46,860 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:46,860 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:46,861 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=21, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:46,861 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:46,861 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:46,861 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:45:46,881 - DEBUG - map_view_widget.py:424 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='platform_wall_gray', Grid=(14,9), FirstAction=False, Continuous=True
-2025-05-19 09:45:46,882 - DEBUG - map_view_widget.py:443 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'platform_wall_gray' (derived from palette key 'platform_wall_gray')
-2025-05-19 09:45:46,882 - DEBUG - map_view_widget.py:476 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'platform_wall_gray' (GameID: platform_wall_gray) at grid (14,9), world (560.0,360.0). IsSpawn: False
-2025-05-19 09:45:46,882 - DEBUG - map_view_widget.py:506 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 22
-2025-05-19 09:45:46,882 - DEBUG - map_view_widget.py:516 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(40, 40)). Creating and adding item to scene.
-2025-05-19 09:45:46,882 - INFO - map_view_widget.py:521 - _place_single_object_on_map - MapView: Placed 'platform_wall_gray' at grid (14,9).
-2025-05-19 09:45:46,882 - DEBUG - map_view_widget.py:466 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
-2025-05-19 09:45:46,882 - DEBUG - editor.py:257 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
-2025-05-19 09:45:46,882 - DEBUG - editor.py:283 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=22, map_is_properly_loaded_or_newly_named=False, unsaved_changes=True
-2025-05-19 09:45:46,882 - DEBUG - editor.py:291 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
-2025-05-19 09:45:46,882 - DEBUG - editor.py:310 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(True)
-2025-05-19 09:45:46,882 - DEBUG - editor.py:263 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
-2025-05-19 09:47:15,743 - INFO - editor.py:550 - keyPressEvent - Escape key pressed, attempting to close window.
-2025-05-19 09:47:15,745 - INFO - editor.py:555 - closeEvent - Close event triggered for main window.
-2025-05-19 09:48:02,894 - INFO - editor.py:563 - closeEvent - Window geometry and state saved.
-2025-05-19 09:48:02,912 - INFO - editor.py:598 - editor_main - QApplication event loop finished with exit code: 0
-2025-05-19 09:48:02,914 - INFO - editor.py:606 - editor_main - Editor session ended.
+2025-05-19 09:55:12,508 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
+2025-05-19 09:55:12,509 - INFO - editor.py:65 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
+2025-05-19 09:55:12,510 - WARNING - editor.py:81 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
+2025-05-19 09:55:12,582 - INFO - editor_assets.py:27 - <module> - EditorAssets: Successfully imported 'resource_path' from 'assets' module.
+2025-05-19 09:55:12,660 - DEBUG - editor.py:89 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
+2025-05-19 09:55:12,661 - INFO - editor.py:590 - editor_main - editor_main() started for PySide6 application.
+2025-05-19 09:55:12,760 - DEBUG - editor.py:592 - editor_main - QApplication instance created.
+2025-05-19 09:55:12,770 - INFO - editor.py:98 - __init__ - Initializing EditorMainWindow...
+2025-05-19 09:55:12,770 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
+2025-05-19 09:55:12,770 - DEBUG - editor_state.py:66 - __init__ - EditorState initialized.
+2025-05-19 09:55:12,773 - DEBUG - editor.py:135 - init_ui - Initializing UI components...
+2025-05-19 09:55:12,795 - DEBUG - map_view_widget.py:164 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 09:55:12,796 - DEBUG - map_view_widget.py:148 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 09:55:12,796 - DEBUG - map_view_widget.py:161 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 09:55:12,804 - DEBUG - map_view_widget.py:178 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-19 09:55:12,804 - DEBUG - map_view_widget.py:140 - __init__ - MapViewWidget initialized.
+2025-05-19 09:55:12,926 - DEBUG - editor.py:162 - init_ui - UI components initialized.
+2025-05-19 09:55:12,926 - DEBUG - editor.py:165 - create_actions - Creating actions...
+2025-05-19 09:55:12,928 - DEBUG - editor.py:195 - create_actions - Actions created.
+2025-05-19 09:55:12,928 - DEBUG - editor.py:198 - create_menus - Creating menus...
+2025-05-19 09:55:12,934 - DEBUG - editor.py:234 - create_menus - Menus created.
+2025-05-19 09:55:12,934 - DEBUG - editor.py:237 - create_status_bar - Creating status bar...
+2025-05-19 09:55:12,936 - DEBUG - editor.py:244 - create_status_bar - Status bar created.
+2025-05-19 09:55:12,936 - INFO - editor_assets.py:207 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-19 09:55:12,936 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player1_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
+2025-05-19 09:55:12,937 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Attempting Qt load...
+2025-05-19 09:55:12,943 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player2_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
+2025-05-19 09:55:12,943 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Attempting Qt load...
+2025-05-19 09:55:12,944 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_gray' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
+2025-05-19 09:55:12,944 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Attempting Qt load...
+2025-05-19 09:55:12,944 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_green' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
+2025-05-19 09:55:12,945 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Attempting Qt load...
+2025-05-19 09:55:12,945 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_pink' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
+2025-05-19 09:55:12,945 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Attempting Qt load...
+2025-05-19 09:55:12,946 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_purple' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
+2025-05-19 09:55:12,946 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Attempting Qt load...
+2025-05-19 09:55:12,947 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_orange' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
+2025-05-19 09:55:12,947 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Attempting Qt load...
+2025-05-19 09:55:12,948 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_yellow' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
+2025-05-19 09:55:12,948 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Attempting Qt load...
+2025-05-19 09:55:12,949 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'chest' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
+2025-05-19 09:55:12,949 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Attempting Qt load...
+2025-05-19 09:55:12,950 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_idle' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
+2025-05-19 09:55:12,950 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Attempting Qt load...
+2025-05-19 09:55:12,951 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_crouch' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
+2025-05-19 09:55:12,951 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Attempting Qt load...
+2025-05-19 09:55:12,954 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'hazard_lava_tile' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
+2025-05-19 09:55:12,954 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Attempting Qt load...
+2025-05-19 09:55:12,956 - INFO - editor_assets.py:356 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
+2025-05-19 09:55:12,956 - DEBUG - editor_ui_panels.py:59 - populate_assets - Populating asset palette UI...
+2025-05-19 09:55:12,962 - DEBUG - editor_ui_panels.py:105 - populate_assets - Asset palette UI populated with 32 displayable items.
+2025-05-19 09:55:12,962 - DEBUG - editor.py:284 - update_edit_actions_enabled_state - UpdateEditActions: current_json_filename='None', map_name='untitled_map', placed_objects_count=0, map_is_properly_loaded_or_newly_named=False, unsaved_changes=False
+2025-05-19 09:55:12,962 - DEBUG - editor.py:292 - update_edit_actions_enabled_state - UpdateEditActions: save_map_action.setEnabled(False)
+2025-05-19 09:55:12,962 - DEBUG - editor.py:311 - update_edit_actions_enabled_state - UpdateEditActions: export_map_as_image_action.setEnabled(False)
+2025-05-19 09:55:13,044 - DEBUG - editor.py:581 - restore_geometry_and_state - Window geometry and/or state restored.
+2025-05-19 09:55:13,105 - INFO - editor.py:130 - __init__ - EditorMainWindow initialized.
+2025-05-19 09:55:13,105 - INFO - editor.py:249 - show_status_message - Status: Editor started. Welcome!
+2025-05-19 09:55:19,607 - DEBUG - map_view_widget.py:578 - on_asset_selected - MapView: on_asset_selected received key: 'platform_wall_gray'
+2025-05-19 09:55:19,607 - INFO - editor_state.py:87 - selected_asset_editor_key - selected_asset_editor_key changed to: 'platform_wall_gray'
+2025-05-19 09:55:19,607 - DEBUG - map_view_widget.py:589 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'platform_wall_gray'
+2025-05-19 09:55:19,608 - INFO - editor.py:249 - show_status_message - Status: Asset selected: Wall (Gray)
+2025-05-19 09:57:19,894 - INFO - editor.py:556 - closeEvent - Close event triggered for main window.
+2025-05-19 09:57:19,895 - INFO - editor.py:564 - closeEvent - Window geometry and state saved.
+2025-05-19 09:57:19,923 - INFO - editor.py:599 - editor_main - QApplication event loop finished with exit code: 0
+2025-05-19 09:57:19,924 - INFO - editor.py:607 - editor_main - Editor session ended.
