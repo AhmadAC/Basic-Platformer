@@ -3,13 +3,13 @@
 """
 Custom Qt Widgets for UI Panels (Asset Palette, Properties Editor)
 in the PySide6 Level Editor.
-Version 2.0.6 (Asset Palette Paint Color Button)
+Version 2.0.7 (Paint Color button text static, background indicates color)
 """
 import logging
 from typing import Optional, Dict, Any, List, Tuple
 
 from PySide6.QtWidgets import (
-    QWidget, QListWidget, QListWidgetItem, QVBoxLayout, QHBoxLayout, # Added QHBoxLayout
+    QWidget, QListWidget, QListWidgetItem, QVBoxLayout, QHBoxLayout, 
     QLabel, QLineEdit, QCheckBox, QComboBox, QPushButton, QScrollArea,
     QFormLayout, QSpinBox, QDoubleSpinBox, QColorDialog,
     QGroupBox, QSizePolicy 
@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 class AssetPaletteWidget(QWidget):
     asset_selected = Signal(str)
     tool_selected = Signal(str)
-    # Signal to notify main window when paint color changes, so status bar can update
     paint_color_changed_for_status = Signal(str)
 
 
@@ -41,22 +40,20 @@ class AssetPaletteWidget(QWidget):
         self.main_layout.setContentsMargins(2,2,2,2)
         self.main_layout.setSpacing(3) 
 
-        # --- Category Filter and Paint Color Button Area ---
         filter_area_layout = QHBoxLayout()
         
         self.category_filter_combo = QComboBox(self)
         self.category_filter_combo.addItem("All") 
         self.category_filter_combo.currentIndexChanged.connect(self._on_category_filter_changed)
-        filter_area_layout.addWidget(self.category_filter_combo, 1) # Combo takes more space
+        filter_area_layout.addWidget(self.category_filter_combo, 1) 
 
-        self.paint_color_button = QPushButton("Paint Color")
-        self.paint_color_button.setToolTip("Set the color for the next placed colorable asset.")
+        self.paint_color_button = QPushButton("Paint Color") # Static text
+        self.paint_color_button.setToolTip("Set the color for the next placed colorable asset. Current color shown by button background.")
         self.paint_color_button.clicked.connect(self._on_select_paint_color)
-        self._update_paint_color_button_visuals() # Initialize button appearance
-        filter_area_layout.addWidget(self.paint_color_button, 0) # Button takes less space
+        self._update_paint_color_button_visuals() 
+        filter_area_layout.addWidget(self.paint_color_button, 0) 
 
         self.main_layout.addLayout(filter_area_layout)
-        # --- End Filter Area ---
 
         self.asset_list_widget = QListWidget(self)
         self.asset_list_widget.setIconSize(QSize(ED_CONFIG.ASSET_PALETTE_ICON_SIZE_W, ED_CONFIG.ASSET_PALETTE_ICON_SIZE_H))
@@ -75,21 +72,29 @@ class AssetPaletteWidget(QWidget):
 
     def _update_paint_color_button_visuals(self):
         color_tuple = self.editor_state.current_selected_asset_paint_color
+        # Keep button text static
+        self.paint_color_button.setText("Paint Color") 
+
         if color_tuple:
             q_color = QColor(*color_tuple)
             palette = self.paint_color_button.palette()
             palette.setColor(QPalette.ColorRole.Button, q_color)
+            
+            # Determine text color for contrast
             luma = 0.299 * color_tuple[0] + 0.587 * color_tuple[1] + 0.114 * color_tuple[2]
             text_q_color = QColor(Qt.GlobalColor.black) if luma > 128 else QColor(Qt.GlobalColor.white)
             palette.setColor(QPalette.ColorRole.ButtonText, text_q_color)
+            
             self.paint_color_button.setPalette(palette)
             self.paint_color_button.setAutoFillBackground(True)
-            self.paint_color_button.setText(f"RGB: {color_tuple}")
-            self.paint_color_button.setStyleSheet("QPushButton { border: 1px solid black; min-height: 20px; padding: 2px; }")
+            # Ensure border is visible if color is very light/dark like the default button bg
+            self.paint_color_button.setStyleSheet("QPushButton { border: 1px solid #555; min-height: 20px; padding: 2px; }")
         else:
-            self.paint_color_button.setAutoFillBackground(False) # Revert to default
-            self.paint_color_button.setText("Paint Color")
+            # Revert to default appearance
+            self.paint_color_button.setAutoFillBackground(False) 
+            self.paint_color_button.setPalette(QWidget().palette()) # Get a default palette from a temporary default QWidget
             self.paint_color_button.setStyleSheet("") # Revert to default stylesheet
+        
         self.paint_color_button.update()
 
 
@@ -101,12 +106,10 @@ class AssetPaletteWidget(QWidget):
             self.editor_state.current_selected_asset_paint_color = new_q_color.getRgb()[:3]
             status_msg = f"Asset paint color set to: {self.editor_state.current_selected_asset_paint_color}"
         else:
-            # self.editor_state.current_selected_asset_paint_color = None # Optionally clear if dialog cancelled
-            status_msg = "Asset paint color selection cancelled."
+            status_msg = "Asset paint color selection cancelled." # Or keep previous color
         
         self._update_paint_color_button_visuals()
         self.paint_color_changed_for_status.emit(status_msg)
-
 
     def _populate_category_combo_if_needed(self):
         if self.categories_populated_in_combo or not self.editor_state.assets_palette:
@@ -190,8 +193,7 @@ class AssetPaletteWidget(QWidget):
     def clear_selection(self):
         self.asset_list_widget.clearSelection()
 
-# --- PropertiesEditorDockWidget (No changes needed here for this request) ---
-# ... (rest of PropertiesEditorDockWidget remains the same as version 2.0.5) ...
+# --- PropertiesEditorDockWidget ---
 class PropertiesEditorDockWidget(QWidget):
     properties_changed = Signal(dict)
 

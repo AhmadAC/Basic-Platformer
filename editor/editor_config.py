@@ -76,6 +76,17 @@ MINIMAP_BORDER_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'GRAY', (128,128,128
 MINIMAP_CAMERA_VIEW_RECT_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'YELLOW', (255,255,0))
 MINIMAP_CAMERA_VIEW_RECT_ALPHA = 100
 
+# --- Minimap Configuration ---
+MINIMAP_ENABLED = True
+MINIMAP_DEFAULT_WIDTH = 200  # Preferred width of the minimap widget
+MINIMAP_DEFAULT_HEIGHT = 150 # Preferred height of the minimap widget
+MINIMAP_BACKGROUND_COLOR_TUPLE: Tuple[int,int,int] = (40, 40, 50, 230) # RGBA, slightly transparent dark
+MINIMAP_BORDER_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'GRAY', (128,128,128))
+MINIMAP_VIEW_RECT_FILL_COLOR_TUPLE: Tuple[int,int,int,int] = (255, 255, 0, 70) # Yellow, semi-transparent fill
+MINIMAP_VIEW_RECT_BORDER_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'YELLOW', (255,255,0))
+MINIMAP_OBJECT_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'LIGHT_GRAY', (200,200,200)) # Default color for objects on minimap
+MINIMAP_UPDATE_INTERVAL_MS = 50 # 
+
 # --- Asset Palette ---
 ASSET_THUMBNAIL_SIZE = getattr(C, 'TILE_SIZE', 32)# For display in the palette
 ASSET_PALETTE_ICON_SIZE_W = ASSET_THUMBNAIL_SIZE
