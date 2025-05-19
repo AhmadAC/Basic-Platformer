@@ -903,10 +903,156 @@
                 "item_type": "coin",
                 "item_quantity": 1
             }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 280,
+            "world_y": 680,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 280,
+            "world_y": 920,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 280,
+            "world_y": 960,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 240,
+            "world_y": 840,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 280,
+            "world_y": 840,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 280,
+            "world_y": 800,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 280,
+            "world_y": 880,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 280,
+            "world_y": 760,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 280,
+            "world_y": 720,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": false,
+                "hardness": 1
+            }
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 400,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 440,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 480,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 520,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 560,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 600,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 640,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 680,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "properties": {}
         }
     ],
-    "camera_offset_x": -50.0,
-    "camera_offset_y": -264.0,
+    "camera_offset_x": 238.0,
+    "camera_offset_y": 683.0,
     "zoom_level": 1.0,
     "show_grid": true,
     "asset_specific_variables": {}

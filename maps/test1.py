@@ -18,6 +18,7 @@ def load_map_test1(initial_screen_width, initial_screen_height):
     collectible_spawns_data = []
     statue_spawns_data = []
 
+    platforms.add(Platform(400, 600, 320, 10, (0, 100, 0), platform_type='ledge'))
     platforms.add(Platform(160, 160, 240, 40, (170, 0, 0), platform_type='wall'))
     platforms.add(Platform(360, 120, 80, 40, (170, 0, 0), platform_type='wall'))
     platforms.add(Platform(160, 200, 40, 40, (85, 170, 255), platform_type='wall'))
@@ -42,19 +43,27 @@ def load_map_test1(initial_screen_width, initial_screen_height):
     # No hazards placed.
     enemy_spawns_data.append({'pos': (770, 358), 'patrol': None, 'enemy_color_id': 'purple', 'properties': {'health': 5, 'attack_damage': 2, 'can_fly': True}})
     collectible_spawns_data.append({'type': 'chest', 'pos': (355, 530), 'properties': {'item_type': 'coin', 'item_quantity': 1}})
-    # No statue spawns defined.
+    statue_spawns_data.append({'id': 'object_stone_idle_280_680', 'pos': (296.5, 698.0), 'properties': {'destructible': False, 'hardness': 1}})
+    statue_spawns_data.append({'id': 'object_stone_idle_280_920', 'pos': (296.5, 938.0), 'properties': {'destructible': False, 'hardness': 1}})
+    statue_spawns_data.append({'id': 'object_stone_idle_280_960', 'pos': (296.5, 978.0), 'properties': {'destructible': False, 'hardness': 1}})
+    statue_spawns_data.append({'id': 'object_stone_idle_240_840', 'pos': (256.5, 858.0), 'properties': {'destructible': False, 'hardness': 1}})
+    statue_spawns_data.append({'id': 'object_stone_idle_280_840', 'pos': (296.5, 858.0), 'properties': {'destructible': False, 'hardness': 1}})
+    statue_spawns_data.append({'id': 'object_stone_idle_280_800', 'pos': (296.5, 818.0), 'properties': {'destructible': False, 'hardness': 1}})
+    statue_spawns_data.append({'id': 'object_stone_idle_280_880', 'pos': (296.5, 898.0), 'properties': {'destructible': False, 'hardness': 1}})
+    statue_spawns_data.append({'id': 'object_stone_idle_280_760', 'pos': (296.5, 778.0), 'properties': {'destructible': False, 'hardness': 1}})
+    statue_spawns_data.append({'id': 'object_stone_idle_280_720', 'pos': (296.5, 738.0), 'properties': {'destructible': False, 'hardness': 1}})
 
     map_total_width_pixels = 1400
     level_min_y_absolute = 40
-    level_max_y_absolute = 640
-    main_ground_y_reference = 640
+    level_max_y_absolute = 996
+    main_ground_y_reference = 996
     main_ground_height_reference = 40
 
     _boundary_thickness = 80
-    _boundary_wall_height = 760
+    _boundary_wall_height = 1116
     _boundary_color = (50, 50, 50)
 
-    platforms.add(Platform(1320, -40, 80, 760, _boundary_color, platform_type='wall'))
+    platforms.add(Platform(1320, -40, 80, 1116, _boundary_color, platform_type='wall'))
 
     platforms.add(Platform(0, level_min_y_absolute - _boundary_thickness, 1400, _boundary_thickness, _boundary_color, platform_type="boundary_wall_top"))
     platforms.add(Platform(0, level_max_y_absolute, 1400, _boundary_thickness, _boundary_color, platform_type="boundary_wall_bottom"))
