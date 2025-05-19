@@ -3,6 +3,7 @@
 """
 ## version 2.0.6 (Minimap docking order corrected)
 ## version 2.0.7 (Hide level_default from editor interactions)
+## version 2.0.8 (Allow full editing of level_default in editor, still hidden from game UI)
 Level Editor for the Platformer Game (PySide6 Version).
 Allows creating, loading, and saving game levels visually.
 """
@@ -27,7 +28,7 @@ log_file_path_for_error_msg = "editor_qt_debug.log"
 try:
     import editor_config as ED_CONFIG
     current_script_dir_for_logs = os.path.dirname(os.path.abspath(__file__))
-    logs_dir = os.path.join(current_script_dir_for_logs, 'logs') 
+    logs_dir = os.path.join(current_script_dir_for_logs, 'logs')
     if not os.path.exists(logs_dir): os.makedirs(logs_dir)
     log_file_path_for_error_msg = os.path.join(logs_dir, ED_CONFIG.LOG_FILE_NAME if hasattr(ED_CONFIG, "LOG_FILE_NAME") else "editor_qt_debug.log")
 
@@ -38,7 +39,7 @@ try:
         format=ED_CONFIG.LOG_FORMAT if hasattr(ED_CONFIG, "LOG_FORMAT") else '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s',
         handlers=[logging.FileHandler(log_file_path_for_error_msg, mode='w')]
     )
-    logger = logging.getLogger(__name__) 
+    logger = logging.getLogger(__name__)
     logger.info("Editor session started. Logging initialized successfully.")
     print(f"LOGGING INITIALIZED. Log file at: {log_file_path_for_error_msg}")
 except Exception as e_log:
@@ -63,17 +64,17 @@ except Exception as e_imp:
 
 # --- Editor module imports ---
 try:
-    from .editor_state import EditorState 
+    from .editor_state import EditorState
     from . import editor_assets
     from . import editor_map_utils
     from . import editor_history
-    from .map_view_widget import MapViewWidget, MapObjectItem 
+    from .map_view_widget import MapViewWidget, MapObjectItem
     from .editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
-    if ED_CONFIG.MINIMAP_ENABLED: from .minimap_widget import MinimapWidget 
+    if ED_CONFIG.MINIMAP_ENABLED: from .minimap_widget import MinimapWidget
     if logger: logger.debug("Successfully imported all editor-specific modules (using relative imports).")
 except ImportError as e_editor_mod_rel:
     logger.warning(f"Relative import failed for editor modules: {e_editor_mod_rel}. Trying absolute...")
-    try: 
+    try:
         from editor_state import EditorState
         import editor_assets
         import editor_map_utils
@@ -87,7 +88,7 @@ except ImportError as e_editor_mod_rel:
         sys.exit(f"ImportError for editor module. Check log: {log_file_path_for_error_msg}")
 # --- End Editor module imports ---
 
-RESERVED_MAP_NAME = "level_default"
+# REMOVED: RESERVED_MAP_NAME = "level_default" - We no longer need to treat it specially in editor UI
 
 class EditorMainWindow(QMainWindow):
     def __init__(self):
@@ -100,10 +101,10 @@ class EditorMainWindow(QMainWindow):
         self.setWindowTitle("Platformer Level Editor (PySide6)")
         self.setGeometry(50, 50, ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT)
 
-        self.init_ui() 
-        self.create_actions() 
-        self.create_menus()   
-        self.create_status_bar() 
+        self.init_ui()
+        self.create_actions()
+        self.create_menus()
+        self.create_status_bar()
 
         self.asset_palette_dock.setObjectName("AssetPaletteDock")
         self.properties_editor_dock.setObjectName("PropertiesEditorDock")
@@ -112,9 +113,9 @@ class EditorMainWindow(QMainWindow):
 
         editor_assets.load_editor_palette_assets(self.editor_state, self)
         self.asset_palette_widget.populate_assets()
-        
+
         self.update_window_title()
-        self.update_edit_actions_enabled_state() 
+        self.update_edit_actions_enabled_state()
 
         if not self.restore_geometry_and_state():
             self.showMaximized()
@@ -128,8 +129,9 @@ class EditorMainWindow(QMainWindow):
         self.show_status_message("Editor started. Welcome!", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2)
 
     def init_ui(self):
+        # ... (init_ui content remains the same as version 2.0.7)
         logger.debug("Initializing UI components...")
-        self.map_view_widget = MapViewWidget(self.editor_state, self) 
+        self.map_view_widget = MapViewWidget(self.editor_state, self)
         self.setCentralWidget(self.map_view_widget)
 
         self.asset_palette_dock = QDockWidget("Asset Palette", self)
@@ -137,24 +139,24 @@ class EditorMainWindow(QMainWindow):
         self.asset_palette_dock.setWidget(self.asset_palette_widget)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.asset_palette_dock)
         self.asset_palette_dock.setMinimumWidth(max(200, ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH - 50))
-        self.asset_palette_dock.setMaximumWidth(ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH + 100) 
+        self.asset_palette_dock.setMaximumWidth(ED_CONFIG.ASSET_PALETTE_PREFERRED_WIDTH + 100)
 
         # Properties Dock
         self.properties_editor_dock = QDockWidget("Properties", self)
         self.properties_editor_widget = PropertiesEditorDockWidget(self.editor_state, self)
         self.properties_editor_dock.setWidget(self.properties_editor_widget)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.properties_editor_dock)
-        self.properties_editor_dock.setMinimumWidth(280) 
+        self.properties_editor_dock.setMinimumWidth(280)
 
         # Minimap Dock (if enabled)
         if ED_CONFIG.MINIMAP_ENABLED:
             self.minimap_dock = QDockWidget("Minimap", self)
             self.minimap_widget = MinimapWidget(self.editor_state, self.map_view_widget, self)
             self.minimap_dock.setWidget(self.minimap_widget)
-            
+
             self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.minimap_dock)
             self.splitDockWidget(self.minimap_dock, self.properties_editor_dock, Qt.Orientation.Vertical)
-            self.minimap_dock.setFixedHeight(ED_CONFIG.MINIMAP_DEFAULT_HEIGHT + 35) 
+            self.minimap_dock.setFixedHeight(ED_CONFIG.MINIMAP_DEFAULT_HEIGHT + 35)
         else:
             self.minimap_dock = None
             self.minimap_widget = None
@@ -166,9 +168,9 @@ class EditorMainWindow(QMainWindow):
 
         self.map_view_widget.map_object_selected_for_properties.connect(self.properties_editor_widget.display_map_object_properties)
         self.map_view_widget.map_content_changed.connect(self.handle_map_content_changed)
-        
+
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
-        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed) 
+        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed)
 
         if self.minimap_widget:
             self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_full_update)
@@ -177,16 +179,18 @@ class EditorMainWindow(QMainWindow):
         self.map_view_widget.setFocus()
         logger.debug("UI components initialized.")
 
+
     def create_actions(self):
+        # ... (create_actions content remains the same as version 2.0.7)
         logger.debug("Creating actions...")
         self.new_map_action = QAction("&New Map...", self, shortcut=QKeySequence.StandardKey.New, statusTip="Create a new map", triggered=self.new_map)
         self.load_map_action = QAction("&Load Map...", self, shortcut=QKeySequence.StandardKey.Open, statusTip="Load an existing map", triggered=self.load_map)
         self.save_map_action = QAction("&Save Map", self, shortcut=QKeySequence.StandardKey.Save, statusTip="Save the current map's editor data (.json)", triggered=self.save_map_json)
         self.export_map_action = QAction("&Export Map for Game...", self, shortcut=QKeySequence("Ctrl+E"), statusTip="Export map to game format (.py)", triggered=self.export_map_py)
         self.save_all_action = QAction("Save &All (JSON & PY)", self, shortcut=QKeySequence("Ctrl+Shift+S"), statusTip="Save editor data and export for game", triggered=self.save_all)
-        
+
         self.export_map_as_image_action = QAction("Export Map as &Image...", self,
-                                                  shortcut="Ctrl+Shift+P", 
+                                                  shortcut="Ctrl+Shift+P",
                                                   statusTip="Export the current map view as a PNG image",
                                                   triggered=self.export_map_as_image)
 
@@ -196,7 +200,7 @@ class EditorMainWindow(QMainWindow):
         self.redo_action = QAction("&Redo", self, shortcut=QKeySequence.StandardKey.Redo, statusTip="Redo last undone action", triggered=self.redo)
 
         self.toggle_grid_action = QAction("Toggle &Grid", self, shortcut="Ctrl+G", statusTip="Show/Hide grid", triggered=self.toggle_grid, checkable=True)
-        self.toggle_grid_action.setChecked(self.editor_state.show_grid) 
+        self.toggle_grid_action.setChecked(self.editor_state.show_grid)
         self.change_bg_color_action = QAction("Change &Background Color...", self, statusTip="Change map background color", triggered=self.change_background_color)
 
         self.zoom_in_action = QAction("Zoom &In", self, shortcut=QKeySequence.StandardKey.ZoomIn, statusTip="Zoom in on the map", triggered=self.map_view_widget.zoom_in)
@@ -209,6 +213,7 @@ class EditorMainWindow(QMainWindow):
         logger.debug("Actions created.")
 
     def create_menus(self):
+        # ... (create_menus content remains the same as version 2.0.7)
         logger.debug("Creating menus...")
         self.menu_bar = self.menuBar()
 
@@ -222,7 +227,7 @@ class EditorMainWindow(QMainWindow):
         file_menu.addAction(self.export_map_action)
         file_menu.addAction(self.save_all_action)
         file_menu.addSeparator()
-        file_menu.addAction(self.export_map_as_image_action) 
+        file_menu.addAction(self.export_map_as_image_action)
         file_menu.addSeparator()
         file_menu.addAction(self.exit_action)
 
@@ -241,7 +246,7 @@ class EditorMainWindow(QMainWindow):
         view_menu.addSeparator()
         view_menu.addAction(self.asset_palette_dock.toggleViewAction())
         view_menu.addAction(self.properties_editor_dock.toggleViewAction())
-        if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock: 
+        if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock:
             view_menu.addAction(self.minimap_dock.toggleViewAction())
 
         help_menu = self.menu_bar.addMenu("&Help")
@@ -250,6 +255,7 @@ class EditorMainWindow(QMainWindow):
         logger.debug("Menus created.")
 
     def create_status_bar(self):
+        # ... (create_status_bar content remains the same as version 2.0.7)
         logger.debug("Creating status bar...")
         self.status_bar = self.statusBar()
         self.status_bar.showMessage("Ready", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT)
@@ -261,30 +267,35 @@ class EditorMainWindow(QMainWindow):
 
     @Slot(str)
     def show_status_message(self, message: str, timeout: int = ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT):
+        # ... (show_status_message content remains the same as version 2.0.7)
         self.status_bar.showMessage(message, timeout)
         logger.info(f"Status: {message}")
 
     @Slot(tuple)
     def update_map_coords_status(self, coords: tuple):
+        # ... (update_map_coords_status content remains the same as version 2.0.7)
         wx, wy, tx, ty, zl = coords
         self.map_coords_label.setText(f" Map:({int(wx)},{int(wy)}) Tile:({tx},{ty}) Zoom:{zl:.2f}x ")
 
     @Slot()
     def handle_map_content_changed(self):
+        # ... (handle_map_content_changed content remains the same as version 2.0.7)
         logger.debug("EditorMainWindow: handle_map_content_changed triggered.")
         if not self.editor_state.unsaved_changes:
             logger.debug("Map content changed, unsaved_changes was False, now set to True.")
         self.editor_state.unsaved_changes = True
         self.update_window_title()
         self.update_edit_actions_enabled_state()
-        
+
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_widget') and self.minimap_widget:
              logger.debug("Notifying minimap to redraw content due to map change via handle_map_content_changed.")
              self.minimap_widget.schedule_map_content_redraw()
-        
+
         logger.debug(f"EditorMainWindow: After handle_map_content_changed - unsaved_changes: {self.editor_state.unsaved_changes}, save_map_action enabled: {self.save_map_action.isEnabled()}")
 
+
     def update_window_title(self):
+        # ... (update_window_title content remains the same as version 2.0.7)
         title = "Platformer Level Editor (PySide6)"
         map_name = self.editor_state.map_name_for_function
         if map_name and map_name != "untitled_map":
@@ -295,8 +306,9 @@ class EditorMainWindow(QMainWindow):
             title += "*"
         self.setWindowTitle(title)
 
+
     def update_edit_actions_enabled_state(self):
-        is_reserved_map = (self.editor_state.map_name_for_function == RESERVED_MAP_NAME)
+        # REMOVED: is_reserved_map check
         
         map_is_properly_loaded_or_newly_named = bool(
             self.editor_state.current_json_filename or \
@@ -304,12 +316,12 @@ class EditorMainWindow(QMainWindow):
              self.editor_state.placed_objects)
         )
         
-        can_save = map_is_properly_loaded_or_newly_named and self.editor_state.unsaved_changes and not is_reserved_map
+        can_save = map_is_properly_loaded_or_newly_named and self.editor_state.unsaved_changes
         self.save_map_action.setEnabled(can_save)
         
-        self.export_map_action.setEnabled(map_is_properly_loaded_or_newly_named and not is_reserved_map)
-        self.save_all_action.setEnabled(map_is_properly_loaded_or_newly_named and not is_reserved_map)
-        self.rename_map_action.setEnabled(bool(self.editor_state.current_json_filename) and not is_reserved_map)
+        self.export_map_action.setEnabled(map_is_properly_loaded_or_newly_named)
+        self.save_all_action.setEnabled(map_is_properly_loaded_or_newly_named)
+        self.rename_map_action.setEnabled(bool(self.editor_state.current_json_filename)) # Can rename any loaded map
 
         self.undo_action.setEnabled(len(self.editor_state.undo_stack) > 0)
         self.redo_action.setEnabled(len(self.editor_state.redo_stack) > 0)
@@ -325,7 +337,8 @@ class EditorMainWindow(QMainWindow):
         self.export_map_as_image_action.setEnabled(map_has_content)
 
     def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool:
-        if self.editor_state.unsaved_changes and self.editor_state.map_name_for_function != RESERVED_MAP_NAME:
+        # REMOVED: and self.editor_state.map_name_for_function != RESERVED_MAP_NAME
+        if self.editor_state.unsaved_changes: 
             reply = QMessageBox.question(self, "Unsaved Changes",
                                          f"You have unsaved changes. Do you want to save before you {action_description}?",
                                          QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
@@ -339,13 +352,11 @@ class EditorMainWindow(QMainWindow):
     def new_map(self):
         logger.info("New Map action triggered.")
         if not self.confirm_unsaved_changes("create a new map"): return
-        map_name, ok = QInputDialog.getText(self, "New Map", "Enter map name (e.g., level_1):")
+        map_name, ok = QInputDialog.getText(self, "New Map", "Enter map name (e.g., level_1 or level_default):") # Modified prompt
         if ok and map_name:
             clean_map_name = map_name.strip().lower().replace(" ", "_").replace("-", "_")
             if not clean_map_name: QMessageBox.warning(self, "Invalid Name", "Map name cannot be empty."); return
-            if clean_map_name == RESERVED_MAP_NAME: # MODIFIED
-                QMessageBox.warning(self, "Reserved Name", f"'{RESERVED_MAP_NAME}' is a reserved map name and cannot be used for new maps.")
-                return
+            # REMOVED: Check for RESERVED_MAP_NAME here, as user can now create/edit it.
             invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']
             if any(char in clean_map_name for char in invalid_chars): QMessageBox.warning(self, "Invalid Name", f"Map name '{clean_map_name}' has invalid chars."); return
             project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -376,12 +387,7 @@ class EditorMainWindow(QMainWindow):
         json_filter = f"Editor Map Files (*{ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION})"
         file_path, _ = QFileDialog.getOpenFileName(self, "Load Map", maps_abs_dir, json_filter)
         if file_path:
-            # MODIFICATION: Check if trying to load the reserved map
-            if os.path.basename(file_path) == RESERVED_MAP_NAME + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION:
-                QMessageBox.information(self, "Reserved Map", f"'{RESERVED_MAP_NAME}' is a system map and cannot be directly edited.")
-                self.show_status_message(f"Loading of '{RESERVED_MAP_NAME}' disallowed.")
-                return
-
+            # REMOVED: Check preventing loading RESERVED_MAP_NAME
             if editor_map_utils.load_map_from_json(self.editor_state, file_path):
                 self.map_view_widget.load_map_from_state(); self.asset_palette_widget.clear_selection()
                 self.properties_editor_widget.clear_display(); self.update_window_title()
@@ -393,15 +399,10 @@ class EditorMainWindow(QMainWindow):
     @Slot()
     def save_map_json(self) -> bool:
         logger.info("Save Map (JSON) action triggered.")
-        # MODIFICATION: Prevent saving as reserved name
-        if self.editor_state.map_name_for_function == RESERVED_MAP_NAME:
-            QMessageBox.warning(self, "Reserved Name", f"Cannot save map as '{RESERVED_MAP_NAME}'. This name is reserved.")
-            self.show_status_message(f"Save cancelled: '{RESERVED_MAP_NAME}' is reserved.")
-            return False
-            
+        # REMOVED: Check preventing saving RESERVED_MAP_NAME
         if not self.editor_state.map_name_for_function or self.editor_state.map_name_for_function == "untitled_map":
             self.show_status_message("Map is untitled. Performing initial Save All.", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2)
-            return self.save_all() # Save All will ask for a name
+            return self.save_all()
         if editor_map_utils.save_map_to_json(self.editor_state):
             self.show_status_message(f"Editor data saved: {os.path.basename(self.editor_state.current_json_filename)}.")
             self.update_window_title(); self.update_edit_actions_enabled_state()
@@ -411,16 +412,11 @@ class EditorMainWindow(QMainWindow):
     @Slot()
     def export_map_py(self) -> bool:
         logger.info("Export Map (PY) action triggered.")
-        # MODIFICATION: Prevent exporting as reserved name
-        if self.editor_state.map_name_for_function == RESERVED_MAP_NAME:
-            QMessageBox.warning(self, "Reserved Name", f"Cannot export map as '{RESERVED_MAP_NAME}'. This name is reserved.")
-            self.show_status_message(f"Export cancelled: '{RESERVED_MAP_NAME}' is reserved.")
-            return False
-
+        # REMOVED: Check preventing exporting RESERVED_MAP_NAME
         if not self.editor_state.current_json_filename:
              QMessageBox.warning(self, "Cannot Export", "No map is currently loaded/saved. Save the map first (JSON)."); return False
         if editor_map_utils.export_map_to_game_python_script(self.editor_state):
-            self.editor_state.unsaved_changes = False
+            self.editor_state.unsaved_changes = False # Export implies a save of game-ready state
             self.update_window_title(); self.update_edit_actions_enabled_state()
             self.show_status_message(f"Map exported for game: {os.path.basename(self.editor_state.current_map_filename)}.")
             return True
@@ -430,14 +426,10 @@ class EditorMainWindow(QMainWindow):
     def save_all(self) -> bool:
         logger.info("Save All action triggered.")
         if not self.editor_state.map_name_for_function or self.editor_state.map_name_for_function == "untitled_map":
-            map_name, ok = QInputDialog.getText(self, "Save Map As", "Enter map name for saving all files:")
+            map_name, ok = QInputDialog.getText(self, "Save Map As", "Enter map name for saving all files (e.g., level_default):") # Updated prompt
             if ok and map_name:
                 clean_map_name = map_name.strip().lower().replace(" ", "_").replace("-", "_")
-                # MODIFICATION: Prevent initial save as reserved name
-                if clean_map_name == RESERVED_MAP_NAME:
-                    QMessageBox.warning(self, "Reserved Name", f"Cannot save map as '{RESERVED_MAP_NAME}'. This name is reserved.")
-                    self.show_status_message("Save All cancelled: name is reserved.")
-                    return False
+                # REMOVED: Check preventing saving as RESERVED_MAP_NAME initially
                 if not clean_map_name or any(c in clean_map_name for c in ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']):
                     QMessageBox.warning(self, "Invalid Name", "Map name is invalid or empty."); return False
                 self.editor_state.map_name_for_function = clean_map_name
@@ -450,11 +442,7 @@ class EditorMainWindow(QMainWindow):
                 self.update_window_title()
             else: self.show_status_message("Save All cancelled: map name not provided."); return False
         
-        # MODIFICATION: Double-check before saving existing map as reserved name (should be caught by above but defensive)
-        if self.editor_state.map_name_for_function == RESERVED_MAP_NAME:
-            QMessageBox.warning(self, "Reserved Name", f"Cannot save map as '{RESERVED_MAP_NAME}'. This name is reserved.")
-            self.show_status_message(f"Save All cancelled: '{RESERVED_MAP_NAME}' is reserved.")
-            return False
+        # REMOVED: Double-check for RESERVED_MAP_NAME before saving
 
         if self.save_map_json():
             if self.export_map_py():
@@ -466,18 +454,12 @@ class EditorMainWindow(QMainWindow):
         logger.info("Rename Map action triggered.")
         if not self.editor_state.current_json_filename: QMessageBox.information(self, "Rename Map", "No map loaded to rename."); return
         old_base_name = self.editor_state.map_name_for_function
-        # MODIFICATION: Prevent renaming the reserved map
-        if old_base_name == RESERVED_MAP_NAME:
-            QMessageBox.information(self, "Rename Map", f"Cannot rename the reserved map '{RESERVED_MAP_NAME}'.")
-            return
+        # REMOVED: Check preventing renaming RESERVED_MAP_NAME
 
         new_name_str, ok = QInputDialog.getText(self, "Rename Map", f"Enter new name for '{old_base_name}':", text=old_base_name)
         if ok and new_name_str:
             clean_new_name = new_name_str.strip().lower().replace(" ", "_").replace("-", "_")
-            # MODIFICATION: Prevent renaming TO the reserved name
-            if clean_new_name == RESERVED_MAP_NAME:
-                QMessageBox.warning(self, "Reserved Name", f"Cannot rename map to '{RESERVED_MAP_NAME}'. This name is reserved.")
-                return
+            # REMOVED: Check preventing renaming TO RESERVED_MAP_NAME
             if not clean_new_name or any(c in clean_new_name for c in ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']): QMessageBox.warning(self, "Invalid Name", "New map name invalid."); return
             if clean_new_name == old_base_name: self.show_status_message("Rename cancelled: name unchanged."); return
             project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -514,11 +496,7 @@ class EditorMainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Map to Delete", maps_abs_dir, json_filter)
         if file_path:
             map_name_to_delete = os.path.splitext(os.path.basename(file_path))[0]
-            # MODIFICATION: Prevent deleting the reserved map
-            if map_name_to_delete == RESERVED_MAP_NAME:
-                QMessageBox.information(self, "Reserved Map", f"Cannot delete the reserved map '{RESERVED_MAP_NAME}'.")
-                self.show_status_message(f"Deletion of '{RESERVED_MAP_NAME}' disallowed.")
-                return
+            # REMOVED: Check preventing deleting RESERVED_MAP_NAME
 
             reply = QMessageBox.warning(self, "Confirm Delete", f"Delete all files for map '{map_name_to_delete}'?\nCannot be undone.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if reply == QMessageBox.StandardButton.Yes:
@@ -534,6 +512,7 @@ class EditorMainWindow(QMainWindow):
 
     @Slot()
     def export_map_as_image(self):
+        # ... (export_map_as_image content remains the same as version 2.0.7)
         logger.info("Export Map as Image action triggered.")
         if not self.editor_state.placed_objects and not self.editor_state.current_json_filename:
             QMessageBox.information(self, "Export Error", "No map content to export as an image.")
@@ -564,6 +543,7 @@ class EditorMainWindow(QMainWindow):
 
     @Slot()
     def undo(self):
+        # ... (undo content remains the same as version 2.0.7)
         logger.info("Undo action triggered.")
         if editor_history.undo(self.editor_state):
             self.map_view_widget.load_map_from_state(); self.update_edit_actions_enabled_state()
@@ -575,6 +555,7 @@ class EditorMainWindow(QMainWindow):
 
     @Slot()
     def redo(self):
+        # ... (redo content remains the same as version 2.0.7)
         logger.info("Redo action triggered.")
         if editor_history.redo(self.editor_state):
             self.map_view_widget.load_map_from_state(); self.update_edit_actions_enabled_state()
@@ -586,6 +567,7 @@ class EditorMainWindow(QMainWindow):
 
     @Slot()
     def toggle_grid(self):
+        # ... (toggle_grid content remains the same as version 2.0.7)
         self.editor_state.show_grid = not self.editor_state.show_grid
         self.toggle_grid_action.setChecked(self.editor_state.show_grid)
         self.map_view_widget.update_grid_visibility()
@@ -593,6 +575,7 @@ class EditorMainWindow(QMainWindow):
 
     @Slot()
     def change_background_color(self):
+        # ... (change_background_color content remains the same as version 2.0.7)
         if not self.editor_state.map_name_for_function or self.editor_state.map_name_for_function == "untitled_map":
             if not self.editor_state.placed_objects: QMessageBox.information(self, "Change Background Color", "Please load or create a map first."); return
         current_qcolor = QColor(*self.editor_state.background_color)
@@ -605,22 +588,25 @@ class EditorMainWindow(QMainWindow):
 
     @Slot()
     def about_dialog(self):
+        # ... (about_dialog content remains the same as version 2.0.7)
         QMessageBox.about(self, "About Platformer Level Editor", "Platformer Level Editor (PySide6 Version)\n\nCreate and edit levels for your platformer game.")
 
     def keyPressEvent(self, event: QKeyEvent):
+        # ... (keyPressEvent content remains the same as version 2.0.7)
         if event.key() == Qt.Key.Key_Escape:
             logger.info("Escape key pressed, attempting to close window.")
             self.close(); event.accept()
         else: super().keyPressEvent(event)
 
     def closeEvent(self, event):
+        # ... (closeEvent content remains the same as version 2.0.7)
         logger.info("Close event triggered for main window.")
         if self.confirm_unsaved_changes("exit the editor"):
             if not self.asset_palette_dock.objectName(): self.asset_palette_dock.setObjectName("AssetPaletteDock")
             if not self.properties_editor_dock.objectName(): self.properties_editor_dock.setObjectName("PropertiesEditorDock")
             if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock and not self.minimap_dock.objectName():
                 self.minimap_dock.setObjectName("MinimapDock")
-            
+
             self.settings.setValue("geometry", self.saveGeometry())
             self.settings.setValue("windowState", self.saveState())
             logger.info("Window geometry and state saved.")
@@ -628,25 +614,29 @@ class EditorMainWindow(QMainWindow):
         else: event.ignore()
 
     def save_geometry_and_state(self):
+        # ... (save_geometry_and_state content remains the same as version 2.0.7)
         if not self.asset_palette_dock.objectName(): self.asset_palette_dock.setObjectName("AssetPaletteDock")
         if not self.properties_editor_dock.objectName(): self.properties_editor_dock.setObjectName("PropertiesEditorDock")
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock and not self.minimap_dock.objectName():
             self.minimap_dock.setObjectName("MinimapDock")
-            
+
         self.settings.setValue("geometry", self.saveGeometry())
         self.settings.setValue("windowState", self.saveState())
         logger.debug("Window geometry and state explicitly saved.")
 
+
     def restore_geometry_and_state(self) -> bool:
+        # ... (restore_geometry_and_state content remains the same as version 2.0.7)
         geom = self.settings.value("geometry")
         state = self.settings.value("windowState")
         restored = False
-        if geom is not None: self.restoreGeometry(geom); restored = True 
-        if state is not None: self.restoreState(state); restored = True 
+        if geom is not None: self.restoreGeometry(geom); restored = True
+        if state is not None: self.restoreState(state); restored = True
         if restored: logger.debug("Window geometry and/or state restored.")
         return restored
 
 def editor_main():
+    # ... (editor_main content remains the same as version 2.0.7)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     logger.info("editor_main() started for PySide6 application.")
@@ -664,10 +654,11 @@ def editor_main():
         QMessageBox.critical(None,"Editor Critical Error", f"{e_main_loop}\n\nCheck log:\n{log_file_path_for_error_msg}")
         exit_code = 1
     finally:
-        if hasattr(main_window, 'isVisible') and main_window.isVisible(): 
+        if hasattr(main_window, 'isVisible') and main_window.isVisible():
             main_window.save_geometry_and_state()
         logger.info("Editor session ended.")
     return exit_code
+
 
 if __name__ == "__main__":
     print("--- editor.py execution started (__name__ == '__main__') ---")
