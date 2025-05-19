@@ -1,5 +1,3 @@
-#################### START OF FILE: enemy_status_effects.py ####################
-
 # enemy_status_effects.py
 # -*- coding: utf-8 -*-
 """
@@ -7,7 +5,7 @@ Handles the application and management of status effects for enemies using PySid
 """
 # version 2.0.1 (PySide6 Refactor - Added missing Any import)
 
-from typing import List, Optional, Any # Added Any
+from typing import List, Optional, Any, TYPE_CHECKING # Added TYPE_CHECKING
 
 # PySide6 imports
 from PySide6.QtGui import QPixmap, QImage, QTransform, QColor
@@ -15,7 +13,10 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 
 # Game imports
 import constants as C
-from enemy import Enemy # For type hinting and isinstance checks
+# from enemy import Enemy # For type hinting and isinstance checks # <--- REMOVE THIS LINE (Original line 18)
+
+if TYPE_CHECKING:
+    from enemy import Enemy # For type hinting and isinstance checks # <--- ADD THIS LINE
 
 try:
     from enemy_state_handler import set_enemy_state
@@ -49,7 +50,9 @@ except ImportError:
 
 # --- Functions to APPLY status effects ---
 
-def apply_aflame_effect(enemy):
+# Optionally, if type hints are desired for functions:
+# def apply_aflame_effect(enemy: 'Enemy'):
+def apply_aflame_effect(enemy): # Original signature
     if enemy.is_aflame or enemy.is_deflaming or enemy.is_dead or \
        enemy.is_petrified or enemy.is_frozen or enemy.is_defrosting:
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_aflame_effect called but already in conflicting state. Ignoring.")
@@ -60,7 +63,8 @@ def apply_aflame_effect(enemy):
     set_enemy_state(enemy, 'aflame')
     enemy.is_attacking = False; enemy.attack_type = 0
 
-def apply_freeze_effect(enemy):
+# def apply_freeze_effect(enemy: 'Enemy'):
+def apply_freeze_effect(enemy): # Original signature
     if enemy.is_frozen or enemy.is_defrosting or enemy.is_dead or \
        enemy.is_petrified or enemy.is_aflame or enemy.is_deflaming:
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_freeze_effect called but already in conflicting state. Ignoring.")
@@ -71,7 +75,8 @@ def apply_freeze_effect(enemy):
     enemy.vel = QPointF(0,0); enemy.acc.setX(0.0) 
     enemy.is_attacking = False; enemy.attack_type = 0
 
-def petrify_enemy(enemy):
+# def petrify_enemy(enemy: 'Enemy'):
+def petrify_enemy(enemy): # Original signature
     if enemy.is_petrified or (enemy.is_dead and not enemy.is_petrified):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: petrify_enemy called but already petrified or truly dead. Ignoring.")
         return
@@ -81,14 +86,16 @@ def petrify_enemy(enemy):
     set_enemy_state(enemy, 'petrified')
     enemy.vel.setX(0.0); enemy.acc.setX(0.0) 
 
-def smash_petrified_enemy(enemy):
+# def smash_petrified_enemy(enemy: 'Enemy'):
+def smash_petrified_enemy(enemy): # Original signature
     if enemy.is_petrified and not enemy.is_stone_smashed:
         debug(f"Petrified Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {enemy.color_name}) is being smashed.")
         set_enemy_state(enemy, 'smashed')
     else:
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: smash_petrified_enemy called but not in smashable state (Petrified: {enemy.is_petrified}, Smashed: {enemy.is_stone_smashed}).")
 
-def stomp_kill_enemy(enemy):
+# def stomp_kill_enemy(enemy: 'Enemy'):
+def stomp_kill_enemy(enemy): # Original signature
     if enemy.is_dead or enemy.is_stomp_dying or enemy.is_petrified or \
        enemy.is_aflame or enemy.is_frozen:
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: stomp_kill_enemy called but already in conflicting state. Ignoring.")
@@ -117,7 +124,8 @@ def stomp_kill_enemy(enemy):
 
 # --- Function to UPDATE status effects ---
 
-def update_enemy_status_effects(enemy, current_time_ms: int, platforms_list: List[Any]) -> bool:
+# def update_enemy_status_effects(enemy: 'Enemy', current_time_ms: int, platforms_list: List[Any]) -> bool:
+def update_enemy_status_effects(enemy, current_time_ms: int, platforms_list: List[Any]) -> bool: # Original signature
     enemy_id_log = getattr(enemy, 'enemy_id', 'Unknown')
     an_effect_is_overriding_updates = False
 
@@ -230,5 +238,3 @@ def update_enemy_status_effects(enemy, current_time_ms: int, platforms_list: Lis
         return False 
 
     return False
-
-#################### END OF FILE: enemy_status_effects.py ####################

@@ -1,5 +1,3 @@
-#################### START OF FILE: enemy_physics_handler.py ####################
-
 # enemy_physics_handler.py
 # -*- coding: utf-8 -*-
 """
@@ -8,7 +6,7 @@ Aflame enemies can ignite other characters.
 """
 # version 2.0.0 (PySide6 Refactor)
 
-from typing import List, Any, Optional # Added Optional
+from typing import List, Any, Optional, TYPE_CHECKING # Added Optional and TYPE_CHECKING
 
 # PySide6 imports
 from PySide6.QtCore import QPointF, QRectF # For geometry
@@ -16,11 +14,11 @@ from PySide6.QtCore import QPointF, QRectF # For geometry
 # Game imports
 import constants as C
 from tiles import Lava # Lava class now uses QRectF
-# enemy_module_ref is tricky. If Enemy is imported directly, it's circular with EnemyBase.
-# For now, we'll assume type checking on 'Enemy' instances will work if they share a common base or duck type.
-# Or, pass the Enemy class itself if absolutely needed for isinstance, but try to avoid.
-# Let's try importing the refactored Enemy class.
-from enemy import Enemy as EnemyClass_TYPE # For isinstance, type hinting
+
+# from enemy import Enemy as EnemyClass_TYPE # For isinstance, type hinting # <--- REMOVE THIS LINE (Original line 23)
+
+if TYPE_CHECKING:
+    from enemy import Enemy as EnemyClass_TYPE # For isinstance, type hinting # <--- ADD THIS LINE
 
 try:
     from enemy_ai_handler import set_enemy_new_patrol_target # Already refactored
@@ -49,6 +47,10 @@ except ImportError:
         return int((time.monotonic() - _start_time_enemy_phys) * 1000)
 
 # --- Internal Helper Functions for Collision ---
+
+# If EnemyClass_TYPE was used for type hinting in function signatures, change to string literal 'Enemy'.
+# Example: def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', ...)
+# However, the provided signatures don't use it, so this is not strictly necessary for them.
 
 def _check_enemy_platform_collisions(enemy, direction: str, platforms_list: List[Any]):
     """
@@ -83,7 +85,6 @@ def _check_enemy_platform_collisions(enemy, direction: str, platforms_list: List
                      enemy.rect.moveTop(platform_obj.rect.bottom())
                      enemy.vel.setY(0.0)
         
-        # Sync pos from rect after collision resolution
         if direction == 'x': enemy.pos.setX(enemy.rect.center().x())
         else: enemy.pos.setY(enemy.rect.bottom())
 
@@ -184,12 +185,10 @@ def _check_enemy_hazard_collisions(enemy, hazards_list: List[Any]):
 def update_enemy_physics_and_collisions(enemy, dt_sec: float, platforms_list: List[Any],
                                         hazards_list: List[Any], all_other_characters_list: List[Any]):
     if not enemy._valid_init or not enemy.alive() or enemy.is_petrified or enemy.is_frozen or enemy.is_defrosting:
-        # Petrified enemies might have gravity handled by status_effects if not on ground
-        # Frozen/Defrosting are stationary.
-        if enemy.is_dead and enemy.alive() and hasattr(enemy, 'kill'): enemy.kill() # Clean up if dead but still in lists
+        if enemy.is_dead and enemy.alive() and hasattr(enemy, 'kill'): enemy.kill() 
         return
 
-    enemy.vel.setY(enemy.vel.y() + enemy.acc.y()) # Gravity
+    enemy.vel.setY(enemy.vel.y() + enemy.acc.y()) 
 
     enemy_friction = float(getattr(C, 'ENEMY_FRICTION', -0.12))
     current_speed_limit = float(getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0))
@@ -198,10 +197,10 @@ def update_enemy_physics_and_collisions(enemy, dt_sec: float, platforms_list: Li
     
     terminal_velocity = float(getattr(C, 'TERMINAL_VELOCITY_Y', 18.0))
 
-    enemy.vel.setX(enemy.vel.x() + enemy.acc.x()) # AI-driven acceleration
+    enemy.vel.setX(enemy.vel.x() + enemy.acc.x()) 
 
-    if enemy.on_ground and enemy.acc.x() == 0: # Use x()
-        friction_force = enemy.vel.x() * enemy_friction # Use x()
+    if enemy.on_ground and enemy.acc.x() == 0: 
+        friction_force = enemy.vel.x() * enemy_friction 
         if abs(enemy.vel.x()) > 0.1: enemy.vel.setX(enemy.vel.x() + friction_force)
         else: enemy.vel.setX(0.0)
 
@@ -214,7 +213,6 @@ def update_enemy_physics_and_collisions(enemy, dt_sec: float, platforms_list: Li
     if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
     _check_enemy_platform_collisions(enemy, 'x', platforms_list)
     collided_x_char = _check_enemy_character_collision(enemy, 'x', all_other_characters_list)
-    # After collision, enemy.pos.x might need re-syncing from rect.center().x()
     if hasattr(enemy, 'rect'): enemy.pos.setX(enemy.rect.center().x())
 
 
@@ -223,14 +221,9 @@ def update_enemy_physics_and_collisions(enemy, dt_sec: float, platforms_list: Li
     _check_enemy_platform_collisions(enemy, 'y', platforms_list)
     if not collided_x_char: 
         _check_enemy_character_collision(enemy, 'y', all_other_characters_list)
-    # After collision, enemy.pos.y needs re-syncing from rect.bottom()
     if hasattr(enemy, 'rect'): enemy.pos.setY(enemy.rect.bottom())
 
     _check_enemy_hazard_collisions(enemy, hazards_list)
 
-    # Ensure final pos is based on rect's midbottom after all adjustments
     if hasattr(enemy, 'rect'):
         enemy.pos = QPointF(enemy.rect.center().x(), enemy.rect.bottom())
-
-
-#################### END OF FILE: enemy_physics_handler.py ####################

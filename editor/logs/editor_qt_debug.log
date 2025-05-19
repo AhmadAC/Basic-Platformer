@@ -1,113 +1,51 @@
-2025-05-19 18:01:17,129 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
-2025-05-19 18:01:17,130 - INFO - editor.py:59 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
-2025-05-19 18:01:17,132 - WARNING - editor.py:76 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
-2025-05-19 18:01:17,244 - INFO - editor_assets.py:27 - <module> - EditorAssets: Successfully imported 'resource_path' from 'assets' module.
-2025-05-19 18:01:17,352 - DEBUG - editor.py:85 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
-2025-05-19 18:01:17,354 - INFO - editor.py:615 - editor_main - editor_main() started for PySide6 application.
-2025-05-19 18:01:17,552 - DEBUG - editor.py:617 - editor_main - QApplication instance created.
-2025-05-19 18:01:17,560 - INFO - editor.py:97 - __init__ - Initializing EditorMainWindow...
-2025-05-19 18:01:17,560 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
-2025-05-19 18:01:17,560 - DEBUG - editor_state.py:55 - __init__ - EditorState initialized.
-2025-05-19 18:01:17,562 - DEBUG - editor.py:133 - init_ui - Initializing UI components...
-2025-05-19 18:01:17,580 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 18:01:17,580 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 18:01:17,581 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 18:01:17,589 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
-2025-05-19 18:01:17,589 - DEBUG - map_view_widget.py:145 - __init__ - MapViewWidget initialized.
-2025-05-19 18:01:17,792 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
-2025-05-19 18:01:17,797 - DEBUG - editor.py:177 - init_ui - UI components initialized.
-2025-05-19 18:01:17,797 - DEBUG - editor.py:180 - create_actions - Creating actions...
-2025-05-19 18:01:17,802 - DEBUG - editor.py:207 - create_actions - Actions created.
-2025-05-19 18:01:17,802 - DEBUG - editor.py:210 - create_menus - Creating menus...
-2025-05-19 18:01:17,813 - DEBUG - editor.py:248 - create_menus - Menus created.
-2025-05-19 18:01:17,814 - DEBUG - editor.py:251 - create_status_bar - Creating status bar...
-2025-05-19 18:01:17,816 - DEBUG - editor.py:258 - create_status_bar - Status bar created.
-2025-05-19 18:01:17,817 - INFO - editor_assets.py:207 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-19 18:01:17,817 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player1_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
-2025-05-19 18:01:17,817 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Attempting Qt load...
-2025-05-19 18:01:17,830 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'player2_spawn' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
-2025-05-19 18:01:17,831 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Attempting Qt load...
-2025-05-19 18:01:17,832 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_gray' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
-2025-05-19 18:01:17,832 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Attempting Qt load...
-2025-05-19 18:01:17,833 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_green' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
-2025-05-19 18:01:17,833 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Attempting Qt load...
-2025-05-19 18:01:17,834 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_pink' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
-2025-05-19 18:01:17,834 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Attempting Qt load...
-2025-05-19 18:01:17,835 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_purple' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
-2025-05-19 18:01:17,835 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Attempting Qt load...
-2025-05-19 18:01:17,836 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_orange' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
-2025-05-19 18:01:17,836 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Attempting Qt load...
-2025-05-19 18:01:17,837 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'enemy_yellow' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
-2025-05-19 18:01:17,837 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Attempting Qt load...
-2025-05-19 18:01:17,838 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'chest' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
-2025-05-19 18:01:17,838 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Attempting Qt load...
-2025-05-19 18:01:17,840 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_idle' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
-2025-05-19 18:01:17,840 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Attempting Qt load...
-2025-05-19 18:01:17,842 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'object_stone_crouch' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
-2025-05-19 18:01:17,842 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Attempting Qt load...
-2025-05-19 18:01:17,848 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Attempting to load asset 'hazard_lava_tile' from normalized path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
-2025-05-19 18:01:17,848 - DEBUG - editor_assets.py:248 - load_editor_palette_assets - File exists: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Attempting Qt load...
-2025-05-19 18:01:17,852 - INFO - editor_assets.py:356 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
-2025-05-19 18:01:17,854 - DEBUG - editor_ui_panels.py:151 - populate_assets - Populating asset palette UI with filter: 'All'...
-2025-05-19 18:01:17,856 - DEBUG - editor_ui_panels.py:176 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
-2025-05-19 18:01:17,938 - DEBUG - editor.py:609 - restore_geometry_and_state - Window geometry and/or state restored.
-2025-05-19 18:01:17,986 - INFO - editor.py:129 - __init__ - EditorMainWindow initialized.
-2025-05-19 18:01:17,987 - INFO - editor.py:263 - show_status_message - Status: Editor started. Welcome!
-2025-05-19 18:01:18,065 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
-2025-05-19 18:01:20,696 - INFO - editor.py:368 - load_map - Load Map action triggered.
-2025-05-19 18:01:24,174 - INFO - editor_map_utils.py:153 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/long.json'
-2025-05-19 18:01:24,174 - DEBUG - editor_map_utils.py:164 - load_map_from_json - Successfully read JSON data from 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/long.json'.
-2025-05-19 18:01:24,175 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-19 18:01:24,175 - INFO - editor_map_utils.py:176 - load_map_from_json - Map 'long' loaded from long.json.. map_name_for_function='long', current_map_filename (py)='c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\long.py', current_json_filename='C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/long.json', unsaved_changes=True
-2025-05-19 18:01:24,175 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 18:01:24,175 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 18:01:24,178 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 18:01:24,195 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 20000.000000, 400.000000), Zoom: 1.00, Offset: (2571.9, 0.0)
-2025-05-19 18:01:24,196 - INFO - editor.py:263 - show_status_message - Status: Map 'long' loaded.
-2025-05-19 18:01:24,196 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 1
-2025-05-19 18:01:28,332 - INFO - editor.py:399 - export_map_py - Export Map (PY) action triggered.
-2025-05-19 18:01:28,333 - INFO - editor_map_utils.py:283 - export_map_to_game_python_script - Exporting map. Map name from state: 'long'
-2025-05-19 18:01:28,334 - DEBUG - editor_map_utils.py:307 - export_map_to_game_python_script - Exporting to function 'load_map_long' in file 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\long.py'
-2025-05-19 18:01:28,339 - INFO - editor_map_utils.py:517 - export_map_to_game_python_script - Map exported to game script: long.py
-2025-05-19 18:01:28,339 - DEBUG - editor_map_utils.py:519 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\long.py'.
-2025-05-19 18:01:28,340 - INFO - editor.py:263 - show_status_message - Status: Map exported for game: long.py.
-2025-05-19 18:01:29,668 - INFO - editor.py:368 - load_map - Load Map action triggered.
-2025-05-19 18:01:33,104 - INFO - editor_map_utils.py:153 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/ttt.json'
-2025-05-19 18:01:33,105 - DEBUG - editor_map_utils.py:164 - load_map_from_json - Successfully read JSON data from 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/ttt.json'.
-2025-05-19 18:01:33,106 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-19 18:01:33,106 - INFO - editor_map_utils.py:176 - load_map_from_json - Map 'ttt' loaded from ttt.json.. map_name_for_function='ttt', current_map_filename (py)='c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\ttt.py', current_json_filename='C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/ttt.json', unsaved_changes=True
-2025-05-19 18:01:33,106 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 18:01:33,106 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 18:01:33,112 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 18:01:33,123 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (9.0, 36.0)
-2025-05-19 18:01:33,124 - INFO - editor.py:263 - show_status_message - Status: Map 'ttt' loaded.
-2025-05-19 18:01:33,124 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 2
-2025-05-19 18:01:36,576 - INFO - editor.py:399 - export_map_py - Export Map (PY) action triggered.
-2025-05-19 18:01:36,576 - INFO - editor_map_utils.py:283 - export_map_to_game_python_script - Exporting map. Map name from state: 'ttt'
-2025-05-19 18:01:36,578 - DEBUG - editor_map_utils.py:307 - export_map_to_game_python_script - Exporting to function 'load_map_ttt' in file 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\ttt.py'
-2025-05-19 18:01:36,582 - INFO - editor_map_utils.py:517 - export_map_to_game_python_script - Map exported to game script: ttt.py
-2025-05-19 18:01:36,582 - DEBUG - editor_map_utils.py:519 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\ttt.py'.
-2025-05-19 18:01:36,584 - INFO - editor.py:263 - show_status_message - Status: Map exported for game: ttt.py.
-2025-05-19 18:01:40,156 - INFO - editor.py:368 - load_map - Load Map action triggered.
-2025-05-19 18:01:43,713 - INFO - editor_map_utils.py:153 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/bigmap1.json'
-2025-05-19 18:01:43,715 - DEBUG - editor_map_utils.py:164 - load_map_from_json - Successfully read JSON data from 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/bigmap1.json'.
-2025-05-19 18:01:43,715 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-19 18:01:43,715 - INFO - editor_map_utils.py:176 - load_map_from_json - Map 'bigmap1' loaded from bigmap1.json.. map_name_for_function='bigmap1', current_map_filename (py)='c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\bigmap1.py', current_json_filename='C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/bigmap1.json', unsaved_changes=True
-2025-05-19 18:01:43,715 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 18:01:43,715 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 18:01:43,716 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 18:01:43,746 - WARNING - map_view_widget.py:233 - draw_placed_objects - DrawPlaced: Asset info for key 'enemy_red' not found in palette state.
-2025-05-19 18:01:43,751 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 4000.000000, 2000.000000), Zoom: 1.00, Offset: (0.0, 1300.0)
-2025-05-19 18:01:43,751 - INFO - editor.py:263 - show_status_message - Status: Map 'bigmap1' loaded.
-2025-05-19 18:01:43,753 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 3
-2025-05-19 18:01:53,820 - INFO - editor.py:399 - export_map_py - Export Map (PY) action triggered.
-2025-05-19 18:01:53,820 - INFO - editor_map_utils.py:283 - export_map_to_game_python_script - Exporting map. Map name from state: 'bigmap1'
-2025-05-19 18:01:53,822 - DEBUG - editor_map_utils.py:307 - export_map_to_game_python_script - Exporting to function 'load_map_bigmap1' in file 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\bigmap1.py'
-2025-05-19 18:01:53,842 - INFO - editor_map_utils.py:517 - export_map_to_game_python_script - Map exported to game script: bigmap1.py
-2025-05-19 18:01:53,842 - DEBUG - editor_map_utils.py:519 - export_map_to_game_python_script - unsaved_changes set to False after .py export to 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\bigmap1.py'.
-2025-05-19 18:01:53,844 - INFO - editor.py:263 - show_status_message - Status: Map exported for game: bigmap1.py.
-2025-05-19 18:01:55,068 - INFO - editor.py:575 - keyPressEvent - Escape key pressed, attempting to close window.
-2025-05-19 18:01:55,071 - INFO - editor.py:580 - closeEvent - Close event triggered for main window.
-2025-05-19 18:01:55,075 - INFO - editor.py:589 - closeEvent - Window geometry and state saved.
-2025-05-19 18:01:55,197 - INFO - editor.py:624 - editor_main - QApplication event loop finished with exit code: 0
-2025-05-19 18:01:55,197 - INFO - editor.py:632 - editor_main - Editor session ended.
+2025-05-19 22:46:19,295 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
+2025-05-19 22:46:19,296 - INFO - editor.py:59 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
+2025-05-19 22:46:19,296 - WARNING - editor.py:76 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
+2025-05-19 22:46:19,377 - INFO - editor_assets.py:30 - <module> - EditorAssets: Successfully imported 'resource_path' from root 'assets' module.
+2025-05-19 22:46:19,437 - DEBUG - editor.py:85 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
+2025-05-19 22:46:19,438 - INFO - editor.py:615 - editor_main - editor_main() started for PySide6 application.
+2025-05-19 22:46:19,552 - DEBUG - editor.py:617 - editor_main - QApplication instance created.
+2025-05-19 22:46:19,564 - INFO - editor.py:97 - __init__ - Initializing EditorMainWindow...
+2025-05-19 22:46:19,564 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
+2025-05-19 22:46:19,564 - DEBUG - editor_state.py:55 - __init__ - EditorState initialized.
+2025-05-19 22:46:19,566 - DEBUG - editor.py:133 - init_ui - Initializing UI components...
+2025-05-19 22:46:19,589 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 22:46:19,589 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 22:46:19,590 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 22:46:19,601 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-19 22:46:19,601 - DEBUG - map_view_widget.py:145 - __init__ - MapViewWidget initialized.
+2025-05-19 22:46:19,770 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled.
+2025-05-19 22:46:19,772 - DEBUG - editor.py:177 - init_ui - UI components initialized.
+2025-05-19 22:46:19,772 - DEBUG - editor.py:180 - create_actions - Creating actions...
+2025-05-19 22:46:19,777 - DEBUG - editor.py:207 - create_actions - Actions created.
+2025-05-19 22:46:19,777 - DEBUG - editor.py:210 - create_menus - Creating menus...
+2025-05-19 22:46:19,783 - DEBUG - editor.py:248 - create_menus - Menus created.
+2025-05-19 22:46:19,783 - DEBUG - editor.py:251 - create_status_bar - Creating status bar...
+2025-05-19 22:46:19,784 - DEBUG - editor.py:258 - create_status_bar - Status bar created.
+2025-05-19 22:46:19,784 - INFO - editor_assets.py:212 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-19 22:46:19,965 - INFO - editor_assets.py:318 - load_editor_palette_assets - Palette asset loading complete. Successfully processed intended assets: 25, Assets requiring fallbacks or failed: 0.
+2025-05-19 22:46:19,968 - DEBUG - editor_ui_panels.py:151 - populate_assets - Populating asset palette UI with filter: 'All'...
+2025-05-19 22:46:19,970 - DEBUG - editor_ui_panels.py:176 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
+2025-05-19 22:46:20,101 - DEBUG - editor.py:609 - restore_geometry_and_state - Window geometry and/or state restored.
+2025-05-19 22:46:20,176 - INFO - editor.py:129 - __init__ - EditorMainWindow initialized.
+2025-05-19 22:46:20,176 - INFO - editor.py:263 - show_status_message - Status: Editor started. Welcome!
+2025-05-19 22:46:20,262 - DEBUG - minimap_widget.py:87 - _render_map_content_to_pixmap - Minimap: Rendering map content to internal pixmap.
+2025-05-19 22:46:22,251 - INFO - editor.py:368 - load_map - Load Map action triggered.
+2025-05-19 22:46:24,362 - INFO - editor_map_utils.py:118 - load_map_from_json - Loading map from JSON: 'C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/11.json'
+2025-05-19 22:46:24,363 - INFO - editor_history.py:75 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-19 22:46:24,363 - INFO - editor_map_utils.py:134 - load_map_from_json - Map '11' loaded from 11.json.
+2025-05-19 22:46:24,363 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-19 22:46:24,363 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-19 22:46:24,365 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-19 22:46:24,402 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1200.000000, 800.000000), Zoom: 1.00, Offset: (0.0, 100.0)
+2025-05-19 22:46:24,403 - INFO - editor.py:263 - show_status_message - Status: Map '11' loaded.
+2025-05-19 22:46:24,403 - DEBUG - editor_history.py:103 - push_undo_state - Pushed state to undo stack. Size: 1
+2025-05-19 22:46:27,613 - INFO - editor.py:399 - export_map_py - Export Map (PY) action triggered.
+2025-05-19 22:46:27,613 - INFO - editor_map_utils.py:208 - export_map_to_game_python_script - Exporting map. Map name from state: '11'
+2025-05-19 22:46:27,614 - DEBUG - editor_map_utils.py:230 - export_map_to_game_python_script - Exporting to function 'load_map_11' in file 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\11.py'
+2025-05-19 22:46:27,616 - INFO - editor_map_utils.py:404 - export_map_to_game_python_script - Map exported to game script: 11.py
+2025-05-19 22:46:27,616 - INFO - editor.py:263 - show_status_message - Status: Map exported for game: 11.py.
+2025-05-19 22:46:29,312 - INFO - editor.py:580 - closeEvent - Close event triggered for main window.
+2025-05-19 22:46:29,315 - INFO - editor.py:589 - closeEvent - Window geometry and state saved.
+2025-05-19 22:46:29,357 - INFO - editor.py:624 - editor_main - QApplication event loop finished with exit code: 0
+2025-05-19 22:46:29,357 - INFO - editor.py:632 - editor_main - Editor session ended.
