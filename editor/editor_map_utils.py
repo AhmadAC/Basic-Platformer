@@ -3,7 +3,7 @@
 """
 Utility functions for map operations in the Level Editor (PySide6 version).
 Handles saving/loading editor JSON and exporting game-compatible Python data scripts.
-VERSION 2.2.1
+VERSION 2.2.3 (Moved data creation helpers here)
 """
 import sys
 import os
@@ -31,9 +31,33 @@ except ImportError as e_proj_imp:
 
 logger = logging.getLogger(__name__)
 
+# --- START: Moved Helper functions from levels.py ---
+def _create_platform_data(x: float, y: float, w: float, h: float, color: Tuple[int,int,int], p_type: str, props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
+    return {'rect': (float(x), float(y), float(w), float(h)), 'color': color, 'type': p_type, 'properties': props or {}}
+
+def _create_ladder_data(x: float, y: float, w: float, h: float) -> Dict[str, Any]: # Color not typically used for ladder data for game
+    return {'rect': (float(x), float(y), float(w), float(h))} # Removed color, add if needed
+
+def _create_hazard_data(h_type: str, x: float, y: float, w: float, h: float, color: Tuple[int,int,int]) -> Dict[str, Any]:
+    return {'type': h_type, 'rect': (float(x), float(y), float(w), float(h)), 'color': color}
+
+def _create_enemy_spawn_data(start_pos_tuple: Tuple[float,float], enemy_type_str: str, patrol_rect_data_dict: Optional[Dict[str,float]]=None, props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
+    data = {'start_pos': start_pos_tuple, 'type': enemy_type_str, 'properties': props or {}}
+    if patrol_rect_data_dict: # Only add patrol_rect_data if it's provided
+        data['patrol_rect_data'] = patrol_rect_data_dict
+    return data
+
+def _create_item_spawn_data(item_type_str: str, pos_tuple: Tuple[float,float], props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
+    return {'type': item_type_str, 'pos': pos_tuple, 'properties': props or {}}
+
+def _create_statue_spawn_data(statue_id_str: str, pos_tuple: Tuple[float,float], props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
+    return {'id': statue_id_str, 'pos': pos_tuple, 'properties': props or {}}
+# --- END: Moved Helper functions ---
+
 
 def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
                        map_width_tiles: int, map_height_tiles: int):
+    # ... (rest of the function remains the same)
     logger.info(f"Initializing new map state. Name: '{map_name_for_function}', Size: {map_width_tiles}x{map_height_tiles}")
     clean_map_name = map_name_for_function.strip().lower().replace(" ", "_").replace("-", "_")
     if not clean_map_name: clean_map_name = "untitled_map"; logger.warning("map_name empty, defaulting to 'untitled_map'")
@@ -66,6 +90,7 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
 
 
 def ensure_maps_directory_exists() -> bool:
+    # ... (function remains the same)
     maps_dir_to_check = getattr(C, "MAPS_DIR", ED_CONFIG.MAPS_DIRECTORY)
     if not os.path.isabs(maps_dir_to_check):
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -83,6 +108,7 @@ def ensure_maps_directory_exists() -> bool:
 
 
 def save_map_to_json(editor_state: EditorState) -> bool:
+    # ... (function remains the same)
     logger.info(f"Saving map to JSON. Map name from state: '{editor_state.map_name_for_function}'")
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
         logger.error("Map name not set or 'untitled_map'. Cannot save JSON."); return False
@@ -110,14 +136,13 @@ def save_map_to_json(editor_state: EditorState) -> bool:
     try:
         with open(json_filepath, "w") as f: json.dump(data_to_save, f, indent=4)
         logger.info(f"Editor data saved to: {os.path.basename(json_filepath)}")
-        # Consider setting unsaved_changes to True if PY export is the primary "save"
-        # For now, JSON save is a distinct step.
         return True
     except Exception as e:
         logger.error(f"Error saving map to JSON '{json_filepath}': {e}", exc_info=True); return False
 
 
 def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
+    # ... (function remains the same)
     logger.info(f"Loading map from JSON: '{json_filepath}'")
     if not os.path.exists(json_filepath) or not os.path.isfile(json_filepath):
         logger.error(f"JSON map file not found: '{json_filepath}'"); return False
@@ -141,6 +166,7 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
 
 
 def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_category_name: str) -> List[Dict[str, Any]]:
+    # ... (function remains the same)
     if not objects_raw:
         logger.debug(f"No raw objects provided for merging (category: {object_category_name}).")
         return []
@@ -159,11 +185,9 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
         elif not (isinstance(color_val, tuple) and len(color_val) == 3):
              obj['color'] = getattr(C, 'MAGENTA', (255,0,255))
         
-        # Ensure 'type' is present for consistent sorting and processing
         obj.setdefault('type', f'generic_{object_category_name}')
         working_objects.append(obj)
 
-    # Horizontal merge
     horizontal_strips: List[Dict[str, Any]] = []
     key_func_h = lambda p: (str(p['type']), str(p['color']), p['y'], p['h'], p['x'])
     sorted_h = sorted(working_objects, key=key_func_h)
@@ -189,7 +213,6 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
                 break
         horizontal_strips.append(current_strip)
 
-    # Vertical merge
     final_blocks_data: List[Dict[str, Any]] = []
     strips_to_merge = [strip.copy() for strip in horizontal_strips]
     for strip in strips_to_merge: strip['merged'] = False
@@ -221,7 +244,7 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
             'rect': (current_block['x'], current_block['y'], current_block['w'], current_block['h']),
             'type': current_block['type'],
             'color': current_block.get('color'),
-            'properties': current_block.get('properties', {}) # Preserve properties
+            'properties': current_block.get('properties', {}) 
         })
     
     logger.debug(f"Merged {len(objects_raw)} raw {object_category_name} objects into {len(final_blocks_data)} final blocks.")
@@ -260,6 +283,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     
     enemies_list_export: List[Dict[str, Any]] = []
     items_list_export: List[Dict[str, Any]] = []
+    statue_list_export: List[Dict[str, Any]] = []
 
     default_spawn_world_x = (editor_state.map_width_tiles // 2) * ts + ts / 2.0
     default_spawn_world_y = (editor_state.map_height_tiles - 2) * ts 
@@ -302,9 +326,10 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         is_platform_type = any(pt in game_id.lower() for pt in ["platform", "wall", "ground", "ledge"])
         is_ladder_type = "ladder" in game_id.lower()
         is_hazard_type = "hazard" in game_id.lower()
+        is_statue_type = "object_stone" in game_id.lower()
 
         if is_platform_type:
-            platform_game_type = game_id # Use the editor's game_type_id directly
+            platform_game_type = game_id 
             platforms_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 
                                        'color': final_color_for_export, 'type': platform_game_type, 
                                        'properties': obj_props})
@@ -316,6 +341,10 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 
                                      'color': final_color_for_export, 'type': game_id, 
                                      'properties': obj_props})
+        elif is_statue_type:
+            statue_id = obj_data.get("unique_id", f"statue_{len(statue_list_export)}")
+            statue_pos = (export_x + obj_w / 2.0, export_y + obj_h / 2.0)
+            statue_list_export.append(_create_statue_spawn_data(statue_id, statue_pos, props=obj_props)) # Use helper
         elif game_id == "player1_spawn":
             player_start_pos_p1 = (export_x + obj_w / 2.0, export_y + obj_h) 
         elif game_id == "player2_spawn":
@@ -323,13 +352,11 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         elif "enemy" in game_id.lower():
             enemy_type_for_game = game_id 
             spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h)
-            enemies_list_export.append({'type': enemy_type_for_game, 'start_pos': spawn_pos, 
-                                        'properties': obj_props})
+            enemies_list_export.append(_create_enemy_spawn_data(spawn_pos, enemy_type_for_game, props=obj_props)) # Use helper
         elif any(item_key in game_id.lower() for item_key in ["chest", "item", "collectible"]):
             item_type_for_game = game_id
             item_pos = (export_x + obj_w / 2.0, export_y + obj_h / 2.0) 
-            items_list_export.append({'type': item_type_for_game, 'pos': item_pos, 
-                                      'properties': obj_props})
+            items_list_export.append(_create_item_spawn_data(item_type_for_game, item_pos, props=obj_props)) # Use helper
 
     if player_start_pos_p1 is None: player_start_pos_p1 = (default_spawn_world_x, default_spawn_world_y)
 
@@ -337,51 +364,59 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     ladders_list_export = _merge_rect_objects_to_data(ladders_data_raw, "ladder")
     hazards_list_export = _merge_rect_objects_to_data(hazards_data_raw, "hazard")
 
-    map_min_x_content = 0.0; map_max_x_content = float(editor_state.map_width_tiles * ts)
-    map_min_y_content = 0.0; map_max_y_content = float(editor_state.map_height_tiles * ts)
-    if all_placed_objects_rect_data_for_bounds:
+    # --- MODIFIED BOUNDARY AND CAMERA EXTENT LOGIC ---
+    if not all_placed_objects_rect_data_for_bounds:
+        map_min_x_content = 0.0; map_max_x_content = float(editor_state.map_width_tiles * ts)
+        map_min_y_content = 0.0; map_max_y_content = float(editor_state.map_height_tiles * ts)
+        logger.warning("Exporting an empty map. Using editor canvas dimensions for boundaries.")
+    else:
         map_min_x_content = min(r['x'] for r in all_placed_objects_rect_data_for_bounds)
         map_max_x_content = max(r['x'] + r['width'] for r in all_placed_objects_rect_data_for_bounds)
         map_min_y_content = min(r['y'] for r in all_placed_objects_rect_data_for_bounds)
         map_max_y_content = max(r['y'] + r['height'] for r in all_placed_objects_rect_data_for_bounds)
-
-    padding_px = float(getattr(C, 'TILE_SIZE', 40) * 2)
-    game_level_pixel_width = float(int(max(float(editor_state.map_width_tiles * ts), map_max_x_content) + padding_px))
     
-    # Assuming Y increases downwards. Min Y is higher on screen.
-    game_level_min_y_absolute = float(int(map_min_y_content - padding_px)) 
-    game_level_max_y_absolute = float(int(map_max_y_content + padding_px)) 
-
     _boundary_thickness_val = float(getattr(C, 'TILE_SIZE', 40))
+    visual_padding_around_content = float(C.TILE_SIZE) * 1.0 
+
+    level_min_x_abs_for_camera = map_min_x_content - visual_padding_around_content - _boundary_thickness_val
+    level_max_x_abs_for_camera = map_max_x_content + visual_padding_around_content + _boundary_thickness_val
+    level_min_y_abs_for_camera = map_min_y_content - visual_padding_around_content - _boundary_thickness_val
+    level_max_y_abs_for_camera = map_max_y_content + visual_padding_around_content + _boundary_thickness_val
+    
+    level_pixel_width_for_camera = level_max_x_abs_for_camera - level_min_x_abs_for_camera
+
     _boundary_color_tuple = getattr(C, 'DARK_GRAY', (50,50,50))
     
-    # Calculate effective map extents for boundary walls
-    # These should encompass all content including padding
-    eff_min_x = map_min_x_content - padding_px
-    eff_max_x = map_max_x_content + padding_px
-    eff_min_y = map_min_y_content - padding_px
-    eff_max_y = map_max_y_content + padding_px
-
-    # Ensure game_level_pixel_width covers from 0 (or eff_min_x if negative) to eff_max_x
-    world_origin_x = min(0.0, eff_min_x)
-    game_level_pixel_width = eff_max_x - world_origin_x
-    
-    # The min/max_y_absolute are effectively the content boundaries for the camera,
-    # not necessarily the visual extent if Y=0 is top of screen.
-    # game_level_min_y_absolute is the "highest" Y value of content.
-    # game_level_max_y_absolute is the "lowest" Y value of content.
-
     boundary_platforms_data = [
-        # Top boundary: Starts above the highest content (eff_min_y)
-        {'rect': (eff_min_x, eff_min_y - _boundary_thickness_val, eff_max_x - eff_min_x, _boundary_thickness_val), 'type': 'boundary_wall_top', 'color': _boundary_color_tuple, 'properties': {}},
-        # Bottom boundary: Starts at the lowest content (eff_max_y)
-        {'rect': (eff_min_x, eff_max_y, eff_max_x - eff_min_x, _boundary_thickness_val), 'type': 'boundary_wall_bottom', 'color': _boundary_color_tuple, 'properties': {}},
-        # Left boundary
-        {'rect': (eff_min_x - _boundary_thickness_val, eff_min_y - _boundary_thickness_val, _boundary_thickness_val, eff_max_y - eff_min_y + 2*_boundary_thickness_val), 'type': 'boundary_wall_left', 'color': _boundary_color_tuple, 'properties': {}},
-        # Right boundary
-        {'rect': (eff_max_x, eff_min_y - _boundary_thickness_val, _boundary_thickness_val, eff_max_y - eff_min_y + 2*_boundary_thickness_val), 'type': 'boundary_wall_right', 'color': _boundary_color_tuple, 'properties': {}},
+        _create_platform_data(level_min_x_abs_for_camera, level_min_y_abs_for_camera, 
+                              level_pixel_width_for_camera, _boundary_thickness_val, 
+                              _boundary_color_tuple, "boundary_wall_top"),
+        _create_platform_data(level_min_x_abs_for_camera, level_max_y_abs_for_camera - _boundary_thickness_val, 
+                              level_pixel_width_for_camera, _boundary_thickness_val, 
+                              _boundary_color_tuple, "boundary_wall_bottom"),
+        _create_platform_data(level_min_x_abs_for_camera, level_min_y_abs_for_camera + _boundary_thickness_val, 
+                              _boundary_thickness_val, level_max_y_abs_for_camera - level_min_y_abs_for_camera - 2 * _boundary_thickness_val, 
+                              _boundary_color_tuple, "boundary_wall_left"),
+        _create_platform_data(level_max_x_abs_for_camera - _boundary_thickness_val, level_min_y_abs_for_camera + _boundary_thickness_val, 
+                              _boundary_thickness_val, level_max_y_abs_for_camera - level_min_y_abs_for_camera - 2 * _boundary_thickness_val, 
+                              _boundary_color_tuple, "boundary_wall_right"),
     ]
     platforms_list_export.extend(boundary_platforms_data)
+    # --- END MODIFIED BOUNDARY LOGIC ---
+
+    main_ground_y_ref = map_max_y_content 
+    ground_platform_height_ref = float(C.TILE_SIZE)
+    all_platforms_for_ground_check = [p for p in platforms_list_export if "boundary" not in p.get('type', '')]
+    if all_platforms_for_ground_check:
+        lowest_platform_top_y = max(p['rect'][1] for p in all_platforms_for_ground_check)
+        candidate_ground_platforms = [p for p in all_platforms_for_ground_check if abs(p['rect'][1] - lowest_platform_top_y) < (ts * 0.1)]
+        if candidate_ground_platforms:
+            widest_candidate = max(candidate_ground_platforms, key=lambda p: p['rect'][2])
+            main_ground_y_ref = widest_candidate['rect'][1]
+            ground_platform_height_ref = widest_candidate['rect'][3]
+        elif all_platforms_for_ground_check:
+            main_ground_y_ref = min(p['rect'][1] for p in all_platforms_for_ground_check)
+
 
     final_game_data_for_script = {
         "level_name": editor_state.map_name_for_function,
@@ -392,23 +427,25 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         "hazards_list": hazards_list_export,
         "enemies_list": enemies_list_export,
         "items_list": items_list_export,
-        "level_pixel_width": game_level_pixel_width,
-        "level_min_y_absolute": game_level_min_y_absolute,
-        "level_max_y_absolute": game_level_max_y_absolute,
+        "statues_list": statue_list_export,
+        "level_pixel_width": level_pixel_width_for_camera,    # Use corrected width
+        "level_min_x_absolute": level_min_x_abs_for_camera, # Add min_x
+        "level_min_y_absolute": level_min_y_abs_for_camera,
+        "level_max_y_absolute": level_max_y_abs_for_camera,
+        "ground_level_y_ref": main_ground_y_ref,
+        "ground_platform_height_ref": ground_platform_height_ref,
     }
     if player_start_pos_p2:
         final_game_data_for_script["player_start_pos_p2"] = player_start_pos_p2
     
-    # Ensure all keys expected by game_setup are present, even if empty
-    for key in ["platforms_list", "ladders_list", "hazards_list", "enemies_list", "items_list"]:
+    for key in ["platforms_list", "ladders_list", "hazards_list", "enemies_list", "items_list", "statues_list"]:
         final_game_data_for_script.setdefault(key, [])
-
 
     script_content_parts = [
         f"# Level Data: {editor_state.map_name_for_function}",
         "# Generated by Platformer Level Editor",
         "",
-        f"def {game_function_name}():", # Correct function name
+        f"def {game_function_name}():",
         "    game_data = {"
     ]
     for key, value in final_game_data_for_script.items():
@@ -435,6 +472,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
 
 
 def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) -> bool:
+    # ... (function remains the same)
     logger.info(f"Attempting to delete map files. Base JSON path: {json_filepath_to_delete}")
     if not json_filepath_to_delete.endswith(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
         logger.error(f"Invalid file type for deletion: {json_filepath_to_delete}."); return False
