@@ -1,187 +1,33 @@
-[2025-05-20 16:56:38.367] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-20 16:56:38.367] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
-[2025-05-20 16:56:38.367] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
-[2025-05-20 16:56:38.581] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Platformer modules imported successfully.
-[2025-05-20 16:56:38.584] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pyperclip library found.
-[2025-05-20 16:56:38.622] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
-[2025-05-20 16:56:38.623] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial normal window size: 960x600 (will attempt to show maximized)
-[2025-05-20 16:56:38.624] INFO    logger.py:120 (_log_wrapper): Translating keyboard mappings from config strings to Qt.Key values.
-[2025-05-20 16:56:38.624] INFO    logger.py:120 (_log_wrapper): Keyboard mapping translation complete.
-[2025-05-20 16:56:38.635] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-20 16:56:42.366] INFO    logger.py:120 (_log_wrapper): Preparing to start game mode: couch_play, Map: noenemy, Target: None
-[2025-05-20 16:56:42.366] INFO    logger.py:120 (_log_wrapper): GameSceneWidget current size: 100x30
-[2025-05-20 16:56:42.366] INFO    logger.py:120 (_log_wrapper): MainWindow current size: 1280x649
-[2025-05-20 16:56:42.658] INFO    logger.py:120 (_log_wrapper): Initial camera update called for P1. CamRect: PySide6.QtCore.QPointF(0.000000, -511.000000), P1Rect: PySide6.QtCore.QPointF(280.000000, 840.000000)
-[2025-05-20 16:56:42.658] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
-[2025-05-20 16:56:42.659] INFO    logger.py:120 (_log_wrapper): Game mode 'couch_play' started.
-[2025-05-20 16:56:54.245] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-20 16:56:54.530] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:56:54.726] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:56:54.786] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-20 16:56:55.043] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-20 16:56:55.331] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:56:55.507] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:56:55.539] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-20 16:56:55.555] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-20 16:56:55.651] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
-[2025-05-20 16:56:55.939] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:56:56.115] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:56:56.275] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-20 16:56:59.795] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
-[2025-05-20 16:57:00.068] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'run' (request was 'run')
-[2025-05-20 16:57:00.178] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:00.274] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-20 16:57:00.563] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:57:00.783] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:57:00.962] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-20 16:57:03.747] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
-[2025-05-20 16:57:04.035] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'run' (request was 'run')
-[2025-05-20 16:57:04.835] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:04.868] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
-[2025-05-20 16:57:04.995] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
-[2025-05-20 16:57:05.058] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:05.090] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
-[2025-05-20 16:57:05.346] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
-[2025-05-20 16:57:05.395] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'turn' (request was 'turn')
-[2025-05-20 16:57:05.667] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'run' (request was 'run')
-[2025-05-20 16:57:06.003] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:06.835] DEBUG   logger.py:120 (_log_wrapper): PoisonShot (Owner: P1) hit Player 2 for 20 DMG.
-[2025-05-20 16:57:06.835] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P2): Took 20 damage. Health: 75.0/100
-[2025-05-20 16:57:06.835] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:57:06.835] DEBUG   logger.py:120 (_log_wrapper): PoisonShot (Owner: P2) hit Player 1 for 20 DMG.
-[2025-05-20 16:57:06.835] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 20 damage. Health: 75.0/100
-[2025-05-20 16:57:06.835] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:57:06.931] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:57:06.932] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:57:07.891] DEBUG   logger.py:120 (_log_wrapper): BloodShot (Owner: P1) hit Player 2 for 30 DMG.
-[2025-05-20 16:57:07.892] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P2): Took 30 damage. Health: 41.25/100
-[2025-05-20 16:57:07.892] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:57:07.892] DEBUG   logger.py:120 (_log_wrapper): BloodShot (Owner: P2) hit Player 1 for 30 DMG.
-[2025-05-20 16:57:07.892] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 30 damage. Health: 41.25/100
-[2025-05-20 16:57:07.892] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:57:07.987] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:57:07.988] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:57:08.836] DEBUG   logger.py:120 (_log_wrapper): IceShard (Owner: P1) hit Player 2 for 10 DMG.
-[2025-05-20 16:57:08.836] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P2): Took 10 damage. Health: 31.25/100
-[2025-05-20 16:57:08.836] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:57:08.836] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'hit' to 'frozen' (request was 'frozen')
-[2025-05-20 16:57:08.836] DEBUG   logger.py:120 (_log_wrapper): IceShard (Owner: P2) hit Player 1 for 10 DMG.
-[2025-05-20 16:57:08.836] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 31.25/100
-[2025-05-20 16:57:08.836] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:57:08.837] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'frozen' (request was 'frozen')
-[2025-05-20 16:57:11.683] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'frozen' to 'defrost' (request was 'defrost')
-[2025-05-20 16:57:11.683] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'frozen' to 'defrost' (request was 'defrost')
-[2025-05-20 16:57:12.882] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.883] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.899] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.899] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.915] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.915] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.931] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.931] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.947] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:12.947] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.891] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.891] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.907] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.908] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.923] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.923] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.938] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.938] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.954] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:15.954] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'defrost' not allowed or no actual change needed.
-[2025-05-20 16:57:18.451] INFO    logger.py:120 (_log_wrapper): Couch Play: Game state reset initiated.
-[2025-05-20 16:57:18.451] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-20 16:57:18.451] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at (290.5, 878.0)
-[2025-05-20 16:57:18.459] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'defrost' to 'idle' (request was 'idle')
-[2025-05-20 16:57:18.460] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-20 16:57:18.460] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at (290.5, 918.0)
-[2025-05-20 16:57:18.465] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'defrost' to 'idle' (request was 'idle')
-[2025-05-20 16:57:18.466] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-20 16:57:18.466] DEBUG   logger.py:120 (_log_wrapper): GSM: 0 enemies processed for reset.
-[2025-05-20 16:57:18.466] DEBUG   logger.py:120 (_log_wrapper): GSM: 0 statues processed for state reset.
-[2025-05-20 16:57:18.466] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles cleared from lists.
-[2025-05-20 16:57:18.466] DEBUG   logger.py:120 (_log_wrapper): GSM: Existing chest removed (if any).
-[2025-05-20 16:57:18.467] DEBUG   logger.py:120 (_log_wrapper): GSM: Failed to respawn chest.
-[2025-05-20 16:57:18.467] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset.
-[2025-05-20 16:57:18.467] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
-
-[2025-05-20 16:57:18.754] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-20 16:57:18.772] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:18.787] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-20 16:57:19.075] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:57:19.267] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:57:19.283] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
-[2025-05-20 16:57:20.019] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:20.051] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
-[2025-05-20 16:57:20.306] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
-[2025-05-20 16:57:20.322] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:20.515] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
-[2025-05-20 16:57:20.786] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'idle' (request was 'idle')
-[2025-05-20 16:57:21.796] DEBUG   logger.py:120 (_log_wrapper): Fireball (Owner: P1) hit Player 2 for 50 DMG.
-[2025-05-20 16:57:21.796] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P2): Took 50 damage. Health: 50/100
-[2025-05-20 16:57:21.796] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:57:21.796] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'hit' to 'aflame' (request was 'aflame')
-[2025-05-20 16:57:21.797] DEBUG   logger.py:120 (_log_wrapper): Fireball (Owner: P2) hit Player 1 for 50 DMG.
-[2025-05-20 16:57:21.797] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 50 damage. Health: 50/100
-[2025-05-20 16:57:21.797] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:57:21.797] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'aflame' (request was 'aflame')
-[2025-05-20 16:57:21.812] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'aflame' to 'burning' (request was 'burning')
-[2025-05-20 16:57:21.812] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'aflame' to 'burning' (request was 'burning')
-[2025-05-20 16:57:22.803] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 5 damage. Health: 45/100
-[2025-05-20 16:57:22.803] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took damage while on fire. State remains 'burning'. is_taking_hit=True.
-[2025-05-20 16:57:22.803] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P2): Took 5 damage. Health: 45/100
-[2025-05-20 16:57:22.804] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P2): Took damage while on fire. State remains 'burning'. is_taking_hit=True.
-[2025-05-20 16:57:23.826] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 5 damage. Health: 40/100
-[2025-05-20 16:57:23.827] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took damage while on fire. State remains 'burning'. is_taking_hit=True.
-[2025-05-20 16:57:23.827] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P2): Took 5 damage. Health: 40/100
-[2025-05-20 16:57:23.827] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P2): Took damage while on fire. State remains 'burning'. is_taking_hit=True.
-[2025-05-20 16:57:24.803] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'burning' to 'deflame' (request was 'deflame')
-[2025-05-20 16:57:24.803] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'burning' to 'deflame' (request was 'deflame')
-[2025-05-20 16:57:24.851] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'deflame' not allowed or no actual change needed.
-[2025-05-20 16:57:25.155] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'deflame' not allowed or no actual change needed.
-[2025-05-20 16:57:25.731] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'deflame' to 'deflame_crouch' (request was 'deflame_crouch')
-[2025-05-20 16:57:27.827] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'deflame_crouch' to 'crouch' (request was 'crouch')
-[2025-05-20 16:57:27.827] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'deflame' to 'idle' (request was 'idle')
-[2025-05-20 16:57:27.938] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch' to 'crouch_walk' (request was 'crouch_walk')
-[2025-05-20 16:57:28.258] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch_walk' to 'crouch' (request was 'crouch')
-[2025-05-20 16:57:28.658] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch' to 'crouch_walk' (request was 'crouch_walk')
-[2025-05-20 16:57:28.834] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch_walk' to 'run' (request was 'run')
-[2025-05-20 16:57:28.962] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:29.779] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
-[2025-05-20 16:57:30.066] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'idle' (request was 'idle')
-[2025-05-20 16:57:30.371] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-20 16:57:30.498] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-20 16:57:31.202] DEBUG   logger.py:120 (_log_wrapper): GreyProjectile by P1 hit Player 2. Petrifying.
-[2025-05-20 16:57:31.202] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'idle' to 'petrified' (request was 'petrified')
-[2025-05-20 16:57:31.202] DEBUG   logger.py:120 (_log_wrapper): GreyProjectile by P2 hit Player 1. Petrifying.
-[2025-05-20 16:57:31.203] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'petrified' (request was 'petrified')
-[2025-05-20 16:57:35.299] INFO    logger.py:120 (_log_wrapper): Couch Play: Game state reset initiated.
-[2025-05-20 16:57:35.299] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-20 16:57:35.299] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at (290.5, 878.0)
-[2025-05-20 16:57:35.304] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'petrified' to 'idle' (request was 'idle')
-[2025-05-20 16:57:35.305] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-20 16:57:35.305] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at (290.5, 918.0)
-[2025-05-20 16:57:35.308] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'petrified' to 'idle' (request was 'idle')
-[2025-05-20 16:57:35.309] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-20 16:57:35.309] DEBUG   logger.py:120 (_log_wrapper): GSM: 0 enemies processed for reset.
-[2025-05-20 16:57:35.309] DEBUG   logger.py:120 (_log_wrapper): GSM: 0 statues processed for state reset.
-[2025-05-20 16:57:35.309] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles cleared from lists.
-[2025-05-20 16:57:35.309] DEBUG   logger.py:120 (_log_wrapper): GSM: Existing chest removed (if any).
-[2025-05-20 16:57:35.309] DEBUG   logger.py:120 (_log_wrapper): GSM: Failed to respawn chest.
-[2025-05-20 16:57:35.310] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset.
-[2025-05-20 16:57:35.310] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
-
-[2025-05-20 16:57:47.945] INFO    logger.py:120 (_log_wrapper): Escape pressed in game mode 'couch_play'. Stopping mode.
-[2025-05-20 16:57:47.945] INFO    logger.py:120 (_log_wrapper): Stopping game mode: couch_play
-[2025-05-20 16:57:47.949] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-20 16:57:47.950] INFO    logger.py:120 (_log_wrapper): Game mode 'couch_play' stopped and cleaned.
-[2025-05-20 16:57:48.763] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Quit action triggered, requesting main window close via self.close().
-[2025-05-20 16:57:48.764] INFO    logger.py:120 (_log_wrapper): Close event received. Shutting down application.
-[2025-05-20 16:57:48.764] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
-[2025-05-20 16:57:48.764] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
-[2025-05-20 16:57:48.764] INFO    logger.py:120 (_log_wrapper): Stopping game mode: None
-[2025-05-20 16:57:48.764] INFO    logger.py:120 (_log_wrapper): Game mode 'None' stopped and cleaned.
-[2025-05-20 16:57:48.765] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application terminated via closeEvent.
-[2025-05-20 16:57:48.812] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-20 18:33:04.100] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 18:33:04.100] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-20 18:33:04.100] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
+[2025-05-20 18:33:04.696] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Platformer modules imported successfully.
+[2025-05-20 18:33:04.707] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pyperclip library found.
+[2025-05-20 18:33:04.790] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
+[2025-05-20 18:33:04.791] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial normal window size: 960x600 (will attempt to show maximized)
+[2025-05-20 18:33:04.795] INFO    logger.py:120 (_log_wrapper): Translating keyboard mappings from config strings to Qt.Key values.
+[2025-05-20 18:33:04.795] INFO    logger.py:120 (_log_wrapper): Keyboard mapping translation complete.
+[2025-05-20 18:33:04.820] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-20 18:33:11.629] INFO    logger.py:120 (_log_wrapper): Switching UI view to: settings
+[2025-05-20 18:33:11.629] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Attempting to create and embed controls mapper instance.
+[2025-05-20 18:33:11.838] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Controls mapper instance added to controls_content_container.
+[2025-05-20 18:33:16.906] INFO    logger.py:120 (_log_wrapper): Returning to menu from: settings
+[2025-05-20 18:33:17.927] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-20 18:33:26.394] INFO    logger.py:120 (_log_wrapper): Preparing to start game mode: couch_play, Map: noenemy, Target: None
+[2025-05-20 18:33:26.397] INFO    logger.py:120 (_log_wrapper): GameSceneWidget current size: 100x30
+[2025-05-20 18:33:26.397] INFO    logger.py:120 (_log_wrapper): MainWindow current size: 1280x649
+[2025-05-20 18:33:26.952] INFO    logger.py:120 (_log_wrapper): Initial camera update called for P1. CamRect: PySide6.QtCore.QPointF(0.000000, -511.000000), P1Rect: PySide6.QtCore.QPointF(280.000000, 840.000000)
+[2025-05-20 18:33:26.952] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
+[2025-05-20 18:33:26.952] INFO    logger.py:120 (_log_wrapper): Game mode 'couch_play' started.
+[2025-05-20 18:33:31.763] INFO    logger.py:120 (_log_wrapper): Escape pressed in game mode 'couch_play'. Stopping mode.
+[2025-05-20 18:33:31.765] INFO    logger.py:120 (_log_wrapper): Stopping game mode: couch_play
+[2025-05-20 18:33:31.769] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-20 18:33:31.769] INFO    logger.py:120 (_log_wrapper): Game mode 'couch_play' stopped and cleaned.
+[2025-05-20 18:33:32.354] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Quit action triggered, requesting main window close via self.close().
+[2025-05-20 18:33:32.357] INFO    logger.py:120 (_log_wrapper): Close event received. Shutting down application.
+[2025-05-20 18:33:32.357] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-20 18:33:32.357] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
+[2025-05-20 18:33:32.357] INFO    logger.py:120 (_log_wrapper): Stopping game mode: None
+[2025-05-20 18:33:32.357] INFO    logger.py:120 (_log_wrapper): Game mode 'None' stopped and cleaned.
+[2025-05-20 18:33:32.373] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application terminated via closeEvent.
+[2025-05-20 18:33:32.471] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0

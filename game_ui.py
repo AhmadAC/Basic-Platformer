@@ -6,7 +6,7 @@
 Manages UI elements for the PySide6 version of the game.
 This includes menus, dialogs, HUD, and game scene rendering.
 """
-# version 2.0.4 (Enhanced tile/lava rendering debug)
+# version 2.0.5 (Moved debug prints in GameSceneWidget.paintEvent to logger)
 
 import sys
 import os
@@ -23,22 +23,22 @@ from PySide6.QtGui import (
     QFontMetrics
 )
 from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF, Signal, QTimer
-import logging # Import logging
+import logging
 
 import constants as C
 import config as game_config
 import joystick_handler
 from tiles import Platform, Ladder, Lava
-from utils import PrintLimiter # Assuming PrintLimiter is in utils.py
+from utils import PrintLimiter
 
-logger = logging.getLogger(__name__) # Standard logger for this module
-if not logger.hasHandlers(): # Basic setup if not configured by main logger
+logger = logging.getLogger(__name__)
+if not logger.hasHandlers():
     _gui_handler = logging.StreamHandler(sys.stdout)
     _gui_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     _gui_handler.setFormatter(_gui_formatter)
     logger.addHandler(_gui_handler)
-    logger.setLevel(logging.DEBUG)
-    logger.debug("GameUI: Basic logger configured.")
+    logger.setLevel(logging.DEBUG) # Ensure this logger processes DEBUG messages
+    logger.debug("GameUI: Basic logger configured for game_ui.py")
 
 
 _start_time_game_ui = time.monotonic()
@@ -88,7 +88,7 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: A
 
 
 class GameSceneWidget(QWidget):
-    render_print_limiter = PrintLimiter(default_limit=1, default_period=2.0) # Limit logs per object per 2s
+    render_print_limiter = PrintLimiter(default_limit=1, default_period=2.0)
 
     def __init__(self, game_elements_ref: Dict[str, Any], fonts_ref: Dict[str, QFont], parent=None):
         super().__init__(parent)
@@ -106,7 +106,7 @@ class GameSceneWidget(QWidget):
         self.download_progress_percent = download_prog
         self.update()
 
-    def paintEvent(self, event: Any): # event type is QPaintEvent
+    def paintEvent(self, event: Any):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
@@ -115,8 +115,7 @@ class GameSceneWidget(QWidget):
         all_renderables: List[Any] = self.game_elements.get("all_renderable_objects", [])
         bg_color_tuple = self.game_elements.get("level_background_color", C.LIGHT_BLUE)
         
-        # Log background color being used
-        current_game_mode_str = str(self.game_elements.get('current_game_mode', 'N/A_MODE'))
+        current_game_mode_str = str(self.game_elements.get('current_game_mode', 'N/A_MODE')) # Added to game_elements by main.py
         if GameSceneWidget.render_print_limiter.can_print(f"paint_event_start_{current_game_mode_str}"):
             logger.debug(f"GameSceneWidget Paint (Mode: {current_game_mode_str}): BG Color={bg_color_tuple}, Renderables: {len(all_renderables)}, Camera: {camera_instance is not None}")
         
@@ -129,12 +128,12 @@ class GameSceneWidget(QWidget):
                 
                 entity_rect = getattr(entity, 'rect', None)
                 entity_image = getattr(entity, 'image', None)
-                is_alive_entity = getattr(entity, 'alive', lambda: True)() # Default to True if no alive method
+                is_alive_entity = getattr(entity, 'alive', lambda: True)()
 
                 if is_static_tile:
                     can_render_entity = (entity_image and not entity_image.isNull() and
                                          entity_rect and entity_rect.isValid())
-                else: # Dynamic entities like Player, Enemy, Projectile
+                else:
                     can_render_entity = (entity_image and not entity_image.isNull() and
                                          entity_rect and entity_rect.isValid() and
                                          is_alive_entity)
@@ -149,10 +148,9 @@ class GameSceneWidget(QWidget):
                                  f"ImageNull={entity_image.isNull() if entity_image else 'NoImage'}, "
                                  f"RectValid={entity_rect.isValid() if entity_rect else 'NoRect'}, WorldRect={entity_rect}")
 
-                if can_render_entity and entity_rect is not None: # MyPy hint
+                if can_render_entity and entity_rect is not None:
                     screen_rect_qrectf = camera_instance.apply(entity_rect)
-                    screen_rect_qrect = screen_rect_qrectf.toRect() # For intersects check
-
+                    screen_rect_qrect = screen_rect_qrectf.toRect()
                     intersects_view = self.rect().intersects(screen_rect_qrect)
                     
                     if GameSceneWidget.render_print_limiter.can_print(f"entity_render_details_{entity_id_for_log}"):
@@ -160,18 +158,16 @@ class GameSceneWidget(QWidget):
                                      f"ScreenRect={screen_rect_qrectf}, WidgetView={self.rect()}, Intersects={intersects_view}")
 
                     if intersects_view:
-                        painter.drawPixmap(screen_rect_qrectf.topLeft(), entity_image) # entity_image is already a QPixmap
+                        painter.drawPixmap(screen_rect_qrectf.topLeft(), entity_image)
                         # if GameSceneWidget.render_print_limiter.can_print(f"entity_DRAWN_{entity_id_for_log}"):
                         #     logger.debug(f"      DRAWN Entity {i} ({entity_type_for_log}) at screen {screen_rect_qrectf.topLeft()}")
                     # else:
-                        # if GameSceneWidget.render_print_limiter.can_print(f"entity_CULLED_{entity_id_for_log}"):
-                        #     logger.debug(f"      CULLED Entity {i} ({entity_type_for_log}) - ScreenRect {screen_rect_qrectf} outside View {self.rect()}")
-                # else: # Log why it wasn't rendered if static and expected
+                        # if is_static_tile and GameSceneWidget.render_print_limiter.can_print(f"entity_CULLED_{entity_id_for_log}"):
+                        #     logger.debug(f"      CULLED Static Tile: {entity_type_for_log}, PType: {platform_type_attr}, WorldRect={entity_rect}, ScreenRect={screen_rect_qrectf}")
+                # else:
                     # if is_static_tile and GameSceneWidget.render_print_limiter.can_print(f"entity_NOT_RENDERABLE_{entity_id_for_log}"):
-                    #      logger.warning(f"    Static Tile NOT RENDERABLE: {entity_type_for_log} Rect={entity_rect} ImgValid={entity_image and not entity_image.isNull()}")
+                    #      logger.warning(f"    Static Tile NOT RENDERABLE: {entity_type_for_log}, PType: {platform_type_attr}, WorldRect={entity_rect} ImgValid={entity_image and not entity_image.isNull()}")
 
-
-            # Enemy health bars
             enemy_list_for_hb: List[Any] = self.game_elements.get("enemy_list", [])
             for enemy in enemy_list_for_hb:
                 if hasattr(enemy, 'alive') and enemy.alive() and \
@@ -184,18 +180,15 @@ class GameSceneWidget(QWidget):
                     hb_x = enemy_screen_rect.center().x() - hb_w / 2.0
                     hb_y = enemy_screen_rect.top() - hb_h - float(getattr(C, 'HEALTH_BAR_OFFSET_ABOVE', 5))
                     draw_health_bar_qt(painter, hb_x, hb_y, hb_w, hb_h, enemy.current_health, enemy.max_health)
-        else: # No camera instance
+        else:
             logger.warning("GameSceneWidget Paint: No camera instance found. Drawing at world coordinates.")
-            for entity in all_renderables: # Fallback drawing without camera
+            for entity in all_renderables:
                 if hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
                    hasattr(entity, 'rect') and entity.rect and entity.rect.isValid():
-                    if (not hasattr(entity, 'alive') or entity.alive()): # Draw if alive or if alive attr missing (static tiles)
+                    if (not hasattr(entity, 'alive') or entity.alive()):
                         painter.drawPixmap(entity.rect.topLeft(), entity.image)
 
-
-        # Player HUDs
-        player1 = self.game_elements.get("player1")
-        player2 = self.game_elements.get("player2")
+        player1 = self.game_elements.get("player1"); player2 = self.game_elements.get("player2")
         hud_font = self.fonts.get("medium_qfont", QFont("Arial", 12))
         if player1 and hasattr(player1, '_valid_init') and player1._valid_init and \
            hasattr(player1, 'alive') and player1.alive() and not getattr(player1, 'is_petrified', False):
@@ -205,7 +198,6 @@ class GameSceneWidget(QWidget):
             p2_hud_w_est = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100) + 120)
             draw_player_hud_qt(painter, self.width() - p2_hud_w_est - 10.0, 10.0, player2, 2, hud_font)
 
-        # Download status overlay
         if self.download_status_message:
             dialog_w = self.width() * 0.6; dialog_h = self.height() * 0.3
             dialog_rect = QRectF(0, 0, dialog_w, dialog_h)
@@ -237,20 +229,15 @@ class SelectMapDialog(QDialog):
     def populate_maps(self):
         self.list_widget.clear(); maps_dir = getattr(C, "MAPS_DIR", "maps")
         if not os.path.isabs(maps_dir):
-            project_root_from_game_ui = os.path.dirname(os.path.abspath(__file__))
-            maps_dir = os.path.join(project_root_from_game_ui, maps_dir)
+            project_root_from_game_ui = os.path.dirname(os.path.abspath(__file__)); maps_dir = os.path.join(project_root_from_game_ui, maps_dir)
         if os.path.exists(maps_dir) and os.path.isdir(maps_dir):
             try:
-                map_files = [f[:-3] for f in os.listdir(maps_dir) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"] # Exclude level_default from selection
-                map_files.sort()
-                if "original" not in map_files: map_files.insert(0, "original") # Ensure original is an option
-                if "lava" not in map_files: map_files.insert(1, "lava") # Ensure lava is an option
-                if "cpu_extended" not in map_files: map_files.insert(2, "cpu_extended") # Ensure cpu_extended is an option
-
-                unique_map_files = []
+                map_files = [f[:-3] for f in os.listdir(maps_dir) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"]
+                map_files.sort(); unique_map_files = []
+                for mf_opt in ["original", "lava", "cpu_extended", "noenemy", "bigmap1"]: # Ensure specific maps are listed first if present
+                    if mf_opt in map_files and mf_opt not in unique_map_files: unique_map_files.append(mf_opt)
                 for mf in map_files:
                     if mf not in unique_map_files: unique_map_files.append(mf)
-                
                 if unique_map_files:
                     self.list_widget.addItems(unique_map_files)
                     if self.list_widget.count() > 0: self.list_widget.setCurrentRow(0)
@@ -273,11 +260,9 @@ class IPInputDialog(QDialog):
         self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.button_box.accepted.connect(self.accept); self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box); self.line_edit.returnPressed.connect(self.accept)
-
     def accept(self):
         text = self.line_edit.text().strip()
-        if text:
-            self.ip_port_string = text
-            super().accept()
-        else:
-            QMessageBox.warning(self, "Input Error", "IP and Port cannot be empty.")
+        if text: self.ip_port_string = text; super().accept()
+        else: QMessageBox.warning(self, "Input Error", "IP and Port cannot be empty.")
+
+#################### END OF FILE: game_ui.py ####################
