@@ -6,10 +6,10 @@ from typing import Dict, Optional, Any, List, Tuple
 
 # PySide6 imports
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, # Added QGridLayout
     QPushButton, QLabel, QStackedWidget, QMessageBox, QDialog,
     QLineEdit, QListWidget, QListWidgetItem, QDialogButtonBox, QProgressBar,
-    QSizePolicy
+    QSizePolicy, QScrollArea
 )
 from PySide6.QtGui import (QFont, QKeyEvent, QMouseEvent, QCloseEvent, QColor, QPalette, QScreen, QKeySequence)
 from PySide6.QtCore import Qt, Signal, Slot, QThread, QSize,QTimer
@@ -24,13 +24,13 @@ if _project_root not in sys.path:
 from logger import info, debug, warning, critical, error, LOGGING_ENABLED, LOG_FILE_PATH
 
 import constants as C
-from game_setup import initialize_game_elements
+from game_setup import initialize_game_elements, reset_game_state # Added reset_game_state
 from server_logic import ServerState, run_server_mode
 from client_logic import ClientState, run_client_mode, find_server_on_lan
 from couch_play_logic import run_couch_play_mode
-from game_ui import GameSceneWidget, SelectMapDialog, IPInputDialog # game_ui.py will NOT use pygame for its UI elements
+from game_ui import GameSceneWidget, SelectMapDialog, IPInputDialog
 import config as game_config
-import joystick_handler # This uses 'inputs' library, primarily for controller_mapper_gui
+import joystick_handler # This is the 'inputs' library based handler
 from player import Player
 from player_input_handler import process_player_input_logic_pyside as process_player_input_logic
 
@@ -87,7 +87,7 @@ _qt_keys_pressed_snapshot: Dict[Qt.Key, bool] = {}
 _qt_key_events_this_frame: List[Tuple[QKeyEvent.Type, Qt.Key, bool]] = []
 
 
-class JoystickPollingThread(QThread): # This thread might be less relevant if Pygame polling is in main timer
+class JoystickPollingThread(QThread):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.running = True
@@ -95,8 +95,12 @@ class JoystickPollingThread(QThread): # This thread might be less relevant if Py
     def run(self):
         info("JoystickPollingThread: Started.")
         while self.running:
-            # Removed: joystick_handler.poll_joysticks_and_update_globals()
-            self.msleep(30) 
+            if hasattr(joystick_handler, 'poll_joysticks_and_update_globals') and callable(joystick_handler.poll_joysticks_and_update_globals):
+                try:
+                    joystick_handler.poll_joysticks_and_update_globals()
+                except Exception as e_poll:
+                    warning(f"JoystickPollingThread: Error polling 'inputs' joystick_handler: {e_poll}")
+            self.msleep(16)
         info("JoystickPollingThread: Stopped.")
 
     def stop(self):
@@ -107,18 +111,28 @@ class JoystickPollingThread(QThread): # This thread might be less relevant if Py
 class NetworkThread(QThread):
     status_update_signal = Signal(str, str, float)
     operation_finished_signal = Signal(str)
+    client_fully_synced_signal = Signal() # New signal for host mode
+
     def __init__(self, mode: str, game_elements_ref: Dict[str, Any], server_state_ref: Optional[ServerState] = None, client_state_ref: Optional[ClientState] = None, target_ip_port: Optional[str] = None, parent=None):
         super().__init__(parent)
         self.mode = mode; self.game_elements = game_elements_ref; self.server_state = server_state_ref; self.client_state = client_state_ref; self.target_ip_port = target_ip_port
     def _ui_status_update_callback(self, title: str, message: str, progress: float): self.status_update_signal.emit(title, message, progress)
     def _get_p1_input_snapshot_main_thread_passthrough(self, player_instance: Any, platforms_list: List[Any]) -> Dict[str, bool]: return {}
-    
+
     def run(self):
         try:
             main_window_instance = MainWindow._instance
-            if self.mode == "host" and self.server_state and main_window_instance:
-                info("NetworkThread: Starting run_server_mode...")
-                run_server_mode(self.server_state, self.game_elements, self._ui_status_update_callback, main_window_instance.get_p1_input_snapshot_for_server_thread, lambda: QApplication.processEvents())
+            if self.mode == "host" and self.server_state and main_window_instance: # Changed from "host_pre_game" to "host"
+                info("NetworkThread: Starting run_server_mode (will handle pre-game and active game)...")
+                # Pass the client_fully_synced_signal emitter to run_server_mode
+                run_server_mode(
+                    self.server_state,
+                    self.game_elements,
+                    self._ui_status_update_callback,
+                    main_window_instance.get_p1_input_snapshot_for_server_thread,
+                    lambda: QApplication.processEvents(),
+                    lambda: self.client_fully_synced_signal.emit() # Callback for when client is ready
+                )
                 info("NetworkThread: run_server_mode finished."); self.operation_finished_signal.emit("host_ended")
             elif self.mode == "join" and self.client_state and main_window_instance:
                 info("NetworkThread: Starting run_client_mode...")
@@ -136,867 +150,673 @@ class MainWindow(QMainWindow):
     actual_controls_module_instance: Optional[Any] = None
     joystick_poll_thread: Optional[JoystickPollingThread] = None
 
-    # Pygame joystick specific attributes for menu navigation
     _pygame_joysticks: List[pygame.joystick.Joystick]
     _menu_selected_button_idx: int
+    _map_selection_selected_button_idx: int
+    _lan_search_list_selected_idx: int
+    _ip_dialog_selected_button_idx: int
     _last_pygame_joy_nav_time: float
     _pygame_joy_axis_was_active_neg: bool
     _pygame_joy_axis_was_active_pos: bool
-    _main_menu_buttons_ref: List[QPushButton] # To simulate clicks
+    _main_menu_buttons_ref: List[QPushButton]
+    _map_selection_buttons_ref: List[QPushButton]
+    _ip_dialog_buttons_ref: List[QPushButton]
+    _current_active_menu_buttons: List[QPushButton]
+    _current_active_menu_selected_idx_ref: str
+    map_select_scroll_area: Optional[QScrollArea] = None
+    current_modal_dialog: Optional[str] = None
+
+    _prev_menu_confirm_pressed: bool
+    _prev_menu_cancel_pressed: bool
+    _prev_lan_confirm_pressed: bool
+    _prev_lan_cancel_pressed: bool
+    _prev_lan_retry_pressed: bool
+    _prev_ip_dialog_confirm_pressed: bool
+    _prev_ip_dialog_cancel_pressed: bool
+
+
+    NUM_MAP_COLUMNS = 3
 
     def __init__(self):
         super().__init__()
         MainWindow._instance = self
-        self.setWindowTitle(f"Platformer")
+        self.setWindowTitle(f"Platformer Adventure LAN")
 
-        # Pygame initialization for joystick
         try:
-            pygame.init() # Initialize all Pygame modules
-            pygame.joystick.init() # Initialize only the joystick module
+            pygame.init(); pygame.joystick.init()
             self._pygame_joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
-            if self._pygame_joysticks:
-                info(f"MAIN PySide6: Pygame found {len(self._pygame_joysticks)} joysticks for menu navigation.")
-                for joy in self._pygame_joysticks:
-                    joy.init() # Initialize each joystick instance
-                    info(f"  - Pygame Joystick: {joy.get_name()}")
-            else:
-                info("MAIN PySide6: Pygame found no joysticks for menu navigation.")
-        except pygame.error as e:
-            warning(f"MAIN PySide6: Pygame joystick initialization error: {e}. Menu joystick navigation disabled.")
-            self._pygame_joysticks = []
-        
-        self._menu_selected_button_idx = 0
-        self._last_pygame_joy_nav_time = 0.0
-        self._pygame_joy_axis_was_active_neg = False
-        self._pygame_joy_axis_was_active_pos = False
-        self._main_menu_buttons_ref = []
+            if self._pygame_joysticks: info(f"MAIN PySide6: Pygame found {len(self._pygame_joysticks)} joysticks."); [j.init() for j in self._pygame_joysticks]; [info(f"  - Pygame Joystick: {j.get_name()}") for j in self._pygame_joysticks]
+            else: info("MAIN PySide6: Pygame found no joysticks.")
+        except pygame.error as e: warning(f"MAIN PySide6: Pygame joystick init error: {e}."); self._pygame_joysticks = []
 
+        self._menu_selected_button_idx = 0; self._map_selection_selected_button_idx = 0; self._lan_search_list_selected_idx = 0; self._ip_dialog_selected_button_idx = 0
+        self._last_pygame_joy_nav_time = 0.0; self._pygame_joy_axis_was_active_neg = False; self._pygame_joy_axis_was_active_pos = False
+        self._main_menu_buttons_ref = []; self._map_selection_buttons_ref = []; self._ip_dialog_buttons_ref = []
+        self._current_active_menu_buttons = self._main_menu_buttons_ref; self._current_active_menu_selected_idx_ref = "_menu_selected_button_idx"
+        self._prev_menu_confirm_pressed = False; self._prev_menu_cancel_pressed = False
+        self._prev_lan_confirm_pressed = False; self._prev_lan_cancel_pressed = False; self._prev_lan_retry_pressed = False
+        self._prev_ip_dialog_confirm_pressed = False; self._prev_ip_dialog_cancel_pressed = False
 
         screen_geo = QApplication.primaryScreen().availableGeometry()
         self.initial_main_window_width = max(800, min(int(screen_geo.width() * 0.75), 1600))
         self.initial_main_window_height = max(600, min(int(screen_geo.height() * 0.75), 900))
-        self.setMinimumSize(QSize(800,600))
-        self.resize(self.initial_main_window_width, self.initial_main_window_height)
-        info(f"MAIN PySide6: Initial normal window size: {self.size().width()}x{self.size().height()}")
-
-        self.fonts = {
-            "small": QFont("Arial", 10), "medium": QFont("Arial", 14),
-            "large": QFont("Arial", 24, QFont.Weight.Bold), "debug": QFont("Monospace", 9)
-        }
+        self.setMinimumSize(QSize(800,600)); self.resize(self.initial_main_window_width, self.initial_main_window_height)
+        info(f"MAIN PySide6: Initial window size: {self.size().width()}x{self.size().height()}")
+        self.fonts = {"small": QFont("Arial", 10), "medium": QFont("Arial", 14), "large": QFont("Arial", 24, QFont.Weight.Bold), "debug": QFont("Monospace", 9)}
 
         try:
-            if not joystick_handler.init_joysticks(): # 'inputs' library handler
-                warning("MAIN PySide6: 'inputs' joystick_handler failed to initialize. This affects controller_mapper_gui.")
-            else:
-                info("MAIN PySide6: 'inputs' joystick_handler initialized successfully for controller_mapper_gui.")
-            
-            game_config.load_config()
-            self._translate_config_key_mappings()
-        except Exception as e_cfg:
-            critical(f"Error during 'inputs' joystick/config init in MainWindow: {e_cfg}", exc_info=True)
+            if hasattr(joystick_handler, 'init_joysticks') and callable(joystick_handler.init_joysticks):
+                if not joystick_handler.init_joysticks(): warning("MAIN PySide6: 'inputs' joystick_handler failed to initialize.")
+                else: info("MAIN PySide6: 'inputs' joystick_handler initialized.")
+            else: warning("MAIN PySide6: 'joystick_handler' module missing 'init_joysticks'.")
+            game_config.load_config(); self._translate_config_key_mappings()
+        except AttributeError as e_attr: critical(f"Error during 'inputs' joystick/config init: {e_attr} (Likely 'joystick_handler' API issue)", exc_info=True); self._handle_config_load_failure()
+        except Exception as e_cfg: critical(f"Error during general config init: {e_cfg}", exc_info=True); self._handle_config_load_failure()
 
-        self.app_status = APP_STATUS
-        self.game_elements: Dict[str, Any] = {}
-        self.current_view_name: Optional[str] = None
-        self.current_game_mode: Optional[str] = None
-
-        self.server_state: Optional[ServerState] = None
-        self.client_state: Optional[ClientState] = None
-        self.network_thread: Optional[NetworkThread] = None
-        self.lan_search_dialog: Optional[QDialog] = None
+        self.app_status = APP_STATUS; self.game_elements: Dict[str, Any] = {}; self.current_view_name: Optional[str] = None; self.current_game_mode: Optional[str] = None
+        self.server_state: Optional[ServerState] = None; self.client_state: Optional[ClientState] = None; self.network_thread: Optional[NetworkThread] = None; self.lan_search_dialog: Optional[QDialog] = None
 
         self.stacked_widget = QStackedWidget(self)
-        self.main_menu_widget = self._create_main_menu_widget() # Buttons are added to self._main_menu_buttons_ref here
+        self.main_menu_widget = self._create_main_menu_widget()
+        self.map_select_widget = self._create_map_select_widget() # Renamed for clarity
         self.game_scene_widget = GameSceneWidget(self.game_elements, self.fonts, self)
-
-        self.editor_content_container = QWidget()
-        self.editor_content_container.setLayout(QVBoxLayout())
-        self.editor_content_container.layout().setContentsMargins(0,0,0,0)
-
-        self.controls_content_container = QWidget()
-        self.controls_content_container.setLayout(QVBoxLayout())
-        self.controls_content_container.layout().setContentsMargins(0,0,0,0)
-
+        self.editor_content_container = QWidget(); self.editor_content_container.setLayout(QVBoxLayout()); self.editor_content_container.layout().setContentsMargins(0,0,0,0)
+        self.controls_content_container = QWidget(); self.controls_content_container.setLayout(QVBoxLayout()); self.controls_content_container.layout().setContentsMargins(0,0,0,0)
         self.editor_view_page = self._create_view_page_with_back_button("Level Editor", self.editor_content_container, self.on_return_to_menu_from_sub_view)
         self.settings_view_page = self._create_view_page_with_back_button("Settings/Controls", self.controls_content_container, self.on_return_to_menu_from_sub_view)
 
-        self.stacked_widget.addWidget(self.main_menu_widget)
-        self.stacked_widget.addWidget(self.game_scene_widget)
-        self.stacked_widget.addWidget(self.editor_view_page)
-        self.stacked_widget.addWidget(self.settings_view_page)
+        self.stacked_widget.addWidget(self.main_menu_widget); self.stacked_widget.addWidget(self.map_select_widget); self.stacked_widget.addWidget(self.game_scene_widget)
+        self.stacked_widget.addWidget(self.editor_view_page); self.stacked_widget.addWidget(self.settings_view_page)
+        self.setCentralWidget(self.stacked_widget); self.show_view("menu")
 
-        self.setCentralWidget(self.stacked_widget)
-        self.show_view("menu")
+        self.network_status_update.connect(self.on_network_status_update); self.lan_server_search_status.connect(self.on_lan_server_search_status_update)
+        self.status_dialog: Optional[QDialog] = None; self.status_label_in_dialog: Optional[QLabel] = None; self.status_progress_bar_in_dialog: Optional[QProgressBar] = None
+        self.joystick_poll_thread = JoystickPollingThread(self); self.joystick_poll_thread.start()
+        self.game_update_timer = QTimer(self); self.game_update_timer.timeout.connect(self.update_game_loop); self.game_update_timer.start(1000 // C.FPS)
 
-        self.network_status_update.connect(self.on_network_status_update)
-        self.lan_server_search_status.connect(self.on_lan_server_search_status_update)
-        self.status_dialog: Optional[QDialog] = None
-        self.status_label_in_dialog: Optional[QLabel] = None
-        self.status_progress_bar_in_dialog: Optional[QProgressBar] = None
-        
-        self.joystick_poll_thread = JoystickPollingThread(self) # May not be needed if polling is done in game_update_timer
-        self.joystick_poll_thread.start()
-        
-        self.game_update_timer = QTimer(self)
-        self.game_update_timer.timeout.connect(self.update_game_loop)
-        self.game_update_timer.start(1000 // C.FPS) # Approx 60 FPS for game logic and menu polling
-
+    def _handle_config_load_failure(self):
+        warning("MAIN PySide6: Attempting to load config or translate mappings even after 'inputs' joystick_handler failure.")
+        try:
+            if not hasattr(game_config, 'P1_MAPPINGS'): # Check if config was loaded at all
+                game_config.load_config() # This might re-raise if underlying issue persists
+            self._translate_config_key_mappings()
+        except Exception as e_cfg_fallback:
+            critical(f"Error during fallback game_config.load_config() or _translate_config_key_mappings(): {e_cfg_fallback}", exc_info=True)
+            QMessageBox.critical(self, "Config Error", "Failed to load critical game configurations. Application might not work correctly.")
 
     def _create_view_page_with_back_button(self, title_text: str, content_widget_to_embed: QWidget, back_slot: Slot) -> QWidget:
-        # ... (definition remains the same)
-        page_widget = QWidget()
-        page_layout = QVBoxLayout(page_widget)
-        page_layout.setContentsMargins(10, 10, 10, 10)
-        title_label = QLabel(title_text)
-        title_label.setFont(self.fonts["large"])
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        page_layout.addWidget(title_label)
+        page_widget = QWidget(); page_layout = QVBoxLayout(page_widget); page_layout.setContentsMargins(10,10,10,10); page_layout.setSpacing(10)
+        title_label = QLabel(title_text); title_label.setFont(self.fonts["large"]); title_label.setAlignment(Qt.AlignmentFlag.AlignCenter); page_layout.addWidget(title_label)
         page_layout.addWidget(content_widget_to_embed, 1)
-        back_button = QPushButton("Back to Main Menu")
-        back_button.setFont(self.fonts["medium"])
-        back_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
-        back_button.clicked.connect(back_slot)
-        
-        button_layout_wrapper = QHBoxLayout()
-        button_layout_wrapper.addStretch()
-        button_layout_wrapper.addWidget(back_button)
-        button_layout_wrapper.addStretch()
-        page_layout.addLayout(button_layout_wrapper)
+        back_button = QPushButton("Back to Main Menu"); back_button.setFont(self.fonts["medium"]); back_button.setMinimumHeight(40); back_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed); back_button.clicked.connect(back_slot)
+        button_layout_wrapper = QHBoxLayout(); button_layout_wrapper.addStretch(); button_layout_wrapper.addWidget(back_button); button_layout_wrapper.addStretch(); page_layout.addLayout(button_layout_wrapper)
         return page_widget
 
-    def _clear_container_content(self, container_widget: QWidget):
-        # ... (definition remains the same)
-        layout = container_widget.layout()
-        if layout is not None:
-            while layout.count():
-                item = layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.setParent(None)
-                    widget.deleteLater()
+    def _create_map_select_widget(self) -> QWidget: # Renamed from _create_couch_coop_map_select_widget
+        from PySide6.QtWidgets import QGridLayout
+        page_widget = QWidget()
+        main_layout = QVBoxLayout(page_widget); main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter); main_layout.setSpacing(10)
+        self.map_select_title_label = QLabel("Select Map") # Generic title
+        self.map_select_title_label.setFont(self.fonts["large"]); self.map_select_title_label.setAlignment(Qt.AlignmentFlag.AlignCenter); main_layout.addWidget(self.map_select_title_label)
+        self.map_select_scroll_area = QScrollArea(); self.map_select_scroll_area.setWidgetResizable(True)
+        self.map_select_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff); self.map_select_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.map_buttons_container = QWidget()
+        self.map_buttons_layout = QGridLayout(self.map_buttons_container); self.map_buttons_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter); self.map_buttons_layout.setSpacing(10)
+        self.map_select_scroll_area.setWidget(self.map_buttons_container); main_layout.addWidget(self.map_select_scroll_area, 1)
+        back_button = QPushButton("Back to Main Menu"); back_button.setFont(self.fonts["medium"]); back_button.setMinimumHeight(40); back_button.setMinimumWidth(250); back_button.clicked.connect(lambda: self.show_view("menu"))
+        button_layout_wrapper = QHBoxLayout(); button_layout_wrapper.addStretch(); button_layout_wrapper.addWidget(back_button); button_layout_wrapper.addStretch(); main_layout.addLayout(button_layout_wrapper)
+        return page_widget
 
-    def _ensure_editor_instance(self):
-        # ... (definition remains the same)
-        if self.actual_editor_module_instance and self.actual_editor_module_instance.parent() is self.editor_content_container:
-            return
-        
-        self._clear_container_content(self.editor_content_container)
-        
-        if self.actual_editor_module_instance is None:
-            info("MAIN PySide6: Creating and embedding editor instance.")
+    def _populate_map_list_for_selection(self, purpose: str): # 'couch_coop' or 'host_game'
+        from PySide6.QtWidgets import QGridLayout # Ensure import
+        if not isinstance(self.map_buttons_layout, QGridLayout):
+            error("Map buttons layout is not QGridLayout in _populate_map_list_for_selection"); return
+        while self.map_buttons_layout.count():
+            child = self.map_buttons_layout.takeAt(0)
+            if child.widget(): child.widget().deleteLater()
+        self._map_selection_buttons_ref.clear()
+        maps_dir = getattr(C, "MAPS_DIR", "maps")
+        if not os.path.isabs(maps_dir): maps_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), maps_dir)
+        available_maps = []
+        if os.path.exists(maps_dir) and os.path.isdir(maps_dir):
             try:
-                from editor.editor import editor_main
-                instance = editor_main(parent_app_instance=QApplication.instance(), embed_mode=True)
-                if not instance or not isinstance(instance, QMainWindow):
-                    error("Failed to get QMainWindow editor instance.")
-                    self._add_placeholder_to_content_area(self.editor_content_container, "Error: Editor load failed.")
-                    return
-                self.actual_editor_module_instance = instance
-            except Exception as e:
-                error(f"Exception creating editor: {e}", exc_info=True)
-                self._add_placeholder_to_content_area(self.editor_content_container, f"Error loading editor: {e}")
-                self.actual_editor_module_instance = None
-                return
-        
-        if self.actual_editor_module_instance:
-            if self.actual_editor_module_instance.parent() is not None:
-                self.actual_editor_module_instance.setParent(None)
-            self.editor_content_container.layout().addWidget(self.actual_editor_module_instance)
-            info("MAIN PySide6: Editor instance embedded.")
+                map_files = sorted([f[:-3] for f in os.listdir(maps_dir) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"])
+                prio = ["original", "lava", "cpu_extended", "noenemy", "bigmap1"]
+                available_maps = [m for m in prio if m in map_files] + [m for m in map_files if m not in prio]
+            except OSError as e: self.map_buttons_layout.addWidget(QLabel(f"Error: {e}"),0,0,1,self.NUM_MAP_COLUMNS); return
+        else: self.map_buttons_layout.addWidget(QLabel(f"Maps dir not found: {maps_dir}"),0,0,1,self.NUM_MAP_COLUMNS); return
+        if not available_maps: self.map_buttons_layout.addWidget(QLabel("No maps found."),0,0,1,self.NUM_MAP_COLUMNS); return
 
-    def _ensure_controls_mapper_instance(self):
-        # ... (definition remains the same)
-        if self.actual_controls_module_instance and self.actual_controls_module_instance.parent() is self.controls_content_container:
-            return
+        for idx, map_name in enumerate(available_maps):
+            button = QPushButton(map_name.replace("_", " ").title())
+            button.setFont(self.fonts["medium"]); button.setMinimumHeight(40); button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            if purpose == "couch_coop": button.clicked.connect(lambda checked=False, mn=map_name: self._on_map_selected_for_couch_coop(mn))
+            elif purpose == "host_game": button.clicked.connect(lambda checked=False, mn=map_name: self._on_map_selected_for_host_game(mn))
+            row, col = divmod(idx, self.NUM_MAP_COLUMNS)
+            self.map_buttons_layout.addWidget(button, row, col)
+            self._map_selection_buttons_ref.append(button)
 
-        self._clear_container_content(self.controls_content_container)
-
-        if self.actual_controls_module_instance is None:
-            info("MAIN PySide6: Creating and embedding controls mapper instance.")
-            try:
-                from controller_settings.controller_mapper_gui import MainWindow as ControlsMapperWindow
-                instance = ControlsMapperWindow() 
-                
-                if not instance or not isinstance(instance, QWidget): # Check if it's a QWidget
-                    error("Failed to get QWidget controls instance.")
-                    self._add_placeholder_to_content_area(self.controls_content_container, "Error: Controls UI load failed (instance type).")
-                    return
-                self.actual_controls_module_instance = instance
-            except ImportError as e_imp:
-                error(f"ImportError creating controls mapper (likely 'inputs' lib issue for GUI): {e_imp}", exc_info=True)
-                self._add_placeholder_to_content_area(self.controls_content_container, f"Error importing controls UI: {e_imp}")
-                self.actual_controls_module_instance = None
-                return
-            except Exception as e:
-                error(f"Exception creating controls mapper: {e}", exc_info=True)
-                self._add_placeholder_to_content_area(self.controls_content_container, f"Error loading controls UI: {e}")
-                self.actual_controls_module_instance = None
-                return
-
-        if self.actual_controls_module_instance:
-            if self.actual_controls_module_instance.parent() is not None:
-                self.actual_controls_module_instance.setParent(None)
-            self.controls_content_container.layout().addWidget(self.actual_controls_module_instance)
-            info("MAIN PySide6: Controls mapper instance embedded/handled.")
-
-    def _add_placeholder_to_content_area(self, container: QWidget, msg: str):
-        # ... (definition remains the same)
-        layout = container.layout()
-        if layout is None:
-            layout = QVBoxLayout(container)
-            container.setLayout(layout)
-        else:
-            while layout.count():
-                child = layout.takeAt(0)
-                if child.widget():
-                    child.widget().deleteLater()
-        
-        lbl = QLabel(msg)
-        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl.setFont(self.fonts["medium"])
-        layout.addWidget(lbl)
-
-    def _translate_config_key_mappings(self):
-        # ... (definition remains the same)
-        info("Translating keyboard mappings to Qt.Key values.")
-        self._apply_qt_key_translation_to_map_definition(game_config.DEFAULT_KEYBOARD_P1_MAPPINGS)
-        self._apply_qt_key_translation_to_map_definition(game_config.DEFAULT_KEYBOARD_P2_MAPPINGS)
-        if game_config.CURRENT_P1_INPUT_DEVICE.startswith("keyboard"):
-            self._apply_qt_key_translation_to_map_definition(game_config.P1_MAPPINGS)
-        if game_config.CURRENT_P2_INPUT_DEVICE.startswith("keyboard"):
-            self._apply_qt_key_translation_to_map_definition(game_config.P2_MAPPINGS)
-        info("Keyboard mapping translation complete.")
-
-    def _apply_qt_key_translation_to_map_definition(self, mapping_dict: Dict[str, Any]):
-        # ... (definition remains the same)
-        for action, key_val_str in list(mapping_dict.items()):
-            if isinstance(key_val_str, str):
-                qt_key = QT_KEY_MAP.get(key_val_str.upper())
-                if qt_key is None and len(key_val_str) == 1:
-                    try:
-                        seq = QKeySequence(key_val_str.upper())
-                        if seq.count() > 0:
-                            qt_key_from_seq = seq[0].key()
-                            if qt_key_from_seq != 0: 
-                                qt_key = Qt.Key(qt_key_from_seq)
-                    except Exception: pass 
-                
-                if qt_key is not None and qt_key != Qt.Key.Key_unknown :
-                    mapping_dict[action] = qt_key
+    def _on_map_selected_for_couch_coop(self, map_name: str):
+        info(f"Map '{map_name}' selected for Couch Co-op."); self._prepare_and_start_game("couch_play", map_name=map_name)
+    def _on_map_selected_for_host_game(self, map_name: str):
+        info(f"Map '{map_name}' selected for Hosting."); self._prepare_and_start_game("host_waiting", map_name=map_name) # Start in waiting mode
 
     def _create_main_menu_widget(self) -> QWidget:
-        self._main_menu_buttons_ref = [] # Clear previous button references
-        menu_widget = QWidget()
-        layout = QVBoxLayout(menu_widget)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.setSpacing(15)
-
-        title_label = QLabel("Platformer Adventure LAN")
-        title_label.setFont(self.fonts["large"])
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title_label)
-
+        self._main_menu_buttons_ref = []
+        menu_widget = QWidget(); layout = QVBoxLayout(menu_widget); layout.setAlignment(Qt.AlignmentFlag.AlignCenter); layout.setSpacing(15)
+        title_label = QLabel("Platformer Adventure LAN"); title_label.setFont(self.fonts["large"]); title_label.setAlignment(Qt.AlignmentFlag.AlignCenter); layout.addWidget(title_label)
         buttons_data = [
-            ("Couch Co-op", self.on_start_couch_play),
-            ("Host Game", self.on_start_host_game),
-            ("Join LAN Game", self.on_start_join_lan),
-            ("Join by IP", self.on_start_join_ip),
-            ("Level Editor", lambda: self.show_view("editor")),
-            ("Settings/Controls", lambda: self.show_view("settings")),
+            ("Couch Co-op", self.on_start_couch_play), ("Host Game", self.on_start_host_game),
+            ("Join LAN Game", self.on_start_join_lan), ("Join by IP", self.on_start_join_ip),
+            ("Level Editor", lambda: self.show_view("editor")), ("Settings/Controls", lambda: self.show_view("settings")),
             ("Quit", self.request_close_app)
         ]
-
         for text, slot_func in buttons_data:
-            button = QPushButton(text)
-            button.setFont(self.fonts["medium"])
-            button.setMinimumHeight(40)
-            button.setMinimumWidth(250)
-            button.clicked.connect(slot_func)
-            layout.addWidget(button)
-            self._main_menu_buttons_ref.append(button) # Store reference for joystick nav
-        
-        self._update_main_menu_button_focus() # Initial focus
+            button = QPushButton(text); button.setFont(self.fonts["medium"]); button.setMinimumHeight(40)
+            button.setMinimumWidth(250); button.clicked.connect(slot_func); layout.addWidget(button)
+            self._main_menu_buttons_ref.append(button)
         return menu_widget
 
-    def _update_main_menu_button_focus(self):
-        if not self._main_menu_buttons_ref:
-            return
-        for i, button in enumerate(self._main_menu_buttons_ref):
-            is_selected = (i == self._menu_selected_button_idx)
-            # Update visual style for selection (e.g., border, background)
-            # PySide6 doesn't have a direct "hover" state equivalent from code for QPushButtons easily
-            # without stylesheets or custom painting. For simplicity, we'll just set focus.
+    def _update_current_menu_button_focus(self):
+        buttons_to_update = self._current_active_menu_buttons
+        selected_idx_attr_name = self._current_active_menu_selected_idx_ref
+        if not buttons_to_update or not hasattr(self, selected_idx_attr_name): return
+        current_selected_idx = getattr(self, selected_idx_attr_name)
+        selected_button_widget = None
+        for i, button in enumerate(buttons_to_update):
+            is_selected = (i == current_selected_idx)
             if is_selected:
-                button.setStyleSheet("QPushButton { border: 2px solid yellow; }")
-                button.setFocus(Qt.FocusReason.OtherFocusReason) # Give it keyboard focus
-            else:
-                button.setStyleSheet("") # Reset style
-    
-    def _navigate_main_menu_pygame_joy(self, direction: int): # direction: -1 for up, 1 for down
-        if not self._main_menu_buttons_ref:
+                button.setStyleSheet("QPushButton { border: 2px solid yellow; background-color: #555; color: white; } QPushButton:focus { outline: none; }")
+                button.setFocus(Qt.FocusReason.OtherFocusReason); selected_button_widget = button
+            else: button.setStyleSheet("")
+        if selected_button_widget and self.current_view_name == "map_select" and self.map_select_scroll_area:
+            self.map_select_scroll_area.ensureWidgetVisible(selected_button_widget, 50, 50) # Ensure 50px margin
+
+    def _navigate_current_menu_pygame_joy(self, direction: int):
+        buttons_to_nav = self._current_active_menu_buttons
+        selected_idx_attr_name = self._current_active_menu_selected_idx_ref
+        if not buttons_to_nav or not hasattr(self, selected_idx_attr_name): return
+        num_buttons = len(buttons_to_nav)
+        if num_buttons == 0: return
+        current_idx = getattr(self, selected_idx_attr_name)
+        if self.current_view_name == "map_select": # Grid navigation
+            row, col = divmod(current_idx, self.NUM_MAP_COLUMNS)
+            if direction == -1 : # Up
+                row = max(0, row - 1)
+            elif direction == 1: # Down
+                row = min((num_buttons - 1) // self.NUM_MAP_COLUMNS, row + 1)
+            elif direction == -2: # Left
+                col = max(0, col - 1)
+            elif direction == 2: # Right
+                col = min(self.NUM_MAP_COLUMNS - 1, col + 1)
+            new_idx = row * self.NUM_MAP_COLUMNS + col
+            new_idx = min(num_buttons - 1, max(0, new_idx)) # Clamp
+        else: # Linear navigation
+            new_idx = (current_idx + direction + num_buttons) % num_buttons
+        setattr(self, selected_idx_attr_name, new_idx)
+        self._update_current_menu_button_focus()
+        info(f"Menu Joystick: Navigated to button index {new_idx} in view '{self.current_view_name}'")
+
+    def _activate_current_menu_selected_button_pygame_joy(self):
+        buttons_to_activate = self._current_active_menu_buttons
+        selected_idx_attr_name = self._current_active_menu_selected_idx_ref
+        if not buttons_to_activate or not hasattr(self, selected_idx_attr_name): return
+        current_idx = getattr(self, selected_idx_attr_name)
+        if not (0 <= current_idx < len(buttons_to_activate)): return
+        selected_button = buttons_to_activate[current_idx]
+        info(f"Menu Joystick: Activating button '{selected_button.text()}' in view '{self.current_view_name}'")
+        selected_button.click()
+
+    def _poll_pygame_joysticks_for_ui_navigation(self):
+        active_ui_element = self.current_view_name
+        if self.current_modal_dialog: active_ui_element = self.current_modal_dialog
+        if active_ui_element not in ["menu", "map_select", "lan_search", "ip_input"] or not self._pygame_joysticks:
+            self._prev_menu_confirm_pressed = False; self._prev_menu_cancel_pressed = False
+            self._prev_lan_confirm_pressed = False; self._prev_lan_cancel_pressed = False; self._prev_lan_retry_pressed = False
+            self._prev_ip_dialog_confirm_pressed = False; self._prev_ip_dialog_cancel_pressed = False
             return
-        
-        num_buttons = len(self._main_menu_buttons_ref)
-        self._menu_selected_button_idx = (self._menu_selected_button_idx + direction + num_buttons) % num_buttons
-        self._update_main_menu_button_focus()
-        info(f"Menu Joystick: Navigated to button index {self._menu_selected_button_idx}")
-
-    def _activate_main_menu_selected_button_pygame_joy(self):
-        if not self._main_menu_buttons_ref or \
-           not (0 <= self._menu_selected_button_idx < len(self._main_menu_buttons_ref)):
-            return
-        
-        selected_button = self._main_menu_buttons_ref[self._menu_selected_button_idx]
-        info(f"Menu Joystick: Activating button '{selected_button.text()}'")
-        selected_button.click() # Simulate a click
-
-    def _poll_pygame_joysticks_for_menu(self):
-        if self.current_view_name != "menu" or not self._pygame_joysticks:
-            return
-
-        pygame.event.pump() # Process Pygame's internal event queue (needed for joystick state updates)
-
-        joy = self._pygame_joysticks[0] # For simplicity, use the first detected Pygame joystick for menu
-        
-        # --- Get effective Pygame key mappings for menu actions ---
-        # We'll use a simplified default or try to read from config.py's joystick mapping
-        # This part is a bit tricky as config.py is geared towards the 'inputs' library format.
-        # For Pygame menu nav, we usually look for specific button IDs (e.g., A=0, B=1) or D-pad.
-
-        # Simplified: Button 0 (often A/Cross) for select, Button 1 (often B/Circle) for back/quit
-        # D-pad or Left Stick Y for up/down.
-        JOY_MENU_CONFIRM_BTN_ID = 0 # Typically A/Cross
-        JOY_MENU_CANCEL_BTN_ID = 1  # Typically B/Circle
-        JOY_MENU_NAV_AXIS_ID = 1    # Typically Left Stick Y
-        JOY_MENU_NAV_HAT_ID = 0     # D-Pad
-
+        pygame.event.pump(); joy = self._pygame_joysticks[0]
+        JOY_NAV_AXIS_ID = 1; JOY_NAV_HAT_ID = 0
         current_time = time.monotonic()
-        if current_time - self._last_pygame_joy_nav_time < 0.2: # 200ms cooldown
-            return
-
-        # Check D-pad/Hat for up/down
-        if joy.get_numhats() > JOY_MENU_NAV_HAT_ID:
-            hat_x, hat_y = joy.get_hat(JOY_MENU_NAV_HAT_ID)
-            if hat_y > 0.5: # Hat down
-                self._navigate_main_menu_pygame_joy(1)
-                self._last_pygame_joy_nav_time = current_time
-                return
-            elif hat_y < -0.5: # Hat up
-                self._navigate_main_menu_pygame_joy(-1)
-                self._last_pygame_joy_nav_time = current_time
-                return
-
-        # Check Axis for up/down
-        if joy.get_numaxes() > JOY_MENU_NAV_AXIS_ID:
-            axis_val = joy.get_axis(JOY_MENU_NAV_AXIS_ID)
-            if axis_val > 0.7: # Axis pushed down
-                if not self._pygame_joy_axis_was_active_pos:
-                    self._navigate_main_menu_pygame_joy(1)
-                    self._last_pygame_joy_nav_time = current_time
-                self._pygame_joy_axis_was_active_pos = True
-                return # Prioritize axis over next checks if active
-            else:
-                self._pygame_joy_axis_was_active_pos = False
-
-            if axis_val < -0.7: # Axis pushed up
-                if not self._pygame_joy_axis_was_active_neg:
-                    self._navigate_main_menu_pygame_joy(-1)
-                    self._last_pygame_joy_nav_time = current_time
-                self._pygame_joy_axis_was_active_neg = True
-                return
-            else:
-                self._pygame_joy_axis_was_active_neg = False
+        if current_time - self._last_pygame_joy_nav_time < 0.22: return
+        confirm_mapping = game_config.LOADED_PYGAME_JOYSTICK_MAPPINGS.get("menu_confirm")
+        cancel_mapping = game_config.LOADED_PYGAME_JOYSTICK_MAPPINGS.get("menu_cancel")
         
-        # Check buttons for confirm/cancel
-        # We need to check button presses (down event), not just held state.
-        # Pygame's event queue is better for this, but we're polling.
-        # A simple way is to track previous button states for polling.
-        # For now, this will trigger on hold, which is not ideal for confirm.
-        # A proper solution would involve Pygame event loop integration or more complex polling.
-        
-        # This part would be better with pygame.event.get() and JOYBUTTONDOWN
-        # but since PySide6 has the event loop, we are restricted.
-        # Let's assume this is called frequently enough that button presses will be caught.
-        # (This is a known limitation of polling for discrete button presses without an event queue)
-        if joy.get_numbuttons() > JOY_MENU_CONFIRM_BTN_ID and joy.get_button(JOY_MENU_CONFIRM_BTN_ID):
-            self._activate_main_menu_selected_button_pygame_joy()
-            self._last_pygame_joy_nav_time = current_time # Add cooldown after action too
-            return
-        
-        if joy.get_numbuttons() > JOY_MENU_CANCEL_BTN_ID and joy.get_button(JOY_MENU_CANCEL_BTN_ID):
-            # In main menu, cancel usually means quit
-            self.request_close_app()
-            self._last_pygame_joy_nav_time = current_time
-            return
+        # Hat Navigation (Up/Down/Left/Right)
+        if joy.get_numhats() > JOY_NAV_HAT_ID:
+            hat_x, hat_y = joy.get_hat(JOY_NAV_HAT_ID); navigated_by_hat = False
+            if active_ui_element in ["menu", "map_select", "lan_search"]:
+                if hat_y > 0.5: self._navigate_current_menu_pygame_joy(1); navigated_by_hat = True       # Down
+                elif hat_y < -0.5: self._navigate_current_menu_pygame_joy(-1); navigated_by_hat = True    # Up
+            if active_ui_element == "map_select" or (active_ui_element == "ip_input" and self._ip_dialog_buttons_ref):
+                if hat_x > 0.5: self._navigate_current_menu_pygame_joy(2); navigated_by_hat = True     # Right
+                elif hat_x < -0.5: self._navigate_current_menu_pygame_joy(-2); navigated_by_hat = True  # Left
+            if navigated_by_hat: self._last_pygame_joy_nav_time = current_time; self._reset_prev_press_flags(); return
+
+        # Axis Navigation (Up/Down/Left/Right)
+        nav_threshold = 0.65; navigated_by_axis = False
+        if joy.get_numaxes() > JOY_NAV_AXIS_ID: # Vertical axis (usually Y)
+            axis_y_val = joy.get_axis(JOY_NAV_AXIS_ID)
+            if active_ui_element in ["menu", "map_select", "lan_search"]:
+                if axis_y_val > nav_threshold:
+                    if not self._pygame_joy_axis_was_active_pos: self._navigate_current_menu_pygame_joy(1); navigated_by_axis = True
+                    self._pygame_joy_axis_was_active_pos = True
+                else: self._pygame_joy_axis_was_active_pos = False
+                if axis_y_val < -nav_threshold:
+                    if not self._pygame_joy_axis_was_active_neg: self._navigate_current_menu_pygame_joy(-1); navigated_by_axis = True
+                    self._pygame_joy_axis_was_active_neg = True
+                else: self._pygame_joy_axis_was_active_neg = False
+        if joy.get_numaxes() > 0: # Horizontal axis (usually X, ID 0)
+             axis_x_val = joy.get_axis(0)
+             if active_ui_element == "map_select" or (active_ui_element == "ip_input" and self._ip_dialog_buttons_ref):
+                if axis_x_val > nav_threshold:
+                    # Assuming axis 0, positive direction has not been continuously active for this specific purpose
+                    # This needs more state if mixing axis for up/down and left/right on same stick
+                    self._navigate_current_menu_pygame_joy(2); navigated_by_axis = True 
+                elif axis_x_val < -nav_threshold:
+                    self._navigate_current_menu_pygame_joy(-2); navigated_by_axis = True
+        if navigated_by_axis: self._last_pygame_joy_nav_time = current_time; self._reset_prev_press_flags(); return
 
 
-    def request_close_app(self):
-        # ... (definition remains the same)
-        info("MAIN PySide6: Quit action triggered from UI.")
-        self.close()
+        # Confirm/Cancel Button Actions
+        confirm_held = False; cancel_held = False
+        if confirm_mapping and confirm_mapping.get("type") == "button":
+            btn_id = confirm_mapping.get("id"); confirm_held = joy.get_numbuttons() > btn_id and joy.get_button(btn_id)
+        if cancel_mapping and cancel_mapping.get("type") == "button":
+            btn_id = cancel_mapping.get("id"); cancel_held = joy.get_numbuttons() > btn_id and joy.get_button(btn_id)
+
+        prev_confirm_flag_attr = f"_prev_{active_ui_element}_confirm_pressed" if active_ui_element != "menu" and active_ui_element != "map_select" else "_prev_menu_confirm_pressed"
+        prev_cancel_flag_attr = f"_prev_{active_ui_element}_cancel_pressed" if active_ui_element != "menu" and active_ui_element != "map_select" else "_prev_menu_cancel_pressed"
+
+        if confirm_held and not getattr(self, prev_confirm_flag_attr, False):
+            if active_ui_element in ["menu", "map_select"]: self._activate_current_menu_selected_button_pygame_joy()
+            elif active_ui_element == "lan_search": self._join_selected_lan_server_from_dialog()
+            elif active_ui_element == "ip_input": self._activate_ip_dialog_button()
+            self._last_pygame_joy_nav_time = current_time; setattr(self, prev_confirm_flag_attr, True); self._reset_other_prev_press_flags(prev_confirm_flag_attr); return
+        if not confirm_held: setattr(self, prev_confirm_flag_attr, False)
+
+        if cancel_held and not getattr(self, prev_cancel_flag_attr, False):
+            if active_ui_element == "menu": self.request_close_app()
+            elif active_ui_element == "map_select": self.show_view("menu")
+            elif active_ui_element == "lan_search" and self.lan_search_dialog: self.lan_search_dialog.reject()
+            elif active_ui_element == "ip_input" and self.ip_input_dialog: self.ip_input_dialog.reject()
+            self._last_pygame_joy_nav_time = current_time; setattr(self, prev_cancel_flag_attr, True); self._reset_other_prev_press_flags(prev_cancel_flag_attr); return
+        if not cancel_held: setattr(self, prev_cancel_flag_attr, False)
+        
+        # Retry for LAN search (Example: map to a different button if needed)
+        if active_ui_element == "lan_search":
+            retry_mapping = game_config.LOADED_PYGAME_JOYSTICK_MAPPINGS.get("reset") # Example: Using 'reset' action for retry
+            retry_held = False
+            if retry_mapping and retry_mapping.get("type") == "button":
+                btn_id = retry_mapping.get("id"); retry_held = joy.get_numbuttons() > btn_id and joy.get_button(btn_id)
+            if retry_held and not self._prev_lan_retry_pressed:
+                if self.lan_search_dialog and hasattr(self.lan_search_dialog, 'button_box'): self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Retry).click()
+                self._last_pygame_joy_nav_time = current_time; self._prev_lan_retry_pressed = True; self._reset_other_prev_press_flags("_prev_lan_retry_pressed"); return
+            if not retry_held: self._prev_lan_retry_pressed = False
+    
+    def _reset_prev_press_flags(self):
+        self._prev_menu_confirm_pressed = False; self._prev_menu_cancel_pressed = False
+        self._prev_lan_confirm_pressed = False; self._prev_lan_cancel_pressed = False; self._prev_lan_retry_pressed = False
+        self._prev_ip_dialog_confirm_pressed = False; self._prev_ip_dialog_cancel_pressed = False
+
+    def _reset_other_prev_press_flags(self, just_pressed_flag_name: str):
+        flags_to_reset = ["_prev_menu_confirm_pressed", "_prev_menu_cancel_pressed",
+                          "_prev_lan_confirm_pressed", "_prev_lan_cancel_pressed", "_prev_lan_retry_pressed",
+                          "_prev_ip_dialog_confirm_pressed", "_prev_ip_dialog_cancel_pressed"]
+        for flag_name in flags_to_reset:
+            if flag_name != just_pressed_flag_name:
+                setattr(self, flag_name, False)
+
+    def _activate_ip_dialog_button(self):
+        if self.ip_input_dialog and self._ip_dialog_buttons_ref:
+            if 0 <= self._ip_dialog_selected_button_idx < len(self._ip_dialog_buttons_ref):
+                self._ip_dialog_buttons_ref[self._ip_dialog_selected_button_idx].click()
+
+    def request_close_app(self): info("MAIN PySide6: Quit action triggered from UI."); self.close()
 
     def on_return_to_menu_from_sub_view(self):
-        # ... (definition remains the same, ensure _update_main_menu_button_focus is called if returning to menu)
-        source_view = self.current_view_name
-        info(f"Returning to menu from: {source_view}")
-        should_return_to_menu = True
-
+        source_view = self.current_view_name; info(f"Returning to menu from: {source_view}"); should_return = True
         if source_view == "editor" and self.actual_editor_module_instance:
-            if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and \
-               callable(self.actual_editor_module_instance.confirm_unsaved_changes):
-                if not self.actual_editor_module_instance.confirm_unsaved_changes("return to menu"):
-                    should_return_to_menu = False
-            if should_return_to_menu and hasattr(self.actual_editor_module_instance, 'save_geometry_and_state') and \
-               callable(self.actual_editor_module_instance.save_geometry_and_state):
-                self.actual_editor_module_instance.save_geometry_and_state()
-            if should_return_to_menu and self.actual_editor_module_instance.parent() is not None:
-                 self.actual_editor_module_instance.setParent(None)
-
+            if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and callable(self.actual_editor_module_instance.confirm_unsaved_changes):
+                if not self.actual_editor_module_instance.confirm_unsaved_changes("return to menu"): should_return = False
+            if should_return and hasattr(self.actual_editor_module_instance, 'save_geometry_and_state') and callable(self.actual_editor_module_instance.save_geometry_and_state): self.actual_editor_module_instance.save_geometry_and_state()
+            if should_return and self.actual_editor_module_instance.parent() is not None: self.actual_editor_module_instance.setParent(None)
         elif source_view == "settings" and self.actual_controls_module_instance:
-            if should_return_to_menu and self.actual_controls_module_instance.parent() is not None:
-                self.actual_controls_module_instance.setParent(None)
-
-        if should_return_to_menu:
-            self.show_view("menu") # This will call _update_main_menu_button_focus
-        else:
-            info("Return to menu cancelled by sub-view.")
+            if should_return and self.actual_controls_module_instance.parent() is not None: self.actual_controls_module_instance.setParent(None)
+        if should_return: self.show_view("menu")
+        else: info("Return to menu cancelled by sub-view.")
 
     def show_view(self, view_name: str):
-        # ... (definition remains the same, added call to _update_main_menu_button_focus if view is menu)
         info(f"Switching UI view to: {view_name}")
-        if self.current_view_name == "game_scene" and view_name != "game_scene" and self.current_game_mode:
-            self.stop_current_game_mode(show_menu=False)
+        if self.current_view_name == "game_scene" and view_name != "game_scene" and self.current_game_mode: self.stop_current_game_mode(show_menu=False)
+        self.current_view_name = view_name; target_page: Optional[QWidget] = None; title = "Platformer Adventure LAN"
+        self.current_modal_dialog = None # Clear modal dialog context when switching main views
 
-        self.current_view_name = view_name
+        if view_name == "menu": target_page = self.main_menu_widget; title += " - Main Menu"; self._current_active_menu_buttons = self._main_menu_buttons_ref; self._current_active_menu_selected_idx_ref = "_menu_selected_button_idx"; self._menu_selected_button_idx = 0
+        elif view_name == "map_select": # Generic map select view
+            target_page = self.map_select_widget;
+            # Title and purpose set by caller (on_start_couch_play or on_start_host_game)
+            self._current_active_menu_buttons = self._map_selection_buttons_ref; self._current_active_menu_selected_idx_ref = "_map_selection_selected_button_idx"; self._map_selection_selected_button_idx = 0
+        elif view_name == "game_scene": target_page = self.game_scene_widget; title += f" - {self.current_game_mode.replace('_',' ').title() if self.current_game_mode else 'Game'}"; self._current_active_menu_buttons = []
+        elif view_name == "editor": self._ensure_editor_instance(); target_page = self.editor_view_page; title += " - Level Editor"; self._current_active_menu_buttons = []
+        elif view_name == "settings": self._ensure_controls_mapper_instance(); target_page = self.settings_view_page; title += " - Settings/Controls"; self._current_active_menu_buttons = []
         
-        target_widget_page: Optional[QWidget] = None
-        window_title = "Platformer"
-
-        if view_name == "menu":
-            target_widget_page = self.main_menu_widget
-            window_title += " - Main Menu"
-            self._menu_selected_button_idx = 0 # Reset menu selection
-            self._update_main_menu_button_focus() # Ensure focus is correct when showing menu
-        elif view_name == "game_scene":
-            target_widget_page = self.game_scene_widget
-            window_title += f" - {self.current_game_mode.replace('_',' ').title() if self.current_game_mode else 'Game'}"
-        elif view_name == "editor":
-            self._ensure_editor_instance()
-            target_widget_page = self.editor_view_page
-            window_title += " - Level Editor"
-        elif view_name == "settings":
-            self._ensure_controls_mapper_instance()
-            target_widget_page = self.settings_view_page
-            window_title += " - Settings/Controls"
-
-        if target_widget_page:
-            self.stacked_widget.setCurrentWidget(target_widget_page)
-            self.setWindowTitle(window_title)
-            if view_name == "editor" and self.actual_editor_module_instance:
-                self.actual_editor_module_instance.setFocus()
-            elif view_name == "settings" and self.actual_controls_module_instance:
-                self.actual_controls_module_instance.setFocus()
-            elif target_widget_page:
-                target_widget_page.setFocus()
+        if target_page:
+            self.stacked_widget.setCurrentWidget(target_page); self.setWindowTitle(title)
+            if view_name in ["menu", "map_select"]: self._update_current_menu_button_focus()
+            focus_target = target_page
+            if view_name == "editor" and self.actual_editor_module_instance: focus_target = self.actual_editor_module_instance
+            elif view_name == "settings" and self.actual_controls_module_instance: focus_target = self.actual_controls_module_instance
+            focus_target.setFocus(Qt.FocusReason.OtherFocusReason)
         else:
-            warning(f"show_view: Unknown view '{view_name}'. Defaulting to menu.")
-            self.stacked_widget.setCurrentWidget(self.main_menu_widget)
-            self.setWindowTitle("Platformer Adventure LAN - Main Menu")
-            self.main_menu_widget.setFocus()
-            self._menu_selected_button_idx = 0 
-            self._update_main_menu_button_focus()
-        
-        global _qt_keys_pressed_snapshot, _qt_key_events_this_frame
-        _qt_keys_pressed_snapshot.clear()
-        _qt_key_events_this_frame.clear()
+            warning(f"show_view: Unknown view '{view_name}'. Defaulting to menu."); self.stacked_widget.setCurrentWidget(self.main_menu_widget)
+            self.setWindowTitle("Platformer Adventure LAN - Main Menu"); self._current_active_menu_buttons = self._main_menu_buttons_ref
+            self._current_active_menu_selected_idx_ref = "_menu_selected_button_idx"; self._menu_selected_button_idx = 0
+            self._update_current_menu_button_focus(); self.main_menu_widget.setFocus()
+        global _qt_keys_pressed_snapshot, _qt_key_events_this_frame; _qt_keys_pressed_snapshot.clear(); _qt_key_events_this_frame.clear()
 
     def keyPressEvent(self, event: QKeyEvent):
-        global _qt_keys_pressed_snapshot, _qt_key_events_this_frame
-        is_auto_repeat = event.isAutoRepeat()
-        qt_key_enum = Qt.Key(event.key())
-
-        if not is_auto_repeat:
-            _qt_keys_pressed_snapshot[qt_key_enum] = True
-            _qt_key_events_this_frame.append((QKeyEvent.Type.KeyPress, qt_key_enum, is_auto_repeat))
+        global _qt_keys_pressed_snapshot, _qt_key_events_this_frame; is_auto_repeat = event.isAutoRepeat(); qt_key_enum = Qt.Key(event.key())
+        if not is_auto_repeat: _qt_keys_pressed_snapshot[qt_key_enum] = True; _qt_key_events_this_frame.append((QKeyEvent.Type.KeyPress, qt_key_enum, is_auto_repeat))
         
-        # Keyboard menu navigation
-        if self.current_view_name == "menu" and not is_auto_repeat:
-            if event.key() == Qt.Key.Key_Up:
-                self._navigate_main_menu_pygame_joy(-1) # Re-use logic, -1 for up
-                event.accept()
-                return
-            elif event.key() == Qt.Key.Key_Down:
-                self._navigate_main_menu_pygame_joy(1)  # Re-use logic, 1 for down
-                event.accept()
-                return
+        active_ui_element = self.current_modal_dialog if self.current_modal_dialog else self.current_view_name
+        
+        if active_ui_element in ["menu", "map_select"] and not is_auto_repeat:
+            if event.key() == Qt.Key.Key_Up: self._navigate_current_menu_pygame_joy(-1); event.accept(); return
+            elif event.key() == Qt.Key.Key_Down: self._navigate_current_menu_pygame_joy(1); event.accept(); return
+            elif event.key() == Qt.Key.Key_Left and active_ui_element == "map_select": self._navigate_current_menu_pygame_joy(-2); event.accept(); return # Grid left
+            elif event.key() == Qt.Key.Key_Right and active_ui_element == "map_select": self._navigate_current_menu_pygame_joy(2); event.accept(); return # Grid right
+            elif event.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]: self._activate_current_menu_selected_button_pygame_joy(); event.accept(); return
+        elif active_ui_element == "lan_search" and not is_auto_repeat:
+            if event.key() == Qt.Key.Key_Up: self._lan_search_list_selected_idx = max(0, self._lan_search_list_selected_idx - 1); self._update_lan_search_list_focus(); event.accept(); return
+            elif event.key() == Qt.Key.Key_Down: self._lan_search_list_selected_idx = min(self.lan_servers_list_widget.count() - 1, self._lan_search_list_selected_idx + 1); self._update_lan_search_list_focus(); event.accept(); return
+            elif event.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]: self._join_selected_lan_server_from_dialog(); event.accept(); return
+        elif active_ui_element == "ip_input" and not is_auto_repeat:
+            if event.key() in [Qt.Key.Key_Left, Qt.Key.Key_Right]:
+                self._ip_dialog_selected_button_idx = 1 - self._ip_dialog_selected_button_idx # Toggle 0 and 1
+                self._update_ip_dialog_button_focus(); event.accept(); return
             elif event.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]:
-                self._activate_main_menu_selected_button_pygame_joy()
-                event.accept()
-                return
-
+                self._activate_ip_dialog_button(); event.accept(); return
+        
         if event.key() == Qt.Key.Key_Escape and not is_auto_repeat:
-            if self.current_view_name == "menu":
-                self.request_close_app()
-            elif self.current_view_name in ["editor", "settings"]:
-                self.on_return_to_menu_from_sub_view()
-            elif self.current_view_name == "game_scene" and self.current_game_mode:
-                info(f"Escape in game mode '{self.current_game_mode}'. Stopping.")
-                self.stop_current_game_mode(show_menu=True)
-            event.accept()
-            return
-        
-        if not event.isAccepted():
-            super().keyPressEvent(event)
+            if active_ui_element == "menu": self.request_close_app()
+            elif active_ui_element == "map_select": self.show_view("menu")
+            elif active_ui_element == "lan_search" and self.lan_search_dialog: self.lan_search_dialog.reject()
+            elif active_ui_element == "ip_input" and self.ip_input_dialog: self.ip_input_dialog.reject()
+            elif self.current_view_name in ["editor", "settings"]: self.on_return_to_menu_from_sub_view()
+            elif self.current_view_name == "game_scene" and self.current_game_mode: info(f"Escape in game mode '{self.current_game_mode}'. Stopping."); self.stop_current_game_mode(show_menu=True)
+            event.accept(); return
+        if not event.isAccepted(): super().keyPressEvent(event)
 
-    def keyReleaseEvent(self, event: QKeyEvent):
-        # ... (definition remains the same)
-        global _qt_keys_pressed_snapshot, _qt_key_events_this_frame
-        is_auto_repeat = event.isAutoRepeat()
-        qt_key_enum = Qt.Key(event.key())
-
-        if not is_auto_repeat:
-            _qt_keys_pressed_snapshot[qt_key_enum] = False
-        
-        if not event.isAccepted():
-            super().keyReleaseEvent(event)
+    # ... (rest of methods like keyReleaseEvent, _get_input_snapshot, etc. mostly unchanged but review them for current_modal_dialog if needed) ...
 
     def _get_input_snapshot(self, player_instance: Player, player_id: int) -> Dict[str, bool]:
-        # ... (definition remains the same, it uses config.py which relies on 'inputs' or keyboard)
         global _qt_keys_pressed_snapshot, _qt_key_events_this_frame
-        
-        if not player_instance or not hasattr(player_instance, '_valid_init') or not player_instance._valid_init:
-             warning(f"_get_input_snapshot: Invalid player_instance for player_id {player_id}.")
-             return {}
-        
-        active_mappings = {}
-        joystick_internal_id_for_player: Optional[int] = None # This refers to ID for 'inputs' lib via config
-
-        if player_id == 1:
-            active_mappings = game_config.P1_MAPPINGS
-            if game_config.CURRENT_P1_INPUT_DEVICE.startswith("joystick_"):
-                try: 
-                    # This ID is for the 'inputs' library system, not Pygame's indexing
-                    joystick_internal_id_for_player = int(game_config.CURRENT_P1_INPUT_DEVICE.split('_')[-1])
-                except (ValueError, IndexError): 
-                    joystick_internal_id_for_player = None
-        elif player_id == 2:
-            active_mappings = game_config.P2_MAPPINGS
-            if game_config.CURRENT_P2_INPUT_DEVICE.startswith("joystick_"):
-                try:
-                    joystick_internal_id_for_player = int(game_config.CURRENT_P2_INPUT_DEVICE.split('_')[-1])
-                except (ValueError, IndexError):
-                    joystick_internal_id_for_player = None
-
+        if not player_instance or not hasattr(player_instance, '_valid_init') or not player_instance._valid_init: warning(f"_get_input_snapshot: Invalid player_instance for player_id {player_id}."); return {}
+        active_mappings = {}; joystick_pygame_idx_for_player: Optional[int] = None
+        player_device_str = game_config.CURRENT_P1_INPUT_DEVICE if player_id == 1 else game_config.CURRENT_P2_INPUT_DEVICE
+        active_mappings = game_config.P1_MAPPINGS if player_id == 1 else game_config.P2_MAPPINGS
+        if player_device_str.startswith("joystick_pygame_"):
+            try: joystick_pygame_idx_for_player = int(player_device_str.split('_')[-1])
+            except (ValueError, IndexError): joystick_pygame_idx_for_player = None
         joystick_data_for_handler: Optional[Dict[str,Any]] = None
-        # This block is for IN-GAME joystick input via the 'inputs' library (via controller_mapper_gui)
-        if joystick_internal_id_for_player is not None:
-             # The joystick_handler here is the 'inputs' based one.
-             # Its get_joystick_count() might not align with Pygame's.
-            if 0 <= joystick_internal_id_for_player < joystick_handler.get_joystick_count(): 
-                joystick_data_for_handler = {
-                    'axes': joystick_handler.get_axis_values(joystick_internal_id_for_player),
-                    'buttons_current': joystick_handler.get_button_states(joystick_internal_id_for_player),
-                    'buttons_prev': joystick_handler.get_prev_button_states(joystick_internal_id_for_player),
-                    'hats': joystick_handler.get_hat_values(joystick_internal_id_for_player)
-                }
-        
+        if joystick_pygame_idx_for_player is not None and 0 <= joystick_pygame_idx_for_player < len(self._pygame_joysticks):
+            joy = self._pygame_joysticks[joystick_pygame_idx_for_player]; pygame.event.pump() 
+            current_buttons_state = {i: joy.get_button(i) for i in range(joy.get_numbuttons())}
+            # TODO: Implement proper prev_buttons_state tracking for Pygame joysticks for "just pressed" events.
+            # For now, player_input_handler needs to be robust or actions might fire continuously.
+            joystick_data_for_handler = {
+                'axes': {i: joy.get_axis(i) for i in range(joy.get_numaxes())},
+                'buttons_current': current_buttons_state, 'buttons_prev': current_buttons_state, 
+                'hats': {i: joy.get_hat(i) for i in range(joy.get_numhats())}
+            }
         platforms_list = self.game_elements.get("platforms_list", [])
         if not isinstance(platforms_list, list): platforms_list = []
-
-        action_events = process_player_input_logic(
-            player_instance,
-            _qt_keys_pressed_snapshot,
-            list(_qt_key_events_this_frame),
-            active_mappings,
-            platforms_list,
-            joystick_data=joystick_data_for_handler # This is 'inputs' lib data if joystick chosen in config
-        )
-        
-        _qt_key_events_this_frame.clear()
-        return action_events
+        action_events = process_player_input_logic(player_instance, _qt_keys_pressed_snapshot, list(_qt_key_events_this_frame), active_mappings, platforms_list, joystick_data=joystick_data_for_handler)
+        _qt_key_events_this_frame.clear(); return action_events
 
     @staticmethod
     def get_p1_input_snapshot_for_server_thread(player_instance: Any, platforms_list: List[Any]) -> Dict[str, Any]:
-        # ... (definition remains the same)
-        if MainWindow._instance:
-            return MainWindow._instance._get_input_snapshot(player_instance, 1)
+        if MainWindow._instance: return MainWindow._instance._get_input_snapshot(player_instance, 1)
         return {}
-
     @staticmethod
     def get_p2_input_snapshot_for_client_thread(player_instance: Any) -> Dict[str, Any]:
-        # ... (definition remains the same)
         platforms_list = []
-        if MainWindow._instance and MainWindow._instance.game_elements:
-            platforms_list = MainWindow._instance.game_elements.get("platforms_list", [])
-
-        if MainWindow._instance:
-            return MainWindow._instance._get_input_snapshot(player_instance, 2)
+        if MainWindow._instance and MainWindow._instance.game_elements: platforms_list = MainWindow._instance.game_elements.get("platforms_list", [])
+        if MainWindow._instance: return MainWindow._instance._get_input_snapshot(player_instance, 2)
         return {}
 
     def _prepare_and_start_game(self, mode: str, map_name: Optional[str] = None, target_ip_port: Optional[str] = None):
-        # ... (definition mostly same, camera line updated)
         info(f"Preparing to start game mode: {mode}, Map: {map_name}, Target: {target_ip_port}")
-        main_window_size = self.size()
-        current_width, current_height = main_window_size.width(), main_window_size.height()
+        main_window_size = self.size(); current_width, current_height = main_window_size.width(), main_window_size.height()
+        if current_width <= 100 or current_height <= 100: current_width, current_height = self.initial_main_window_width, self.initial_main_window_height; info(f"Window size small, using defaults: {current_width}x{current_height}")
+        else: info(f"Window size for game init: {current_width}x{current_height}")
         
-        if current_width <= 100 or current_height <= 100: 
-            current_width, current_height = self.initial_main_window_width, self.initial_main_window_height
-            info(f"MainWindow size too small or invalid ({main_window_size.width()}x{main_window_size.height()}), using defaults for game init: {current_width}x{current_height}")
-        else:
-            info(f"MainWindow current size for game init: {current_width}x{current_height}")
+        if map_name is None and mode != "join_ip" and mode != "join_lan": # join modes get map from server
+             map_name = getattr(C, 'DEFAULT_LEVEL_MODULE_NAME', "level_default")
 
-        if map_name is None and mode in ["host", "join_lan", "join_ip", "couch_play"]:
-            map_name = getattr(C, 'DEFAULT_LEVEL_MODULE_NAME', "level_default")
-
-        initialized_elements = initialize_game_elements(current_width, current_height, mode, None, map_name)
+        initialized_elements = initialize_game_elements(current_width, current_height, mode, None, map_name if mode != "join_ip" and mode != "join_lan" else None)
+        if initialized_elements is None: QMessageBox.critical(self, "Error", f"Failed to init game elements for {mode}, map '{map_name}'."); self.show_view("menu"); return
+        self.game_elements.clear(); self.game_elements.update(initialized_elements); self.game_elements['current_game_mode'] = mode; self.current_game_mode = mode
+        self.setWindowTitle(f"Platformer - {mode.replace('_',' ').title()}")
         
-        if initialized_elements is None:
-            QMessageBox.critical(self, "Error", f"Failed to initialize game elements for {mode}, map '{map_name}'. Check logs.")
-            self.show_view("menu")
-            return
-
-        self.game_elements.clear(); self.game_elements.update(initialized_elements)
-        self.game_elements['current_game_mode'] = mode 
-        
-        self.current_game_mode = mode
-        self.setWindowTitle(f"Platformer Adventure LAN - {mode.replace('_',' ').title()}")
-
         camera = self.game_elements.get("camera")
         if camera and hasattr(camera, 'set_screen_dimensions') and hasattr(camera, 'set_level_dimensions'):
-            game_scene_render_width = self.game_scene_widget.width()
-            game_scene_render_height = self.game_scene_widget.height()
-            if game_scene_render_width <=1 or game_scene_render_height <=1 : 
-                game_scene_render_width = current_width
-                game_scene_render_height = current_height
-
-            camera.set_screen_dimensions(float(game_scene_render_width), float(game_scene_render_height))
-            if "level_pixel_width" in self.game_elements:
-                camera.set_level_dimensions(
-                    self.game_elements["level_pixel_width"],
-                    self.game_elements.get("level_min_x_absolute", 0.0), # MODIFIED: Added min_x
-                    self.game_elements.get("level_min_y_absolute", 0.0),
-                    self.game_elements.get("level_max_y_absolute", game_scene_render_height)
-                )
-            player1_for_cam = self.game_elements.get("player1")
-            if player1_for_cam and hasattr(camera, 'update'):
-                 camera.update(player1_for_cam)
-
-        self.show_view("game_scene")
-        QApplication.processEvents() 
-        self.game_scene_widget.update_game_state(0) 
+            game_scene_w = self.game_scene_widget.width(); game_scene_h = self.game_scene_widget.height()
+            if game_scene_w <=1 or game_scene_h <=1 : game_scene_w = current_width; game_scene_h = current_height
+            camera.set_screen_dimensions(float(game_scene_w), float(game_scene_h))
+            if "level_pixel_width" in self.game_elements: camera.set_level_dimensions(self.game_elements["level_pixel_width"], self.game_elements.get("level_min_x_absolute", 0.0), self.game_elements.get("level_min_y_absolute", 0.0), self.game_elements.get("level_max_y_absolute", game_scene_h))
+            p1_cam = self.game_elements.get("player1")
+            if p1_cam and hasattr(camera, 'update'): camera.update(p1_cam)
         
-        if mode in ["host", "join_lan", "join_ip"]: self._start_network_mode(mode, target_ip_port)
-        elif mode == "couch_play": info("Preparing for couch play. Game loop handled by update_game_loop.")
+        self.show_view("game_scene"); QApplication.processEvents(); self.game_scene_widget.update_game_state(0)
+        
+        if mode == "host_waiting": self._start_network_mode("host_listen_only") # Start server listening, but P1 plays locally
+        elif mode in ["host", "join_lan", "join_ip"]: self._start_network_mode(mode, target_ip_port) # For direct join or if host transitions after client ready
+        info(f"Game mode '{mode}' prepared.")
 
-        info(f"Game mode '{mode}' display prepared. Active game loop/updates depend on mode-specific logic.")
+    @Slot()
+    def on_client_fully_synced_for_host(self):
+        info("MAIN: Client is fully synced with Host. Resetting game state for multiplayer.")
+        if self.current_game_mode == "host_waiting":
+            reset_game_state(self.game_elements) # game_setup.reset_game_state
+            self.current_game_mode = "host" # Transition to active multiplayer host mode
+            # The NetworkThread (run_server_mode) will now take over the full game simulation.
+            # MainWindow's update_game_loop will no longer run local P1 logic for "host_waiting".
+            info("MAIN: Game state reset. Host mode now active for multiplayer.")
+            # Optionally update window title or UI elements here
+            self.setWindowTitle(f"Platformer Adventure LAN - Host (Multiplayer)")
+        else:
+            warning("on_client_fully_synced_for_host called but not in 'host_waiting' mode.")
 
     def update_game_loop(self):
-        # Poll Pygame joysticks for menu if menu is active
-        if self.current_view_name == "menu" and self._pygame_joysticks:
-            self._poll_pygame_joysticks_for_menu()
-
+        self._poll_pygame_joysticks_for_ui_navigation()
         if self.current_game_mode == "couch_play" and self.app_status.app_running:
             dt_sec = 1.0 / C.FPS 
-            if not run_couch_play_mode(
-                self.game_elements,
-                self.app_status,
-                lambda p, plat: self._get_input_snapshot(p, 1),
-                lambda p, plat: self._get_input_snapshot(p, 2),
-                lambda: QApplication.processEvents(),
-                lambda: dt_sec,
-                lambda msg: self.game_scene_widget.update_game_state(0, download_msg=msg) 
-            ):
+            if not run_couch_play_mode(self.game_elements, self.app_status, lambda p, plat: self._get_input_snapshot(p, 1), lambda p, plat: self._get_input_snapshot(p, 2), lambda: QApplication.processEvents(), lambda: dt_sec, lambda msg: self.game_scene_widget.update_game_state(0, download_msg=msg)):
                 self.stop_current_game_mode(show_menu=True)
-        
-        if self.current_view_name == "game_scene":
-            self.game_scene_widget.update_game_state(0)
+        elif self.current_game_mode == "host_waiting" and self.app_status.app_running: # Host plays solo
+            dt_sec = 1.0 / C.FPS
+            # Simulate P1 only
+            p1 = self.game_elements.get("player1")
+            if p1:
+                p1_actions = self._get_input_snapshot(p1, 1)
+                if p1_actions.get("pause"): self.stop_current_game_mode(show_menu=True); return
+                if p1_actions.get("reset"): reset_game_state(self.game_elements)
 
+                # Simplified update for P1 only
+                p1.update(dt_sec, self.game_elements.get("platforms_list", []), 
+                          self.game_elements.get("ladders_list", []), 
+                          self.game_elements.get("hazards_list", []), 
+                          [], # No other players for P1 solo
+                          self.game_elements.get("enemy_list", []))
+                # Update enemies, items etc. if the host should interact with them solo
+                active_players_for_ai = [p1] if p1.alive() else []
+                for enemy in list(self.game_elements.get("enemy_list",[])): enemy.update(dt_sec, active_players_for_ai, self.game_elements.get("platforms_list",[]), self.game_elements.get("hazards_list",[]), self.game_elements.get("enemy_list",[])); #... prune dead enemies
+                # ... update other game elements like projectiles, items, statues as needed for solo host play ...
+                camera = self.game_elements.get("camera")
+                if camera and p1.alive(): camera.update(p1)
+        if self.current_view_name == "game_scene": self.game_scene_widget.update_game_state(0)
 
-    def on_start_couch_play(self):
-        # ... (definition remains the same)
-        map_name = self._select_map_dialog()
-        if map_name is not None:
-            self._prepare_and_start_game("couch_play", map_name=map_name)
-        else:
-            info("Couch play map selection cancelled."); self.show_view("menu")
+    def on_start_couch_play(self): self.map_select_title_label.setText("Select Map for Couch Co-op"); self._populate_map_list_for_selection("couch_coop"); self.show_view("map_select")
+    def on_start_host_game(self): self.map_select_title_label.setText("Select Map to Host"); self._populate_map_list_for_selection("host_game"); self.show_view("map_select")
 
-    def on_start_host_game(self):
-        # ... (definition remains the same)
-        map_name = self._select_map_dialog()
-        if map_name is not None:
-            self._prepare_and_start_game("host", map_name=map_name)
-        else:
-            info("Host game map selection cancelled."); self.show_view("menu")
-
-    def on_start_join_lan(self): 
-        # ... (definition remains the same)
-        self._show_lan_search_dialog()
-
+    def on_start_join_lan(self): self._show_lan_search_dialog()
     def on_start_join_ip(self):
-        # ... (definition remains the same)
-        dialog = IPInputDialog(parent=self)
-        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.ip_port_string:
-            self._prepare_and_start_game("join_ip", target_ip_port=dialog.ip_port_string)
-        else:
-            info("Join by IP cancelled or no IP entered."); self.show_view("menu")
+        self.ip_input_dialog = IPInputDialog(parent=self) # Store reference
+        self._ip_dialog_buttons_ref = [self.ip_input_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok), self.ip_input_dialog.button_box.button(QDialogButtonBox.StandardButton.Cancel)]
+        self._ip_dialog_selected_button_idx = 0
+        self.current_modal_dialog = "ip_input"
+        self._update_ip_dialog_button_focus()
+        if self.ip_input_dialog.exec() == QDialog.DialogCode.Accepted and self.ip_input_dialog.ip_port_string:
+            self._prepare_and_start_game("join_ip", target_ip_port=self.ip_input_dialog.ip_port_string)
+        else: info("Join by IP cancelled or no IP entered."); self.show_view("menu")
+        self.current_modal_dialog = None; self._ip_dialog_buttons_ref.clear()
 
-    def _select_map_dialog(self) -> Optional[str]:
-        # ... (definition remains the same)
+    def _update_ip_dialog_button_focus(self):
+        if not self.ip_input_dialog or not self._ip_dialog_buttons_ref: return
+        for i, button in enumerate(self._ip_dialog_buttons_ref):
+            is_selected = (i == self._ip_dialog_selected_button_idx)
+            button.setStyleSheet("QPushButton { border: 2px solid yellow; background-color: #555; color: white; } QPushButton:focus { outline: none; }" if is_selected else "")
+            if is_selected: button.setFocus(Qt.FocusReason.OtherFocusReason)
+            
+    def _select_map_dialog(self) -> Optional[str]: # Only for legacy "Host Game" if direct map selection is re-enabled
         dialog = SelectMapDialog(self.fonts, self)
         if dialog.exec() == QDialog.DialogCode.Accepted: return dialog.selected_map_name
         return None
 
     def _start_network_mode(self, mode_name: str, target_ip_port: Optional[str] = None):
-        # ... (definition remains the same)
-        if self.network_thread and self.network_thread.isRunning():
-            warning("NetworkThread already running. Attempting to stop old one first.")
-            self.network_thread.quit(); self.network_thread.wait(1000)
-            self.network_thread = None
-
-        if mode_name == "host":
-            self.server_state = ServerState()
-            self.server_state.current_map_name = self.game_elements.get("loaded_map_name", "unknown_map")
+        if self.network_thread and self.network_thread.isRunning(): warning("NetworkThread already running."); self.network_thread.quit(); self.network_thread.wait(1000); self.network_thread = None
+        if mode_name == "host_listen_only": # For host waiting for client
+            self.server_state = ServerState(); self.server_state.current_map_name = self.game_elements.get("loaded_map_name", "unknown_map")
+            self.network_thread = NetworkThread("host", self.game_elements, self.server_state, parent=self) # NetworkThread runs full server logic
+            self.network_thread.client_fully_synced_signal.connect(self.on_client_fully_synced_for_host) # Connect new signal
+        elif mode_name == "host": # This would be after client already synced and game is reset
+            # This case might not be directly called if logic transitions from host_waiting correctly
+            if not self.server_state: self.server_state = ServerState(); self.server_state.current_map_name = self.game_elements.get("loaded_map_name", "unknown_map")
             self.network_thread = NetworkThread("host", self.game_elements, self.server_state, parent=self)
         elif mode_name in ["join_lan", "join_ip"]:
-            self.client_state = ClientState()
-            self.network_thread = NetworkThread("join", self.game_elements, client_state_ref=self.client_state, target_ip_port=target_ip_port, parent=self)
-        
+            self.client_state = ClientState(); self.network_thread = NetworkThread("join", self.game_elements, client_state_ref=self.client_state, target_ip_port=target_ip_port, parent=self)
         if self.network_thread:
-            self.network_thread.status_update_signal.connect(self.on_network_status_update)
-            self.network_thread.operation_finished_signal.connect(self.on_network_operation_finished)
+            self.network_thread.status_update_signal.connect(self.on_network_status_update); self.network_thread.operation_finished_signal.connect(self.on_network_operation_finished)
             self.network_thread.start()
-            self._show_status_dialog("Network Operation", f"Initializing {mode_name} mode...")
-        else:
-            error(f"Failed to create NetworkThread for {mode_name}")
-            QMessageBox.critical(self, "Network Error", f"Could not start {mode_name} mode.")
-            self.show_view("menu")
+            if mode_name != "host_listen_only": # Don't show status dialog for host just listening
+                self._show_status_dialog("Network Operation", f"Initializing {mode_name} mode...")
+        else: error(f"Failed to create NetworkThread for {mode_name}"); QMessageBox.critical(self, "Network Error", f"Could not start {mode_name} mode."); self.show_view("menu")
 
     def _show_status_dialog(self, title: str, initial_message: str):
-        # ... (definition remains the same)
         if self.status_dialog is None:
-            self.status_dialog = QDialog(self); self.status_dialog.setWindowTitle(title)
-            layout = QVBoxLayout(self.status_dialog)
-            self.status_label_in_dialog = QLabel(initial_message); self.status_label_in_dialog.setWordWrap(True)
-            layout.addWidget(self.status_label_in_dialog)
-            self.status_progress_bar_in_dialog = QProgressBar(); self.status_progress_bar_in_dialog.setRange(0,100)
-            self.status_progress_bar_in_dialog.setTextVisible(True); layout.addWidget(self.status_progress_bar_in_dialog)
-            self.status_dialog.setMinimumWidth(350)
+            self.status_dialog = QDialog(self); self.status_dialog.setWindowTitle(title); layout = QVBoxLayout(self.status_dialog); self.status_label_in_dialog = QLabel(initial_message); self.status_label_in_dialog.setWordWrap(True); layout.addWidget(self.status_label_in_dialog)
+            self.status_progress_bar_in_dialog = QProgressBar(); self.status_progress_bar_in_dialog.setRange(0,100); self.status_progress_bar_in_dialog.setTextVisible(True); layout.addWidget(self.status_progress_bar_in_dialog); self.status_dialog.setMinimumWidth(350)
         else: self.status_dialog.setWindowTitle(title)
         if self.status_label_in_dialog: self.status_label_in_dialog.setText(initial_message)
         if self.status_progress_bar_in_dialog: self.status_progress_bar_in_dialog.setValue(0); self.status_progress_bar_in_dialog.setVisible(False)
         self.status_dialog.show(); QApplication.processEvents()
-
     def _update_status_dialog(self, message: str, progress: float = -1.0):
-        # ... (definition remains the same)
         if self.status_dialog and self.status_dialog.isVisible():
             if self.status_label_in_dialog: self.status_label_in_dialog.setText(message)
             if self.status_progress_bar_in_dialog:
                 if 0 <= progress <= 100: self.status_progress_bar_in_dialog.setValue(int(progress)); self.status_progress_bar_in_dialog.setVisible(True)
                 else: self.status_progress_bar_in_dialog.setVisible(False)
         QApplication.processEvents()
-
     def _close_status_dialog(self):
-        # ... (definition remains the same)
         if self.status_dialog: self.status_dialog.hide()
-
     @Slot(str, str, float)
     def on_network_status_update(self, title: str, message: str, progress: float):
-        # ... (definition remains the same)
-        if not self.status_dialog or not self.status_dialog.isVisible(): self._show_status_dialog(title, message) 
-        self._update_status_dialog(message, progress)
-        if title in ["game_starting", "game_active"] or (title == "Map Sync" and "ready" in message.lower() and progress >= 99.9): self._close_status_dialog()
+        if not self.status_dialog or not self.status_dialog.isVisible():
+             if self.current_game_mode == "host_waiting" and "Player 2 needs" in message: # Show dialog for host when client starts map sync
+                self._show_status_dialog(title, message)
+             elif self.current_game_mode != "host_waiting": # Show for other modes as before
+                self._show_status_dialog(title, message)
+
+        if self.status_dialog and self.status_dialog.isVisible(): # Update if visible
+            self._update_status_dialog(message, progress)
+        
+        if title in ["game_starting", "game_active"] or (title == "Map Sync" and "Player 2 has" in message and "Ready" in message and progress >= 99.9):
+             self._close_status_dialog() # Close when game is truly starting or map fully synced
 
     @Slot(str)
     def on_network_operation_finished(self, message: str):
-        # ... (definition remains the same)
-        info(f"Network operation finished: {message}")
-        self._close_status_dialog()
-        if "error" in message.lower() or "failed" in message.lower():
-            QMessageBox.critical(self, "Network Error", f"Network operation ended with an error: {message}")
-            self.stop_current_game_mode(show_menu=True)
-        elif "ended" in message.lower() and self.current_game_mode:
-            info(f"Mode {self.current_game_mode} finished normally via network signal.")
-            self.stop_current_game_mode(show_menu=True)
+        info(f"Network operation finished: {message}"); self._close_status_dialog()
+        if "error" in message.lower() or "failed" in message.lower(): QMessageBox.critical(self, "Network Error", f"Network op error: {message}"); self.stop_current_game_mode(show_menu=True)
+        elif "ended" in message.lower() and self.current_game_mode and self.current_game_mode != "host_waiting": # Don't stop host_waiting from here
+            info(f"Mode {self.current_game_mode} finished via network signal."); self.stop_current_game_mode(show_menu=True)
 
     def _show_lan_search_dialog(self):
-        # ... (definition remains the same)
         if self.lan_search_dialog is None:
-            self.lan_search_dialog = QDialog(self); self.lan_search_dialog.setWindowTitle("Searching for LAN Games...")
-            layout = QVBoxLayout(self.lan_search_dialog); self.lan_search_status_label = QLabel("Initializing search...")
-            layout.addWidget(self.lan_search_status_label); self.lan_servers_list_widget = QListWidget()
-            self.lan_servers_list_widget.itemDoubleClicked.connect(self._join_selected_lan_server_from_dialog); layout.addWidget(self.lan_servers_list_widget)
+            self.lan_search_dialog = QDialog(self); self.lan_search_dialog.setWindowTitle("Searching for LAN Games..."); layout = QVBoxLayout(self.lan_search_dialog); self.lan_search_status_label = QLabel("Initializing search...")
+            layout.addWidget(self.lan_search_status_label); self.lan_servers_list_widget = QListWidget(); self.lan_servers_list_widget.itemDoubleClicked.connect(self._join_selected_lan_server_from_dialog); layout.addWidget(self.lan_servers_list_widget)
             self.lan_search_dialog.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Retry)
             self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setText("Join Selected"); self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
             self.lan_search_dialog.button_box.accepted.connect(self._join_selected_lan_server_from_dialog); self.lan_search_dialog.button_box.rejected.connect(self.lan_search_dialog.reject)
             self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Retry).clicked.connect(self._start_lan_server_search_thread); layout.addWidget(self.lan_search_dialog.button_box)
-            self.lan_search_dialog.rejected.connect(lambda: self.show_view("menu")); self.lan_search_dialog.setMinimumSize(400, 300)
-        self.lan_servers_list_widget.clear(); self.lan_search_status_label.setText("Searching for LAN games...")
-        self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+            self.lan_search_dialog.rejected.connect(lambda: (self.show_view("menu"), setattr(self, 'current_modal_dialog', None))); self.lan_search_dialog.setMinimumSize(400, 300)
+        self.lan_servers_list_widget.clear(); self.lan_search_status_label.setText("Searching for LAN games..."); self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+        self.current_modal_dialog = "lan_search"; self._lan_search_list_selected_idx = 0; self._update_lan_search_list_focus()
         self.lan_search_dialog.show(); self._start_lan_server_search_thread()
 
+    def _update_lan_search_list_focus(self):
+        if not self.lan_search_dialog or not self.lan_servers_list_widget: return
+        if self.lan_servers_list_widget.count() > 0:
+            self.lan_servers_list_widget.setCurrentRow(self._lan_search_list_selected_idx)
+            selected_item = self.lan_servers_list_widget.item(self._lan_search_list_selected_idx)
+            if selected_item: self.lan_servers_list_widget.scrollToItem(selected_item)
+            if hasattr(self.lan_search_dialog, 'button_box'): self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(True)
+        elif hasattr(self.lan_search_dialog, 'button_box'): self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+
     def _start_lan_server_search_thread(self):
-        # ... (definition remains the same)
-        if hasattr(self, 'lan_search_worker') and self.lan_search_worker and self.lan_search_worker.isRunning():
-            warning("LAN search worker already running. Requesting stop for restart."); self.lan_search_worker.quit()
-            if not self.lan_search_worker.wait(500): self.lan_search_worker.terminate(); self.lan_search_worker.wait(100)
+        if hasattr(self, 'lan_search_worker') and self.lan_search_worker and self.lan_search_worker.isRunning(): warning("LAN search worker already running."); self.lan_search_worker.quit(); self.lan_search_worker.wait(500)
         if self.lan_servers_list_widget: self.lan_servers_list_widget.clear()
         if self.lan_search_status_label: self.lan_search_status_label.setText("Searching...")
         if self.lan_search_dialog and hasattr(self.lan_search_dialog, 'button_box'): self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
         self.lan_search_worker = QThread(self)
-        class LanSearchRunner(QWidget): # QWidget for signal/slot compatibility
+        class LanSearchRunner(QWidget):
             found_signal = Signal(object); search_finished_signal = Signal()
             def __init__(self, parent=None): super().__init__(parent); self.client_state_for_search = ClientState()
             @Slot()
             def run_search(self):
                 info("LanSearchRunner: Starting find_server_on_lan.")
                 try:
-                    def on_server_found_callback(key: str, data: Any): self.found_signal.emit((key, data))
-                    result_server_info = find_server_on_lan(self.client_state_for_search, on_server_found_callback)
-                    self.found_signal.emit(("final_result", result_server_info))
-                except Exception as e: critical(f"LanSearchRunner: Error during LAN search: {e}", exc_info=True); self.found_signal.emit(("error", f"Search failed: {e}"))
+                    def cb(key: str, data: Any): self.found_signal.emit((key,data))
+                    res = find_server_on_lan(self.client_state_for_search, cb)
+                    self.found_signal.emit(("final_result", res))
+                except Exception as e: critical(f"LanSearchRunner Error: {e}", exc_info=True); self.found_signal.emit(("error",f"Search failed: {e}"))
                 finally: self.search_finished_signal.emit(); info("LanSearchRunner: run_search finished.")
         self.lan_search_run_obj = LanSearchRunner(); self.lan_search_run_obj.moveToThread(self.lan_search_worker)
         self.lan_search_worker.started.connect(self.lan_search_run_obj.run_search); self.lan_search_run_obj.found_signal.connect(self.on_lan_server_search_status_update)
         self.lan_search_worker.finished.connect(self.lan_search_worker.deleteLater); self.lan_search_run_obj.search_finished_signal.connect(self.lan_search_worker.quit)
-        self.lan_search_run_obj.search_finished_signal.connect(self.lan_search_run_obj.deleteLater); self.lan_search_worker.start()
-        info("LAN server search thread started.")
+        self.lan_search_run_obj.search_finished_signal.connect(self.lan_search_run_obj.deleteLater); self.lan_search_worker.start(); info("LAN server search thread started.")
 
     @Slot(object)
     def on_lan_server_search_status_update(self, data_tuple: Any):
-        # ... (definition remains the same)
         if not self.lan_search_dialog or not self.lan_search_dialog.isVisible(): info("LAN search status update received, but dialog is not visible. Ignoring."); return
         if not isinstance(data_tuple, tuple) or len(data_tuple) != 2: warning(f"Invalid data_tuple received in on_lan_server_search_status_update: {data_tuple}"); return
         status_key, data = data_tuple; debug(f"LAN Search Status: Key='{status_key}', Data='{str(data)[:100]}'")
         if self.lan_search_status_label: self.lan_search_status_label.setText(f"Status: {status_key}")
         if status_key == "found" and isinstance(data, tuple) and len(data)==2:
             ip, port = data; item_text = f"Server at {ip}:{port}"
-            if not self.lan_servers_list_widget.findItems(item_text, Qt.MatchFlag.MatchExactly):
-                list_item = QListWidgetItem(item_text); list_item.setData(Qt.ItemDataRole.UserRole, f"{ip}:{port}")
-                self.lan_servers_list_widget.addItem(list_item)
-            if hasattr(self.lan_search_dialog, 'button_box'): self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(True)
+            if not self.lan_servers_list_widget.findItems(item_text, Qt.MatchFlag.MatchExactly): list_item = QListWidgetItem(item_text); list_item.setData(Qt.ItemDataRole.UserRole, f"{ip}:{port}"); self.lan_servers_list_widget.addItem(list_item)
+            self._update_lan_search_list_focus() # Update focus potentially enabling OK
         elif status_key == "timeout" or status_key == "error" or (status_key == "final_result" and data is None and self.lan_servers_list_widget.count() == 0):
             if self.lan_servers_list_widget.count() == 0 and self.lan_search_status_label: self.lan_search_status_label.setText(f"Search {status_key}. No servers found.")
+            self._update_lan_search_list_focus()
         elif status_key == "final_result" and data is not None:
              ip, port = data; item_text = f"Server at {ip}:{port} (Recommended)"
-             if not self.lan_servers_list_widget.findItems(item_text, Qt.MatchFlag.MatchExactly):
-                list_item = QListWidgetItem(item_text); list_item.setData(Qt.ItemDataRole.UserRole, f"{ip}:{port}")
-                self.lan_servers_list_widget.addItem(list_item); self.lan_servers_list_widget.setCurrentItem(list_item)
-             if hasattr(self.lan_search_dialog, 'button_box'): self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(True)
+             if not self.lan_servers_list_widget.findItems(item_text, Qt.MatchFlag.MatchExactly): list_item = QListWidgetItem(item_text); list_item.setData(Qt.ItemDataRole.UserRole, f"{ip}:{port}"); self.lan_servers_list_widget.addItem(list_item); self.lan_servers_list_widget.setCurrentItem(list_item)
+             self._update_lan_search_list_focus()
 
     def _join_selected_lan_server_from_dialog(self):
-        # ... (definition remains the same)
         if not self.lan_servers_list_widget or not self.lan_search_dialog: warning("Attempt to join LAN server, but list widget or dialog is missing."); return
-        selected_items = self.lan_servers_list_widget.selectedItems()
-        if selected_items:
-            selected_item = selected_items[0]; ip_port_str = selected_item.data(Qt.ItemDataRole.UserRole)
+        selected_item = self.lan_servers_list_widget.currentItem() # Use currentItem for single selection lists
+        if selected_item:
+            ip_port_str = selected_item.data(Qt.ItemDataRole.UserRole)
             if ip_port_str and isinstance(ip_port_str, str):
-                info(f"Joining selected LAN server: {ip_port_str}"); self.lan_search_dialog.accept()
+                info(f"Joining selected LAN server: {ip_port_str}"); self.lan_search_dialog.accept(); self.current_modal_dialog = None
                 self._prepare_and_start_game("join_lan", target_ip_port=ip_port_str); return
             else: warning(f"Selected LAN server item has invalid data: {ip_port_str}")
         QMessageBox.warning(self, "No Server Selected", "Please select a server from the list to join, or Cancel.")
 
     def stop_current_game_mode(self, show_menu: bool = True):
-        # ... (definition remains the same)
         mode_stopped = self.current_game_mode; info(f"Stopping game mode: {mode_stopped}")
         self.current_game_mode = None
         if self.network_thread and self.network_thread.isRunning():
@@ -1008,37 +828,38 @@ class MainWindow(QMainWindow):
             info("Network thread stopped.")
         self.network_thread = None; self.server_state = None; self.client_state = None
         self._close_status_dialog()
-        if self.lan_search_dialog and self.lan_search_dialog.isVisible(): self.lan_search_dialog.reject()
-        self.game_elements.clear()
-        self.game_scene_widget.update_game_state(0) 
+        if self.lan_search_dialog and self.lan_search_dialog.isVisible(): self.lan_search_dialog.reject(); self.current_modal_dialog = None
+        self.game_elements.clear(); self.game_scene_widget.update_game_state(0)
         if show_menu: self.show_view("menu")
         info(f"Game mode '{mode_stopped}' stopped and cleaned up.")
 
     def closeEvent(self, event: QCloseEvent):
-        # ... (definition remains the same)
         info("MAIN PySide6: Close event received. Initiating shutdown sequence.")
         if self.actual_editor_module_instance:
             can_close_editor = True
             if isinstance(self.actual_editor_module_instance, QMainWindow):
-                if hasattr(self.actual_editor_module_instance, 'request_close'): 
-                     if not self.actual_editor_module_instance.request_close(): can_close_editor = False
-                elif not self.actual_editor_module_instance.close(): 
-                     can_close_editor = False 
+                if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and callable(self.actual_editor_module_instance.confirm_unsaved_changes):
+                    if not self.actual_editor_module_instance.confirm_unsaved_changes("exit the application"): can_close_editor = False
             if not can_close_editor: info("Editor prevented application close."); event.ignore(); return
-            else: self.actual_editor_module_instance.deleteLater(); self.actual_editor_module_instance = None; info("Editor instance scheduled for deletion.")
-        
+            else:
+                if hasattr(self.actual_editor_module_instance, 'save_geometry_and_state'): self.actual_editor_module_instance.save_geometry_and_state()
+                self.actual_editor_module_instance.deleteLater(); self.actual_editor_module_instance = None; info("Editor instance scheduled for deletion.")
         if self.actual_controls_module_instance:
-            self.actual_controls_module_instance.deleteLater(); self.actual_controls_module_instance = None; info("Controls mapper instance scheduled for deletion.")
-
+             if hasattr(self.actual_controls_module_instance, 'save_mappings'): self.actual_controls_module_instance.save_mappings()
+             self.actual_controls_module_instance.deleteLater(); self.actual_controls_module_instance = None; info("Controls mapper instance scheduled for deletion.")
         self.app_status.quit_app(); self.stop_current_game_mode(show_menu=False)
         if self.joystick_poll_thread and self.joystick_poll_thread.isRunning():
             info("Stopping joystick polling thread..."); self.joystick_poll_thread.stop()
             if not self.joystick_poll_thread.wait(1000): warning("Joystick polling thread did not stop gracefully. Terminating."); self.joystick_poll_thread.terminate(); self.joystick_poll_thread.wait(100)
             info("Joystick polling thread stopped.")
         
-        joystick_handler.quit_joysticks(); info("MAIN PySide6: 'inputs' joystick_handler.quit_joysticks() called.")
-        pygame.joystick.quit() # Quit Pygame joystick module
-        pygame.quit() # Quit all Pygame modules
+        # Safely attempt to quit the 'inputs' library joystick_handler
+        if hasattr(joystick_handler, 'quit_joysticks') and callable(joystick_handler.quit_joysticks):
+            try: joystick_handler.quit_joysticks(); info("MAIN PySide6: 'inputs' joystick_handler.quit_joysticks() called.")
+            except Exception as e_jq: warning(f"MAIN PySide6: Error calling 'inputs' joystick_handler.quit_joysticks(): {e_jq}")
+        else: warning("MAIN PySide6: 'inputs' joystick_handler.quit_joysticks() not found or not callable.")
+        
+        pygame.joystick.quit(); pygame.quit()
         info("MAIN PySide6: Pygame quit.")
         info("MAIN PySide6: Application shutdown sequence complete. Accepting close event."); super().closeEvent(event)
 
@@ -1047,44 +868,27 @@ def main():
     if app is None: app = QApplication(sys.argv)
     info("MAIN PySide6: Application starting...")
     main_window = MainWindow()
-    main_window.showMaximized() 
+    main_window.showMaximized()
     exit_code = app.exec()
     info(f"MAIN PySide6: QApplication event loop finished. Exit code: {exit_code}")
-    if APP_STATUS.app_running: 
-        APP_STATUS.app_running = False
+    if APP_STATUS.app_running: APP_STATUS.app_running = False
     info("MAIN PySide6: Application fully terminated."); sys.exit(exit_code)
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e_main_outer:
-        if 'critical' in globals() and callable(critical) and _project_root: 
-            critical(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}", exc_info=True)
-        else: 
-            print(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}")
-            traceback.print_exc()
-        
+        if 'critical' in globals() and callable(critical) and _project_root: critical(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}", exc_info=True)
+        else: print(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}"); traceback.print_exc()
         try:
-            error_app = QApplication.instance()
+            error_app = QApplication.instance(); 
             if error_app is None: error_app = QApplication(sys.argv)
-            
-            msg_box = QMessageBox()
-            msg_box.setIcon(QMessageBox.Icon.Critical)
-            msg_box.setWindowTitle("Critical Application Error")
+            msg_box = QMessageBox(); msg_box.setIcon(QMessageBox.Icon.Critical); msg_box.setWindowTitle("Critical Application Error")
             msg_box.setText("A critical error occurred, and the application must close.")
-            
             log_path_info_str = ""
-            if LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH and os.path.exists(LOG_FILE_PATH):
-                log_path_info_str = f"Please check the log file for details:\n{LOG_FILE_PATH}"
-            elif LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH:
-                 log_path_info_str = f"Log file configured at: {LOG_FILE_PATH} (may not exist or have details if error was early)."
-            else:
-                log_path_info_str = "Logging to file is disabled or path not set. Check console output."
-
-            msg_box.setInformativeText(f"Error: {str(e_main_outer)[:1000]}\n\n{log_path_info_str}")
-            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
-            msg_box.exec()
-        except Exception as e_msgbox:
-            print(f"FATAL: Could not display Qt error dialog: {e_msgbox}")
-            traceback.print_exc()
+            if LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH and os.path.exists(LOG_FILE_PATH): log_path_info_str = f"Please check the log file for details:\n{LOG_FILE_PATH}"
+            elif LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH: log_path_info_str = f"Log file configured at: {LOG_FILE_PATH} (may not exist or have details if error was early)."
+            else: log_path_info_str = "Logging to file is disabled or path not set. Check console output."
+            msg_box.setInformativeText(f"Error: {str(e_main_outer)[:1000]}\n\n{log_path_info_str}"); msg_box.setStandardButtons(QMessageBox.StandardButton.Ok); msg_box.exec()
+        except Exception as e_msgbox: print(f"FATAL: Could not display Qt error dialog: {e_msgbox}"); traceback.print_exc()
         sys.exit(1)

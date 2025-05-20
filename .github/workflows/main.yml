@@ -1,61 +1,55 @@
-name: Build Windows Executable (Platformer Only)
+# .github/workflows/main.yaml
+name: Build Windows Executable (Platformer Game)
 
-# Controls when the workflow will run
 on:
-  # Allows running this workflow manually from the Actions tab
   workflow_dispatch:
-
-  # Runs on pushes targeting the main branch (optional)
   push:
     branches: [ "main" ]
-
-  # Runs when a new release is published on GitHub
   release:
     types: [published]
 
 jobs:
   build-windows:
-    name: Build for Windows
-    runs-on: windows-latest # Use a Windows runner
+    name: Build Platformer for Windows
+    runs-on: windows-latest
 
     steps:
-      # 1. Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # Ensure this matches your project's requirements
+          python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: requirements.txt # Assumes requirements.txt exists
+          cache-dependency-path: requirements.txt
 
-      # 3. Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install from requirements.txt (MUST include pyinstaller)
-          pip install -r requirements.txt
-        shell: pwsh # Use PowerShell for consistency
+          pip install -r requirements.txt 
+          # PySide6 is in requirements.txt, no need to install separately here
+          # Pillow is in requirements.txt
+          # pygame is in requirements.txt
+        shell: pwsh
 
       # --- Build Platformer.exe ---
-
-      # 4. Generate BASE PyInstaller Spec File for Platformer
       - name: Generate Base PyInstaller Spec File for Platformer
         run: |
           pyi-makespec --windowed --name Platformer `
             --hidden-import PIL `
             --hidden-import PIL.Image `
             --hidden-import numpy `
-            main.py  # Your main game script
-          # This creates 'Platformer.spec'
+            --hidden-import PySide6.QtGui `
+            --hidden-import PySide6.QtCore `
+            --hidden-import PySide6.QtWidgets `
+            --hidden-import pygame `
+            main.py
         shell: pwsh
 
-      # 5. Modify the Spec File to Add Data Files for Platformer
-      - name: Add data files to Platformer Spec File
+      - name: Modify the Spec File to Add Data Files for Platformer
         run: |
-          $specFile = "Platformer.spec" # Name matches '--name' arg above
+          $specFile = "Platformer.spec"
           Write-Host "Checking if $specFile exists..."
           if (!(Test-Path $specFile)) {
             Write-Error "$specFile not found after pyi-makespec!"
@@ -64,45 +58,21 @@ jobs:
           Write-Host "$specFile found. Attempting to modify..."
           $specContent = Get-Content -Path $specFile -Raw
           
-          # --- MODIFIED LINE START ---
-          # Add 'characters' and 'maps' folders from your project root
-          # into an '_internal' subfolder within the bundled application.
-          # The first element of the tuple is the source (in your repo).
-          # The second element is the destination relative to the bundle's root (dist/Platformer/).
-          $dataToAdd = "[('characters', 'characters'), ('maps', 'maps')]"          # --- MODIFIED LINE END ---
+          # Add 'characters', 'maps', and 'controller_settings' folders.
+          # The paths are relative to the project root (where main.py and the spec file are).
+          # The destination is relative to the bundled app's root (dist/Platformer/).
+          $dataToAdd = "[('characters', 'characters'), ('maps', 'maps'), ('controller_settings', 'controller_settings')]"
                                         
-          # Regex to find 'datas=[]' (allowing for spaces) and replace it
           $modifiedContent = $specContent -replace 'datas=\s*\[\s*\]', "datas=$dataToAdd"
 
-          # Check if replacement actually happened
           if ($specContent -eq $modifiedContent) {
             Write-Host "--- Platformer Spec File Content START ---"
             Write-Host $specContent
             Write-Host "--- Platformer Spec File Content END ---"
-            Write-Error "Failed to find and replace 'datas=[]' pattern in $specFile for Platformer. Check the content above. This can also happen if the spec file didn't initially contain 'datas=[]' or if the data to add was an empty list and it was already empty."
-            # If 'datas=[]' was NOT found, it means pyi-makespec might not have added it (e.g., older PyInstaller or no obvious data files detected by it initially).
-            # In that case, we might need to add the datas line differently if it's missing.
-            # However, modern PyInstaller usually includes `datas=[]` in a fresh spec.
-            # For now, we'll stick to replacing it. If this fails, the spec file structure needs a closer look.
-            # A more robust way if 'datas=[]' might be missing:
-            # if ($specContent -match "a = Analysis\(\[(.*?)\]") {
-            #   $analysisBlock = $matches[0]
-            #   if ($analysisBlock -match "datas=\s*\[\s*\]") {
-            #      $modifiedContent = $specContent -replace "(datas=\s*\[\s*\])", "datas=$dataToAdd"
-            #   } else { # datas key exists but not empty, or datas key missing - more complex append needed
-            #      # This part is more complex to do reliably with simple regex replace if datas is not 'datas=[]'
-            #      # For simplicity, we assume 'datas=[]' exists or the previous error will trigger.
-            #      Write-Error "Pattern 'datas=[]' not found for simple replacement. More complex spec modification needed if datas line is different or missing."
-            #      exit 1
-            #   }
-            # } else {
-            #   Write-Error "Could not find 'Analysis' block in spec file."
-            #   exit 1
-            # }
-            exit 1 # Exit because simple replacement failed
+            Write-Error "Failed to find and replace 'datas=[]' pattern in $specFile. Check the spec file content."
+            exit 1
           }
 
-          # Write the modified content back to the spec file
           Set-Content -Path $specFile -Value $modifiedContent
           Write-Host "Successfully added datas to $specFile."
           Write-Host "--- Modified Platformer Spec File Content START ---"
@@ -110,24 +80,14 @@ jobs:
           Write-Host "--- Modified Platformer Spec File Content END ---"
         shell: pwsh
 
-      # 6. Build the Platformer executable using the MODIFIED spec file
       - name: Build Platformer executable from Spec File
         run: |
           pyinstaller --noconfirm --log-level INFO Platformer.spec
         shell: pwsh
 
-      # 7. Create a dummy _internal/__init__.py if it helps PyInstaller or runtime discovery (Optional, usually not needed if _internal is just a data container)
-      # This step is generally NOT required if _internal is directly added to sys.path and 'maps' has its own __init__.py
-      # - name: Ensure _internal can be a namespace (Optional)
-      #   run: |
-      #     New-Item -ItemType Directory -Force -Path "dist/Platformer/_internal"
-      #     # New-Item -ItemType File -Force -Path "dist/Platformer/_internal/__init__.py" # Usually not needed
-      #   shell: pwsh
-
-      # 8. Upload the Platformer artifact (the generated FOLDER)
       - name: Upload Platformer Windows Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Platformer-Windows-Folder # Artifact name
-          path: dist/Platformer/ # Path to the FOLDER generated by PyInstaller
-          if-no-files-found: error # Fail if the folder wasn't created
+          name: Platformer-Windows-Release
+          path: dist/Platformer/
+          if-no-files-found: error
