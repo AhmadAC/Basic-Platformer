@@ -1,179 +1,113 @@
-[2025-05-20 16:22:17.636] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-20 16:22:17.636] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
-[2025-05-20 16:22:17.638] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
-[2025-05-20 16:22:17.804] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Platformer modules imported successfully.
-[2025-05-20 16:22:17.804] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pyperclip library found.
-[2025-05-20 16:22:17.830] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
-[2025-05-20 16:22:17.831] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial normal window size: 960x600 (will attempt to show maximized)
-[2025-05-20 16:22:17.834] INFO    logger.py:120 (_log_wrapper): Translating keyboard mappings from config strings to Qt.Key values.
-[2025-05-20 16:22:17.834] INFO    logger.py:120 (_log_wrapper): Keyboard mapping translation complete.
-[2025-05-20 16:22:17.842] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-20 16:22:20.626] INFO    logger.py:120 (_log_wrapper): Preparing to start game mode: couch_play, Map: bigmap1, Target: None
-[2025-05-20 16:22:20.626] INFO    logger.py:120 (_log_wrapper): GameSceneWidget current size: 100x30
-[2025-05-20 16:22:20.626] INFO    logger.py:120 (_log_wrapper): MainWindow current size: 1280x649
-[2025-05-20 16:22:20.905] WARNING logger.py:120 (_log_wrapper): EnemyBase Warning (ID: 0): Specified color 'enemy_yellow' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 16:22:20.906] DEBUG   logger.py:120 (_log_wrapper): EnemyBase (ID: 0): Initializing with color: 'gray'.
-[2025-05-20 16:22:20.971] WARNING logger.py:120 (_log_wrapper): 
---- Assets: Missing Animation Files Detected for 'characters\gray' ---
-[2025-05-20 16:22:20.972] WARNING logger.py:120 (_log_wrapper): - State 'burning': Expected relative path (for resource_path): 'characters\gray\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Burning.gif'
-[2025-05-20 16:22:20.972] WARNING logger.py:120 (_log_wrapper): - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\gray\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Aflame_crouch.gif'
-[2025-05-20 16:22:20.972] WARNING logger.py:120 (_log_wrapper): - State 'burning_crouch': Expected relative path (for resource_path): 'characters\gray\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Burning_crouch.gif'
-[2025-05-20 16:22:20.973] WARNING logger.py:120 (_log_wrapper): - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\gray\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Deflame_crouch.gif'
-[2025-05-20 16:22:20.973] INFO    logger.py:120 (_log_wrapper): (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 16:22:20.973] WARNING logger.py:120 (_log_wrapper): -----------------------------------------------------------------
+[2025-05-20 16:48:45.773] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 16:48:45.774] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-20 16:48:45.774] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
+[2025-05-20 16:48:46.052] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Platformer modules imported successfully.
+[2025-05-20 16:48:46.052] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pyperclip library found.
+[2025-05-20 16:48:46.080] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
+[2025-05-20 16:48:46.081] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial normal window size: 960x600 (will attempt to show maximized)
+[2025-05-20 16:48:46.082] INFO    logger.py:120 (_log_wrapper): Translating keyboard mappings from config strings to Qt.Key values.
+[2025-05-20 16:48:46.082] INFO    logger.py:120 (_log_wrapper): Keyboard mapping translation complete.
+[2025-05-20 16:48:46.091] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-20 16:49:08.804] INFO    logger.py:120 (_log_wrapper): Preparing to start game mode: couch_play, Map: noenemy, Target: None
+[2025-05-20 16:49:08.804] INFO    logger.py:120 (_log_wrapper): GameSceneWidget current size: 100x30
+[2025-05-20 16:49:08.804] INFO    logger.py:120 (_log_wrapper): MainWindow current size: 1280x649
+[2025-05-20 16:49:09.068] INFO    logger.py:120 (_log_wrapper): Initial camera update called for P1. CamRect: PySide6.QtCore.QPointF(0.000000, -511.000000), P1Rect: PySide6.QtCore.QPointF(280.000000, 840.000000)
+[2025-05-20 16:49:09.068] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
+[2025-05-20 16:49:09.069] INFO    logger.py:120 (_log_wrapper): Game mode 'couch_play' started.
+[2025-05-20 16:49:11.421] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-20 16:49:11.437] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
+[2025-05-20 16:49:11.708] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:11.903] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 16:49:12.012] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
+[2025-05-20 16:49:12.301] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-20 16:49:12.333] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
+[2025-05-20 16:49:12.621] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:12.812] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 16:49:12.957] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
+[2025-05-20 16:49:13.277] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:13.310] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
+[2025-05-20 16:49:13.597] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
+[2025-05-20 16:49:13.660] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:14.045] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-20 16:49:14.157] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:14.717] INFO    logger.py:120 (_log_wrapper): Player 1 interacted with chest. State changing to 'opening'.
+[2025-05-20 16:49:14.893] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-20 16:49:15.084] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:15.773] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
+[2025-05-20 16:49:16.061] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'idle' (request was 'idle')
+[2025-05-20 16:49:16.269] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-20 16:49:16.509] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:16.716] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
+[2025-05-20 16:49:17.004] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'idle' (request was 'idle')
+[2025-05-20 16:49:17.293] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
+[2025-05-20 16:49:17.581] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:17.757] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 16:49:17.965] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
+[2025-05-20 16:49:17.997] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-20 16:49:18.124] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:19.741] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
+[2025-05-20 16:49:20.029] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'idle' (request was 'idle')
+[2025-05-20 16:49:20.205] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
+[2025-05-20 16:49:20.477] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:20.669] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 16:49:20.733] INFO    logger.py:120 (_log_wrapper): Chest opened for Player 1. Healing.
+[2025-05-20 16:49:20.733] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Healed to full health: 100/100
+[2025-05-20 16:49:20.876] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
+[2025-05-20 16:49:21.244] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
+[2025-05-20 16:49:21.535] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'idle' (request was 'idle')
+[2025-05-20 16:49:21.837] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
+[2025-05-20 16:49:22.125] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:22.318] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 16:49:22.509] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
+[2025-05-20 16:49:23.341] INFO    logger.py:120 (_log_wrapper): Couch Play: Game state reset initiated.
+[2025-05-20 16:49:23.341] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 16:49:23.341] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at (290.5, 878.0)
+[2025-05-20 16:49:23.352] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 16:49:23.353] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
+[2025-05-20 16:49:23.353] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at (290.5, 918.0)
+[2025-05-20 16:49:23.358] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 16:49:23.359] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
+[2025-05-20 16:49:23.359] DEBUG   logger.py:120 (_log_wrapper): GSM: 0 enemies processed for reset.
+[2025-05-20 16:49:23.359] DEBUG   logger.py:120 (_log_wrapper): GSM: 0 statues processed for state reset.
+[2025-05-20 16:49:23.359] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles cleared from lists.
+[2025-05-20 16:49:23.359] DEBUG   logger.py:120 (_log_wrapper): GSM: Existing chest removed (if any).
+[2025-05-20 16:49:23.359] DEBUG   logger.py:120 (_log_wrapper): GSM: Failed to respawn chest.
+[2025-05-20 16:49:23.359] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset.
+[2025-05-20 16:49:23.359] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
 
-[2025-05-20 16:22:20.973] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'burning' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 16:22:20.974] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 16:22:20.974] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 16:22:20.974] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 16:22:20.977] DEBUG   logger.py:120 (_log_wrapper): Enemy (ID: 0, Color: gray) main class initialized.
-[2025-05-20 16:22:20.977] WARNING logger.py:120 (_log_wrapper): EnemyBase Warning (ID: 1): Specified color 'enemy_purple' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 16:22:20.978] DEBUG   logger.py:120 (_log_wrapper): EnemyBase (ID: 1): Initializing with color: 'gray'.
-[2025-05-20 16:22:21.045] WARNING logger.py:120 (_log_wrapper): 
---- Assets: Missing Animation Files Detected for 'characters\gray' ---
-[2025-05-20 16:22:21.046] WARNING logger.py:120 (_log_wrapper): - State 'burning': Expected relative path (for resource_path): 'characters\gray\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Burning.gif'
-[2025-05-20 16:22:21.046] WARNING logger.py:120 (_log_wrapper): - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\gray\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Aflame_crouch.gif'
-[2025-05-20 16:22:21.046] WARNING logger.py:120 (_log_wrapper): - State 'burning_crouch': Expected relative path (for resource_path): 'characters\gray\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Burning_crouch.gif'
-[2025-05-20 16:22:21.047] WARNING logger.py:120 (_log_wrapper): - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\gray\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Deflame_crouch.gif'
-[2025-05-20 16:22:21.047] INFO    logger.py:120 (_log_wrapper): (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 16:22:21.047] WARNING logger.py:120 (_log_wrapper): -----------------------------------------------------------------
-
-[2025-05-20 16:22:21.047] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'burning' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.048] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.048] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.048] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.051] DEBUG   logger.py:120 (_log_wrapper): Enemy (ID: 1, Color: gray) main class initialized.
-[2025-05-20 16:22:21.051] WARNING logger.py:120 (_log_wrapper): EnemyBase Warning (ID: 2): Specified color 'enemy_pink' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 16:22:21.051] DEBUG   logger.py:120 (_log_wrapper): EnemyBase (ID: 2): Initializing with color: 'pink'.
-[2025-05-20 16:22:21.117] WARNING logger.py:120 (_log_wrapper): 
---- Assets: Missing Animation Files Detected for 'characters\pink' ---
-[2025-05-20 16:22:21.118] WARNING logger.py:120 (_log_wrapper): - State 'burning': Expected relative path (for resource_path): 'characters\pink\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning.gif'
-[2025-05-20 16:22:21.118] WARNING logger.py:120 (_log_wrapper): - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Aflame_crouch.gif'
-[2025-05-20 16:22:21.119] WARNING logger.py:120 (_log_wrapper): - State 'burning_crouch': Expected relative path (for resource_path): 'characters\pink\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning_crouch.gif'
-[2025-05-20 16:22:21.119] WARNING logger.py:120 (_log_wrapper): - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Deflame_crouch.gif'
-[2025-05-20 16:22:21.119] INFO    logger.py:120 (_log_wrapper): (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 16:22:21.119] WARNING logger.py:120 (_log_wrapper): -----------------------------------------------------------------
-
-[2025-05-20 16:22:21.120] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'burning' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.120] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.121] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.121] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.123] DEBUG   logger.py:120 (_log_wrapper): Enemy (ID: 2, Color: pink) main class initialized.
-[2025-05-20 16:22:21.123] WARNING logger.py:120 (_log_wrapper): EnemyBase Warning (ID: 3): Specified color 'enemy_green' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 16:22:21.124] DEBUG   logger.py:120 (_log_wrapper): EnemyBase (ID: 3): Initializing with color: 'green'.
-[2025-05-20 16:22:21.191] WARNING logger.py:120 (_log_wrapper): 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-20 16:22:21.191] WARNING logger.py:120 (_log_wrapper): - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-20 16:22:21.191] WARNING logger.py:120 (_log_wrapper): - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-20 16:22:21.191] WARNING logger.py:120 (_log_wrapper): - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-20 16:22:21.192] WARNING logger.py:120 (_log_wrapper): - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-20 16:22:21.192] INFO    logger.py:120 (_log_wrapper): (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 16:22:21.192] WARNING logger.py:120 (_log_wrapper): -----------------------------------------------------------------
-
-[2025-05-20 16:22:21.192] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'burning' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.193] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.193] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.193] WARNING logger.py:120 (_log_wrapper): Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 16:22:21.195] DEBUG   logger.py:120 (_log_wrapper): Enemy (ID: 3, Color: green) main class initialized.
-[2025-05-20 16:22:21.210] ERROR   logger.py:120 (_log_wrapper): Assets Error: GIF file not found at provided path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/items/chest_open.gif'
-[2025-05-20 16:22:21.210] INFO    logger.py:120 (_log_wrapper): Initial camera update called for P1. CamRect: PySide6.QtCore.QPointF(0.000000, -1471.000000), P1Rect: PySide6.QtCore.QPointF(80.000000, 1880.000000)
-[2025-05-20 16:22:21.210] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
-[2025-05-20 16:22:21.211] INFO    logger.py:120 (_log_wrapper): Game mode 'couch_play' started.
-[2025-05-20 16:22:21.228] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:21.229] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:21.229] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:21.229] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:21.933] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-20 16:22:21.949] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
-[2025-05-20 16:22:21.950] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State changing from 'idle' to 'wall_slide' (request was 'wall_slide')
-[2025-05-20 16:22:22.237] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:22:22.412] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:22:22.572] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-20 16:22:22.716] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-20 16:22:22.716] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:22.796] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-20 16:22:22.844] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
-[2025-05-20 16:22:23.131] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:22:23.196] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-20 16:22:23.196] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:23.325] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:22:23.548] DEBUG   logger.py:120 (_log_wrapper): Enemy 3 (Color: green): Stomp kill initiated.
-[2025-05-20 16:22:23.548] WARNING logger.py:120 (_log_wrapper): EnemyStateHandler (ID: 3, Color: green): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing. Animation handler will attempt fallback.
-[2025-05-20 16:22:23.549] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 3): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
-[2025-05-20 16:22:23.549] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'jump' (request was 'jump')
-[2025-05-20 16:22:23.820] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:22:23.900] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'run' to 'attack'. Requested: 'attack'.
-[2025-05-20 16:22:23.901] DEBUG   logger.py:120 (_log_wrapper): Enemy 0 (Color: gray) hit Target 1 for 10 damage.
-[2025-05-20 16:22:23.901] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 90/100
-[2025-05-20 16:22:23.901] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'hit' (request was 'hit')
-[2025-05-20 16:22:23.948] DEBUG   logger.py:120 (_log_wrapper): Enemy 3: Stomp squash duration ended.
-[2025-05-20 16:22:23.948] DEBUG   logger.py:120 (_log_wrapper): EnemyBase (ID: 3): kill() called. Setting _alive to False.
-[2025-05-20 16:22:23.996] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'fall' (request was 'fall')
-[2025-05-20 16:22:24.172] DEBUG   logger.py:120 (_log_wrapper): Enemy 0 (Color: gray) hit Target 1 for 10 damage.
-[2025-05-20 16:22:24.172] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 80/100
-[2025-05-20 16:22:24.172] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'hit' (request was 'hit')
-[2025-05-20 16:22:24.268] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'fall' (request was 'fall')
-[2025-05-20 16:22:24.380] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'attack' to 'idle'. Requested: 'idle'.
-[2025-05-20 16:22:24.523] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-20 16:22:24.556] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 2): State changing from 'run' to 'attack'. Requested: 'attack'.
-[2025-05-20 16:22:24.556] DEBUG   logger.py:120 (_log_wrapper): Enemy 2 (Color: pink) hit Target 1 for 10 damage.
-[2025-05-20 16:22:24.557] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 70/100
-[2025-05-20 16:22:24.557] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:22:24.588] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:24.652] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:22:24.653] DEBUG   logger.py:120 (_log_wrapper): Enemy 2 (Color: pink) hit Target 1 for 10 damage.
-[2025-05-20 16:22:24.653] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 60/100
-[2025-05-20 16:22:24.653] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:22:24.749] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:22:24.750] DEBUG   logger.py:120 (_log_wrapper): Enemy 2 (Color: pink) hit Target 1 for 10 damage.
-[2025-05-20 16:22:24.750] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 50/100
-[2025-05-20 16:22:24.750] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:22:24.846] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:22:24.846] DEBUG   logger.py:120 (_log_wrapper): Enemy 2 (Color: pink) hit Target 1 for 10 damage.
-[2025-05-20 16:22:24.846] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 40/100
-[2025-05-20 16:22:24.846] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:22:24.942] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:22:24.942] DEBUG   logger.py:120 (_log_wrapper): Enemy 2 (Color: pink) hit Target 1 for 10 damage.
-[2025-05-20 16:22:24.942] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 30/100
-[2025-05-20 16:22:24.942] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
-[2025-05-20 16:22:25.036] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
-[2025-05-20 16:22:25.037] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 2): State changing from 'attack' to 'idle'. Requested: 'idle'.
-[2025-05-20 16:22:25.052] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-20 16:22:25.245] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:25.340] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:22:25.420] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-20 16:22:25.421] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 16:22:25.533] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:22:25.676] DEBUG   logger.py:120 (_log_wrapper): Enemy 2 (Color: pink): Stomp kill initiated.
-[2025-05-20 16:22:25.676] WARNING logger.py:120 (_log_wrapper): EnemyStateHandler (ID: 2, Color: pink): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing. Animation handler will attempt fallback.
-[2025-05-20 16:22:25.677] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 2): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
-[2025-05-20 16:22:25.677] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'jump' (request was 'jump')
-[2025-05-20 16:22:25.964] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:22:26.028] DEBUG   logger.py:120 (_log_wrapper): Enemy 1 (Color: gray): Stomp kill initiated.
-[2025-05-20 16:22:26.029] WARNING logger.py:120 (_log_wrapper): EnemyStateHandler (ID: 1, Color: gray): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing. Animation handler will attempt fallback.
-[2025-05-20 16:22:26.029] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 1): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
-[2025-05-20 16:22:26.029] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'jump' (request was 'jump')
-[2025-05-20 16:22:26.076] DEBUG   logger.py:120 (_log_wrapper): Enemy 2: Stomp squash duration ended.
-[2025-05-20 16:22:26.076] DEBUG   logger.py:120 (_log_wrapper): EnemyBase (ID: 2): kill() called. Setting _alive to False.
-[2025-05-20 16:22:26.317] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-20 16:22:26.428] DEBUG   logger.py:120 (_log_wrapper): Enemy 1: Stomp squash duration ended.
-[2025-05-20 16:22:26.428] DEBUG   logger.py:120 (_log_wrapper): EnemyBase (ID: 1): kill() called. Setting _alive to False.
-[2025-05-20 16:22:26.492] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-20 16:22:26.508] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-20 16:22:26.686] DEBUG   logger.py:120 (_log_wrapper): EnemyStateHandler (ID 0): State changing from 'run' to 'attack'. Requested: 'attack'.
-[2025-05-20 16:22:26.686] DEBUG   logger.py:120 (_log_wrapper): Enemy 0 (Color: gray) hit Target 1 for 10 damage.
-[2025-05-20 16:22:26.686] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 20/100
-[2025-05-20 16:22:26.780] DEBUG   logger.py:120 (_log_wrapper): Enemy 0 (Color: gray) hit Target 1 for 10 damage.
-[2025-05-20 16:22:26.780] DEBUG   logger.py:120 (_log_wrapper): PlayerCombatHandler (P1): Took 10 damage. Health: 10/100
-[2025-05-20 16:22:26.806] INFO    logger.py:120 (_log_wrapper): Escape pressed in game mode 'couch_play'. Stopping mode.
-[2025-05-20 16:22:26.806] INFO    logger.py:120 (_log_wrapper): Stopping game mode: couch_play
-[2025-05-20 16:22:26.811] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-20 16:22:26.811] INFO    logger.py:120 (_log_wrapper): Game mode 'couch_play' stopped and cleaned.
-[2025-05-20 16:22:29.343] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Quit action triggered, requesting main window close via self.close().
-[2025-05-20 16:22:29.343] INFO    logger.py:120 (_log_wrapper): Close event received. Shutting down application.
-[2025-05-20 16:22:29.343] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
-[2025-05-20 16:22:29.343] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
-[2025-05-20 16:22:29.344] INFO    logger.py:120 (_log_wrapper): Stopping game mode: None
-[2025-05-20 16:22:29.344] INFO    logger.py:120 (_log_wrapper): Game mode 'None' stopped and cleaned.
-[2025-05-20 16:22:29.346] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application terminated via closeEvent.
-[2025-05-20 16:22:29.409] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-20 16:49:23.788] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-20 16:49:23.949] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:23.981] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
+[2025-05-20 16:49:24.093] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
+[2025-05-20 16:49:24.477] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
+[2025-05-20 16:49:24.765] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:24.941] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'jump' (request was 'jump')
+[2025-05-20 16:49:25.213] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:25.405] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 16:49:25.422] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
+[2025-05-20 16:49:25.470] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
+[2025-05-20 16:49:25.757] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:25.949] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'jump' (request was 'jump')
+[2025-05-20 16:49:26.237] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:26.413] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 16:49:26.429] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
+[2025-05-20 16:49:26.541] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:26.558] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
+[2025-05-20 16:49:26.845] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'turn' to 'run' (request was 'run')
+[2025-05-20 16:49:26.877] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
+[2025-05-20 16:49:27.149] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 16:49:27.341] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 16:49:27.357] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
+[2025-05-20 16:49:27.629] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 16:49:29.394] INFO    logger.py:120 (_log_wrapper): Escape pressed in game mode 'couch_play'. Stopping mode.
+[2025-05-20 16:49:29.394] INFO    logger.py:120 (_log_wrapper): Stopping game mode: couch_play
+[2025-05-20 16:49:29.397] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-20 16:49:29.397] INFO    logger.py:120 (_log_wrapper): Game mode 'couch_play' stopped and cleaned.
+[2025-05-20 16:49:30.697] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Quit action triggered, requesting main window close via self.close().
+[2025-05-20 16:49:30.698] INFO    logger.py:120 (_log_wrapper): Close event received. Shutting down application.
+[2025-05-20 16:49:30.698] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-20 16:49:30.698] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
+[2025-05-20 16:49:30.698] INFO    logger.py:120 (_log_wrapper): Stopping game mode: None
+[2025-05-20 16:49:30.698] INFO    logger.py:120 (_log_wrapper): Game mode 'None' stopped and cleaned.
+[2025-05-20 16:49:30.698] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application terminated via closeEvent.
+[2025-05-20 16:49:30.733] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0

@@ -52,7 +52,6 @@ CHARACTER_ATTACK_STATE_DURATION = 480 # ms, general duration for an attack state
 
 # --- Item Constants ---
 CHEST_CLOSED_SPRITE_PATH = "characters/items/chest.gif"
-CHEST_OPEN_SPRITE_PATH = "characters/items/chest_open.gif"
 CHEST_STAY_OPEN_DURATION_MS = 3000
 CHEST_FADE_OUT_DURATION_MS = 1000
 

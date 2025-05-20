@@ -6,22 +6,19 @@
 Defines collectible items like Chests.
 Uses resource_path helper. Refactored for PySide6.
 """
-# version 2.0.2
+# version 2.0.3 (Chest uses single animation, heals after opening anim)
 import os
 import sys
 import random
-from typing import List, Optional, Any
-import time # For get_current_ticks fallback
+from typing import Dict, Optional, Any, List, Tuple
+import time
 
-# PySide6 imports
 from PySide6.QtGui import QPixmap, QColor, QPainter, QFont, QImage
 from PySide6.QtCore import QRectF, QSize, Qt, QPointF
 
-# Game imports (already PySide6 compatible or will be)
 import constants as C
-from assets import load_gif_frames, resource_path # load_gif_frames now returns List[QPixmap]
+from assets import load_gif_frames, resource_path
 
-# Logger import
 try:
     from logger import debug, info, warning
 except ImportError:
@@ -31,91 +28,83 @@ except ImportError:
 
 _start_time_items = time.monotonic()
 def get_current_ticks():
-    """
-    Returns the number of milliseconds since this module was initialized.
-
-    """
     return int((time.monotonic() - _start_time_items) * 1000)
 
 
 class Chest:
     """
-    A chest that opens, stays open for a bit, fades, and then restores player health.
-    Uses QPixmap for visuals.
+    A chest that starts closed, plays an opening animation when interacted with,
+    and then stays on its last (open) frame. Heals player after opening.
     """
     def __init__(self, x: float, y: float): # x, y are for midbottom
         self._valid_init = True
-        self.frames_closed: List[QPixmap] = []
-        self.frames_open: List[QPixmap] = []
+        self.all_frames: List[QPixmap] = [] # Will hold all frames: closed -> opening -> open
 
-        full_chest_closed_path = resource_path(C.CHEST_CLOSED_SPRITE_PATH)
-        self.frames_closed = load_gif_frames(full_chest_closed_path)
-        if not self.frames_closed or self._is_placeholder_qpixmap(self.frames_closed[0]):
-            warning(f"Chest: Failed to load closed frames from '{full_chest_closed_path}'. Using placeholder.")
+        # CHEST_CLOSED_SPRITE_PATH should now point to a GIF that includes
+        # the closed state, the opening animation, and the final open state.
+        full_chest_animation_path = resource_path(C.CHEST_CLOSED_SPRITE_PATH)
+        self.all_frames = load_gif_frames(full_chest_animation_path)
+
+        if not self.all_frames or self._is_placeholder_qpixmap(self.all_frames[0]):
+            warning(f"Chest: Failed to load animation frames from '{full_chest_animation_path}'. Using placeholder.")
             self._valid_init = False
-            self.frames_closed = [self._create_placeholder_qpixmap(QColor(*C.YELLOW), "ClosedErr")]
+            # Create a simple 2-frame placeholder: closed and open
+            self.all_frames = [
+                self._create_placeholder_qpixmap(QColor(*C.YELLOW), "ChestClosed"),
+                self._create_placeholder_qpixmap(QColor(*C.BLUE), "ChestOpen")
+            ]
+            self.num_opening_frames = 1 # Placeholder has 1 frame for "opening"
+        else:
+            # Assume the animation sequence is:
+            # Frame 0: Closed state
+            # Frame 1 to N-1: Opening animation frames
+            # Frame N: Fully open state (last frame)
+            self.num_opening_frames = len(self.all_frames) -1 # All frames after the first are "opening" to the last "open"
 
-        full_chest_open_path = resource_path(C.CHEST_OPEN_SPRITE_PATH)
-        self.frames_open = load_gif_frames(full_chest_open_path)
-        if not self.frames_open or self._is_placeholder_qpixmap(self.frames_open[0]):
-            warning(f"Chest: Failed to load open frames from '{full_chest_open_path}'. Using placeholder.")
-            self.frames_open = [self._create_placeholder_qpixmap(QColor(*C.BLUE), "OpenErr")]
-
-        self.state = 'closed'
+        self.state = 'closed' # Initial state
         self.is_collected_flag_internal = False
         self.player_to_heal: Optional[Any] = None
 
-        self.frames_current_set = self.frames_closed
-        self.image: QPixmap = self.frames_current_set[0]
+        self.image: QPixmap = self.all_frames[0] # Start with the first frame (closed)
 
         img_width = self.image.width()
         img_height = self.image.height()
         rect_x = float(x - img_width / 2.0)
         rect_y = float(y - img_height)
         self.rect = QRectF(rect_x, rect_y, float(img_width), float(img_height))
-
         self.pos_midbottom = QPointF(float(x), float(y))
 
-        self.current_frame_index = 0
+        self.current_frame_index = 0 # Index within self.all_frames
         self.animation_timer = get_current_ticks()
-        self.time_opened_start = 0
-        self.fade_alpha = 255
         self._alive = True
 
         if not self._valid_init:
-             self.image = self.frames_closed[0]
+             self.image = self.all_frames[0] # Ensure image is set even if placeholder
              self._update_rect_from_image_and_pos()
 
     def _is_placeholder_qpixmap(self, pixmap: QPixmap) -> bool:
-        if pixmap.size() == QSize(30,40): # Placeholder size defined in load_gif_frames
+        if pixmap.isNull(): return True
+        if pixmap.size() == QSize(30,40):
             qimage = pixmap.toImage()
             if not qimage.isNull():
-                # Check a few pixels to be more robust against minor color variations
-                # if using a specific placeholder pattern.
-                # For now, checking a known color and text used in _create_placeholder_qpixmap
-                # might be fragile if placeholder generation changes.
-                # Simpler: Assume any 30x40 is a placeholder if it's not the expected sprite.
-                # This logic is heuristic and depends on how placeholders are generated.
-                # If placeholders are always red or blue (as per _create_placeholder_qpixmap),
-                # this check is okay.
                 color_at_origin = qimage.pixelColor(0,0)
-                if color_at_origin == QColor(*C.YELLOW) or color_at_origin == QColor(*C.BLUE) or color_at_origin == QColor(*C.RED): # Added RED from load_gif_frames
+                qcolor_red = QColor(*(getattr(C, 'RED', (255,0,0))))
+                qcolor_blue = QColor(*(getattr(C, 'BLUE', (0,0,255))))
+                qcolor_yellow = QColor(*(getattr(C, 'YELLOW', (255,255,0))))
+                if color_at_origin == qcolor_red or color_at_origin == qcolor_blue or color_at_origin == qcolor_yellow:
                     return True
         return False
 
     def _create_placeholder_qpixmap(self, q_color: QColor, text: str = "Err") -> QPixmap:
-        pixmap = QPixmap(30, 30) # Consistent placeholder size
+        pixmap = QPixmap(30, 30)
         pixmap.fill(q_color)
         painter = QPainter(pixmap)
         painter.setPen(QColor(*C.BLACK))
         painter.drawRect(pixmap.rect().adjusted(0,0,-1,-1))
         try:
-            font = QFont()
-            font.setPointSize(10)
-            painter.setFont(font)
+            font = QFont(); font.setPointSize(8); painter.setFont(font)
             painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, text)
-        except Exception as e:
-            print(f"ITEMS PlaceholderFontError: {e}")
+        except Exception as e: print(f"ITEMS PlaceholderFontError: {e}")
         painter.end()
         return pixmap
 
@@ -126,97 +115,100 @@ class Chest:
             rect_x = self.pos_midbottom.x() - img_width / 2.0
             rect_y = self.pos_midbottom.y() - img_height
             self.rect.setRect(rect_x, rect_y, img_width, img_height)
-        else: # Fallback if image is null
-            self.rect.setRect(self.pos_midbottom.x() - 15, self.pos_midbottom.y() - 30, 30, 30) # Default size
+        else:
+            self.rect.setRect(self.pos_midbottom.x() - 15, self.pos_midbottom.y() - 30, 30, 30)
 
-    def alive(self) -> bool:
-        return self._alive
-
-    def kill(self):
-        self._alive = False
+    def alive(self) -> bool: return self._alive
+    def kill(self): self._alive = False
 
     def update(self, dt_sec: float):
         if self.state == 'killed' or not self._alive:
             return
 
         now = get_current_ticks()
-        anim_speed_ms = C.ANIM_FRAME_DURATION
+        anim_speed_ms = int(C.ANIM_FRAME_DURATION * 0.7) # Opening animation speed
+
         if self.state == 'opening':
-            anim_speed_ms = int(anim_speed_ms * 0.7)
-
-        if now - self.animation_timer > anim_speed_ms:
-            self.animation_timer = now
-            self.current_frame_index += 1
-
-            if self.current_frame_index >= len(self.frames_current_set):
-                if self.state == 'opening':
-                    self.current_frame_index = len(self.frames_current_set) - 1
-                    self.state = 'opened'
-                    self.time_opened_start = now
-                    debug("Chest state changed to: opened")
-                elif self.state == 'closed':
-                    self.current_frame_index = 0
-
-            if self.state != 'fading':
-                if self.frames_current_set and 0 <= self.current_frame_index < len(self.frames_current_set):
-                    self.image = self.frames_current_set[self.current_frame_index]
-                    self._update_rect_from_image_and_pos()
-
-        if self.state == 'opened':
-            if now - self.time_opened_start >= C.CHEST_STAY_OPEN_DURATION_MS:
-                self.state = 'fading'
-                self.fade_alpha = 255
+            if now - self.animation_timer > anim_speed_ms:
                 self.animation_timer = now
-                debug("Chest state changed to: fading")
+                self.current_frame_index += 1
 
-        elif self.state == 'fading':
-            elapsed_fade_time = now - self.animation_timer
-            fade_progress = min(1.0, elapsed_fade_time / C.CHEST_FADE_OUT_DURATION_MS)
-            self.fade_alpha = int(255 * (1.0 - fade_progress))
-
-            if self.frames_open and self.frames_open[-1]:
-                base_image_pixmap = self.frames_open[-1] # This is a QPixmap
-
-                # Create a QImage for alpha manipulation
-                qimage_alpha = base_image_pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32_Premultiplied)
-                if qimage_alpha.isNull(): # Check if conversion failed
-                    warning("Chest: Failed to convert base_image_pixmap to QImage for fading.")
-                    return
-
-                # Iterate and set alpha per pixel
-                for y_px in range(qimage_alpha.height()):
-                    for x_px in range(qimage_alpha.width()):
-                        current_pixel_color = qimage_alpha.pixelColor(x_px, y_px)
-                        current_pixel_color.setAlpha(max(0, self.fade_alpha))
-                        qimage_alpha.setPixelColor(x_px, y_px, current_pixel_color)
-
-                self.image = QPixmap.fromImage(qimage_alpha)
-
-            if self.fade_alpha <= 0:
-                debug("Chest fully faded out.")
-                if self.player_to_heal and hasattr(self.player_to_heal, 'heal_to_full'):
-                    info(f"Player {getattr(self.player_to_heal, 'player_id', 'Unknown')} healed by chest after fade.")
-                    self.player_to_heal.heal_to_full()
-                self.state = 'killed'
-                self.kill()
+                if self.current_frame_index >= len(self.all_frames): # Animation finished
+                    self.current_frame_index = len(self.all_frames) - 1 # Stay on last frame
+                    self.state = 'opened'
+                    info(f"Chest opened for Player {getattr(self.player_to_heal, 'player_id', 'Unknown')}. Healing.")
+                    if self.player_to_heal and hasattr(self.player_to_heal, 'heal_to_full'):
+                        self.player_to_heal.heal_to_full()
+                    # Chest now stays open on the last frame. No fading or killing state after opening.
+                
+                if self.all_frames and 0 <= self.current_frame_index < len(self.all_frames):
+                    self.image = self.all_frames[self.current_frame_index]
+                    self._update_rect_from_image_and_pos()
+        # If state is 'closed' or 'opened', it's static, no animation update needed here.
+        # The image is set to all_frames[0] for 'closed'
+        # and all_frames[last_index] for 'opened'.
 
     def collect(self, player: Any):
         if self.is_collected_flag_internal or not self._valid_init or self.state != 'closed' or not self._alive:
             return
 
         info(f"Player {getattr(player, 'player_id', 'Unknown')} interacted with chest. State changing to 'opening'.")
-        self.is_collected_flag_internal = True
+        self.is_collected_flag_internal = True # Mark as collected to prevent re-trigger
         self.player_to_heal = player
 
         self.state = 'opening'
-        self.frames_current_set = self.frames_open
-        self.current_frame_index = 0
+        self.current_frame_index = 0 # Start opening animation from the first frame (which is the closed state)
+                                     # The animation will progress to subsequent frames.
         self.animation_timer = get_current_ticks()
 
-        if self.frames_current_set and self.frames_current_set[0]:
-            self.image = self.frames_current_set[0]
-            self._update_rect_from_image_and_pos()
+        if self.all_frames and self.all_frames[0] and not self.all_frames[0].isNull():
+            # Image will be updated frame-by-frame in update() method
+            pass
         else:
-            warning("Chest: Collect called, but 'open' frames are invalid. Chest might not animate correctly.")
+            warning("Chest: Collect called, but animation frames are invalid. Chest might not animate correctly.")
+
+    def get_network_data(self) -> Dict[str, Any]:
+        """Gets data for network synchronization."""
+        return {
+            'pos_center': (self.rect.center().x(), self.rect.center().y()),
+            'is_collected_internal': self.is_collected_flag_internal,
+            'chest_state': self.state,
+            'animation_timer': self.animation_timer, # Sync animation timer for opening
+            'current_frame_index': self.current_frame_index,
+            # No need for fade_alpha, time_opened_start if it just stays open
+        }
+
+    def set_network_data(self, data: Dict[str, Any]):
+        """Sets state from network data."""
+        server_chest_pos_center_tuple = data.get('pos_center')
+        server_chest_state = data.get('chest_state')
+
+        if server_chest_state == 'killed': # Server says it's gone
+            self.kill()
+            return
+        
+        if server_chest_pos_center_tuple:
+             self.rect.moveCenter(QPointF(server_chest_pos_center_tuple[0], server_chest_pos_center_tuple[1]))
+             self.pos_midbottom = QPointF(self.rect.center().x(), self.rect.bottom())
+
+        old_state = self.state
+        self.state = server_chest_state
+        self.is_collected_flag_internal = data.get('is_collected_internal', False)
+        
+        if self.state == 'opening' and old_state != 'opening': # If server initiated opening
+            self.animation_timer = data.get('animation_timer', get_current_ticks())
+            self.current_frame_index = data.get('current_frame_index', 0)
+        elif self.state == 'opened':
+            self.current_frame_index = len(self.all_frames) - 1 if self.all_frames else 0
+        elif self.state == 'closed':
+            self.current_frame_index = 0
+        
+        if self.all_frames and 0 <= self.current_frame_index < len(self.all_frames):
+            self.image = self.all_frames[self.current_frame_index]
+            self._update_rect_from_image_and_pos()
+        elif self.all_frames: # Fallback to first frame if index is bad
+            self.image = self.all_frames[0]
+            self._update_rect_from_image_and_pos()
+
 
 #################### END OF FILE: items.py ####################
