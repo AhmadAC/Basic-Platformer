@@ -1,2 +1,17 @@
-[2025-05-20 22:50:37.230] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-20 22:50:37.230] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-20 23:01:27.098] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 23:01:27.098] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-20 23:01:28.545] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
+[2025-05-20 23:01:28.547] INFO    logger.py:120 (_log_wrapper):   - Pygame Joystick 0: Xbox 360 Controller
+[2025-05-20 23:01:28.547] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame found 1 joysticks.
+[2025-05-20 23:01:28.547] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial window size: 960x600
+[2025-05-20 23:01:28.550] CRITICAL logger.py:120 (_log_wrapper): MAIN CRITICAL UNHANDLED EXCEPTION: 'MainWindow' object has no attribute '_create_main_menu_widget'
+Traceback (most recent call last):
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\main.py", line 756, in <module>
+    main()
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\main.py", line 747, in main
+    main_window = MainWindow()
+                  ^^^^^^^^^^^^
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\main.py", line 209, in __init__
+    self.main_menu_widget = self._create_main_menu_widget()
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute '_create_main_menu_widget'
