@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\editor_logging.py ####################
+
 # editor/editor_logging.py
 # -*- coding: utf-8 -*-
 """
@@ -120,3 +122,5 @@ def setup_logging(script_main_dir: Optional[str] = None) -> logging.Logger:
 # from editor_logging import logger
 # if logger:
 # logger.info("This is an info message from another_module.py")
+
+#################### END OF FILE: editor\editor_logging.py ####################

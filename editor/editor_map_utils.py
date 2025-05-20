@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\editor_map_utils.py ####################
+
 # editor_map_utils.py
 # -*- coding: utf-8 -*-
 """
@@ -13,9 +15,9 @@ from typing import Optional, Dict, List, Tuple, Any
 import logging
 
 # Editor-specific config and state
-import editor_config as ED_CONFIG
-from editor_state import EditorState
-import editor_history # For getting snapshots
+from . import editor_config as ED_CONFIG # Use relative import
+from .editor_state import EditorState # Use relative import
+from . import editor_history # Use relative import
 
 
 try:
@@ -483,3 +485,5 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
             return True 
     except OSError as e:
         logger.error(f"Error deleting map files for '{map_name_base}': {e}", exc_info=True); return False
+
+#################### END OF FILE: editor\editor_map_utils.py ####################

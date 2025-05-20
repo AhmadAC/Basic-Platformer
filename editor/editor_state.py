@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\editor_state.py ####################
+
 # editor_state.py
 # -*- coding: utf-8 -*-
 """
@@ -8,7 +10,7 @@ and data for the level editor, adapted for PySide6.
 import logging
 from typing import Optional, Dict, List, Tuple, Any, Callable
 
-import editor_config as ED_CONFIG
+from . import editor_config as ED_CONFIG # Use relative import
 
 logger = logging.getLogger(__name__)
 
@@ -110,3 +112,5 @@ class EditorState:
         self.undo_stack.clear()
         self.redo_stack.clear()
         logger.debug(f"Map context reset complete. Current map name: '{self.map_name_for_function}'.")
+
+#################### END OF FILE: editor\editor_state.py ####################

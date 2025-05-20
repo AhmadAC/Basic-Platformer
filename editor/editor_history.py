@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\editor_history.py ####################
+
 # editor_history.py
 # -*- coding: utf-8 -*-
 """
@@ -9,8 +11,8 @@ import json
 import logging
 from typing import List, Dict, Any, Optional, cast
 
-from editor_state import EditorState
-import editor_config as ED_CONFIG # For default values if needed on restore
+from .editor_state import EditorState # Use relative import
+from . import editor_config as ED_CONFIG # Use relative import
 
 logger = logging.getLogger(__name__)
 
@@ -163,3 +165,5 @@ def redo(editor_state: EditorState) -> bool:
     except Exception as e:
         logger.error(f"Unexpected error during redo restore: {e}", exc_info=True)
         return False
+
+#################### END OF FILE: editor\editor_history.py ####################

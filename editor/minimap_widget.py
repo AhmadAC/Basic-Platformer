@@ -1,7 +1,10 @@
+#################### START OF FILE: editor\minimap_widget.py ####################
+
 # minimap_widget.py
 # -*- coding: utf-8 -*-
 """
 ## version 2.0.3 (Fixed QRectF.toTuple() error)
+## version 2.0.4 (Enhanced object rendering with category-specific colors)
 Minimap Widget for the Platformer Level Editor.
 Displays a scaled-down overview of the map and the current viewport.
 Allows navigation by clicking or dragging on the minimap.
@@ -13,11 +16,11 @@ from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtGui import QPainter, QColor, QPen, QBrush, QMouseEvent, QPaintEvent, QPixmap
 from PySide6.QtCore import Qt, QRectF, QPointF, QTimer, Slot, QSize
 
-import editor_config as ED_CONFIG
-from editor_state import EditorState
+from . import editor_config as ED_CONFIG # Use relative import
+from .editor_state import EditorState # Use relative import
 
 if TYPE_CHECKING:
-    from map_view_widget import MapViewWidget # type: ignore
+    from .map_view_widget import MapViewWidget # Use relative import
 
 logger = logging.getLogger(__name__)
 
@@ -105,51 +108,68 @@ class MinimapWidget(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
 
         scale, eff_w, eff_h, offset_x, offset_y, _, _ = self._get_map_to_minimap_transform()
-        # logger.debug(f"Minimap Render - Transform: scale={scale:.4f}, eff_w={eff_w:.1f}, eff_h={eff_h:.1f}, offset_x={offset_x:.1f}, offset_y={offset_y:.1f}")
-        # logger.debug(f"Minimap Render - Map BG Color: {self.editor_state.background_color}")
 
         map_bg_rect = QRectF(offset_x, offset_y, max(0.0, eff_w), max(0.0, eff_h))
         map_bg_qcolor = QColor(*self.editor_state.background_color)
         painter.fillRect(map_bg_rect, map_bg_qcolor)
-        # logger.debug(f"Minimap Render - Drawn map background rect: ({map_bg_rect.x():.1f},{map_bg_rect.y():.1f},{map_bg_rect.width():.1f},{map_bg_rect.height():.1f}) with color {map_bg_qcolor.name()}")
+
+        # Define colors for different object categories on the minimap
+        category_colors = {
+            "spawn": QColor(*getattr(ED_CONFIG.C, 'GREEN', (0, 255, 0))),
+            "enemy": QColor(*getattr(ED_CONFIG.C, 'RED', (255, 0, 0))),
+            "item": QColor(*getattr(ED_CONFIG.C, 'YELLOW', (255, 255, 0))),
+            "object": QColor(*getattr(ED_CONFIG.C, 'BLUE', (0, 0, 255))),
+            "hazard": QColor(*getattr(ED_CONFIG.C, 'ORANGE_RED', (255, 69, 0))),
+            "tool": QColor(Qt.GlobalColor.transparent), # Tools usually not shown on map
+            "unknown": QColor(*getattr(ED_CONFIG.C, 'MAGENTA', (255, 0, 255))),
+        }
+        default_tile_color = QColor(*getattr(ED_CONFIG.C, 'GRAY', (128, 128, 128)))
+        
+        painter.setPen(Qt.PenStyle.NoPen) # Draw filled rectangles without outlines
 
         if scale > 1e-5 and self.editor_state.placed_objects:
-            # logger.info(f"Minimap Render - Drawing {len(self.editor_state.placed_objects)} objects with scale {scale:.4f}")
             fixed_obj_size_on_minimap = getattr(ED_CONFIG, 'MINIMAP_OBJECT_REPRESENTATION_SIZE_PX', 2.0)
-            debug_object_color = QColor(255, 0, 0, 255) # Solid Bright Red for debug
-            painter.setPen(Qt.PenStyle.NoPen)
 
-            for i, obj_data in enumerate(self.editor_state.placed_objects):
+            for obj_data in self.editor_state.placed_objects:
                 world_x = float(obj_data.get("world_x", 0.0))
                 world_y = float(obj_data.get("world_y", 0.0))
                 asset_key = obj_data.get("asset_editor_key", "unknown_asset")
                 asset_info = self.editor_state.assets_palette.get(str(asset_key))
+                
                 obj_orig_w, obj_orig_h = float(ED_CONFIG.BASE_GRID_SIZE), float(ED_CONFIG.BASE_GRID_SIZE)
                 if asset_info:
                     orig_size_tuple = asset_info.get("original_size_pixels")
-                    if orig_size_tuple and len(orig_size_tuple) == 2: obj_orig_w, obj_orig_h = float(orig_size_tuple[0]), float(orig_size_tuple[1])
+                    if orig_size_tuple and len(orig_size_tuple) == 2:
+                        obj_orig_w, obj_orig_h = float(orig_size_tuple[0]), float(orig_size_tuple[1])
                 
                 mini_x = offset_x + (world_x * scale)
                 mini_y = offset_y + (world_y * scale)
                 obj_category = asset_info.get("category", "unknown") if asset_info else "unknown"
                 
                 draw_rect: QRectF
+                object_qcolor: QColor
+
                 if obj_category == "tile" or "platform" in obj_data.get("game_type_id", ""):
                     rect_w_on_minimap = max(1.0, obj_orig_w * scale)
                     rect_h_on_minimap = max(1.0, obj_orig_h * scale)
                     draw_rect = QRectF(mini_x, mini_y, rect_w_on_minimap, rect_h_on_minimap)
-                else:
+                    
+                    color_tuple = obj_data.get("override_color")
+                    if not color_tuple and asset_info:
+                        color_tuple = asset_info.get("base_color_tuple")
+                        if not color_tuple:
+                            sp = asset_info.get("surface_params")
+                            if sp and isinstance(sp, tuple) and len(sp) == 3:
+                                color_tuple = sp[2]
+                    object_qcolor = QColor(*color_tuple) if color_tuple else default_tile_color
+                else: # For non-tile objects
                      draw_rect = QRectF(mini_x, mini_y, fixed_obj_size_on_minimap, fixed_obj_size_on_minimap)
+                     object_qcolor = category_colors.get(obj_category, category_colors["unknown"])
                 
-                painter.setBrush(debug_object_color)
-                painter.drawRect(draw_rect)
-                
-                # if i < 1 : # Log only the first object per render to reduce spam
-                #     logger.debug(f"  Minimap Obj {i} ('{asset_key}'): Cat='{obj_category}' WPos=({world_x:.0f},{world_y:.0f}) DrawRect=({draw_rect.x():.1f},{draw_rect.y():.1f},{draw_rect.width():.1f},{draw_rect.height():.1f})")
-        # else:
-            # if scale <= 1e-5: logger.warning("Minimap Render - Scale is too small, not drawing objects.")
-            # if not self.editor_state.placed_objects: logger.info("Minimap Render - No objects placed on map.")
-
+                if object_qcolor.alpha() > 0: # Only draw if not fully transparent (e.g. for "tool")
+                    painter.setBrush(object_qcolor)
+                    painter.drawRect(draw_rect)
+        
         painter.end()
         logger.debug("Minimap: Finished rendering map content to pixmap.")
 
@@ -176,7 +196,6 @@ class MinimapWidget(QWidget):
                    abs(old_view_rect.height() - self._view_rect_on_minimap.height()) > 0.1)
         
         if changed:
-            # Correct way to log QRectF components
             rect_tuple_str = (f"({self._view_rect_on_minimap.x():.1f}, {self._view_rect_on_minimap.y():.1f}, "
                               f"{self._view_rect_on_minimap.width():.1f}, {self._view_rect_on_minimap.height():.1f})")
             logger.debug(f"Minimap: View rect updated to {rect_tuple_str}")
@@ -189,7 +208,6 @@ class MinimapWidget(QWidget):
         painter.fillRect(self.rect(), widget_bg_color)
 
         if self._map_content_pixmap is None:
-            # logger.info("Minimap paintEvent: _map_content_pixmap is None, re-rendering.") # Can be spammy
             self._render_map_content_to_pixmap()
         
         if self._map_content_pixmap and not self._map_content_pixmap.isNull():
@@ -227,14 +245,10 @@ class MinimapWidget(QWidget):
                     self._is_dragging_view_rect = True
                     self._drag_offset = event.position() - self._view_rect_on_minimap.topLeft()
                     self.setCursor(Qt.CursorShape.ClosedHandCursor)
-                    # logger.debug(f"Minimap: Started dragging view rect. Offset: ({self._drag_offset.x():.1f},{self._drag_offset.y():.1f})")
                 else:
                     clamped_map_coord_x = max(0.0, min(map_coord_x, map_px_w))
                     clamped_map_coord_y = max(0.0, min(map_coord_y, map_px_h))
                     self.map_view_ref.center_on_map_coords(QPointF(clamped_map_coord_x, clamped_map_coord_y))
-                    # logger.debug(f"Minimap: Clicked to center main view at map coords ({clamped_map_coord_x:.0f}, {clamped_map_coord_y:.0f})")
-            # else:
-                # logger.debug("Minimap: Clicked outside scaled map content area.")
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent):
@@ -259,10 +273,11 @@ class MinimapWidget(QWidget):
         if event.button() == Qt.MouseButton.LeftButton and self._is_dragging_view_rect:
             self._is_dragging_view_rect = False
             self.unsetCursor()
-            # logger.debug("Minimap: Stopped dragging view rect.")
         super().mouseReleaseEvent(event)
 
     def resizeEvent(self, event: QPaintEvent): # event is QResizeEvent, but QPaintEvent is often used as a general type hint here
         logger.info(f"Minimap: Resized to {self.size()}. Scheduling content redraw.")
         self.schedule_map_content_redraw()
         super().resizeEvent(event)
+
+#################### END OF FILE: editor\minimap_widget.py ####################

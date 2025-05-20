@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\editor.py ####################
+
 # editor.py
 # -*- coding: utf-8 -*-
 """
@@ -24,9 +26,9 @@ from PySide6.QtCore import Qt, Slot, QSettings, QTimer, QRectF
 
 # --- Logger Setup ---
 logger = None
-log_file_path_for_error_msg = "editor_qt_debug.log"
+log_file_path_for_error_msg = "editor_qt_debug.log" # Default, might be overridden
 try:
-    import editor_config as ED_CONFIG
+    from . import editor_config as ED_CONFIG # Use relative import
     current_script_dir_for_logs = os.path.dirname(os.path.abspath(__file__))
     logs_dir = os.path.join(current_script_dir_for_logs, 'logs')
     if not os.path.exists(logs_dir): os.makedirs(logs_dir)
@@ -43,11 +45,11 @@ try:
     logger.info("Editor session started. Logging initialized successfully.")
     print(f"LOGGING INITIALIZED. Log file at: {log_file_path_for_error_msg}")
 except Exception as e_log:
-    print(f"CRITICAL ERROR DURING LOGGING SETUP: {e_log}")
+    print(f"CRITICAL ERROR DURING LOGGING SETUP (editor.py): {e_log}")
     traceback.print_exc()
     logging.basicConfig(level=logging.DEBUG, format='CONSOLE LOG: %(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
-    logger.error("File logging setup failed.")
+    logger.error("File logging setup failed (editor.py).")
 # --- End Logger Setup ---
 
 # --- sys.path modification ---
@@ -73,10 +75,11 @@ try:
     if ED_CONFIG.MINIMAP_ENABLED: from .minimap_widget import MinimapWidget
     if logger: logger.debug("Successfully imported all editor-specific modules (using relative imports).")
 except ImportError as e_editor_mod_rel:
-    logger.warning(f"Relative import failed for editor modules: {e_editor_mod_rel}. Trying absolute...")
+    logger.warning(f"Relative import failed for editor modules: {e_editor_mod_rel}. Trying absolute (this may indicate a setup issue if it works)...")
     try:
+        # This block is less likely to be hit if the primary issue is editor_config not found by relative import
         from editor_state import EditorState
-        import editor_assets
+        import editor_assets 
         import editor_map_utils
         import editor_history
         from map_view_widget import MapViewWidget, MapObjectItem
@@ -169,10 +172,8 @@ class EditorMainWindow(QMainWindow):
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
         self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed)
 
-# ...
         if self.minimap_widget:
-            self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_view_rect_update_and_repaint) # <--- CORRECTED
-# ...
+            self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_view_rect_update_and_repaint)
         self.setDockOptions(QMainWindow.DockOption.AnimatedDocks | QMainWindow.DockOption.AllowNestedDocks | QMainWindow.DockOption.AllowTabbedDocks | QMainWindow.DockOption.VerticalTabs)
         self.map_view_widget.setFocus()
         logger.debug("UI components initialized.")
@@ -611,6 +612,9 @@ class EditorMainWindow(QMainWindow):
         return restored
 
 def editor_main():
+    # When editor.py is run directly, set the CWD to its directory.
+    # This helps Python resolve relative imports like `from . import editor_config`
+    # if the package structure is standard.
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     logger.info("editor_main() started for PySide6 application.")
@@ -639,3 +643,5 @@ if __name__ == "__main__":
     return_code = editor_main()
     print(f"--- editor.py execution finished (exit code: {return_code}) ---")
     sys.exit(return_code)
+
+#################### END OF FILE: editor\editor.py ####################

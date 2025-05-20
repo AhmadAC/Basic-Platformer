@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\editor_ui_panels.py ####################
+
 # editor_ui_panels.py
 # -*- coding: utf-8 -*-
 """
@@ -17,9 +19,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon, QPalette, QColor, QPixmap
 from PySide6.QtCore import Qt, Signal, Slot, QSize
 
-import editor_config as ED_CONFIG
-from editor_state import EditorState
-import editor_history
+from . import editor_config as ED_CONFIG # Use relative import
+from .editor_state import EditorState # Use relative import
+from . import editor_history # Use relative import
 
 logger = logging.getLogger(__name__)
 
@@ -498,3 +500,5 @@ class PropertiesEditorDockWidget(QWidget):
                 logger.debug(f"Object color changed to {new_color_tuple}")
                 color_button = self.input_widgets.get("_color_button")
                 if isinstance(color_button, QPushButton): self._update_color_button_visuals(color_button, map_object_data_ref)
+
+#################### END OF FILE: editor\editor_ui_panels.py ####################

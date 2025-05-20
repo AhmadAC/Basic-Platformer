@@ -1,24 +1,11 @@
-[2025-05-20 08:19:10.039] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-20 08:19:10.039] INFO    PlatformerLogger: MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
-[2025-05-20 08:19:11.006] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
-[2025-05-20 08:19:11.008] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
-[2025-05-20 08:19:11.051] INFO    PlatformerLogger: MAIN PySide6: Application starting...
-[2025-05-20 08:19:11.062] INFO    PlatformerLogger: MAIN PySide6: Initial window size: 1152x604
-[2025-05-20 08:19:11.067] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
-[2025-05-20 08:19:11.067] INFO    PlatformerLogger: Keyboard mapping translation complete.
-[2025-05-20 08:19:11.164] INFO    PlatformerLogger: Switching UI view to: menu
-[2025-05-20 08:19:23.449] INFO    PlatformerLogger: Preparing to start game mode: couch_play, Map: bigmap1, Target: None
-[2025-05-20 08:19:23.450] INFO    PlatformerLogger: GameSetup: Initializing elements for PySide6. Mode: 'couch_play', Screen: 100x30, Map: 'bigmap1'
-[2025-05-20 08:19:23.450] DEBUG   PlatformerLogger: GameSetup: Attempting to load map module 'maps.bigmap1' and call 'load_map_bigmap1'
-[2025-05-20 08:19:23.455] CRITICAL PlatformerLogger: GameSetup CRITICAL Error processing map 'bigmap1': module 'maps.bigmap1' has no attribute 'load_map_bigmap1'
-[2025-05-20 08:19:23.506] WARNING PlatformerLogger: GameSetup: Falling back to default map 'level_default'.
-[2025-05-20 08:19:23.506] INFO    PlatformerLogger: GameSetup: Initializing elements for PySide6. Mode: 'couch_play', Screen: 100x30, Map: 'level_default'
-[2025-05-20 08:19:23.506] DEBUG   PlatformerLogger: GameSetup: Attempting to load map module 'maps.level_default' and call 'load_map_level_default'
-[2025-05-20 08:19:23.509] CRITICAL PlatformerLogger: GameSetup CRITICAL Error processing map 'level_default': module 'maps.level_default' has no attribute 'load_map_level_default'
-[2025-05-20 08:19:23.514] CRITICAL PlatformerLogger: GameSetup FATAL: Default map also failed.
-[2025-05-20 08:19:25.357] INFO    PlatformerLogger: Switching UI view to: menu
-[2025-05-20 08:19:27.503] INFO    PlatformerLogger: Switching UI view to: settings
-[2025-05-20 08:19:27.505] INFO    PlatformerLogger: MAIN PySide6: Creating instance of ActualControlsWindow for embedding.
-[2025-05-20 08:19:29.572] INFO    PlatformerLogger: Switching UI view to: menu
-[2025-05-20 08:19:31.400] INFO    PlatformerLogger: Switching UI view to: editor
-[2025-05-20 08:19:31.400] INFO    PlatformerLogger: MAIN PySide6: Creating instance of ActualEditorWindow for embedding.
+[2025-05-20 08:43:04.098] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 08:43:04.099] INFO    PlatformerLogger: MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
+[2025-05-20 08:43:04.291] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
+[2025-05-20 08:43:04.292] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
+[2025-05-20 08:43:04.320] INFO    PlatformerLogger: MAIN PySide6: Application starting...
+[2025-05-20 08:43:04.321] INFO    PlatformerLogger: MAIN PySide6: Initial window size: 1152x604
+[2025-05-20 08:43:04.324] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
+[2025-05-20 08:43:04.324] INFO    PlatformerLogger: Keyboard mapping translation complete.
+[2025-05-20 08:43:04.334] INFO    PlatformerLogger: Switching UI view to: menu
+[2025-05-20 08:43:05.721] INFO    PlatformerLogger: Switching UI view to: editor
+[2025-05-20 08:43:05.721] INFO    PlatformerLogger: MAIN PySide6: Creating instance of ActualEditorWindow for embedding.

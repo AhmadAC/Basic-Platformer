@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\map_view_widget.py ####################
+
 # map_view_widget.py
 # -*- coding: utf-8 -*-
 """
@@ -17,11 +19,11 @@ from PySide6.QtGui import (
 )
 from PySide6.QtCore import Qt, Signal, Slot, QRectF, QPointF, QSize, QTimer
 
-import editor_config as ED_CONFIG
-from editor_state import EditorState
-import editor_history
+from . import editor_config as ED_CONFIG # Use relative import
+from .editor_state import EditorState # Use relative import
+from . import editor_history # Use relative import
 try:
-    from editor_assets import get_asset_pixmap
+    from .editor_assets import get_asset_pixmap # Use relative import
 except ImportError:
     logging.basicConfig(level=logging.DEBUG) 
     logger_mv_fallback = logging.getLogger(__name__ + ".fallback_assets")
@@ -716,3 +718,5 @@ class MapViewWidget(QGraphicsView):
         else:
             logger.debug(f"MapView: Scene selection changed. Selection count: {len(selected_items)}. Emitting None for properties.")
             self.map_object_selected_for_properties.emit(None)
+
+#################### END OF FILE: editor\map_view_widget.py ####################

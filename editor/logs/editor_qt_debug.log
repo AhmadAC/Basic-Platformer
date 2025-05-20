@@ -1,45 +1,18 @@
-2025-05-19 23:57:55,860 - INFO - editor.py:43 - <module> - Editor session started. Logging initialized successfully.
-2025-05-19 23:57:55,860 - INFO - editor.py:59 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
-2025-05-19 23:57:55,860 - WARNING - editor.py:76 - <module> - Relative import failed for editor modules: attempted relative import with no known parent package. Trying absolute...
-2025-05-19 23:57:55,924 - INFO - editor_assets.py:28 - <module> - EditorAssets: Imported 'resource_path' from root 'assets'.
-2025-05-19 23:57:55,948 - DEBUG - editor.py:85 - <module> - Successfully imported all editor-specific modules (using absolute imports as fallback).
-2025-05-19 23:57:55,948 - INFO - editor.py:616 - editor_main - editor_main() started for PySide6 application.
-2025-05-19 23:57:55,981 - DEBUG - editor.py:618 - editor_main - QApplication instance created.
-2025-05-19 23:57:55,981 - INFO - editor.py:97 - __init__ - Initializing EditorMainWindow...
-2025-05-19 23:57:55,981 - DEBUG - editor_state.py:17 - __init__ - Initializing EditorState for PySide6...
-2025-05-19 23:57:55,981 - DEBUG - editor_state.py:55 - __init__ - EditorState initialized.
-2025-05-19 23:57:55,981 - DEBUG - editor.py:133 - init_ui - Initializing UI components...
-2025-05-19 23:57:55,982 - DEBUG - map_view_widget.py:169 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-19 23:57:55,982 - DEBUG - map_view_widget.py:153 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-19 23:57:55,982 - DEBUG - map_view_widget.py:166 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-19 23:57:55,983 - DEBUG - map_view_widget.py:183 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
-2025-05-19 23:57:55,983 - DEBUG - map_view_widget.py:145 - __init__ - MapViewWidget initialized.
-2025-05-19 23:57:56,010 - DEBUG - minimap_widget.py:62 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-19 23:57:56,010 - DEBUG - minimap_widget.py:182 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
-2025-05-19 23:57:56,010 - INFO - minimap_widget.py:48 - __init__ - MinimapWidget initialized. Preferred size: PySide6.QtCore.QSize(200, 150). Update interval: 50ms.
-2025-05-19 23:57:56,010 - DEBUG - editor.py:178 - init_ui - UI components initialized.
-2025-05-19 23:57:56,010 - DEBUG - editor.py:181 - create_actions - Creating actions...
-2025-05-19 23:57:56,025 - DEBUG - editor.py:208 - create_actions - Actions created.
-2025-05-19 23:57:56,025 - DEBUG - editor.py:211 - create_menus - Creating menus...
-2025-05-19 23:57:56,026 - DEBUG - editor.py:249 - create_menus - Menus created.
-2025-05-19 23:57:56,026 - DEBUG - editor.py:252 - create_status_bar - Creating status bar...
-2025-05-19 23:57:56,026 - DEBUG - editor.py:259 - create_status_bar - Status bar created.
-2025-05-19 23:57:56,027 - INFO - editor_assets.py:183 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-19 23:57:56,040 - INFO - editor_assets.py:278 - load_editor_palette_assets - Palette asset loading complete. Success: 25, Failed/Fallback: 0.
-2025-05-19 23:57:56,040 - DEBUG - editor_ui_panels.py:151 - populate_assets - Populating asset palette UI with filter: 'All'...
-2025-05-19 23:57:56,040 - DEBUG - editor_ui_panels.py:176 - populate_assets - Asset palette UI populated with 25 items for filter 'All'.
-2025-05-19 23:57:56,059 - DEBUG - editor.py:610 - restore_geometry_and_state - Window geometry and/or state restored.
-2025-05-19 23:57:56,075 - INFO - minimap_widget.py:266 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(280, 161). Scheduling content redraw.
-2025-05-19 23:57:56,075 - DEBUG - minimap_widget.py:62 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-19 23:57:56,075 - DEBUG - minimap_widget.py:182 - update_view_rect - Minimap: View rect updated to (11.2, 0.0, 116.9, 93.5)
-2025-05-19 23:57:56,128 - INFO - editor.py:129 - __init__ - EditorMainWindow initialized.
-2025-05-19 23:57:56,128 - INFO - editor.py:264 - show_status_message - Status: Editor started. Welcome!
-2025-05-19 23:57:56,165 - DEBUG - minimap_widget.py:94 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(280, 161)
-2025-05-19 23:57:56,165 - DEBUG - minimap_widget.py:154 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-19 23:57:56,169 - DEBUG - minimap_widget.py:182 - update_view_rect - Minimap: View rect updated to (11.2, 0.0, 117.2, 93.5)
-2025-05-19 23:57:57,327 - DEBUG - minimap_widget.py:182 - update_view_rect - Minimap: View rect updated to (11.2, 1.4, 117.2, 93.5)
-2025-05-19 23:57:58,634 - DEBUG - minimap_widget.py:182 - update_view_rect - Minimap: View rect updated to (12.6, 1.4, 117.2, 93.5)
-2025-05-19 23:57:59,913 - INFO - editor.py:581 - closeEvent - Close event triggered for main window.
-2025-05-19 23:57:59,913 - INFO - editor.py:590 - closeEvent - Window geometry and state saved.
-2025-05-19 23:57:59,961 - INFO - editor.py:625 - editor_main - QApplication event loop finished with exit code: 0
-2025-05-19 23:57:59,961 - INFO - editor.py:633 - editor_main - Editor session ended.
+2025-05-20 08:43:05,736 - INFO - editor.py:45 - <module> - Editor session started. Logging initialized successfully.
+2025-05-20 08:43:05,738 - INFO - editor.py:61 - <module> - Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' setup in sys.path (from editor.py). Current sys.path[0]: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer
+2025-05-20 08:43:05,778 - INFO - editor_assets.py:28 - <module> - EditorAssets: Imported 'resource_path' from root 'assets'.
+2025-05-20 08:43:05,778 - WARNING - editor.py:78 - <module> - Relative import failed for editor modules: No module named 'editor_config'. Trying absolute (this may indicate a setup issue if it works)...
+2025-05-20 08:43:05,779 - CRITICAL - editor.py:90 - <module> - Failed to import an editor-specific module (both relative and absolute): No module named 'editor_state'
+Traceback (most recent call last):
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor.py", line 70, in <module>
+    from . import editor_assets
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor_assets.py", line 37, in <module>
+    import editor_config as ED_CONFIG
+ModuleNotFoundError: No module named 'editor_config'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\editor.py", line 81, in <module>
+    from editor_state import EditorState
+ModuleNotFoundError: No module named 'editor_state'

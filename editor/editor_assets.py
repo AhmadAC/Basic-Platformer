@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\editor_assets.py ####################
+
 # editor_assets.py
 # -*- coding: utf-8 -*-
 """
@@ -34,8 +36,8 @@ except ImportError:
     logger.warning("EditorAssets: Could not import 'resource_path' from root 'assets'. Using fallback.")
     def resource_path(relative_path: str) -> str: return os.path.join(parent_dir, relative_path)
 
-import editor_config as ED_CONFIG
-from editor_state import EditorState
+from . import editor_config as ED_CONFIG # Use relative import
+from .editor_state import EditorState # Use relative import
 
 # --- Helper functions for creating procedural QPixmaps ---
 # ( _create_colored_pixmap, _create_half_tile_pixmap, _create_icon_pixmap remain unchanged )
@@ -276,3 +278,5 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
         else: failed_loads += 1
 
     logger.info(f"Palette asset loading complete. Success: {successful_loads}, Failed/Fallback: {failed_loads}.")
+
+#################### END OF FILE: editor\editor_assets.py ####################
