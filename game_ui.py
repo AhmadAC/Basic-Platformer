@@ -139,7 +139,7 @@ class GameSceneWidget(QWidget):
         self.download_progress_percent = download_prog
         self.update()
 
-    def paintEvent(self, event: Any): # event type is QPaintEvent, but Any is fine for now
+    def paintEvent(self, event: Any): # event type is QPaintEvent
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
@@ -151,23 +151,25 @@ class GameSceneWidget(QWidget):
 
         if camera_instance:
             for entity in all_renderables:
-                # MODIFIED RENDER CONDITION
+                # --- OPTION A IMPLEMENTED HERE ---
                 is_static_tile = isinstance(entity, (Platform, Ladder, Lava))
                 can_render_entity = False
                 if is_static_tile:
-                    # Static tiles are always "alive" for rendering if they have image and rect
+                    # Static tiles are always "present" for rendering if they have image and rect
                     can_render_entity = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
-                                        hasattr(entity, 'rect') and entity.rect
+                                        hasattr(entity, 'rect') and entity.rect and entity.rect.isValid() # Added isValid check
                 else:
                     # Dynamic entities need the alive check
                     can_render_entity = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
-                                        hasattr(entity, 'rect') and entity.rect and \
+                                        hasattr(entity, 'rect') and entity.rect and entity.rect.isValid() and \
                                         hasattr(entity, 'alive') and entity.alive()
 
                 if can_render_entity:
                     screen_rect = camera_instance.apply(entity.rect)
-                    painter.drawPixmap(screen_rect.topLeft(), entity.image)
-            # END OF MODIFIED RENDER CONDITION
+                    # Basic culling: only draw if the entity's screen rectangle intersects the widget's visible area
+                    if self.rect().intersects(screen_rect.toRect()): # toRect() is important for QRectF intersection with QRect
+                        painter.drawPixmap(screen_rect.topLeft(), entity.image)
+                # --- END OF OPTION A ---
 
             enemy_list_for_hb: List[Any] = self.game_elements.get("enemy_list", [])
             for enemy in enemy_list_for_hb:
@@ -182,22 +184,20 @@ class GameSceneWidget(QWidget):
                     hb_x = enemy_screen_rect.center().x() - hb_w / 2.0
                     hb_y = enemy_screen_rect.top() - hb_h - float(getattr(C, 'HEALTH_BAR_OFFSET_ABOVE', 5))
                     draw_health_bar_qt(painter, hb_x, hb_y, hb_w, hb_h, enemy.current_health, enemy.max_health)
-        else: # Fallback if no camera (should not happen in normal game modes)
+        else: # Fallback if no camera
             for entity in all_renderables:
-                 # MODIFIED RENDER CONDITION (simplified for no camera)
                 is_static_tile_no_cam = isinstance(entity, (Platform, Ladder, Lava))
                 can_render_no_cam = False
                 if is_static_tile_no_cam:
                     can_render_no_cam = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
-                                        hasattr(entity, 'rect') and entity.rect
+                                        hasattr(entity, 'rect') and entity.rect and entity.rect.isValid()
                 else:
                     can_render_no_cam = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
-                                        hasattr(entity, 'rect') and entity.rect and \
+                                        hasattr(entity, 'rect') and entity.rect and entity.rect.isValid() and \
                                         hasattr(entity, 'alive') and entity.alive()
 
                 if can_render_no_cam:
                      painter.drawPixmap(entity.rect.topLeft(), entity.image)
-                # END OF MODIFIED RENDER CONDITION (simplified for no camera)
 
 
         player1 = self.game_elements.get("player1")
@@ -272,17 +272,12 @@ class SelectMapDialog(QDialog):
     def populate_maps(self):
         self.list_widget.clear()
         maps_dir = getattr(C, "MAPS_DIR", "maps")
-        # Ensure maps_dir is absolute if it's relative
         if not os.path.isabs(maps_dir):
-            # Assuming C.MAPS_DIR is relative to the project root where constants.py is
-            # To get to project root from game_ui.py: os.path.dirname(os.path.abspath(__file__)) -> game_ui's dir
-            # then os.path.dirname() again to get project root
             project_root_from_game_ui = os.path.dirname(os.path.abspath(__file__))
             maps_dir = os.path.join(project_root_from_game_ui, maps_dir)
 
         if os.path.exists(maps_dir) and os.path.isdir(maps_dir):
             try:
-                # Exclude level_default from selection in the game UI
                 map_files = [f[:-3] for f in os.listdir(maps_dir) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"]
                 map_files.sort()
                 if map_files:

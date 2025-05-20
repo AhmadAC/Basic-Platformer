@@ -6,7 +6,7 @@ Handles enemy combat mechanics for PySide6: checking attack collisions and proce
 # version 2.0.3 (Fixed QRectF.moveTopLeft() argument)
 
 import time # For monotonic timer
-from typing import List, Any
+from typing import List, Any, TYPE_CHECKING
 
 # PySide6 imports
 from PySide6.QtCore import QRectF, QPointF
@@ -14,6 +14,9 @@ from PySide6.QtCore import QRectF, QPointF
 # Game imports
 import constants as C
 from statue import Statue
+
+if TYPE_CHECKING: # To avoid circular import issues at runtime but allow type hinting
+    from enemy import Enemy as EnemyClass_TYPE
 
 try:
     from enemy_state_handler import set_enemy_state
@@ -35,7 +38,8 @@ def get_current_ticks_monotonic() -> int:
 # --- End Monotonic Timer ---
 
 
-def check_enemy_attack_collisions(enemy, hittable_targets_list: List[Any]):
+def check_enemy_attack_collisions(enemy: 'EnemyClass_TYPE', hittable_targets_list: List[Any]):
+    # Ensure enemy object and its attributes are valid before proceeding
     if not getattr(enemy, '_valid_init', False) or \
        not getattr(enemy, 'is_attacking', False) or \
        getattr(enemy, 'is_dead', True) or \
@@ -45,19 +49,25 @@ def check_enemy_attack_collisions(enemy, hittable_targets_list: List[Any]):
        getattr(enemy, 'is_petrified', False):
         return
 
+    # Ensure rect and attack_hitbox are QRectF and have necessary methods
     if not (hasattr(enemy, 'rect') and isinstance(enemy.rect, QRectF) and
             hasattr(enemy, 'attack_hitbox') and isinstance(enemy.attack_hitbox, QRectF)):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Missing rect or attack_hitbox for collision check.")
         return
 
+    # Correctly position the attack hitbox based on enemy's facing direction and current rect
+    # enemy.rect.center().y() gives the y-coordinate of the center of the enemy's main rect
+    # enemy.attack_hitbox.height() is the height of the attack hitbox itself
     if getattr(enemy, 'facing_right', True):
-        new_x = enemy.rect.right()
-        new_y = enemy.rect.center().y() - enemy.attack_hitbox.height() / 2.0
-        enemy.attack_hitbox.moveTopLeft(QPointF(new_x, new_y)) # CORRECTED
-    else:
+        new_x = enemy.rect.right() # Hitbox starts at the right edge of the enemy
+        # Vertically align the hitbox's center with the enemy's main rect's center
+        new_y = enemy.rect.center().y() - (enemy.attack_hitbox.height() / 2.0)
+        enemy.attack_hitbox.moveTopLeft(QPointF(new_x, new_y)) # Pass QPointF
+    else: # Facing left
+        # Hitbox starts at the left edge of the enemy, minus its own width
         new_x = enemy.rect.left() - enemy.attack_hitbox.width()
-        new_y = enemy.rect.center().y() - enemy.attack_hitbox.height() / 2.0
-        enemy.attack_hitbox.moveTopLeft(QPointF(new_x, new_y)) # CORRECTED
+        new_y = enemy.rect.center().y() - (enemy.attack_hitbox.height() / 2.0)
+        enemy.attack_hitbox.moveTopLeft(QPointF(new_x, new_y)) # Pass QPointF
 
     current_time_ms = get_current_ticks_monotonic()
 
@@ -73,13 +83,15 @@ def check_enemy_attack_collisions(enemy, hittable_targets_list: List[Any]):
                     damage_to_statue = getattr(C, 'ENEMY_ATTACK_DAMAGE', 10)
                     debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} hit Statue {getattr(target_sprite, 'statue_id', 'N/A')} for {damage_to_statue} damage.")
                     target_sprite.take_damage(damage_to_statue)
-            continue
+            continue # Process next target
 
+        # Check for general character validity
         if not (hasattr(target_sprite, '_valid_init') and target_sprite._valid_init and \
                 hasattr(target_sprite, 'is_dead') and not target_sprite.is_dead and \
                 hasattr(target_sprite, 'alive') and target_sprite.alive()):
             continue
 
+        # Check for invincibility or petrification
         is_invincible = False
         if hasattr(target_sprite, 'is_taking_hit') and hasattr(target_sprite, 'hit_timer') and hasattr(target_sprite, 'hit_cooldown'):
             if target_sprite.is_taking_hit and (current_time_ms - target_sprite.hit_timer < target_sprite.hit_cooldown):
@@ -92,7 +104,6 @@ def check_enemy_attack_collisions(enemy, hittable_targets_list: List[Any]):
                     target_sprite.smash_petrification()
             continue
 
-
         if enemy.attack_hitbox.intersects(target_sprite.rect):
             if hasattr(target_sprite, 'take_damage') and callable(target_sprite.take_damage):
                 damage_to_target = getattr(C, 'ENEMY_ATTACK_DAMAGE', 10)
@@ -102,7 +113,7 @@ def check_enemy_attack_collisions(enemy, hittable_targets_list: List[Any]):
                 target_sprite.take_damage(damage_to_target)
 
 
-def enemy_take_damage(enemy, damage_amount: int):
+def enemy_take_damage(enemy: 'EnemyClass_TYPE', damage_amount: int):
     current_time_ms = get_current_ticks_monotonic()
     enemy_id_log = getattr(enemy, 'enemy_id', 'Unknown')
 

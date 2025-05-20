@@ -104,7 +104,7 @@ _app_start_time = time.monotonic()
 def get_current_game_ticks(): return int((time.monotonic() - _app_start_time) * 1000)
 
 _qt_keys_pressed_snapshot: Dict[Qt.Key, bool] = {}
-_qt_key_events_this_frame: List[Tuple[QKeyEvent.Type, Qt.Key, bool]] = [] # MODIFIED: Stores (type, key, isAutoRepeat)
+_qt_key_events_this_frame: List[Tuple[QKeyEvent.Type, Qt.Key, bool]] = []
 _joystick_axis_values_pyside: Dict[int, Dict[int, float]] = {}
 _joystick_button_states_pyside: Dict[int, Dict[int, bool]] = {}
 _joystick_hat_values_pyside: Dict[int, Dict[int, Tuple[int, int]]] = {}
@@ -244,9 +244,9 @@ class MainWindow(QMainWindow):
 
     def _ensure_editor_instance(self):
         self._clear_container_content(self.editor_content_container)
-        self.actual_editor_module_instance = None
+        # self.actual_editor_module_instance = None # Keep instance if already created unless explicitly told to recreate
 
-        if self.actual_editor_module_instance is None:
+        if self.actual_editor_module_instance is None: # Only create if None
             info("MAIN PySide6: Attempting to create and embed editor instance.")
             try:
                 from editor.editor import editor_main
@@ -261,16 +261,19 @@ class MainWindow(QMainWindow):
                 self.actual_editor_module_instance = editor_qmainwindow_instance
                 self.editor_content_container.layout().addWidget(self.actual_editor_module_instance)
                 info("MAIN PySide6: Editor QMainWindow instance added to editor_content_container.")
-
             except Exception as e:
                 error(f"Exception creating/embedding editor instance: {e}", exc_info=True)
                 self._add_placeholder_to_content_area(self.editor_content_container, f"Error creating editor: {e}")
+        elif self.actual_editor_module_instance.parent() is None: # If instance exists but not in layout (e.g., returning to editor)
+            self.editor_content_container.layout().addWidget(self.actual_editor_module_instance)
+            info("MAIN PySide6: Re-added existing editor QMainWindow instance to editor_content_container.")
+
 
     def _ensure_controls_mapper_instance(self):
         self._clear_container_content(self.controls_content_container)
-        self.actual_controls_module_instance = None
+        # self.actual_controls_module_instance = None # Keep instance if already created
 
-        if self.actual_controls_module_instance is None:
+        if self.actual_controls_module_instance is None: # Only create if None
             info("MAIN PySide6: Attempting to create and embed controls mapper instance.")
             try:
                 from controller_settings.controller_mapper_gui import main as controls_main
@@ -285,13 +288,16 @@ class MainWindow(QMainWindow):
                 self.actual_controls_module_instance = controls_instance
                 self.controls_content_container.layout().addWidget(self.actual_controls_module_instance)
                 info("MAIN PySide6: Controls mapper instance added to controls_content_container.")
-
             except ImportError:
                 error("Failed to import controller_settings.controller_mapper_gui.main", exc_info=True)
                 self._add_placeholder_to_content_area(self.controls_content_container, "Controls UI not available (Import Error).")
             except Exception as e:
                 error(f"Exception creating/embedding controls mapper instance: {e}", exc_info=True)
                 self._add_placeholder_to_content_area(self.controls_content_container, f"Error creating controls UI: {e}")
+        elif self.actual_controls_module_instance.parent() is None: # If instance exists but not in layout
+            self.controls_content_container.layout().addWidget(self.actual_controls_module_instance)
+            info("MAIN PySide6: Re-added existing controls mapper instance to controls_content_container.")
+
 
     def _add_placeholder_to_content_area(self, content_container_widget: QWidget, message: str):
         layout = content_container_widget.layout()
@@ -356,29 +362,33 @@ class MainWindow(QMainWindow):
         self.close()
 
     def on_return_to_menu_from_sub_view(self):
-        info(f"Returning to menu from: {self.current_view_name}")
-        if self.current_view_name == "editor" and self.actual_editor_module_instance:
+        source_view = self.current_view_name
+        info(f"Returning to menu from: {source_view}")
+        
+        if source_view == "editor" and self.actual_editor_module_instance:
             if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and \
                callable(self.actual_editor_module_instance.confirm_unsaved_changes):
                 if not self.actual_editor_module_instance.confirm_unsaved_changes("return to menu"):
                     info("Editor has unsaved changes, return to menu cancelled by user.")
                     return
-            if isinstance(self.actual_editor_module_instance, QMainWindow) and hasattr(self.actual_editor_module_instance, 'close'):
-                self.actual_editor_module_instance.close() # Trigger its closeEvent for proper cleanup
-            elif self.actual_editor_module_instance.parent() is not None:
-                 self.actual_editor_module_instance.setParent(None) # Unparent if just a QWidget
-            self.actual_editor_module_instance.deleteLater() # Schedule for deletion
-            self.actual_editor_module_instance = None
+            if hasattr(self.actual_editor_module_instance, 'save_geometry_and_state'):
+                self.actual_editor_module_instance.save_geometry_and_state() # Save its layout
 
-        elif self.current_view_name == "settings" and self.actual_controls_module_instance:
-            if isinstance(self.actual_controls_module_instance, QMainWindow) and hasattr(self.actual_controls_module_instance, 'close'):
+            if self.actual_editor_module_instance.parent() is not None:
+                 self.actual_editor_module_instance.setParent(None) # Detach from layout
+
+        elif source_view == "settings" and self.actual_controls_module_instance:
+            if hasattr(self.actual_controls_module_instance, 'closeEvent') and \
+               hasattr(self.actual_controls_module_instance, 'close'): # If it's a QMainWindow-like object
+                 # Call its close method to trigger its own cleanup/save logic
                  self.actual_controls_module_instance.close()
             elif self.actual_controls_module_instance.parent() is not None:
-                 self.actual_controls_module_instance.setParent(None)
-            self.actual_controls_module_instance.deleteLater()
-            self.actual_controls_module_instance = None
+                 self.actual_controls_module_instance.setParent(None) # Detach from layout
+            # We don't deleteLater here if we want to reuse the instance.
+            # If we want to recreate it each time, then deleteLater is fine.
 
         self.show_view("menu")
+
 
     def show_view(self, view_name: str):
         info(f"Switching UI view to: {view_name}")
@@ -428,14 +438,13 @@ class MainWindow(QMainWindow):
     def keyPressEvent(self, event: QKeyEvent):
         global _qt_keys_pressed_snapshot, _qt_key_events_this_frame
         is_auto_repeat = event.isAutoRepeat()
-        qt_key = Qt.Key(event.key()) # Ensure it's a Qt.Key enum
+        qt_key = Qt.Key(event.key())
 
         if not is_auto_repeat:
             _qt_keys_pressed_snapshot[qt_key] = True
-            # Store event type, key, and auto-repeat status
-            _qt_key_events_this_frame.append((QKeyEvent.Type.KeyPress, qt_key, is_auto_repeat)) # MODIFIED
+            _qt_key_events_this_frame.append((QKeyEvent.Type.KeyPress, qt_key, is_auto_repeat))
 
-        if event.key() == Qt.Key.Key_Escape and not is_auto_repeat: # Process Escape only on actual press
+        if event.key() == Qt.Key.Key_Escape and not is_auto_repeat:
             if self.current_view_name == "menu": self.request_close_app()
             elif self.current_view_name in ["editor", "settings"]: self.on_return_to_menu_from_sub_view()
             elif self.current_view_name == "game_scene" and self.current_game_mode:
@@ -444,13 +453,15 @@ class MainWindow(QMainWindow):
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent):
-        global _qt_keys_pressed_snapshot, _qt_key_events_this_frame
+        global _qt_keys_pressed_snapshot, _qt_key_events_this_frame # _qt_key_events_this_frame not directly used here
         is_auto_repeat = event.isAutoRepeat()
         qt_key = Qt.Key(event.key())
 
         if not is_auto_repeat:
             _qt_keys_pressed_snapshot[qt_key] = False
-            # Optionally store release events if needed for complex input logic (usually not for game actions)
+            # Storing KeyRelease events in _qt_key_events_this_frame can be done
+            # if input_handler needs to distinguish between press and release events.
+            # For now, only press events are added. If releases are needed for specific logic:
             # _qt_key_events_this_frame.append((QKeyEvent.Type.KeyRelease, qt_key, is_auto_repeat))
         super().keyReleaseEvent(event)
 
@@ -482,7 +493,6 @@ class MainWindow(QMainWindow):
                 'buttons_prev': _prev_joystick_button_states_pyside[joystick_id_for_player],
                 'hats': _joystick_hat_values_pyside[joystick_id_for_player]
             }
-        # Pass the copied/processed list of key event data
         action_events = process_player_input_logic(player_instance, _qt_keys_pressed_snapshot, list(_qt_key_events_this_frame), active_mappings, self.game_elements.get("platforms_list", []), joystick_data=joystick_data_for_handler)
         if joystick_id_for_player is not None: _prev_joystick_button_states_pyside[joystick_id_for_player] = _joystick_button_states_pyside.get(joystick_id_for_player, {}).copy()
         return action_events
@@ -491,7 +501,6 @@ class MainWindow(QMainWindow):
     def get_p2_input_snapshot_for_client_thread(player_instance: Any) -> Dict[str, Any]:
         if MainWindow._instance:
             global _qt_keys_pressed_snapshot, _qt_key_events_this_frame
-            # Pass a copy of _qt_key_events_this_frame to avoid modification issues if threading is fast
             return MainWindow._instance._get_input_snapshot(player_instance, 2)
         return {}
 
@@ -517,6 +526,11 @@ class MainWindow(QMainWindow):
             camera.set_screen_dimensions(self.game_scene_widget.width(), self.game_scene_widget.height())
             if "level_pixel_width" in self.game_elements:
                 camera.set_level_dimensions( self.game_elements["level_pixel_width"], self.game_elements["level_min_y_absolute"], self.game_elements["level_max_y_absolute"])
+            # Initial camera focus on P1
+            p1_for_camera_init = self.game_elements.get("player1")
+            if p1_for_camera_init:
+                camera.update(p1_for_camera_init)
+
 
         self.game_scene_widget.game_elements = self.game_elements
         self.show_view("game_scene")
@@ -585,7 +599,7 @@ class MainWindow(QMainWindow):
         if self.lan_search_dialog is None:
             self.lan_search_dialog = QDialog(self); self.lan_search_dialog.setWindowTitle("Searching for LAN Games..."); layout = QVBoxLayout(self.lan_search_dialog); self.lan_search_status_label = QLabel("Searching...")
             layout.addWidget(self.lan_search_status_label); self.lan_servers_list_widget = QListWidget(); layout.addWidget(self.lan_servers_list_widget)
-            self.lan_search_dialog.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Retry) # Store button_box
+            self.lan_search_dialog.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Retry)
             self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False); self.lan_search_dialog.button_box.accepted.connect(self._join_selected_lan_server)
             self.lan_search_dialog.button_box.rejected.connect(self.lan_search_dialog.reject); self.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Retry).clicked.connect(self._start_lan_server_search_thread)
             layout.addWidget(self.lan_search_dialog.button_box); self.lan_search_dialog.rejected.connect(lambda: self.show_view("menu")); self.lan_servers_list_widget.itemDoubleClicked.connect(self._join_selected_lan_server)
@@ -664,14 +678,10 @@ class MainWindow(QMainWindow):
         p2 = self.game_elements.get("player2"); p2_input_actions_couch: Dict[str,bool] = {}
         if self.current_game_mode == "couch_play":
             if p2 and p2._valid_init: p2_input_actions_couch = self._get_input_snapshot(p2, 2)
-            # The pause check for P2 in couch play is implicitly handled by run_couch_play_mode if it returns False
-            # or if p2_input_actions_couch contains "pause" which is checked inside run_couch_play_mode.
 
         if self.current_game_mode == "couch_play":
             should_continue = run_couch_play_mode(self.game_elements, self.app_status, lambda _p, _plats: p1_input_actions, lambda _p, _plats: p2_input_actions_couch, lambda: QApplication.processEvents(), lambda: dt_sec, lambda msg: self.statusBar().showMessage(msg, 2000))
             if not should_continue or not self.app_status.app_running: self.stop_current_game_mode(show_menu=True); return
-        # Note: Server mode game logic (P1 update, enemy update, etc.) happens in the NetworkThread for `run_server_mode`.
-        # The main `game_tick` here primarily drives the GameSceneWidget update for the host's view.
 
         dl_msg, dl_prog = None, None
         if self.client_state and self.current_game_mode in ["join_lan", "join_ip"]:
@@ -679,7 +689,7 @@ class MainWindow(QMainWindow):
                 dl_msg = f"Map: {self.client_state.server_selected_map_name or '...'} - Status: {self.client_state.map_download_status}"
                 dl_prog = self.client_state.map_download_progress
         self.game_scene_widget.update_game_state(current_game_time, dl_msg, dl_prog)
-        _qt_key_events_this_frame.clear() # Clear after processing for this frame
+        _qt_key_events_this_frame.clear()
 
     def stop_current_game_mode(self, show_menu: bool = True):
         mode_stopped = self.current_game_mode; info(f"Stopping game mode: {mode_stopped}")
@@ -710,8 +720,10 @@ class MainWindow(QMainWindow):
                     event.ignore()
                     return
             if isinstance(self.actual_editor_module_instance, QMainWindow) and hasattr(self.actual_editor_module_instance, 'close'):
-                self.actual_editor_module_instance.close()
-            else: # If just a QWidget, ensure it's cleaned up
+                 # Check if closeEvent was already called by its own logic (e.g. standalone window behavior)
+                if not (hasattr(self.actual_editor_module_instance, '_close_event_processed_flag') and self.actual_editor_module_instance._close_event_processed_flag):
+                    self.actual_editor_module_instance.close()
+            else:
                 self.actual_editor_module_instance.deleteLater()
             self.actual_editor_module_instance = None
 
@@ -721,14 +733,15 @@ class MainWindow(QMainWindow):
         joystick_handler.quit_joysticks()
 
         if self.actual_editor_module_instance and isinstance(self.actual_editor_module_instance, QMainWindow):
-             if hasattr(self.actual_editor_module_instance, 'close') and not (hasattr(self.actual_editor_module_instance, 'isClosed') and self.actual_editor_module_instance.isClosed()): # Check if already closed
+             if hasattr(self.actual_editor_module_instance, 'close') and not (hasattr(self.actual_editor_module_instance, '_close_event_processed_flag') and self.actual_editor_module_instance._close_event_processed_flag):
                 self.actual_editor_module_instance.close()
-        elif self.actual_editor_module_instance:
+        elif self.actual_editor_module_instance: # If QWidget
              self.actual_editor_module_instance.deleteLater()
 
 
         if self.actual_controls_module_instance and isinstance(self.actual_controls_module_instance, QMainWindow):
-            if hasattr(self.actual_controls_module_instance, 'close'): self.actual_controls_module_instance.close()
+            if hasattr(self.actual_controls_module_instance, 'close') and not (hasattr(self.actual_controls_module_instance, '_close_event_processed_flag') and self.actual_controls_module_instance._close_event_processed_flag):
+                self.actual_controls_module_instance.close()
         elif self.actual_controls_module_instance:
              self.actual_controls_module_instance.deleteLater()
 
