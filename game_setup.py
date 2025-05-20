@@ -6,7 +6,7 @@
 Handles initialization of game elements, levels, and entities for PySide6.
 PySide6-compatible game object structures.
 """
-# version 2.1.4 (Chest only spawns from map data, no random spawn)
+# version 2.1.6 (Initialize local_enemy_spawns_data_list earlier)
 import sys
 import os
 import random
@@ -20,7 +20,7 @@ from PySide6.QtCore import QRectF
 import constants as C
 from player import Player
 from enemy import Enemy
-from items import Chest # Updated Chest class
+from items import Chest
 from statue import Statue
 from tiles import Platform, Ladder, Lava
 from camera import Camera
@@ -33,8 +33,9 @@ if not logger.hasHandlers():
     _gs_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     _gs_handler.setFormatter(_gs_formatter)
     logger.addHandler(_gs_handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     logger.propagate = False
+    logger.debug("GameSetup: Basic logger configured for game_setup.py")
 
 
 def initialize_game_elements(current_width: int, current_height: int,
@@ -48,31 +49,39 @@ def initialize_game_elements(current_width: int, current_height: int,
     ladders_list: List[Ladder] = []
     hazards_list: List[Lava] = []
     enemy_list: List[Enemy] = []
-    collectible_list: List[Any] = [] # Will hold Chest instances
+    collectible_list: List[Any] = []
     statue_objects_list: List[Statue] = []
     projectiles_list: List[Any] = []
     all_renderable_objects: List[Any] = []
+    
+    # Initialize local_enemy_spawns_data_list here
+    local_enemy_spawns_data_list: List[Dict[str, Any]] = []
+
 
     raw_map_data: Optional[Dict[str, Any]] = None
     target_map_name_for_load = map_module_name if map_module_name else DEFAULT_LEVEL_MODULE_NAME
     loaded_map_name_return: Optional[str] = None
 
+    logger.debug(f"GameSetup: Attempting to load map module: 'maps.{target_map_name_for_load}'")
     if target_map_name_for_load:
         safe_map_name_for_func = target_map_name_for_load.replace('-', '_').replace(' ', '_')
         expected_level_load_func_name = f"load_map_{safe_map_name_for_func}"
-        logger.debug(f"GameSetup: Attempting to load map module 'maps.{target_map_name_for_load}' and call '{expected_level_load_func_name}'")
+        logger.debug(f"GameSetup: Map function to call: '{expected_level_load_func_name}'")
 
         try:
             map_module_full_path = f"maps.{target_map_name_for_load}"
             if map_module_full_path in sys.modules:
+                logger.debug(f"GameSetup: Reloading existing map module: {map_module_full_path}")
                 map_module = importlib.reload(sys.modules[map_module_full_path])
             else:
+                logger.debug(f"GameSetup: Importing new map module: {map_module_full_path}")
                 map_module = importlib.import_module(map_module_full_path)
 
             load_level_function = getattr(map_module, expected_level_load_func_name)
             raw_map_data = load_level_function()
             
             if not isinstance(raw_map_data, dict):
+                logger.error(f"Map function '{expected_level_load_func_name}' did not return a dictionary. Returned: {type(raw_map_data)}")
                 raise ValueError(f"Map function '{expected_level_load_func_name}' did not return a dictionary.")
             
             logger.info(f"GameSetup: Successfully loaded and called map function for '{target_map_name_for_load}'.")
@@ -89,11 +98,10 @@ def initialize_game_elements(current_width: int, current_height: int,
                 return None
     
     if not raw_map_data:
-        if target_map_name_for_load == DEFAULT_LEVEL_MODULE_NAME:
-            logger.critical("GameSetup FATAL: No map data loaded, even after fallback attempt. Exiting initialization.")
-            return None
-        logger.warning("GameSetup: No specific map loaded. Proceeding with empty/default elements.")
-        raw_map_data = {}
+        logger.critical(f"GameSetup FATAL: raw_map_data is None after attempting to load '{target_map_name_for_load}'. Cannot proceed.")
+        return None
+
+    logger.debug(f"GameSetup: Raw map data loaded: {list(raw_map_data.keys())}")
 
     level_background_color = tuple(raw_map_data.get('background_color', C.LIGHT_BLUE))
     
@@ -105,55 +113,65 @@ def initialize_game_elements(current_width: int, current_height: int,
     level_pixel_width = float(raw_map_data.get('level_pixel_width', current_width * 2))
     lvl_min_y_abs = float(raw_map_data.get('level_min_y_absolute', 0.0))
     lvl_max_y_abs = float(raw_map_data.get('level_max_y_absolute', current_height))
-    ground_level_y_ref = float(raw_map_data.get('ground_level_y_ref', lvl_max_y_abs - C.TILE_SIZE))
-    ground_platform_height_ref = float(raw_map_data.get('ground_platform_height_ref', C.TILE_SIZE))
+    logger.debug(f"GameSetup: Level Dims from map: W={level_pixel_width}, MinY={lvl_min_y_abs}, MaxY={lvl_max_y_abs}")
 
-    for p_data in raw_map_data.get('platforms_list', []):
+
+    map_platforms_data = raw_map_data.get('platforms_list', [])
+    logger.debug(f"GameSetup: Processing {len(map_platforms_data)} platform entries from map data.")
+    for i, p_data in enumerate(map_platforms_data):
         rect_tuple = p_data.get('rect')
         if not rect_tuple or len(rect_tuple) != 4:
-            logger.warning(f"Skipping platform with invalid rect data: {p_data}")
+            logger.warning(f"Skipping platform entry {i} with invalid rect data: {p_data}")
             continue
         platform_properties = p_data.get('properties', {})
         if platform_properties is None: platform_properties = {}
-        new_platform = Platform(x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                                width=float(rect_tuple[2]), height=float(rect_tuple[3]),
-                                color_tuple=tuple(p_data.get('color', C.GRAY)),
-                                platform_type=str(p_data.get('type', 'generic_platform')),
+        
+        plat_x, plat_y, plat_w, plat_h = float(rect_tuple[0]), float(rect_tuple[1]), float(rect_tuple[2]), float(rect_tuple[3])
+        plat_color = tuple(p_data.get('color', C.GRAY))
+        plat_type = str(p_data.get('type', 'generic_platform'))
+
+        # logger.debug(f"GameSetup: Platform entry {i} data: rect=({plat_x},{plat_y},{plat_w},{plat_h}), type='{plat_type}', color={plat_color}") # Less verbose now
+
+        new_platform = Platform(x=plat_x, y=plat_y,
+                                width=plat_w, height=plat_h,
+                                color_tuple=plat_color,
+                                platform_type=plat_type,
                                 properties=platform_properties)
         platforms_list.append(new_platform)
-        # logger.debug(f"Created Platform: rect={new_platform.rect}, type='{new_platform.platform_type}', color={new_platform.color_tuple}, image_null={new_platform.image.isNull()}")
+        # logger.debug(f"  GameSetup: Created Platform {i}: type='{new_platform.platform_type}', rect={new_platform.rect}, color={new_platform.color_tuple}, image_is_null={new_platform.image.isNull()}, image_size={new_platform.image.size() if new_platform.image else 'N/A'}")
 
-    for l_data in raw_map_data.get('ladders_list', []):
-        rect_tuple = l_data.get('rect')
-        if not rect_tuple or len(rect_tuple) != 4:
-            logger.warning(f"Skipping ladder with invalid rect data: {l_data}")
-            continue
-        ladders_list.append(Ladder(x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                                   width=float(rect_tuple[2]), height=float(rect_tuple[3])))
-
-    for h_data in raw_map_data.get('hazards_list', []):
+    map_hazards_data = raw_map_data.get('hazards_list', [])
+    logger.debug(f"GameSetup: Processing {len(map_hazards_data)} hazard entries from map data.")
+    for i, h_data in enumerate(map_hazards_data):
         rect_tuple = h_data.get('rect')
         if not rect_tuple or len(rect_tuple) != 4:
-            logger.warning(f"Skipping hazard with invalid rect data: {h_data}")
+            logger.warning(f"Skipping hazard entry {i} with invalid rect data: {h_data}")
             continue
-        hazard_type_str = str(h_data.get('type', '')).lower()
-        if 'lava' in hazard_type_str:
-            new_lava = Lava(x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                            width=float(rect_tuple[2]), height=float(rect_tuple[3]),
-                            color_tuple=tuple(h_data.get('color', C.ORANGE_RED)))
+        
+        haz_x, haz_y, haz_w, haz_h = float(rect_tuple[0]), float(rect_tuple[1]), float(rect_tuple[2]), float(rect_tuple[3])
+        haz_color = tuple(h_data.get('color', C.ORANGE_RED))
+        haz_type_str = str(h_data.get('type', '')).lower()
+
+        # logger.debug(f"GameSetup: Hazard entry {i} data: rect=({haz_x},{haz_y},{haz_w},{haz_h}), type='{haz_type_str}', color={haz_color}") # Less verbose now
+
+        if 'lava' in haz_type_str:
+            new_lava = Lava(x=haz_x, y=haz_y,
+                            width=haz_w, height=haz_h,
+                            color_tuple=haz_color)
             hazards_list.append(new_lava)
-            # logger.debug(f"Created Lava: rect={new_lava.rect}, color={new_lava.color_tuple}, image_null={new_lava.image.isNull()}")
+            # logger.debug(f"  GameSetup: Created Lava {i}: rect={new_lava.rect}, color={new_lava.color_tuple}, image_is_null={new_lava.image.isNull()}, image_size={new_lava.image.size() if new_lava.image else 'N/A'}")
         else:
-            logger.warning(f"Unknown hazard type: {h_data.get('type')}. Skipping.")
+            logger.warning(f"Unknown hazard type: {h_data.get('type')}. Skipping hazard {i}.")
 
     all_renderable_objects.extend(platforms_list)
     all_renderable_objects.extend(ladders_list)
     all_renderable_objects.extend(hazards_list)
+    # logger.debug(f"GameSetup: Extended all_renderable_objects with {len(platforms_list)} platforms, {len(ladders_list)} ladders, {len(hazards_list)} hazards.")
 
     player1: Optional[Player] = None
     player2: Optional[Player] = None
-
     if for_game_mode in ["host", "couch_play", "join_lan", "join_ip"]:
+        logger.debug(f"GameSetup: Initializing Player 1 at {player1_spawn_pos_tuple}")
         player1 = Player(player1_spawn_pos_tuple[0], player1_spawn_pos_tuple[1], player_id=1, initial_properties=player1_props_for_init)
         if not player1._valid_init: logger.critical("P1 init failed!"); return None
         player1.control_scheme = game_config.CURRENT_P1_INPUT_DEVICE
@@ -161,8 +179,10 @@ def initialize_game_elements(current_width: int, current_height: int,
             try: player1.joystick_id_idx = int(player1.control_scheme.split('_')[-1])
             except ValueError: player1.joystick_id_idx = None
         all_renderable_objects.append(player1)
+        # logger.debug(f"GameSetup: Player 1 initialized. Valid: {player1._valid_init}, Rect: {player1.rect}")
 
     if for_game_mode == "couch_play":
+        logger.debug(f"GameSetup: Initializing Player 2 (couch) at {player2_spawn_pos_tuple}")
         player2 = Player(player2_spawn_pos_tuple[0], player2_spawn_pos_tuple[1], player_id=2, initial_properties=player2_props_for_init)
         if not player2._valid_init: logger.critical("P2 (couch) init failed!"); return None
         player2.control_scheme = game_config.CURRENT_P2_INPUT_DEVICE
@@ -170,21 +190,26 @@ def initialize_game_elements(current_width: int, current_height: int,
             try: player2.joystick_id_idx = int(player2.control_scheme.split('_')[-1])
             except ValueError: player2.joystick_id_idx = None
         all_renderable_objects.append(player2)
+        # logger.debug(f"GameSetup: Player 2 (couch) initialized. Valid: {player2._valid_init}, Rect: {player2.rect}")
     elif for_game_mode in ["join_lan", "join_ip", "host"]:
+        logger.debug(f"GameSetup: Initializing Player 2 (network shell) at {player2_spawn_pos_tuple}")
         player2 = Player(player2_spawn_pos_tuple[0], player2_spawn_pos_tuple[1], player_id=2, initial_properties=player2_props_for_init)
-        if not player2._valid_init: logger.critical("P2 (shell for network) init failed!"); return None
+        if not player2._valid_init: logger.critical("P2 (network shell) init failed!"); return None
         if for_game_mode != "host":
             player2.control_scheme = game_config.CURRENT_P2_INPUT_DEVICE
             if "joystick" in player2.control_scheme:
                 try: player2.joystick_id_idx = int(player2.control_scheme.split('_')[-1])
                 except ValueError: player2.joystick_id_idx = None
         all_renderable_objects.append(player2)
+        # logger.debug(f"GameSetup: Player 2 (network shell) initialized. Valid: {player2._valid_init}, Rect: {player2.rect}")
 
     game_elements_ref_for_proj = {"projectiles_list": projectiles_list, "all_renderable_objects": all_renderable_objects, "platforms_list": platforms_list}
     if player1: player1.game_elements_ref_for_projectiles = game_elements_ref_for_proj
     if player2: player2.game_elements_ref_for_projectiles = game_elements_ref_for_proj
 
+    # Assign from map data if present, otherwise it remains the empty list from above
     local_enemy_spawns_data_list = raw_map_data.get('enemies_list', [])
+
     if (for_game_mode == "host" or for_game_mode == "couch_play") and local_enemy_spawns_data_list:
         logger.debug(f"GameSetup: Spawning {len(local_enemy_spawns_data_list)} enemies from map data...")
         for i, spawn_info in enumerate(local_enemy_spawns_data_list):
@@ -220,27 +245,27 @@ def initialize_game_elements(current_width: int, current_height: int,
 
     current_chest_obj: Optional[Chest] = None
     collectible_spawns_data_list_from_map = raw_map_data.get('items_list', [])
-    # Only create a chest if it's defined in the map data. No random spawning.
     if Chest and (for_game_mode == "host" or for_game_mode == "couch_play"):
         if collectible_spawns_data_list_from_map:
             for item_data in collectible_spawns_data_list_from_map:
                 if item_data.get('type', '').lower() == 'chest':
                     try:
                         chest_midbottom_x, chest_midbottom_y = float(item_data['pos'][0]), float(item_data['pos'][1])
+                        logger.debug(f"GameSetup: Attempting to create Chest at ({chest_midbottom_x}, {chest_midbottom_y})")
                         current_chest_obj = Chest(chest_midbottom_x, chest_midbottom_y)
                         if current_chest_obj._valid_init:
                             all_renderable_objects.append(current_chest_obj)
-                            collectible_list.append(current_chest_obj) # Add to general collectible list
-                            logger.debug(f"Created Chest from map: rect={current_chest_obj.rect}, image_null={current_chest_obj.image.isNull() if current_chest_obj.image else 'ImageIsNone'}")
+                            collectible_list.append(current_chest_obj)
+                            # logger.debug(f"  GameSetup: Created Chest from map: rect={current_chest_obj.rect}, image_null={current_chest_obj.image.isNull() if current_chest_obj.image else 'ImageIsNone'}, state={current_chest_obj.state}, image_size={current_chest_obj.image.size() if current_chest_obj.image else 'N/A'}")
                         else:
                             logger.warning(f"Chest from map at {item_data['pos']} failed init.")
-                        break # Assuming only one chest is handled as 'current_chest'
+                        break 
                     except Exception as e:
                         logger.error(f"Error spawning map chest: {e}", exc_info=True)
         else:
-            logger.debug("GameSetup: No chest defined in map data.")
-
-
+            logger.debug("GameSetup: No chest defined in map data. No chest will be spawned.")
+            
+    # logger.debug(f"GameSetup: Initializing Camera. Level W={level_pixel_width}, MinY={lvl_min_y_abs}, MaxY={lvl_max_y_abs}, Screen {current_width}x{current_height}")
     camera_instance = Camera(level_pixel_width, lvl_min_y_abs, lvl_max_y_abs, float(current_width), float(current_height))
 
     game_elements_dict = {
@@ -249,35 +274,38 @@ def initialize_game_elements(current_width: int, current_height: int,
         "platforms_list": platforms_list,
         "ladders_list": ladders_list,
         "hazards_list": hazards_list,
-        "collectible_list": collectible_list, # This list will contain the chest if created
+        "collectible_list": collectible_list,
         "projectiles_list": projectiles_list,
         "all_renderable_objects": all_renderable_objects,
         "statue_objects_list": statue_objects_list,
         "level_pixel_width": level_pixel_width,
         "level_min_y_absolute": lvl_min_y_abs,
         "level_max_y_absolute": lvl_max_y_abs,
-        "ground_level_y_ref": ground_level_y_ref,
-        "ground_platform_height_ref": ground_platform_height_ref,
+        "ground_level_y_ref": float(raw_map_data.get('ground_level_y_ref', lvl_max_y_abs - C.TILE_SIZE)),
+        "ground_platform_height_ref": float(raw_map_data.get('ground_platform_height_ref', C.TILE_SIZE)),
         "player1_spawn_pos": player1_spawn_pos_tuple,
         "player1_spawn_props": player1_props_for_init,
         "player2_spawn_pos": player2_spawn_pos_tuple,
         "player2_spawn_props": player2_props_for_init,
         "level_background_color": level_background_color,
         "loaded_map_name": loaded_map_name_return,
-        "enemy_spawns_data_cache": local_enemy_spawns_data_list,
+        "enemy_spawns_data_cache": local_enemy_spawns_data_list, # Now always defined
         "main_app_screen_width": current_width,
         "main_app_screen_height": current_height,
-        "current_chest": current_chest_obj # Will be None if no chest in map data
+        "current_chest": current_chest_obj
     }
 
-    logger.debug(f"GameSetup: Elements initialized. Renderables: {len(all_renderable_objects)}")
+    # logger.debug(f"GameSetup: Final all_renderable_objects count: {len(all_renderable_objects)}")
+    # num_platforms_final = sum(1 for obj in all_renderable_objects if isinstance(obj, Platform))
+    # num_lava_final = sum(1 for obj in all_renderable_objects if isinstance(obj, Lava))
+    # logger.debug(f"GameSetup: Final counts in all_renderable_objects - Platforms: {num_platforms_final}, Lava: {num_lava_final}")
+
+    logger.info(f"GameSetup: Initialization complete for mode '{for_game_mode}'.")
     return game_elements_dict
 
 
 def spawn_chest_qt(platforms_list_qt: List[Platform], main_ground_y_surface: float) -> Optional[Chest]:
-    # This function is now deprecated for random spawning, but kept for structure if needed later.
-    # It will not be called if chests are only defined in map data.
-    logger.warning("GameSetup (spawn_chest_qt): This function for random chest spawning is deprecated.")
+    logger.warning("GameSetup (spawn_chest_qt): This function for random chest spawning is deprecated and should not be called if chests are map-defined.")
     return None
 
 #################### END OF FILE: game_setup.py ####################
