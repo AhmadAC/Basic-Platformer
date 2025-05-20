@@ -66,26 +66,18 @@ def set_clipboard_text_qt(text: str):
 
 QT_KEY_MAP = {
     "A": Qt.Key.Key_A, "D": Qt.Key.Key_D, "W": Qt.Key.Key_W, "S": Qt.Key.Key_S,
-    "V": Qt.Key.Key_V, "B": Qt.Key.Key_B,
-    "SHIFT": Qt.Key.Key_Shift, "LSHIFT": Qt.Key.Key_Shift,
-    "CONTROL": Qt.Key.Key_Control, "LCONTROL": Qt.Key.Key_Control,
-    "E": Qt.Key.Key_E, "Q": Qt.Key.Key_Q,
-    "1": Qt.Key.Key_1, "2": Qt.Key.Key_2, "3": Qt.Key.Key_3, "4": Qt.Key.Key_4,
-    "5": Qt.Key.Key_5, "6": Qt.Key.Key_6, "7": Qt.Key.Key_7,
+    "V": Qt.Key.Key_V, "B": Qt.Key.Key_B, "SHIFT": Qt.Key.Key_Shift, "CONTROL": Qt.Key.Key_Control,
+    "E": Qt.Key.Key_E, "Q": Qt.Key.Key_Q, "1": Qt.Key.Key_1, "2": Qt.Key.Key_2, "3": Qt.Key.Key_3,
+    "4": Qt.Key.Key_4, "5": Qt.Key.Key_5, "6": Qt.Key.Key_6, "7": Qt.Key.Key_7,
     "ESCAPE": Qt.Key.Key_Escape, "RETURN": Qt.Key.Key_Return, "ENTER": Qt.Key.Key_Enter,
     "UP": Qt.Key.Key_Up, "DOWN": Qt.Key.Key_Down, "LEFT": Qt.Key.Key_Left, "RIGHT": Qt.Key.Key_Right,
-    "SPACE": Qt.Key.Key_Space,
-    "J": Qt.Key.Key_J, "L": Qt.Key.Key_L, "I": Qt.Key.Key_I, "K": Qt.Key.Key_K,
-    "O": Qt.Key.Key_O, "P": Qt.Key.Key_P,
-    ";": Qt.Key.Key_Semicolon, "'": Qt.Key.Key_Apostrophe, "\\": Qt.Key.Key_Backslash,
-    "NUM+0": Qt.Key.Key_0, "NUM+1": Qt.Key.Key_1, "NUM+2": Qt.Key.Key_2,
-    "NUM+3": Qt.Key.Key_3, "NUM+4": Qt.Key.Key_4, "NUM+5": Qt.Key.Key_5,
-    "NUM+6": Qt.Key.Key_6, "NUM+7": Qt.Key.Key_7, "NUM+8": Qt.Key.Key_8,
-    "NUM+9": Qt.Key.Key_9,
-    "NUMPAD0": Qt.Key.Key_0, "NUMPAD1": Qt.Key.Key_1,
-    "NUM+ENTER": Qt.Key.Key_Enter,
-    "DELETE": Qt.Key.Key_Delete,
-    "PAUSE": Qt.Key.Key_Pause,
+    "SPACE": Qt.Key.Key_Space, "J": Qt.Key.Key_J, "L": Qt.Key.Key_L, "I": Qt.Key.Key_I, "K": Qt.Key.Key_K,
+    "O": Qt.Key.Key_O, "P": Qt.Key.Key_P, ";": Qt.Key.Key_Semicolon, "'": Qt.Key.Key_Apostrophe,
+    "\\": Qt.Key.Key_Backslash, "NUM+0": Qt.Key.Key_0, "NUM+1": Qt.Key.Key_1, "NUM+2": Qt.Key.Key_2,
+    "NUM+3": Qt.Key.Key_3, "NUM+4": Qt.Key.Key_4, "NUM+5": Qt.Key.Key_5, "NUM+6": Qt.Key.Key_6,
+    "NUM+7": Qt.Key.Key_7, "NUM+8": Qt.Key.Key_8, "NUM+9": Qt.Key.Key_9,
+    "NUMPAD0": Qt.Key.Key_0, "NUMPAD1": Qt.Key.Key_1, "NUM+ENTER": Qt.Key.Key_Enter,
+    "DELETE": Qt.Key.Key_Delete, "PAUSE": Qt.Key.Key_Pause,
 }
 
 class AppStatus:
@@ -174,7 +166,7 @@ class MainWindow(QMainWindow):
     lan_search_dialog: Optional[QDialog] = None
     lan_search_status_label: Optional[QLabel] = None
     lan_servers_list_widget: Optional[QListWidget] = None
-    ip_input_dialog: Optional[IPInputDialog] = None # Changed from QDialog to IPInputDialog
+    ip_input_dialog: Optional[IPInputDialog] = None
     current_modal_dialog: Optional[str] = None
 
     _prev_menu_confirm_pressed: bool; _prev_menu_cancel_pressed: bool
@@ -182,9 +174,7 @@ class MainWindow(QMainWindow):
     _prev_ip_dialog_confirm_pressed: bool; _prev_ip_dialog_cancel_pressed: bool
 
     NUM_MAP_COLUMNS = 3
-
-    # Make NetworkThread a class attribute for easier access in _start_network_mode
-    NetworkThread = NetworkThread # Expose the class
+    NetworkThread = NetworkThread
 
     def __init__(self):
         super().__init__()
@@ -192,33 +182,20 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"Platformer Adventure LAN")
 
         try:
-            pygame.init()
-            pygame.joystick.init()
-            self._pygame_joysticks = []
-            self._pygame_joy_button_prev_state = [] 
+            pygame.init(); pygame.joystick.init()
+            self._pygame_joysticks = []; self._pygame_joy_button_prev_state = []
             for i in range(pygame.joystick.get_count()):
-                joy = pygame.joystick.Joystick(i)
-                joy.init()
-                self._pygame_joysticks.append(joy)
-                self._pygame_joy_button_prev_state.append({}) 
-                info(f"  - Pygame Joystick {i}: {joy.get_name()}")
+                joy = pygame.joystick.Joystick(i); joy.init(); self._pygame_joysticks.append(joy)
+                self._pygame_joy_button_prev_state.append({}); info(f"  - Pygame Joystick {i}: {joy.get_name()}")
             if self._pygame_joysticks: info(f"MAIN PySide6: Pygame found {len(self._pygame_joysticks)} joysticks.")
             else: info("MAIN PySide6: Pygame found no joysticks.")
-        except pygame.error as e:
-            warning(f"MAIN PySide6: Pygame joystick init error: {e}. Joysticks may not be available."); self._pygame_joysticks = []
+        except pygame.error as e: warning(f"MAIN PySide6: Pygame joystick init error: {e}."); self._pygame_joysticks = []
 
-        self._menu_selected_button_idx = 0
-        self._map_selection_selected_button_idx = 0
-        self._lan_search_list_selected_idx = 0
-        self._ip_dialog_selected_button_idx = 0
-        self._last_pygame_joy_nav_time = 0.0
-        self._pygame_joy_axis_was_active_neg = {} 
-        self._pygame_joy_axis_was_active_pos = {} 
-        self._main_menu_buttons_ref = []
-        self._map_selection_buttons_ref = []
-        self._ip_dialog_buttons_ref = []
-        self._current_active_menu_buttons = self._main_menu_buttons_ref
-        self._current_active_menu_selected_idx_ref = "_menu_selected_button_idx"
+        self._menu_selected_button_idx = 0; self._map_selection_selected_button_idx = 0
+        self._lan_search_list_selected_idx = 0; self._ip_dialog_selected_button_idx = 0
+        self._last_pygame_joy_nav_time = 0.0; self._pygame_joy_axis_was_active_neg = {}; self._pygame_joy_axis_was_active_pos = {}
+        self._main_menu_buttons_ref = []; self._map_selection_buttons_ref = []; self._ip_dialog_buttons_ref = []
+        self._current_active_menu_buttons = self._main_menu_buttons_ref; self._current_active_menu_selected_idx_ref = "_menu_selected_button_idx"
         self._prev_menu_confirm_pressed = False; self._prev_menu_cancel_pressed = False
         self._prev_lan_confirm_pressed = False; self._prev_lan_cancel_pressed = False; self._prev_lan_retry_pressed = False
         self._prev_ip_dialog_confirm_pressed = False; self._prev_ip_dialog_cancel_pressed = False
@@ -232,9 +209,7 @@ class MainWindow(QMainWindow):
 
         try:
             game_config.load_config()
-        except Exception as e_cfg:
-            critical(f"Error during game_config.load_config() in MainWindow: {e_cfg}", exc_info=True)
-            self._handle_config_load_failure()
+        except Exception as e_cfg: critical(f"Error during game_config.load_config(): {e_cfg}", exc_info=True); self._handle_config_load_failure()
 
         self.app_status = APP_STATUS; self.game_elements: Dict[str, Any] = {}; self.current_view_name: Optional[str] = None; self.current_game_mode: Optional[str] = None
         self.server_state: Optional[ServerState] = None; self.client_state: Optional[ClientState] = None; self.network_thread: Optional[NetworkThread] = None
@@ -269,63 +244,53 @@ class MainWindow(QMainWindow):
         app_game_modes.start_host_game_logic(self, map_name)
 
     def on_start_couch_play(self):
-        app_game_modes.on_start_couch_play(self)
+        app_game_modes.start_couch_play_actual(self)
 
     def on_start_host_game(self):
-        app_game_modes.on_start_host_game(self)
+        app_game_modes.start_host_game_actual(self)
 
     def on_start_join_lan(self):
-        app_game_modes.on_start_join_lan(self)
+        app_game_modes.start_join_lan_actual(self)
 
     def on_start_join_ip(self):
-        app_game_modes.on_start_join_ip(self)
+        app_game_modes.start_join_ip_actual(self)
         
-    def _prepare_and_start_game(self, mode: str, map_name: Optional[str] = None, target_ip_port: Optional[str] = None):
-        app_game_modes._prepare_and_start_game(self, mode, map_name, target_ip_port)
+    # _prepare_and_start_game is now called by functions in app_game_modes
+    # def _prepare_and_start_game(...): see app_game_modes.prepare_and_start_game_logic
 
     @Slot()
-    def on_client_fully_synced_for_host(self):
-        app_game_modes.on_client_fully_synced_for_host_external(self)
+    def on_client_fully_synced_for_host(self): # Slot for NetworkThread signal
+        app_game_modes.on_client_fully_synced_for_host_logic(self)
 
-    def _start_network_mode(self, mode_name: str, target_ip_port: Optional[str] = None):
-        app_game_modes._start_network_mode(self, mode_name, target_ip_port)
+    # _start_network_mode is now called by functions in app_game_modes
+    # def _start_network_mode(...): see app_game_modes.start_network_mode_logic
 
     @Slot(str, str, float)
     def on_network_status_update_slot(self, title: str, message: str, progress: float):
-        app_game_modes.on_network_status_update_external(self, title, message, progress)
+        app_game_modes.on_network_status_update_logic(self, title, message, progress)
 
     @Slot(str)
     def on_network_operation_finished_slot(self, message: str):
-        app_game_modes.on_network_operation_finished_external(self, message)
+        app_game_modes.on_network_operation_finished_logic(self, message)
 
     @Slot(object)
     def on_lan_server_search_status_update_slot(self, data_tuple: Any):
-        app_game_modes.on_lan_server_search_status_update_external(self, data_tuple)
+        app_game_modes.on_lan_server_search_status_update_logic(self, data_tuple)
 
-    def _start_lan_server_search_thread(self):
-         app_game_modes._start_lan_server_search_thread(self)
+    def _start_lan_server_search_thread(self): # This is called by a button in the LAN dialog
+         app_game_modes.start_lan_server_search_thread_logic(self)
 
-    def _join_selected_lan_server_from_dialog(self):
-        app_game_modes._join_selected_lan_server_from_dialog(self)
+    def _join_selected_lan_server_from_dialog(self): # Called by LAN dialog
+        app_game_modes.join_selected_lan_server_from_dialog_logic(self)
 
     def stop_current_game_mode(self, show_menu: bool = True):
-        app_game_modes.stop_current_game_mode(self, show_menu)
+        app_game_modes.stop_current_game_mode_logic(self, show_menu)
     # --- End Slot Methods ---
 
-    # --- Methods that call helpers from app_ui_creator ---
-    def _populate_map_list_for_selection(self, purpose: str): # This is called by on_start_... methods
+    # --- UI Helper Callers (that use app_ui_creator functions) ---
+    def _populate_map_list_for_selection(self, purpose: str):
         _populate_map_list_for_selection(self, purpose)
-
-    def _update_current_menu_button_focus(self):
-        _update_current_menu_button_focus(self)
-        
-    def _update_lan_search_list_focus(self):
-        _update_lan_search_list_focus(self)
-
-    def _update_ip_dialog_button_focus(self):
-        _update_ip_dialog_button_focus(self)
     # --- End app_ui_creator helper calls ---
-
 
     def request_close_app(self):
         info("MAIN PySide6: Quit action triggered from UI (request_close_app called).")
@@ -359,7 +324,7 @@ class MainWindow(QMainWindow):
         
         if target_page:
             self.stacked_widget.setCurrentWidget(target_page); self.setWindowTitle(title)
-            if view_name in ["menu", "map_select"]: _update_current_menu_button_focus(self)
+            if view_name in ["menu", "map_select"]: _update_current_menu_button_focus(self) # Call the imported function
             focus_target = target_page
             if view_name == "editor" and self.actual_editor_module_instance: focus_target = self.actual_editor_module_instance
             elif view_name == "settings" and self.actual_controls_module_instance: focus_target = self.actual_controls_module_instance
@@ -368,8 +333,7 @@ class MainWindow(QMainWindow):
             warning(f"show_view: Unknown view '{view_name}'. Defaulting to menu."); self.stacked_widget.setCurrentWidget(self.main_menu_widget)
             self.setWindowTitle("Platformer Adventure LAN - Main Menu"); self._current_active_menu_buttons = self._main_menu_buttons_ref
             self._current_active_menu_selected_idx_ref = "_menu_selected_button_idx"; self._menu_selected_button_idx = 0
-            _update_current_menu_button_focus(self); self.main_menu_widget.setFocus()
-        
+            _update_current_menu_button_focus(self); self.main_menu_widget.setFocus() # Call the imported function
         clear_qt_key_events_this_frame()
 
     def keyPressEvent(self, event: QKeyEvent):
