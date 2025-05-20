@@ -1,5 +1,3 @@
-#################### START OF FILE: config.py ####################
-
 # config.py
 # -*- coding: utf-8 -*-
 """
@@ -7,10 +5,9 @@ Configuration for game settings, primarily controls.
 Allows defining default keyboard and joystick mappings, and storing current selections.
 Handles loading custom joystick mappings from controller_mappings.json.
 """
-# version 2.0.0 
+# version 2.0.0
 import json
 import os
-# joystick_handler will be refactored later for PySide6
 import joystick_handler # Still imported for function signatures, actual implementation will change
 
 # --- File for saving/loading game config (selected devices) ---
@@ -86,7 +83,7 @@ DEFAULT_KEYBOARD_P1_MAPPINGS = {
     "roll": "Control", "interact": "E", # "LControl" or just "Control"
     "projectile1": "1", "projectile2": "2", "projectile3": "3",
     "projectile4": "4", "projectile5": "5",
-    "reset": "6", # Key 6 for P1 for reset
+    "reset": "Q", # Changed to Q for P1 reset for testing
     "projectile7": "7",
     "pause": "Escape", "menu_confirm": "Return", "menu_cancel": "Escape",
     "menu_up": "Up", "menu_down": "Down", "menu_left": "Left", "menu_right": "Right",
@@ -249,11 +246,9 @@ def load_config():
         print(f"Config Info: File {filepath} not found. Using default device choices.")
 
     # Joystick count will now come from the refactored joystick_handler
-    num_joysticks = joystick_handler.get_joystick_count() # This function's implementation will change
+    num_joysticks = joystick_handler.get_joystick_count()
     print(f"Config: Number of joysticks detected by joystick_handler: {num_joysticks}")
 
-    # Logic for assigning CURRENT_P1_INPUT_DEVICE and CURRENT_P2_INPUT_DEVICE based on
-    # loaded_choices and num_joysticks remains conceptually the same.
     if loaded_p1_device_choice.startswith("joystick_"):
         try:
             p1_joy_idx = int(loaded_p1_device_choice.split('_')[-1])
@@ -334,9 +329,6 @@ def update_player_mappings_from_device_choice():
 if __name__ == "__main__":
     print("--- Running config.py directly for testing (PySide6) ---")
     
-    # Simulate joystick_handler being initialized if you want to test joystick count logic
-    # For a true test, joystick_handler.py would need its PySide6-compatible version.
-    # For now, we can mock its behavior:
     class MockJoystickHandler:
         def __init__(self): self._joystick_count = 0
         def init_joysticks(self): print("MockJoystickHandler: init_joysticks called.")
@@ -344,10 +336,9 @@ if __name__ == "__main__":
         def set_joystick_count(self, count): self._joystick_count = count
         def quit_joysticks(self): print("MockJoystickHandler: quit_joysticks called.")
 
-    original_joystick_handler_module = joystick_handler # Save original
-    joystick_handler = MockJoystickHandler() # Replace with mock
+    original_joystick_handler_module = joystick_handler
+    joystick_handler = MockJoystickHandler()
     
-    # Simulate finding 1 joystick for testing logic
     joystick_handler.set_joystick_count(1)
     joystick_handler.init_joysticks()
 
@@ -358,7 +349,7 @@ if __name__ == "__main__":
     print(f"  AXIS_THRESHOLD_DEFAULT: {AXIS_THRESHOLD_DEFAULT}")
     print(f"  CURRENT_P1_INPUT_DEVICE: {CURRENT_P1_INPUT_DEVICE}")
     print(f"  P1_MAPPINGS sample (jump): {P1_MAPPINGS.get('jump', 'Not Found')}")
-    print(f"  P1_MAPPINGS sample (reset): {P1_MAPPINGS.get('reset', 'Not Found')}")
+    print(f"  P1_MAPPINGS sample (reset): {P1_MAPPINGS.get('reset', 'Not Found')}") # This will show 'Q' if DEFAULT_KEYBOARD_P1_MAPPINGS was changed
     print(f"  CURRENT_P2_INPUT_DEVICE: {CURRENT_P2_INPUT_DEVICE}")
     print(f"  P2_MAPPINGS sample (jump): {P2_MAPPINGS.get('jump', 'Not Found')}")
     print(f"  P2_MAPPINGS sample (reset): {P2_MAPPINGS.get('reset', 'Not Found')}")
@@ -369,7 +360,5 @@ if __name__ == "__main__":
         print(f"  LOADED_JOYSTICK_MAPPINGS (example - projectile6): {LOADED_JOYSTICK_MAPPINGS.get('projectile6')}")
 
     joystick_handler.quit_joysticks()
-    joystick_handler = original_joystick_handler_module # Restore original module
+    joystick_handler = original_joystick_handler_module
     print("--- config.py direct test finished ---")
-
-#################### END OF FILE: config.py ####################

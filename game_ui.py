@@ -132,6 +132,8 @@ class GameSceneWidget(QWidget):
         self.download_progress_percent: Optional[float] = None
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
         self.setAutoFillBackground(False)
+        # For debugging rendering issues
+        # self._printed_renderables_once = False 
 
     def update_game_state(self, game_time_ticks: int, download_msg: Optional[str] = None, download_prog: Optional[float] = None):
         self.current_game_time_ticks = game_time_ticks
@@ -149,28 +151,42 @@ class GameSceneWidget(QWidget):
         bg_color_tuple = self.game_elements.get("level_background_color", C.LIGHT_BLUE)
         painter.fillRect(self.rect(), QColor(*bg_color_tuple))
 
+        # --- DEBUG PRINT FOR RENDERABLES (Optional, enable if needed) ---
+        # if not self._printed_renderables_once and all_renderables:
+        #     print(f"DEBUG GameSceneWidget.paintEvent: Total renderables: {len(all_renderables)}")
+        #     for i, ent in enumerate(all_renderables):
+        #         if isinstance(ent, Platform):
+        #             print(f"  Renderable {i}: Platform - Rect: {ent.rect}, Type: {ent.platform_type}, ImageNull: {ent.image.isNull()}, Color: {ent.color_tuple}")
+        #         # else:
+        #         #     print(f"  Renderable {i}: {type(ent).__name__}, Rect: {getattr(ent, 'rect', 'N/A')}")
+        #     self._printed_renderables_once = True
+        # --- END DEBUG PRINT ---
+
         if camera_instance:
             for entity in all_renderables:
-                # --- OPTION A IMPLEMENTED HERE ---
                 is_static_tile = isinstance(entity, (Platform, Ladder, Lava))
                 can_render_entity = False
                 if is_static_tile:
-                    # Static tiles are always "present" for rendering if they have image and rect
                     can_render_entity = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
-                                        hasattr(entity, 'rect') and entity.rect and entity.rect.isValid() # Added isValid check
+                                        hasattr(entity, 'rect') and entity.rect and entity.rect.isValid()
                 else:
-                    # Dynamic entities need the alive check
                     can_render_entity = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
                                         hasattr(entity, 'rect') and entity.rect and entity.rect.isValid() and \
                                         hasattr(entity, 'alive') and entity.alive()
 
                 if can_render_entity:
-                    screen_rect = camera_instance.apply(entity.rect)
-                    # Basic culling: only draw if the entity's screen rectangle intersects the widget's visible area
-                    if self.rect().intersects(screen_rect.toRect()): # toRect() is important for QRectF intersection with QRect
-                        painter.drawPixmap(screen_rect.topLeft(), entity.image)
-                # --- END OF OPTION A ---
+                    screen_rect_qrectf = camera_instance.apply(entity.rect)
+                    screen_rect_qrect = screen_rect_qrectf.toRect()
 
+                    # --- DEBUG PRINT FOR SPECIFIC TILES (Optional) ---
+                    # if isinstance(entity, Platform) and "wall_gray" in entity.platform_type:
+                    #     if entity.rect.x() == 0 and entity.rect.y() < 800: # Log first few top-left walls
+                    #         print(f"DEBUG Wall Tile: WorldRect={entity.rect}, ScreenRect={screen_rect_qrectf}, WidgetRect={self.rect()}, Intersects={self.rect().intersects(screen_rect_qrect)}")
+                    # --- END DEBUG PRINT ---
+                    
+                    if self.rect().intersects(screen_rect_qrect):
+                        painter.drawPixmap(screen_rect_qrectf.topLeft(), entity.image)
+            # ... (rest of enemy health bar, player HUD rendering) ...
             enemy_list_for_hb: List[Any] = self.game_elements.get("enemy_list", [])
             for enemy in enemy_list_for_hb:
                 if hasattr(enemy, 'alive') and enemy.alive() and \
@@ -184,7 +200,7 @@ class GameSceneWidget(QWidget):
                     hb_x = enemy_screen_rect.center().x() - hb_w / 2.0
                     hb_y = enemy_screen_rect.top() - hb_h - float(getattr(C, 'HEALTH_BAR_OFFSET_ABOVE', 5))
                     draw_health_bar_qt(painter, hb_x, hb_y, hb_w, hb_h, enemy.current_health, enemy.max_health)
-        else: # Fallback if no camera
+        else:
             for entity in all_renderables:
                 is_static_tile_no_cam = isinstance(entity, (Platform, Ladder, Lava))
                 can_render_no_cam = False
@@ -195,7 +211,6 @@ class GameSceneWidget(QWidget):
                     can_render_no_cam = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
                                         hasattr(entity, 'rect') and entity.rect and entity.rect.isValid() and \
                                         hasattr(entity, 'alive') and entity.alive()
-
                 if can_render_no_cam:
                      painter.drawPixmap(entity.rect.topLeft(), entity.image)
 

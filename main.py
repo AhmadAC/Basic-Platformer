@@ -33,7 +33,7 @@ try:
     from game_ui import GameSceneWidget, SelectMapDialog, IPInputDialog
     import config as game_config
     import joystick_handler
-    from player import Player
+    from player import Player # Ensure Player is imported
     from player_input_handler import process_player_input_logic_pyside as process_player_input_logic
 
     info("MAIN PySide6: Platformer modules imported successfully.")
@@ -42,8 +42,8 @@ except ImportError as e:
     print(f"Current sys.path was: {sys.path}")
     traceback.print_exc()
     sys.exit(1)
-except Exception as e:
-    print(f"MAIN PySide6 FATAL: An unexpected error occurred during platformer module imports: {e}")
+except Exception as e_global: # Changed variable name to avoid conflict
+    print(f"MAIN PySide6 FATAL: An unexpected error occurred during platformer module imports: {e_global}")
     traceback.print_exc()
     sys.exit(1)
 
@@ -70,7 +70,7 @@ QT_KEY_MAP = {
     "V": Qt.Key.Key_V, "B": Qt.Key.Key_B,
     "SHIFT": Qt.Key.Key_Shift, "LSHIFT": Qt.Key.Key_Shift,
     "CONTROL": Qt.Key.Key_Control, "LCONTROL": Qt.Key.Key_Control,
-    "E": Qt.Key.Key_E,
+    "E": Qt.Key.Key_E, "Q": Qt.Key.Key_Q, # Added Q for potential reset
     "1": Qt.Key.Key_1, "2": Qt.Key.Key_2, "3": Qt.Key.Key_3, "4": Qt.Key.Key_4,
     "5": Qt.Key.Key_5, "6": Qt.Key.Key_6, "7": Qt.Key.Key_7,
     "ESCAPE": Qt.Key.Key_Escape, "RETURN": Qt.Key.Key_Return, "ENTER": Qt.Key.Key_Enter,
@@ -119,18 +119,18 @@ class NetworkThread(QThread):
         super().__init__(parent)
         self.mode = mode; self.game_elements = game_elements_ref; self.server_state = server_state_ref; self.client_state = client_state_ref; self.target_ip_port = target_ip_port
     def _ui_status_update_callback(self, title: str, message: str, progress: float): self.status_update_signal.emit(title, message, progress)
-    def _get_p1_input_snapshot_main_thread_passthrough(self, player_instance: Any, platforms_list: List[Any]) -> Dict[str, bool]: return {}
+    def _get_p1_input_snapshot_main_thread_passthrough(self, player_instance: Any, platforms_list: List[Any]) -> Dict[str, bool]: return {} # Not used by server thread directly
     def run(self):
         try:
             if self.mode == "host" and self.server_state:
                 info("NetworkThread: Starting run_server_mode...")
-                run_server_mode(self.server_state, self.game_elements, self._ui_status_update_callback, self._get_p1_input_snapshot_main_thread_passthrough, lambda: QApplication.processEvents())
+                run_server_mode(self.server_state, self.game_elements, self._ui_status_update_callback, MainWindow.get_p1_input_snapshot_for_server_thread, lambda: QApplication.processEvents()) # Pass correct callback
                 info("NetworkThread: run_server_mode finished."); self.operation_finished_signal.emit("host_ended")
             elif self.mode == "join" and self.client_state:
                 info("NetworkThread: Starting run_client_mode...")
                 run_client_mode(self.client_state, self.game_elements, self._ui_status_update_callback, self.target_ip_port, MainWindow.get_p2_input_snapshot_for_client_thread, lambda: QApplication.processEvents())
                 info("NetworkThread: run_client_mode finished."); self.operation_finished_signal.emit("client_ended")
-        except Exception as e: critical(f"NetworkThread: Exception in {self.mode} mode: {e}", exc_info=True); self.operation_finished_signal.emit(f"{self.mode}_error")
+        except Exception as e_thread: critical(f"NetworkThread: Exception in {self.mode} mode: {e_thread}", exc_info=True); self.operation_finished_signal.emit(f"{self.mode}_error")
 
 
 class MainWindow(QMainWindow):
@@ -148,10 +148,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"Platformer Adventure LAN (PySide6)")
 
         screen_geo = QApplication.primaryScreen().availableGeometry()
-        initial_width = max(800, min(int(screen_geo.width() * 0.9), 1920))
-        initial_height = max(600, min(int(screen_geo.height() * 0.9), 1080))
+        # Use a portion of available geometry or fixed reasonable size
+        self.initial_main_window_width = max(800, min(int(screen_geo.width() * 0.75), 1600))
+        self.initial_main_window_height = max(600, min(int(screen_geo.height() * 0.75), 900))
         self.setMinimumSize(QSize(800,600))
-        self.resize(initial_width, initial_height)
+        self.resize(self.initial_main_window_width, self.initial_main_window_height) # Set initial size
         info(f"MAIN PySide6: Initial normal window size: {self.size().width()}x{self.size().height()} (will attempt to show maximized)")
 
         self.fonts = {
@@ -244,9 +245,8 @@ class MainWindow(QMainWindow):
 
     def _ensure_editor_instance(self):
         self._clear_container_content(self.editor_content_container)
-        # self.actual_editor_module_instance = None # Keep instance if already created unless explicitly told to recreate
 
-        if self.actual_editor_module_instance is None: # Only create if None
+        if self.actual_editor_module_instance is None:
             info("MAIN PySide6: Attempting to create and embed editor instance.")
             try:
                 from editor.editor import editor_main
@@ -264,16 +264,15 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 error(f"Exception creating/embedding editor instance: {e}", exc_info=True)
                 self._add_placeholder_to_content_area(self.editor_content_container, f"Error creating editor: {e}")
-        elif self.actual_editor_module_instance.parent() is None: # If instance exists but not in layout (e.g., returning to editor)
+        elif self.actual_editor_module_instance.parent() is None:
             self.editor_content_container.layout().addWidget(self.actual_editor_module_instance)
             info("MAIN PySide6: Re-added existing editor QMainWindow instance to editor_content_container.")
 
 
     def _ensure_controls_mapper_instance(self):
         self._clear_container_content(self.controls_content_container)
-        # self.actual_controls_module_instance = None # Keep instance if already created
 
-        if self.actual_controls_module_instance is None: # Only create if None
+        if self.actual_controls_module_instance is None:
             info("MAIN PySide6: Attempting to create and embed controls mapper instance.")
             try:
                 from controller_settings.controller_mapper_gui import main as controls_main
@@ -294,7 +293,7 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 error(f"Exception creating/embedding controls mapper instance: {e}", exc_info=True)
                 self._add_placeholder_to_content_area(self.controls_content_container, f"Error creating controls UI: {e}")
-        elif self.actual_controls_module_instance.parent() is None: # If instance exists but not in layout
+        elif self.actual_controls_module_instance.parent() is None:
             self.controls_content_container.layout().addWidget(self.actual_controls_module_instance)
             info("MAIN PySide6: Re-added existing controls mapper instance to controls_content_container.")
 
@@ -364,28 +363,30 @@ class MainWindow(QMainWindow):
     def on_return_to_menu_from_sub_view(self):
         source_view = self.current_view_name
         info(f"Returning to menu from: {source_view}")
-        
+
         if source_view == "editor" and self.actual_editor_module_instance:
             if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and \
                callable(self.actual_editor_module_instance.confirm_unsaved_changes):
                 if not self.actual_editor_module_instance.confirm_unsaved_changes("return to menu"):
                     info("Editor has unsaved changes, return to menu cancelled by user.")
                     return
-            if hasattr(self.actual_editor_module_instance, 'save_geometry_and_state'):
-                self.actual_editor_module_instance.save_geometry_and_state() # Save its layout
+            if hasattr(self.actual_editor_module_instance, 'save_geometry_and_state'): # Save editor layout
+                self.actual_editor_module_instance.save_geometry_and_state()
 
             if self.actual_editor_module_instance.parent() is not None:
-                 self.actual_editor_module_instance.setParent(None) # Detach from layout
+                 self.actual_editor_module_instance.setParent(None)
+            # Do not deleteLater if we want to reuse the instance.
+            # self.actual_editor_module_instance = None # Set to None if you want to force recreation.
 
         elif source_view == "settings" and self.actual_controls_module_instance:
             if hasattr(self.actual_controls_module_instance, 'closeEvent') and \
-               hasattr(self.actual_controls_module_instance, 'close'): # If it's a QMainWindow-like object
-                 # Call its close method to trigger its own cleanup/save logic
-                 self.actual_controls_module_instance.close()
+               hasattr(self.actual_controls_module_instance, 'close'):
+                 if hasattr(self.actual_controls_module_instance, 'save_mappings_to_file'):
+                     self.actual_controls_module_instance.save_mappings_to_file()
+                 self.actual_controls_module_instance.close() # Let it handle its own cleanup
             elif self.actual_controls_module_instance.parent() is not None:
-                 self.actual_controls_module_instance.setParent(None) # Detach from layout
-            # We don't deleteLater here if we want to reuse the instance.
-            # If we want to recreate it each time, then deleteLater is fine.
+                 self.actual_controls_module_instance.setParent(None)
+            # self.actual_controls_module_instance = None # Set to None if you want to force recreation.
 
         self.show_view("menu")
 
@@ -453,16 +454,12 @@ class MainWindow(QMainWindow):
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent):
-        global _qt_keys_pressed_snapshot, _qt_key_events_this_frame # _qt_key_events_this_frame not directly used here
+        global _qt_keys_pressed_snapshot
         is_auto_repeat = event.isAutoRepeat()
         qt_key = Qt.Key(event.key())
 
         if not is_auto_repeat:
             _qt_keys_pressed_snapshot[qt_key] = False
-            # Storing KeyRelease events in _qt_key_events_this_frame can be done
-            # if input_handler needs to distinguish between press and release events.
-            # For now, only press events are added. If releases are needed for specific logic:
-            # _qt_key_events_this_frame.append((QKeyEvent.Type.KeyRelease, qt_key, is_auto_repeat))
         super().keyReleaseEvent(event)
 
     def _get_input_snapshot(self, player_instance: Player, player_id: int) -> Dict[str, bool]:
@@ -498,16 +495,38 @@ class MainWindow(QMainWindow):
         return action_events
 
     @staticmethod
-    def get_p2_input_snapshot_for_client_thread(player_instance: Any) -> Dict[str, Any]:
+    def get_p1_input_snapshot_for_server_thread(player_instance: Any, platforms_list: List[Any]) -> Dict[str, Any]: # For server's P1
         if MainWindow._instance:
-            global _qt_keys_pressed_snapshot, _qt_key_events_this_frame
+            return MainWindow._instance._get_input_snapshot(player_instance, 1)
+        return {}
+
+    @staticmethod
+    def get_p2_input_snapshot_for_client_thread(player_instance: Any) -> Dict[str, Any]: # For client's P2
+        if MainWindow._instance:
             return MainWindow._instance._get_input_snapshot(player_instance, 2)
         return {}
 
     def _prepare_and_start_game(self, mode: str, map_name: Optional[str] = None, target_ip_port: Optional[str] = None):
         info(f"Preparing to start game mode: {mode}, Map: {map_name}, Target: {target_ip_port}")
-        current_width = self.game_scene_widget.width() or self.width()
-        current_height = self.game_scene_widget.height() or self.height()
+
+        # --- MODIFIED SCREEN DIMENSION LOGIC ---
+        # Use main window's current size as it's more likely to be stable after showMaximized()
+        # than an inactive widget in a QStackedWidget.
+        main_window_size = self.size()
+        current_width = main_window_size.width()
+        current_height = main_window_size.height()
+        
+        # Log what game_scene_widget reports vs main window
+        game_widget_width = self.game_scene_widget.width()
+        game_widget_height = self.game_scene_widget.height()
+        info(f"GameSceneWidget current size: {game_widget_width}x{game_widget_height}")
+        info(f"MainWindow current size: {current_width}x{current_height}")
+
+        if current_width <= 100 or current_height <= 100: # If main window size is unusually small (e.g., before fully shown)
+            info(f"MainWindow size {current_width}x{current_height} seems too small, using initial defaults: {self.initial_main_window_width}x{self.initial_main_window_height}")
+            current_width = self.initial_main_window_width
+            current_height = self.initial_main_window_height
+        # --- END OF MODIFIED SCREEN DIMENSION LOGIC ---
 
         if map_name is None and mode in ["host", "join_lan", "join_ip", "couch_play"]:
             map_name = getattr(C, 'DEFAULT_LEVEL_MODULE_NAME', "level_default")
@@ -521,19 +540,33 @@ class MainWindow(QMainWindow):
         self.game_elements.clear(); self.game_elements.update(initialized_elements)
         self.current_game_mode = mode
         self.setWindowTitle(f"Platformer Adventure LAN - {mode.replace('_',' ').title()}")
+        
         camera = self.game_elements.get("camera")
         if camera:
-            camera.set_screen_dimensions(self.game_scene_widget.width(), self.game_scene_widget.height())
+            # Crucially, set screen dimensions for the camera *after* GameSceneWidget is current and sized
+            # However, for the first initialization, we must use the best guess we have.
+            camera.set_screen_dimensions(float(current_width), float(current_height)) # Use the dimensions passed to init_game_elements
             if "level_pixel_width" in self.game_elements:
                 camera.set_level_dimensions( self.game_elements["level_pixel_width"], self.game_elements["level_min_y_absolute"], self.game_elements["level_max_y_absolute"])
-            # Initial camera focus on P1
-        p1_for_camera_init = self.game_elements.get("player1")
-        if p1_for_camera_init:
-            camera.update(p1_for_camera_init) 
-
+            
+            p1_for_camera_init = self.game_elements.get("player1")
+            if p1_for_camera_init:
+                camera.update(p1_for_camera_init)
+                info(f"Initial camera update called for P1. CamRect: {camera.camera_rect.topLeft()}, P1Rect: {p1_for_camera_init.rect.topLeft()}")
 
         self.game_scene_widget.game_elements = self.game_elements
-        self.show_view("game_scene")
+        self.show_view("game_scene") # This makes game_scene_widget current
+
+        # Now that game_scene_widget is current, its size should be more reliable for a final camera screen update
+        if camera:
+            final_widget_w = self.game_scene_widget.width()
+            final_widget_h = self.game_scene_widget.height()
+            if final_widget_w > 1 and final_widget_h > 1 and (final_widget_w != current_width or final_widget_h != current_height) :
+                info(f"Re-setting camera screen dimensions with final GameSceneWidget size: {final_widget_w}x{final_widget_h}")
+                camera.set_screen_dimensions(float(final_widget_w), float(final_widget_h))
+                p1_for_camera_final = self.game_elements.get("player1")
+                if p1_for_camera_final:
+                    camera.update(p1_for_camera_final) # Re-center with new screen size
 
         if mode in ["host", "join_lan", "join_ip"]: self._start_network_mode(mode, target_ip_port)
 
@@ -720,9 +753,7 @@ class MainWindow(QMainWindow):
                     event.ignore()
                     return
             if isinstance(self.actual_editor_module_instance, QMainWindow) and hasattr(self.actual_editor_module_instance, 'close'):
-                 # Check if closeEvent was already called by its own logic (e.g. standalone window behavior)
-                if not (hasattr(self.actual_editor_module_instance, '_close_event_processed_flag') and self.actual_editor_module_instance._close_event_processed_flag):
-                    self.actual_editor_module_instance.close()
+                self.actual_editor_module_instance.close()
             else:
                 self.actual_editor_module_instance.deleteLater()
             self.actual_editor_module_instance = None
@@ -733,9 +764,9 @@ class MainWindow(QMainWindow):
         joystick_handler.quit_joysticks()
 
         if self.actual_editor_module_instance and isinstance(self.actual_editor_module_instance, QMainWindow):
-             if hasattr(self.actual_editor_module_instance, 'close') and not (hasattr(self.actual_editor_module_instance, '_close_event_processed_flag') and self.actual_editor_module_instance._close_event_processed_flag):
+             if hasattr(self.actual_editor_module_instance, 'close') and not (hasattr(self.actual_editor_module_instance, 'isClosed') and self.actual_editor_module_instance.isClosed()):
                 self.actual_editor_module_instance.close()
-        elif self.actual_editor_module_instance: # If QWidget
+        elif self.actual_editor_module_instance:
              self.actual_editor_module_instance.deleteLater()
 
 
@@ -766,14 +797,14 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
-        if 'critical' in globals() and callable(critical): critical(f"MAIN PySide6 CRITICAL UNHANDLED EXCEPTION: {e}", exc_info=True)
-        else: print(f"MAIN PySide6 CRITICAL UNHANDLED EXCEPTION: {e}"); traceback.print_exc()
+    except Exception as e_main: # Changed variable name
+        if 'critical' in globals() and callable(critical): critical(f"MAIN PySide6 CRITICAL UNHANDLED EXCEPTION: {e_main}", exc_info=True)
+        else: print(f"MAIN PySide6 CRITICAL UNHANDLED EXCEPTION: {e_main}"); traceback.print_exc()
         try:
             error_app = QApplication.instance();
             if not error_app : error_app = QApplication(sys.argv)
             msg_box = QMessageBox(); msg_box.setIcon(QMessageBox.Icon.Critical); msg_box.setText("A critical error occurred and the application must close.")
             log_file_info = LOG_FILE_PATH if LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() else 'console output'
-            msg_box.setInformativeText(f"{e}\n\nDetails might be in {log_file_info}."); msg_box.setStandardButtons(QMessageBox.StandardButton.Ok); msg_box.exec()
+            msg_box.setInformativeText(f"{e_main}\n\nDetails might be in {log_file_info}."); msg_box.setStandardButtons(QMessageBox.StandardButton.Ok); msg_box.exec()
         except Exception as e_msgbox: print(f"FATAL: Could not display Qt error message box: {e_msgbox}")
         sys.exit(1)

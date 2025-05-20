@@ -1,14 +1,14 @@
 # player_input_handler.py
 # -*- coding: utf-8 -*-
 """
-version 2.0.1 (Adapt to simplified QKeyEvent data)
+version 2.0.2 (Added Q for reset if mapped, and W to uncrouch logic)
 Handles processing of player input (Qt events) and translating it to actions.
 """
 import time
 from typing import Dict, List, Any, Optional, Tuple
 
-from PySide6.QtGui import QKeyEvent # Keep for QKeyEvent.Type if needed, but not for event instances
-from PySide6.QtCore import Qt # For Qt.Key enum comparison
+from PySide6.QtGui import QKeyEvent
+from PySide6.QtCore import Qt
 
 import constants as C
 import config as game_config
@@ -24,7 +24,7 @@ def get_input_handler_ticks():
 def process_player_input_logic_pyside(
     player: Any,
     qt_keys_held_snapshot: Dict[Qt.Key, bool],
-    qt_key_event_data_this_frame: List[Tuple[QKeyEvent.Type, Qt.Key, bool]], # MODIFIED: Now a list of tuples
+    qt_key_event_data_this_frame: List[Tuple[QKeyEvent.Type, Qt.Key, bool]],
     active_mappings: Dict[str, Any],
     platforms_list: List[Any],
     joystick_data: Optional[Dict[str, Any]] = None
@@ -50,8 +50,8 @@ def process_player_input_logic_pyside(
     is_joystick_input_type = player.control_scheme and player.control_scheme.startswith("joystick_")
 
     # --- Part 1: Process universal events (reset, pause) from DISCRETE key event data ---
-    for event_type, key_code, _ in qt_key_event_data_this_frame: # MODIFIED: Unpack tuple
-        if event_type == QKeyEvent.Type.KeyPress: # Only process key presses for events
+    for event_type, key_code, _ in qt_key_event_data_this_frame:
+        if event_type == QKeyEvent.Type.KeyPress:
             if not is_joystick_input_type:
                 if active_mappings.get("reset") == key_code: action_events["reset"] = True
                 if active_mappings.get("pause") == key_code: action_events["pause"] = True
@@ -72,7 +72,6 @@ def process_player_input_logic_pyside(
                     current_hat_val = tuple(joystick_data.get('hats', {}).get(hat_id, (0,0)))
                     if current_hat_val == hat_val_target and hat_val_target != (0,0):
                          action_events[action_name_check] = True
-                # Axis for reset/pause can be handled similarly if needed
 
     # --- Part 2: Populate action_state (continuous HELD inputs for movement/aiming) ---
     if not is_joystick_input_type: # Keyboard
@@ -129,7 +128,7 @@ def process_player_input_logic_pyside(
         return {"reset": action_events.get("reset", False), "pause": action_events.get("pause", False)}
 
     # --- Part 3: Populate remaining action_events from DISCRETE key event data ---
-    for event_type, key_code, _ in qt_key_event_data_this_frame: # MODIFIED: Unpack tuple
+    for event_type, key_code, _ in qt_key_event_data_this_frame:
         if event_type == QKeyEvent.Type.KeyPress:
             if not (active_mappings.get("reset") == key_code or active_mappings.get("pause") == key_code):
                 for action_name, mapped_val in active_mappings.items():
@@ -207,13 +206,14 @@ def process_player_input_logic_pyside(
         elif player.is_holding_crouch_ability_key: player.vel.setY(C.PLAYER_LADDER_CLIMB_SPEED)
         else: player.vel.setY(0)
 
-    if action_events.get("crouch"):
+    # CROUCH LOGIC
+    if action_events.get("crouch"): # This is the "S" key by default
         if player.is_crouching:
             if player.can_stand_up(platforms_list):
                 player.is_crouching = False
                 next_f_state = ('burning' if player.is_aflame else 'deflame') if (player.is_aflame or player.is_deflaming) else ('run' if player_intends_horizontal_move else 'idle')
                 player.set_state(next_f_state)
-        else:
+        else: # Not crouching, try to crouch
             can_crouch_now = player.on_ground and not player.on_ladder and not player.is_sliding and \
                                not (player.is_dashing or player.is_rolling or player.is_attacking or \
                                     player.state in ['turn','hit','death','death_nm', 'frozen', 'defrost', 'jump'])
@@ -221,7 +221,19 @@ def process_player_input_logic_pyside(
                 player.is_crouching = True
                 next_f_state = ('aflame_crouch' if player.is_aflame else 'deflame_crouch') if (player.is_aflame or player.is_deflaming) else ('crouch_trans' if player.animations.get('crouch_trans') else 'crouch')
                 player.set_state(next_f_state)
+    
+    # Uncrouch with "W" (up key) if player is crouching and "up" event occurred
+    # This is separate from the "crouch" toggle event.
+    if action_events.get("up") and not is_joystick_input_type: # Keyboard specific 'W' for uncrouch
+        if player.is_crouching and player.can_stand_up(platforms_list):
+            player.is_crouching = False
+            player_intends_horizontal_move_after_uncrouch = action_state["left"] or action_state["right"]
+            next_f_state_after_uncrouch = ('burning' if player.is_aflame else 'deflame') if (player.is_aflame or player.is_deflaming) else ('run' if player_intends_horizontal_move_after_uncrouch else 'idle')
+            player.set_state(next_f_state_after_uncrouch)
+            action_events["up"] = False # Consume the "up" event if it was used for uncrouching
+            action_events["jump"] = False # And also don't let it trigger a jump
 
+    # Visual state for crouching movement
     if player.is_crouching and player_intends_horizontal_move:
         if player.is_aflame and player.state not in ['burning_crouch', 'aflame_crouch']: player.set_state('burning_crouch')
         elif player.is_deflaming and player.state != 'deflame_crouch': player.set_state('deflame_crouch')
@@ -231,15 +243,16 @@ def process_player_input_logic_pyside(
         elif player.is_deflaming and player.state != 'deflame_crouch': player.set_state('deflame_crouch')
         elif not (player.is_aflame or player.is_deflaming) and player.state == 'crouch_walk': player.set_state('crouch')
 
-    joystick_up_for_jump = False
-    if joystick_data:
+    # JUMP LOGIC
+    joystick_jump_pressed = False
+    if is_joystick_input_type and joystick_data:
         current_buttons = joystick_data.get('buttons_current',{})
         prev_buttons = joystick_data.get('buttons_prev',{})
         jump_mapping = active_mappings.get("jump")
         if isinstance(jump_mapping, dict) and jump_mapping.get("type") == "button":
             btn_id = jump_mapping.get("id")
             if current_buttons.get(btn_id,False) and not prev_buttons.get(btn_id,False):
-                joystick_up_for_jump = True
+                joystick_jump_pressed = True
 
     can_initiate_jump_action = not (player.is_attacking or player.is_dashing or player.is_rolling or player.is_sliding) and \
                                player.state not in ['turn', 'death', 'death_nm', 'frozen', 'defrost']
@@ -247,12 +260,17 @@ def process_player_input_logic_pyside(
         if player.state == 'hit': can_initiate_jump_action = False
         if player.is_taking_hit and (current_time_ms - player.hit_timer < player.hit_duration): can_initiate_jump_action = False
 
-    if (action_events.get("jump") or joystick_up_for_jump) and can_initiate_jump_action:
-        can_actually_execute_jump = not player.is_crouching or player.can_stand_up(platforms_list)
-        if player.is_crouching and can_actually_execute_jump:
-            player.is_crouching = False
-            if player.is_aflame: player.set_state('burning')
-            elif player.is_deflaming: player.set_state('deflame')
+    if (action_events.get("jump") or joystick_jump_pressed) and can_initiate_jump_action: # "jump" event often comes from "up"
+        can_actually_execute_jump = not player.is_crouching # If already crouching, "up" might uncrouch first
+        if player.is_crouching: # If "up" was used to uncrouch, don't jump immediately unless jump is a separate button
+             # This condition is a bit tricky. If "up" and "jump" are the same key,
+             # and "up" just uncrouched the player, we might not want to immediately jump.
+             # However, if jump is a dedicated button, then this is fine.
+             # The current logic for keyboard maps "W" to both "up" and "jump".
+             # The added "uncrouch with W" logic above sets action_events["jump"] = False
+             # if "up" was used to uncrouch.
+             pass
+        
         if can_actually_execute_jump:
             if player.on_ground: player.vel.setY(C.PLAYER_JUMP_STRENGTH); player.set_state('jump'); player.on_ground = False
             elif player.on_ladder:
@@ -312,7 +330,7 @@ def process_player_input_logic_pyside(
             else:
                 target_idle_state = ('burning' if player.is_aflame else 'deflame') if (player.is_aflame or player.is_deflaming) else 'idle'
                 if player.state != target_idle_state and player.animations.get(target_idle_state): player.set_state(target_idle_state)
-        else:
+        else: # In air
             if player.touching_wall != 0 and not player.is_dashing and not player.is_rolling and not is_on_fire_visual:
                 wall_time = get_input_handler_ticks()
                 climb_expired = (player.wall_climb_duration > 0 and player.wall_climb_timer > 0 and wall_time - player.wall_climb_timer > player.wall_climb_duration)
