@@ -2833,43 +2833,52 @@
             "asset_editor_key": "player1_spawn",
             "world_x": 80.0,
             "world_y": 1880.0,
-            "game_type_id": "player1_spawn"
+            "game_type_id": "player1_spawn",
+            "properties": {}
         },
         {
             "asset_editor_key": "player2_spawn",
             "world_x": 80,
             "world_y": 1840.0,
-            "game_type_id": "player2_spawn"
+            "game_type_id": "player2_spawn",
+            "properties": {
+                "max_health": 50
+            }
         },
         {
             "asset_editor_key": "enemy_yellow",
             "world_x": 320,
             "world_y": 1880,
-            "game_type_id": "enemy_yellow"
+            "game_type_id": "enemy_yellow",
+            "properties": {}
         },
         {
             "asset_editor_key": "enemy_purple",
             "world_x": 400,
             "world_y": 1920,
-            "game_type_id": "enemy_purple"
+            "game_type_id": "enemy_purple",
+            "properties": {}
         },
         {
             "asset_editor_key": "enemy_pink",
             "world_x": 440,
             "world_y": 1920,
-            "game_type_id": "enemy_pink"
+            "game_type_id": "enemy_pink",
+            "properties": {}
         },
         {
             "asset_editor_key": "enemy_green",
             "world_x": 480,
             "world_y": 1920.0,
-            "game_type_id": "enemy_green"
+            "game_type_id": "enemy_green",
+            "properties": {}
         },
         {
             "asset_editor_key": "chest",
             "world_x": 1280.0,
             "world_y": 1880,
-            "game_type_id": "chest"
+            "game_type_id": "chest",
+            "properties": {}
         },
         {
             "asset_editor_key": "hazard_lava_tile",
@@ -2962,7 +2971,9 @@
             "game_type_id": "platform_ledge_green_one_fourth"
         }
     ],
-    "camera_offset_x": 0,
-    "camera_offset_y": 1300.0,
-    "show_grid": true
+    "camera_offset_x": 9.0,
+    "camera_offset_y": 1562.0,
+    "zoom_level": 1.0,
+    "show_grid": true,
+    "asset_specific_variables": {}
 }

@@ -1,16 +1,19 @@
-[2025-05-20 09:36:49.140] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-20 09:36:49.141] INFO    PlatformerLogger: MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
-[2025-05-20 09:36:49.297] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
-[2025-05-20 09:36:49.298] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
-[2025-05-20 09:36:49.326] INFO    PlatformerLogger: MAIN PySide6: Application starting...
-[2025-05-20 09:36:49.327] INFO    PlatformerLogger: MAIN PySide6: Initial window size: 1152x604
-[2025-05-20 09:36:49.329] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
-[2025-05-20 09:36:49.330] INFO    PlatformerLogger: Keyboard mapping translation complete.
-[2025-05-20 09:36:49.340] INFO    PlatformerLogger: Switching UI view to: menu
-[2025-05-20 09:36:50.640] INFO    PlatformerLogger: Close event received. Shutting down application.
-[2025-05-20 09:36:50.640] INFO    PlatformerLogger: APP_STATUS: quit_app() called.
-[2025-05-20 09:36:50.640] DEBUG   PlatformerLogger: APP_STATUS: Requesting QApplication.quit().
-[2025-05-20 09:36:50.641] INFO    PlatformerLogger: Stopping game mode: None
-[2025-05-20 09:36:50.641] INFO    PlatformerLogger: Game mode 'None' stopped and cleaned.
-[2025-05-20 09:36:50.642] INFO    PlatformerLogger: MAIN PySide6: Application terminated via closeEvent.
-[2025-05-20 09:36:50.679] INFO    PlatformerLogger: MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-20 09:42:01.516] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 09:42:01.517] INFO    PlatformerLogger: MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
+[2025-05-20 09:42:01.731] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
+[2025-05-20 09:42:01.731] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
+[2025-05-20 09:42:01.761] INFO    PlatformerLogger: MAIN PySide6: Application starting...
+[2025-05-20 09:42:01.762] INFO    PlatformerLogger: MAIN PySide6: Initial normal window size: 1152x604 (will attempt to show maximized)
+[2025-05-20 09:42:01.766] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
+[2025-05-20 09:42:01.766] INFO    PlatformerLogger: Keyboard mapping translation complete.
+[2025-05-20 09:42:01.777] INFO    PlatformerLogger: Switching UI view to: menu
+[2025-05-20 09:42:03.055] INFO    PlatformerLogger: Switching UI view to: editor
+[2025-05-20 09:42:03.055] INFO    PlatformerLogger: MAIN PySide6: Attempting to create and embed editor instance.
+[2025-05-20 09:42:03.431] INFO    PlatformerLogger: MAIN PySide6: Editor QMainWindow instance added to editor_content_container.
+[2025-05-20 09:42:05.906] INFO    PlatformerLogger: Close event received. Shutting down application.
+[2025-05-20 09:42:05.917] INFO    PlatformerLogger: APP_STATUS: quit_app() called.
+[2025-05-20 09:42:05.917] DEBUG   PlatformerLogger: APP_STATUS: Requesting QApplication.quit().
+[2025-05-20 09:42:05.919] INFO    PlatformerLogger: Stopping game mode: None
+[2025-05-20 09:42:05.919] INFO    PlatformerLogger: Game mode 'None' stopped and cleaned.
+[2025-05-20 09:42:05.922] INFO    PlatformerLogger: MAIN PySide6: Application terminated via closeEvent.
+[2025-05-20 09:42:05.964] INFO    PlatformerLogger: MAIN PySide6: QApplication event loop finished. Exit code: 0

@@ -159,7 +159,7 @@ class MainWindow(QMainWindow):
         initial_height = max(600, min(int(screen_geo.height() * 0.9), 1080))
         self.setMinimumSize(QSize(800,600))
         self.resize(initial_width, initial_height)
-        info(f"MAIN PySide6: Initial window size: {self.size().width()}x{self.size().height()}")
+        info(f"MAIN PySide6: Initial normal window size: {self.size().width()}x{self.size().height()} (will attempt to show maximized)")
 
         self.fonts = {
             "small": QFont("Arial", 10), "medium": QFont("Arial", 14),
@@ -208,7 +208,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.settings_view_page) # Add the page that contains the settings content
         
         self.setCentralWidget(self.stacked_widget)
-        self.show_view("menu")
+        self.show_view("menu") # This sets the initial view but doesn't make the main window visible yet
 
         self.network_status_update.connect(self.on_network_status_update)
         self.lan_server_search_status.connect(self.on_lan_server_search_status_update)
@@ -758,7 +758,7 @@ def main():
     else: info("MAIN PySide6: Application starting...")
 
     main_window = MainWindow()
-    main_window.show()
+    main_window.showMaximized() # <--- MODIFIED: Show the window maximized
     
     exit_code = app.exec()
     info(f"MAIN PySide6: QApplication event loop finished. Exit code: {exit_code}")
