@@ -1,12 +1,10 @@
-#################### START OF FILE: game_ui.py ####################
-
 # game_ui.py
 # -*- coding: utf-8 -*-
 """
 Manages UI elements for the PySide6 version of the game.
 This includes menus, dialogs, HUD, and game scene rendering.
 """
-# version 2.0.2 
+# version 2.0.3 (Implemented Option A for static tile rendering)
 
 import sys
 import os
@@ -27,14 +25,14 @@ from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF, Signal, QTimer
 
 # Game imports
 import constants as C
-import config as game_config
-import joystick_handler
+import config as game_config # Though not directly used in this version of game_ui.py, good for context
+import joystick_handler # Same as above
+from tiles import Platform, Ladder, Lava # Import static tile types
 
 _start_time_game_ui = time.monotonic()
 def get_current_ticks():
     """
     Returns the number of milliseconds since this module was initialized.
-
     """
     return int((time.monotonic() - _start_time_game_ui) * 1000)
 
@@ -44,6 +42,15 @@ try:
     PYPERCLIP_AVAILABLE_UI_MODULE = True
 except ImportError:
     pass
+
+
+def get_clipboard_text_qt() -> Optional[str]: # Added for completeness, though not used in this file
+    clipboard = QApplication.clipboard()
+    return clipboard.text() if clipboard else None
+
+def set_clipboard_text_qt(text: str): # Added for completeness, though not used in this file
+    clipboard = QApplication.clipboard()
+    if clipboard: clipboard.setText(text)
 
 
 def draw_health_bar_qt(painter: QPainter, x: float, y: float,
@@ -95,10 +102,7 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: A
 
     font_metrics = QFontMetrics(hud_qfont)
     label_text_height = float(font_metrics.height())
-    # For drawText with QPointF, the point is the baseline of the text.
-    # So, y + ascent() or y + height() might be needed for precise top-left alignment of text block.
-    # For simplicity, drawText(QPointF, str) draws with point as top-left.
-    painter.drawText(QPointF(x, y + label_text_height - font_metrics.descent()), player_label_text) # Adjust y for text baseline
+    painter.drawText(QPointF(x, y + label_text_height - font_metrics.descent()), player_label_text)
     label_height_offset = label_text_height
 
     health_bar_pos_x = x
@@ -111,11 +115,9 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: A
                        player_instance.current_health, player_instance.max_health)
 
     health_value_text = f"{int(player_instance.current_health)}/{int(player_instance.max_health)}"
-    # Get proper text bounding rect for centering
     text_bounding_rect = font_metrics.boundingRect(health_value_text)
 
     health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 10.0
-    # Center text vertically within the health bar's height
     health_text_pos_y = health_bar_pos_y + (hud_health_bar_height - text_bounding_rect.height()) / 2.0 + font_metrics.ascent()
     painter.drawText(QPointF(health_text_pos_x, health_text_pos_y), health_value_text)
 
@@ -137,7 +139,7 @@ class GameSceneWidget(QWidget):
         self.download_progress_percent = download_prog
         self.update()
 
-    def paintEvent(self, event: Any):
+    def paintEvent(self, event: Any): # event type is QPaintEvent, but Any is fine for now
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
@@ -149,10 +151,23 @@ class GameSceneWidget(QWidget):
 
         if camera_instance:
             for entity in all_renderables:
-                if hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
-                   hasattr(entity, 'rect') and entity.rect and hasattr(entity, 'alive') and entity.alive():
+                # MODIFIED RENDER CONDITION
+                is_static_tile = isinstance(entity, (Platform, Ladder, Lava))
+                can_render_entity = False
+                if is_static_tile:
+                    # Static tiles are always "alive" for rendering if they have image and rect
+                    can_render_entity = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
+                                        hasattr(entity, 'rect') and entity.rect
+                else:
+                    # Dynamic entities need the alive check
+                    can_render_entity = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
+                                        hasattr(entity, 'rect') and entity.rect and \
+                                        hasattr(entity, 'alive') and entity.alive()
+
+                if can_render_entity:
                     screen_rect = camera_instance.apply(entity.rect)
                     painter.drawPixmap(screen_rect.topLeft(), entity.image)
+            # END OF MODIFIED RENDER CONDITION
 
             enemy_list_for_hb: List[Any] = self.game_elements.get("enemy_list", [])
             for enemy in enemy_list_for_hb:
@@ -167,15 +182,27 @@ class GameSceneWidget(QWidget):
                     hb_x = enemy_screen_rect.center().x() - hb_w / 2.0
                     hb_y = enemy_screen_rect.top() - hb_h - float(getattr(C, 'HEALTH_BAR_OFFSET_ABOVE', 5))
                     draw_health_bar_qt(painter, hb_x, hb_y, hb_w, hb_h, enemy.current_health, enemy.max_health)
-        else:
+        else: # Fallback if no camera (should not happen in normal game modes)
             for entity in all_renderables:
-                 if hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
-                    hasattr(entity, 'rect') and entity.rect and hasattr(entity, 'alive') and entity.alive():
+                 # MODIFIED RENDER CONDITION (simplified for no camera)
+                is_static_tile_no_cam = isinstance(entity, (Platform, Ladder, Lava))
+                can_render_no_cam = False
+                if is_static_tile_no_cam:
+                    can_render_no_cam = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
+                                        hasattr(entity, 'rect') and entity.rect
+                else:
+                    can_render_no_cam = hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
+                                        hasattr(entity, 'rect') and entity.rect and \
+                                        hasattr(entity, 'alive') and entity.alive()
+
+                if can_render_no_cam:
                      painter.drawPixmap(entity.rect.topLeft(), entity.image)
+                # END OF MODIFIED RENDER CONDITION (simplified for no camera)
+
 
         player1 = self.game_elements.get("player1")
         player2 = self.game_elements.get("player2")
-        hud_font = self.fonts.get("medium_qfont", QFont("Arial", 12)) # Use specific key or default
+        hud_font = self.fonts.get("medium_qfont", QFont("Arial", 12))
 
         if player1 and hasattr(player1, '_valid_init') and player1._valid_init and \
            hasattr(player1, 'alive') and player1.alive() and not getattr(player1, 'is_petrified', False):
@@ -193,30 +220,25 @@ class GameSceneWidget(QWidget):
             painter.fillRect(dialog_rect, QColor(50,50,50, 200))
             painter.setPen(QColor(*C.WHITE)); painter.drawRect(dialog_rect)
 
-            title_font = self.fonts.get("large_qfont", QFont("Arial", 24, QFont.Weight.Bold)) # Corrected: QFont.Bold
+            title_font = self.fonts.get("large_qfont", QFont("Arial", 24, QFont.Weight.Bold))
             msg_font = self.fonts.get("medium_qfont", QFont("Arial", 12))
 
             painter.setFont(title_font)
-            # For drawText with QRectF, provide alignment flags
             painter.drawText(dialog_rect.adjusted(10,10,-10,-10), Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, "File Transfer")
 
             painter.setFont(msg_font)
-            painter.drawText(dialog_rect.adjusted(10, QFontMetrics(title_font).height() + 20, -10, -10), # Adjust y based on title height
+            painter.drawText(dialog_rect.adjusted(10, QFontMetrics(title_font).height() + 20, -10, -10),
                              Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, self.download_status_message)
 
             if self.download_progress_percent is not None and self.download_progress_percent >= 0:
                 bar_margin = 20.0; bar_h = 30.0
-                # Position progress bar below message text
                 msg_text_rect = QFontMetrics(msg_font).boundingRect(dialog_rect.adjusted(10, QFontMetrics(title_font).height() + 20, -10, -10),
                                                                    Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, self.download_status_message)
-
                 bar_y_pos = dialog_rect.top() + QFontMetrics(title_font).height() + 20 + msg_text_rect.height() + 15
-
                 bar_rect = QRectF(dialog_rect.left() + bar_margin, bar_y_pos,
                                   dialog_rect.width() - 2 * bar_margin, bar_h)
-                if bar_rect.bottom() > dialog_rect.bottom() - bar_margin: # Ensure bar fits
+                if bar_rect.bottom() > dialog_rect.bottom() - bar_margin:
                     bar_rect.setHeight(max(5.0, dialog_rect.bottom() - bar_margin - bar_y_pos))
-
 
                 painter.fillRect(bar_rect, QColor(*C.GRAY))
                 fill_width = bar_rect.width() * (self.download_progress_percent / 100.0)
@@ -250,8 +272,17 @@ class SelectMapDialog(QDialog):
     def populate_maps(self):
         self.list_widget.clear()
         maps_dir = getattr(C, "MAPS_DIR", "maps")
+        # Ensure maps_dir is absolute if it's relative
+        if not os.path.isabs(maps_dir):
+            # Assuming C.MAPS_DIR is relative to the project root where constants.py is
+            # To get to project root from game_ui.py: os.path.dirname(os.path.abspath(__file__)) -> game_ui's dir
+            # then os.path.dirname() again to get project root
+            project_root_from_game_ui = os.path.dirname(os.path.abspath(__file__))
+            maps_dir = os.path.join(project_root_from_game_ui, maps_dir)
+
         if os.path.exists(maps_dir) and os.path.isdir(maps_dir):
             try:
+                # Exclude level_default from selection in the game UI
                 map_files = [f[:-3] for f in os.listdir(maps_dir) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"]
                 map_files.sort()
                 if map_files:
@@ -306,5 +337,3 @@ class IPInputDialog(QDialog):
             super().accept()
         else:
             QMessageBox.warning(self, "Input Error", "IP and Port cannot be empty.")
-
-#################### END OF FILE: game_ui.py ####################
