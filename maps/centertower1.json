@@ -960,18 +960,6 @@
             "game_type_id": "enemy_pink"
         },
         {
-            "asset_editor_key": "enemy_red",
-            "world_x": 440,
-            "world_y": 480,
-            "game_type_id": "enemy_red"
-        },
-        {
-            "asset_editor_key": "enemy_red",
-            "world_x": 520.0,
-            "world_y": 520.0,
-            "game_type_id": "enemy_red"
-        },
-        {
             "asset_editor_key": "platform_wall_gray",
             "world_x": 400,
             "world_y": 720.0,

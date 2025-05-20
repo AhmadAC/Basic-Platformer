@@ -1,6 +1,4 @@
-#################### START OF FILE: editor\editor_history.py ####################
-
-# editor_history.py
+# editor/editor_history.py
 # -*- coding: utf-8 -*-
 """
 ## version 2.0.0 (PySide6 Conversion)
@@ -44,27 +42,63 @@ def restore_map_from_snapshot(editor_state: EditorState, snapshot: Dict[str, Any
     editor_state.map_name_for_function = snapshot.get("map_name_for_function", "untitled_map")
     editor_state.map_width_tiles = snapshot.get("map_width_tiles", ED_CONFIG.DEFAULT_MAP_WIDTH_TILES)
     editor_state.map_height_tiles = snapshot.get("map_height_tiles", ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES)
-    editor_state.grid_size = snapshot.get("grid_size", ED_CONFIG.BASE_GRID_SIZE) # Use BASE_GRID_SIZE
+    editor_state.grid_size = snapshot.get("grid_size", ED_CONFIG.BASE_GRID_SIZE)
 
     bg_color_data = snapshot.get("background_color", list(ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE))
     editor_state.background_color = tuple(cast(List[int], bg_color_data))
 
     loaded_objects = snapshot.get("placed_objects", [])
     restored_objects = []
+
+    # Pre-build a lookup map from game_type_id to the editor_palette_key
+    game_id_to_palette_key_map = {}
+    # Ensure ED_CONFIG.EDITOR_PALETTE_ASSETS is available and populated correctly
+    # It's assumed editor_config (ED_CONFIG) is imported and EDITOR_PALETTE_ASSETS is accessible
+    if hasattr(ED_CONFIG, 'EDITOR_PALETTE_ASSETS'):
+        for pk, p_data in ED_CONFIG.EDITOR_PALETTE_ASSETS.items():
+            gid = p_data.get("game_type_id")
+            if gid:
+                game_id_to_palette_key_map[gid] = pk
+    else:
+        logger.error("ED_CONFIG.EDITOR_PALETTE_ASSETS not found. Asset key remapping will not work.")
+
+
     for obj_data in loaded_objects:
         new_obj = obj_data.copy()
         if "override_color" in new_obj and isinstance(new_obj["override_color"], list):
             new_obj["override_color"] = tuple(new_obj["override_color"])
-        # Ensure 'properties' key exists if asset has editable vars, even if empty
+
+        # Reconcile asset_editor_key
+        current_asset_editor_key = new_obj.get("asset_editor_key")
         game_id = new_obj.get("game_type_id")
+
+        if current_asset_editor_key not in ED_CONFIG.EDITOR_PALETTE_ASSETS and game_id:
+            canonical_palette_key = game_id_to_palette_key_map.get(game_id)
+            if canonical_palette_key:
+                logger.info(f"Remapping loaded object's asset_editor_key from '{current_asset_editor_key}' to '{canonical_palette_key}' based on game_type_id '{game_id}'.")
+                new_obj["asset_editor_key"] = canonical_palette_key
+            # If still not found, it will be handled by draw_placed_objects warning
+            elif current_asset_editor_key: # Only warn if it was trying to use a key
+                 logger.warning(f"Could not find a canonical palette key for loaded object with asset_editor_key '{current_asset_editor_key}' and game_type_id '{game_id}'. Display may be affected.")
+
+
         if game_id and game_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES and "properties" not in new_obj:
-            new_obj["properties"] = {} # Initialize if missing
+            new_obj["properties"] = {}
         restored_objects.append(new_obj)
     editor_state.placed_objects = restored_objects
 
-    editor_state.camera_offset_x = snapshot.get("camera_offset_x", 0)
-    editor_state.camera_offset_y = snapshot.get("camera_offset_y", 0)
-    editor_state.zoom_level = snapshot.get("zoom_level", 1.0) # NEW: Restore zoom level
+    # Temporarily override camera offset to ensure visibility after loading
+    # This helps if a map was saved with an unusual offset.
+    # Remove or adjust this override for production if saved offsets are desired.
+    editor_state.camera_offset_x = 0.0
+    editor_state.camera_offset_y = 0.0
+    logger.warning("Camera offset from loaded map snapshot is temporarily overridden to (0,0) for visibility testing.")
+    # Original lines:
+    # editor_state.camera_offset_x = snapshot.get("camera_offset_x", 0)
+    # editor_state.camera_offset_y = snapshot.get("camera_offset_y", 0)
+
+
+    editor_state.zoom_level = snapshot.get("zoom_level", 1.0)
     editor_state.show_grid = snapshot.get("show_grid", True)
 
     editor_state.asset_specific_variables = {k: v.copy() for k, v in snapshot.get("asset_specific_variables", {}).items()}
@@ -165,5 +199,3 @@ def redo(editor_state: EditorState) -> bool:
     except Exception as e:
         logger.error(f"Unexpected error during redo restore: {e}", exc_info=True)
         return False
-
-#################### END OF FILE: editor\editor_history.py ####################

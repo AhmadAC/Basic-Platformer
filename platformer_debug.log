@@ -1,11 +1,11 @@
-[2025-05-20 08:43:04.098] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-20 08:43:04.099] INFO    PlatformerLogger: MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
-[2025-05-20 08:43:04.291] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
-[2025-05-20 08:43:04.292] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
-[2025-05-20 08:43:04.320] INFO    PlatformerLogger: MAIN PySide6: Application starting...
-[2025-05-20 08:43:04.321] INFO    PlatformerLogger: MAIN PySide6: Initial window size: 1152x604
-[2025-05-20 08:43:04.324] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
-[2025-05-20 08:43:04.324] INFO    PlatformerLogger: Keyboard mapping translation complete.
-[2025-05-20 08:43:04.334] INFO    PlatformerLogger: Switching UI view to: menu
-[2025-05-20 08:43:05.721] INFO    PlatformerLogger: Switching UI view to: editor
-[2025-05-20 08:43:05.721] INFO    PlatformerLogger: MAIN PySide6: Creating instance of ActualEditorWindow for embedding.
+[2025-05-20 09:01:39.072] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 09:01:39.074] INFO    PlatformerLogger: MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
+[2025-05-20 09:01:39.260] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
+[2025-05-20 09:01:39.261] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
+[2025-05-20 09:01:39.290] INFO    PlatformerLogger: MAIN PySide6: Application starting...
+[2025-05-20 09:01:39.290] INFO    PlatformerLogger: MAIN PySide6: Initial window size: 1152x604
+[2025-05-20 09:01:39.294] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
+[2025-05-20 09:01:39.294] INFO    PlatformerLogger: Keyboard mapping translation complete.
+[2025-05-20 09:01:39.303] INFO    PlatformerLogger: Switching UI view to: menu
+[2025-05-20 09:01:40.354] INFO    PlatformerLogger: Switching UI view to: editor
+[2025-05-20 09:01:40.354] INFO    PlatformerLogger: MAIN PySide6: Creating instance of ActualEditorWindow for embedding.

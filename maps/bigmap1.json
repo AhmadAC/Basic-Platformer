@@ -2848,12 +2848,6 @@
             "game_type_id": "enemy_yellow"
         },
         {
-            "asset_editor_key": "enemy_red",
-            "world_x": 360,
-            "world_y": 1920,
-            "game_type_id": "enemy_red"
-        },
-        {
             "asset_editor_key": "enemy_purple",
             "world_x": 400,
             "world_y": 1920,

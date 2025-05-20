@@ -795,12 +795,7 @@
             "world_y": 440,
             "game_type_id": "enemy_pink"
         },
-        {
-            "asset_editor_key": "enemy_red",
-            "world_x": 680,
-            "world_y": 560,
-            "game_type_id": "enemy_red"
-        },
+
         {
             "asset_editor_key": "player1_spawn",
             "world_x": 80,

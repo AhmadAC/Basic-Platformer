@@ -417,12 +417,7 @@
             "world_y": 720.0,
             "game_type_id": "enemy_yellow"
         },
-        {
-            "asset_editor_key": "enemy_orange",
-            "world_x": 120,
-            "world_y": 720.0,
-            "game_type_id": "enemy_red"
-        },
+
         {
             "asset_editor_key": "enemy_purple",
             "world_x": 200,

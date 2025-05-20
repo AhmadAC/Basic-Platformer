@@ -105,7 +105,7 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "category": "enemy", "name_in_palette": "Enemy Green"},
     "enemy_pink": { "source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "category": "enemy", "name_in_palette": "Enemy Pink"},
     "enemy_purple": { "source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "category": "enemy", "name_in_palette": "Enemy Purple"},
-    "enemy_orange": { "source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_red", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"},
+    "enemy_orange": { "source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_orange", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"},
     "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
     # Items
     "chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "category": "item", "name_in_palette": "Chest"},
@@ -162,11 +162,6 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "health": {"type": "int", "default": 5, "min": 1, "max": 20, "label": "Health"},
         "attack_damage": {"type": "int", "default": getattr(C, 'ENEMY_ATTACK_DAMAGE',10)//2, "min": 0, "max": 10, "label": "Attack Damage"},
          "can_fly": {"type": "bool", "default": True, "label": "Can Fly"}
-    },
-    "enemy_red": {
-        "health": {"type": "int", "default": 3, "min": 1, "max": 20, "label": "Health"},
-        "is_aggressive": {"type": "bool", "default": True, "label": "Is Aggressive"},
-        "aggro_range_tiles": {"type": "int", "default": 8, "min":0, "max": 30, "label": "Aggro Range (Tiles)"}
     },
     "enemy_yellow": {
         "health": {"type": "int", "default": 3, "min": 1, "max": 20, "label": "Health"},
