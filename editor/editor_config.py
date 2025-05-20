@@ -71,7 +71,7 @@ MAP_VIEW_HOVER_RECT_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'LIGHT_BLUE', (
 CURSOR_ASSET_ALPHA = 100 # Opacity for cursor preview (0-255)
 
 # --- Minimap Configuration ---
-MINIMAP_ENABLED = False
+MINIMAP_ENABLED = True
 MINIMAP_DEFAULT_WIDTH = 200
 MINIMAP_DEFAULT_HEIGHT = 150
 MINIMAP_BACKGROUND_COLOR_TUPLE: Tuple[int,int,int,int] = (40, 40, 50, 230) # RGBA
