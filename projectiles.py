@@ -82,11 +82,11 @@ class BaseProjectile:
         
         # Initial rect based on current image and spawn position (center of projectile)
         rect_w, rect_h = self.image.width(), self.image.height()
-        rect_x = float(x - rect_w / 2.0)
+        rect_x = float(x - rect_w / 2.0) 
         rect_y = float(y - rect_h / 2.0)
         self.rect = QRectF(rect_x, rect_y, float(rect_w), float(rect_h))
-        
-        self.pos = QPointF(float(x), float(y)) # Position is center of projectile
+        #projectile spawn from player
+        self.pos = QPointF(float(x)-30, float(y-30)) # Position is center of projectile
 
         # Normalize direction and set velocity
         direction_mag = math.sqrt(direction_qpointf.x()**2 + direction_qpointf.y()**2)
