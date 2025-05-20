@@ -6,9 +6,10 @@
 Handles network data serialization, deserialization, and input processing
 for the Player class in a PySide6 environment.
 """
-# version 2.0.1 (PySide6 Refactor - Corrected set_player_state import in handle_player_network_input)
+# version 2.0.2
 
 from typing import Dict, Any, List
+import time # For get_current_ticks fallback
 
 # PySide6 imports
 from PySide6.QtCore import QPointF
@@ -23,15 +24,13 @@ try:
 except ImportError:
     def debug(msg): print(f"DEBUG_PNET: {msg}")
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_player_net = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_player_net) * 1000)
+_start_time_player_net = time.monotonic()
+def get_current_ticks():
+    """
+    Returns the number of milliseconds since this module was initialized.
+
+    """
+    return int((time.monotonic() - _start_time_player_net) * 1000)
 
 
 def get_player_network_data(player) -> Dict[str, Any]:
@@ -97,15 +96,15 @@ def set_player_network_data(player, network_data: Dict[str, Any]):
         if new_is_smashed_net:
             if not player.is_stone_smashed: player.is_stone_smashed = True; state_changed_by_priority = True
             player.stone_smashed_timer_start = network_data.get('stone_smashed_timer_start', player.stone_smashed_timer_start)
-            player.is_dead = True 
+            player.is_dead = True
             player.death_animation_finished = network_data.get('death_animation_finished', player.death_animation_finished)
             if player.state != 'smashed': set_player_state(player, 'smashed')
-        else: 
+        else:
             if player.is_stone_smashed: player.is_stone_smashed = False; state_changed_by_priority = True
-            player.is_dead = True 
-            player.death_animation_finished = True 
+            player.is_dead = True
+            player.death_animation_finished = True
             if player.state != 'petrified': set_player_state(player, 'petrified')
-    elif player.is_petrified: 
+    elif player.is_petrified:
         player.is_petrified = False; player.is_stone_smashed = False; state_changed_by_priority = True
         player.was_crouching_when_petrified = False
 
@@ -114,9 +113,9 @@ def set_player_network_data(player, network_data: Dict[str, Any]):
             player.is_dead = new_is_dead_net
             state_changed_by_priority = True
             if player.is_dead:
-                player.current_health = 0 
+                player.current_health = 0
                 if player.state not in ['death', 'death_nm']: set_player_state(player, 'death')
-            else: 
+            else:
                 if player.state in ['death', 'death_nm']: set_player_state(player, 'idle')
                 player.death_animation_finished = False
         else: player.is_dead = new_is_dead_net
@@ -135,7 +134,7 @@ def set_player_network_data(player, network_data: Dict[str, Any]):
         new_is_defrosting = network_data.get('is_defrosting', player.is_defrosting)
         if new_is_defrosting and not player.is_defrosting: player.frozen_effect_timer = network_data.get('frozen_effect_timer', get_current_ticks())
         player.is_defrosting = new_is_defrosting
-    
+
     can_sync_actions = can_sync_other_statuses and not (player.is_aflame or player.is_deflaming or player.is_frozen or player.is_defrosting)
     if can_sync_actions:
         player.is_attacking = network_data.get('is_attacking', player.is_attacking)
@@ -152,7 +151,7 @@ def set_player_network_data(player, network_data: Dict[str, Any]):
             player.hit_timer = new_hit_timer
             if player.is_taking_hit and player.state != 'hit' and not player.is_dead: set_player_state(player, 'hit')
             elif not player.is_taking_hit and player.state == 'hit' and not player.is_dead: set_player_state(player, 'idle')
-    
+
     if not state_changed_by_priority:
         new_logical_state_from_net = network_data.get('state', player.state)
         is_current_state_overriding = player.state in ['aflame','burning','aflame_crouch','burning_crouch',
@@ -160,7 +159,7 @@ def set_player_network_data(player, network_data: Dict[str, Any]):
                                                       'petrified','smashed','death','death_nm']
         if not is_current_state_overriding and player.state != new_logical_state_from_net:
             set_player_state(player, new_logical_state_from_net)
-        else: 
+        else:
             player.current_frame = network_data.get('current_frame', player.current_frame)
             player.last_anim_update = network_data.get('last_anim_update', player.last_anim_update)
 
@@ -185,7 +184,7 @@ def handle_player_network_input(player, received_input_data_dict: Dict[str, Any]
     player.is_trying_to_move_right = received_input_data_dict.get('right_held', False)
     player.is_holding_climb_ability_key = received_input_data_dict.get('up_held', False)
     player.is_holding_crouch_ability_key = received_input_data_dict.get('down_held', False)
-    
+
     net_aim_x = received_input_data_dict.get('fireball_aim_x')
     net_aim_y = received_input_data_dict.get('fireball_aim_y')
     if net_aim_x is not None and net_aim_y is not None:
@@ -220,21 +219,21 @@ def handle_player_network_input(player, received_input_data_dict: Dict[str, Any]
         player.facing_right = new_facing_net
         set_player_state(player, 'turn')
     else: player.facing_right = new_facing_net
-    
+
     can_perform_general_action_net = not player.is_attacking and not player.is_dashing and \
                                      not player.is_rolling and not player.is_sliding and \
                                      not player.on_ladder and player.state not in ['turn','hit', 'frozen', 'defrost'] and \
                                      not is_on_fire_visual_net
 
     if received_input_data_dict.get('crouch_event', False):
-        if player.is_crouching: 
+        if player.is_crouching:
             if hasattr(player, 'can_stand_up') and player.can_stand_up(player.game_elements_ref_for_projectiles.get('platform_sprites',[])): # This part needs platform_sprites
                 player.is_crouching = False
                 if player.is_aflame or player.is_deflaming:
                      next_f_state = 'burning' if player.is_aflame else 'deflame'
                      set_player_state(player, next_f_state)
-                else: set_player_state(player, 'idle') 
-        else: 
+                else: set_player_state(player, 'idle')
+        else:
             can_crouch_now_net = player.on_ground and not player.on_ladder and not player.is_sliding and \
                                not (player.is_dashing or player.is_rolling or player.is_attacking or \
                                     player.state in ['turn','hit','death','death_nm', 'frozen', 'defrost', 'jump'])
@@ -244,11 +243,11 @@ def handle_player_network_input(player, received_input_data_dict: Dict[str, Any]
                 elif player.is_deflaming: set_player_state(player, 'deflame_crouch')
                 else: set_player_state(player, 'crouch_trans' if player.animations and player.animations.get('crouch_trans') else 'crouch')
 
-    if received_input_data_dict.get('jump_pressed_event', False): 
-        can_initiate_jump_action_net = not (player.is_attacking or player.is_dashing or 
+    if received_input_data_dict.get('jump_pressed_event', False):
+        can_initiate_jump_action_net = not (player.is_attacking or player.is_dashing or
                                          player.is_rolling or player.is_sliding or
                                          player.state in ['turn', 'death', 'death_nm', 'frozen', 'defrost'])
-        if not is_on_fire_visual_net: 
+        if not is_on_fire_visual_net:
             if player.state == 'hit': can_initiate_jump_action_net = False
             if player.is_taking_hit and (get_current_ticks() - player.hit_timer < player.hit_duration): can_initiate_jump_action_net = False
         if can_initiate_jump_action_net:
@@ -266,8 +265,8 @@ def handle_player_network_input(player, received_input_data_dict: Dict[str, Any]
                     player.on_ladder = False; set_player_state(player, 'jump')
                 elif player.can_wall_jump and player.touching_wall != 0:
                     player.vel.setY(C.PLAYER_JUMP_STRENGTH)
-                    player.vel.setX(C.PLAYER_RUN_SPEED_LIMIT * 1.5 * (-player.touching_wall)) 
-                    player.facing_right = not player.facing_right 
+                    player.vel.setX(C.PLAYER_RUN_SPEED_LIMIT * 1.5 * (-player.touching_wall))
+                    player.facing_right = not player.facing_right
                     set_player_state(player, 'jump'); player.can_wall_jump = False; player.touching_wall = 0; player.wall_climb_timer = 0
 
     if received_input_data_dict.get('attack1_pressed_event', False) and can_perform_general_action_net:
@@ -296,9 +295,9 @@ def handle_player_network_input(player, received_input_data_dict: Dict[str, Any]
 
 
 def get_player_input_state_for_network(player,
-                                       qt_keys_pressed_snapshot: Dict[int, bool], 
-                                       qt_input_events: List[Any], 
-                                       key_map_config: Dict[str, Any], 
+                                       qt_keys_pressed_snapshot: Dict[int, bool],
+                                       qt_input_events: List[Any],
+                                       key_map_config: Dict[str, Any],
                                        platforms_list: List[Any]
                                        ) -> Dict[str, Any]:
     from player_input_handler import process_player_input_logic # Local import
@@ -313,9 +312,9 @@ def get_player_input_state_for_network(player,
         'is_crouching_state': player.is_crouching,
         'fireball_aim_x': player.fireball_last_input_dir.x(),
         'fireball_aim_y': player.fireball_last_input_dir.y(),
-        'action_self_harm': processed_action_events.get('self_harm', False), 
-        'action_heal': processed_action_events.get('heal', False),         
-        'action_reset_global': processed_action_events.get('reset', False) 
+        'action_self_harm': processed_action_events.get('self_harm', False),
+        'action_heal': processed_action_events.get('heal', False),
+        'action_reset_global': processed_action_events.get('reset', False)
     }
     network_payload.update(processed_action_events)
     return network_payload

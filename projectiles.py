@@ -4,7 +4,7 @@
 Defines projectile classes like Fireball, PoisonShot, etc. for PySide6.
 Handles projectile effects including setting targets aflame or frozen.
 """
-# version 2.0.2 (PySide6 - Pygame time removed)
+# version 2.0.2 
 import os
 import math # For atan2, degrees for rotation
 import time # For monotonic timer
@@ -15,7 +15,7 @@ from PySide6.QtGui import QPixmap, QColor, QPainter, QTransform, QImage
 from PySide6.QtCore import QRectF, QPointF, QSizeF, Qt, QSize
 
 # Game imports
-import constants as C # Assumed Pygame-free
+import constants as C 
 from assets import load_gif_frames, resource_path # Assumed Qt-based
 from enemy import Enemy # For isinstance checks (assumed PySide6 compatible)
 from statue import Statue # For isinstance checks (assumed PySide6 compatible)

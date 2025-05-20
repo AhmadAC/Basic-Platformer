@@ -5,9 +5,10 @@
 """
 Handles player combat: attacks, damage dealing/taking, healing for PySide6.
 """
-# version 2.0.0 (PySide6 Refactor)
+# version 2.0.1 
 
 from typing import List, Any # For type hints
+import time # For get_current_ticks fallback
 
 # PySide6 imports
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
@@ -24,15 +25,13 @@ except ImportError:
     def debug(msg): print(f"DEBUG_PCOMBAT: {msg}")
     def info(msg): print(f"INFO_PCOMBAT: {msg}")
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_pcombat = time.monotonic()
-    def get_current_ticks(): # Fallback timer
-        return int((time.monotonic() - _start_time_pcombat) * 1000)
+_start_time_pcombat = time.monotonic()
+def get_current_ticks():
+    """
+    Returns the number of milliseconds since this module was initialized.
+
+    """
+    return int((time.monotonic() - _start_time_pcombat) * 1000)
 
 
 def check_player_attack_collisions(player, targets_list: List[Any]):
@@ -55,7 +54,7 @@ def check_player_attack_collisions(player, targets_list: List[Any]):
     vertical_offset_for_crouch_attack = 0.0
     if player.is_crouching and player.attack_type == 4: # Assuming attack_type 4 is crouch_attack
         vertical_offset_for_crouch_attack = 10.0 # Pixels downwards
-    
+
     # Adjust vertical position of hitbox based on player's center + offset
     new_hitbox_centery = player.rect.center().y() + vertical_offset_for_crouch_attack
     player.attack_hitbox.moveCenter(QPointF(player.attack_hitbox.center().x(), new_hitbox_centery))
@@ -76,7 +75,7 @@ def check_player_attack_collisions(player, targets_list: List[Any]):
                     elif player.attack_type == 2: damage_to_inflict_on_statue = C.PLAYER_ATTACK2_DAMAGE
                     elif player.attack_type == 3: damage_to_inflict_on_statue = C.PLAYER_COMBO_ATTACK_DAMAGE
                     elif player.attack_type == 4: damage_to_inflict_on_statue = C.PLAYER_CROUCH_ATTACK_DAMAGE
-                    
+
                     if damage_to_inflict_on_statue > 0:
                         debug(f"Player {player.player_id} (AttackType {player.attack_type}) hit Statue {getattr(target_sprite, 'statue_id', 'Unknown')} for {damage_to_inflict_on_statue} damage.")
                         target_sprite.take_damage(damage_to_inflict_on_statue)
@@ -108,7 +107,7 @@ def check_player_attack_collisions(player, targets_list: List[Any]):
                 elif player.attack_type == 2: damage_to_inflict = C.PLAYER_ATTACK2_DAMAGE
                 elif player.attack_type == 3: damage_to_inflict = C.PLAYER_COMBO_ATTACK_DAMAGE
                 elif player.attack_type == 4: damage_to_inflict = C.PLAYER_CROUCH_ATTACK_DAMAGE
-                
+
                 if damage_to_inflict > 0:
                     target_id_log = getattr(target_sprite, 'player_id', getattr(target_sprite, 'enemy_id', 'Unknown'))
                     debug(f"Player {player.player_id} (AttackType {player.attack_type}) hit Target {target_id_log} for {damage_to_inflict} damage.")
@@ -118,12 +117,12 @@ def check_player_attack_collisions(player, targets_list: List[Any]):
 def player_take_damage(player, damage_amount: int):
     current_time_ms = get_current_ticks()
     player_id_log = f"P{player.player_id}"
-    
+
     if not player._valid_init or player.is_dead or not player.alive(): return
     if player.is_petrified:
         debug(f"PlayerCombatHandler ({player_id_log}): Take damage ({damage_amount}) ignored, player is petrified/smashed.")
         return
-    if player.is_taking_hit and (current_time_ms - player.hit_timer < player.hit_cooldown): 
+    if player.is_taking_hit and (current_time_ms - player.hit_timer < player.hit_cooldown):
         debug(f"PlayerCombatHandler ({player_id_log}): Take damage ({damage_amount}) ignored, player in hit cooldown.")
         return
 
@@ -134,14 +133,14 @@ def player_take_damage(player, damage_amount: int):
     player.is_taking_hit = True
     player.hit_timer = current_time_ms
 
-    if player.current_health <= 0: 
+    if player.current_health <= 0:
         if not player.is_dead:
             debug(f"PlayerCombatHandler ({player_id_log}): Health <= 0. Setting state to 'death'.")
             if hasattr(player, 'set_state'): player.set_state('death')
     else:
         is_in_fire_visual_state = player.state in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame', 'deflame_crouch']
         if not is_in_fire_visual_state:
-            if player.state != 'hit': 
+            if player.state != 'hit':
                  if hasattr(player, 'set_state'): player.set_state('hit')
         else:
             if player.print_limiter.can_print(f"player_hit_while_on_fire_{player.player_id}"):

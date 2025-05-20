@@ -6,11 +6,12 @@
 Manages UI elements for the PySide6 version of the game.
 This includes menus, dialogs, HUD, and game scene rendering.
 """
-# version 2.0.1 (PySide6 Refactor - Added QFontMetrics import)
+# version 2.0.2 
 
 import sys
 import os
-import time 
+import time
+
 from typing import Dict, Optional, Any, List, Tuple
 # PySide6 imports
 from PySide6.QtWidgets import (
@@ -20,22 +21,22 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import (
     QPainter, QColor, QFont, QPen, QBrush, QPixmap, QPalette,
-    QFontMetrics # Added QFontMetrics
+    QFontMetrics
 )
 from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF, Signal, QTimer
 
 # Game imports
 import constants as C
 import config as game_config
-import joystick_handler 
+import joystick_handler
 
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    _start_time_game_ui = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_game_ui) * 1000)
+_start_time_game_ui = time.monotonic()
+def get_current_ticks():
+    """
+    Returns the number of milliseconds since this module was initialized.
+
+    """
+    return int((time.monotonic() - _start_time_game_ui) * 1000)
 
 PYPERCLIP_AVAILABLE_UI_MODULE = False
 try:
@@ -71,11 +72,11 @@ def draw_health_bar_qt(painter: QPainter, x: float, y: float,
 
     background_rect = QRectF(x, y, bar_width, bar_height)
     painter.fillRect(background_rect, qcolor_dark_gray)
-    
+
     health_fill_width = bar_width * health_ratio
     if health_fill_width > 0:
         painter.fillRect(QRectF(x, y, health_fill_width, bar_height), health_qcolor)
-    
+
     pen = QPen(qcolor_black)
     pen.setWidth(1)
     painter.setPen(pen)
@@ -91,7 +92,7 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: A
 
     painter.setFont(hud_qfont)
     painter.setPen(qcolor_white)
-    
+
     font_metrics = QFontMetrics(hud_qfont)
     label_text_height = float(font_metrics.height())
     # For drawText with QPointF, the point is the baseline of the text.
@@ -112,7 +113,7 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: A
     health_value_text = f"{int(player_instance.current_health)}/{int(player_instance.max_health)}"
     # Get proper text bounding rect for centering
     text_bounding_rect = font_metrics.boundingRect(health_value_text)
-    
+
     health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 10.0
     # Center text vertically within the health bar's height
     health_text_pos_y = health_bar_pos_y + (hud_health_bar_height - text_bounding_rect.height()) / 2.0 + font_metrics.ascent()
@@ -123,8 +124,8 @@ class GameSceneWidget(QWidget):
     def __init__(self, game_elements_ref: Dict[str, Any], fonts_ref: Dict[str, QFont], parent=None):
         super().__init__(parent)
         self.game_elements = game_elements_ref
-        self.fonts = fonts_ref 
-        self.current_game_time_ticks = 0 
+        self.fonts = fonts_ref
+        self.current_game_time_ticks = 0
         self.download_status_message: Optional[str] = None
         self.download_progress_percent: Optional[float] = None
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
@@ -136,7 +137,7 @@ class GameSceneWidget(QWidget):
         self.download_progress_percent = download_prog
         self.update()
 
-    def paintEvent(self, event: Any): 
+    def paintEvent(self, event: Any):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
@@ -152,7 +153,7 @@ class GameSceneWidget(QWidget):
                    hasattr(entity, 'rect') and entity.rect and hasattr(entity, 'alive') and entity.alive():
                     screen_rect = camera_instance.apply(entity.rect)
                     painter.drawPixmap(screen_rect.topLeft(), entity.image)
-            
+
             enemy_list_for_hb: List[Any] = self.game_elements.get("enemy_list", [])
             for enemy in enemy_list_for_hb:
                 if hasattr(enemy, 'alive') and enemy.alive() and \
@@ -166,7 +167,7 @@ class GameSceneWidget(QWidget):
                     hb_x = enemy_screen_rect.center().x() - hb_w / 2.0
                     hb_y = enemy_screen_rect.top() - hb_h - float(getattr(C, 'HEALTH_BAR_OFFSET_ABOVE', 5))
                     draw_health_bar_qt(painter, hb_x, hb_y, hb_w, hb_h, enemy.current_health, enemy.max_health)
-        else: 
+        else:
             for entity in all_renderables:
                  if hasattr(entity, 'image') and entity.image and not entity.image.isNull() and \
                     hasattr(entity, 'rect') and entity.rect and hasattr(entity, 'alive') and entity.alive():
@@ -179,7 +180,7 @@ class GameSceneWidget(QWidget):
         if player1 and hasattr(player1, '_valid_init') and player1._valid_init and \
            hasattr(player1, 'alive') and player1.alive() and not getattr(player1, 'is_petrified', False):
             draw_player_hud_qt(painter, 10.0, 10.0, player1, 1, hud_font)
-        
+
         if player2 and hasattr(player2, '_valid_init') and player2._valid_init and \
            hasattr(player2, 'alive') and player2.alive() and not getattr(player2, 'is_petrified', False):
             p2_hud_w_est = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100) + 120)
@@ -194,10 +195,10 @@ class GameSceneWidget(QWidget):
 
             title_font = self.fonts.get("large_qfont", QFont("Arial", 24, QFont.Weight.Bold)) # Corrected: QFont.Bold
             msg_font = self.fonts.get("medium_qfont", QFont("Arial", 12))
-            
+
             painter.setFont(title_font)
             # For drawText with QRectF, provide alignment flags
-            painter.drawText(dialog_rect.adjusted(10,10,-10,-10), Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, "File Transfer") 
+            painter.drawText(dialog_rect.adjusted(10,10,-10,-10), Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, "File Transfer")
 
             painter.setFont(msg_font)
             painter.drawText(dialog_rect.adjusted(10, QFontMetrics(title_font).height() + 20, -10, -10), # Adjust y based on title height
@@ -206,7 +207,7 @@ class GameSceneWidget(QWidget):
             if self.download_progress_percent is not None and self.download_progress_percent >= 0:
                 bar_margin = 20.0; bar_h = 30.0
                 # Position progress bar below message text
-                msg_text_rect = QFontMetrics(msg_font).boundingRect(dialog_rect.adjusted(10, QFontMetrics(title_font).height() + 20, -10, -10), 
+                msg_text_rect = QFontMetrics(msg_font).boundingRect(dialog_rect.adjusted(10, QFontMetrics(title_font).height() + 20, -10, -10),
                                                                    Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, self.download_status_message)
 
                 bar_y_pos = dialog_rect.top() + QFontMetrics(title_font).height() + 20 + msg_text_rect.height() + 15
@@ -221,7 +222,7 @@ class GameSceneWidget(QWidget):
                 fill_width = bar_rect.width() * (self.download_progress_percent / 100.0)
                 painter.fillRect(QRectF(bar_rect.topLeft(), QSizeF(fill_width, bar_rect.height())), QColor(*C.GREEN))
                 painter.setPen(QColor(*C.WHITE)); painter.drawRect(bar_rect)
-                
+
                 prog_text = f"{self.download_progress_percent:.1f}%"
                 painter.setPen(QColor(*C.BLACK))
                 painter.drawText(bar_rect, Qt.AlignmentFlag.AlignCenter, prog_text)
@@ -233,7 +234,7 @@ class SelectMapDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Select Map")
         self.selected_map_name: Optional[str] = None
-        self.fonts = fonts 
+        self.fonts = fonts
 
         layout = QVBoxLayout(self)
         self.list_widget = QListWidget(self)
@@ -248,7 +249,7 @@ class SelectMapDialog(QDialog):
 
     def populate_maps(self):
         self.list_widget.clear()
-        maps_dir = getattr(C, "MAPS_DIR", "maps") 
+        maps_dir = getattr(C, "MAPS_DIR", "maps")
         if os.path.exists(maps_dir) and os.path.isdir(maps_dir):
             try:
                 map_files = [f[:-3] for f in os.listdir(maps_dir) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"]
@@ -271,9 +272,9 @@ class SelectMapDialog(QDialog):
         if current_item and current_item.text() and not current_item.text().startswith("No") and not current_item.text().startswith("Error"):
             self.selected_map_name = current_item.text()
             super().accept()
-        elif current_item: 
+        elif current_item:
             QMessageBox.information(self, "No Map", "No valid map selected.")
-        else: 
+        else:
              QMessageBox.warning(self, "Selection Error", "Please select a map or cancel.")
 
 

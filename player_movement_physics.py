@@ -5,9 +5,10 @@
 """
 Handles core movement physics, state timers, and collision orchestration for the Player using PySide6 types.
 """
-# version 2.0.0 (PySide6 Refactor)
+# version 2.0.1 
 
 from typing import List, Any, Optional # Added Optional
+import time # For get_current_ticks fallback
 
 # PySide6 imports
 from PySide6.QtCore import QPointF, QRectF # For type hints and direct use if needed
@@ -25,15 +26,14 @@ from player_state_handler import set_player_state
 
 from logger import info, debug, warning, error, critical, ENABLE_DETAILED_PHYSICS_LOGS, log_player_physics
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_player_physics = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_player_physics) * 1000)
+
+_start_time_player_physics = time.monotonic()
+def get_current_ticks():
+    """
+    Returns the number of milliseconds since this module was initialized.
+
+    """
+    return int((time.monotonic() - _start_time_player_physics) * 1000)
 
 
 def manage_player_state_timers_and_cooldowns(player):
@@ -100,9 +100,9 @@ def apply_player_movement_and_physics(player):
             nudge_accel_x = -roll_control_accel_magnitude
         elif player.is_trying_to_move_right and not player.is_trying_to_move_left:
             nudge_accel_x = roll_control_accel_magnitude
-        
+
         player.vel.setX(player.vel.x() + nudge_accel_x)
-        max_roll_speed_cap = C.PLAYER_ROLL_SPEED * 1.15 
+        max_roll_speed_cap = C.PLAYER_ROLL_SPEED * 1.15
         min_roll_speed_cap = C.PLAYER_ROLL_SPEED * 0.4
         current_vel_x = player.vel.x() # Use x()
         if current_vel_x > 0:
@@ -116,7 +116,7 @@ def apply_player_movement_and_physics(player):
         if nudge_accel_x == 0 and abs(player.vel.x()) > 0.1:
              player.vel.setX(player.vel.x() * 0.99)
              if abs(player.vel.x()) < 0.5: player.vel.setX(0.0)
-    else: 
+    else:
         should_apply_horizontal_physics = not (
             player.is_dashing or player.on_ladder or
             (player.state == 'wall_climb' and player.vel.y() <= C.PLAYER_WALL_CLIMB_SPEED + 0.1) or # Use y()
@@ -126,7 +126,7 @@ def apply_player_movement_and_physics(player):
             actual_accel_to_apply = player.acc.x() # Use x()
             if player.is_aflame: actual_accel_to_apply *= getattr(C, 'PLAYER_AFLAME_ACCEL_MULTIPLIER', 1.0)
             elif player.is_deflaming: actual_accel_to_apply *= getattr(C, 'PLAYER_DEFLAME_ACCEL_MULTIPLIER', 1.0)
-            
+
             player.vel.setX(player.vel.x() + actual_accel_to_apply)
 
             friction_coeff = 0.0
@@ -148,7 +148,7 @@ def apply_player_movement_and_physics(player):
                      slide_end_key = 'slide_trans_end' if player.animations and 'slide_trans_end' in player.animations else None
                      if slide_end_key: set_player_state(player, slide_end_key)
                      else: set_player_state(player, 'crouch' if player.is_crouching else 'idle')
-            
+
             current_h_speed_limit = base_player_run_speed_limit
             if player.is_crouching and player.state == 'crouch_walk': current_h_speed_limit *= 0.6
             if not player.is_dashing and not player.is_rolling and not player.is_sliding and player.state != 'slide':
@@ -178,7 +178,7 @@ def update_player_core_logic(player, dt_sec: float, platforms_list: List[Any], l
                     player.vel.setY(min(player.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
                     player.pos.setY(player.pos.y() + player.vel.y())
                     if hasattr(player, '_update_rect_from_image_and_pos'): player._update_rect_from_image_and_pos()
-                    
+
                     player.on_ground = False
                     for platform_obj in platforms_list:
                         if hasattr(platform_obj, 'rect') and player.rect.intersects(platform_obj.rect):

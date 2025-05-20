@@ -5,18 +5,19 @@
 """
 Handles all player-related collision detection and resolution for PySide6.
 """
-# version 2.0.1 (PySide6 Refactor - Corrected timer usage)
+# version 2.0.2 
 
 from typing import List, Any, Optional
+import time # For get_current_ticks fallback
 
 # PySide6 imports
 from PySide6.QtCore import QRectF, QPointF
 
 # Game imports
 import constants as C
-from tiles import Lava 
-from enemy import Enemy 
-from statue import Statue 
+from tiles import Lava
+from enemy import Enemy
+from statue import Statue
 
 # Logger and physics logging helper
 try:
@@ -27,28 +28,27 @@ except ImportError:
     ENABLE_DETAILED_PHYSICS_LOGS = False
     def log_player_physics(player, tag, extra=""): pass
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_pcollision = time.monotonic()
-    def get_current_ticks(): # Fallback timer
-        return int((time.monotonic() - _start_time_pcollision) * 1000)
+
+_start_time_pcollision = time.monotonic()
+def get_current_ticks():
+    """
+    Returns the number of milliseconds since this module was initialized.
+  
+    """
+    return int((time.monotonic() - _start_time_pcollision) * 1000)
 
 
 def check_player_platform_collisions(player, direction: str, platforms_list: List[Any]):
     if not player._valid_init: return
 
-    rect_after_current_axis_move = QRectF(player.rect) 
+    rect_after_current_axis_move = QRectF(player.rect)
     collided_with_wall_on_side = 0
 
     for platform_obj in platforms_list:
-        if not hasattr(platform_obj, 'rect'): continue 
+        if not hasattr(platform_obj, 'rect'): continue
 
         current_player_rect_for_log = QRectF(player.rect)
-        
+
         if not player.rect.intersects(platform_obj.rect):
             continue
 
@@ -56,22 +56,22 @@ def check_player_platform_collisions(player, direction: str, platforms_list: Lis
                            (QRectF(player.rect), platform_obj.rect, getattr(platform_obj, 'platform_type', 'unknown')))
 
         if direction == 'x':
-            if player.vel.x() > 0: 
+            if player.vel.x() > 0:
                 if player.rect.right() > platform_obj.rect.left() and \
                    rect_after_current_axis_move.left() < platform_obj.rect.left():
-                    player.rect.moveRight(platform_obj.rect.left()) 
+                    player.rect.moveRight(platform_obj.rect.left())
                     player.vel.setX(0.0)
                     if not player.on_ground and not player.on_ladder:
                         if player.rect.bottom() > platform_obj.rect.top() + C.MIN_WALL_OVERLAP_PX and \
                            player.rect.top() < platform_obj.rect.bottom() - C.MIN_WALL_OVERLAP_PX:
                             collided_with_wall_on_side = 1
-                    player.pos.setX(player.rect.center().x()) 
+                    player.pos.setX(player.rect.center().x())
                     log_player_physics(player, f"PLAT_COLL_RESOLVED_X_R", (QRectF(player.rect), current_player_rect_for_log, (player.pos.x(), player.pos.y()), player.vel.x(), player.on_ground, 'x'))
-            
-            elif player.vel.x() < 0: 
+
+            elif player.vel.x() < 0:
                 if player.rect.left() < platform_obj.rect.right() and \
                    rect_after_current_axis_move.right() > platform_obj.rect.right():
-                    player.rect.moveLeft(platform_obj.rect.right()) 
+                    player.rect.moveLeft(platform_obj.rect.right())
                     player.vel.setX(0.0)
                     if not player.on_ground and not player.on_ladder:
                         if player.rect.bottom() > platform_obj.rect.top() + C.MIN_WALL_OVERLAP_PX and \
@@ -79,41 +79,41 @@ def check_player_platform_collisions(player, direction: str, platforms_list: Lis
                             collided_with_wall_on_side = -1
                     player.pos.setX(player.rect.center().x())
                     log_player_physics(player, f"PLAT_COLL_RESOLVED_X_L", (QRectF(player.rect), current_player_rect_for_log, (player.pos.x(), player.pos.y()), player.vel.x(), player.on_ground, 'x'))
-        
+
         elif direction == 'y':
-            if player.vel.y() >= 0: 
+            if player.vel.y() >= 0:
                 if player.rect.bottom() >= platform_obj.rect.top() and \
                    rect_after_current_axis_move.bottom() > platform_obj.rect.top() and \
-                   rect_after_current_axis_move.top() < platform_obj.rect.top() + 1: 
-                    
+                   rect_after_current_axis_move.top() < platform_obj.rect.top() + 1:
+
                     min_overlap_ratio = getattr(C, 'MIN_PLATFORM_OVERLAP_RATIO_FOR_LANDING', 0.15)
                     min_horizontal_overlap = player.rect.width() * min_overlap_ratio
                     actual_overlap_width = min(player.rect.right(), platform_obj.rect.right()) - \
                                            max(player.rect.left(), platform_obj.rect.left())
-                    
+
                     if actual_overlap_width >= min_horizontal_overlap:
-                        player.rect.moveBottom(platform_obj.rect.top()) 
+                        player.rect.moveBottom(platform_obj.rect.top())
                         if not player.on_ground and player.vel.y() > 0:
                             player.can_wall_jump = False; player.wall_climb_timer = 0
                             if not player.is_sliding and not (hasattr(player, 'state') and player.state.startswith('slide_trans')):
                                 player.vel.setX(player.vel.x() * C.LANDING_FRICTION_MULTIPLIER)
                         player.on_ground = True; player.vel.setY(0.0)
-                        player.pos = QPointF(player.rect.center().x(), player.rect.bottom()) 
+                        player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
                         log_player_physics(player, f"PLAT_COLL_Y_LAND", (QRectF(player.rect), current_player_rect_for_log, (player.pos.x(), player.pos.y()), player.vel.y(), player.on_ground, 'y_land'))
-            
-            elif player.vel.y() < 0: 
+
+            elif player.vel.y() < 0:
                 if player.rect.top() <= platform_obj.rect.bottom() and \
                    rect_after_current_axis_move.top() < platform_obj.rect.bottom() and \
                    rect_after_current_axis_move.bottom() > platform_obj.rect.bottom() -1:
-                    
+
                     min_overlap_ratio_ceil = getattr(C, 'MIN_PLATFORM_OVERLAP_RATIO_FOR_CEILING', 0.15)
                     min_horizontal_overlap_ceil = player.rect.width() * min_overlap_ratio_ceil
                     actual_overlap_width_ceil = min(player.rect.right(), platform_obj.rect.right()) - \
                                                 max(player.rect.left(), platform_obj.rect.left())
-                    
+
                     if actual_overlap_width_ceil >= min_horizontal_overlap_ceil:
                         if player.on_ladder: player.on_ladder = False
-                        player.rect.moveTop(platform_obj.rect.bottom()) 
+                        player.rect.moveTop(platform_obj.rect.bottom())
                         player.vel.setY(0.0)
                         player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
                         log_player_physics(player, f"PLAT_COLL_Y_CEIL_NORMAL", (QRectF(player.rect), current_player_rect_for_log, (player.pos.x(), player.pos.y()), player.vel.y(), player.on_ground, 'y_ceil_norm'))
@@ -127,10 +127,10 @@ def check_player_ladder_collisions(player, ladders_list: List[Any]):
     if not player._valid_init: return
 
     ladder_check_rect = QRectF(player.rect)
-    ladder_check_rect.setWidth(player.rect.width() * 0.4) 
-    ladder_check_rect.setHeight(player.rect.height() * 0.9) 
+    ladder_check_rect.setWidth(player.rect.width() * 0.4)
+    ladder_check_rect.setHeight(player.rect.height() * 0.9)
     ladder_check_rect.moveCenter(player.rect.center())
-    
+
     player.can_grab_ladder = False
     for ladder_obj in ladders_list:
         if not hasattr(ladder_obj, 'rect'): continue
@@ -143,7 +143,7 @@ def check_player_ladder_collisions(player, ladders_list: List[Any]):
 def check_player_character_collisions(player, direction: str, characters_list: List[Any]) -> bool:
     if not player._valid_init or player.is_dead or not player.alive() or player.is_petrified:
         return False
-    
+
     collision_occurred_this_axis = False
     for other_char in characters_list:
         if other_char is player or not hasattr(other_char, 'rect') or not hasattr(other_char, 'alive') or not other_char.alive(): continue
@@ -157,10 +157,10 @@ def check_player_character_collisions(player, direction: str, characters_list: L
             log_player_physics(player, f"CHAR_COLL_CHECK DIR:{direction}",
                                (current_player_rect_for_log, other_char.rect,
                                 getattr(other_char, 'player_id', getattr(other_char, 'enemy_id', getattr(other_char, 'statue_id', 'UnknownChar')))))
-            
+
             collision_occurred_this_axis = True
             is_other_petrified_solid = getattr(other_char, 'is_petrified', False) and not getattr(other_char, 'is_stone_smashed', False)
-            
+
             if isinstance(other_char, Enemy) and getattr(other_char, 'is_aflame', False) and \
                not player.is_aflame and not player.is_deflaming and \
                not player.is_frozen and not player.is_defrosting and not player.is_petrified:
@@ -178,7 +178,7 @@ def check_player_character_collisions(player, direction: str, characters_list: L
                 previous_player_bottom_y = player.pos.y() - player.vel.y()
                 stomp_head_grace = C.PLAYER_STOMP_LAND_ON_ENEMY_GRACE_PX
                 target_stomp_top_y = other_char.rect.top() + stomp_head_grace
-                
+
                 if previous_player_bottom_y <= target_stomp_top_y and \
                    player.rect.bottom() >= other_char.rect.top() and \
                    player.rect.bottom() <= other_char.rect.top() + (other_char.rect.height() * 0.40):
@@ -187,7 +187,7 @@ def check_player_character_collisions(player, direction: str, characters_list: L
                         other_char.stomp_kill(); stomp_processed = True
                     elif is_statue_stompable and hasattr(other_char, 'take_damage'):
                         other_char.take_damage(999); stomp_processed = True
-                    
+
                     if stomp_processed:
                         player.vel.setY(C.PLAYER_STOMP_BOUNCE_STRENGTH)
                         player.on_ground = False
@@ -195,7 +195,7 @@ def check_player_character_collisions(player, direction: str, characters_list: L
                         player.rect.moveBottom(other_char.rect.top() -1)
                         player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
                         log_player_physics(player, f"CHAR_COLL_STOMP_{type(other_char).__name__}", (QRectF(player.rect), current_player_rect_for_log, (player.pos.x(),player.pos.y()), player.vel.y(), f'y_stomp'))
-                    return True 
+                    return True
 
             player_state_str = str(getattr(player, 'state', '')).lower()
             is_attacking_self = getattr(player, 'is_attacking', False) or ('attack' in player_state_str)
@@ -245,7 +245,7 @@ def check_player_character_collisions(player, direction: str, characters_list: L
                     player.vel.setY(0.0)
                 player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
                 log_player_physics(player, f"CHAR_COLL_Y_STOP", (QRectF(player.rect), current_player_rect_for_log, (player.pos.x(),player.pos.y()), player.vel.y(), 'y_char_stop'))
-    
+
     return collision_occurred_this_axis
 
 
@@ -261,7 +261,7 @@ def check_player_hazard_collisions(player, hazards_list: List[Any]):
 
 
     for hazard_obj in collided_hazards: # Use the filtered list
-        if isinstance(hazard_obj, Lava): 
+        if isinstance(hazard_obj, Lava):
             player_feet_in_lava = player.rect.bottom() > hazard_obj.rect.top() + (player.rect.height() * 0.2)
             min_horizontal_hazard_overlap = player.rect.width() * 0.20
             actual_overlap_width = min(player.rect.right(), hazard_obj.rect.right()) - max(player.rect.left(), hazard_obj.rect.left())
@@ -272,12 +272,12 @@ def check_player_hazard_collisions(player, hazards_list: List[Any]):
                     if hasattr(player, 'apply_aflame_effect'): player.apply_aflame_effect()
                     if C.LAVA_DAMAGE > 0 and hasattr(player, 'take_damage'): player.take_damage(C.LAVA_DAMAGE)
                     damaged_this_frame = True
-                    if not player.is_dead: 
+                    if not player.is_dead:
                          player.vel.setY(C.PLAYER_JUMP_STRENGTH * 0.75)
                          push_dir = 1 if player.rect.center().x() < hazard_obj.rect.center().x() else -1
                          player.vel.setX(-push_dir * getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 0.6)
                          player.on_ground = False; player.on_ladder = False
-                    break 
+                    break
         if damaged_this_frame: break
 
 #################### END OF FILE: player_collision_handler.py ####################

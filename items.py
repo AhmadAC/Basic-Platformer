@@ -6,15 +6,16 @@
 Defines collectible items like Chests.
 Uses resource_path helper. Refactored for PySide6.
 """
-# version 2.0.1 (PySide6 Refactor - Added missing QImage, QPointF imports)
+# version 2.0.2
 import os
 import sys
 import random
 from typing import List, Optional, Any
+import time # For get_current_ticks fallback
 
 # PySide6 imports
-from PySide6.QtGui import QPixmap, QColor, QPainter, QFont, QImage # Added QImage
-from PySide6.QtCore import QRectF, QSize, Qt, QPointF # Added QPointF
+from PySide6.QtGui import QPixmap, QColor, QPainter, QFont, QImage
+from PySide6.QtCore import QRectF, QSize, Qt, QPointF
 
 # Game imports (already PySide6 compatible or will be)
 import constants as C
@@ -28,15 +29,13 @@ except ImportError:
     def info(msg): print(f"INFO_ITEMS: {msg}")
     def warning(msg): print(f"WARNING_ITEMS: {msg}")
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_items = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_items) * 1000)
+_start_time_items = time.monotonic()
+def get_current_ticks():
+    """
+    Returns the number of milliseconds since this module was initialized.
+
+    """
+    return int((time.monotonic() - _start_time_items) * 1000)
 
 
 class Chest:
@@ -68,13 +67,13 @@ class Chest:
 
         self.frames_current_set = self.frames_closed
         self.image: QPixmap = self.frames_current_set[0]
-        
+
         img_width = self.image.width()
         img_height = self.image.height()
         rect_x = float(x - img_width / 2.0)
         rect_y = float(y - img_height)
         self.rect = QRectF(rect_x, rect_y, float(img_width), float(img_height))
-        
+
         self.pos_midbottom = QPointF(float(x), float(y))
 
         self.current_frame_index = 0
@@ -88,16 +87,24 @@ class Chest:
              self._update_rect_from_image_and_pos()
 
     def _is_placeholder_qpixmap(self, pixmap: QPixmap) -> bool:
-        if pixmap.size() == QSize(30,40):
+        if pixmap.size() == QSize(30,40): # Placeholder size defined in load_gif_frames
             qimage = pixmap.toImage()
             if not qimage.isNull():
+                # Check a few pixels to be more robust against minor color variations
+                # if using a specific placeholder pattern.
+                # For now, checking a known color and text used in _create_placeholder_qpixmap
+                # might be fragile if placeholder generation changes.
+                # Simpler: Assume any 30x40 is a placeholder if it's not the expected sprite.
+                # This logic is heuristic and depends on how placeholders are generated.
+                # If placeholders are always red or blue (as per _create_placeholder_qpixmap),
+                # this check is okay.
                 color_at_origin = qimage.pixelColor(0,0)
-                if color_at_origin == QColor(*C.RED) or color_at_origin == QColor(*C.BLUE):
+                if color_at_origin == QColor(*C.YELLOW) or color_at_origin == QColor(*C.BLUE) or color_at_origin == QColor(*C.RED): # Added RED from load_gif_frames
                     return True
         return False
 
     def _create_placeholder_qpixmap(self, q_color: QColor, text: str = "Err") -> QPixmap:
-        pixmap = QPixmap(30, 30)
+        pixmap = QPixmap(30, 30) # Consistent placeholder size
         pixmap.fill(q_color)
         painter = QPainter(pixmap)
         painter.setPen(QColor(*C.BLACK))
@@ -119,8 +126,8 @@ class Chest:
             rect_x = self.pos_midbottom.x() - img_width / 2.0
             rect_y = self.pos_midbottom.y() - img_height
             self.rect.setRect(rect_x, rect_y, img_width, img_height)
-        else:
-            self.rect.setRect(self.pos_midbottom.x() - 15, self.pos_midbottom.y() - 30, 30, 30)
+        else: # Fallback if image is null
+            self.rect.setRect(self.pos_midbottom.x() - 15, self.pos_midbottom.y() - 30, 30, 30) # Default size
 
     def alive(self) -> bool:
         return self._alive
@@ -140,7 +147,7 @@ class Chest:
         if now - self.animation_timer > anim_speed_ms:
             self.animation_timer = now
             self.current_frame_index += 1
-            
+
             if self.current_frame_index >= len(self.frames_current_set):
                 if self.state == 'opening':
                     self.current_frame_index = len(self.frames_current_set) - 1
@@ -149,7 +156,7 @@ class Chest:
                     debug("Chest state changed to: opened")
                 elif self.state == 'closed':
                     self.current_frame_index = 0
-            
+
             if self.state != 'fading':
                 if self.frames_current_set and 0 <= self.current_frame_index < len(self.frames_current_set):
                     self.image = self.frames_current_set[self.current_frame_index]
@@ -161,15 +168,15 @@ class Chest:
                 self.fade_alpha = 255
                 self.animation_timer = now
                 debug("Chest state changed to: fading")
-        
+
         elif self.state == 'fading':
             elapsed_fade_time = now - self.animation_timer
             fade_progress = min(1.0, elapsed_fade_time / C.CHEST_FADE_OUT_DURATION_MS)
             self.fade_alpha = int(255 * (1.0 - fade_progress))
-            
+
             if self.frames_open and self.frames_open[-1]:
                 base_image_pixmap = self.frames_open[-1] # This is a QPixmap
-                
+
                 # Create a QImage for alpha manipulation
                 qimage_alpha = base_image_pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32_Premultiplied)
                 if qimage_alpha.isNull(): # Check if conversion failed
@@ -182,9 +189,9 @@ class Chest:
                         current_pixel_color = qimage_alpha.pixelColor(x_px, y_px)
                         current_pixel_color.setAlpha(max(0, self.fade_alpha))
                         qimage_alpha.setPixelColor(x_px, y_px, current_pixel_color)
-                
+
                 self.image = QPixmap.fromImage(qimage_alpha)
-            
+
             if self.fade_alpha <= 0:
                 debug("Chest fully faded out.")
                 if self.player_to_heal and hasattr(self.player_to_heal, 'heal_to_full'):
@@ -200,7 +207,7 @@ class Chest:
         info(f"Player {getattr(player, 'player_id', 'Unknown')} interacted with chest. State changing to 'opening'.")
         self.is_collected_flag_internal = True
         self.player_to_heal = player
-        
+
         self.state = 'opening'
         self.frames_current_set = self.frames_open
         self.current_frame_index = 0

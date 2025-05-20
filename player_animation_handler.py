@@ -6,12 +6,13 @@
 Handles player animation selection and frame updates for PySide6.
 Correctly anchors the player's rect when height changes.
 """
-# version 2.0.2 (PySide6 Refactor - Added missing QColor import and usage)
+# version 2.0.3 
 
 from typing import List, Optional
+import time # For get_current_ticks fallback
 
 # PySide6 imports
-from PySide6.QtGui import QPixmap, QImage, QTransform, QColor # Added QColor
+from PySide6.QtGui import QPixmap, QImage, QTransform, QColor
 from PySide6.QtCore import QPointF, QRectF, Qt
 
 # Game imports
@@ -27,15 +28,14 @@ except ImportError:
         else:
             print(f"CRITICAL PLAYER_ANIM_HANDLER: player_state_handler.set_player_state not found for Player ID {getattr(player, 'player_id', 'N/A')}")
 
-# Placeholder for pygame.time.get_ticks()
-try:
-    import pygame
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_player_anim = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_player_anim) * 1000)
+
+_start_time_player_anim = time.monotonic()
+def get_current_ticks():
+    """
+    Returns the number of milliseconds since this module was initialized.
+ 
+    """
+    return int((time.monotonic() - _start_time_player_anim) * 1000)
 
 
 def determine_animation_key(player) -> str:
@@ -113,7 +113,7 @@ def determine_animation_key(player) -> str:
             elif player.animations and player.animations.get('crouch'): animation_key = 'crouch'
         elif player_is_intending_to_move_lr: animation_key = 'run'
         else: animation_key = 'idle'
-    else: 
+    else:
         if player.state not in ['jump','jump_fall_trans','fall', 'wall_slide', 'wall_hang', 'wall_climb', 'wall_climb_nm', 'hit', 'dash', 'roll']:
              animation_key = 'fall' if player.animations and player.animations.get('fall') else 'idle'
 
@@ -161,7 +161,7 @@ def advance_frame_and_handle_state_transitions(player, current_animation_frames_
             if is_trans:
                 next_state = player.state
                 player_is_moving = player.is_trying_to_move_left or player.is_trying_to_move_right
-                
+
                 if current_animation_key == 'aflame': next_state = 'burning_crouch' if player.is_crouching else 'burning'
                 elif current_animation_key == 'aflame_crouch': next_state = 'burning' if not player.is_crouching else 'burning_crouch'
                 elif current_animation_key == 'jump': next_state = 'jump_fall_trans' if player.animations and player.animations.get('jump_fall_trans') else 'fall'
@@ -213,7 +213,7 @@ def update_player_animation(player):
 
     current_time_ms = get_current_ticks()
     determined_animation_key = determine_animation_key(player)
-    
+
     current_animation_frames: Optional[List[QPixmap]] = None
     if determined_animation_key == 'petrified':
         current_animation_frames = [player.stone_crouch_image_frame if player.was_crouching_when_petrified else player.stone_image_frame]
@@ -256,7 +256,7 @@ def update_player_animation(player):
             if hasattr(player, 'image') and player.image and not player.image.isNull(): player.image.fill(qcolor_yellow); return
 
     image_for_this_frame = current_animation_frames[player.current_frame]
-    if image_for_this_frame.isNull(): 
+    if image_for_this_frame.isNull():
         if hasattr(player, 'image') and player.image and not player.image.isNull(): player.image.fill(qcolor_magenta); return
 
     should_flip = not player.facing_right
@@ -274,19 +274,19 @@ def update_player_animation(player):
                             (hasattr(player.image, 'cacheKey') and hasattr(final_image_to_set, 'cacheKey') and \
                              player.image.cacheKey() != final_image_to_set.cacheKey()) or \
                             (player.image is not final_image_to_set) # Fallback if cacheKey not reliable
-                            
+
     facing_direction_for_flip_check = player.facing_at_petrification if (render_animation_key in ['petrified', 'smashed']) else player.facing_right
-    
+
     if image_content_changed or (player._last_facing_right != facing_direction_for_flip_check):
         # Use QPointF methods for midbottom calculation
         old_rect_midbottom_qpointf = QPointF(player.rect.center().x(), player.rect.bottom())
-        
+
         player.image = final_image_to_set
         # _update_rect_from_image_and_pos must exist on player and handle QPointF
         if hasattr(player, '_update_rect_from_image_and_pos'):
-            player._update_rect_from_image_and_pos(old_rect_midbottom_qpointf) 
+            player._update_rect_from_image_and_pos(old_rect_midbottom_qpointf)
         else: # Fallback if method missing (should not happen if player.py is refactored)
-            player.rect = QRectF(old_rect_midbottom_qpointf - QPointF(player.image.width()/2, player.image.height()), 
+            player.rect = QRectF(old_rect_midbottom_qpointf - QPointF(player.image.width()/2, player.image.height()),
                                  player.image.size())
 
 

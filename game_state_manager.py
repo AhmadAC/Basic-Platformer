@@ -5,9 +5,11 @@
 """
 Manages game state, including reset and network synchronization for PySide6.
 """
-# version 2.0.1 (PySide6 Refactor - Corrected current_height and Chest frame access)
+# version 2.0.2 
 import os
 from typing import Optional, List, Dict, Any
+import time # For get_current_ticks fallback
+
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
 # Game-specific imports (refactored classes)
 from game_setup import spawn_chest_qt
@@ -30,38 +32,37 @@ except ImportError:
     def error(msg): print(f"ERROR: {msg}")
     def critical(msg): print(f"CRITICAL: {msg}")
 
-try:
-    import pygame 
-    get_current_ticks = pygame.time.get_ticks
-except ImportError:
-    import time
-    _start_time_gsm = time.monotonic()
-    def get_current_ticks():
-        return int((time.monotonic() - _start_time_gsm) * 1000)
+_start_time_gsm = time.monotonic()
+def get_current_ticks():
+    """
+    Returns the number of milliseconds since this module was initialized.
+   
+    """
+    return int((time.monotonic() - _start_time_gsm) * 1000)
 
 
 def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
     info("GSM: --- Resetting Game State (PySide6) ---")
-    
+
     player1 = game_elements.get("player1")
     player2 = game_elements.get("player2")
     enemy_list: List[Enemy] = game_elements.get("enemy_list", [])
     statue_objects_list: List[Statue] = game_elements.get("statue_objects", [])
     current_chest_obj: Optional[Chest] = game_elements.get("current_chest")
-    
+
     player1_spawn_pos_tuple = game_elements.get("player1_spawn_pos")
     player2_spawn_pos_tuple = game_elements.get("player2_spawn_pos")
-    
+
     all_renderable_objects: List[Any] = game_elements.get("all_renderable_objects", [])
     projectiles_list: List[Any] = game_elements.get("projectiles_list", [])
-    
+
     if player1 and hasattr(player1, 'reset_state'):
         debug(f"GSM: Resetting P1 at {player1_spawn_pos_tuple}")
         player1.reset_state(player1_spawn_pos_tuple)
         if player1._valid_init and not player1.alive():
             if player1 not in all_renderable_objects: all_renderable_objects.append(player1)
         debug("GSM: P1 Reset complete.")
-        
+
     if player2 and hasattr(player2, 'reset_state'):
         debug(f"GSM: Resetting P2 at {player2_spawn_pos_tuple}")
         player2.reset_state(player2_spawn_pos_tuple)
@@ -71,7 +72,7 @@ def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
 
     for enemy_instance in enemy_list:
         if hasattr(enemy_instance, 'reset'):
-            enemy_instance.reset() 
+            enemy_instance.reset()
             if enemy_instance._valid_init and not any(enemy_instance is obj for obj in all_renderable_objects if isinstance(obj, Enemy) and obj.enemy_id == enemy_instance.enemy_id):
                  all_renderable_objects.append(enemy_instance)
     debug(f"GSM: {len(enemy_list)} enemies processed for reset.")
@@ -106,7 +107,7 @@ def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
     # Use ground_level_y_ref from game_elements for spawning chest
     ground_y_for_chest = game_elements.get("ground_level_y_ref", float(C.TILE_SIZE * 15)) # Fallback height
     new_chest_obj = spawn_chest_qt(game_elements.get("platforms_list", []), ground_y_for_chest)
-    
+
     if new_chest_obj:
         if new_chest_obj not in all_renderable_objects: all_renderable_objects.append(new_chest_obj)
         collectible_list_ref = [new_chest_obj] # Replace or ensure it's the only one
@@ -117,7 +118,7 @@ def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
         collectible_list_ref = []
         debug("GSM: Failed to respawn chest.")
     game_elements["collectible_list"] = collectible_list_ref # Update main list
-    
+
     camera = game_elements.get("camera")
     if camera: camera.set_pos(0.0, 0.0)
     debug("GSM: Camera position reset.")
@@ -127,7 +128,7 @@ def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
 
 
 def get_network_game_state(game_elements: Dict[str, Any]) -> Dict[str, Any]:
-    state: Dict[str, Any] = {'p1': None, 'p2': None, 'enemies': {}, 'chest': None, 
+    state: Dict[str, Any] = {'p1': None, 'p2': None, 'enemies': {}, 'chest': None,
                              'statues': [], 'projectiles': [], 'game_over': False}
     player1 = game_elements.get("player1")
     player2 = game_elements.get("player2")
@@ -149,47 +150,47 @@ def get_network_game_state(game_elements: Dict[str, Any]) -> Dict[str, Any]:
             if hasattr(s_obj, 'get_network_data'):
                 state['statues'].append(s_obj.get_network_data())
 
-    if current_chest and hasattr(current_chest, 'rect'): 
+    if current_chest and hasattr(current_chest, 'rect'):
         if current_chest.alive() or current_chest.state in ['fading', 'killed']:
             state['chest'] = {
                 'pos_center': (current_chest.rect.center().x(), current_chest.rect.center().y()),
                 'is_collected_internal': getattr(current_chest, 'is_collected_flag_internal', False),
-                'chest_state': current_chest.state, 
-                'animation_timer': getattr(current_chest, 'animation_timer', 0), 
+                'chest_state': current_chest.state,
+                'animation_timer': getattr(current_chest, 'animation_timer', 0),
                 'time_opened_start': getattr(current_chest, 'time_opened_start', 0),
                 'fade_alpha': getattr(current_chest, 'fade_alpha', 255),
                 'current_frame_index': getattr(current_chest, 'current_frame_index', 0),
             }
         else: state['chest'] = None
     else: state['chest'] = None
-    
+
     p1_truly_gone = True
-    if player1 and player1._valid_init: 
+    if player1 and player1._valid_init:
         if player1.alive():
             if player1.is_dead:
                 if player1.is_petrified and not player1.is_stone_smashed: p1_truly_gone = False
                 elif not player1.death_animation_finished: p1_truly_gone = False
             else: p1_truly_gone = False
-    state['game_over'] = p1_truly_gone 
+    state['game_over'] = p1_truly_gone
 
     state['projectiles'] = [proj.get_network_data() for proj in projectiles_list if hasattr(proj, 'get_network_data') and proj.alive()]
-    
+
     return state
 
 
-def set_network_game_state(network_state_data: Dict[str, Any], 
-                           game_elements: Dict[str, Any], 
-                           client_player_id: Optional[int] = None): 
+def set_network_game_state(network_state_data: Dict[str, Any],
+                           game_elements: Dict[str, Any],
+                           client_player_id: Optional[int] = None):
     player1 = game_elements.get("player1")
     player2 = game_elements.get("player2")
     enemy_list: List[Enemy] = game_elements.get("enemy_list", [])
     statue_objects_list_client: List[Statue] = game_elements.get("statue_objects", [])
     current_chest_obj: Optional[Chest] = game_elements.get("current_chest")
-    
+
     all_renderable_objects: List[Any] = game_elements.get("all_renderable_objects", [])
     projectiles_list: List[Any] = game_elements.get("projectiles_list", [])
     collectible_list: List[Chest] = game_elements.get("collectible_list", []) # Ensure this is fetched
-    
+
     enemy_spawns_data_cache: List[Dict[str, Any]] = game_elements.get("enemy_spawns_data_cache", [])
 
     if player1 and 'p1' in network_state_data and network_state_data['p1'] and hasattr(player1, 'set_network_data'):
@@ -218,15 +219,15 @@ def set_network_game_state(network_state_data: Dict[str, Any],
                         all_renderable_objects.append(client_enemy)
                     elif not client_enemy.alive() and client_enemy in all_renderable_objects:
                         all_renderable_objects.remove(client_enemy)
-                else: 
+                else:
                     spawn_pos_e_default = enemy_data_server.get('pos', (0.0,0.0))
                     patrol_area_e_obj: Optional[QRectF] = None
                     enemy_color_name_cache = None
                     if enemy_id_int < len(enemy_spawns_data_cache):
                         original_spawn_info = enemy_spawns_data_cache[enemy_id_int]
                         spawn_pos_e_default = original_spawn_info.get('pos', spawn_pos_e_default)
-                        patrol_data_raw = original_spawn_info.get('patrol') 
-                        if patrol_data_raw: 
+                        patrol_data_raw = original_spawn_info.get('patrol')
+                        if patrol_data_raw:
                              patrol_area_e_obj = QRectF(float(patrol_data_raw[0]), float(patrol_data_raw[1]), float(patrol_data_raw[2]), float(patrol_data_raw[3]))
                         enemy_color_name_cache = original_spawn_info.get('enemy_color_id')
                     final_color = enemy_data_server.get('color_name', enemy_color_name_cache)
@@ -236,7 +237,7 @@ def set_network_game_state(network_state_data: Dict[str, Any],
                         new_enemy.set_network_data(enemy_data_server)
                         if new_enemy.alive(): all_renderable_objects.append(new_enemy)
                         enemy_list.append(new_enemy)
-            elif enemy_id_str in current_client_enemies_map: 
+            elif enemy_id_str in current_client_enemies_map:
                 enemy_to_remove = current_client_enemies_map[enemy_id_str]
                 if enemy_to_remove.alive(): enemy_to_remove.kill()
                 if enemy_to_remove in all_renderable_objects: all_renderable_objects.remove(enemy_to_remove)
@@ -265,7 +266,7 @@ def set_network_game_state(network_state_data: Dict[str, Any],
                         all_renderable_objects.append(client_statue)
                     elif not client_statue.alive() and client_statue in all_renderable_objects:
                         all_renderable_objects.remove(client_statue)
-                else: 
+                else:
                     s_pos = statue_data_server.get('pos', (0.0,0.0))
                     new_statue = Statue(s_pos[0], s_pos[1], statue_id=statue_id_server)
                     if new_statue._valid_init:
@@ -303,7 +304,7 @@ def set_network_game_state(network_state_data: Dict[str, Any],
                     if current_chest_obj and current_chest_obj.alive(): current_chest_obj.kill()
                     if current_chest_obj in all_renderable_objects: all_renderable_objects.remove(current_chest_obj)
                     if current_chest_obj in collectible_list: collectible_list.remove(current_chest_obj)
-                    
+
                     temp_chest_height = float(C.TILE_SIZE) # Default
                     # Attempt to get a more accurate height from a temporary Chest instance if possible
                     try:
@@ -312,8 +313,8 @@ def set_network_game_state(network_state_data: Dict[str, Any],
                         temp_chest_for_dims = Chest(0,0) # Create dummy to get frame height
                         if temp_chest_for_dims.frames_closed and not temp_chest_for_dims.frames_closed[0].isNull():
                              temp_chest_height = float(temp_chest_for_dims.frames_closed[0].height())
-                    except Exception: pass 
-                    
+                    except Exception: pass
+
                     chest_midbottom_x = server_chest_pos_center_tuple[0]
                     chest_midbottom_y = server_chest_pos_center_tuple[1] + temp_chest_height / 2.0
                     current_chest_obj = Chest(chest_midbottom_x, chest_midbottom_y)
@@ -321,8 +322,8 @@ def set_network_game_state(network_state_data: Dict[str, Any],
                         all_renderable_objects.append(current_chest_obj); collectible_list.append(current_chest_obj)
                         game_elements["current_chest"] = current_chest_obj
                     else: game_elements["current_chest"] = None; current_chest_obj = None
-                
-                if current_chest_obj: 
+
+                if current_chest_obj:
                     current_chest_obj.state = server_chest_state
                     current_chest_obj.is_collected_flag_internal = chest_data_server.get('is_collected_internal', False)
                     current_chest_obj.animation_timer = chest_data_server.get('animation_timer', get_current_ticks())
@@ -331,7 +332,7 @@ def set_network_game_state(network_state_data: Dict[str, Any],
                     current_chest_obj.current_frame_index = chest_data_server.get('current_frame_index', 0)
                     current_chest_obj.rect.moveCenter(QPointF(server_chest_pos_center_tuple[0], server_chest_pos_center_tuple[1]))
                     current_chest_obj.pos_midbottom = QPointF(current_chest_obj.rect.center().x(), current_chest_obj.rect.bottom())
-        elif not network_state_data.get('chest'): 
+        elif not network_state_data.get('chest'):
             if current_chest_obj and current_chest_obj.alive(): current_chest_obj.kill()
             if current_chest_obj in all_renderable_objects: all_renderable_objects.remove(current_chest_obj)
             if current_chest_obj in collectible_list: collectible_list.remove(current_chest_obj)
@@ -354,28 +355,28 @@ def set_network_game_state(network_state_data: Dict[str, Any],
                 existing_proj_client = current_client_proj_map[proj_id_server]
                 if hasattr(existing_proj_client, 'set_network_data'): existing_proj_client.set_network_data(proj_data_server)
                 if existing_proj_client.alive() and existing_proj_client not in all_renderable_objects: all_renderable_objects.append(existing_proj_client)
-            else: 
+            else:
                 owner_instance_client = None
                 owner_id_from_server = proj_data_server.get('owner_id')
                 if owner_id_from_server == 1 and player1: owner_instance_client = player1
                 elif owner_id_from_server == 2 and player2: owner_instance_client = player2
-                
+
                 if owner_instance_client and 'pos' in proj_data_server and 'vel' in proj_data_server and 'type' in proj_data_server:
                     proj_type_name = proj_data_server['type']
                     ProjClass = projectile_class_map.get(proj_type_name)
                     if ProjClass:
                         net_vel = proj_data_server['vel']
-                        direction_qpointf = QPointF(net_vel[0], net_vel[1]) 
-                        
+                        direction_qpointf = QPointF(net_vel[0], net_vel[1])
+
                         new_proj_client = ProjClass(proj_data_server['pos'][0], proj_data_server['pos'][1],
                                                  direction_qpointf, owner_instance_client)
                         new_proj_client.projectile_id = proj_id_server
-                        if hasattr(new_proj_client, 'set_network_data'): new_proj_client.set_network_data(proj_data_server) 
+                        if hasattr(new_proj_client, 'set_network_data'): new_proj_client.set_network_data(proj_data_server)
                         projectiles_list.append(new_proj_client)
                         all_renderable_objects.append(new_proj_client)
                     else: warning(f"GSM Client: Unknown projectile type '{proj_type_name}' from server.")
                 else: warning(f"GSM Client: Insufficient data for projectile {proj_id_server}.")
-        
+
         client_proj_ids_to_remove = set(current_client_proj_map.keys()) - active_server_proj_ids
         for removed_proj_id in client_proj_ids_to_remove:
             if removed_proj_id in current_client_proj_map:
