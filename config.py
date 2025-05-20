@@ -10,6 +10,7 @@ from typing import Dict, Optional, Any, List, Tuple
 import json
 import os
 import pygame # Import Pygame for joystick functions
+from PySide6.QtCore import Qt # <<< ADD THIS IMPORT
 
 # --- Initialize Pygame Joystick (Required before calling its functions within this module) ---
 try:
@@ -68,27 +69,58 @@ EXTERNAL_TO_INTERNAL_ACTION_MAP = {
     "WEAPON_DPAD_RIGHT": "projectile7",
     "MENU_CONFIRM": "menu_confirm", "MENU_CANCEL": "menu_cancel", "MENU_RETURN": "pause",
     "W": "up", "A": "left", "S": "down", "D": "right",
+    "1": "projectile1", "2": "projectile2", "3": "projectile3", "4": "projectile4", "5": "projectile5",
+    "Q": "reset", "E": "interact", "V": "attack1", "B": "attack2",
+    "SPACE": "jump", "SHIFT": "dash", "CTRL": "roll", # Example, could be crouch too
+    # Note: "ALT" is not directly mapped to a game action here, but was in MAPPABLE_KEYS
 }
 
 
 # --- Default Keyboard Mappings ---
+# MODIFIED TO USE Qt.Key enums
 DEFAULT_KEYBOARD_P1_MAPPINGS = {
-    "left": "A", "right": "D", "up": "W", "down": "S", "jump": "W", "crouch": "S",
-    "attack1": "V", "attack2": "B", "dash": "Shift", "roll": "Control", "interact": "E",
-    "projectile1": "1", "projectile2": "2", "projectile3": "3", "projectile4": "4",
-    "projectile5": "5", "reset": "Q", "projectile7": "7",
-    "pause": "Escape", "menu_confirm": "Return", "menu_cancel": "Escape",
-    "menu_up": "Up", "menu_down": "Down", "menu_left": "Left", "menu_right": "Right",
+    "left": Qt.Key.Key_A, "right": Qt.Key.Key_D, "up": Qt.Key.Key_W, "down": Qt.Key.Key_S,
+    "jump": Qt.Key.Key_W, # Often 'up' also serves as jump
+    "crouch": Qt.Key.Key_S, # Often 'down' also serves as crouch
+    "attack1": Qt.Key.Key_V, "attack2": Qt.Key.Key_B,
+    "dash": Qt.Key.Key_Shift, "roll": Qt.Key.Key_Control, "interact": Qt.Key.Key_E,
+    "projectile1": Qt.Key.Key_1, "projectile2": Qt.Key.Key_2, "projectile3": Qt.Key.Key_3,
+    "projectile4": Qt.Key.Key_4, "projectile5": Qt.Key.Key_5,
+    "reset": Qt.Key.Key_Q, # "projectile6" was "Num+6", "projectile7" was "7" - check consistency or remove if not used.
+                           # Assuming projectile6 and 7 are not standard for P1 keyboard or will be mapped via GUI
+    "pause": Qt.Key.Key_Escape,
+    "menu_confirm": Qt.Key.Key_Return, "menu_cancel": Qt.Key.Key_Escape,
+    "menu_up": Qt.Key.Key_Up, "menu_down": Qt.Key.Key_Down,
+    "menu_left": Qt.Key.Key_Left, "menu_right": Qt.Key.Key_Right,
 }
 
 DEFAULT_KEYBOARD_P2_MAPPINGS = {
-    "left": "J", "right": "L", "up": "I", "down": "K", "jump": "I", "crouch": "K",
-    "attack1": "O", "attack2": "P", "dash": ";", "roll": "'", "interact": "\\",
-    "projectile1": "Num+1", "projectile2": "Num+2", "projectile3": "Num+3", "projectile4": "Num+4",
-    "projectile5": "Num+5", "reset": "Num+6", "projectile7": "Num+7",
-    "pause": "Pause", "menu_confirm": "Num+Enter", "menu_cancel": "Delete",
-    "menu_up": "Num+8", "menu_down": "Num+2", "menu_left": "Num+4", "menu_right": "Num+6",
+    "left": Qt.Key.Key_J, "right": Qt.Key.Key_L, "up": Qt.Key.Key_I, "down": Qt.Key.Key_K,
+    "jump": Qt.Key.Key_I, "crouch": Qt.Key.Key_K,
+    "attack1": Qt.Key.Key_O, "attack2": Qt.Key.Key_P,
+    "dash": Qt.Key.Key_Semicolon, "roll": Qt.Key.Key_Apostrophe, "interact": Qt.Key.Key_Backslash,
+    "projectile1": Qt.Key.Key_unknown, # Placeholder, Qt doesn't have direct Num+1. Use specific number keys.
+    "projectile2": Qt.Key.Key_unknown, # Consider mapping to 7,8,9,0,-,= for P2 if numpad isn't ideal
+    "projectile3": Qt.Key.Key_unknown,
+    "projectile4": Qt.Key.Key_unknown,
+    "projectile5": Qt.Key.Key_unknown,
+    "reset": Qt.Key.Key_unknown,
+    "pause": Qt.Key.Key_Pause,
+    "menu_confirm": Qt.Key.Key_Enter, # Often Numpad Enter is also mapped to general Enter
+    "menu_cancel": Qt.Key.Key_Delete,
+    "menu_up": Qt.Key.Key_PageUp,    # Example alternative for Numpad 8
+    "menu_down": Qt.Key.Key_PageDown,  # Example alternative for Numpad 2
+    "menu_left": Qt.Key.Key_Home,    # Example alternative for Numpad 4
+    "menu_right": Qt.Key.Key_End,     # Example alternative for Numpad 6
 }
+# Note on P2 Numpad: Qt.Key doesn't distinguish well between numpad numbers and top-row numbers
+# when NumLock is on. Qt.Key_0 to Qt.Key_9 usually refer to top-row.
+# For distinct numpad keys, you might need to check event.nativeScanCode() or event.text()
+# if NumLock is on/off, which is more complex.
+# Using other distinct keys for P2 is safer if full numpad distinction is crucial.
+# For now, I've put Qt.Key_unknown for P2 projectile keys that were "Num+X".
+# These would need to be remapped in your controller_mapper_gui or to other keys.
+# A common P2 setup might use U,H,J,K for movement and surrounding keys for actions.
 
 # --- Default Pygame Joystick Mappings (Fallback if JSON load fails or is incomplete) ---
 DEFAULT_PYGAME_JOYSTICK_MAPPINGS = {
@@ -102,18 +134,18 @@ DEFAULT_PYGAME_JOYSTICK_MAPPINGS = {
     "attack2": {"type": "button", "id": 3},
     "dash": {"type": "button", "id": 5},
     "roll": {"type": "button", "id": 4},
-    "interact": {"type": "button", "id": 10},
-    "projectile1": {"type": "hat", "id": 0, "value": (0, 1)},
-    "projectile2": {"type": "hat", "id": 0, "value": (1, 0)},
-    "projectile3": {"type": "hat", "id": 0, "value": (0, -1)},
-    "projectile4": {"type": "hat", "id": 0, "value": (-1, 0)},
-    "projectile5": {"type": "button", "id": 8},
-    "projectile6": {"type": "button", "id": 9},
-    "projectile7": {"type": "button", "id": 11},
-    "reset": {"type": "button", "id": 6},
-    "pause": {"type": "button", "id": 7},
-    "menu_confirm": {"type": "button", "id": 0}, # Default: Pygame Button 0 (A/Cross)
-    "menu_cancel": {"type": "button", "id": 1},  # Default: Pygame Button 1 (B/Circle)
+    "interact": {"type": "button", "id": 10}, # Often 'Y' or Triangle
+    "projectile1": {"type": "hat", "id": 0, "value": (0, 1)},  # D-Pad Up
+    "projectile2": {"type": "hat", "id": 0, "value": (1, 0)},  # D-Pad Right
+    "projectile3": {"type": "hat", "id": 0, "value": (0, -1)}, # D-Pad Down
+    "projectile4": {"type": "hat", "id": 0, "value": (-1, 0)}, # D-Pad Left
+    "projectile5": {"type": "button", "id": 8}, # Example: Left Bumper
+    "projectile6": {"type": "button", "id": 9}, # Example: Right Bumper
+    "projectile7": {"type": "button", "id": 11},# Often 'Start' or 'Options' but can vary
+    "reset": {"type": "button", "id": 6}, # Often 'Back' or 'Select'
+    "pause": {"type": "button", "id": 7}, # Often 'Start' or 'Options'
+    "menu_confirm": {"type": "button", "id": 0}, # Pygame Button 0 (A/Cross)
+    "menu_cancel": {"type": "button", "id": 1},  # Pygame Button 1 (B/Circle)
     "menu_up": {"type": "hat", "id": 0, "value": (0, 1)},
     "menu_down": {"type": "hat", "id": 0, "value": (0, -1)},
     "menu_left": {"type": "hat", "id": 0, "value": (-1, 0)},
@@ -133,7 +165,7 @@ def _translate_and_validate_gui_json_to_pygame_mappings(raw_gui_json_mappings: A
     for gui_action_key, mapping_entry in raw_gui_json_mappings.items():
         internal_action_name = EXTERNAL_TO_INTERNAL_ACTION_MAP.get(gui_action_key)
         if not internal_action_name:
-            if gui_action_key in GAME_ACTIONS:
+            if gui_action_key in GAME_ACTIONS: # If the GUI key is already an internal game action name
                 internal_action_name = gui_action_key
             else:
                 # print(f"Config Debug: Skipping unknown GUI action key '{gui_action_key}' during translation.")
@@ -160,7 +192,7 @@ def _translate_and_validate_gui_json_to_pygame_mappings(raw_gui_json_mappings: A
             pygame_event_id = details.get("hat_id")
 
         if pygame_event_type not in ["button", "axis", "hat"] or pygame_event_id is None:
-            print(f"Config Warning: Invalid event_type ('{pygame_event_type}') or missing ID for '{gui_action_key}'. Skipping.")
+            # print(f"Config Warning: Invalid event_type ('{pygame_event_type}') or missing ID for '{gui_action_key}'. Skipping.")
             continue
 
         final_mapping_for_action: Dict[str, Any] = {"type": pygame_event_type, "id": int(pygame_event_id)}
@@ -188,7 +220,7 @@ def _translate_and_validate_gui_json_to_pygame_mappings(raw_gui_json_mappings: A
 
 def _load_external_pygame_joystick_mappings() -> bool:
     global LOADED_PYGAME_JOYSTICK_MAPPINGS
-    LOADED_PYGAME_JOYSTICK_MAPPINGS = {}
+    LOADED_PYGAME_JOYSTICK_MAPPINGS = {} # Reset before loading
     if not os.path.exists(EXTERNAL_CONTROLLER_MAPPINGS_FILE_PATH):
         print(f"Config Info: Controller mappings file (GUI output) '{EXTERNAL_CONTROLLER_MAPPINGS_FILE_PATH}' not found. Will use default Pygame joystick mappings.")
         return False
@@ -206,18 +238,21 @@ def _load_external_pygame_joystick_mappings() -> bool:
             return False
     except Exception as e:
         print(f"Config Error: Error loading/translating Pygame mappings (GUI output) from '{EXTERNAL_CONTROLLER_MAPPINGS_FILENAME}': {e}. Will use default Pygame joystick mappings.")
-        LOADED_PYGAME_JOYSTICK_MAPPINGS = {}
+        LOADED_PYGAME_JOYSTICK_MAPPINGS = {} # Ensure it's empty on error
         return False
 
 def get_action_key_map(player_id: int, device_id_str: str) -> Dict[str, Any]:
     if device_id_str == "keyboard_p1": return DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
     elif device_id_str == "keyboard_p2": return DEFAULT_KEYBOARD_P2_MAPPINGS.copy()
     elif device_id_str.startswith("joystick_pygame_"):
+        # Use loaded mappings if available, otherwise default Pygame mappings
         return LOADED_PYGAME_JOYSTICK_MAPPINGS.copy() if LOADED_PYGAME_JOYSTICK_MAPPINGS else DEFAULT_PYGAME_JOYSTICK_MAPPINGS.copy()
     print(f"Config Warning: get_action_key_map called with unknown device_id_str: {device_id_str}")
-    return {}
+    return {} # Return empty dict for unknown device
 
 def _get_config_filepath() -> str:
+    # Ensure this path is correct relative to your project structure
+    # If config.py is in the root, this is fine. If in a subdir, adjust.
     base_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_dir, CONFIG_FILE_NAME)
 
@@ -240,7 +275,8 @@ def save_config() -> bool:
 def load_config() -> bool:
     global CURRENT_P1_INPUT_DEVICE, CURRENT_P2_INPUT_DEVICE, P1_MAPPINGS, P2_MAPPINGS
 
-    _load_external_pygame_joystick_mappings()
+    # Load external Pygame joystick mappings first
+    _load_external_pygame_joystick_mappings() # This populates LOADED_PYGAME_JOYSTICK_MAPPINGS
 
     filepath = _get_config_filepath()
     loaded_p1_device_choice = DEFAULT_P1_INPUT_DEVICE
@@ -264,63 +300,67 @@ def load_config() -> bool:
         
     print(f"Config: Pygame reported {num_joysticks} joysticks available for assignment.")
 
-    # Player 1 Device Assignment
+    # Player 1 Device Assignment Logic (no change needed here from your original)
     if loaded_p1_device_choice.startswith("joystick_pygame_"):
         if num_joysticks == 0:
             print(f"Config Info: P1 saved Pygame joystick '{loaded_p1_device_choice}' but no joysticks detected. Falling back to P1 keyboard.")
             CURRENT_P1_INPUT_DEVICE = DEFAULT_P1_INPUT_DEVICE
-        else:
+        else: # Joysticks are available
             try:
                 p1_joy_idx = int(loaded_p1_device_choice.split('_')[-1])
                 if not (0 <= p1_joy_idx < num_joysticks):
                     print(f"Config Warning: P1's saved Pygame joystick ID {p1_joy_idx} no longer available (found {num_joysticks}). Assigning joystick_pygame_0.")
-                    CURRENT_P1_INPUT_DEVICE = f"joystick_pygame_0" if num_joysticks > 0 else DEFAULT_P1_INPUT_DEVICE
+                    CURRENT_P1_INPUT_DEVICE = f"joystick_pygame_0" # Assumes at least one joystick if num_joysticks > 0
                 else:
                     CURRENT_P1_INPUT_DEVICE = loaded_p1_device_choice
-            except (ValueError, IndexError):
+            except (ValueError, IndexError): # Malformed ID string
                 print(f"Config Warning: Malformed Pygame joystick ID for P1: '{loaded_p1_device_choice}'. Assigning joystick_pygame_0 if available.")
                 CURRENT_P1_INPUT_DEVICE = "joystick_pygame_0" if num_joysticks > 0 else DEFAULT_P1_INPUT_DEVICE
     else: # Keyboard
         CURRENT_P1_INPUT_DEVICE = loaded_p1_device_choice
 
-    # Player 2 Device Assignment
+    # Player 2 Device Assignment Logic (no change needed here from your original)
     if loaded_p2_device_choice.startswith("joystick_pygame_"):
         if num_joysticks == 0:
             print(f"Config Info: P2 saved Pygame joystick '{loaded_p2_device_choice}' but no joysticks detected. Falling back to P2 keyboard.")
             CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-        else:
+        else: # Joysticks available
             try:
                 p2_joy_idx = int(loaded_p2_device_choice.split('_')[-1])
                 p1_is_pygame_joystick = CURRENT_P1_INPUT_DEVICE.startswith("joystick_pygame_")
                 p1_current_joy_idx_val = -1
                 if p1_is_pygame_joystick:
                     try: p1_current_joy_idx_val = int(CURRENT_P1_INPUT_DEVICE.split('_')[-1])
-                    except (ValueError, IndexError): p1_is_pygame_joystick = False
+                    except (ValueError, IndexError): p1_is_pygame_joystick = False # Treat as keyboard if ID bad
 
-                if not (0 <= p2_joy_idx < num_joysticks):
+                if not (0 <= p2_joy_idx < num_joysticks): # P2's saved joystick ID is invalid
                     print(f"Config Warning: P2's saved Pygame joystick ID {p2_joy_idx} no longer available (found {num_joysticks}).")
-                    if num_joysticks == 1 and p1_is_pygame_joystick and p1_current_joy_idx_val == 0: CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-                    elif num_joysticks > 0 and (not p1_is_pygame_joystick or p1_current_joy_idx_val != 0): CURRENT_P2_INPUT_DEVICE = "joystick_pygame_0"
-                    elif num_joysticks > 1 and p1_is_pygame_joystick and p1_current_joy_idx_val == 0: CURRENT_P2_INPUT_DEVICE = "joystick_pygame_1"
-                    else: CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-                elif p1_is_pygame_joystick and p2_joy_idx == p1_current_joy_idx_val:
+                    # Attempt to assign a different joystick than P1 if possible
+                    if num_joysticks == 1 and p1_is_pygame_joystick and p1_current_joy_idx_val == 0: CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE # Only one joy, P1 has it
+                    elif num_joysticks > 0 and (not p1_is_pygame_joystick or p1_current_joy_idx_val != 0): CURRENT_P2_INPUT_DEVICE = "joystick_pygame_0" # P1 not on joy0, or P1 on keyboard
+                    elif num_joysticks > 1 and p1_is_pygame_joystick and p1_current_joy_idx_val == 0: CURRENT_P2_INPUT_DEVICE = "joystick_pygame_1" # P1 on joy0, assign joy1 to P2
+                    else: CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE # Fallback
+                elif p1_is_pygame_joystick and p2_joy_idx == p1_current_joy_idx_val: # Conflict: P2 wants same joystick as P1
                     print(f"Config Warning: P2 cannot use same Pygame joystick as P1 (ID {p1_current_joy_idx_val}). Attempting to assign another.")
-                    if num_joysticks > 1: CURRENT_P2_INPUT_DEVICE = f"joystick_pygame_{1 if p1_current_joy_idx_val == 0 else 0}"
-                    else: CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-                else:
+                    if num_joysticks > 1: # If more than one joystick, try to assign the other one
+                        CURRENT_P2_INPUT_DEVICE = f"joystick_pygame_{1 if p1_current_joy_idx_val == 0 else 0}" # Assign 0 if P1 is on 1, else assign 1
+                    else: # Only one joystick, P1 has it, P2 falls back to keyboard
+                        CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
+                else: # P2's saved joystick ID is valid and different from P1's (if P1 is on joystick)
                     CURRENT_P2_INPUT_DEVICE = loaded_p2_device_choice
-            except (ValueError, IndexError):
+            except (ValueError, IndexError): # Malformed P2 joystick ID string
                 print(f"Config Warning: Malformed Pygame joystick ID for P2: '{loaded_p2_device_choice}'. Assigning default.")
                 CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
     else: # P2 is keyboard
+        # Ensure P2 doesn't use same keyboard config as P1 if P1 is also keyboard
         if loaded_p2_device_choice == CURRENT_P1_INPUT_DEVICE and CURRENT_P1_INPUT_DEVICE == "keyboard_p1":
             print("Config Warning: P1 and P2 attempted to use 'keyboard_p1'. Assigning 'keyboard_p2' to P2.")
-            CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
+            CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE # This assigns "keyboard_p2"
         else:
             CURRENT_P2_INPUT_DEVICE = loaded_p2_device_choice
 
     print(f"Config: Final device assignments: P1='{CURRENT_P1_INPUT_DEVICE}', P2='{CURRENT_P2_INPUT_DEVICE}'")
-    update_player_mappings_from_device_choice()
+    update_player_mappings_from_device_choice() # Update P1_MAPPINGS and P2_MAPPINGS
     return True
 
 def update_player_mappings_from_device_choice():
@@ -332,21 +372,26 @@ def update_player_mappings_from_device_choice():
         P1_MAPPINGS = LOADED_PYGAME_JOYSTICK_MAPPINGS.copy() if LOADED_PYGAME_JOYSTICK_MAPPINGS else DEFAULT_PYGAME_JOYSTICK_MAPPINGS.copy()
         status_msg_p1 = "from JSON" if LOADED_PYGAME_JOYSTICK_MAPPINGS else "using Pygame FALLBACK"
         print(f"Config: P1 assigned Pygame joystick mappings {status_msg_p1} ({len(P1_MAPPINGS)} actions).")
-    else:
+    else: # Fallback for P1 if device string is unrecognized
         P1_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
 
-    if CURRENT_P2_INPUT_DEVICE == "keyboard_p1":
+    if CURRENT_P2_INPUT_DEVICE == "keyboard_p1": # If P2 is explicitly set to use P1's keyboard scheme
         P2_MAPPINGS = DEFAULT_KEYBOARD_P1_MAPPINGS.copy()
     elif CURRENT_P2_INPUT_DEVICE == "keyboard_p2":
         P2_MAPPINGS = DEFAULT_KEYBOARD_P2_MAPPINGS.copy()
     elif CURRENT_P2_INPUT_DEVICE.startswith("joystick_pygame_"):
+        # For network/couch co-op, P2 usually uses the same joystick mapping profile as P1 if both are joysticks
+        # unless you have specific P2 joystick profiles.
         P2_MAPPINGS = LOADED_PYGAME_JOYSTICK_MAPPINGS.copy() if LOADED_PYGAME_JOYSTICK_MAPPINGS else DEFAULT_PYGAME_JOYSTICK_MAPPINGS.copy()
         status_msg_p2 = "from JSON" if LOADED_PYGAME_JOYSTICK_MAPPINGS else "using Pygame FALLBACK"
         print(f"Config: P2 assigned Pygame joystick mappings {status_msg_p2} ({len(P2_MAPPINGS)} actions).")
-    else:
+    else: # Fallback for P2
         P2_MAPPINGS = DEFAULT_KEYBOARD_P2_MAPPINGS.copy()
 
     print(f"Config: Player mappings updated. P1 using '{CURRENT_P1_INPUT_DEVICE}', P2 using '{CURRENT_P2_INPUT_DEVICE}'.")
+
+# Initialize by loading config when module is imported
+# load_config() # This is typically called by the main application (app_core.py) at startup.
 
 if __name__ == "__main__":
     print("--- Running config.py directly for testing (Pygame Joystick Mode) ---")
