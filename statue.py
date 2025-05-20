@@ -4,10 +4,10 @@
 Defines the Statue class, an immobile object that can be smashed.
 Refactored for PySide6.
 """
-# version 2.0.1 
+# version 2.0.2 (Added properties to __init__)
 import os
 import time # For monotonic timer
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Tuple # Ensure Optional, Dict, Any, Tuple are imported
 
 # PySide6 imports
 from PySide6.QtGui import QPixmap, QColor, QPainter, QFont, QImage
@@ -37,9 +37,11 @@ class Statue:
     An immobile statue object that can be smashed. Uses QPixmap for visuals.
     """
     def __init__(self, center_x: float, center_y: float, statue_id: Optional[Any] = None,
-                 initial_image_path: Optional[str] = None, smashed_anim_path: Optional[str] = None):
+                 initial_image_path: Optional[str] = None, smashed_anim_path: Optional[str] = None,
+                 properties: Optional[Dict[str, Any]] = None): # Added properties
         self.statue_id = statue_id if statue_id is not None else id(self)
         self._valid_init = True
+        self.properties = properties if properties is not None else {} # Store properties
         self.initial_image_frames: List[QPixmap] = []
         self.smashed_frames: List[QPixmap] = []
 
@@ -64,19 +66,19 @@ class Statue:
             debug(f"Statue Error: Failed to load smashed animation from '{full_smashed_path}'. Using placeholder.")
             dark_gray_color = getattr(C, 'DARK_GRAY', (50, 50, 50))
             self.smashed_frames = [self._create_placeholder_qpixmap(QColor(*dark_gray_color), "SmashedStat")]
-        
+
         img_w, img_h = float(self.image.width()), float(self.image.height())
         rect_x = float(center_x - img_w / 2.0)
         rect_y = float(center_y - img_h / 2.0)
         self.rect = QRectF(rect_x, rect_y, img_w, img_h)
-        self.pos = QPointF(float(center_x), float(center_y))
+        self.pos = QPointF(float(center_x), float(center_y)) # pos is center for Statue
 
         self.is_smashed = False
         self.smashed_timer_start = 0
         self.current_frame_index = 0
         self.last_anim_update = get_current_ticks_monotonic() # Use monotonic timer
-        
-        self.is_dead = False 
+
+        self.is_dead = False
         self.death_animation_finished = False
         self._alive = True
 
@@ -103,14 +105,14 @@ class Statue:
         width_val = (self.initial_image_frames[0].width()
                      if self.initial_image_frames and self.initial_image_frames[0] and not self.initial_image_frames[0].isNull()
                      else base_tile_size)
-        
+
         pixmap = QPixmap(max(1, width_val), max(1, height_val))
         pixmap.fill(q_color)
         painter = QPainter(pixmap)
         black_color = getattr(C, 'BLACK', (0,0,0))
         painter.setPen(QColor(*black_color))
         painter.drawRect(pixmap.rect().adjusted(0,0,-1,-1))
-        try: 
+        try:
             font = QFont(); font.setPointSize(10); painter.setFont(font)
             painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, text)
         except Exception as e: print(f"STATUE PlaceholderFontError: {e}") # Should not happen with basic QFont
@@ -118,17 +120,16 @@ class Statue:
         return pixmap
 
     def _update_rect_from_image_and_pos(self):
+        """Updates self.rect (centered) based on self.image and self.pos (center)."""
         if self.image and not self.image.isNull():
             img_w, img_h = float(self.image.width()), float(self.image.height())
             rect_x = self.pos.x() - img_w / 2.0
             rect_y = self.pos.y() - img_h / 2.0
             self.rect.setRect(rect_x, rect_y, img_w, img_h)
-        elif hasattr(self, 'rect'): # Fallback if image is somehow null but rect exists
-            # This case might indicate an issue, but try to keep rect around pos
+        elif hasattr(self, 'rect'): # Fallback if image is null but rect exists
             fallback_w = getattr(C, 'TILE_SIZE', 40.0)
             fallback_h = getattr(C, 'TILE_SIZE', 40.0) * 1.5
             self.rect.setRect(self.pos.x() - fallback_w / 2.0, self.pos.y() - fallback_h / 2.0, fallback_w, fallback_h)
-
 
     def alive(self) -> bool:
         return self._alive
@@ -149,7 +150,9 @@ class Statue:
                 self._update_rect_from_image_and_pos()
 
     def take_damage(self, damage_amount: int):
+        # Statues are typically one-hit-smashed by player attacks or environmental effects
         if not self.is_smashed and self._valid_init and self._alive:
+            debug(f"Statue {self.statue_id} took {damage_amount} damage, proceeding to smash.")
             self.smash()
 
     def update(self, dt_sec: float = 0.0): # dt_sec currently unused but good practice to keep
@@ -162,18 +165,18 @@ class Statue:
                     info(f"Statue {self.statue_id} smashed duration ended. Killing.")
                     self.death_animation_finished = True
                 self.is_dead = True
-                self.kill() 
+                self.kill()
                 return
 
             if self.smashed_frames and len(self.smashed_frames) > 1: # Only animate if multiple frames
-                anim_speed = C.ANIM_FRAME_DURATION 
+                anim_speed = C.ANIM_FRAME_DURATION
                 if now - self.last_anim_update > anim_speed:
                     self.last_anim_update = now
                     self.current_frame_index += 1
                     if self.current_frame_index >= len(self.smashed_frames):
                         # Hold last frame of smashed animation until duration ends
-                        self.current_frame_index = len(self.smashed_frames) - 1 
-                    
+                        self.current_frame_index = len(self.smashed_frames) - 1
+
                     # Ensure frame index is valid before accessing
                     if 0 <= self.current_frame_index < len(self.smashed_frames) and \
                        self.smashed_frames[self.current_frame_index] and \
@@ -191,13 +194,14 @@ class Statue:
         pos_y = self.pos.y() if hasattr(self.pos, 'y') else 0.0
         return {
             'id': self.statue_id, 'type': 'Statue', # Add type for easier parsing on client
-            'pos': (pos_x, pos_y), 
+            'pos': (pos_x, pos_y),
             'is_smashed': self.is_smashed,
             'smashed_timer_start': self.smashed_timer_start,
             'current_frame_index': self.current_frame_index,
             '_valid_init': self._valid_init, # Good to send for client-side validation
             'is_dead': self.is_dead, # Explicitly send is_dead
-            'death_animation_finished': self.death_animation_finished
+            'death_animation_finished': self.death_animation_finished,
+            'properties': self.properties # Send properties
         }
 
     def set_network_data(self, data: Dict[str, Any]):
@@ -209,6 +213,8 @@ class Statue:
         if 'pos' in data and hasattr(self, 'pos'):
             self.pos.setX(data['pos'][0]); self.pos.setY(data['pos'][1])
         
+        self.properties = data.get('properties', self.properties) # Sync properties
+
         new_is_smashed = data.get('is_smashed', self.is_smashed)
         if new_is_smashed != self.is_smashed: # Check if state actually changed
             self.is_smashed = new_is_smashed
@@ -216,7 +222,7 @@ class Statue:
                 self.smashed_timer_start = data.get('smashed_timer_start', get_current_ticks_monotonic()) # Use monotonic
                 self.current_frame_index = data.get('current_frame_index', 0)
                 self.last_anim_update = get_current_ticks_monotonic() # Reset anim timer for synced state
-            
+
         self.is_dead = data.get('is_dead', self.is_dead)
         self.death_animation_finished = data.get('death_animation_finished', self.death_animation_finished)
 
@@ -232,13 +238,16 @@ class Statue:
         else: # Not smashed
             if self.initial_image_frames and self.initial_image_frames[0] and not self.initial_image_frames[0].isNull():
                  self.image = self.initial_image_frames[0]
-        
+
         self._update_rect_from_image_and_pos()
-        
+
         # If server says it's dead (and truly finished), kill on client
         if self.is_dead and self.death_animation_finished and self.alive():
             self.kill()
 
     @property
     def platform_type(self) -> str:
-        return "smashed_debris" if self.is_smashed else "stone_wall"
+        # Statues, when not smashed, might act like walls or obstacles.
+        # When smashed, they might become passable or disappear.
+        # This property can be used by collision logic if statues are treated as platforms.
+        return "smashed_debris" if self.is_smashed else "stone_obstacle"

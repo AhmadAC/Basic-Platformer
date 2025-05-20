@@ -4,18 +4,18 @@
 Defines the EnemyBase class, the foundational class for enemies.
 Handles core attributes, animation loading, and common assets for PySide6.
 """
-# version 2.0.1 
+# version 2.0.2 (Added properties to __init__)
 import os
 import random
 import time # For monotonic timer
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Tuple # Ensure Optional, Dict, Any, Tuple are imported
 
 # PySide6 imports
 from PySide6.QtGui import QPixmap, QColor, QPainter, QFont, QTransform, QImage # Added QImage for is_placeholder
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
 
 # Game imports
-import constants as C 
+import constants as C
 from assets import load_all_player_animations, load_gif_frames, resource_path # Qt-based
 
 # Logger import
@@ -39,14 +39,16 @@ def get_current_ticks_monotonic() -> int:
 
 class EnemyBase:
     def __init__(self, start_x: float, start_y: float, patrol_area: Optional[QRectF] = None,
-                 enemy_id: Optional[Any] = None, color_name: Optional[str] = None):
-        
+                 enemy_id: Optional[Any] = None, color_name: Optional[str] = None,
+                 properties: Optional[Dict[str, Any]] = None): # Added properties
+
         self.spawn_pos = QPointF(float(start_x), float(start_y))
         self.patrol_area = patrol_area # Expected QRectF
         self.enemy_id = enemy_id if enemy_id is not None else id(self)
         self._valid_init = True
         self._alive = True # Initialize alive status
         self.color_name = "unknown"
+        self.properties = properties if properties is not None else {} # Store properties
 
         character_base_asset_folder = 'characters'
         available_enemy_colors = ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'] # Should match asset folders
@@ -62,7 +64,7 @@ class EnemyBase:
             self.color_name = random.choice(available_enemy_colors) if available_enemy_colors else "unknown"
         else: # No color_name provided
             self.color_name = random.choice(available_enemy_colors) if available_enemy_colors else "unknown"
-        
+
         if self.color_name == "unknown" and available_enemy_colors: # If random choice still resulted in unknown (e.g. empty list initially)
              self.color_name = available_enemy_colors[0] # Default to first available
         elif self.color_name == "unknown":
@@ -76,7 +78,7 @@ class EnemyBase:
         if self._valid_init and self.color_name != "unknown":
             chosen_enemy_asset_folder = os.path.join(character_base_asset_folder, self.color_name)
             self.animations = load_all_player_animations(relative_asset_folder=chosen_enemy_asset_folder)
-        
+
         self.image: Optional[QPixmap] = None
         self.rect = QRectF()
 
@@ -114,7 +116,7 @@ class EnemyBase:
                 self.image = self._create_placeholder_qpixmap(QColor(*blue_color), f"NoIdle-{self.color_name[:3]}")
                 critical(f"EnemyBase CRITICAL (ID: {self.enemy_id}, Color: {self.color_name}): No suitable initial animation. Enemy invalid.")
                 self._valid_init = False; self._alive = False; self.is_dead = True
-            
+
             self._update_rect_from_image_and_pos(QPointF(float(start_x), float(start_y)))
 
         # Common physics and state initialization (only if _valid_init is still True or for fallbacks)
@@ -142,10 +144,10 @@ class EnemyBase:
         self.death_animation_finished = False
         self.state_timer = 0 # For states that might have their own duration
 
-        self.max_health = int(getattr(C, 'ENEMY_MAX_HEALTH', 80))
+        self.max_health = int(self.properties.get("health", getattr(C, 'ENEMY_MAX_HEALTH', 80))) # Use property if available
         self.current_health = self.max_health if self._valid_init else 0
-        
-        self.attack_hitbox = QRectF(0, 0, 50.0, 35.0) 
+
+        self.attack_hitbox = QRectF(0, 0, 50.0, 35.0)
 
         try:
             if self.animations and self.animations.get('idle') and self.animations['idle'][0] and not self.animations['idle'][0].isNull():
@@ -181,7 +183,7 @@ class EnemyBase:
             if loaded_stone_frames and not self._is_placeholder_qpixmap(loaded_stone_frames[0]):
                 self.stone_image_frame_original = loaded_stone_frames[0]
             else: warning(f"EnemyBase (ID: {self.enemy_id}): Failed to load common __Stone.png. Using placeholder.")
-            
+
             loaded_smashed_frames = load_gif_frames(common_stone_smashed_gif_path)
             if loaded_smashed_frames and not self._is_placeholder_qpixmap(loaded_smashed_frames[0]):
                 self.stone_smashed_frames_original = loaded_smashed_frames
@@ -213,12 +215,12 @@ class EnemyBase:
         # Default to TILE_SIZE based calculation
         width = base_tile_size
         height = int(base_tile_size * 1.5)
-        
+
         if hasattr(self, 'initial_image_frames') and self.initial_image_frames and \
            self.initial_image_frames[0] and not self.initial_image_frames[0].isNull():
             height = self.initial_image_frames[0].height()
             width = self.initial_image_frames[0].width()
-        
+
         pixmap = QPixmap(max(1, width), max(1, height))
         pixmap.fill(q_color)
         painter = QPainter(pixmap)
@@ -277,11 +279,11 @@ class EnemyBase:
 
         self.pos = self.spawn_pos.copy() # QPointF is copy-on-assignment essentially
         self._update_rect_from_image_and_pos()
-        
+
         self.vel = QPointF(0.0, 0.0)
         enemy_gravity = float(getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.8)))
         self.acc = QPointF(0.0, enemy_gravity)
-        self.current_health = self.max_health
+        self.current_health = self.max_health # Reset health to max
         self.is_dead = False; self.death_animation_finished = False
         self.is_taking_hit = False; self.is_attacking = False; self.attack_type = 0
         self.hit_timer = 0; self.attack_timer = 0; self.attack_cooldown_timer = 0
@@ -305,7 +307,7 @@ class EnemyBase:
 
         self.stone_image_frame = self.stone_image_frame_original.copy()
         self.stone_smashed_frames = [f.copy() for f in self.stone_smashed_frames_original]
-        
+
         self._alive = True # Explicitly set alive on reset
         self.state = 'idle'; self.current_frame = 0
         self.last_anim_update = get_current_ticks_monotonic() # Use monotonic timer
