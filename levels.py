@@ -1,25 +1,23 @@
+#################### START OF FILE: levels.py ####################
+
 # levels.py
 # -*- coding: utf-8 -*-
 """
 levels.py
-Returns data structures (lists of dictionaries) for platforms, ladders, hazards, 
+Returns data structures (lists of dictionaries) for platforms, ladders, hazards,
 spawns, level width, and absolute min/max Y coordinates for the entire level.
 This data is then used by game_setup.py to create PySide6 game objects.
 """
-# version 2.0.0 
+# version 2.0.1 (Corrected enemy spawn data key from 'pos' to 'start_pos')
 import random
 from typing import List, Dict, Tuple, Any, Optional
 
 # Game imports
-# 'tiles.py' is no longer directly used here for instantiation,
-# but its class names might be referenced in 'type' fields if needed by game_setup.
 import constants as C
-# Use constants directly from C, e.g., C.TILE_SIZE, C.GRAY
-# from constants import TILE_SIZE, GRAY, DARK_GREEN, ORANGE_RED, LAVA_PATCH_HEIGHT, BLACK
 
 FENCE_WIDTH = 8
 FENCE_HEIGHT = 15
-FENCE_COLOR = C.GRAY # Use C.GRAY
+FENCE_COLOR = C.GRAY
 
 def _calculate_content_extents(
     platforms_data: List[Dict[str, Any]],
@@ -33,12 +31,20 @@ def _calculate_content_extents(
 
     for data_list in [platforms_data, ladders_data, hazards_data]:
         for obj_data in data_list:
-            y, h = obj_data.get('y', 0.0), obj_data.get('h', 0.0)
-            all_tops.append(y)
-            all_bottoms.append(y + h)
+            # Ensure rect data exists and is a tuple/list of 4 numbers
+            rect_coords = obj_data.get('rect')
+            if isinstance(rect_coords, (list, tuple)) and len(rect_coords) == 4:
+                y, h = float(rect_coords[1]), float(rect_coords[3])
+                all_tops.append(y)
+                all_bottoms.append(y + h)
+            # Legacy support for direct x,y,w,h keys (less preferred)
+            elif all(k in obj_data for k in ['x','y','w','h']):
+                y, h = float(obj_data['y']), float(obj_data['h'])
+                all_tops.append(y)
+                all_bottoms.append(y + h)
 
-    if not all_tops: # No objects with y/h defined
-        # Fallback if no content to measure (e.g., an empty map definition)
+
+    if not all_tops:
         min_y_content = 0.0 - C.TILE_SIZE * 5
         max_y_content = initial_screen_height_fallback
         print(f"Warning: _calculate_content_extents found no measurable content. Using fallbacks: min_y={min_y_content}, max_y={max_y_content}")
@@ -50,16 +56,15 @@ def _calculate_content_extents(
 
 
 def _add_map_boundary_walls_data(
-    platforms_data_list: List[Dict[str, Any]], 
+    platforms_data_list: List[Dict[str, Any]],
     map_total_width: float,
-    ladders_data_list: List[Dict[str, Any]], # Added for extents calculation
-    hazards_data_list: List[Dict[str, Any]], # Added for extents calculation
-    initial_screen_height_fallback: float, 
+    ladders_data_list: List[Dict[str, Any]],
+    hazards_data_list: List[Dict[str, Any]],
+    initial_screen_height_fallback: float,
     extra_sky_clearance: float = 0.0
 ) -> Tuple[float, float]:
     """
-    Calculates content extents from data lists and adds boundary wall data dictionaries
-    to platforms_data_list.
+    Calculates content extents and adds boundary wall data.
     Returns min_y_overall, max_y_overall (absolute top/bottom of level including walls).
     """
     min_y_content, max_y_content = _calculate_content_extents(
@@ -71,69 +76,91 @@ def _add_map_boundary_walls_data(
     level_max_y_abs = max_y_content + C.TILE_SIZE
     boundary_box_height = level_max_y_abs - level_min_y_abs
 
-    boundary_color = getattr(C, 'DARK_GRAY', (50,50,50)) # Consistent boundary color
+    boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))
 
-    platforms_data_list.append({'x': 0.0, 'y': ceiling_object_top_y, 'w': map_total_width, 'h': float(C.TILE_SIZE), 'color': boundary_color, 'type': "boundary_wall_top"})
-    platforms_data_list.append({'x': 0.0, 'y': max_y_content, 'w': map_total_width, 'h': float(C.TILE_SIZE), 'color': boundary_color, 'type': "boundary_wall_bottom"})
-    platforms_data_list.append({'x': 0.0, 'y': level_min_y_abs, 'w': float(C.TILE_SIZE), 'h': boundary_box_height, 'color': boundary_color, 'type': "boundary_wall_left"})
-    platforms_data_list.append({'x': map_total_width - C.TILE_SIZE, 'y': level_min_y_abs, 'w': float(C.TILE_SIZE), 'h': boundary_box_height, 'color': boundary_color, 'type': "boundary_wall_right"})
+    # Data now uses 'rect' key
+    platforms_data_list.append({'rect': (0.0, ceiling_object_top_y, map_total_width, float(C.TILE_SIZE)), 'color': boundary_color, 'type': "boundary_wall_top"})
+    platforms_data_list.append({'rect': (0.0, max_y_content, map_total_width, float(C.TILE_SIZE)), 'color': boundary_color, 'type': "boundary_wall_bottom"})
+    platforms_data_list.append({'rect': (0.0, level_min_y_abs, float(C.TILE_SIZE), boundary_box_height), 'color': boundary_color, 'type': "boundary_wall_left"})
+    platforms_data_list.append({'rect': (map_total_width - C.TILE_SIZE, level_min_y_abs, float(C.TILE_SIZE), boundary_box_height), 'color': boundary_color, 'type': "boundary_wall_right"})
 
     return level_min_y_abs, level_max_y_abs
 
+def _create_platform_data(x, y, w, h, color, p_type, props=None) -> Dict[str, Any]:
+    return {'rect': (float(x), float(y), float(w), float(h)), 'color': color, 'type': p_type, 'properties': props or {}}
 
-def load_map_original(initial_width: float, initial_height: float) -> Tuple[
-    List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], 
-    List[Dict[str, Any]], Optional[Dict[str, Any]], Tuple[float, float], Optional[Dict[str, Any]],
-    float, float, float, float, float, Tuple[int, int, int], Optional[List[Dict[str, Any]]]
-]:
+def _create_ladder_data(x, y, w, h) -> Dict[str, Any]:
+    return {'rect': (float(x), float(y), float(w), float(h))} # Color and type are implicit for ladders
+
+def _create_hazard_data(h_type, x, y, w, h, color) -> Dict[str, Any]:
+    return {'type': h_type, 'rect': (float(x), float(y), float(w), float(h)), 'color': color}
+
+def _create_enemy_spawn_data(start_pos_tuple, enemy_type_str, patrol_rect_data_dict=None, props=None) -> Dict[str, Any]:
+    return {'start_pos': start_pos_tuple, 'type': enemy_type_str, 'patrol_rect_data': patrol_rect_data_dict, 'properties': props or {}}
+
+
+def load_map_original() -> Dict[str, Any]:
     """ Returns data for the original level layout. """
+    initial_height = C.TILE_SIZE * 15 # Assume a default screen height context for placement
+    initial_width = C.TILE_SIZE * 20
+
     platforms_data: List[Dict[str, Any]] = []
     ladders_data: List[Dict[str, Any]] = []
     hazards_data: List[Dict[str, Any]] = []
     enemy_spawns_data: List[Dict[str, Any]] = []
-    collectible_spawns_data: List[Dict[str, Any]] = [] # Added
-    statue_spawns_data: List[Dict[str, Any]] = [] # Added
+    collectible_spawns_data: List[Dict[str, Any]] = []
+    statue_spawns_data: List[Dict[str, Any]] = []
 
     map_total_width = initial_width * 2.5
     player_spawn_pos = (C.TILE_SIZE + 60.0, initial_height - C.TILE_SIZE * 2.0 - 1.0)
-    player_spawn_props = {} # Default empty props
+    player_spawn_props = {}
     main_ground_y_ref = initial_height - C.TILE_SIZE
     main_ground_segment_height_ref = float(C.TILE_SIZE)
 
-    platforms_data.append({'x': float(C.TILE_SIZE), 'y': main_ground_y_ref, 'w': map_total_width - 2 * C.TILE_SIZE, 'h': main_ground_segment_height_ref, 'color': C.GRAY, 'type': "ground"})
-    platforms_data.append({'x': C.TILE_SIZE + 160.0, 'y': initial_height - 150.0, 'w': 250.0, 'h': 20.0, 'color': C.DARK_GREEN, 'type': "ledge"})
-    platforms_data.append({'x': C.TILE_SIZE + 410.0, 'y': initial_height - 300.0, 'w': 180.0, 'h': 20.0, 'color': C.DARK_GREEN, 'type': "ledge"})
-    platforms_data.append({'x': min(map_total_width - C.TILE_SIZE - 200.0, C.TILE_SIZE + initial_width - 350.0), 'y': initial_height - 450.0, 'w': 200.0, 'h': 20.0, 'color': C.DARK_GREEN, 'type': "ledge"})
-    platforms_data.append({'x': min(map_total_width - C.TILE_SIZE - 150.0, C.TILE_SIZE + initial_width + 150.0), 'y': initial_height - 250.0, 'w': 150.0, 'h': 20.0, 'color': C.DARK_GREEN, 'type': "ledge"})
-    platforms_data.append({'x': C.TILE_SIZE + 860.0, 'y': initial_height - 550.0, 'w': 100.0, 'h': 20.0, 'color': C.DARK_GREEN, 'type': "ledge"})
+    platforms_data.append(_create_platform_data(float(C.TILE_SIZE), main_ground_y_ref, map_total_width - 2 * C.TILE_SIZE, main_ground_segment_height_ref, C.GRAY, "ground"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 160.0, initial_height - 150.0, 250.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 410.0, initial_height - 300.0, 180.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(min(map_total_width - C.TILE_SIZE - 200.0, C.TILE_SIZE + initial_width - 350.0), initial_height - 450.0, 200.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(min(map_total_width - C.TILE_SIZE - 150.0, C.TILE_SIZE + initial_width + 150.0), initial_height - 250.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 860.0, initial_height - 550.0, 100.0, 20.0, C.DARK_GREEN, "ledge"))
 
     wall_mid_x = C.TILE_SIZE + 760.0
     wall_mid_width = 30.0
     if wall_mid_x + wall_mid_width > map_total_width - C.TILE_SIZE:
         wall_mid_width = max(1.0, (map_total_width - C.TILE_SIZE) - wall_mid_x)
-    platforms_data.append({'x': wall_mid_x, 'y': initial_height - 400.0, 'w': wall_mid_width, 'h': 360.0, 'color': C.GRAY, 'type': "wall"})
+    platforms_data.append(_create_platform_data(wall_mid_x, initial_height - 400.0, wall_mid_width, 360.0, C.GRAY, "wall"))
 
     ladder_width = 40.0
     ladder_height_main = 250.0
-    ladders_data.append({'x': min(map_total_width - C.TILE_SIZE - ladder_width, C.TILE_SIZE + initial_width - 500.0), 'y': main_ground_y_ref - ladder_height_main, 'w': ladder_width, 'h': ladder_height_main})
-    ladders_data.append({'x': C.TILE_SIZE + 310.0, 'y': initial_height - 250.0, 'w': ladder_width, 'h': 150.0})
+    ladders_data.append(_create_ladder_data(min(map_total_width - C.TILE_SIZE - ladder_width, C.TILE_SIZE + initial_width - 500.0), main_ground_y_ref - ladder_height_main, ladder_width, ladder_height_main))
+    ladders_data.append(_create_ladder_data(C.TILE_SIZE + 310.0, initial_height - 250.0, ladder_width, 150.0))
 
     level_min_y_abs, level_max_y_abs = _add_map_boundary_walls_data(platforms_data, map_total_width, ladders_data, hazards_data, initial_height, extra_sky_clearance=C.TILE_SIZE * 5.0)
-    
-    level_bg_color = getattr(C, "PURPLE_BACKGROUND", (75,0,130)) # Example default
+    level_bg_color = getattr(C, "PURPLE_BACKGROUND", (75,0,130))
 
-    return (platforms_data, ladders_data, hazards_data, enemy_spawns_data, collectible_spawns_data,
-            player_spawn_pos, player_spawn_props,
-            map_total_width, level_min_y_abs, level_max_y_abs,
-            main_ground_y_ref, main_ground_segment_height_ref,
-            level_bg_color, statue_spawns_data)
+    return {
+        "level_name": "original",
+        "platforms_list": platforms_data,
+        "ladders_list": ladders_data,
+        "hazards_list": hazards_data,
+        "enemies_list": enemy_spawns_data,
+        "items_list": collectible_spawns_data,
+        "statues_list": statue_spawns_data,
+        "player_start_pos_p1": player_spawn_pos,
+        "player1_spawn_props": player_spawn_props,
+        "level_pixel_width": map_total_width,
+        "level_min_y_absolute": level_min_y_abs,
+        "level_max_y_absolute": level_max_y_abs,
+        "ground_level_y_ref": main_ground_y_ref,
+        "ground_platform_height_ref": main_ground_segment_height_ref,
+        "background_color": level_bg_color
+    }
 
 
-def load_map_lava(initial_width: float, initial_height: float) -> Tuple[
-    List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], 
-    List[Dict[str, Any]], Optional[Dict[str, Any]], Tuple[float, float], Optional[Dict[str, Any]],
-    float, float, float, float, float, Tuple[int, int, int], Optional[List[Dict[str, Any]]]
-]:
+def load_map_lava() -> Dict[str, Any]:
+    initial_height = C.TILE_SIZE * 15
+    initial_width = C.TILE_SIZE * 20
+
     platforms_data: List[Dict[str, Any]] = []
     ladders_data: List[Dict[str, Any]] = []
     hazards_data: List[Dict[str, Any]] = []
@@ -148,38 +175,52 @@ def load_map_lava(initial_width: float, initial_height: float) -> Tuple[
     player_spawn_props = {}
     main_ground_y_ref = initial_height - C.TILE_SIZE
 
-    platforms_data.append({'x': float(C.TILE_SIZE), 'y': initial_height - 120.0, 'w': 150.0, 'h': 20.0, 'color': C.DARK_GREEN, 'type': "ledge"})
-    # ... (add other platforms similarly) ...
-    platforms_data.append({'x': C.TILE_SIZE + 1560.0, 'y': initial_height - 480.0, 'w': 200.0, 'h': 20.0, 'color': C.DARK_GREEN, 'type': "ledge"})
-    
+    platforms_data.append(_create_platform_data(float(C.TILE_SIZE), initial_height - 120.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 260.0, initial_height - 180.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 520.0, initial_height - 250.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 800.0, initial_height - 320.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 1100.0, initial_height - 400.0, 200.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 1560.0, initial_height - 480.0, 200.0, 20.0, C.DARK_GREEN, "ledge"))
+
     wall1_height = main_ground_y_ref - (initial_height - 400.0)
-    platforms_data.append({'x': C.TILE_SIZE + 1060.0, 'y': initial_height - 400.0, 'w': 30.0, 'h': wall1_height, 'color': C.GRAY, 'type': "wall"})
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 1060.0, initial_height - 400.0, 30.0, wall1_height, C.GRAY, "wall"))
     wall2_height = main_ground_y_ref - (initial_height - 500.0)
-    platforms_data.append({'x': C.TILE_SIZE + 1410.0, 'y': initial_height - 500.0, 'w': 30.0, 'h': wall2_height, 'color': C.GRAY, 'type': "wall"})
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 1410.0, initial_height - 500.0, 30.0, wall2_height, C.GRAY, "wall"))
 
     lava_y_surface = main_ground_y_ref
-    hazards_data.append({'type': 'lava', 'x': float(C.TILE_SIZE), 'y': lava_y_surface, 'w': (C.TILE_SIZE + 1060.0) - C.TILE_SIZE, 'h': float(C.LAVA_PATCH_HEIGHT), 'color': C.ORANGE_RED})
-    # ... (add other hazards similarly) ...
+    hazards_data.append(_create_hazard_data('lava', float(C.TILE_SIZE), lava_y_surface, (C.TILE_SIZE + 1060.0) - C.TILE_SIZE, float(C.LAVA_PATCH_HEIGHT), C.ORANGE_RED))
+    hazards_data.append(_create_hazard_data('lava', C.TILE_SIZE + 1060.0 + 30.0, lava_y_surface, (C.TILE_SIZE + 1410.0) - (C.TILE_SIZE + 1060.0 + 30.0), float(C.LAVA_PATCH_HEIGHT), C.ORANGE_RED))
     lava3_start_x = C.TILE_SIZE + 1410.0 + 30.0
     lava3_width = (map_total_width - C.TILE_SIZE) - lava3_start_x
     if lava3_width > 0:
-        hazards_data.append({'type': 'lava', 'x': lava3_start_x, 'y': lava_y_surface, 'w': lava3_width, 'h': float(C.LAVA_PATCH_HEIGHT), 'color': C.ORANGE_RED})
+        hazards_data.append(_create_hazard_data('lava', lava3_start_x, lava_y_surface, lava3_width, float(C.LAVA_PATCH_HEIGHT), C.ORANGE_RED))
 
     level_min_y_abs, level_max_y_abs = _add_map_boundary_walls_data(platforms_data, map_total_width, ladders_data, hazards_data, initial_height, extra_sky_clearance=C.TILE_SIZE * 5.0)
     level_bg_color = getattr(C, "PURPLE_BACKGROUND", (75,0,130))
 
-    return (platforms_data, ladders_data, hazards_data, enemy_spawns_data, collectible_spawns_data,
-            player_spawn_pos, player_spawn_props,
-            map_total_width, level_min_y_abs, level_max_y_abs,
-            main_ground_y_ref, 0.0, # Ground segment height is 0 for lava level
-            level_bg_color, statue_spawns_data)
+    return {
+        "level_name": "lava",
+        "platforms_list": platforms_data,
+        "ladders_list": ladders_data,
+        "hazards_list": hazards_data,
+        "enemies_list": enemy_spawns_data,
+        "items_list": collectible_spawns_data,
+        "statues_list": statue_spawns_data,
+        "player_start_pos_p1": player_spawn_pos,
+        "player1_spawn_props": player_spawn_props,
+        "level_pixel_width": map_total_width,
+        "level_min_y_absolute": level_min_y_abs,
+        "level_max_y_absolute": level_max_y_abs,
+        "ground_level_y_ref": main_ground_y_ref,
+        "ground_platform_height_ref": 0.0, # Ground segment height is 0 for lava level
+        "background_color": level_bg_color
+    }
 
 
-def load_map_cpu_extended(initial_width: float, initial_height: float) -> Tuple[
-    List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], 
-    List[Dict[str, Any]], Optional[Dict[str, Any]], Tuple[float, float], Optional[Dict[str, Any]],
-    float, float, float, float, float, Tuple[int, int, int], Optional[List[Dict[str, Any]]]
-]:
+def load_map_cpu_extended() -> Dict[str, Any]:
+    initial_height = C.TILE_SIZE * 15
+    initial_width = C.TILE_SIZE * 20
+
     platforms_data: List[Dict[str, Any]] = []
     ladders_data: List[Dict[str, Any]] = []
     hazards_data: List[Dict[str, Any]] = []
@@ -193,76 +234,77 @@ def load_map_cpu_extended(initial_width: float, initial_height: float) -> Tuple[
     player_spawn_pos = (C.TILE_SIZE * 2.0, main_ground_y_ref - 1.0)
     player_spawn_props = {}
     gap_width_lava = C.TILE_SIZE * 4.0
-    lava_collision_y_level = main_ground_y_ref + 1.0
+    lava_collision_y_level = main_ground_y_ref + 1.0 # Lava surface slightly below ground level for collision
     fence_y_pos = main_ground_y_ref - FENCE_HEIGHT
 
     # Ground Segments
     seg1_start_x = float(C.TILE_SIZE)
     seg1_width = (initial_width * 0.7) - C.TILE_SIZE
     seg1_end_x = seg1_start_x + seg1_width
-    platforms_data.append({'x': seg1_start_x, 'y': main_ground_y_ref, 'w': seg1_width, 'h': main_ground_segment_height_ref, 'color': C.GRAY, 'type': "ground"})
+    platforms_data.append(_create_platform_data(seg1_start_x, main_ground_y_ref, seg1_width, main_ground_segment_height_ref, C.GRAY, "ground"))
 
     # Lava Pit 1 with Fences
     lava1_start_x = seg1_end_x
     lava1_width = gap_width_lava
-    hazards_data.append({'type': 'lava', 'x': lava1_start_x, 'y': lava_collision_y_level, 'w': lava1_width, 'h': float(C.LAVA_PATCH_HEIGHT), 'color': C.ORANGE_RED})
-    platforms_data.append({'x': lava1_start_x - FENCE_WIDTH, 'y': fence_y_pos, 'w': float(FENCE_WIDTH), 'h': float(FENCE_HEIGHT), 'color': FENCE_COLOR, 'type': "fence"})
-    platforms_data.append({'x': lava1_start_x + lava1_width, 'y': fence_y_pos, 'w': float(FENCE_WIDTH), 'h': float(FENCE_HEIGHT), 'color': FENCE_COLOR, 'type': "fence"})
+    hazards_data.append(_create_hazard_data('lava', lava1_start_x, lava_collision_y_level, lava1_width, float(C.LAVA_PATCH_HEIGHT), C.ORANGE_RED))
+    platforms_data.append(_create_platform_data(lava1_start_x - FENCE_WIDTH, fence_y_pos, float(FENCE_WIDTH), float(FENCE_HEIGHT), FENCE_COLOR, "fence"))
+    platforms_data.append(_create_platform_data(lava1_start_x + lava1_width, fence_y_pos, float(FENCE_WIDTH), float(FENCE_HEIGHT), FENCE_COLOR, "fence"))
 
     # Ground Segment 2
     seg2_start_x = lava1_start_x + lava1_width
     seg2_width = initial_width * 1.0
-    seg2_end_x = seg2_start_x + seg2_width
-    platforms_data.append({'x': seg2_start_x, 'y': main_ground_y_ref, 'w': seg2_width, 'h': main_ground_segment_height_ref, 'color': C.GRAY, 'type': "ground"})
+    # seg2_end_x = seg2_start_x + seg2_width # This line was unused
+    platforms_data.append(_create_platform_data(seg2_start_x, main_ground_y_ref, seg2_width, main_ground_segment_height_ref, C.GRAY, "ground"))
     
-    # ... (Continue converting other platforms, hazards, enemy_spawns like above) ...
-    # Example for enemy patrol:
-    # patrol_rect_enemy1_data = {'x': seg2_start_x + C.TILE_SIZE, 'y': main_ground_y_ref - C.TILE_SIZE*2, 
-    #                           'w': seg2_width - C.TILE_SIZE*2, 'h': C.TILE_SIZE*2}
-    # enemy_spawns_data.append({'pos': (enemy1_x_pos, spawn_y_on_ground), 'patrol_rect_data': patrol_rect_enemy1_data})
-
-
     # Floating Platforms
     plat1_x = C.TILE_SIZE + (initial_width * 0.3 - C.TILE_SIZE)
     plat1_x = max(seg1_start_x + C.TILE_SIZE, min(plat1_x, seg1_end_x - C.TILE_SIZE*7))
-    platforms_data.append({'x': plat1_x, 'y': main_ground_y_ref - C.TILE_SIZE * 1.8, 'w': C.TILE_SIZE * 6.0, 'h': C.TILE_SIZE * 0.5, 'color': C.DARK_GREEN, 'type': "ledge"})
-    platforms_data.append({'x': seg2_start_x + C.TILE_SIZE * 2.0, 'y': main_ground_y_ref - C.TILE_SIZE * 3.0, 'w': C.TILE_SIZE * 8.0, 'h': C.TILE_SIZE * 0.5, 'color': C.DARK_GREEN, 'type': "ledge"})
+    platforms_data.append(_create_platform_data(plat1_x, main_ground_y_ref - C.TILE_SIZE * 1.8, C.TILE_SIZE * 6.0, C.TILE_SIZE * 0.5, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(seg2_start_x + C.TILE_SIZE * 2.0, main_ground_y_ref - C.TILE_SIZE * 3.0, C.TILE_SIZE * 8.0, C.TILE_SIZE * 0.5, C.DARK_GREEN, "ledge"))
     
     seg3_start_x = seg2_start_x + seg2_width + gap_width_lava * 0.8 # After lava pit 2
     seg3_width = (map_total_width - C.TILE_SIZE) - seg3_start_x
     if seg3_width > C.TILE_SIZE * 8 :
-        platforms_data.append({'x': seg3_start_x + C.TILE_SIZE * 4.0, 'y': main_ground_y_ref - C.TILE_SIZE * 5.5, 'w': C.TILE_SIZE * 7.0, 'h': C.TILE_SIZE * 0.5, 'color': C.DARK_GREEN, 'type': "ledge"})
+        platforms_data.append(_create_platform_data(seg3_start_x + C.TILE_SIZE * 4.0, main_ground_y_ref - C.TILE_SIZE * 5.5, C.TILE_SIZE * 7.0, C.TILE_SIZE * 0.5, C.DARK_GREEN, "ledge"))
 
-    # Enemy Spawns (convert patrol rect if needed)
+    # Enemy Spawns
     spawn_y_on_ground = main_ground_y_ref - 1.0
     enemy1_x_pos = seg2_start_x + seg2_width * 0.5
     patrol_data_e1 = {'x': seg2_start_x + C.TILE_SIZE, 'y': main_ground_y_ref - C.TILE_SIZE*2, 'width': seg2_width - C.TILE_SIZE*2, 'height': C.TILE_SIZE*2.0}
-    enemy_spawns_data.append({'pos': (enemy1_x_pos, spawn_y_on_ground), 'patrol_rect_data': patrol_data_e1}) # Note: key changed
+    enemy_spawns_data.append(_create_enemy_spawn_data((enemy1_x_pos, spawn_y_on_ground), 'enemy_green', patrol_data_e1))
 
-    # For Enemy 2, find its platform data to get coordinates
-    # This is tricky as platforms_data is just data. game_setup.py would resolve this.
-    # For now, let's estimate. Platform 2 on seg2:
     enemy2_platform_y = main_ground_y_ref - C.TILE_SIZE * 3.0
     enemy2_platform_x = seg2_start_x + C.TILE_SIZE * 2.0
-    enemy2_x_pos = enemy2_platform_x + (C.TILE_SIZE * 8.0) / 2.0 # Center of that platform
+    enemy2_x_pos = enemy2_platform_x + (C.TILE_SIZE * 8.0) / 2.0
     enemy2_y_pos = enemy2_platform_y - 1.0
-    enemy_spawns_data.append({'pos': (enemy2_x_pos, enemy2_y_pos), 'patrol_rect_data': None})
+    enemy_spawns_data.append(_create_enemy_spawn_data((enemy2_x_pos, enemy2_y_pos), 'enemy_pink'))
     
     if seg3_width > C.TILE_SIZE:
         enemy3_x_pos = seg3_start_x + seg3_width * 0.3
-        enemy_spawns_data.append({'pos': (enemy3_x_pos, spawn_y_on_ground), 'patrol_rect_data': None})
+        enemy_spawns_data.append(_create_enemy_spawn_data((enemy3_x_pos, spawn_y_on_ground), 'enemy_purple'))
 
 
     level_min_y_abs, level_max_y_abs = _add_map_boundary_walls_data(platforms_data, map_total_width, ladders_data, hazards_data, initial_height, extra_sky_clearance=C.TILE_SIZE * 10.0)
     level_bg_color = getattr(C, "LIGHT_BLUE", (173, 216, 230))
 
-    return (platforms_data, ladders_data, hazards_data, enemy_spawns_data, collectible_spawns_data,
-            player_spawn_pos, player_spawn_props,
-            map_total_width, level_min_y_abs, level_max_y_abs,
-            main_ground_y_ref, main_ground_segment_height_ref,
-            level_bg_color, statue_spawns_data)
+    return {
+        "level_name": "cpu_extended",
+        "platforms_list": platforms_data,
+        "ladders_list": ladders_data,
+        "hazards_list": hazards_data,
+        "enemies_list": enemy_spawns_data,
+        "items_list": collectible_spawns_data,
+        "statues_list": statue_spawns_data,
+        "player_start_pos_p1": player_spawn_pos,
+        "player1_spawn_props": player_spawn_props,
+        "level_pixel_width": map_total_width,
+        "level_min_y_absolute": level_min_y_abs,
+        "level_max_y_absolute": level_max_y_abs,
+        "ground_level_y_ref": main_ground_y_ref,
+        "ground_platform_height_ref": main_ground_segment_height_ref,
+        "background_color": level_bg_color
+    }
 
+load_map_cpu = load_map_cpu_extended
 
-load_map_cpu = load_map_cpu_extended # Alias for convenience
-
-# Testing would be done by running the main game and loading these maps.
+#################### END OF FILE: levels.py ####################

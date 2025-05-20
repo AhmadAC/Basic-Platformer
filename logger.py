@@ -1,237 +1,310 @@
-# logger.py
-# version 1.0.0.3 (Added throttling for log_player_physics)
-import logging
-import os
-import time # Added for robust timestamping
+#################### START OF FILE: levels.py ####################
 
-# --- GLOBAL LOGGING ENABLE/DISABLE SWITCH ---
-LOGGING_ENABLED = True
-# --- ---
+# levels.py
+# -*- coding: utf-8 -*-
+"""
+levels.py
+Returns data structures (lists of dictionaries) for platforms, ladders, hazards,
+spawns, level width, and absolute min/max Y coordinates for the entire level.
+This data is then used by game_setup.py to create PySide6 game objects.
+"""
+# version 2.0.1 (Corrected enemy spawn data key from 'pos' to 'start_pos')
+import random
+from typing import List, Dict, Tuple, Any, Optional
 
-# --- CONFIGURATION FOR DETAILED PHYSICS LOGS ---
-ENABLE_DETAILED_PHYSICS_LOGS = True # This switch works with LOGGING_ENABLED
-PHYSICS_LOG_INTERVAL_SEC = 1.0  # Log physics details at most once per this interval (per player)
-_last_physics_log_time_by_player = {} # Stores last log timestamp for each player
-# --- ---
+# Game imports
+import constants as C
 
+FENCE_WIDTH = 8
+FENCE_HEIGHT = 15
+FENCE_COLOR = C.GRAY
 
-LOG_FILENAME = "platformer_debug.log"
-LOG_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), LOG_FILENAME)
+def _calculate_content_extents(
+    platforms_data: List[Dict[str, Any]],
+    ladders_data: List[Dict[str, Any]],
+    hazards_data: List[Dict[str, Any]],
+    initial_screen_height_fallback: float
+) -> Tuple[float, float]:
+    """Calculates min_y and max_y from lists of object data dictionaries."""
+    all_tops: List[float] = []
+    all_bottoms: List[float] = []
 
-_platformer_logger_instance = logging.getLogger("PlatformerLogger")
-
-if LOGGING_ENABLED:
-    _platformer_logger_instance.setLevel(logging.DEBUG)
-
-    if os.path.exists(LOG_FILE_PATH):
-        try:
-            os.remove(LOG_FILE_PATH)
-        except OSError as e:
-            import sys
-            sys.stderr.write(f"Warning: Could not delete old log file {LOG_FILE_PATH}: {e}\n")
-
-    for handler in list(_platformer_logger_instance.handlers):
-        _platformer_logger_instance.removeHandler(handler)
-        handler.close()
-
-    try:
-        _file_handler = logging.FileHandler(LOG_FILE_PATH, mode='w')
-        _formatter = logging.Formatter("[%(asctime)s.%(msecs)03d] %(levelname)-7s %(name)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-        # Changed formatter to include levelname and logger name for better context
-        # _formatter = logging.Formatter("[%(asctime)s.%(msecs)03d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-        _file_handler.setFormatter(_formatter)
-        _platformer_logger_instance.addHandler(_file_handler)
-        _platformer_logger_instance.propagate = False
-
-        # Optional console handler for seeing logs directly
-        # _console_handler = logging.StreamHandler()
-        # _console_handler.setFormatter(_formatter) # Use the same formatter
-        # _console_handler.setLevel(logging.DEBUG) # Set level for console output
-        # _platformer_logger_instance.addHandler(_console_handler)
-
-        _platformer_logger_instance.info(f"Logger initialized. Logging enabled. Output to: {LOG_FILE_PATH}")
-
-    except Exception as e:
-        import sys
-        sys.stderr.write(f"CRITICAL ERROR: Failed to initialize file logger at {LOG_FILE_PATH}: {e}\n")
-        sys.stderr.write(f"CRITICAL ERROR: PlatformerLogger will not write to file, despite LOGGING_ENABLED=True.\n")
-        for handler in list(_platformer_logger_instance.handlers):
-            _platformer_logger_instance.removeHandler(handler)
-            handler.close()
-        _platformer_logger_instance.addHandler(logging.NullHandler())
-        _platformer_logger_instance.propagate = False
-else:
-    for handler in list(_platformer_logger_instance.handlers):
-        _platformer_logger_instance.removeHandler(handler)
-        handler.close()
-    _platformer_logger_instance.addHandler(logging.NullHandler())
-    _platformer_logger_instance.setLevel(logging.CRITICAL + 1) # Effectively disable
-    _platformer_logger_instance.propagate = False
-    # print("INFO: PlatformerLogger is disabled by configuration.")
+    for data_list in [platforms_data, ladders_data, hazards_data]:
+        for obj_data in data_list:
+            # Ensure rect data exists and is a tuple/list of 4 numbers
+            rect_coords = obj_data.get('rect')
+            if isinstance(rect_coords, (list, tuple)) and len(rect_coords) == 4:
+                y, h = float(rect_coords[1]), float(rect_coords[3])
+                all_tops.append(y)
+                all_bottoms.append(y + h)
+            # Legacy support for direct x,y,w,h keys (less preferred)
+            elif all(k in obj_data for k in ['x','y','w','h']):
+                y, h = float(obj_data['y']), float(obj_data['h'])
+                all_tops.append(y)
+                all_bottoms.append(y + h)
 
 
-def log_player_physics(player, message_tag, extra_info=""):
-    """Helper to log player physics details if detailed logging is enabled, with throttling."""
-    if not LOGGING_ENABLED or not ENABLE_DETAILED_PHYSICS_LOGS:
-        return
-
-    try:
-        # Determine a unique identifier for the player for throttling
-        # Ensure player_id is a string or a consistently hashable type.
-        # Using a prefix "player_" to avoid potential collisions if player_id could be an int like 0 or 1.
-        player_throttle_id = f"player_{str(getattr(player, 'player_id', 'unknown'))}"
-        current_time_sec = time.time()
-
-        # --- Throttling Logic ---
-        last_log_time = _last_physics_log_time_by_player.get(player_throttle_id, 0.0)
-        if current_time_sec - last_log_time < PHYSICS_LOG_INTERVAL_SEC:
-            return  # Throttled, do not log for this player yet
-
-        # If not throttled, update the last log time for this player *before* formatting
-        # to reduce chance of multiple logs if formatting is slow (unlikely but good practice).
-        _last_physics_log_time_by_player[player_throttle_id] = current_time_sec
-        # --- End Throttling Logic ---
-
-        # Formatting logic (existing code)
-        player_id_str_msg = str(getattr(player, 'player_id', 'P?')) # For the message content
-        pos_x = getattr(player, 'pos', type('obj', (object,), {'x': float('nan')})).x
-        pos_y = getattr(player, 'pos', type('obj', (object,), {'y': float('nan')})).y
-        vel_x = getattr(player, 'vel', type('obj', (object,), {'x': float('nan')})).x
-        vel_y = getattr(player, 'vel', type('obj', (object,), {'y': float('nan')})).y
-        player_rect_str = str(getattr(player, 'rect', 'N/A'))
-        player_on_ground = getattr(player, 'on_ground', 'N/A')
-        player_state = getattr(player, 'state', 'N/A')
-        player_acc_x = getattr(player, 'acc', type('obj', (object,), {'x': float('nan')})).x
-        player_acc_y = getattr(player, 'acc', type('obj', (object,), {'y': float('nan')})).y
-        player_wall_touch = getattr(player, 'touching_wall', 'N/A')
-
-        log_msg_parts = [
-            f"P{player_id_str_msg} PHYS: {message_tag: <18} | "
-            f"Pos:({pos_x:6.2f},{pos_y:6.2f}) "
-            f"Vel:({vel_x:5.2f},{vel_y:5.2f}) "
-        ]
-
-        if message_tag == "UPDATE_START":
-             log_msg_parts.append(
-                f"Acc:({player_acc_x:4.2f},{player_acc_y:4.2f}) "
-                f"Rect:{player_rect_str} OnGround:{player_on_ground} State:{player_state}"
-             )
-        elif "PLAT_COLL_CHECK" in message_tag:
-            player_r_str, plat_r_str, plat_t = "N/A", "N/A", "N/A"
-            if isinstance(extra_info, tuple) and len(extra_info) == 3:
-                player_r_str, plat_r_str, plat_t = str(extra_info[0]), str(extra_info[1]), str(extra_info[2])
-            log_msg_parts.append(
-                f"PlayerRect:{player_r_str} | PlatRect:{plat_r_str} | PlatType:{plat_t}"
-            )
-        elif "PLAT_COLL_RESOLVED" in message_tag:
-            snap_r_str, orig_r_str, n_pos_str, n_vel_axis_val_str, n_og_str, axis_char = "N/A", "N/A", "N/A", "N/A", "N/A", "?"
-            if isinstance(extra_info, tuple) and len(extra_info) == 6:
-                snap_r_str, orig_r_str = str(extra_info[0]), str(extra_info[1])
-                n_pos_x, n_pos_y = extra_info[2]
-                n_pos_str = f"({n_pos_x:.2f},{n_pos_y:.2f})"
-                n_vel_axis_val_str = f"{extra_info[3]:.2f}"
-                n_og_str = str(extra_info[4])
-                axis_char = str(extra_info[5])
-            log_msg_parts.append(
-                f"SnappedRect:{snap_r_str} (from {orig_r_str}) | "
-                f"NewPos:{n_pos_str} | Vel.{axis_char}:{n_vel_axis_val_str} OnGround:{n_og_str}"
-            )
-        elif "CHAR_COLL_CHECK" in message_tag:
-            player_r_str, other_r_str, other_id_str = "N/A", "N/A", "N/A"
-            if isinstance(extra_info, tuple) and len(extra_info) == 3:
-                player_r_str, other_r_str, other_id_str = str(extra_info[0]), str(extra_info[1]), str(extra_info[2])
-            log_msg_parts.append(
-                f"PlayerRect:{player_r_str} | OtherRect:{other_r_str} | OtherID:{other_id_str}"
-            )
-        elif "CHAR_COLL_RESOLVED" in message_tag:
-            snap_r_str, orig_r_str, n_pos_str, n_vel_axis_val_str, axis_char = "N/A", "N/A", "N/A", "N/A", "?"
-            if isinstance(extra_info, tuple) and len(extra_info) == 5:
-                snap_r_str, orig_r_str = str(extra_info[0]), str(extra_info[1])
-                n_pos_x, n_pos_y = extra_info[2]
-                n_pos_str = f"({n_pos_x:.2f},{n_pos_y:.2f})"
-                n_vel_axis_val_str = f"{extra_info[3]:.2f}"
-                axis_char = str(extra_info[4])
-            log_msg_parts.append(
-                f"SnappedRect:{snap_r_str} (from {orig_r_str}) | "
-                f"NewPos:{n_pos_str} | Vel.{axis_char}:{n_vel_axis_val_str}"
-            )
-        elif "PLAT_COLL_DONE" in message_tag:
-            axis_char = "x" if "X_" in message_tag else "y"
-            pos_axis_val = pos_x if axis_char == 'x' else pos_y
-            vel_axis_val = vel_x if axis_char == 'x' else vel_y
-            rect_midbottom_str = str(player.rect.midbottom) if hasattr(player,'rect') and hasattr(player.rect, 'midbottom') else 'N/A'
-            if axis_char == "x": log_msg_parts.append(f"Pos.{axis_char}:{pos_axis_val:6.2f} | Rect.midbottom:{rect_midbottom_str} | Vel.{axis_char}:{vel_axis_val:5.2f} WallTouch:{player_wall_touch}")
-            else: log_msg_parts.append(f"Pos.{axis_char}:{pos_axis_val:6.2f} | Rect.midbottom:{rect_midbottom_str} | Vel.{axis_char}:{vel_axis_val:5.2f} OnGround:{player_on_ground}")
-        elif "FINAL_POS_SYNC" in message_tag: log_msg_parts.append(f"Pos:({pos_x:6.2f},{pos_y:6.2f}) | Rect.midbottom: {player_rect_str}") # player_rect_str is already player.rect
-        elif "UPDATE_END" in message_tag: log_msg_parts.append(f"Pos:({pos_x:6.2f},{pos_y:6.2f}) Vel:({vel_x:5.2f},{vel_y:5.2f}) OnGround:{player_on_ground} State:{player_state}")
-        
-        if isinstance(extra_info, str) and extra_info and not any(kw in message_tag for kw in ["PLAT_COLL_CHECK", "PLAT_COLL_RESOLVED", "CHAR_COLL_CHECK", "CHAR_COLL_RESOLVED", "PLAT_COLL_DONE", "FINAL_POS_SYNC", "UPDATE_END", "UPDATE_START"]):
-            log_msg_parts.append(f" {extra_info}")
-            
-        _platformer_logger_instance.debug("".join(log_msg_parts))
-    except Exception as e:
-        # Get player_id again for error message, or use a default if it fails early
-        err_player_id = 'unknown_player'
-        try:
-            err_player_id = f"P{str(getattr(player, 'player_id', '?'))}"
-        except: #pylint: disable=bare-except
-            pass # Keep err_player_id as 'unknown_player'
-        _platformer_logger_instance.error(f"Error in log_player_physics for {err_player_id} tag '{message_tag}': {e}", exc_info=False) # exc_info=False to prevent huge tracebacks for simple formatting errors. Set to True if needed.
-
-logger = _platformer_logger_instance
-
-# Expose logging functions directly
-def debug(message, *args, **kwargs):
-    if LOGGING_ENABLED:
-        _platformer_logger_instance.debug(message, *args, **kwargs)
-
-def info(message, *args, **kwargs):
-    if LOGGING_ENABLED:
-        _platformer_logger_instance.info(message, *args, **kwargs)
-
-def warning(message, *args, **kwargs):
-    if LOGGING_ENABLED:
-        _platformer_logger_instance.warning(message, *args, **kwargs)
-
-def error(message, *args, **kwargs):
-    if LOGGING_ENABLED:
-        _platformer_logger_instance.error(message, *args, **kwargs)
-
-def critical(message, *args, **kwargs):
-    if LOGGING_ENABLED:
-        _platformer_logger_instance.critical(message, *args, **kwargs)
-
-if __name__ == "__main__":
-    if LOGGING_ENABLED:
-        info("This is an info message from logger.py direct run.")
-        debug("This is a debug message from logger.py direct run.")
-        
-        # Mock player for testing log_player_physics
-        class MockPlayer:
-            def __init__(self, player_id):
-                self.player_id = player_id
-                self.pos = type('obj', (object,), {'x': 10.0, 'y': 20.0})
-                self.vel = type('obj', (object,), {'x': 1.0, 'y': -1.0})
-                self.rect = type('obj', (object,), {'midbottom': (15,30)}) # Mocking rect enough for one case
-                self.on_ground = True
-                self.state = "idle"
-                self.acc = type('obj', (object,), {'x': 0.0, 'y': 0.0})
-                self.touching_wall = 0
-
-        player1 = MockPlayer(1)
-        player2 = MockPlayer("Alpha")
-
-        print(f"Testing throttled physics logs (interval: {PHYSICS_LOG_INTERVAL_SEC}s). Output may be sparse.")
-        for i in range(5): # Try to log 5 times in quick succession
-            log_player_physics(player1, "UPDATE_START", f"Loop {i}")
-            log_player_physics(player2, "UPDATE_START", f"Loop {i}")
-            if i < 4: # Don't sleep on the last iteration
-                time.sleep(0.3) # Sleep less than interval to test throttling
-
-        time.sleep(PHYSICS_LOG_INTERVAL_SEC + 0.1) # Sleep longer than interval
-        log_player_physics(player1, "UPDATE_END", "After long sleep")
-        log_player_physics(player2, "UPDATE_END", "After long sleep")
-
-        print(f"Test logs (if enabled) written to {LOG_FILE_PATH}")
+    if not all_tops:
+        min_y_content = 0.0 - C.TILE_SIZE * 5
+        max_y_content = initial_screen_height_fallback
+        print(f"Warning: _calculate_content_extents found no measurable content. Using fallbacks: min_y={min_y_content}, max_y={max_y_content}")
     else:
-        print("Logging is disabled. No log file generated from this direct run.")
+        min_y_content = min(all_tops) if all_tops else 0.0
+        max_y_content = max(all_bottoms) if all_bottoms else initial_screen_height_fallback
+    
+    return min_y_content, max_y_content
+
+
+def _add_map_boundary_walls_data(
+    platforms_data_list: List[Dict[str, Any]],
+    map_total_width: float,
+    ladders_data_list: List[Dict[str, Any]],
+    hazards_data_list: List[Dict[str, Any]],
+    initial_screen_height_fallback: float,
+    extra_sky_clearance: float = 0.0
+) -> Tuple[float, float]:
+    """
+    Calculates content extents and adds boundary wall data.
+    Returns min_y_overall, max_y_overall (absolute top/bottom of level including walls).
+    """
+    min_y_content, max_y_content = _calculate_content_extents(
+        platforms_data_list, ladders_data_list, hazards_data_list, initial_screen_height_fallback
+    )
+
+    ceiling_object_top_y = min_y_content - C.TILE_SIZE - extra_sky_clearance
+    level_min_y_abs = ceiling_object_top_y
+    level_max_y_abs = max_y_content + C.TILE_SIZE
+    boundary_box_height = level_max_y_abs - level_min_y_abs
+
+    boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))
+
+    # Data now uses 'rect' key
+    platforms_data_list.append({'rect': (0.0, ceiling_object_top_y, map_total_width, float(C.TILE_SIZE)), 'color': boundary_color, 'type': "boundary_wall_top"})
+    platforms_data_list.append({'rect': (0.0, max_y_content, map_total_width, float(C.TILE_SIZE)), 'color': boundary_color, 'type': "boundary_wall_bottom"})
+    platforms_data_list.append({'rect': (0.0, level_min_y_abs, float(C.TILE_SIZE), boundary_box_height), 'color': boundary_color, 'type': "boundary_wall_left"})
+    platforms_data_list.append({'rect': (map_total_width - C.TILE_SIZE, level_min_y_abs, float(C.TILE_SIZE), boundary_box_height), 'color': boundary_color, 'type': "boundary_wall_right"})
+
+    return level_min_y_abs, level_max_y_abs
+
+def _create_platform_data(x, y, w, h, color, p_type, props=None) -> Dict[str, Any]:
+    return {'rect': (float(x), float(y), float(w), float(h)), 'color': color, 'type': p_type, 'properties': props or {}}
+
+def _create_ladder_data(x, y, w, h) -> Dict[str, Any]:
+    return {'rect': (float(x), float(y), float(w), float(h))} # Color and type are implicit for ladders
+
+def _create_hazard_data(h_type, x, y, w, h, color) -> Dict[str, Any]:
+    return {'type': h_type, 'rect': (float(x), float(y), float(w), float(h)), 'color': color}
+
+def _create_enemy_spawn_data(start_pos_tuple, enemy_type_str, patrol_rect_data_dict=None, props=None) -> Dict[str, Any]:
+    return {'start_pos': start_pos_tuple, 'type': enemy_type_str, 'patrol_rect_data': patrol_rect_data_dict, 'properties': props or {}}
+
+
+def load_map_original() -> Dict[str, Any]:
+    """ Returns data for the original level layout. """
+    initial_height = C.TILE_SIZE * 15 # Assume a default screen height context for placement
+    initial_width = C.TILE_SIZE * 20
+
+    platforms_data: List[Dict[str, Any]] = []
+    ladders_data: List[Dict[str, Any]] = []
+    hazards_data: List[Dict[str, Any]] = []
+    enemy_spawns_data: List[Dict[str, Any]] = []
+    collectible_spawns_data: List[Dict[str, Any]] = []
+    statue_spawns_data: List[Dict[str, Any]] = []
+
+    map_total_width = initial_width * 2.5
+    player_spawn_pos = (C.TILE_SIZE + 60.0, initial_height - C.TILE_SIZE * 2.0 - 1.0)
+    player_spawn_props = {}
+    main_ground_y_ref = initial_height - C.TILE_SIZE
+    main_ground_segment_height_ref = float(C.TILE_SIZE)
+
+    platforms_data.append(_create_platform_data(float(C.TILE_SIZE), main_ground_y_ref, map_total_width - 2 * C.TILE_SIZE, main_ground_segment_height_ref, C.GRAY, "ground"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 160.0, initial_height - 150.0, 250.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 410.0, initial_height - 300.0, 180.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(min(map_total_width - C.TILE_SIZE - 200.0, C.TILE_SIZE + initial_width - 350.0), initial_height - 450.0, 200.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(min(map_total_width - C.TILE_SIZE - 150.0, C.TILE_SIZE + initial_width + 150.0), initial_height - 250.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 860.0, initial_height - 550.0, 100.0, 20.0, C.DARK_GREEN, "ledge"))
+
+    wall_mid_x = C.TILE_SIZE + 760.0
+    wall_mid_width = 30.0
+    if wall_mid_x + wall_mid_width > map_total_width - C.TILE_SIZE:
+        wall_mid_width = max(1.0, (map_total_width - C.TILE_SIZE) - wall_mid_x)
+    platforms_data.append(_create_platform_data(wall_mid_x, initial_height - 400.0, wall_mid_width, 360.0, C.GRAY, "wall"))
+
+    ladder_width = 40.0
+    ladder_height_main = 250.0
+    ladders_data.append(_create_ladder_data(min(map_total_width - C.TILE_SIZE - ladder_width, C.TILE_SIZE + initial_width - 500.0), main_ground_y_ref - ladder_height_main, ladder_width, ladder_height_main))
+    ladders_data.append(_create_ladder_data(C.TILE_SIZE + 310.0, initial_height - 250.0, ladder_width, 150.0))
+
+    level_min_y_abs, level_max_y_abs = _add_map_boundary_walls_data(platforms_data, map_total_width, ladders_data, hazards_data, initial_height, extra_sky_clearance=C.TILE_SIZE * 5.0)
+    level_bg_color = getattr(C, "PURPLE_BACKGROUND", (75,0,130))
+
+    return {
+        "level_name": "original",
+        "platforms_list": platforms_data,
+        "ladders_list": ladders_data,
+        "hazards_list": hazards_data,
+        "enemies_list": enemy_spawns_data,
+        "items_list": collectible_spawns_data,
+        "statues_list": statue_spawns_data,
+        "player_start_pos_p1": player_spawn_pos,
+        "player1_spawn_props": player_spawn_props,
+        "level_pixel_width": map_total_width,
+        "level_min_y_absolute": level_min_y_abs,
+        "level_max_y_absolute": level_max_y_abs,
+        "ground_level_y_ref": main_ground_y_ref,
+        "ground_platform_height_ref": main_ground_segment_height_ref,
+        "background_color": level_bg_color
+    }
+
+
+def load_map_lava() -> Dict[str, Any]:
+    initial_height = C.TILE_SIZE * 15
+    initial_width = C.TILE_SIZE * 20
+
+    platforms_data: List[Dict[str, Any]] = []
+    ladders_data: List[Dict[str, Any]] = []
+    hazards_data: List[Dict[str, Any]] = []
+    enemy_spawns_data: List[Dict[str, Any]] = []
+    collectible_spawns_data: List[Dict[str, Any]] = []
+    statue_spawns_data: List[Dict[str, Any]] = []
+
+    map_total_width = initial_width * 2.8
+    player_spawn_x = C.TILE_SIZE + 30.0
+    player_spawn_y = initial_height - 120.0 - C.TILE_SIZE
+    player_spawn_pos = (player_spawn_x, player_spawn_y)
+    player_spawn_props = {}
+    main_ground_y_ref = initial_height - C.TILE_SIZE
+
+    platforms_data.append(_create_platform_data(float(C.TILE_SIZE), initial_height - 120.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 260.0, initial_height - 180.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 520.0, initial_height - 250.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 800.0, initial_height - 320.0, 150.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 1100.0, initial_height - 400.0, 200.0, 20.0, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 1560.0, initial_height - 480.0, 200.0, 20.0, C.DARK_GREEN, "ledge"))
+
+    wall1_height = main_ground_y_ref - (initial_height - 400.0)
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 1060.0, initial_height - 400.0, 30.0, wall1_height, C.GRAY, "wall"))
+    wall2_height = main_ground_y_ref - (initial_height - 500.0)
+    platforms_data.append(_create_platform_data(C.TILE_SIZE + 1410.0, initial_height - 500.0, 30.0, wall2_height, C.GRAY, "wall"))
+
+    lava_y_surface = main_ground_y_ref
+    hazards_data.append(_create_hazard_data('lava', float(C.TILE_SIZE), lava_y_surface, (C.TILE_SIZE + 1060.0) - C.TILE_SIZE, float(C.LAVA_PATCH_HEIGHT), C.ORANGE_RED))
+    hazards_data.append(_create_hazard_data('lava', C.TILE_SIZE + 1060.0 + 30.0, lava_y_surface, (C.TILE_SIZE + 1410.0) - (C.TILE_SIZE + 1060.0 + 30.0), float(C.LAVA_PATCH_HEIGHT), C.ORANGE_RED))
+    lava3_start_x = C.TILE_SIZE + 1410.0 + 30.0
+    lava3_width = (map_total_width - C.TILE_SIZE) - lava3_start_x
+    if lava3_width > 0:
+        hazards_data.append(_create_hazard_data('lava', lava3_start_x, lava_y_surface, lava3_width, float(C.LAVA_PATCH_HEIGHT), C.ORANGE_RED))
+
+    level_min_y_abs, level_max_y_abs = _add_map_boundary_walls_data(platforms_data, map_total_width, ladders_data, hazards_data, initial_height, extra_sky_clearance=C.TILE_SIZE * 5.0)
+    level_bg_color = getattr(C, "PURPLE_BACKGROUND", (75,0,130))
+
+    return {
+        "level_name": "lava",
+        "platforms_list": platforms_data,
+        "ladders_list": ladders_data,
+        "hazards_list": hazards_data,
+        "enemies_list": enemy_spawns_data,
+        "items_list": collectible_spawns_data,
+        "statues_list": statue_spawns_data,
+        "player_start_pos_p1": player_spawn_pos,
+        "player1_spawn_props": player_spawn_props,
+        "level_pixel_width": map_total_width,
+        "level_min_y_absolute": level_min_y_abs,
+        "level_max_y_absolute": level_max_y_abs,
+        "ground_level_y_ref": main_ground_y_ref,
+        "ground_platform_height_ref": 0.0, # Ground segment height is 0 for lava level
+        "background_color": level_bg_color
+    }
+
+
+def load_map_cpu_extended() -> Dict[str, Any]:
+    initial_height = C.TILE_SIZE * 15
+    initial_width = C.TILE_SIZE * 20
+
+    platforms_data: List[Dict[str, Any]] = []
+    ladders_data: List[Dict[str, Any]] = []
+    hazards_data: List[Dict[str, Any]] = []
+    enemy_spawns_data: List[Dict[str, Any]] = []
+    collectible_spawns_data: List[Dict[str, Any]] = []
+    statue_spawns_data: List[Dict[str, Any]] = []
+
+    map_total_width = initial_width * 3.5
+    main_ground_y_ref = initial_height - C.TILE_SIZE
+    main_ground_segment_height_ref = float(C.TILE_SIZE)
+    player_spawn_pos = (C.TILE_SIZE * 2.0, main_ground_y_ref - 1.0)
+    player_spawn_props = {}
+    gap_width_lava = C.TILE_SIZE * 4.0
+    lava_collision_y_level = main_ground_y_ref + 1.0 # Lava surface slightly below ground level for collision
+    fence_y_pos = main_ground_y_ref - FENCE_HEIGHT
+
+    # Ground Segments
+    seg1_start_x = float(C.TILE_SIZE)
+    seg1_width = (initial_width * 0.7) - C.TILE_SIZE
+    seg1_end_x = seg1_start_x + seg1_width
+    platforms_data.append(_create_platform_data(seg1_start_x, main_ground_y_ref, seg1_width, main_ground_segment_height_ref, C.GRAY, "ground"))
+
+    # Lava Pit 1 with Fences
+    lava1_start_x = seg1_end_x
+    lava1_width = gap_width_lava
+    hazards_data.append(_create_hazard_data('lava', lava1_start_x, lava_collision_y_level, lava1_width, float(C.LAVA_PATCH_HEIGHT), C.ORANGE_RED))
+    platforms_data.append(_create_platform_data(lava1_start_x - FENCE_WIDTH, fence_y_pos, float(FENCE_WIDTH), float(FENCE_HEIGHT), FENCE_COLOR, "fence"))
+    platforms_data.append(_create_platform_data(lava1_start_x + lava1_width, fence_y_pos, float(FENCE_WIDTH), float(FENCE_HEIGHT), FENCE_COLOR, "fence"))
+
+    # Ground Segment 2
+    seg2_start_x = lava1_start_x + lava1_width
+    seg2_width = initial_width * 1.0
+    # seg2_end_x = seg2_start_x + seg2_width # This line was unused
+    platforms_data.append(_create_platform_data(seg2_start_x, main_ground_y_ref, seg2_width, main_ground_segment_height_ref, C.GRAY, "ground"))
+    
+    # Floating Platforms
+    plat1_x = C.TILE_SIZE + (initial_width * 0.3 - C.TILE_SIZE)
+    plat1_x = max(seg1_start_x + C.TILE_SIZE, min(plat1_x, seg1_end_x - C.TILE_SIZE*7))
+    platforms_data.append(_create_platform_data(plat1_x, main_ground_y_ref - C.TILE_SIZE * 1.8, C.TILE_SIZE * 6.0, C.TILE_SIZE * 0.5, C.DARK_GREEN, "ledge"))
+    platforms_data.append(_create_platform_data(seg2_start_x + C.TILE_SIZE * 2.0, main_ground_y_ref - C.TILE_SIZE * 3.0, C.TILE_SIZE * 8.0, C.TILE_SIZE * 0.5, C.DARK_GREEN, "ledge"))
+    
+    seg3_start_x = seg2_start_x + seg2_width + gap_width_lava * 0.8 # After lava pit 2
+    seg3_width = (map_total_width - C.TILE_SIZE) - seg3_start_x
+    if seg3_width > C.TILE_SIZE * 8 :
+        platforms_data.append(_create_platform_data(seg3_start_x + C.TILE_SIZE * 4.0, main_ground_y_ref - C.TILE_SIZE * 5.5, C.TILE_SIZE * 7.0, C.TILE_SIZE * 0.5, C.DARK_GREEN, "ledge"))
+
+    # Enemy Spawns
+    spawn_y_on_ground = main_ground_y_ref - 1.0
+    enemy1_x_pos = seg2_start_x + seg2_width * 0.5
+    patrol_data_e1 = {'x': seg2_start_x + C.TILE_SIZE, 'y': main_ground_y_ref - C.TILE_SIZE*2, 'width': seg2_width - C.TILE_SIZE*2, 'height': C.TILE_SIZE*2.0}
+    enemy_spawns_data.append(_create_enemy_spawn_data((enemy1_x_pos, spawn_y_on_ground), 'enemy_green', patrol_data_e1))
+
+    enemy2_platform_y = main_ground_y_ref - C.TILE_SIZE * 3.0
+    enemy2_platform_x = seg2_start_x + C.TILE_SIZE * 2.0
+    enemy2_x_pos = enemy2_platform_x + (C.TILE_SIZE * 8.0) / 2.0
+    enemy2_y_pos = enemy2_platform_y - 1.0
+    enemy_spawns_data.append(_create_enemy_spawn_data((enemy2_x_pos, enemy2_y_pos), 'enemy_pink'))
+    
+    if seg3_width > C.TILE_SIZE:
+        enemy3_x_pos = seg3_start_x + seg3_width * 0.3
+        enemy_spawns_data.append(_create_enemy_spawn_data((enemy3_x_pos, spawn_y_on_ground), 'enemy_purple'))
+
+
+    level_min_y_abs, level_max_y_abs = _add_map_boundary_walls_data(platforms_data, map_total_width, ladders_data, hazards_data, initial_height, extra_sky_clearance=C.TILE_SIZE * 10.0)
+    level_bg_color = getattr(C, "LIGHT_BLUE", (173, 216, 230))
+
+    return {
+        "level_name": "cpu_extended",
+        "platforms_list": platforms_data,
+        "ladders_list": ladders_data,
+        "hazards_list": hazards_data,
+        "enemies_list": enemy_spawns_data,
+        "items_list": collectible_spawns_data,
+        "statues_list": statue_spawns_data,
+        "player_start_pos_p1": player_spawn_pos,
+        "player1_spawn_props": player_spawn_props,
+        "level_pixel_width": map_total_width,
+        "level_min_y_absolute": level_min_y_abs,
+        "level_max_y_absolute": level_max_y_abs,
+        "ground_level_y_ref": main_ground_y_ref,
+        "ground_platform_height_ref": main_ground_segment_height_ref,
+        "background_color": level_bg_color
+    }
+
+load_map_cpu = load_map_cpu_extended
+
+#################### END OF FILE: levels.py ####################

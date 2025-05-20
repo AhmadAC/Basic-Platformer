@@ -1,205 +1,825 @@
-[2025-05-20 13:57:44.667] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-20 13:57:44.667] INFO    PlatformerLogger: MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
-[2025-05-20 13:57:44.838] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
-[2025-05-20 13:57:44.839] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
-[2025-05-20 13:57:44.865] INFO    PlatformerLogger: MAIN PySide6: Application starting...
-[2025-05-20 13:57:44.866] INFO    PlatformerLogger: MAIN PySide6: Initial normal window size: 1152x604 (will attempt to show maximized)
-[2025-05-20 13:57:44.869] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
-[2025-05-20 13:57:44.869] INFO    PlatformerLogger: Keyboard mapping translation complete.
-[2025-05-20 13:57:44.879] INFO    PlatformerLogger: Switching UI view to: menu
-[2025-05-20 13:57:47.470] INFO    PlatformerLogger: Preparing to start game mode: couch_play, Map: bigmap1, Target: None
-[2025-05-20 13:57:47.741] WARNING PlatformerLogger: EnemyBase Warning (ID: 0): Specified color 'enemy_yellow' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 13:57:47.741] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Initializing with color: 'purple'.
-[2025-05-20 13:57:47.812] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\purple' ---
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\purple\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Burning.gif'
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\purple\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Aflame_crouch.gif'
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\purple\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Burning_crouch.gif'
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\purple\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Deflame_crouch.gif'
-[2025-05-20 13:57:47.813] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.813] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.817] DEBUG   PlatformerLogger: Enemy (ID: 0, Color: purple) main class initialized.
-[2025-05-20 13:57:47.817] WARNING PlatformerLogger: EnemyBase Warning (ID: 1): Specified color 'enemy_purple' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 13:57:47.817] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Initializing with color: 'orange'.
-[2025-05-20 13:57:47.888] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\orange' ---
-[2025-05-20 13:57:47.888] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\orange\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Burning.gif'
-[2025-05-20 13:57:47.888] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\orange\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Aflame_crouch.gif'
-[2025-05-20 13:57:47.888] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\orange\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Burning_crouch.gif'
-[2025-05-20 13:57:47.888] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\orange\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Deflame_crouch.gif'
-[2025-05-20 13:57:47.888] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 13:57:47.888] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-20 13:57:47.888] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\orange'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.888] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\orange'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.889] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\orange'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.889] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\orange'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.890] DEBUG   PlatformerLogger: Enemy (ID: 1, Color: orange) main class initialized.
-[2025-05-20 13:57:47.890] WARNING PlatformerLogger: EnemyBase Warning (ID: 2): Specified color 'enemy_pink' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 13:57:47.891] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Initializing with color: 'green'.
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-20 13:57:47.955] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.955] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 13:57:47.957] DEBUG   PlatformerLogger: Enemy (ID: 2, Color: green) main class initialized.
-[2025-05-20 13:57:47.957] WARNING PlatformerLogger: EnemyBase Warning (ID: 3): Specified color 'enemy_green' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 13:57:47.957] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Initializing with color: 'purple'.
-[2025-05-20 13:57:48.032] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\purple' ---
-[2025-05-20 13:57:48.032] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\purple\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Burning.gif'
-[2025-05-20 13:57:48.032] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\purple\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Aflame_crouch.gif'
-[2025-05-20 13:57:48.032] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\purple\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Burning_crouch.gif'
-[2025-05-20 13:57:48.032] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\purple\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Deflame_crouch.gif'
-[2025-05-20 13:57:48.032] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 13:57:48.032] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-20 13:57:48.033] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
-[2025-05-20 13:57:48.033] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
-[2025-05-20 13:57:48.033] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
-[2025-05-20 13:57:48.033] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\purple'). Providing a BLUE placeholder.
-[2025-05-20 13:57:48.035] DEBUG   PlatformerLogger: Enemy (ID: 3, Color: purple) main class initialized.
-[2025-05-20 13:57:48.052] ERROR   PlatformerLogger: Assets Error: GIF file not found at provided path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/items/chest_open.gif'
-[2025-05-20 13:57:48.053] INFO    PlatformerLogger: Switching UI view to: game_scene
-[2025-05-20 13:57:48.054] INFO    PlatformerLogger: Game mode 'couch_play' started.
-[2025-05-20 13:57:48.073] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:48.073] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:48.074] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:57:48.074] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:57:48.074] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:57:48.075] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:57:48.681] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-20 13:57:48.681] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:57:49.079] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:49.079] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:49.450] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-20 13:57:49.450] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:57:50.097] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:50.098] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:50.296] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-20 13:57:50.296] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:57:50.888] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
-[2025-05-20 13:57:50.888] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:57:51.111] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:51.112] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:52.119] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:52.120] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:53.127] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:53.128] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:54.135] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:54.136] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:57:54.442] INFO    PlatformerLogger: Escape pressed in game mode 'couch_play'. Stopping mode.
-[2025-05-20 13:57:54.442] INFO    PlatformerLogger: Stopping game mode: couch_play
-[2025-05-20 13:57:54.449] INFO    PlatformerLogger: Switching UI view to: menu
-[2025-05-20 13:57:54.451] INFO    PlatformerLogger: Game mode 'couch_play' stopped and cleaned.
-[2025-05-20 13:58:30.104] INFO    PlatformerLogger: Preparing to start game mode: couch_play, Map: bigmap1, Target: None
-[2025-05-20 13:58:30.348] WARNING PlatformerLogger: EnemyBase Warning (ID: 0): Specified color 'enemy_yellow' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 13:58:30.348] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Initializing with color: 'green'.
-[2025-05-20 13:58:30.414] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\green' ---
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\green\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning.gif'
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\green\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Aflame_crouch.gif'
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\green\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Burning_crouch.gif'
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\green\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Deflame_crouch.gif'
-[2025-05-20 13:58:30.415] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.415] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\green'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.417] DEBUG   PlatformerLogger: Enemy (ID: 0, Color: green) main class initialized.
-[2025-05-20 13:58:30.417] WARNING PlatformerLogger: EnemyBase Warning (ID: 1): Specified color 'enemy_purple' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 13:58:30.417] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Initializing with color: 'gray'.
-[2025-05-20 13:58:30.480] WARNING PlatformerLogger: 
---- Assets: Missing Animation Files Detected for 'characters\gray' ---
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\gray\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Burning.gif'
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\gray\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Aflame_crouch.gif'
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\gray\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Burning_crouch.gif'
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\gray\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Deflame_crouch.gif'
-[2025-05-20 13:58:30.481] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: -----------------------------------------------------------------
-
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.481] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\gray'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.483] DEBUG   PlatformerLogger: Enemy (ID: 1, Color: gray) main class initialized.
-[2025-05-20 13:58:30.483] WARNING PlatformerLogger: EnemyBase Warning (ID: 2): Specified color 'enemy_pink' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 13:58:30.483] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Initializing with color: 'pink'.
-[2025-05-20 13:58:30.550] WARNING PlatformerLogger: 
+[2025-05-20 15:34:28.575] INFO    PlatformerLogger: Logger initialized. Logging enabled. Output to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 15:34:28.588] INFO    PlatformerLogger: MAIN PySide6: Project root 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer' is in sys.path.
+[2025-05-20 15:34:29.907] INFO    PlatformerLogger: MAIN PySide6: Platformer modules imported successfully.
+[2025-05-20 15:34:29.908] INFO    PlatformerLogger: MAIN PySide6: Pyperclip library found.
+[2025-05-20 15:34:29.935] INFO    PlatformerLogger: MAIN PySide6: Application starting...
+[2025-05-20 15:34:29.936] INFO    PlatformerLogger: MAIN PySide6: Initial normal window size: 960x600 (will attempt to show maximized)
+[2025-05-20 15:34:29.957] INFO    PlatformerLogger: Translating keyboard mappings from config strings to Qt.Key values.
+[2025-05-20 15:34:29.957] INFO    PlatformerLogger: Keyboard mapping translation complete.
+[2025-05-20 15:34:29.977] INFO    PlatformerLogger: Switching UI view to: menu
+[2025-05-20 15:36:06.266] INFO    PlatformerLogger: Preparing to start game mode: couch_play, Map: bigmap1, Target: None
+[2025-05-20 15:36:06.268] INFO    PlatformerLogger: GameSceneWidget current size: 100x30
+[2025-05-20 15:36:06.268] INFO    PlatformerLogger: MainWindow current size: 1280x649
+[2025-05-20 15:36:06.686] WARNING PlatformerLogger: EnemyBase Warning (ID: 0): Specified color 'enemy_yellow' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
+[2025-05-20 15:36:06.686] DEBUG   PlatformerLogger: EnemyBase (ID: 0): Initializing with color: 'pink'.
+[2025-05-20 15:36:06.791] WARNING PlatformerLogger: 
 --- Assets: Missing Animation Files Detected for 'characters\pink' ---
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\pink\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning.gif'
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Aflame_crouch.gif'
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\pink\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning_crouch.gif'
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Deflame_crouch.gif'
-[2025-05-20 13:58:30.551] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: -----------------------------------------------------------------
+[2025-05-20 15:36:06.791] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\pink\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning.gif'
+[2025-05-20 15:36:06.791] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Aflame_crouch.gif'
+[2025-05-20 15:36:06.791] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\pink\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning_crouch.gif'
+[2025-05-20 15:36:06.791] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Deflame_crouch.gif'
+[2025-05-20 15:36:06.791] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-20 15:36:06.791] WARNING PlatformerLogger: -----------------------------------------------------------------
 
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.551] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.553] DEBUG   PlatformerLogger: Enemy (ID: 2, Color: pink) main class initialized.
-[2025-05-20 13:58:30.553] WARNING PlatformerLogger: EnemyBase Warning (ID: 3): Specified color 'enemy_green' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
-[2025-05-20 13:58:30.553] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Initializing with color: 'yellow'.
-[2025-05-20 13:58:30.615] WARNING PlatformerLogger: 
+[2025-05-20 15:36:06.791] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.792] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.792] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.792] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.795] DEBUG   PlatformerLogger: Enemy (ID: 0, Color: pink) main class initialized.
+[2025-05-20 15:36:06.795] WARNING PlatformerLogger: EnemyBase Warning (ID: 1): Specified color 'enemy_purple' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
+[2025-05-20 15:36:06.795] DEBUG   PlatformerLogger: EnemyBase (ID: 1): Initializing with color: 'pink'.
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\pink' ---
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\pink\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning.gif'
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Aflame_crouch.gif'
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\pink\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning_crouch.gif'
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Deflame_crouch.gif'
+[2025-05-20 15:36:06.855] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: -----------------------------------------------------------------
+
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.855] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.856] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.857] DEBUG   PlatformerLogger: Enemy (ID: 1, Color: pink) main class initialized.
+[2025-05-20 15:36:06.857] WARNING PlatformerLogger: EnemyBase Warning (ID: 2): Specified color 'enemy_pink' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
+[2025-05-20 15:36:06.858] DEBUG   PlatformerLogger: EnemyBase (ID: 2): Initializing with color: 'pink'.
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: 
+--- Assets: Missing Animation Files Detected for 'characters\pink' ---
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\pink\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning.gif'
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Aflame_crouch.gif'
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\pink\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Burning_crouch.gif'
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\pink\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Deflame_crouch.gif'
+[2025-05-20 15:36:06.917] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: -----------------------------------------------------------------
+
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.917] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\pink'). Providing a BLUE placeholder.
+[2025-05-20 15:36:06.919] DEBUG   PlatformerLogger: Enemy (ID: 2, Color: pink) main class initialized.
+[2025-05-20 15:36:06.919] WARNING PlatformerLogger: EnemyBase Warning (ID: 3): Specified color 'enemy_green' not available. Using random from ['green', 'pink', 'purple', 'gray', 'yellow', 'orange'].
+[2025-05-20 15:36:06.919] DEBUG   PlatformerLogger: EnemyBase (ID: 3): Initializing with color: 'yellow'.
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: 
 --- Assets: Missing Animation Files Detected for 'characters\yellow' ---
-[2025-05-20 13:58:30.615] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\yellow\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Burning.gif'
-[2025-05-20 13:58:30.615] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\yellow\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Aflame_crouch.gif'
-[2025-05-20 13:58:30.615] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\yellow\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Burning_crouch.gif'
-[2025-05-20 13:58:30.615] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\yellow\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Deflame_crouch.gif'
-[2025-05-20 13:58:30.615] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
-[2025-05-20 13:58:30.616] WARNING PlatformerLogger: -----------------------------------------------------------------
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: - State 'burning': Expected relative path (for resource_path): 'characters\yellow\__Burning.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Burning.gif'
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: - State 'aflame_crouch': Expected relative path (for resource_path): 'characters\yellow\__Aflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Aflame_crouch.gif'
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: - State 'burning_crouch': Expected relative path (for resource_path): 'characters\yellow\__Burning_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Burning_crouch.gif'
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: - State 'deflame_crouch': Expected relative path (for resource_path): 'characters\yellow\__Deflame_crouch.gif', Resolved path checked: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Deflame_crouch.gif'
+[2025-05-20 15:36:07.050] INFO    PlatformerLogger: (Asset loading base path used by resource_path for these assets: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer')
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: -----------------------------------------------------------------
 
-[2025-05-20 13:58:30.616] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.616] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.616] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.616] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
-[2025-05-20 13:58:30.618] DEBUG   PlatformerLogger: Enemy (ID: 3, Color: yellow) main class initialized.
-[2025-05-20 13:58:30.631] ERROR   PlatformerLogger: Assets Error: GIF file not found at provided path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/items/chest_open.gif'
-[2025-05-20 13:58:30.632] INFO    PlatformerLogger: Switching UI view to: game_scene
-[2025-05-20 13:58:30.632] INFO    PlatformerLogger: Game mode 'couch_play' started.
-[2025-05-20 13:58:30.657] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:30.658] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:30.658] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:58:30.659] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:58:30.659] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:58:30.659] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
-[2025-05-20 13:58:31.672] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:31.672] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:32.675] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:32.676] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:33.689] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:33.689] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:34.697] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:34.698] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:35.705] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:35.706] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:36.714] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:36.715] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
-[2025-05-20 13:58:37.398] INFO    PlatformerLogger: Escape pressed in game mode 'couch_play'. Stopping mode.
-[2025-05-20 13:58:37.398] INFO    PlatformerLogger: Stopping game mode: couch_play
-[2025-05-20 13:58:37.404] INFO    PlatformerLogger: Switching UI view to: menu
-[2025-05-20 13:58:37.405] INFO    PlatformerLogger: Game mode 'couch_play' stopped and cleaned.
-[2025-05-20 13:58:39.108] INFO    PlatformerLogger: MAIN PySide6: Quit action triggered, requesting main window close via self.close().
-[2025-05-20 13:58:39.109] INFO    PlatformerLogger: Close event received. Shutting down application.
-[2025-05-20 13:58:39.109] INFO    PlatformerLogger: APP_STATUS: quit_app() called.
-[2025-05-20 13:58:39.109] DEBUG   PlatformerLogger: APP_STATUS: Requesting QApplication.quit().
-[2025-05-20 13:58:39.110] INFO    PlatformerLogger: Stopping game mode: None
-[2025-05-20 13:58:39.110] INFO    PlatformerLogger: Game mode 'None' stopped and cleaned.
-[2025-05-20 13:58:39.113] INFO    PlatformerLogger: MAIN PySide6: Application terminated via closeEvent.
-[2025-05-20 13:58:39.199] INFO    PlatformerLogger: MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: Assets Warning: Animation state 'burning' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: Assets Warning: Animation state 'aflame_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: Assets Warning: Animation state 'burning_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-20 15:36:07.050] WARNING PlatformerLogger: Assets Warning: Animation state 'deflame_crouch' (file likely missing for 'characters\yellow'). Providing a BLUE placeholder.
+[2025-05-20 15:36:07.052] DEBUG   PlatformerLogger: Enemy (ID: 3, Color: yellow) main class initialized.
+[2025-05-20 15:36:07.068] ERROR   PlatformerLogger: Assets Error: GIF file not found at provided path: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters/items/chest_open.gif'
+[2025-05-20 15:36:07.071] INFO    PlatformerLogger: Initial camera update called for P1. CamRect: PySide6.QtCore.QPointF(0.000000, -1471.000000), P1Rect: PySide6.QtCore.QPointF(80.000000, 1880.000000)
+[2025-05-20 15:36:07.071] INFO    PlatformerLogger: Switching UI view to: game_scene
+[2025-05-20 15:36:07.074] INFO    PlatformerLogger: Game mode 'couch_play' started.
+[2025-05-20 15:36:07.103] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:07.104] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:07.104] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:07.105] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:07.105] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:07.105] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:07.682] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-20 15:36:07.683] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:07.683] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-20 15:36:07.683] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:07.683] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-20 15:36:07.683] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:08.106] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:08.107] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:08.395] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
+[2025-05-20 15:36:08.689] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 15:36:08.779] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'jump' (request was 'jump')
+[2025-05-20 15:36:08.795] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State changing from 'idle' to 'wall_slide' (request was 'wall_slide')
+[2025-05-20 15:36:09.079] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 15:36:09.111] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:09.112] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:09.281] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 15:36:09.440] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
+[2025-05-20 15:36:09.505] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-20 15:36:09.506] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:09.616] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
+[2025-05-20 15:36:09.921] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 15:36:10.113] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:10.113] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:10.130] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 15:36:10.273] DEBUG   PlatformerLogger: Enemy 1 (Color: pink): Stomp kill initiated.
+[2025-05-20 15:36:10.273] WARNING PlatformerLogger: EnemyStateHandler (ID: 1, Color: pink): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing. Animation handler will attempt fallback.
+[2025-05-20 15:36:10.273] DEBUG   PlatformerLogger: EnemyStateHandler (ID 1): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-20 15:36:10.273] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'fall' to 'jump' (request was 'jump')
+[2025-05-20 15:36:10.577] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 15:36:10.625] DEBUG   PlatformerLogger: Enemy 3 (Color: yellow): Stomp kill initiated.
+[2025-05-20 15:36:10.625] WARNING PlatformerLogger: EnemyStateHandler (ID: 3, Color: yellow): Animation for logical state 'stomp_death' (maps to key 'stomp_death') potentially missing. Animation handler will attempt fallback.
+[2025-05-20 15:36:10.625] DEBUG   PlatformerLogger: EnemyStateHandler (ID 3): State changing from 'run' to 'stomp_death'. Requested: 'stomp_death'.
+[2025-05-20 15:36:10.625] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'jump' (request was 'jump')
+[2025-05-20 15:36:10.705] DEBUG   PlatformerLogger: Enemy 1: Stomp squash duration ended.
+[2025-05-20 15:36:10.706] DEBUG   PlatformerLogger: EnemyBase (ID: 1): kill() called. Setting _alive to False.
+[2025-05-20 15:36:10.929] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-20 15:36:11.041] DEBUG   PlatformerLogger: Enemy 3: Stomp squash duration ended.
+[2025-05-20 15:36:11.041] DEBUG   PlatformerLogger: EnemyBase (ID: 3): kill() called. Setting _alive to False.
+[2025-05-20 15:36:11.121] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:11.121] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:11.136] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-20 15:36:11.153] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
+[2025-05-20 15:36:11.201] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-20 15:36:11.250] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-20 15:36:11.250] DEBUG   PlatformerLogger: Enemy 2 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:11.250] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 90/100
+[2025-05-20 15:36:11.250] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
+[2025-05-20 15:36:11.361] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
+[2025-05-20 15:36:11.362] DEBUG   PlatformerLogger: Enemy 2 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:11.362] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 80/100
+[2025-05-20 15:36:11.362] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
+[2025-05-20 15:36:11.473] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
+[2025-05-20 15:36:11.474] DEBUG   PlatformerLogger: Enemy 2 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:11.474] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 70/100
+[2025-05-20 15:36:11.474] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
+[2025-05-20 15:36:11.585] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
+[2025-05-20 15:36:11.585] DEBUG   PlatformerLogger: Enemy 2 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:11.585] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 60/100
+[2025-05-20 15:36:11.586] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
+[2025-05-20 15:36:11.698] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
+[2025-05-20 15:36:11.698] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-20 15:36:11.863] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'turn' (request was 'turn')
+[2025-05-20 15:36:11.906] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:12.129] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:12.129] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:12.161] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'turn' to 'run' (request was 'run')
+[2025-05-20 15:36:12.514] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'run' to 'crouch_trans' (request was 'crouch_trans')
+[2025-05-20 15:36:12.627] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'crouch_trans' to 'crouch_walk' (request was 'crouch_walk')
+[2025-05-20 15:36:12.689] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'crouch_walk' to 'crouch' (request was 'crouch')
+[2025-05-20 15:36:12.850] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-20 15:36:12.850] DEBUG   PlatformerLogger: Enemy 0 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:12.850] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 50/100
+[2025-05-20 15:36:12.850] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'crouch' to 'hit' (request was 'hit')
+[2025-05-20 15:36:12.961] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'hit' to 'idle' (request was 'idle')
+[2025-05-20 15:36:12.961] DEBUG   PlatformerLogger: Enemy 0 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:12.961] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 40/100
+[2025-05-20 15:36:12.961] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'hit' (request was 'hit')
+[2025-05-20 15:36:13.073] DEBUG   PlatformerLogger: Enemy 0 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:13.073] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 30/100
+[2025-05-20 15:36:13.137] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:13.137] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:13.186] DEBUG   PlatformerLogger: Enemy 0 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:13.186] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 20/100
+[2025-05-20 15:36:13.218] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'run' to 'attack'. Requested: 'attack'.
+[2025-05-20 15:36:13.298] DEBUG   PlatformerLogger: Enemy 2 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:13.298] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 10/100
+[2025-05-20 15:36:13.314] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-20 15:36:13.410] DEBUG   PlatformerLogger: Enemy 2 (Color: pink) hit Target 1 for 10 damage.
+[2025-05-20 15:36:13.410] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Took 10 damage. Health: 0/100
+[2025-05-20 15:36:13.410] DEBUG   PlatformerLogger: PlayerCombatHandler (P1): Health <= 0. Setting state to 'death'.
+[2025-05-20 15:36:13.410] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'idle' to 'death' (request was 'death')
+[2025-05-20 15:36:13.521] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:13.666] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'attack' to 'idle'. Requested: 'idle'.
+[2025-05-20 15:36:13.746] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'run' to 'idle'. Requested: 'idle'.
+[2025-05-20 15:36:13.746] DEBUG   PlatformerLogger: EnemyStateHandler (ID 0): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:13.874] DEBUG   PlatformerLogger: EnemyStateHandler (ID 2): State changing from 'idle' to 'run'. Requested: 'run'.
+[2025-05-20 15:36:14.144] ERROR   PlatformerLogger: Error in log_player_physics for P1 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:14.145] ERROR   PlatformerLogger: Error in log_player_physics for P2 tag 'UPDATE_START': unsupported format string passed to builtin_function_or_method.__format__
+[2025-05-20 15:36:14.641] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.641] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.647] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.652] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State changing from 'death' to 'idle' (request was 'idle')
+[2025-05-20 15:36:14.653] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.653] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.658] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State changing from 'wall_slide' to 'idle' (request was 'idle')
+[2025-05-20 15:36:14.659] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.693] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.693] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.694] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.697] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.698] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.698] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.702] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.703] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.730] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.730] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.730] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.734] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.735] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.735] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.738] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.739] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.767] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.767] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.767] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.771] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.772] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.772] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.776] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.776] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.804] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.804] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.804] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.808] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.809] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.809] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.813] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.813] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.839] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.840] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.840] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.844] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.844] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.844] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.848] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:14.849] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.883] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.883] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.883] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.887] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.888] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.892] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.918] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.918] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.918] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.922] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.922] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.926] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.956] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.956] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.956] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:14.960] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:14.960] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:14.965] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:14.994] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:14.994] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:14.995] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.002] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.002] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.008] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.037] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.037] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.037] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.042] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.042] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.046] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.074] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.074] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.074] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.078] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.078] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.082] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.107] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.107] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.107] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.111] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.111] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.115] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.140] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.140] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.140] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.144] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.144] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.148] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.178] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.178] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.178] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.182] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.183] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.187] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.212] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.212] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.212] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.216] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.216] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.220] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.246] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.246] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.246] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.250] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.250] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.254] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.277] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.278] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.278] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.282] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.282] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.286] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.310] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.310] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.310] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.314] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.314] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.318] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.344] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.344] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.344] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.348] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.348] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.352] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.377] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.377] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.377] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.381] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.381] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.385] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.410] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.411] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.411] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.415] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.415] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.419] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.444] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.444] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.444] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.448] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.448] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.452] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.477] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.477] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.477] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.481] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.481] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.485] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.511] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.511] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.511] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.515] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.515] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.519] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.544] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.544] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.544] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.548] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.548] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.552] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.577] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.577] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.577] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.581] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.582] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.585] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.612] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.612] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.612] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.616] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.616] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.620] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.644] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.644] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.644] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.648] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.648] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.652] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.676] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.676] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.676] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.680] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.680] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.684] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.709] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.710] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.710] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.714] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.714] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.718] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.743] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.743] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.743] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.747] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.747] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.751] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.776] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.776] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.776] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.780] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.780] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.784] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.809] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.809] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.809] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.813] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.813] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.817] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.842] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.842] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.842] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.846] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.846] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.850] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.877] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.877] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.877] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.882] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.882] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.886] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.915] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.915] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.915] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.919] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.919] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.923] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.950] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.950] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.950] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.954] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.954] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.958] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:15.982] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:15.983] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:15.983] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:15.987] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:15.987] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:15.991] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.016] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.016] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.016] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.020] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.021] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.024] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.050] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.050] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.050] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.054] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.054] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.059] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.088] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.088] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.088] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.092] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.092] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.096] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.124] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.124] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.124] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.129] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.129] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.133] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.161] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.161] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.161] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.165] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.165] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.169] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.197] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.197] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.197] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.202] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.202] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.206] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.233] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.233] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.233] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.237] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.237] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.241] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.269] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.269] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.269] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.273] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.273] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.278] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.304] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.304] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.304] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.308] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.308] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.312] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.338] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.338] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.338] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.342] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.342] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.346] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.372] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.372] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.372] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.376] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.376] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.380] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.408] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.408] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.408] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.412] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.412] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.416] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.442] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.442] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.442] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.446] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.447] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.451] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.477] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.477] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.477] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.481] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.482] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.485] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.511] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.511] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.511] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.515] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.515] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.519] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.545] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.545] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.545] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.549] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.549] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.553] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.580] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.580] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.580] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.584] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.584] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.589] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.616] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.616] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.616] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.620] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.620] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.624] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.653] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.653] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.653] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.657] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.657] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.661] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.686] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.686] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.686] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.690] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.690] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.694] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.722] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.722] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.722] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.726] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.726] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.730] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.755] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.755] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.755] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.759] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.759] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.763] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.786] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.786] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.786] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.790] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.790] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.794] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.819] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.819] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.819] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.824] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.824] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.828] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.853] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.853] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.853] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.857] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.857] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.861] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.888] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.888] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.888] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.892] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.893] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.896] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.922] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.922] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.922] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.926] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.926] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.930] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.955] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.955] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.955] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.959] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.959] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.963] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:16.990] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:16.990] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:16.990] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:16.995] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:16.995] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:16.999] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.024] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.025] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.025] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.029] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.029] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.033] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.058] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.058] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.058] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.062] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.062] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.067] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.094] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.094] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.094] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.098] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.098] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.102] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.129] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.129] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.129] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.133] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.133] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.137] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.166] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.166] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.166] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.170] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.170] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.174] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.202] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.202] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.202] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.206] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.206] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.210] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.237] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.237] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.237] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.241] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.241] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.245] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.273] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.273] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.273] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.277] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.277] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.282] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.310] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.310] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.310] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.314] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.314] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.318] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.344] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.344] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.344] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.348] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.348] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.352] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.377] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.378] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.378] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.382] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.382] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.385] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.413] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.413] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.413] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.417] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.417] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.421] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.450] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.450] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.450] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.455] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.455] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.459] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.485] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.485] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.485] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.489] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.489] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.493] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.519] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.519] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.519] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.523] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.523] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.527] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.553] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.554] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.554] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.558] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.558] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.562] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.591] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.591] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.591] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.595] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.595] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.599] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.626] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.626] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.626] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.630] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.630] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.634] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.660] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.660] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.660] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.664] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.664] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.668] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.697] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.697] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.697] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.701] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.702] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.702] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.705] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.706] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.729] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.729] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.730] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.734] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.734] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.734] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.737] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.738] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.762] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.763] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.763] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.766] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.767] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.767] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.771] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.771] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.798] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.798] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.798] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.802] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.802] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.802] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.806] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.806] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.833] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.833] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.833] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.837] DEBUG   PlatformerLogger: PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.838] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.838] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.841] DEBUG   PlatformerLogger: PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-20 15:36:17.842] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.873] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.873] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.873] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.878] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.878] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.881] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.908] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.908] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.908] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.912] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.912] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.916] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.942] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.942] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.942] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.946] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.946] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.949] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:17.977] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:17.977] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:17.977] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:17.981] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:17.981] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:17.985] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:18.008] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:18.009] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:18.009] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:18.012] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:18.013] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:18.016] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:18.042] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:18.042] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:18.042] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:18.046] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:18.046] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:18.050] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:18.075] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:18.075] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:18.075] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:18.079] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:18.079] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:18.083] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:18.108] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:18.109] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:18.109] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:18.113] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:18.113] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:18.117] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:18.142] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:18.142] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:18.142] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:18.146] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:18.146] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:18.150] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:18.251] INFO    PlatformerLogger: Couch Play: Game state reset initiated.
+[2025-05-20 15:36:18.251] INFO    PlatformerLogger: GSM: --- Resetting Game State (PySide6) ---
+[2025-05-20 15:36:18.251] DEBUG   PlatformerLogger: GSM: Resetting P1 at (90.5, 1918.0)
+[2025-05-20 15:36:18.259] DEBUG   PlatformerLogger: GSM: P1 Reset complete.
+[2025-05-20 15:36:18.259] DEBUG   PlatformerLogger: GSM: Resetting P2 at (90.5, 1878.0)
+[2025-05-20 15:36:18.266] DEBUG   PlatformerLogger: GSM: P2 Reset complete.
+[2025-05-20 15:36:18.295] INFO    PlatformerLogger: Close event received. Shutting down application.
+[2025-05-20 15:36:18.296] INFO    PlatformerLogger: APP_STATUS: quit_app() called.
+[2025-05-20 15:36:18.296] DEBUG   PlatformerLogger: APP_STATUS: Requesting QApplication.quit().
+[2025-05-20 15:36:18.296] INFO    PlatformerLogger: Stopping game mode: couch_play
+[2025-05-20 15:36:18.296] INFO    PlatformerLogger: Game mode 'couch_play' stopped and cleaned.
+[2025-05-20 15:36:18.297] INFO    PlatformerLogger: MAIN PySide6: Application terminated via closeEvent.
+[2025-05-20 15:36:18.329] INFO    PlatformerLogger: MAIN PySide6: QApplication event loop finished. Exit code: 0
