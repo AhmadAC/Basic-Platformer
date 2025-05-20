@@ -1,6 +1,4 @@
-#################### START OF FILE: editor\editor.py ####################
-
-# editor.py
+# editor/editor.py
 # -*- coding: utf-8 -*-
 """
 ## version 2.0.6 (Minimap docking order corrected)
@@ -34,8 +32,11 @@ try:
     if not os.path.exists(logs_dir): os.makedirs(logs_dir)
     log_file_path_for_error_msg = os.path.join(logs_dir, ED_CONFIG.LOG_FILE_NAME if hasattr(ED_CONFIG, "LOG_FILE_NAME") else "editor_qt_debug.log")
 
+    # Clear existing handlers from the root logger
     for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler); handler.close()
+        logging.root.removeHandler(handler)
+        handler.close() # Ensure handlers release resources
+
     logging.basicConfig(
         level=getattr(logging, ED_CONFIG.LOG_LEVEL.upper(), logging.DEBUG) if hasattr(ED_CONFIG, "LOG_LEVEL") else logging.DEBUG,
         format=ED_CONFIG.LOG_FORMAT if hasattr(ED_CONFIG, "LOG_FORMAT") else '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s',
@@ -43,13 +44,12 @@ try:
     )
     logger = logging.getLogger(__name__)
     logger.info("Editor session started. Logging initialized successfully.")
-    print(f"LOGGING INITIALIZED. Log file at: {log_file_path_for_error_msg}")
+    # Removed the print here as basicConfig will also print to console if no file handler works
 except Exception as e_log:
-    print(f"CRITICAL ERROR DURING LOGGING SETUP (editor.py): {e_log}")
-    traceback.print_exc()
-    logging.basicConfig(level=logging.DEBUG, format='CONSOLE LOG: %(asctime)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger(__name__)
-    logger.error("File logging setup failed (editor.py).")
+    # Fallback console logging if file logging setup fails
+    logging.basicConfig(level=logging.DEBUG, format='CONSOLE FALLBACK: %(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__) # Re-get logger
+    logger.error(f"CRITICAL ERROR DURING FILE LOGGING SETUP (editor.py): {e_log}. Using console.", exc_info=True)
 # --- End Logger Setup ---
 
 # --- sys.path modification ---
@@ -61,7 +61,7 @@ try:
     if logger: logger.info(f"Project root '{project_root}' setup in sys.path (from editor.py). Current sys.path[0]: {sys.path[0]}")
 except Exception as e_imp:
     if logger: logger.critical(f"Failed sys.path modification in editor.py: {e_imp}", exc_info=True)
-    sys.exit(1)
+    # Potentially sys.exit(1) here if this is critical, but let's see if subsequent imports fail first
 # --- End sys.path modification ---
 
 # --- Editor module imports ---
@@ -72,38 +72,51 @@ try:
     from . import editor_history
     from .map_view_widget import MapViewWidget, MapObjectItem
     from .editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
-    if ED_CONFIG.MINIMAP_ENABLED: from .minimap_widget import MinimapWidget
+    if ED_CONFIG.MINIMAP_ENABLED: # Check ED_CONFIG first
+        from .minimap_widget import MinimapWidget
     if logger: logger.debug("Successfully imported all editor-specific modules (using relative imports).")
 except ImportError as e_editor_mod_rel:
-    logger.warning(f"Relative import failed for editor modules: {e_editor_mod_rel}. Trying absolute (this may indicate a setup issue if it works)...")
+    if logger: logger.warning(f"Relative import failed for editor modules: {e_editor_mod_rel}. Trying absolute (this may indicate a setup issue if it works)...")
     try:
-        # This block is less likely to be hit if the primary issue is editor_config not found by relative import
         from editor_state import EditorState
         import editor_assets 
         import editor_map_utils
         import editor_history
         from map_view_widget import MapViewWidget, MapObjectItem
         from editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
-        if ED_CONFIG.MINIMAP_ENABLED: from minimap_widget import MinimapWidget
+        if ED_CONFIG.MINIMAP_ENABLED: # Check ED_CONFIG first
+             from minimap_widget import MinimapWidget
         if logger: logger.debug("Successfully imported all editor-specific modules (using absolute imports as fallback).")
     except ImportError as e_editor_mod_abs:
         if logger: logger.critical(f"Failed to import an editor-specific module (both relative and absolute): {e_editor_mod_abs}", exc_info=True)
+        if not isinstance(QApplication.instance(), QApplication): # Avoid showing message box if no app
+            QMessageBox.critical(None, "Editor Import Error", f"Failed to import critical editor module: {e_editor_mod_abs}\n\nCheck log: {log_file_path_for_error_msg}")
         sys.exit(f"ImportError for editor module. Check log: {log_file_path_for_error_msg}")
+except AttributeError as e_attr_edcfg: # Catch if ED_CONFIG itself or MINIMAP_ENABLED is missing
+    if logger: logger.critical(f"AttributeError related to ED_CONFIG: {e_attr_edcfg}. ED_CONFIG might not be fully loaded.", exc_info=True)
+    if not isinstance(QApplication.instance(), QApplication):
+        QMessageBox.critical(None, "Editor Config Error", f"Configuration error: {e_attr_edcfg}\n\nCheck log: {log_file_path_for_error_msg}")
+    sys.exit(f"Configuration error. Check log: {log_file_path_for_error_msg}")
 # --- End Editor module imports ---
 
 # No longer treating "level_default" as special for UI blocking purposes in the editor.
 # It's still hidden from the game's map selection dialog by game_ui.py.
 
-class EditorMainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class EditorMainWindow(QMainWindow): # <<< CRITICAL: This is a QMainWindow
+    def __init__(self, parent: Optional[QWidget] = None): # Added optional parent argument
+        super().__init__(parent) # Pass parent to QMainWindow
         logger.info("Initializing EditorMainWindow...")
 
         self.editor_state = EditorState()
         self.settings = QSettings("MyPlatformerGame", "LevelEditor_Qt")
 
+        # If this window is embedded, the container (ActualEditorWindow) should set the title.
+        # If standalone, this is fine.
         self.setWindowTitle("Platformer Level Editor (PySide6)")
-        self.setGeometry(50, 50, ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT)
+
+        # If embedded, the container (ActualEditorWindow) likely controls geometry.
+        # If standalone, this is fine.
+        # self.setGeometry(50, 50, ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT)
 
         self.init_ui()
         self.create_actions()
@@ -118,15 +131,39 @@ class EditorMainWindow(QMainWindow):
         editor_assets.load_editor_palette_assets(self.editor_state, self)
         self.asset_palette_widget.populate_assets()
 
-        self.update_window_title()
+        self.update_window_title() # Might conflict if container sets title
         self.update_edit_actions_enabled_state()
 
+        # CRITICAL: If this EditorMainWindow is embedded, its parent (ActualEditorWindow)
+        # should be responsible for showing it. Calling self.show() or self.showMaximized()
+        # here can lead to conflicts or the window appearing separately.
+        #
+        # If run standalone (if __name__ == "__main__" in this file), then showing it is correct.
+        # If embedded, these lines should likely be removed or conditional.
+        # For now, let's assume it might be run standalone sometimes.
+        # If it's *always* embedded, these show calls should be removed.
+        #
+        # if not self.parent(): # Only show if it's a top-level window (no parent passed)
+        #     if not self.restore_geometry_and_state():
+        #         logger.info("No saved geometry/state or parent, showing maximized.")
+        #         self.showMaximized()
+        #     else:
+        #         logger.info("Restored geometry/state, showing window.")
+        #         self.show()
+        # else:
+        #     logger.info("EditorMainWindow has a parent; assuming it will be shown by the parent.")
+        #
+        # --->>> For now, let's keep the original logic but be aware of this point.
+        # The crash happens *before* a user can load a map, so ensure_maps_directory_exists
+        # is probably not the immediate cause of the startup crash.
         if not self.restore_geometry_and_state():
-            self.showMaximized()
+             self.showMaximized() # This might be problematic if embedded.
         else:
-            self.show()
+             self.show() # This might be problematic if embedded.
+
 
         if not editor_map_utils.ensure_maps_directory_exists():
+            # This QMessageBox might not show if the app crashes before event loop processing
             QMessageBox.critical(self, "Error", f"Maps directory issue: {ED_CONFIG.MAPS_DIRECTORY}")
 
         logger.info("EditorMainWindow initialized.")
@@ -134,6 +171,9 @@ class EditorMainWindow(QMainWindow):
 
     def init_ui(self):
         logger.debug("Initializing UI components...")
+        
+        # If this EditorMainWindow is a QWidget for embedding, it would already have a layout.
+        # If it's a QMainWindow, setCentralWidget is correct.
         self.map_view_widget = MapViewWidget(self.editor_state, self)
         self.setCentralWidget(self.map_view_widget)
 
@@ -154,9 +194,9 @@ class EditorMainWindow(QMainWindow):
             self.minimap_dock = QDockWidget("Minimap", self)
             self.minimap_widget = MinimapWidget(self.editor_state, self.map_view_widget, self)
             self.minimap_dock.setWidget(self.minimap_widget)
-            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.minimap_dock)
-            self.splitDockWidget(self.minimap_dock, self.properties_editor_dock, Qt.Orientation.Vertical)
-            self.minimap_dock.setFixedHeight(ED_CONFIG.MINIMAP_DEFAULT_HEIGHT + 35)
+            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.minimap_dock) # Add first
+            self.splitDockWidget(self.minimap_dock, self.properties_editor_dock, Qt.Orientation.Vertical) # Then split
+            self.minimap_dock.setFixedHeight(ED_CONFIG.MINIMAP_DEFAULT_HEIGHT + 35) # +35 for title bar
         else:
             self.minimap_dock = None
             self.minimap_widget = None
@@ -170,10 +210,11 @@ class EditorMainWindow(QMainWindow):
         self.map_view_widget.map_content_changed.connect(self.handle_map_content_changed)
 
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
-        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed)
+        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed) # Ensure this signal triggers general content changed logic
 
         if self.minimap_widget:
             self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_view_rect_update_and_repaint)
+        
         self.setDockOptions(QMainWindow.DockOption.AnimatedDocks | QMainWindow.DockOption.AllowNestedDocks | QMainWindow.DockOption.AllowTabbedDocks | QMainWindow.DockOption.VerticalTabs)
         self.map_view_widget.setFocus()
         logger.debug("UI components initialized.")
@@ -210,7 +251,7 @@ class EditorMainWindow(QMainWindow):
 
     def create_menus(self):
         logger.debug("Creating menus...")
-        self.menu_bar = self.menuBar()
+        self.menu_bar = self.menuBar() # QMainWindow method
 
         file_menu = self.menu_bar.addMenu("&File")
         file_menu.addAction(self.new_map_action)
@@ -251,7 +292,7 @@ class EditorMainWindow(QMainWindow):
 
     def create_status_bar(self):
         logger.debug("Creating status bar...")
-        self.status_bar = self.statusBar()
+        self.status_bar = self.statusBar() # QMainWindow method
         self.status_bar.showMessage("Ready", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT)
         self.map_coords_label = QLabel(" Map: (0,0) Tile: (0,0) Zoom: 1.00x ")
         self.map_coords_label.setMinimumWidth(250)
@@ -261,8 +302,10 @@ class EditorMainWindow(QMainWindow):
 
     @Slot(str)
     def show_status_message(self, message: str, timeout: int = ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT):
-        self.status_bar.showMessage(message, timeout)
+        if hasattr(self, 'status_bar') and self.status_bar: # Check if status_bar exists
+            self.status_bar.showMessage(message, timeout)
         logger.info(f"Status: {message}")
+
 
     @Slot(tuple)
     def update_map_coords_status(self, coords: tuple):
@@ -285,6 +328,9 @@ class EditorMainWindow(QMainWindow):
         logger.debug(f"EditorMainWindow: After handle_map_content_changed - unsaved_changes: {self.editor_state.unsaved_changes}, save_map_action enabled: {self.save_map_action.isEnabled()}")
 
     def update_window_title(self):
+        # If this is a QWidget, it doesn't have a window title of its own in the same way.
+        # The container (ActualEditorWindow) would manage the title.
+        # If run standalone, this is fine.
         title = "Platformer Level Editor (PySide6)"
         map_name = self.editor_state.map_name_for_function
         if map_name and map_name != "untitled_map":
@@ -295,8 +341,8 @@ class EditorMainWindow(QMainWindow):
             title += "*"
         self.setWindowTitle(title)
 
+
     def update_edit_actions_enabled_state(self):
-        # No longer checking for RESERVED_MAP_NAME for enabling/disabling actions
         map_is_properly_loaded_or_newly_named = bool(
             self.editor_state.current_json_filename or \
             (self.editor_state.map_name_for_function != "untitled_map" and \
@@ -324,13 +370,12 @@ class EditorMainWindow(QMainWindow):
         self.export_map_as_image_action.setEnabled(map_has_content)
 
     def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool:
-        # No longer checking for RESERVED_MAP_NAME here
         if self.editor_state.unsaved_changes:
             reply = QMessageBox.question(self, "Unsaved Changes",
                                          f"You have unsaved changes. Do you want to save before you {action_description}?",
                                          QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
             if reply == QMessageBox.StandardButton.Save:
-                return self.save_all()
+                return self.save_all() # save_all will attempt JSON then PY
             elif reply == QMessageBox.StandardButton.Cancel:
                 return False
         return True
@@ -343,13 +388,17 @@ class EditorMainWindow(QMainWindow):
         if ok and map_name:
             clean_map_name = map_name.strip().lower().replace(" ", "_").replace("-", "_")
             if not clean_map_name: QMessageBox.warning(self, "Invalid Name", "Map name cannot be empty."); return
-            # No longer preventing "level_default" as a new map name
             invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']
             if any(char in clean_map_name for char in invalid_chars): QMessageBox.warning(self, "Invalid Name", f"Map name '{clean_map_name}' has invalid chars."); return
-            project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Project root
             maps_abs_dir = os.path.join(project_root_for_maps, ED_CONFIG.MAPS_DIRECTORY)
+            if not editor_map_utils.ensure_maps_directory_exists():
+                 QMessageBox.critical(self, "Error", f"Cannot access or create maps directory: {maps_abs_dir}"); return
+
             potential_json_path = os.path.join(maps_abs_dir, clean_map_name + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION)
             if os.path.exists(potential_json_path): QMessageBox.warning(self, "Name Exists", f"JSON '{os.path.basename(potential_json_path)}' exists."); return
+            
             size_str, ok_size = QInputDialog.getText(self, "Map Size", "Enter map size (Width,Height in tiles):", text=f"{ED_CONFIG.DEFAULT_MAP_WIDTH_TILES},{ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES}")
             if ok_size and size_str:
                 try:
@@ -369,12 +418,15 @@ class EditorMainWindow(QMainWindow):
     def load_map(self):
         logger.info("Load Map action triggered.")
         if not self.confirm_unsaved_changes("load another map"): return
+        
         project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         maps_abs_dir = os.path.join(project_root_for_maps, ED_CONFIG.MAPS_DIRECTORY)
+        if not editor_map_utils.ensure_maps_directory_exists():
+             QMessageBox.critical(self, "Error", f"Cannot access or create maps directory: {maps_abs_dir}"); return
+
         json_filter = f"Editor Map Files (*{ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION})"
         file_path, _ = QFileDialog.getOpenFileName(self, "Load Map", maps_abs_dir, json_filter)
         if file_path:
-            # No longer preventing loading "level_default.json"
             if editor_map_utils.load_map_from_json(self.editor_state, file_path):
                 self.map_view_widget.load_map_from_state(); self.asset_palette_widget.clear_selection()
                 self.properties_editor_widget.clear_display(); self.update_window_title()
@@ -386,12 +438,13 @@ class EditorMainWindow(QMainWindow):
     @Slot()
     def save_map_json(self) -> bool:
         logger.info("Save Map (JSON) action triggered.")
-        # No longer preventing saving "level_default"
         if not self.editor_state.map_name_for_function or self.editor_state.map_name_for_function == "untitled_map":
             self.show_status_message("Map is untitled. Performing initial Save All.", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2)
-            return self.save_all()
+            return self.save_all() # save_all handles getting a name if needed
         if editor_map_utils.save_map_to_json(self.editor_state):
             self.show_status_message(f"Editor data saved: {os.path.basename(self.editor_state.current_json_filename)}.")
+            # unsaved_changes is set to False inside export_map_py, or if only JSON is saved, it should also be false
+            self.editor_state.unsaved_changes = False # Explicitly set after JSON save
             self.update_window_title(); self.update_edit_actions_enabled_state()
             return True
         else: QMessageBox.critical(self, "Save Error", "Failed to save map editor data (.json). Check logs."); return False
@@ -399,11 +452,10 @@ class EditorMainWindow(QMainWindow):
     @Slot()
     def export_map_py(self) -> bool:
         logger.info("Export Map (PY) action triggered.")
-        # No longer preventing exporting "level_default"
-        if not self.editor_state.current_json_filename:
+        if not self.editor_state.current_json_filename: # Requires a JSON to exist / map to be named
              QMessageBox.warning(self, "Cannot Export", "No map is currently loaded/saved. Save the map first (JSON)."); return False
         if editor_map_utils.export_map_to_game_python_script(self.editor_state):
-            self.editor_state.unsaved_changes = False
+            self.editor_state.unsaved_changes = False # Exporting also implies changes are now "saved" in some form
             self.update_window_title(); self.update_edit_actions_enabled_state()
             self.show_status_message(f"Map exported for game: {os.path.basename(self.editor_state.current_map_filename)}.")
             return True
@@ -416,60 +468,75 @@ class EditorMainWindow(QMainWindow):
             map_name, ok = QInputDialog.getText(self, "Save Map As", "Enter map name for saving all files (e.g., level_default):")
             if ok and map_name:
                 clean_map_name = map_name.strip().lower().replace(" ", "_").replace("-", "_")
-                # No longer preventing initial save as "level_default"
                 if not clean_map_name or any(c in clean_map_name for c in ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']):
                     QMessageBox.warning(self, "Invalid Name", "Map name is invalid or empty."); return False
+                
+                # Update editor_state with the new name and file paths *before* saving
                 self.editor_state.map_name_for_function = clean_map_name
                 json_fn = clean_map_name + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
                 py_fn = clean_map_name + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
+                
                 project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                 maps_abs_dir = os.path.join(project_root_for_maps, ED_CONFIG.MAPS_DIRECTORY)
+                if not editor_map_utils.ensure_maps_directory_exists():
+                    QMessageBox.critical(self, "Error", f"Cannot access or create maps directory: {maps_abs_dir}"); return False
+
                 self.editor_state.current_json_filename = os.path.join(maps_abs_dir, json_fn)
                 self.editor_state.current_map_filename = os.path.join(maps_abs_dir, py_fn)
                 self.update_window_title()
             else: self.show_status_message("Save All cancelled: map name not provided."); return False
 
-        # No longer double-checking for RESERVED_MAP_NAME before saving
-
-        if self.save_map_json():
+        if self.save_map_json(): # This will now use the (potentially new) name in editor_state
             if self.export_map_py():
                 self.show_status_message("Map saved (JSON & PY)."); return True
         self.show_status_message("Save All failed. Check logs."); return False
+
 
     @Slot()
     def rename_map(self):
         logger.info("Rename Map action triggered.")
         if not self.editor_state.current_json_filename: QMessageBox.information(self, "Rename Map", "No map loaded to rename."); return
         old_base_name = self.editor_state.map_name_for_function
-        # No longer preventing renaming "level_default"
 
         new_name_str, ok = QInputDialog.getText(self, "Rename Map", f"Enter new name for '{old_base_name}':", text=old_base_name)
         if ok and new_name_str:
             clean_new_name = new_name_str.strip().lower().replace(" ", "_").replace("-", "_")
-            # No longer preventing renaming TO "level_default"
             if not clean_new_name or any(c in clean_new_name for c in ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '.']): QMessageBox.warning(self, "Invalid Name", "New map name invalid."); return
             if clean_new_name == old_base_name: self.show_status_message("Rename cancelled: name unchanged."); return
+            
             project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             maps_abs_dir = os.path.join(project_root_for_maps, ED_CONFIG.MAPS_DIRECTORY)
+            if not editor_map_utils.ensure_maps_directory_exists():
+                 QMessageBox.critical(self, "Error", f"Cannot access or create maps directory: {maps_abs_dir}"); return
+
             new_json_path = os.path.join(maps_abs_dir, clean_new_name + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION)
             if os.path.exists(new_json_path) and os.path.normcase(new_json_path) != os.path.normcase(self.editor_state.current_json_filename):
                 QMessageBox.warning(self, "Rename Error", f"JSON '{os.path.basename(new_json_path)}' already exists."); return
+            
             old_json_path = self.editor_state.current_json_filename
-            old_py_path = self.editor_state.current_map_filename
+            old_py_path = self.editor_state.current_map_filename # Path to .py data file
             new_py_path = os.path.join(maps_abs_dir, clean_new_name + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION)
             try:
                 logger.info(f"Attempting rename '{old_base_name}' to '{clean_new_name}'.")
                 if old_json_path and os.path.exists(old_json_path): os.rename(old_json_path, new_json_path)
+                
                 self.editor_state.map_name_for_function = clean_new_name
                 self.editor_state.current_json_filename = new_json_path
-                self.editor_state.current_map_filename = new_py_path
-                if not editor_map_utils.save_map_to_json(self.editor_state): QMessageBox.critical(self, "Rename Error", "Failed to save to new JSON."); return
+                self.editor_state.current_map_filename = new_py_path # Update path for .py data file
+                
+                # Save the map data (which includes map_name_for_function) to the new JSON file.
+                if not editor_map_utils.save_map_to_json(self.editor_state): 
+                    QMessageBox.critical(self, "Rename Error", "Failed to save to new JSON after renaming file."); return
+                
                 if old_py_path and os.path.exists(old_py_path) and os.path.normcase(old_py_path) != os.path.normcase(new_py_path):
                     os.remove(old_py_path); logger.info(f"Old PY file '{os.path.basename(old_py_path)}' deleted.")
+                
+                # Export to new PY data file
                 if editor_map_utils.export_map_to_game_python_script(self.editor_state):
                     self.show_status_message(f"Map renamed to '{clean_new_name}' and files updated.")
                 else:
                     QMessageBox.warning(self, "Rename Warning", "Map renamed, JSON updated, but new PY export failed. Save All manually."); self.editor_state.unsaved_changes = True
+                
                 self.update_window_title(); self.update_edit_actions_enabled_state()
             except Exception as e_rename: logger.error(f"Error during rename: {e_rename}", exc_info=True); QMessageBox.critical(self, "Rename Error", f"An error occurred: {e_rename}")
         else: self.show_status_message("Rename map cancelled.")
@@ -479,12 +546,13 @@ class EditorMainWindow(QMainWindow):
         logger.info("Delete Map File action triggered.")
         project_root_for_maps = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         maps_abs_dir = os.path.join(project_root_for_maps, ED_CONFIG.MAPS_DIRECTORY)
+        if not editor_map_utils.ensure_maps_directory_exists():
+             QMessageBox.critical(self, "Error", f"Cannot access or create maps directory: {maps_abs_dir}"); return
+
         json_filter = f"Editor Map Files (*{ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION})"
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Map to Delete", maps_abs_dir, json_filter)
         if file_path:
             map_name_to_delete = os.path.splitext(os.path.basename(file_path))[0]
-            # No longer preventing deleting "level_default"
-
             reply = QMessageBox.warning(self, "Confirm Delete", f"Delete all files for map '{map_name_to_delete}'?\nCannot be undone.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if reply == QMessageBox.StandardButton.Yes:
                 if editor_map_utils.delete_map_files(self.editor_state, file_path):
@@ -509,18 +577,40 @@ class EditorMainWindow(QMainWindow):
         if not os.path.exists(suggested_dir):
             try: os.makedirs(suggested_dir)
             except OSError as e: logger.error(f"Could not create map_exports directory: {e}"); suggested_dir = os.path.join(project_root, ED_CONFIG.MAPS_DIRECTORY)
+        
         suggested_path = os.path.join(suggested_dir, default_map_name + ".png")
         file_path, _ = QFileDialog.getSaveFileName(self, "Export Map as Image", suggested_path, "PNG Images (*.png);;All Files (*)")
         if not file_path: self.show_status_message("Export map as image cancelled."); logger.info("Export map as image cancelled."); return
+        
         try:
             scene = self.map_view_widget.scene()
             if not scene: QMessageBox.critical(self, "Export Error", "Cannot access map scene."); return
-            target_rect = scene.sceneRect()
+            
+            target_rect = scene.itemsBoundingRect() # Get bounding rect of all items
+            if target_rect.isEmpty():
+                 QMessageBox.information(self, "Export Error", "Map is empty, nothing to export as image.")
+                 return
+
+            # Add some padding
+            padding = 20 
+            target_rect.adjust(-padding, -padding, padding, padding)
+
+
             image = QImage(target_rect.size().toSize(), QImage.Format.Format_ARGB32_Premultiplied)
-            image.fill(Qt.GlobalColor.transparent)
+            image.fill(Qt.GlobalColor.transparent) # Start with transparent background
+            
             painter = QPainter(image)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing, False); painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
-            scene.render(painter, QRectF(image.rect()), target_rect); painter.end()
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing, False) 
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+
+            # Render background color first if desired
+            # bg_qcolor = QColor(*self.editor_state.background_color)
+            # painter.fillRect(image.rect(), bg_qcolor) # Optional: fill with map BG color
+
+            # Render scene content onto the image
+            scene.render(painter, QRectF(image.rect()), target_rect)
+            painter.end()
+            
             if image.save(file_path, "PNG"):
                 self.show_status_message(f"Map exported as image: {os.path.basename(file_path)}")
                 logger.info(f"Map successfully exported as PNG to: {file_path}")
@@ -593,6 +683,7 @@ class EditorMainWindow(QMainWindow):
         else: event.ignore()
 
     def save_geometry_and_state(self):
+        # Ensure dock widgets have object names before saving state
         if not self.asset_palette_dock.objectName(): self.asset_palette_dock.setObjectName("AssetPaletteDock")
         if not self.properties_editor_dock.objectName(): self.properties_editor_dock.setObjectName("PropertiesEditorDock")
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock and not self.minimap_dock.objectName():
@@ -606,42 +697,87 @@ class EditorMainWindow(QMainWindow):
         geom = self.settings.value("geometry")
         state = self.settings.value("windowState")
         restored = False
-        if geom is not None: self.restoreGeometry(geom); restored = True
-        if state is not None: self.restoreState(state); restored = True
-        if restored: logger.debug("Window geometry and/or state restored.")
+        try:
+            if geom is not None: self.restoreGeometry(geom); restored = True
+            if state is not None: self.restoreState(state); restored = True
+            if restored: logger.debug("Window geometry and/or state restored.")
+        except Exception as e_restore:
+            logger.error(f"Error restoring window geometry/state: {e_restore}. Resetting to defaults.", exc_info=True)
+            # Reset to some default if restoration fails badly
+            self.setGeometry(50, 50, ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT)
+            return False # Indicate restoration failed
         return restored
 
-def editor_main():
+def editor_main(parent_app_instance: Optional[QApplication] = None, embed_mode: bool = False):
+    # This function is primarily for standalone execution.
+    # If embed_mode is True, it means it's being called to create an instance
+    # to be embedded, and it should not create its own QApplication or run app.exec().
+    
     # When editor.py is run directly, set the CWD to its directory.
     # This helps Python resolve relative imports like `from . import editor_config`
-    # if the package structure is standard.
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    # if the package structure is standard and this file is inside the 'editor' package.
+    if not embed_mode: # Only chdir if not in embed_mode
+        try:
+            os.chdir(os.path.dirname(os.path.abspath(__file__)))
+            logger.info(f"Standalone mode: Changed CWD to: {os.getcwd()}")
+        except Exception as e_chdir:
+            logger.error(f"Could not change CWD in standalone mode: {e_chdir}")
 
-    logger.info("editor_main() started for PySide6 application.")
-    app = QApplication.instance()
-    if app is None: app = QApplication(sys.argv); logger.debug("QApplication instance created.")
-    else: logger.debug("QApplication instance already exists.")
 
-    main_window = EditorMainWindow()
-    exit_code = 0
-    try:
-        exit_code = app.exec()
-        logger.info(f"QApplication event loop finished with exit code: {exit_code}")
-    except Exception as e_main_loop:
-        logger.critical(f"CRITICAL ERROR in QApplication exec: {e_main_loop}", exc_info=True)
-        QMessageBox.critical(None,"Editor Critical Error", f"{e_main_loop}\n\nCheck log:\n{log_file_path_for_error_msg}")
-        exit_code = 1
-    finally:
-        if hasattr(main_window, 'isVisible') and main_window.isVisible():
-            main_window.save_geometry_and_state()
-        logger.info("Editor session ended.")
-    return exit_code
+    logger.info(f"editor_main() started. Embed mode: {embed_mode}")
+    
+    app = QApplication.instance() 
+    if app is None:
+        if parent_app_instance:
+            app = parent_app_instance
+            logger.debug("Using parent_app_instance for QApplication.")
+        elif not embed_mode: # Only create a new app if not embedded and no parent_app_instance
+            app = QApplication(sys.argv)
+            logger.debug("QApplication instance created for standalone editor.")
+        else: # embed_mode is True, but no app instance exists and no parent_app_instance given
+            logger.critical("CRITICAL: embed_mode is True, but no QApplication instance found or provided. Editor cannot run.")
+            # Cannot show QMessageBox here as there's no app event loop.
+            sys.exit("CRITICAL: No QApplication for embedded editor.")
+    else:
+        logger.debug("QApplication instance already exists.")
+
+    # The EditorMainWindow is a QMainWindow.
+    # If embed_mode is True, the CALLER (e.g., ActualEditorWindow) is responsible
+    # for how it uses this instance. It might take its centralWidget() or add it to a layout
+    # if EditorMainWindow was redesigned as a QWidget.
+    # As a QMainWindow, it's typically a top-level window.
+    main_window = EditorMainWindow() # Create instance
+
+    if not embed_mode: # Only run event loop if standalone
+        exit_code = 0
+        try:
+            # The show/showMaximized is now inside EditorMainWindow.__init__
+            # based on whether it has a parent.
+            # If it did not show itself, show it now.
+            if not main_window.isVisible():
+                 main_window.show()
+
+            exit_code = app.exec()
+            logger.info(f"QApplication event loop finished with exit code: {exit_code}")
+        except Exception as e_main_loop:
+            logger.critical(f"CRITICAL ERROR in QApplication exec: {e_main_loop}", exc_info=True)
+            QMessageBox.critical(None,"Editor Critical Error", f"{e_main_loop}\n\nCheck log:\n{log_file_path_for_error_msg}")
+            exit_code = 1
+        finally:
+            if hasattr(main_window, 'isVisible') and main_window.isVisible(): # Check if it's still valid
+                main_window.save_geometry_and_state() # Save state on exit
+            logger.info("Editor session (standalone) ended.")
+        return exit_code
+    else:
+        # In embed_mode, we don't run app.exec(). We return the instance.
+        # The caller (ActualEditorWindow) will manage its display.
+        logger.info("EditorMainWindow instance created for embedding. Returning instance.")
+        return main_window # Return the editor window instance to the caller
 
 
 if __name__ == "__main__":
     print("--- editor.py execution started (__name__ == '__main__') ---")
-    return_code = editor_main()
+    # This will run the editor as a standalone application.
+    return_code = editor_main(embed_mode=False) 
     print(f"--- editor.py execution finished (exit code: {return_code}) ---")
     sys.exit(return_code)
-
-#################### END OF FILE: editor\editor.py ####################

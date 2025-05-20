@@ -1,6 +1,4 @@
-#################### START OF FILE: editor\map_view_widget.py ####################
-
-# map_view_widget.py
+# editor/map_view_widget.py
 # -*- coding: utf-8 -*-
 """
 Custom Qt Widget for the Map View in the PySide6 Level Editor.
@@ -29,7 +27,8 @@ except ImportError:
     logger_mv_fallback = logging.getLogger(__name__ + ".fallback_assets")
     logger_mv_fallback.critical("map_view_widget.py: Failed to import get_asset_pixmap from editor_assets.")
     def get_asset_pixmap(asset_editor_key: str, asset_data_entry: Dict[str, Any],
-                         target_size: QSize, override_color: Optional[Tuple[int,int,int]] = None) -> Optional[QPixmap]:
+                         target_size: QSize, override_color: Optional[Tuple[int,int,int]] = None,
+                         get_native_size_only: bool = False) -> Optional[QPixmap]: # Added get_native_size_only
         logger_mv_fallback.error(f"Dummy get_asset_pixmap called for {asset_editor_key}")
         dummy_pix = QPixmap(target_size); dummy_pix.fill(Qt.GlobalColor.magenta); return dummy_pix
 
@@ -77,19 +76,22 @@ class MapObjectItem(QGraphicsPixmapItem):
             asset_data = editor_state.assets_palette.get(self.editor_key)
             if asset_data and asset_data.get("colorable"):
                 try:
-                    target_w = self.initial_pixmap.width() if self.initial_pixmap and not self.initial_pixmap.isNull() else ED_CONFIG.BASE_GRID_SIZE
-                    target_h = self.initial_pixmap.height() if self.initial_pixmap and not self.initial_pixmap.isNull() else ED_CONFIG.BASE_GRID_SIZE
+                    # When updating color, we want the pixmap at its native/original size
+                    original_w, original_h = asset_data.get("original_size_pixels", 
+                                                             (self.initial_pixmap.width() if self.initial_pixmap else ED_CONFIG.BASE_GRID_SIZE,
+                                                              self.initial_pixmap.height() if self.initial_pixmap else ED_CONFIG.BASE_GRID_SIZE))
                     colored_pixmap = get_asset_pixmap(
                         self.editor_key, asset_data,
-                        target_size=QSize(int(target_w), int(target_h)),
-                        override_color=new_color.getRgb()[:3]
+                        target_size=QSize(int(original_w), int(original_h)), # Use original size
+                        override_color=new_color.getRgb()[:3],
+                        get_native_size_only=True # Ensure it's native size for coloring
                     )
                     if colored_pixmap and not colored_pixmap.isNull():
                         self.setPixmap(colored_pixmap)
                     elif self.initial_pixmap and not self.initial_pixmap.isNull(): # Fallback to initial if coloring fails
                         self.setPixmap(self.initial_pixmap)
                     else: # Absolute fallback if initial_pixmap is also bad
-                        fallback_pix = QPixmap(int(target_w), int(target_h))
+                        fallback_pix = QPixmap(int(original_w), int(original_h))
                         fallback_pix.fill(Qt.GlobalColor.magenta)
                         self.setPixmap(fallback_pix)
                 except Exception as e:
@@ -174,21 +176,27 @@ class MapViewWidget(QGraphicsView):
         scene_h = float(self.editor_state.get_map_pixel_height())
         self.map_scene.setSceneRect(QRectF(0, 0, max(1.0, scene_w), max(1.0, scene_h)))
         self.map_scene.setProperty("grid_size", self.editor_state.grid_size)
-        self.update_background_color()
+        
+        self.update_background_color(emit_view_changed=False) # Don't emit yet
+
         self.resetTransform()
         current_transform = QTransform()
         current_transform.translate(float(self.editor_state.camera_offset_x * -1), float(self.editor_state.camera_offset_y * -1))
         current_transform.scale(self.editor_state.zoom_level, self.editor_state.zoom_level)
         self.setTransform(current_transform)
-        self.update_grid_visibility()
+        
+        self.update_grid_visibility(emit_view_changed=False) # Don't emit yet
         self.draw_placed_objects()
+        
         logger.debug(f"MapViewWidget: Map loaded. Scene rect: {self.map_scene.sceneRect()}, Zoom: {self.editor_state.zoom_level:.2f}, Offset: ({self.editor_state.camera_offset_x:.1f}, {self.editor_state.camera_offset_y:.1f})")
         self.viewport().update()
-        self.view_changed.emit() # Notify minimap of new map state
+        self.view_changed.emit() # Notify minimap of new map state (emit once at the end)
 
-    def update_background_color(self):
+
+    def update_background_color(self, emit_view_changed=True): # Added optional parameter
         self.map_scene.setBackgroundBrush(QColor(*self.editor_state.background_color))
-        self.view_changed.emit() # Background color change affects overall view
+        if emit_view_changed:
+            self.view_changed.emit() # Background color change affects overall view
 
     def draw_grid(self):
         for line in self._grid_lines:
@@ -212,14 +220,16 @@ class MapViewWidget(QGraphicsView):
             line.setZValue(-1); self._grid_lines.append(line)
         self.viewport().update()
 
-    def update_grid_visibility(self):
+    def update_grid_visibility(self, emit_view_changed=True): # Added optional parameter
         is_visible = self.editor_state.show_grid
         if self._grid_lines and self._grid_lines[0].isVisible() == is_visible: return
         if not is_visible and self._grid_lines:
             for line in self._grid_lines: line.setVisible(False)
         elif is_visible : self.draw_grid()
         self.viewport().update()
-        self.view_changed.emit() # Grid visibility change affects overall view
+        if emit_view_changed:
+            self.view_changed.emit() # Grid visibility change affects overall view
+
 
     def draw_placed_objects(self):
         current_data_ids = {id(obj_data) for obj_data in self.editor_state.placed_objects}
@@ -228,15 +238,50 @@ class MapViewWidget(QGraphicsView):
             if self._map_object_items[item_id].scene() == self.map_scene:
                 self.map_scene.removeItem(self._map_object_items[item_id])
             del self._map_object_items[item_id]
+
         for obj_data in self.editor_state.placed_objects:
             item_data_id = id(obj_data)
             asset_key = str(obj_data.get("asset_editor_key",""))
+            
             asset_info_from_palette = self.editor_state.assets_palette.get(asset_key)
-            if not asset_info_from_palette: logger.warning(f"DrawPlaced: Asset info for key '{asset_key}' not found in palette state."); continue
+            
+            # Fallback lookup if asset_key from file doesn't match palette keys directly
+            # This is a secondary check; primary remapping should happen in editor_history.restore_map_from_snapshot
+            if not asset_info_from_palette:
+                game_id_of_obj = obj_data.get("game_type_id")
+                if game_id_of_obj:
+                    found_fallback = False
+                    for pal_key_iter, pal_data_iter in self.editor_state.assets_palette.items():
+                        if pal_data_iter.get("game_type_id") == game_id_of_obj:
+                            asset_info_from_palette = pal_data_iter
+                            asset_key = pal_key_iter # Use the canonical key from palette
+                            # Optionally, update obj_data in-memory, but this might be too late if not done at load
+                            # obj_data["asset_editor_key"] = asset_key 
+                            logger.info(f"DrawPlaced (Fallback): Remapped loaded asset with game_type_id '{game_id_of_obj}' to palette key '{asset_key}'.")
+                            found_fallback = True
+                            break
+                    if not found_fallback:
+                         logger.warning(f"DrawPlaced: Asset info for key '{obj_data.get('asset_editor_key')}' or game_type_id '{game_id_of_obj}' not found in palette state. Skipping object.")
+                         continue
+                else:
+                    logger.warning(f"DrawPlaced: Asset info for key '{asset_key}' not found and no game_type_id. Skipping object.")
+                    continue
+            
+            if not asset_info_from_palette: # Should be caught by above, but as a safeguard
+                logger.error(f"DrawPlaced: CRITICAL - asset_info_from_palette is None for asset_key '{asset_key}'. This should not happen. Skipping.")
+                continue
+
             original_w, original_h = asset_info_from_palette.get("original_size_pixels", (ED_CONFIG.BASE_GRID_SIZE, ED_CONFIG.BASE_GRID_SIZE))
-            pixmap_to_draw = get_asset_pixmap(asset_key, asset_info_from_palette, QSize(original_w, original_h), obj_data.get("override_color"))
+            # Request the pixmap at its NATIVE size for drawing on the map
+            pixmap_to_draw = get_asset_pixmap(asset_key, asset_info_from_palette, 
+                                              QSize(original_w, original_h), # Native size
+                                              obj_data.get("override_color"),
+                                              get_native_size_only=True) # Explicitly request native size
+            
             if not pixmap_to_draw or pixmap_to_draw.isNull():
-                logger.warning(f"DrawPlaced: Pixmap for asset '{asset_key}' is null. Object not drawn/updated."); continue
+                logger.warning(f"DrawPlaced: Pixmap for asset '{asset_key}' is null. Object not drawn/updated.")
+                continue
+            
             world_x, world_y = float(obj_data["world_x"]), float(obj_data["world_y"])
             if item_data_id in self._map_object_items:
                 map_obj_item = self._map_object_items[item_data_id]
@@ -251,6 +296,7 @@ class MapViewWidget(QGraphicsView):
                 self._map_object_items[item_data_id] = map_obj_item
         self.viewport().update()
         # self.view_changed.emit() # map_content_changed signal already covers this for minimap content
+
 
     def screen_to_scene_coords(self, screen_pos_qpoint: QPointF) -> QPointF:
         return self.mapToScene(screen_pos_qpoint.toPoint())
@@ -434,11 +480,11 @@ class MapViewWidget(QGraphicsView):
         if self.dragMode() == QGraphicsView.DragMode.RubberBandDrag: self.setDragMode(QGraphicsView.DragMode.NoDrag)
         super().mouseReleaseEvent(event)
         
-    def enterEvent(self, event: QFocusEvent):
+    def enterEvent(self, event: QFocusEvent): # Corrected type hint for event
         if not self.edge_scroll_timer.isActive(): self.edge_scroll_timer.start()
         super().enterEvent(event)
         
-    def leaveEvent(self, event: QFocusEvent):
+    def leaveEvent(self, event: QFocusEvent): # Corrected type hint for event
         if self.edge_scroll_timer.isActive(): self.edge_scroll_timer.stop()
         self._edge_scroll_dx = 0; self._edge_scroll_dy = 0
         if self._hover_preview_item: self._hover_preview_item.setVisible(False)
@@ -555,7 +601,11 @@ class MapViewWidget(QGraphicsView):
         logger.debug(f"MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: {len(self.editor_state.placed_objects)}")
         
         original_w, original_h = asset_definition_for_placement.get("original_size_pixels", (self.editor_state.grid_size, self.editor_state.grid_size))
-        item_pixmap = get_asset_pixmap(asset_to_place_key, asset_definition_for_placement, QSize(original_w, original_h), new_object_map_data.get("override_color"))
+        # Request pixmap at native size for scene item
+        item_pixmap = get_asset_pixmap(asset_to_place_key, asset_definition_for_placement, 
+                                       QSize(original_w, original_h), # Native size
+                                       new_object_map_data.get("override_color"),
+                                       get_native_size_only=True) # Explicitly request native size
 
         if not item_pixmap or item_pixmap.isNull():
             logger.error(f"MapView (_place_single_object): FAILED to get valid pixmap for MapObjectItem '{asset_to_place_key}'. Pixmap is null. Cannot create scene item.")
@@ -718,5 +768,3 @@ class MapViewWidget(QGraphicsView):
         else:
             logger.debug(f"MapView: Scene selection changed. Selection count: {len(selected_items)}. Emitting None for properties.")
             self.map_object_selected_for_properties.emit(None)
-
-#################### END OF FILE: editor\map_view_widget.py ####################
