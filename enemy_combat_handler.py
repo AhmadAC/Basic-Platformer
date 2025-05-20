@@ -134,7 +134,7 @@ def enemy_take_damage(enemy: 'EnemyClass_TYPE', damage_amount: int):
     if getattr(enemy, 'is_petrified', False):
         if enemy.current_health <= 0:
             debug(f"EnemyCombatHandler: Petrified Enemy {enemy_id_log} health 0. Smashing.")
-            from enemy_status_effects import smash_petrified_enemy
+            from enemy_status_effects import smash_petrified_enemy # Lazy import
             smash_petrified_enemy(enemy)
         else:
             debug(f"EnemyCombatHandler: Petrified Enemy {enemy_id_log} took damage but still >0 health.")

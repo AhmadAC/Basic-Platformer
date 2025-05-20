@@ -527,9 +527,9 @@ class MainWindow(QMainWindow):
             if "level_pixel_width" in self.game_elements:
                 camera.set_level_dimensions( self.game_elements["level_pixel_width"], self.game_elements["level_min_y_absolute"], self.game_elements["level_max_y_absolute"])
             # Initial camera focus on P1
-            p1_for_camera_init = self.game_elements.get("player1")
-            if p1_for_camera_init:
-                camera.update(p1_for_camera_init)
+        p1_for_camera_init = self.game_elements.get("player1")
+        if p1_for_camera_init:
+            camera.update(p1_for_camera_init) 
 
 
         self.game_scene_widget.game_elements = self.game_elements
