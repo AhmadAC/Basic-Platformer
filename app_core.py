@@ -22,15 +22,11 @@ if _project_root not in sys.path:
 
 from logger import info, debug, warning, critical, error, LOGGING_ENABLED, LOG_FILE_PATH
 import constants as C
-from game_setup import initialize_game_elements # Used by app_game_modes
-from game_state_manager import reset_game_state # Used by app_game_modes
-from server_logic import ServerState, run_server_mode # Used by app_game_modes
-from client_logic import ClientState, run_client_mode, find_server_on_lan # Used by app_game_modes
-from couch_play_logic import run_couch_play_mode # Used by app_game_modes
-from game_ui import GameSceneWidget, IPInputDialog # IPInputDialog is used here now
+from game_ui import GameSceneWidget, IPInputDialog
 import config as game_config
 from player import Player
 
+# Import the split modules
 from app_ui_creator import (
     _create_main_menu_widget, _create_map_select_widget,
     _populate_map_list_for_selection, _create_view_page_with_back_button,
@@ -41,13 +37,19 @@ from app_ui_creator import (
     _navigate_current_menu_pygame_joy, _activate_current_menu_selected_button_pygame_joy,
     _update_current_menu_button_focus, _reset_all_prev_press_flags, _activate_ip_dialog_button
 )
-# app_game_modes contains logic, MainWindow methods will call these
-import app_game_modes 
+# Import app_game_modes to call its logic functions
+import app_game_modes
 
 from app_input_manager import (
     get_input_snapshot, update_qt_key_press, update_qt_key_release,
     clear_qt_key_events_this_frame
 )
+
+from server_logic import ServerState # For NetworkThread type hint
+from client_logic import ClientState # For NetworkThread type hint
+from couch_play_logic import run_couch_play_mode
+from game_state_manager import reset_game_state
+
 
 PYPERCLIP_AVAILABLE_MAIN = False
 try:
@@ -111,11 +113,15 @@ class NetworkThread(QThread):
         return {}
 
     def run(self):
+        # Import run_server_mode and run_client_mode here to avoid potential top-level circular imports
+        # if server_logic or client_logic ever needed to import something from app_core indirectly
+        from server_logic import run_server_mode as rs_mode 
+        from client_logic import run_client_mode as rc_mode
         try:
             main_window_instance = MainWindow._instance
             if self.mode == "host" and self.server_state and main_window_instance:
                 info("NetworkThread: Starting run_server_mode...")
-                run_server_mode(
+                rs_mode(
                     self.server_state,
                     self.game_elements,
                     self._ui_status_update_callback,
@@ -126,7 +132,7 @@ class NetworkThread(QThread):
                 info("NetworkThread: run_server_mode finished."); self.operation_finished_signal.emit("host_ended")
             elif self.mode == "join" and self.client_state and main_window_instance:
                 info("NetworkThread: Starting run_client_mode...")
-                run_client_mode(
+                rc_mode(
                     self.client_state,
                     self.game_elements,
                     self._ui_status_update_callback,
@@ -174,7 +180,7 @@ class MainWindow(QMainWindow):
     _prev_ip_dialog_confirm_pressed: bool; _prev_ip_dialog_cancel_pressed: bool
 
     NUM_MAP_COLUMNS = 3
-    NetworkThread = NetworkThread
+    NetworkThread = NetworkThread 
 
     def __init__(self):
         super().__init__()
@@ -236,34 +242,36 @@ class MainWindow(QMainWindow):
     def _handle_config_load_failure(self):
         warning("MAIN PySide6: Game config loading encountered an issue. Default keyboard mappings might be used. Check logs from config.py.")
 
-    # --- Slot Methods for UI Interactions ---
+    # --- Slot Methods for UI Interactions (These ARE methods of MainWindow) ---
     def _on_map_selected_for_couch_coop(self, map_name: str):
+        info(f"MAIN: Map '{map_name}' selected for Couch Co-op via _on_map_selected.")
         app_game_modes.start_couch_play_logic(self, map_name)
 
     def _on_map_selected_for_host_game(self, map_name: str):
+        info(f"MAIN: Map '{map_name}' selected for Hosting via _on_map_selected.")
         app_game_modes.start_host_game_logic(self, map_name)
 
     def on_start_couch_play(self):
-        app_game_modes.start_couch_play_actual(self)
+        app_game_modes.initiate_couch_play_map_selection(self)
 
     def on_start_host_game(self):
-        app_game_modes.start_host_game_actual(self)
+        app_game_modes.initiate_host_game_map_selection(self)
 
     def on_start_join_lan(self):
-        app_game_modes.start_join_lan_actual(self)
+        app_game_modes.initiate_join_lan_dialog(self)
 
     def on_start_join_ip(self):
-        app_game_modes.start_join_ip_actual(self)
+        app_game_modes.initiate_join_ip_dialog(self)
         
-    # _prepare_and_start_game is now called by functions in app_game_modes
-    # def _prepare_and_start_game(...): see app_game_modes.prepare_and_start_game_logic
+    def _prepare_and_start_game(self, mode: str, map_name: Optional[str] = None, target_ip_port: Optional[str] = None):
+        app_game_modes.prepare_and_start_game_logic(self, mode, map_name, target_ip_port)
 
     @Slot()
     def on_client_fully_synced_for_host(self): # Slot for NetworkThread signal
         app_game_modes.on_client_fully_synced_for_host_logic(self)
 
-    # _start_network_mode is now called by functions in app_game_modes
-    # def _start_network_mode(...): see app_game_modes.start_network_mode_logic
+    def _start_network_mode(self, mode_name: str, target_ip_port: Optional[str] = None):
+        app_game_modes.start_network_mode_logic(self, mode_name, target_ip_port)
 
     @Slot(str, str, float)
     def on_network_status_update_slot(self, title: str, message: str, progress: float):
@@ -287,8 +295,8 @@ class MainWindow(QMainWindow):
         app_game_modes.stop_current_game_mode_logic(self, show_menu)
     # --- End Slot Methods ---
 
-    # --- UI Helper Callers (that use app_ui_creator functions) ---
-    def _populate_map_list_for_selection(self, purpose: str):
+    # --- Methods that call helpers from app_ui_creator ---
+    def _populate_map_list_for_selection(self, purpose: str): # Called by on_start_couch_play/host_game in this file
         _populate_map_list_for_selection(self, purpose)
     # --- End app_ui_creator helper calls ---
 
@@ -317,6 +325,7 @@ class MainWindow(QMainWindow):
         if view_name == "menu": target_page = self.main_menu_widget; title += " - Main Menu"; self._current_active_menu_buttons = self._main_menu_buttons_ref; self._current_active_menu_selected_idx_ref = "_menu_selected_button_idx"; self._menu_selected_button_idx = 0
         elif view_name == "map_select":
             target_page = self.map_select_widget
+            # Title for map_select is set by the calling function (on_start_couch_play or on_start_host_game)
             self._current_active_menu_buttons = self._map_selection_buttons_ref; self._current_active_menu_selected_idx_ref = "_map_selection_selected_button_idx"; self._map_selection_selected_button_idx = 0
         elif view_name == "game_scene": target_page = self.game_scene_widget; title += f" - {self.current_game_mode.replace('_',' ').title() if self.current_game_mode else 'Game'}"; self._current_active_menu_buttons = []
         elif view_name == "editor": _ensure_editor_instance(self); target_page = self.editor_view_page; title += " - Level Editor"; self._current_active_menu_buttons = []
@@ -415,7 +424,7 @@ class MainWindow(QMainWindow):
         if self.actual_controls_module_instance:
              if hasattr(self.actual_controls_module_instance, 'save_mappings'): self.actual_controls_module_instance.save_mappings()
              self.actual_controls_module_instance.deleteLater(); self.actual_controls_module_instance = None; info("Controls mapper instance scheduled for deletion.")
-        self.app_status.quit_app(); app_game_modes.stop_current_game_mode(self, show_menu=False)
+        self.app_status.quit_app(); app_game_modes.stop_current_game_mode_logic(self, show_menu=False)
         pygame.joystick.quit(); pygame.quit()
         info("MAIN PySide6: Pygame quit.")
         info("MAIN PySide6: Application shutdown sequence complete. Accepting close event."); super().closeEvent(event)
