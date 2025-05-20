@@ -1,2 +1,59 @@
-[2025-05-21 00:26:24.653] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-21 00:26:24.653] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-21 00:33:59.296] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-21 00:33:59.296] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-21 00:34:00.739] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
+[2025-05-21 00:34:00.739] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame found no joysticks.
+[2025-05-21 00:34:00.740] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial window size: 960x600
+[2025-05-21 00:34:00.745] DEBUG   logger.py:120 (_log_wrapper): GameSceneWidget initialized.
+[2025-05-21 00:34:00.754] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-21 00:34:01.896] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op.
+[2025-05-21 00:34:01.899] INFO    logger.py:120 (_log_wrapper): Switching UI view to: map_select
+[2025-05-21 00:34:02.728] INFO    logger.py:120 (_log_wrapper): MAIN: Map 'noenemy' selected for Couch Co-op via _on_map_selected.
+[2025-05-21 00:34:02.728] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'noenemy'.
+[2025-05-21 00:34:02.728] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: noenemy, Target: None
+[2025-05-21 00:34:02.783] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initializing game entities for map 'noenemy' in mode 'couch_play'.
+[2025-05-21 00:34:02.783] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 00:34:02.783] DEBUG   logger.py:120 (_log_wrapper): GSM: 0 enemies processed for reset.
+[2025-05-21 00:34:02.783] DEBUG   logger.py:120 (_log_wrapper): GSM: 0 statues processed for state reset.
+[2025-05-21 00:34:02.783] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles cleared from lists.
+[2025-05-21 00:34:02.783] DEBUG   logger.py:120 (_log_wrapper): GSM: Existing chest removed (if any).
+[2025-05-21 00:34:02.783] DEBUG   logger.py:120 (_log_wrapper): GSM: Failed to respawn chest.
+[2025-05-21 00:34:02.784] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset.
+[2025-05-21 00:34:02.784] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
+
+[2025-05-21 00:34:02.784] INFO    logger.py:120 (_log_wrapper): LevelLoader initialized.
+[2025-05-21 00:34:02.784] INFO    logger.py:120 (_log_wrapper): Attempting to load map 'noenemy' from directory 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps'
+[2025-05-21 00:34:02.784] INFO    logger.py:120 (_log_wrapper): Attempting to load map from: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\noenemy.json
+[2025-05-21 00:34:02.785] INFO    logger.py:120 (_log_wrapper): Map 'noenemy' loaded successfully.
+[2025-05-21 00:34:03.023] INFO    logger.py:120 (_log_wrapper): Camera initialized: Viewport(100.0x30.0), WorldBounds(X: 0.0 to 1920.0, Y: 0.0 to 600.0)
+[2025-05-21 00:34:03.023] INFO    logger.py:120 (_log_wrapper): Camera Level Dims Set: Width=1920.0, StartX=0.0, TopY=0.0, BottomY=600.0, EffectiveHeight=600.0
+[2025-05-21 00:34:03.024] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Level dimensions set - TotalW:1920.0, MinX:0.0, MinY:0.0, MaxY:600.0
+[2025-05-21 00:34:03.024] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game entities initialized successfully.
+[2025-05-21 00:34:03.032] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
+[2025-05-21 00:34:03.032] INFO    logger.py:120 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
+[2025-05-21 00:34:03.032] DEBUG   logger.py:120 (_log_wrapper): GameSceneWidget: Updating camera screen dimensions to 1280.0x649.0
+[2025-05-21 00:34:03.032] INFO    logger.py:120 (_log_wrapper): Camera Screen Dims Set: 1280.0x649.0
+[2025-05-21 00:34:03.061] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
+[2025-05-21 00:34:05.324] INFO    logger.py:120 (_log_wrapper): Escape in game mode 'couch_play'. Stopping.
+[2025-05-21 00:34:05.325] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-21 00:34:05.325] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 00:34:05.325] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at None
+[2025-05-21 00:34:05.780] INFO    logger.py:120 (_log_wrapper): Escape in game mode 'couch_play'. Stopping.
+[2025-05-21 00:34:05.781] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-21 00:34:05.781] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 00:34:05.781] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at None
+[2025-05-21 00:34:06.025] INFO    logger.py:120 (_log_wrapper): Escape in game mode 'couch_play'. Stopping.
+[2025-05-21 00:34:06.025] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-21 00:34:06.025] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 00:34:06.025] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at None
+[2025-05-21 00:34:06.224] INFO    logger.py:120 (_log_wrapper): Escape in game mode 'couch_play'. Stopping.
+[2025-05-21 00:34:06.224] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-21 00:34:06.224] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 00:34:06.224] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at None
+[2025-05-21 00:34:06.909] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Close event received. Initiating shutdown sequence.
+[2025-05-21 00:34:06.909] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-21 00:34:06.909] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
+[2025-05-21 00:34:06.909] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-21 00:34:06.909] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 00:34:06.909] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at None
+[2025-05-21 00:34:06.961] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-21 00:34:06.961] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application fully terminated.
