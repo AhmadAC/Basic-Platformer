@@ -1,29 +1,30 @@
-[2025-05-20 21:42:24.837] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-20 21:42:24.838] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
-[2025-05-20 21:42:26.245] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
-[2025-05-20 21:42:26.246] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame found 1 joysticks for menu navigation.
-[2025-05-20 21:42:26.246] INFO    logger.py:120 (_log_wrapper):   - Pygame Joystick: Xbox 360 Controller
-[2025-05-20 21:42:26.247] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial normal window size: 960x600
-[2025-05-20 21:42:26.247] WARNING logger.py:120 (_log_wrapper): MAIN PySide6: 'inputs' joystick_handler failed to initialize. This affects controller_mapper_gui.
-[2025-05-20 21:42:26.249] INFO    logger.py:120 (_log_wrapper): Translating keyboard mappings to Qt.Key values.
-[2025-05-20 21:42:26.249] INFO    logger.py:120 (_log_wrapper): Keyboard mapping translation complete.
-[2025-05-20 21:42:26.267] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-20 21:42:26.425] INFO    logger.py:120 (_log_wrapper): JoystickPollingThread: Started.
-[2025-05-20 21:42:27.885] INFO    logger.py:120 (_log_wrapper): Menu Joystick: Activating button 'Couch Co-op'
-[2025-05-20 21:42:35.509] INFO    logger.py:120 (_log_wrapper): Couch play map selection cancelled.
-[2025-05-20 21:42:35.509] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-20 21:42:36.557] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Quit action triggered from UI.
-[2025-05-20 21:42:36.559] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Close event received. Initiating shutdown sequence.
-[2025-05-20 21:42:36.559] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
-[2025-05-20 21:42:36.559] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
-[2025-05-20 21:42:36.559] INFO    logger.py:120 (_log_wrapper): Stopping game mode: None
-[2025-05-20 21:42:36.559] INFO    logger.py:120 (_log_wrapper): Game mode 'None' stopped and cleaned up.
-[2025-05-20 21:42:36.559] INFO    logger.py:120 (_log_wrapper): Stopping joystick polling thread...
-[2025-05-20 21:42:36.559] INFO    logger.py:120 (_log_wrapper): JoystickPollingThread: Stop requested.
-[2025-05-20 21:42:36.570] INFO    logger.py:120 (_log_wrapper): JoystickPollingThread: Stopped.
-[2025-05-20 21:42:36.570] INFO    logger.py:120 (_log_wrapper): Joystick polling thread stopped.
-[2025-05-20 21:42:36.573] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: 'inputs' joystick_handler.quit_joysticks() called.
-[2025-05-20 21:42:36.827] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame quit.
-[2025-05-20 21:42:36.827] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application shutdown sequence complete. Accepting close event.
-[2025-05-20 21:42:36.906] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
-[2025-05-20 21:42:36.906] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application fully terminated.
+[2025-05-20 21:54:20.021] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-20 21:54:20.022] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-20 21:54:21.527] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
+[2025-05-20 21:54:21.527] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame found 1 joysticks for menu navigation.
+[2025-05-20 21:54:21.528] INFO    logger.py:120 (_log_wrapper):   - Pygame Joystick: Xbox 360 Controller
+[2025-05-20 21:54:21.528] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial normal window size: 960x600
+[2025-05-20 21:54:21.529] WARNING logger.py:120 (_log_wrapper): MAIN PySide6: 'inputs' joystick_handler failed to initialize. This affects controller_mapper_gui.
+[2025-05-20 21:54:21.531] INFO    logger.py:120 (_log_wrapper): Translating keyboard mappings to Qt.Key values.
+[2025-05-20 21:54:21.531] INFO    logger.py:120 (_log_wrapper): Keyboard mapping translation complete.
+[2025-05-20 21:54:21.547] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-20 21:54:21.702] INFO    logger.py:120 (_log_wrapper): JoystickPollingThread: Started.
+[2025-05-20 21:54:22.173] INFO    logger.py:120 (_log_wrapper): Menu Joystick: Navigated to button index 1
+[2025-05-20 21:54:24.110] INFO    logger.py:120 (_log_wrapper): Menu Joystick: Navigated to button index 0
+[2025-05-20 21:54:24.510] INFO    logger.py:120 (_log_wrapper): Menu Joystick: Navigated to button index 1
+[2025-05-20 21:54:24.862] INFO    logger.py:120 (_log_wrapper): Menu Joystick: Navigated to button index 0
+[2025-05-20 21:54:25.166] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Quit action triggered from UI.
+[2025-05-20 21:54:25.166] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Close event received. Initiating shutdown sequence.
+[2025-05-20 21:54:25.166] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-20 21:54:25.166] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
+[2025-05-20 21:54:25.166] INFO    logger.py:120 (_log_wrapper): Stopping game mode: None
+[2025-05-20 21:54:25.167] INFO    logger.py:120 (_log_wrapper): Game mode 'None' stopped and cleaned up.
+[2025-05-20 21:54:25.167] INFO    logger.py:120 (_log_wrapper): Stopping joystick polling thread...
+[2025-05-20 21:54:25.167] INFO    logger.py:120 (_log_wrapper): JoystickPollingThread: Stop requested.
+[2025-05-20 21:54:25.171] INFO    logger.py:120 (_log_wrapper): JoystickPollingThread: Stopped.
+[2025-05-20 21:54:25.172] INFO    logger.py:120 (_log_wrapper): Joystick polling thread stopped.
+[2025-05-20 21:54:25.172] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: 'inputs' joystick_handler.quit_joysticks() called.
+[2025-05-20 21:54:25.411] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame quit.
+[2025-05-20 21:54:25.411] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application shutdown sequence complete. Accepting close event.
+[2025-05-20 21:54:25.471] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-20 21:54:25.471] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application fully terminated.
