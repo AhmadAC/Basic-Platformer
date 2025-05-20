@@ -5,14 +5,14 @@ import time
 import logging
 import os
 from typing import Dict, List, Optional, Tuple, Any
-from PySide6.QtCore import Qt, Slot, QTimer # QRectF removed as not used here
+from PySide6.QtCore import Qt, Slot, QTimer 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QComboBox, QPushButton, QTableWidget, QTableWidgetItem, QAbstractItemView,
     QHeaderView, QLabel, QLineEdit, QInputDialog, QMessageBox, QTextEdit
 )
 from PySide6.QtGui import QIcon, QCloseEvent
-from PySide6.QtCore import QThread, Signal # Qt was already imported, Slot is from QtCore
+from PySide6.QtCore import QThread, Signal 
 
 # Pynput for keyboard simulation
 try:
@@ -34,12 +34,13 @@ if project_root_mapper not in sys.path:
     sys.path.insert(0, project_root_mapper)
 
 import joystick_handler # Your refactored inputs-based handler
+import inputs # Ensure inputs is imported here if used by joystick_handler or directly below
 
 # 'inputs' library components
 try:
-    from inputs import GamePad, UnpluggedError # Removed unused EVENT_TYPES etc.
+    # from inputs import GamePad, UnpluggedError # Already imported via 'import inputs' implicitly
     INPUTS_LIB_AVAILABLE_FOR_MAPPER = True
-except ImportError:
+except ImportError: # This specific check for inputs.GamePad might not be needed if 'import inputs' fails first
     INPUTS_LIB_AVAILABLE_FOR_MAPPER = False
     class GamePad: # Dummy
         def __init__(self, gamepad_path: Optional[str]=None, characterizing: bool=False): self.name="DummyInputsGamePad"; self._Device__path = gamepad_path
@@ -47,7 +48,9 @@ except ImportError:
         def __enter__(self) -> 'GamePad': return self
         def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any): pass
     class UnpluggedError(Exception): pass # Dummy
-    print("CONTROLLER_MAPPER_GUI: CRITICAL - 'inputs' library not found. Gamepad mapping will not function.")
+    if 'inputs' not in sys.modules: # If the main 'inputs' import failed
+        print("CONTROLLER_MAPPER_GUI: CRITICAL - 'inputs' library not found. Gamepad mapping will not function.")
+
 
 # Configure logging
 if not logging.getLogger().hasHandlers():
@@ -101,7 +104,7 @@ class InputsControllerThread(QThread):
     mappedEventTriggered = Signal(str, bool)
     controllerStatusUpdate = Signal(str)
 
-    def __init__(self, mappings_ref: Dict[str, Any], gamepad_device_obj: Optional[GamePad] = None, parent: Optional[QWidget]=None):
+    def __init__(self, mappings_ref: Dict[str, Any], gamepad_device_obj: Optional[inputs.GamePad] = None, parent: Optional[QWidget]=None): # type: ignore
         super().__init__(parent)
         self.mappings = mappings_ref
         self.gamepad_instance = gamepad_device_obj
@@ -122,7 +125,7 @@ class InputsControllerThread(QThread):
             while not self._stop_requested.is_set():
                 try:
                     events = self.gamepad_instance.read()
-                except (UnpluggedError, EOFError, OSError) as e_read:
+                except (inputs.UnpluggedError, EOFError, OSError) as e_read: # type: ignore
                     self.controllerStatusUpdate.emit(f"Gamepad disconnected or read error: {gamepad_name} ({type(e_read).__name__})")
                     logger.warning(f"InputsControllerThread: Gamepad read issue for {gamepad_name}: {e_read}")
                     break 
@@ -180,7 +183,6 @@ class InputsControllerThread(QThread):
             self.controllerStatusUpdate.emit(f"Controller thread for {gamepad_name} stopped.")
 
     def process_event_for_mapped_actions(self, event_details: Dict[str, Any]):
-        # (Implementation as before, no critical changes needed for this fix)
         for internal_action_key, mapping_info in self.mappings.items():
             if not mapping_info: continue
             stored_event_type = mapping_info.get("event_type")
@@ -235,7 +237,7 @@ class MainWindow(QMainWindow):
         self.mappings: Dict[str, Dict[str, Any]] = {}
         self.current_listening_key: Optional[str] = None
         self.last_selected_row_for_mapping = -1
-        self.selected_gamepad_instance: Optional[GamePad] = None
+        self.selected_gamepad_instance: Optional[inputs.GamePad] = None # type: ignore
 
         logger.info("Controller Mapper MainWindow initializing...")
         central_widget = QWidget()
@@ -272,7 +274,7 @@ class MainWindow(QMainWindow):
         self.mappings_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.mappings_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.mappings_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        self.mappings_table.setColumnWidth(1, 220)
+        # self.mappings_table.setColumnWidth(1, 220) # Let stretch handle it
         self.mappings_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.mappings_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.mappings_table.cellDoubleClicked.connect(self.handle_table_double_click)
@@ -292,10 +294,10 @@ class MainWindow(QMainWindow):
         self.controller_thread: Optional[InputsControllerThread] = None
         
         self._load_mappings_from_file() 
-        self.refresh_mappings_table() # Called after _load_mappings_from_file populates self.mappings
+        self.refresh_mappings_table()
         
         self.gamepad_combo.currentIndexChanged.connect(self.on_gamepad_selection_changed)
-        QTimer.singleShot(100, self.populate_gamepad_combo) # Initial detection after UI shown
+        QTimer.singleShot(100, self.populate_gamepad_combo)
 
         logger.info("Controller Mapper MainWindow initialized.")
 
@@ -321,11 +323,10 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Load Error", f"Could not parse {MAPPINGS_FILE}.")
             except Exception as e: self.log_to_debug_console(f"Error loading mappings: {e}.")
         else: self.log_to_debug_console(f"Mappings file {MAPPINGS_FILE} not found.")
-        # self.refresh_mappings_table() # Moved to be called after this in __init__
 
     def load_mappings_and_refresh(self):
         self._load_mappings_from_file()
-        self.refresh_mappings_table() # Explicitly refresh table after loading
+        self.refresh_mappings_table()
         if self.controller_thread and self.controller_thread.isRunning() and self.selected_gamepad_instance:
             self.update_status_and_log("Reloading mappings. Restarting controller listener...")
             self.on_gamepad_selection_changed(self.gamepad_combo.currentIndex())
@@ -365,21 +366,24 @@ class MainWindow(QMainWindow):
                 self.mappings_table.setItem(row, 1, QTableWidgetItem("Not Set"))
                 self.mappings_table.setItem(row, 2, QTableWidgetItem("N/A"))
                 assign_btn = QPushButton("Assign"); assign_btn.clicked.connect(lambda c, k=internal_key, r=row: self.initiate_listening_sequence(k,r))
-                self.mappings_table.setCellWidget(row, 3, assign_btn)
-                self.mappings_table.setCellWidget(row, 4, QLabel(""))
+                self.mappings_table.setCellWidget(row, 3, assign_btn) # Assign button in rename column for unassigned
+                self.mappings_table.setCellWidget(row, 4, QLabel("")) # Empty in clear column
             if target_row_key and internal_key == target_row_key: row_to_select_after_refresh = row
         
         if row_to_select_after_refresh != -1:
             self.mappings_table.selectRow(row_to_select_after_refresh)
             self.mappings_table.scrollToItem(self.mappings_table.item(row_to_select_after_refresh, 0), QAbstractItemView.ScrollHint.PositionAtCenter)
+        
+        # Adjust column sizes after populating
+        self.mappings_table.resizeColumnToContents(0) 
+        self.mappings_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.mappings_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.mappings_table.resizeColumnToContents(3)
+        self.mappings_table.resizeColumnToContents(4)
+        
         if preserve_scroll:
             QTimer.singleShot(0, lambda: self.mappings_table.verticalScrollBar().setValue(current_scroll_v))
             QTimer.singleShot(0, lambda: self.mappings_table.horizontalScrollBar().setValue(current_scroll_h))
-        self.mappings_table.resizeColumnToContents(0) # Resize Action/Key column to fit content
-        self.mappings_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
 
 
     @Slot(str, bool)
@@ -424,7 +428,7 @@ class MainWindow(QMainWindow):
             self.mappings_table.selectRow(self.last_selected_row_for_mapping)
             self.mappings_table.scrollToItem(self.mappings_table.item(self.last_selected_row_for_mapping,0), QAbstractItemView.ScrollHint.EnsureVisible)
         else: self.mappings_table.clearSelection()
-        self.last_selected_row_for_mapping = -1 # Reset after use
+        self.last_selected_row_for_mapping = -1 
 
     def handle_table_double_click(self, row: int, column: int):
         action_item = self.mappings_table.item(row, 0)
@@ -458,7 +462,7 @@ class MainWindow(QMainWindow):
         if reply == QMessageBox.StandardButton.Yes:
             self.mappings.clear(); self.refresh_mappings_table(); self.update_status_and_log("All mappings have been reset.")
 
-    def closeEvent(self, event: Optional[QCloseEvent]): # Make event Optional
+    def closeEvent(self, event: Optional[QCloseEvent]): 
         logger.info("Close event received for Controller Mapper GUI.")
         if self.controller_thread and self.controller_thread.isRunning():
             self.update_status_and_log("Stopping controller thread...")
@@ -468,7 +472,7 @@ class MainWindow(QMainWindow):
             self.controller_thread = None
         self.release_all_simulated_keys()
         self.save_mappings_to_file()
-        if event: super().closeEvent(event) # Call base class only if event is provided
+        if event: super().closeEvent(event) 
         logger.info("Controller Mapper GUI closed/cleaned up.")
 
     def populate_gamepad_combo(self):
@@ -477,21 +481,24 @@ class MainWindow(QMainWindow):
         if self.controller_thread and self.controller_thread.isRunning():
             self.controller_thread.request_stop(); self.controller_thread.wait(300); self.controller_thread = None
         self.listen_button.setEnabled(False)
-        joystick_handler.init_joysticks()
+        joystick_handler.init_joysticks() # Ensure joystick_handler is aware (might be redundant if it's singleton)
         
         detected_devices_info = []
         if INPUTS_LIB_AVAILABLE_FOR_MAPPER:
             try:
                 logger.debug("Scanning with inputs.DeviceManager().gamepads...")
-                joystick_handler._gamepads_devices = [] # Clear joystick_handler's cache too
+                # Ensure joystick_handler internal list is also managed if it's a shared source of truth
+                # This direct manipulation is okay if this GUI is the primary user of this part of joystick_handler
+                if hasattr(joystick_handler, '_gamepads_devices'): joystick_handler._gamepads_devices = [] 
+                
                 device_manager = inputs.DeviceManager() # type: ignore
-                for device_instance in device_manager.gamepads:
+                for device_instance in device_manager.gamepads: # type: ignore
                     if device_instance:
                         path = getattr(device_instance, '_Device__path', f"uid_{id(device_instance)}")
                         name = getattr(device_instance, 'name', f'Gamepad (Path: {os.path.basename(path)})')
                         dev_info = {'name': name, 'path': path, 'instance': device_instance}
                         detected_devices_info.append(dev_info)
-                        joystick_handler._gamepads_devices.append(dev_info) # Also update handler's cache
+                        if hasattr(joystick_handler, '_gamepads_devices'): joystick_handler._gamepads_devices.append(dev_info)
                 
                 if detected_devices_info:
                     for dev_info in detected_devices_info: self.gamepad_combo.addItem(dev_info['name'], userData=dev_info)
@@ -502,11 +509,11 @@ class MainWindow(QMainWindow):
         else: self.gamepad_combo.addItem("'inputs' library missing", userData=None)
 
         self.gamepad_combo.blockSignals(False)
-        if self.gamepad_combo.count() > 0 and self.gamepad_combo.itemData(0) is not None: # Check if first item is valid
+        if self.gamepad_combo.count() > 0 and self.gamepad_combo.itemData(0) is not None: 
             self.on_gamepad_selection_changed(0)
-        elif self.gamepad_combo.count() > 0: # Has "No gamepads" type item
+        elif self.gamepad_combo.count() > 0: 
              self.status_label.setText("No gamepads available for selection.")
-        else: # Should not happen if placeholders are added
+        else:
              self.status_label.setText("No gamepads found.")
 
     @Slot(int)
@@ -520,7 +527,7 @@ class MainWindow(QMainWindow):
             self.update_status_and_log("No valid gamepad selected or 'inputs' library missing."); self.listen_button.setEnabled(False); return
         
         self.selected_gamepad_instance = device_info.get('instance')
-        if not self.selected_gamepad_instance or not isinstance(self.selected_gamepad_instance, GamePad):
+        if not self.selected_gamepad_instance or not isinstance(self.selected_gamepad_instance, inputs.GamePad): # type: ignore
             self.update_status_and_log(f"Error: Invalid gamepad instance for {device_info.get('name')}."); self.listen_button.setEnabled(False); return
         
         self.update_status_and_log(f"Selected: {device_info.get('name')}. Starting listener thread.")
@@ -533,8 +540,7 @@ class MainWindow(QMainWindow):
 
     def update_status_and_log(self, message: str):
         self.status_label.setText(message)
-        self.log_to_debug_console(message) # Log to GUI console
-        # Also log to main file logger if desired
+        self.log_to_debug_console(message) 
         if "error" in message.lower() or "unplugged" in message.lower() or "no gamepad" in message.lower(): logger.warning(f"MapperStatus: {message}")
         else: logger.info(f"MapperStatus: {message}")
 
@@ -597,27 +603,91 @@ class MainWindow(QMainWindow):
         self.reset_listening_ui(preserve_scroll=True)
 
 
+# NEW main function for importability and standalone execution
+def main(embed_mode: bool = False) -> Any: # Returns MainWindow or int or None
+    """
+    Initializes and runs the Controller Mapper GUI.
+
+    Args:
+        embed_mode (bool): If True, the function returns the MainWindow instance
+                           without starting its own event loop, for embedding in another app.
+                           The parent application must have already created a QApplication instance.
+    Returns:
+        Optional[MainWindow]: The MainWindow instance if embed_mode is True.
+        int: The application exit code if embed_mode is False and the event loop is run.
+        None: If a critical error occurs (e.g., 'inputs' missing).
+    """
+    if not INPUTS_LIB_AVAILABLE_FOR_MAPPER:
+        app_for_msg = QApplication.instance()
+        temp_app_created = False
+        if not app_for_msg and not embed_mode:
+            app_for_msg = QApplication(sys.argv)
+            temp_app_created = True
+        
+        if app_for_msg and not embed_mode: # Only show message box if running standalone and app exists
+            QMessageBox.critical(None, "Missing Dependency", "The 'inputs' Python library is required for the Controller Mapper.\nPlease install it: pip install inputs")
+        elif embed_mode:
+             logger.error("CONTROLLER_MAPPER_GUI (embed mode): 'inputs' library missing. Cannot initialize.")
+        else: # Standalone, but no app to show message box
+            print("CONTROLLER_MAPPER_GUI: CRITICAL - 'inputs' library not found and no GUI context to show error.")
+
+        if temp_app_created: # If we made a temp app just for the message box
+            # This is tricky, as exec() wasn't called.
+            # For standalone, sys.exit(1) will be called by __main__
+            pass
+        return None 
+
+    logger.info(f"Controller Mapper GUI {'embedding process' if embed_mode else 'application'} starting...")
+
+    app_to_use = QApplication.instance()
+    if not app_to_use:
+        if embed_mode:
+            logger.error("CONTROLLER_MAPPER_GUI (embed_mode): QApplication instance not found. It should be created by the host application.")
+            return None 
+        logger.info("CONTROLLER_MAPPER_GUI (standalone): No QApplication instance found, creating new one.")
+        app_to_use = QApplication(sys.argv)
+    
+    if not app_to_use: 
+        logger.critical("CONTROLLER_MAPPER_GUI: QApplication instance could not be obtained or created.")
+        return None
+
+    # Initialize joystick_handler (it's lightweight)
+    joystick_handler.init_joysticks()
+    
+    window_instance = MainWindow()
+
+    if embed_mode:
+        logger.info("Controller Mapper GUI MainWindow instance created for embedding.")
+        return window_instance # Return the instance to be embedded
+    else:
+        # Standalone mode
+        window_instance.show()
+        exit_code = app_to_use.exec()
+        
+        # joystick_handler.quit_joysticks() # Cleanup handled by MainWindow.closeEvent or here for symmetry
+        # Let's keep it here for explicit standalone cleanup after app loop
+        joystick_handler.quit_joysticks()
+        logger.info(f"Controller Mapper GUI application finished with exit code: {exit_code}.")
+        return exit_code
+
+
 if __name__ == "__main__":
     # This block is for running the controller_mapper_gui.py standalone
-    if not INPUTS_LIB_AVAILABLE_FOR_MAPPER:
-        try:
-            app_standalone = QApplication.instance() or QApplication(sys.argv) # Use existing or create
-            QMessageBox.critical(None, "Missing Dependency", "The 'inputs' Python library is required for the Controller Mapper.\nPlease install it: pip install inputs")
-        except Exception as e: print(f"Could not show critical error dialog for missing 'inputs': {e}")
-        sys.exit(1) # Exit if 'inputs' is not available
-        
-    logger.info("Controller Mapper GUI application starting (standalone)...")
-    app_standalone_main = QApplication.instance() or QApplication(sys.argv)
+    # Ensure a QApplication instance exists for main() in standalone mode
+    app = QApplication.instance()
+    if not app:
+        app = QApplication(sys.argv)
+
+    result = main(embed_mode=False)
     
-    # Initialize joystick_handler (it's lightweight)
-    joystick_handler.init_joysticks() # Important for get_joystick_count and get_joystick_name
-    
-    window_standalone = MainWindow()
-    window_standalone.show()
-    
-    exit_code_standalone = app_standalone_main.exec()
-    
-    # Clean up joystick_handler
-    joystick_handler.quit_joysticks()
-    logger.info(f"Controller Mapper GUI application finished with exit code: {exit_code_standalone}.")
-    sys.exit(exit_code_standalone)
+    if isinstance(result, int): # main() returned an exit code
+        sys.exit(result)
+    elif result is None: # main() indicated a critical failure (e.g., 'inputs' missing)
+        logger.error("Controller Mapper GUI failed to initialize in standalone mode. Exiting.")
+        sys.exit(1)
+    # If result is a MainWindow instance, it means embed_mode was True, which shouldn't happen here.
+    # However, if main() for standalone somehow returned the window, the app loop didn't run in main().
+    # This path should ideally not be hit with the current main() logic for embed_mode=False.
+    else:
+        logger.error(f"Unexpected return from main() in standalone: {type(result)}. Exiting.")
+        sys.exit(1)
