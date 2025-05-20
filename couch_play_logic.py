@@ -8,7 +8,7 @@ UI rendering and input capture are handled by the main Qt application.
 
 import time
 from typing import Dict, List, Any, Optional
-
+from tiles import Platform, Ladder, Lava
 # --- Logger Setup ---
 import logging
 try:
