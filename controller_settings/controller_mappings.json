@@ -2,11 +2,11 @@
     "config_version": "2.3.2",
     "player1_settings": {
         "input_device": "joystick_pygame_0",
-        "keyboard_enabled": false,
+        "keyboard_enabled": true,
         "controller_enabled": true
     },
     "player2_settings": {
-        "input_device": "keyboard_p2",
+        "input_device": "joystick_pygame_1",
         "keyboard_enabled": true,
         "controller_enabled": true
     },
