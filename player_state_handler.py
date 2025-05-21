@@ -36,7 +36,7 @@ try:
     from logger import info, debug, warning, error, critical # Define these for the module
 except ImportError:
     print("CRITICAL PLAYER_STATE_HANDLER: logger.py not found. Falling back to print statements for logging.")
-    def info(msg, *args, **kwargs): print(f"INFO: {msg}", *args)
+    def info(msg, *args, **kwargs): print(f"INFO: {msg}", *args) # Add *args for compatibility
     def debug(msg, *args, **kwargs): print(f"DEBUG: {msg}", *args)
     def warning(msg, *args, **kwargs): print(f"WARNING: {msg}", *args)
     def error(msg, *args, **kwargs): print(f"ERROR: {msg}", *args)
@@ -86,7 +86,7 @@ def set_player_state(player, new_state: str):
 
     # --- Animation Key Validation ---
     animation_key_to_check = new_state
-    if new_state in ['chasing', 'patrolling']: animation_key_to_check = 'run' # These are logical states, map to visual 'run'
+    if new_state in ['chasing', 'patrolling']: animation_key_to_check = 'run'
     elif 'attack' in new_state: animation_key_to_check = new_state
     
     player_animations = getattr(player, 'animations', None)
@@ -120,80 +120,98 @@ def set_player_state(player, new_state: str):
     if not can_change_state_now:
         if current_player_state == new_state and hasattr(player, 'print_limiter') and \
            player.print_limiter.can_print(f"set_state_no_change_{player_id_str}_{new_state}"):
-             debug(f"PlayerStateHandler ({player_id_str}): State change to '{new_state}' not allowed or no actual change needed.")
-        if current_player_state == new_state: update_player_animation(player) # Refresh animation if state is the same
+             debug(f"PlayerStateHandler ({player_id_str}): State change to '{new_state}' not allowed or no actual change needed (current state already '{current_player_state}').")
+        if current_player_state == new_state: update_player_animation(player)
         return
 
     state_is_actually_changing = (current_player_state != new_state)
     if state_is_actually_changing:
         if hasattr(player, 'print_limiter') and player.print_limiter.can_print(f"state_change_{player.player_id}_{current_player_state}_{new_state}"):
              debug(f"PlayerStateHandler ({player_id_str}): State changing from '{current_player_state}' to '{new_state}' (request was '{original_new_state_request}')")
-    setattr(player, '_last_state_for_debug', new_state) # Use setattr for safety
+    setattr(player, '_last_state_for_debug', new_state)
 
-    # --- Clear Conflicting Flags ---
-    # (This logic seems okay, no major changes needed for movement/jump focus)
+    # --- Clear Conflicting Flags (with debugs) ---
     if 'attack' not in new_state and getattr(player, 'is_attacking', False):
         player.is_attacking = False; setattr(player, 'attack_type', 0)
+        debug(f"{player_id_str} StateClear: Cleared is_attacking due to new state '{new_state}'.")
     if new_state != 'hit' and getattr(player, 'is_taking_hit', False):
         if current_ticks_ms - getattr(player, 'hit_timer', 0) >= getattr(player, 'hit_cooldown', C.PLAYER_HIT_COOLDOWN):
             player.is_taking_hit = False
-    if new_state != 'dash': setattr(player, 'is_dashing', False)
-    if new_state != 'roll': setattr(player, 'is_rolling', False)
-    if new_state not in ['slide', 'slide_trans_start', 'slide_trans_end']: setattr(player, 'is_sliding', False)
+            debug(f"{player_id_str} StateClear: Cleared is_taking_hit (cooldown ended) due to new state '{new_state}'.")
+    if new_state != 'dash' and getattr(player, 'is_dashing', False):
+        player.is_dashing = False
+        debug(f"{player_id_str} StateClear: Cleared is_dashing due to new state '{new_state}'.")
+    if new_state != 'roll' and getattr(player, 'is_rolling', False):
+        player.is_rolling = False
+        debug(f"{player_id_str} StateClear: Cleared is_rolling due to new state '{new_state}'.")
+    if new_state not in ['slide', 'slide_trans_start', 'slide_trans_end'] and getattr(player, 'is_sliding', False):
+        player.is_sliding = False
+        debug(f"{player_id_str} StateClear: Cleared is_sliding due to new state '{new_state}'.")
 
-    # --- Handle Status Effects Flags ---
-    # (This logic seems okay, no major changes needed for movement/jump focus)
+    # --- Handle Status Effects Flags (with debugs) ---
     if new_state in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch']:
         if not getattr(player, 'is_aflame', False):
             player.aflame_timer_start = current_ticks_ms
             player.aflame_damage_last_tick = player.aflame_timer_start
+            debug(f"{player_id_str} StatusSet: is_aflame=True, timer_start={player.aflame_timer_start}")
         player.is_aflame = True; player.is_deflaming = False
     elif new_state in ['deflame', 'deflame_crouch']:
-        if not getattr(player, 'is_deflaming', False): player.deflame_timer_start = current_ticks_ms
+        if not getattr(player, 'is_deflaming', False):
+            player.deflame_timer_start = current_ticks_ms
+            debug(f"{player_id_str} StatusSet: is_deflaming=True, timer_start={player.deflame_timer_start}")
         player.is_deflaming = True; player.is_aflame = False
-    else:
-        player.is_aflame = False; player.is_deflaming = False
+    else: # Neither aflame nor deflaming, ensure flags are false
+        if getattr(player, 'is_aflame', False): player.is_aflame = False; debug(f"{player_id_str} StatusClear: is_aflame=False")
+        if getattr(player, 'is_deflaming', False): player.is_deflaming = False; debug(f"{player_id_str} StatusClear: is_deflaming=False")
         
     if new_state == 'frozen':
-        if not getattr(player, 'is_frozen', False): player.frozen_effect_timer = current_ticks_ms
+        if not getattr(player, 'is_frozen', False):
+            player.frozen_effect_timer = current_ticks_ms
+            debug(f"{player_id_str} StatusSet: is_frozen=True, timer_start={player.frozen_effect_timer}")
         player.is_frozen = True; player.is_defrosting = False
     elif new_state == 'defrost':
         player.is_defrosting = True; player.is_frozen = False
+        debug(f"{player_id_str} StatusSet: is_defrosting=True (frozen_timer still {player.frozen_effect_timer})")
     else:
-        player.is_frozen = False; player.is_defrosting = False
+        if getattr(player, 'is_frozen', False): player.is_frozen = False; debug(f"{player_id_str} StatusClear: is_frozen=False")
+        if getattr(player, 'is_defrosting', False): player.is_defrosting = False; debug(f"{player_id_str} StatusClear: is_defrosting=False")
         
     if new_state == 'petrified':
         if not getattr(player, 'is_petrified', False):
             player.facing_at_petrification = getattr(player, 'facing_right', True)
             player.was_crouching_when_petrified = getattr(player, 'is_crouching', False)
+            debug(f"{player_id_str} StatusSet: PETRIFIED. FacingAtPetri={player.facing_at_petrification}, WasCrouching={player.was_crouching_when_petrified}")
         player.is_petrified = True; player.is_stone_smashed = False
-        player.is_dead = True; player.death_animation_finished = True
-        player.is_aflame = False; player.is_deflaming = False; player.is_frozen = False; player.is_defrosting = False
+        player.is_dead = True; player.death_animation_finished = True # Petrified is "visually dead" immediately
+        player.is_aflame = False; player.is_deflaming = False; player.is_frozen = False; player.is_defrosting = False # Clear other major statuses
     elif new_state == 'smashed':
-        if not getattr(player, 'is_stone_smashed', False): player.stone_smashed_timer_start = current_ticks_ms
-        player.is_stone_smashed = True; player.is_petrified = True
-        player.is_dead = True; player.death_animation_finished = False
+        if not getattr(player, 'is_stone_smashed', False):
+            player.stone_smashed_timer_start = current_ticks_ms
+            debug(f"{player_id_str} StatusSet: SMASHED. TimerStart={player.stone_smashed_timer_start}")
+        player.is_stone_smashed = True; player.is_petrified = True # Smashed implies petrified
+        player.is_dead = True; player.death_animation_finished = False # Smashed has its own "death" anim
     elif getattr(player, 'is_petrified', False) and new_state not in ['petrified', 'smashed']:
+        debug(f"{player_id_str} StatusClear: Exiting petrified state due to new state '{new_state}'.")
         player.is_petrified = False; player.is_stone_smashed = False; player.was_crouching_when_petrified = False
-        if getattr(player, 'is_dead', False) and getattr(player, 'current_health', 0) > 0:
+        if getattr(player, 'is_dead', False) and getattr(player, 'current_health', 0) > 0: # If was "dead" due to petrification but has health
             player.is_dead = False; player.death_animation_finished = False
 
     # --- Set the new state and reset animation timers if needed ---
     player.state = new_state
-    if state_is_actually_changing or new_state in ['hit', 'attack', 'attack_nm', 'attack_combo', 'attack_combo_nm', 'crouch_attack', 'aflame', 'aflame_crouch']:
+    if state_is_actually_changing or new_state in ['hit', 'attack', 'attack_nm', 'attack_combo', 'attack_combo_nm', 'crouch_attack', 'aflame', 'aflame_crouch', 'jump']:
         player.current_frame = 0
         player.last_anim_update = current_ticks_ms
-    player.state_timer = current_ticks_ms # Timestamp for when this state began
+        debug(f"{player_id_str} AnimReset: Frame reset for new state '{new_state}' or re-triggerable state.")
+    player.state_timer = current_ticks_ms
 
     # --- State-Specific Initializations (with added debug prints) ---
-    debug_state_init = False # Set to True to see detailed state init logs
-    if debug_state_init: debug(f"{player_id_str} StateInit: Setting up for state '{new_state}'")
+    debug_state_init = True # Enable detailed state init logs for this run
 
     if new_state == 'idle':
-        player.is_crouching = False # Explicitly uncrouch when going to idle
+        player.is_crouching = False
         if debug_state_init: debug(f"{player_id_str} StateInit_idle: is_crouching={player.is_crouching}")
     elif new_state == 'run':
-        player.is_crouching = False # Explicitly uncrouch when running
+        player.is_crouching = False
         if debug_state_init: debug(f"{player_id_str} StateInit_run: is_crouching={player.is_crouching}")
     elif new_state == 'crouch':
         player.is_crouching = True
@@ -202,34 +220,34 @@ def set_player_state(player, new_state: str):
         player.is_crouching = True
         if debug_state_init: debug(f"{player_id_str} StateInit_crouch_walk: is_crouching={player.is_crouching}")
     elif new_state == 'jump':
-        player.is_crouching = False # Cannot be crouching and jumping simultaneously in this state logic
-        # Player's velocity for jump is set by input_handler based on context (ground, ladder, wall)
-        debug(f"{player_id_str} StateInit_jump: Player jumped. Current vel.y={player.vel.y():.2f} (should be PLAYER_JUMP_STRENGTH). OnGround={player.on_ground}")
+        player.is_crouching = False
+        # NOTE: Actual player.vel.setY(C.PLAYER_JUMP_STRENGTH) happens in player_input_handler
+        # when the jump *event* is processed. This set_state just changes to 'jump' state.
+        debug(f"{player_id_str} StateInit_jump: Player entered 'jump' state. current vel.y={player.vel.y():.2f}. OnGround={player.on_ground}")
     elif new_state == 'dash':
         player.is_dashing = True; player.dash_timer = player.state_timer
-        player.is_crouching = False # Cannot dash while crouched with this state
+        player.is_crouching = False
         if hasattr(player, 'vel') and hasattr(player.vel, 'setX') and hasattr(player.vel, 'setY'):
             player.vel.setX(C.PLAYER_DASH_SPEED * (1 if getattr(player, 'facing_right', True) else -1))
-            player.vel.setY(0.0) # Dash is horizontal
-            debug(f"{player_id_str} StateInit_dash: vel.x={player.vel.x():.2f}")
+            player.vel.setY(0.0)
+            if debug_state_init: debug(f"{player_id_str} StateInit_dash: vel.x={player.vel.x():.2f}")
     elif new_state == 'roll':
         player.is_rolling = True; player.roll_timer = player.state_timer
         player.is_crouching = False
         if hasattr(player, 'vel') and hasattr(player.vel, 'x') and hasattr(player.vel, 'setX'):
             current_vel_x = player.vel.x()
             target_roll_vel_x = C.PLAYER_ROLL_SPEED * (1 if getattr(player, 'facing_right', True) else -1)
-            # Blend or set initial roll speed
             if abs(current_vel_x) < C.PLAYER_ROLL_SPEED * 0.7: player.vel.setX(target_roll_vel_x)
-            else: player.vel.setX(current_vel_x * 0.8 + target_roll_vel_x * 0.2) # Blend if already moving fast
-            player.vel.setX(max(-C.PLAYER_ROLL_SPEED, min(C.PLAYER_ROLL_SPEED, player.vel.x()))) # Cap
-            debug(f"{player_id_str} StateInit_roll: vel.x={player.vel.x():.2f}")
+            else: player.vel.setX(current_vel_x * 0.8 + target_roll_vel_x * 0.2)
+            player.vel.setX(max(-C.PLAYER_ROLL_SPEED, min(C.PLAYER_ROLL_SPEED, player.vel.x())))
+            if debug_state_init: debug(f"{player_id_str} StateInit_roll: vel.x={player.vel.x():.2f}")
     elif new_state == 'slide' or new_state == 'slide_trans_start':
         player.is_sliding = True; player.slide_timer = player.state_timer
-        player.is_crouching = True # Sliding implies a crouched-like state
+        player.is_crouching = True
         if hasattr(player, 'vel') and hasattr(player.vel, 'x') and hasattr(player.vel, 'setX'):
-            if abs(player.vel.x()) < C.PLAYER_RUN_SPEED_LIMIT * 0.5: # Give a small initial slide speed if slow
+            if abs(player.vel.x()) < C.PLAYER_RUN_SPEED_LIMIT * 0.5:
                 player.vel.setX(C.PLAYER_RUN_SPEED_LIMIT * 0.6 * (1 if getattr(player, 'facing_right', True) else -1))
-            debug(f"{player_id_str} StateInit_slide/trans_start: vel.x={player.vel.x():.2f}")
+            if debug_state_init: debug(f"{player_id_str} StateInit_slide/trans_start: vel.x={player.vel.x():.2f}")
     elif 'attack' in new_state:
         player.is_attacking = True; player.attack_timer = player.state_timer
         animation_for_this_attack = player_animations.get(new_state, []) if player_animations else []
@@ -239,50 +257,46 @@ def set_player_state(player, new_state: str):
         if getattr(player, 'attack_type', 0) == 2 and hasattr(C, 'PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER'):
             ms_per_frame_for_attack = int(base_ms_per_frame * C.PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER)
         player.attack_duration = num_attack_frames * ms_per_frame_for_attack if num_attack_frames > 0 else getattr(C, 'CHARACTER_ATTACK_STATE_DURATION', 300)
-        
         if new_state.endswith('_nm') or new_state == 'crouch_attack':
              if hasattr(player, 'vel') and hasattr(player.vel, 'setX'): player.vel.setX(0.0)
-        debug(f"{player_id_str} StateInit_attack: type={player.attack_type}, duration={player.attack_duration}ms")
+        if debug_state_init: debug(f"{player_id_str} StateInit_attack: type={player.attack_type}, duration={player.attack_duration}ms")
     elif new_state == 'hit':
         player.is_taking_hit = True; player.hit_timer = player.state_timer 
         if not getattr(player, 'on_ground', False) and hasattr(player, 'vel') and \
            hasattr(player.vel, 'y') and hasattr(player.vel, 'setY') and hasattr(player.vel, 'setX'):
             if player.vel.y() > -abs(C.PLAYER_JUMP_STRENGTH * 0.5):
-                player.vel.setX(player.vel.x() * -0.3) # Slight horizontal knockback
-                player.vel.setY(C.PLAYER_JUMP_STRENGTH * 0.4) # Slight upward knockback
+                player.vel.setX(player.vel.x() * -0.3)
+                player.vel.setY(C.PLAYER_JUMP_STRENGTH * 0.4)
         player.is_attacking = False; setattr(player, 'attack_type', 0)
-        debug(f"{player_id_str} StateInit_hit: vel=({player.vel.x():.1f},{player.vel.y():.1f})")
+        if debug_state_init: debug(f"{player_id_str} StateInit_hit: vel=({player.vel.x():.1f},{player.vel.y():.1f})")
     elif new_state == 'death' or new_state == 'death_nm':
         player.is_dead = True
         if hasattr(player, 'vel') and hasattr(player.vel, 'setX') and hasattr(player.vel, 'setY'):
             player.vel.setX(0.0)
-            if player.vel.y() < -1: player.vel.setY(1.0) # Prevent extreme upward float
+            if player.vel.y() < -1: player.vel.setY(1.0)
         if hasattr(player, 'acc') and hasattr(player.acc, 'setX') and hasattr(player.acc, 'setY'):
             player.acc.setX(0.0)
-            # Gravity should still apply if dying in air
             if not getattr(player, 'on_ground', False): player.acc.setY(float(getattr(C, 'PLAYER_GRAVITY', 0.7)))
             else: player.vel.setY(0.0); player.acc.setY(0.0)
-        player.death_animation_finished = False # Reset this flag for the new death animation
-        debug(f"{player_id_str} StateInit_death: vel.y={player.vel.y():.1f}, acc.y={player.acc.y():.1f}")
+        player.death_animation_finished = False
+        if debug_state_init: debug(f"{player_id_str} StateInit_death: vel.y={player.vel.y():.1f}, acc.y={player.acc.y():.1f}")
     elif new_state == 'wall_climb':
         player.wall_climb_timer = player.state_timer
         if hasattr(player, 'vel') and hasattr(player.vel, 'setY') and hasattr(player.vel, 'setX'):
             player.vel.setY(C.PLAYER_WALL_CLIMB_SPEED); player.vel.setX(0.0)
-        debug(f"{player_id_str} StateInit_wall_climb: vel.y={player.vel.y():.1f}")
+        if debug_state_init: debug(f"{player_id_str} StateInit_wall_climb: vel.y={player.vel.y():.1f}")
     elif new_state == 'wall_slide' or new_state == 'wall_hang':
-        player.wall_climb_timer = 0 # Reset climb timer
-        debug(f"{player_id_str} StateInit_{new_state}")
+        player.wall_climb_timer = 0
+        if debug_state_init: debug(f"{player_id_str} StateInit_{new_state}")
     elif new_state in ['frozen', 'defrost', 'petrified', 'smashed']:
         if hasattr(player, 'vel'): player.vel = QPointF(0,0)
         if hasattr(player, 'acc'): player.acc = QPointF(0,0)
-        if new_state == 'petrified' and not getattr(player, 'on_ground', False): # Petrified objects fall
+        if new_state == 'petrified' and not getattr(player, 'on_ground', False):
             if hasattr(player, 'acc') and hasattr(player.acc, 'setY'):
                  player.acc.setY(float(getattr(C, 'PLAYER_GRAVITY', 0.7)))
-        debug(f"{player_id_str} StateInit_{new_state}: Movement stopped.")
+        if debug_state_init: debug(f"{player_id_str} StateInit_{new_state}: Movement stopped.")
     
-    # Catch-all debug for other states if needed
-    elif debug_state_init:
-        debug(f"{player_id_str} StateInit_{new_state}: No specific init actions taken beyond base state change.")
+    elif debug_state_init and new_state not in ['idle','run','crouch','crouch_walk']: # Log other uncaught states
+        debug(f"{player_id_str} StateInit_{new_state}: No specific init logic beyond base state set.")
 
-
-    update_player_animation(player) # Update animation based on the new state
+    update_player_animation(player)
