@@ -66,9 +66,6 @@ def set_clipboard_text_qt(text: str):
     clipboard = QApplication.clipboard()
     if clipboard: clipboard.setText(text)
 
-# QT_KEY_MAP is no longer needed here if config.py uses Qt.Key enums directly for keyboard mappings
-# and player_input_handler.py compares Qt.Key enums.
-
 class AppStatus:
     def __init__(self): self.app_running = True
     def quit_app(self):
@@ -98,13 +95,13 @@ class NetworkThread(QThread):
 
     def _ui_status_update_callback(self, title: str, message: str, progress: float):
         self.status_update_signal.emit(title, message, progress)
-    
+
     def _get_p1_input_snapshot_main_thread_passthrough(self, player_instance: Any, platforms_list: List[Any]) -> Dict[str, Any]:
         # This callback is for the server_logic thread to get P1's input from the main thread.
         if MainWindow._instance:
             return MainWindow._instance.get_p1_input_snapshot_for_server_thread(player_instance, platforms_list)
         return {}
-        
+
     def _get_p2_input_snapshot_main_thread_passthrough(self, player_instance: Any) -> Dict[str, Any]:
         # This callback is for the client_logic thread to get P2's input from the main thread.
         if MainWindow._instance:
@@ -256,11 +253,11 @@ class MainWindow(QMainWindow):
         self.main_menu_widget = _create_main_menu_widget(self)
         self.map_select_widget = _create_map_select_widget(self)
         self.game_scene_widget = GameSceneWidget(self.game_elements, self.fonts, self) # Pass fonts
-        
+
         self.editor_content_container = QWidget()
         self.editor_content_container.setLayout(QVBoxLayout())
         self.editor_content_container.layout().setContentsMargins(0,0,0,0)
-        
+
         self.controls_content_container = QWidget()
         self.controls_content_container.setLayout(QVBoxLayout())
         self.controls_content_container.layout().setContentsMargins(0,0,0,0)
@@ -273,7 +270,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.game_scene_widget)
         self.stacked_widget.addWidget(self.editor_view_page)
         self.stacked_widget.addWidget(self.settings_view_page)
-        
+
         self.setCentralWidget(self.stacked_widget)
         self.show_view("menu") # Start with the main menu
 
@@ -283,7 +280,7 @@ class MainWindow(QMainWindow):
         self.status_dialog: Optional[QDialog] = None # For status messages (connecting, loading, etc.)
         self.status_label_in_dialog: Optional[QLabel] = None
         self.status_progress_bar_in_dialog: Optional[QProgressBar] = None
-        
+
         # Main game loop timer
         self.game_update_timer = QTimer(self)
         self.game_update_timer.timeout.connect(self.update_game_loop)
@@ -314,7 +311,7 @@ class MainWindow(QMainWindow):
 
     def on_start_join_ip(self):
         app_game_modes.initiate_join_ip_dialog(self)
-        
+
     def _prepare_and_start_game(self, mode: str, map_name: Optional[str] = None, target_ip_port: Optional[str] = None):
         # This is the central function called after mode/map selection
         app_game_modes.prepare_and_start_game_logic(self, mode, map_name, target_ip_port)
@@ -368,12 +365,11 @@ class MainWindow(QMainWindow):
                callable(self.actual_editor_module_instance.save_geometry_and_state):
                 self.actual_editor_module_instance.save_geometry_and_state()
             if should_return and self.actual_editor_module_instance.parent() is not None:
-                # Detach from layout before setting parent to None and potentially deleting
                 self.actual_editor_module_instance.setParent(None)
         elif source_view == "settings" and self.actual_controls_module_instance:
             if should_return and self.actual_controls_module_instance.parent() is not None:
                 self.actual_controls_module_instance.setParent(None)
-        
+
         if should_return:
             self.show_view("menu")
         else:
@@ -382,42 +378,39 @@ class MainWindow(QMainWindow):
     def show_view(self, view_name: str):
         info(f"Switching UI view to: {view_name}")
         if self.current_view_name == "game_scene" and view_name != "game_scene" and self.current_game_mode:
-            # If leaving game scene for any other view, stop the current game mode
-            self.stop_current_game_mode(show_menu=False) # Don't show menu yet, show_view will handle it
+            self.stop_current_game_mode(show_menu=False)
 
         self.current_view_name = view_name
         target_page: Optional[QWidget] = None
         window_title = "Platformer Adventure LAN"
-        self.current_modal_dialog = None # Reset modal dialog tracker
+        self.current_modal_dialog = None
         
         if view_name == "menu":
             target_page = self.main_menu_widget
             window_title += " - Main Menu"
             self._current_active_menu_buttons = self._main_menu_buttons_ref
             self._current_active_menu_selected_idx_ref = "_menu_selected_button_idx"
-            self._menu_selected_button_idx = 0 # Reset selection
+            self._menu_selected_button_idx = 0
         elif view_name == "map_select":
             target_page = self.map_select_widget
-            # Title for map_select is typically set by the calling function (on_start_couch_play, etc.)
-            # It might be good to have a default here if show_view("map_select") is called directly
             if self.map_select_title_label and not self.map_select_title_label.text().startswith("Select Map"):
-                 self.map_select_title_label.setText("Select Map") # Generic default
-            window_title += " - Map Selection" # Generic title
+                 self.map_select_title_label.setText("Select Map")
+            window_title += " - Map Selection"
             self._current_active_menu_buttons = self._map_selection_buttons_ref
             self._current_active_menu_selected_idx_ref = "_map_selection_selected_button_idx"
-            self._map_selection_selected_button_idx = 0 # Reset selection
+            self._map_selection_selected_button_idx = 0
         elif view_name == "game_scene":
             target_page = self.game_scene_widget
             game_mode_display = self.current_game_mode.replace('_',' ').title() if self.current_game_mode else 'Game'
             window_title += f" - {game_mode_display}"
-            self._current_active_menu_buttons = [] # No menu buttons in game scene for joystick nav
+            self._current_active_menu_buttons = []
         elif view_name == "editor":
-            _ensure_editor_instance(self) # Helper from app_ui_creator
+            _ensure_editor_instance(self)
             target_page = self.editor_view_page
             window_title += " - Level Editor"
             self._current_active_menu_buttons = []
         elif view_name == "settings":
-            _ensure_controls_mapper_instance(self) # Helper from app_ui_creator
+            _ensure_controls_mapper_instance(self)
             target_page = self.settings_view_page
             window_title += " - Settings/Controls"
             self._current_active_menu_buttons = []
@@ -428,15 +421,13 @@ class MainWindow(QMainWindow):
             if view_name in ["menu", "map_select"]:
                 _update_current_menu_button_focus(self)
             
-            # Set focus appropriately
-            focus_target = target_page # Default to the page itself
+            focus_target = target_page
             if view_name == "editor" and self.actual_editor_module_instance:
                 focus_target = self.actual_editor_module_instance
             elif view_name == "settings" and self.actual_controls_module_instance:
                 focus_target = self.actual_controls_module_instance
-            elif view_name == "game_scene": # GameSceneWidget itself or its viewport for game input
-                focus_target = self.game_scene_widget 
-            
+            elif view_name == "game_scene":
+                focus_target = self.game_scene_widget
             focus_target.setFocus(Qt.FocusReason.OtherFocusReason)
         else:
             warning(f"show_view: Unknown view '{view_name}'. Defaulting to menu.")
@@ -448,19 +439,17 @@ class MainWindow(QMainWindow):
             _update_current_menu_button_focus(self)
             self.main_menu_widget.setFocus()
         
-        clear_qt_key_events_this_frame() # Clear stale key events from previous view
+        clear_qt_key_events_this_frame()
 
     def keyPressEvent(self, event: QKeyEvent):
         qt_key_enum = Qt.Key(event.key())
-        update_qt_key_press(qt_key_enum, event.isAutoRepeat()) # From app_input_manager
+        update_qt_key_press(qt_key_enum, event.isAutoRepeat())
 
         active_ui_element = self.current_modal_dialog if self.current_modal_dialog else self.current_view_name
 
-        # UI Navigation with Keyboard (Arrows/Enter/Space)
         if active_ui_element in ["menu", "map_select"] and not event.isAutoRepeat():
             if event.key() == Qt.Key.Key_Up: _navigate_current_menu_pygame_joy(self, -1); event.accept(); return
             elif event.key() == Qt.Key.Key_Down: _navigate_current_menu_pygame_joy(self, 1); event.accept(); return
-            # Map selection specific left/right for grid navigation
             elif event.key() == Qt.Key.Key_Left and active_ui_element == "map_select": _navigate_current_menu_pygame_joy(self, -2); event.accept(); return
             elif event.key() == Qt.Key.Key_Right and active_ui_element == "map_select": _navigate_current_menu_pygame_joy(self, 2); event.accept(); return
             elif event.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]: _activate_current_menu_selected_button_pygame_joy(self); event.accept(); return
@@ -469,29 +458,21 @@ class MainWindow(QMainWindow):
             elif event.key() == Qt.Key.Key_Down: self._lan_search_list_selected_idx = min(self.lan_servers_list_widget.count() - 1, self._lan_search_list_selected_idx + 1); _update_lan_search_list_focus(self); event.accept(); return
             elif event.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]: self._join_selected_lan_server_from_dialog(); event.accept(); return
         elif active_ui_element == "ip_input" and self.ip_input_dialog and not event.isAutoRepeat():
-            if event.key() in [Qt.Key.Key_Left, Qt.Key.Key_Right]: # Navigate Ok/Cancel
+            if event.key() in [Qt.Key.Key_Left, Qt.Key.Key_Right]:
                 self._ip_dialog_selected_button_idx = 1 - self._ip_dialog_selected_button_idx; _update_ip_dialog_button_focus(self); event.accept(); return
             elif event.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]: _activate_ip_dialog_button(self); event.accept(); return
         
-        # Escape Key Handling
         if event.key() == Qt.Key.Key_Escape and not event.isAutoRepeat():
             info(f"Escape key pressed. Active UI: '{active_ui_element}', Current View: '{self.current_view_name}', Modal: '{self.current_modal_dialog}'")
-            if active_ui_element == "menu":
-                self.request_close_app()
-            elif active_ui_element == "map_select":
-                self.show_view("menu")
-            elif active_ui_element == "lan_search" and self.lan_search_dialog:
-                self.lan_search_dialog.reject() # This will trigger its rejected signal
-            elif active_ui_element == "ip_input" and self.ip_input_dialog:
-                self.ip_input_dialog.reject() # Triggers rejected signal
+            if active_ui_element == "menu": self.request_close_app()
+            elif active_ui_element == "map_select": self.show_view("menu")
+            elif active_ui_element == "lan_search" and self.lan_search_dialog: self.lan_search_dialog.reject()
+            elif active_ui_element == "ip_input" and self.ip_input_dialog: self.ip_input_dialog.reject()
             elif self.current_view_name == "game_scene" and self.current_game_mode:
                 info(f"Escape in game mode '{self.current_game_mode}'. Stopping game and returning to menu.")
                 self.stop_current_game_mode(show_menu=True)
-            elif self.current_view_name in ["editor", "settings"]:
-                self.on_return_to_menu_from_sub_view()
-            else: # Fallback if a view doesn't explicitly handle Escape
-                info(f"Escape pressed in unhandled view '{self.current_view_name}'. Returning to menu.")
-                self.show_view("menu")
+            elif self.current_view_name in ["editor", "settings"]: self.on_return_to_menu_from_sub_view()
+            else: info(f"Escape pressed in unhandled view '{self.current_view_name}'. Returning to menu."); self.show_view("menu")
             event.accept(); return
 
         if not event.isAccepted():
@@ -499,7 +480,7 @@ class MainWindow(QMainWindow):
 
     def keyReleaseEvent(self, event: QKeyEvent):
         qt_key_enum = Qt.Key(event.key())
-        update_qt_key_release(qt_key_enum, event.isAutoRepeat()) # From app_input_manager
+        update_qt_key_release(qt_key_enum, event.isAutoRepeat())
         if not event.isAccepted():
             super().keyReleaseEvent(event)
 
@@ -510,58 +491,39 @@ class MainWindow(QMainWindow):
         return get_input_snapshot(player_instance, 2, self._pygame_joysticks, self._pygame_joy_button_prev_state, self.game_elements)
 
     def update_game_loop(self):
-        # Poll Pygame joysticks for UI navigation (if any are connected)
-        _poll_pygame_joysticks_for_ui_navigation(self) # Helper from app_ui_creator
+        _poll_pygame_joysticks_for_ui_navigation(self)
 
-        # Pump Pygame events if any joystick is configured for game input
-        # This ensures joystick state (axes, buttons) is up-to-date for get_input_snapshot
         if self.current_game_mode and \
            ( (game_config.CURRENT_P1_INPUT_DEVICE and "joystick_pygame_" in game_config.CURRENT_P1_INPUT_DEVICE) or \
              (game_config.CURRENT_P2_INPUT_DEVICE and "joystick_pygame_" in game_config.CURRENT_P2_INPUT_DEVICE) ):
-            pygame.event.pump() # Get latest Pygame joystick states
+            pygame.event.pump()
 
-        # --- Couch Play Game Loop Logic ---
         if self.current_game_mode == "couch_play" and self.app_status.app_running:
-            dt_sec = 1.0 / C.FPS # Fixed delta time for couch play
-            
-            # The show_status_message_callback lambda is a bit of a hack if it's for general game messages.
-            # GameSceneWidget.update_game_state's download_msg is specific.
-            # If couch_play_logic needs to show "Game Over", it should ideally do so via a more generic
-            # UI update mechanism or a signal that GameSceneWidget can interpret.
-            # For now, it's passed as is.
+            dt_sec = 1.0 / C.FPS
             continue_game = run_couch_play_mode(
                 self.game_elements, self.app_status,
                 self.get_p1_input_snapshot_for_server_thread,
                 self.get_p2_input_snapshot_for_client_thread,
                 lambda: QApplication.processEvents(),
-                lambda: dt_sec, # Pass dt_sec provider
-                lambda msg: self.game_scene_widget.update_game_state(0, download_msg=msg) # Status msg callback
+                lambda: dt_sec,
+                lambda msg: self.game_scene_widget.update_game_state(0, download_msg=msg)
             )
-            if not continue_game: # run_couch_play_mode returned False (e.g., game over, pause)
+            if not continue_game:
                 self.stop_current_game_mode(show_menu=True)
         
-        # --- Host Waiting Game Loop Logic (Simplified local updates for P1 while waiting for client) ---
         elif self.current_game_mode == "host_waiting" and self.app_status.app_running:
             dt_sec = 1.0 / C.FPS
             p1 = self.game_elements.get("player1")
             if p1:
-                # Get P1 input for local simulation (and for when client connects)
                 p1_actions = self.get_p1_input_snapshot_for_server_thread(p1, self.game_elements.get("platforms_list", []))
-                
-                if p1_actions.get("pause"): # Host pauses while waiting
-                    self.stop_current_game_mode(show_menu=True)
-                    return # Exit update_game_loop for this frame
-                if p1_actions.get("reset"): # Host resets local game state
-                    reset_game_state(self.game_elements)
+                if p1_actions.get("pause"): self.stop_current_game_mode(show_menu=True); return
+                if p1_actions.get("reset"): reset_game_state(self.game_elements)
 
-                # Update P1 locally
                 p1.update(dt_sec, self.game_elements.get("platforms_list", []), 
                           self.game_elements.get("ladders_list", []), 
                           self.game_elements.get("hazards_list", []),
-                          [], # No other players locally for collision
-                          self.game_elements.get("enemy_list", []))
+                          [], self.game_elements.get("enemy_list", []))
                 
-                # Update enemies locally (they don't interact with P2 yet)
                 active_players_for_ai = [p1] if p1.alive() else []
                 for enemy in list(self.game_elements.get("enemy_list",[])):
                     enemy.update(dt_sec, active_players_for_ai,
@@ -569,76 +531,55 @@ class MainWindow(QMainWindow):
                                  self.game_elements.get("hazards_list",[]),
                                  self.game_elements.get("enemy_list",[]))
 
-                # Update projectiles locally
                 projectiles_current_list = self.game_elements.get("projectiles_list", [])
                 for proj_obj in list(projectiles_current_list):
                     if hasattr(proj_obj, 'update'):
-                        # Targets for projectiles in host_waiting: only P1 and enemies
                         proj_targets = ([p1] if p1.alive() else []) + [e for e in self.game_elements.get("enemy_list",[]) if e.alive()]
                         proj_obj.update(dt_sec, self.game_elements.get("platforms_list",[]), proj_targets)
                     if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
-                        if proj_obj in projectiles_current_list:
-                            projectiles_current_list.remove(proj_obj)
+                        if proj_obj in projectiles_current_list: projectiles_current_list.remove(proj_obj)
                 
-                # Update camera for P1
                 camera = self.game_elements.get("camera")
-                if camera and p1.alive():
-                    camera.update(p1)
+                if camera and p1.alive(): camera.update(p1)
         
-        # --- Client Active Game Loop Logic (Handled by NetworkThread and GameSceneWidget updates) ---
-        # No direct game logic for "join_active" or "host_active" in this QTimer loop.
-        # Those are driven by network updates received in their respective threads (client_logic, server_logic)
-        # which then update game_elements. GameSceneWidget.update_game_state() handles rendering.
-
-        # Update the game scene widget if it's the current view
         if self.current_view_name == "game_scene":
-            self.game_scene_widget.update_game_state(0) # Pass dummy time, real timing handled by QTimer
+            self.game_scene_widget.update_game_state(0)
 
-        clear_qt_key_events_this_frame() # Clear input manager's frame events
+        clear_qt_key_events_this_frame()
 
     def closeEvent(self, event: QCloseEvent):
         info("MAIN PySide6: Close event received. Initiating shutdown sequence.")
         
-        # Handle Editor unsaved changes and save geometry
         if self.actual_editor_module_instance:
             can_close_editor = True
-            if isinstance(self.actual_editor_module_instance, QMainWindow): # Editor is a QMainWindow
+            if isinstance(self.actual_editor_module_instance, QMainWindow):
                 if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and \
                    callable(self.actual_editor_module_instance.confirm_unsaved_changes):
                     if not self.actual_editor_module_instance.confirm_unsaved_changes("exit the application"):
                         can_close_editor = False
             
             if not can_close_editor:
-                info("Editor prevented application close.")
-                event.ignore()
-                return
+                info("Editor prevented application close."); event.ignore(); return
             else:
                 if hasattr(self.actual_editor_module_instance, 'save_geometry_and_state'):
                     self.actual_editor_module_instance.save_geometry_and_state()
-                # Important: Detach before deleteLater if it's part of a layout
                 if self.actual_editor_module_instance.parent() is not None:
                     self.actual_editor_module_instance.setParent(None)
                 self.actual_editor_module_instance.deleteLater()
-                self.actual_editor_module_instance = None
-                info("Editor instance scheduled for deletion.")
+                self.actual_editor_module_instance = None; info("Editor instance scheduled for deletion.")
 
-        # Handle Controls Mapper save
         if self.actual_controls_module_instance:
              if hasattr(self.actual_controls_module_instance, 'save_mappings'):
                  self.actual_controls_module_instance.save_mappings()
              if self.actual_controls_module_instance.parent() is not None:
                 self.actual_controls_module_instance.setParent(None)
              self.actual_controls_module_instance.deleteLater()
-             self.actual_controls_module_instance = None
-             info("Controls mapper instance scheduled for deletion.")
+             self.actual_controls_module_instance = None; info("Controls mapper instance scheduled for deletion.")
 
-        # Stop any active game mode and network threads
-        self.app_status.quit_app() # Signals threads to stop
-        app_game_modes.stop_current_game_mode_logic(self, show_menu=False) # Call the logic function
+        self.app_status.quit_app()
+        app_game_modes.stop_current_game_mode_logic(self, show_menu=False)
 
-        # Quit Pygame
-        pygame.joystick.quit()
-        pygame.quit()
+        pygame.joystick.quit(); pygame.quit()
         info("MAIN PySide6: Pygame quit.")
         
         info("MAIN PySide6: Application shutdown sequence complete. Accepting close event.")
@@ -647,20 +588,15 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
+    if app is None: app = QApplication(sys.argv)
 
     info("MAIN PySide6: Application starting...")
     main_window = MainWindow()
-    main_window.showMaximized() # Or main_window.show() for default size
+    main_window.showMaximized()
 
     exit_code = app.exec()
     info(f"MAIN PySide6: QApplication event loop finished. Exit code: {exit_code}")
-
-    # Ensure app_running is false if not already (e.g., if loop exited for other reasons)
-    if APP_STATUS.app_running:
-        APP_STATUS.app_running = False
-
+    if APP_STATUS.app_running: APP_STATUS.app_running = False
     info("MAIN PySide6: Application fully terminated.")
     sys.exit(exit_code)
 
@@ -668,39 +604,25 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e_main_outer:
-        # Log critical error if logger is available and project root can be determined
         if 'critical' in globals() and callable(critical) and _project_root:
             critical(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}", exc_info=True)
-        else: # Fallback to print if logger isn't set up or _project_root is missing
-            print(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}")
-            traceback.print_exc()
+        else:
+            print(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}"); traceback.print_exc()
         
-        # Attempt to show a Qt QMessageBox for critical errors
         try:
-            error_app = QApplication.instance() # Check if an app instance exists
-            if error_app is None: # If not, create one to show the dialog
-                error_app = QApplication(sys.argv)
-            
-            msg_box = QMessageBox()
-            msg_box.setIcon(QMessageBox.Icon.Critical)
+            error_app = QApplication.instance();
+            if error_app is None: error_app = QApplication(sys.argv)
+            msg_box = QMessageBox(); msg_box.setIcon(QMessageBox.Icon.Critical)
             msg_box.setWindowTitle("Critical Application Error")
             msg_box.setText("A critical error occurred, and the application must close.")
-            
             log_path_info_str = ""
-            # Check if logging was enabled and LOG_FILE_PATH is defined and exists
             if LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH and os.path.exists(LOG_FILE_PATH):
                 log_path_info_str = f"Please check the log file for details:\n{LOG_FILE_PATH}"
             elif LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH:
-                log_path_info_str = f"Log file configured at: {LOG_FILE_PATH} (may not exist or have details if error was early)."
-            else:
-                log_path_info_str = "Logging to file is disabled or path not set. Check console output."
-
+                log_path_info_str = f"Log file configured at: {LOG_FILE_PATH} (may not exist if error was early)."
+            else: log_path_info_str = "Logging to file is disabled or path not set. Check console output."
             msg_box.setInformativeText(f"Error: {str(e_main_outer)[:1000]}\n\n{log_path_info_str}")
-            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
-            msg_box.exec()
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok); msg_box.exec()
         except Exception as e_msgbox:
-            # If even the Qt message box fails, print to console
-            print(f"FATAL: Could not display Qt error dialog: {e_msgbox}")
-            traceback.print_exc()
-            
-        sys.exit(1) # Exit with error code
+            print(f"FATAL: Could not display Qt error dialog: {e_msgbox}"); traceback.print_exc()
+        sys.exit(1)
