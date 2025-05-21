@@ -1,36 +1,40 @@
-[2025-05-21 18:56:31.635] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-21 18:56:31.635] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
-[2025-05-21 18:56:33.145] DEBUG   logger.py:120 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
-[2025-05-21 18:56:33.216] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
-[2025-05-21 18:56:33.217] INFO    logger.py:120 (_log_wrapper): AppCore Pygame Joystick 0: Xbox 360 Controller (Instance ID: 0)
-[2025-05-21 18:56:33.217] INFO    logger.py:120 (_log_wrapper): AppCore: Pygame detected 1 joysticks.
-[2025-05-21 18:56:33.217] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial window size: 960x600
-[2025-05-21 18:56:33.233] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 18:56:34.824] INFO    logger.py:120 (_log_wrapper): Switching UI view to: settings
-[2025-05-21 18:56:34.873] INFO    logger.py:120 (_log_wrapper): UI_VIEWS: Creating and embedding ControllerSettingsWindow instance.
-[2025-05-21 18:56:34.894] ERROR   logger.py:120 (_log_wrapper): Exception creating ControllerSettingsWindow: 'ControllerSettingsWindow' object has no attribute 'update_status_and_log'
-Traceback (most recent call last):
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\app_ui_creator.py", line 160, in _ensure_controls_settings_instance
-    instance = ControllerSettingsWindow(parent=main_window.settings_content_container) # Pass parent
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\controller_settings\controller_mapper_gui.py", line 308, in __init__
-    self.load_settings_into_ui() # Load all settings when GUI is created
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\controller_settings\controller_mapper_gui.py", line 396, in load_settings_into_ui
-    self.update_status_and_log("Settings loaded into UI.")
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'ControllerSettingsWindow' object has no attribute 'update_status_and_log'
-[2025-05-21 18:56:37.998] INFO    logger.py:120 (_log_wrapper): Escape key pressed. Active UI: 'settings', View: 'settings', Modal: 'None'
-[2025-05-21 18:56:37.998] INFO    logger.py:120 (_log_wrapper): Returning to menu from: settings
-[2025-05-21 18:56:37.998] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 18:56:38.475] INFO    logger.py:120 (_log_wrapper): Escape key pressed. Active UI: 'menu', View: 'menu', Modal: 'None'
-[2025-05-21 18:56:38.475] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Close event received. Initiating shutdown sequence.
-[2025-05-21 18:56:38.475] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
-[2025-05-21 18:56:38.476] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
-[2025-05-21 18:56:38.476] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: None
-[2025-05-21 18:56:38.476] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Clearing all game_elements (show_menu=False).
-[2025-05-21 18:56:38.477] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
-[2025-05-21 18:56:38.754] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame quit.
-[2025-05-21 18:56:38.754] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application shutdown sequence complete. Accepting close event.
-[2025-05-21 18:56:38.831] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
-[2025-05-21 18:56:38.832] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application fully terminated.
+[2025-05-21 19:35:49.911] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-21 19:35:49.911] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-21 19:35:51.589] DEBUG   logger.py:120 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
+[2025-05-21 19:35:51.742] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
+[2025-05-21 19:35:51.754] INFO    logger.py:120 (_log_wrapper): AppCore Pygame Joystick 0 Acquired: Xbox 360 Controller (Instance ID: 0)
+[2025-05-21 19:35:51.754] INFO    logger.py:120 (_log_wrapper): AppCore Pygame Joystick 1 Acquired: Xbox 360 Controller (Instance ID: 1)
+[2025-05-21 19:35:51.754] INFO    logger.py:120 (_log_wrapper): AppCore: Acquired 2 Pygame joysticks.
+[2025-05-21 19:35:51.824] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-21 19:35:51.833] INFO    logger.py:120 (_log_wrapper): MainWindow initialization complete.
+[2025-05-21 19:35:52.573] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 1 in UI 'menu' (Dir: 1)
+[2025-05-21 19:35:54.092] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 2 in UI 'menu' (Dir: 1)
+[2025-05-21 19:35:54.971] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 1 in UI 'menu' (Dir: -1)
+[2025-05-21 19:35:55.165] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 0 in UI 'menu' (Dir: -1)
+[2025-05-21 19:35:55.739] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 1 in UI 'menu' (Dir: 1)
+[2025-05-21 19:35:56.077] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 2 in UI 'menu' (Dir: 1)
+[2025-05-21 19:35:56.283] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 3 in UI 'menu' (Dir: 1)
+[2025-05-21 19:35:56.939] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 2 in UI 'menu' (Dir: -1)
+[2025-05-21 19:36:13.018] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 3 in UI 'menu' (Dir: 1)
+[2025-05-21 19:36:13.419] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 4 in UI 'menu' (Dir: 1)
+[2025-05-21 19:36:13.738] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 3 in UI 'menu' (Dir: -1)
+[2025-05-21 19:36:14.139] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 1 in UI 'menu' (Dir: -2)
+[2025-05-21 19:36:14.349] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 0 in UI 'menu' (Dir: -1)
+[2025-05-21 19:36:14.538] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 6 in UI 'menu' (Dir: -1)
+[2025-05-21 19:36:14.746] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 0 in UI 'menu' (Dir: 1)
+[2025-05-21 19:36:14.953] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 1 in UI 'menu' (Dir: 1)
+[2025-05-21 19:36:15.162] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 2 in UI 'menu' (Dir: 1)
+[2025-05-21 19:36:15.370] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 3 in UI 'menu' (Dir: 1)
+[2025-05-21 19:36:15.578] INFO    logger.py:120 (_log_wrapper): Menu Nav: Index 4 in UI 'menu' (Dir: 1)
+[2025-05-21 19:36:52.190] INFO    logger.py:120 (_log_wrapper): Switching UI view to: settings
+[2025-05-21 19:36:52.285] INFO    logger.py:120 (_log_wrapper): UI_VIEWS: Creating and embedding ControllerSettingsWindow instance.
+[2025-05-21 19:36:52.398] INFO    logger.py:120 (_log_wrapper): UI_VIEWS: ControllerSettingsWindow instance embedded/handled.
+[2025-05-21 19:38:06.961] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Close event. Shutting down.
+[2025-05-21 19:38:06.965] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-21 19:38:06.966] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
+[2025-05-21 19:38:06.966] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: None
+[2025-05-21 19:38:06.967] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Clearing all game_elements (show_menu=False).
+[2025-05-21 19:38:06.967] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
+[2025-05-21 19:38:07.006] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame quit. Shutdown complete.
+[2025-05-21 19:38:07.035] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-21 19:38:07.035] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application fully terminated.
