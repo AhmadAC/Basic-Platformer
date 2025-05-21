@@ -1,322 +1,118 @@
-[2025-05-21 08:33:12.674] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-21 08:33:12.674] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
-[2025-05-21 08:33:14.151] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
-[2025-05-21 08:33:14.152] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame found no joysticks.
-[2025-05-21 08:33:14.152] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial window size: 960x600
-[2025-05-21 08:33:14.156] DEBUG   logger.py:120 (_log_wrapper): GameSceneWidget initialized.
-[2025-05-21 08:33:14.165] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 08:33:16.186] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op.
-[2025-05-21 08:33:16.188] INFO    logger.py:120 (_log_wrapper): Switching UI view to: map_select
-[2025-05-21 08:33:17.128] INFO    logger.py:120 (_log_wrapper): MAIN: Map 'one' selected for Couch Co-op via _on_map_selected.
-[2025-05-21 08:33:17.128] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'one'.
-[2025-05-21 08:33:17.128] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: one, Target: None
-[2025-05-21 08:33:17.153] INFO    logger.py:120 (_log_wrapper): Couch Play: Both players are gone. Game Over.
-[2025-05-21 08:33:18.657] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
-[2025-05-21 08:33:18.658] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:33:18.658] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:33:18.658] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:33:18.659] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:33:18.659] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
+[2025-05-21 08:40:01.807] INFO    logger.py:83 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-21 08:40:01.807] INFO    logger.py:85 (<module>): Console logging initialized. Level: WARNING.
+[2025-05-21 08:40:03.236] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application starting...
+[2025-05-21 08:40:03.237] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame found no joysticks.
+[2025-05-21 08:40:03.237] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Initial window size: 960x600
+[2025-05-21 08:40:03.240] DEBUG   logger.py:120 (_log_wrapper): GameSceneWidget initialized.
+[2025-05-21 08:40:03.249] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-21 08:40:05.363] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op.
+[2025-05-21 08:40:05.365] INFO    logger.py:120 (_log_wrapper): Switching UI view to: map_select
+[2025-05-21 08:40:06.457] INFO    logger.py:120 (_log_wrapper): MAIN: Map 'one' selected for Couch Co-op via _on_map_selected.
+[2025-05-21 08:40:06.457] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'one'.
+[2025-05-21 08:40:06.457] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: one, Target: None
+[2025-05-21 08:40:06.480] INFO    logger.py:120 (_log_wrapper): Couch Play: Both players are gone. Game Over.
+[2025-05-21 08:40:07.985] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-21 08:40:07.985] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 08:40:07.985] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
+[2025-05-21 08:40:07.985] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
+[2025-05-21 08:40:07.985] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
+[2025-05-21 08:40:07.985] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
 
-[2025-05-21 08:33:18.695] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Clearing visual state for new game.
-[2025-05-21 08:33:18.696] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 08:33:18.703] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode stopped and resources cleaned up.
-[2025-05-21 08:33:18.713] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initializing game entities for map 'one' in mode 'couch_play'.
-[2025-05-21 08:33:18.713] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:33:18.713] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:33:18.713] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:33:18.713] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:33:18.714] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
+[2025-05-21 08:40:08.002] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Clearing visual state for new game.
+[2025-05-21 08:40:08.002] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-21 08:40:08.004] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode stopped and resources cleaned up.
+[2025-05-21 08:40:08.006] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initializing game entities for map 'one' in mode 'couch_play'.
+[2025-05-21 08:40:08.006] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 08:40:08.006] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
+[2025-05-21 08:40:08.006] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
+[2025-05-21 08:40:08.006] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
+[2025-05-21 08:40:08.006] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
 
-[2025-05-21 08:33:18.714] INFO    logger.py:120 (_log_wrapper): LevelLoader initialized (for .py map modules).
-[2025-05-21 08:33:18.714] INFO    logger.py:120 (_log_wrapper): Attempting to load map 'one' from directory 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps' (using .py loader)
-[2025-05-21 08:33:18.714] INFO    logger.py:120 (_log_wrapper): Attempting to load map module 'maps.one' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\one.py
-[2025-05-21 08:33:18.714] DEBUG   logger.py:120 (_log_wrapper): Importing new map module: maps.one
-[2025-05-21 08:33:18.725] INFO    logger.py:120 (_log_wrapper): Map data for 'one' loaded successfully via function 'load_map_one'.
-[2025-05-21 08:33:18.901] DEBUG   logger.py:120 (_log_wrapper): Player 1 initialized successfully.
-[2025-05-21 08:33:19.016] DEBUG   logger.py:120 (_log_wrapper): Player 2 initialized successfully.
-[2025-05-21 08:33:19.017] INFO    logger.py:120 (_log_wrapper): Camera initialized: Viewport(100.0x30.0), WorldBounds(X: 0.0 to 1920.0, Y: 0.0 to 600.0)
-[2025-05-21 08:33:19.017] INFO    logger.py:120 (_log_wrapper): Camera Level Dims Set: Width=1920.0, StartX=0.0, TopY=0.0, BottomY=600.0, EffectiveHeight=600.0
-[2025-05-21 08:33:19.017] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Level dimensions set - TotalW:1920.0, MinX:0.0, MinY:0.0, MaxY:600.0
-[2025-05-21 08:33:19.017] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game entities initialized successfully.
-[2025-05-21 08:33:19.021] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
-[2025-05-21 08:33:19.021] INFO    logger.py:120 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
-[2025-05-21 08:33:19.021] DEBUG   logger.py:120 (_log_wrapper): GameSceneWidget: Updating camera screen dimensions to 1280.0x649.0
-[2025-05-21 08:33:19.022] INFO    logger.py:120 (_log_wrapper): Camera Screen Dims Set: 1280.0x649.0
-[2025-05-21 08:33:23.313] INFO    logger.py:120 (_log_wrapper): Escape key pressed. Active UI: 'game_scene', Current View: 'game_scene', Modal: 'None'
-[2025-05-21 08:33:23.313] INFO    logger.py:120 (_log_wrapper): Escape pressed in unhandled view 'game_scene'. Returning to menu.
-[2025-05-21 08:33:23.313] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 08:33:24.649] INFO    logger.py:120 (_log_wrapper): Switching UI view to: editor
-[2025-05-21 08:33:24.649] INFO    logger.py:120 (_log_wrapper): UI_VIEWS: Creating and embedding editor instance.
-[2025-05-21 08:33:24.791] INFO    logger.py:120 (_log_wrapper): UI_VIEWS: Editor instance embedded.
-[2025-05-21 08:33:40.311] INFO    logger.py:120 (_log_wrapper): Returning to menu from: editor
-[2025-05-21 08:33:40.312] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 08:33:43.283] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op.
-[2025-05-21 08:33:43.285] INFO    logger.py:120 (_log_wrapper): Switching UI view to: map_select
-[2025-05-21 08:33:44.007] INFO    logger.py:120 (_log_wrapper): MAIN: Map 'one' selected for Couch Co-op via _on_map_selected.
-[2025-05-21 08:33:44.007] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'one'.
-[2025-05-21 08:33:44.007] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: one, Target: None
-[2025-05-21 08:33:44.019] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initializing game entities for map 'one' in mode 'couch_play'.
-[2025-05-21 08:33:44.019] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:33:44.019] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
-[2025-05-21 08:33:44.019] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(50.000000, 520.000000).
-[2025-05-21 08:33:44.024] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:33:44.025] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
-[2025-05-21 08:33:44.025] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-21 08:33:44.025] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
-[2025-05-21 08:33:44.025] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(100.000000, 520.000000).
-[2025-05-21 08:33:44.029] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:33:44.030] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
-[2025-05-21 08:33:44.030] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-21 08:33:44.030] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:33:44.030] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:33:44.030] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:33:44.030] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
+[2025-05-21 08:40:08.006] INFO    logger.py:120 (_log_wrapper): LevelLoader initialized (for .py map modules).
+[2025-05-21 08:40:08.006] INFO    logger.py:120 (_log_wrapper): Attempting to load map 'one' from directory 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps' (using .py loader)
+[2025-05-21 08:40:08.006] INFO    logger.py:120 (_log_wrapper): Attempting to load map module 'maps.one' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\one.py
+[2025-05-21 08:40:08.007] DEBUG   logger.py:120 (_log_wrapper): Importing new map module: maps.one
+[2025-05-21 08:40:08.011] INFO    logger.py:120 (_log_wrapper): Map data for 'one' loaded successfully via function 'load_map_one'.
+[2025-05-21 08:40:08.150] DEBUG   logger.py:120 (_log_wrapper): Player 1 initialized successfully.
+[2025-05-21 08:40:08.259] DEBUG   logger.py:120 (_log_wrapper): Player 2 initialized successfully.
+[2025-05-21 08:40:08.272] INFO    logger.py:120 (_log_wrapper): Camera initialized: Viewport(100.0x30.0), WorldBounds(X: -120.0 to 1880.0, Y: -80.0 to 1200.0)
+[2025-05-21 08:40:08.272] INFO    logger.py:120 (_log_wrapper): Camera Level Dims Set: Width=2000.0, StartX=-120.0, TopY=-80.0, BottomY=1200.0, EffectiveHeight=1280.0
+[2025-05-21 08:40:08.272] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Level dimensions set - TotalW:2000.0, MinX:-120.0, MinY:-80.0, MaxY:1200.0
+[2025-05-21 08:40:08.272] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game entities initialized successfully.
+[2025-05-21 08:40:08.279] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
+[2025-05-21 08:40:08.280] INFO    logger.py:120 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
+[2025-05-21 08:40:08.280] DEBUG   logger.py:120 (_log_wrapper): GameSceneWidget: Updating camera screen dimensions to 1280.0x649.0
+[2025-05-21 08:40:08.280] INFO    logger.py:120 (_log_wrapper): Camera Screen Dims Set: 1280.0x649.0
+[2025-05-21 08:40:10.980] INFO    logger.py:120 (_log_wrapper): Escape key pressed. Active UI: 'game_scene', Current View: 'game_scene', Modal: 'None'
+[2025-05-21 08:40:10.980] INFO    logger.py:120 (_log_wrapper): Escape pressed in unhandled view 'game_scene'. Returning to menu.
+[2025-05-21 08:40:10.980] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
+[2025-05-21 08:40:12.074] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op.
+[2025-05-21 08:40:12.077] INFO    logger.py:120 (_log_wrapper): Switching UI view to: map_select
+[2025-05-21 08:40:12.786] INFO    logger.py:120 (_log_wrapper): MAIN: Map 'one' selected for Couch Co-op via _on_map_selected.
+[2025-05-21 08:40:12.786] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'one'.
+[2025-05-21 08:40:12.787] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: one, Target: None
+[2025-05-21 08:40:12.800] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initializing game entities for map 'one' in mode 'couch_play'.
+[2025-05-21 08:40:12.800] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 08:40:12.800] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
+[2025-05-21 08:40:12.800] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(610.500000, 838.000000).
+[2025-05-21 08:40:12.804] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-21 08:40:12.804] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
+[2025-05-21 08:40:12.804] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
+[2025-05-21 08:40:12.804] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
+[2025-05-21 08:40:12.804] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(770.500000, 838.000000).
+[2025-05-21 08:40:12.808] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-21 08:40:12.808] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
+[2025-05-21 08:40:12.808] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
+[2025-05-21 08:40:12.808] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
+[2025-05-21 08:40:12.808] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
+[2025-05-21 08:40:12.808] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
+[2025-05-21 08:40:12.808] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
 
-[2025-05-21 08:33:44.030] INFO    logger.py:120 (_log_wrapper): LevelLoader initialized (for .py map modules).
-[2025-05-21 08:33:44.030] INFO    logger.py:120 (_log_wrapper): Attempting to load map 'one' from directory 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps' (using .py loader)
-[2025-05-21 08:33:44.030] INFO    logger.py:120 (_log_wrapper): Attempting to load map module 'maps.one' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\one.py
-[2025-05-21 08:33:44.030] DEBUG   logger.py:120 (_log_wrapper): Reloading existing map module: maps.one
-[2025-05-21 08:33:44.034] INFO    logger.py:120 (_log_wrapper): Map data for 'one' loaded successfully via function 'load_map_one'.
-[2025-05-21 08:33:44.150] DEBUG   logger.py:120 (_log_wrapper): Player 1 initialized successfully.
-[2025-05-21 08:33:44.256] DEBUG   logger.py:120 (_log_wrapper): Player 2 initialized successfully.
-[2025-05-21 08:33:44.271] INFO    logger.py:120 (_log_wrapper): Camera initialized: Viewport(1280.0x649.0), WorldBounds(X: 320.0 to 1040.0, Y: 640.0 to 1000.0)
-[2025-05-21 08:33:44.271] INFO    logger.py:120 (_log_wrapper): Camera Level Dims Set: Width=720.0, StartX=320.0, TopY=640.0, BottomY=1000.0, EffectiveHeight=360.0
-[2025-05-21 08:33:44.271] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Level dimensions set - TotalW:720.0, MinX:320.0, MinY:640.0, MaxY:1000.0
-[2025-05-21 08:33:44.271] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game entities initialized successfully.
-[2025-05-21 08:33:44.282] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
-[2025-05-21 08:33:44.309] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
-[2025-05-21 08:33:44.437] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:33:45.382] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-21 08:33:45.541] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
-[2025-05-21 08:33:45.829] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:33:46.005] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:33:46.022] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
-[2025-05-21 08:33:46.181] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-21 08:33:46.229] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-21 08:33:46.486] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-21 08:33:46.534] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'crouch' (request was 'crouch')
-[2025-05-21 08:33:46.534] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch' to 'idle' (request was 'idle')
-[2025-05-21 08:33:46.955] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-21 08:33:47.173] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-21 08:33:47.509] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-21 08:33:47.701] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-21 08:33:47.925] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'crouch' (request was 'crouch')
-[2025-05-21 08:33:47.926] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch' to 'idle' (request was 'idle')
-[2025-05-21 08:33:54.246] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-21 08:33:54.422] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-21 08:33:54.597] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'crouch' (request was 'crouch')
-[2025-05-21 08:33:54.597] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch' to 'idle' (request was 'idle')
-[2025-05-21 08:33:54.677] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-21 08:33:54.965] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:33:55.157] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:33:55.173] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:33:55.237] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-21 08:33:55.510] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:33:55.701] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:33:55.717] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:33:56.485] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-21 08:33:56.773] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:33:56.965] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:33:56.981] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:34:00.130] INFO    logger.py:120 (_log_wrapper): Escape key pressed. Active UI: 'game_scene', Current View: 'game_scene', Modal: 'None'
-[2025-05-21 08:34:00.130] INFO    logger.py:120 (_log_wrapper): Escape in game mode 'couch_play'. Stopping game and returning to menu.
-[2025-05-21 08:34:00.130] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
-[2025-05-21 08:34:00.130] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:34:00.130] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
-[2025-05-21 08:34:00.130] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(610.500000, 838.000000).
-[2025-05-21 08:34:00.138] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:34:00.138] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
-[2025-05-21 08:34:00.138] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-21 08:34:00.138] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
-[2025-05-21 08:34:00.138] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(770.500000, 838.000000).
-[2025-05-21 08:34:00.144] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:34:00.145] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
-[2025-05-21 08:34:00.145] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-21 08:34:00.145] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:34:00.145] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:34:00.145] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:34:00.145] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
+[2025-05-21 08:40:12.808] INFO    logger.py:120 (_log_wrapper): LevelLoader initialized (for .py map modules).
+[2025-05-21 08:40:12.809] INFO    logger.py:120 (_log_wrapper): Attempting to load map 'one' from directory 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps' (using .py loader)
+[2025-05-21 08:40:12.809] INFO    logger.py:120 (_log_wrapper): Attempting to load map module 'maps.one' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\one.py
+[2025-05-21 08:40:12.809] DEBUG   logger.py:120 (_log_wrapper): Reloading existing map module: maps.one
+[2025-05-21 08:40:12.810] INFO    logger.py:120 (_log_wrapper): Map data for 'one' loaded successfully via function 'load_map_one'.
+[2025-05-21 08:40:12.930] DEBUG   logger.py:120 (_log_wrapper): Player 1 initialized successfully.
+[2025-05-21 08:40:13.035] DEBUG   logger.py:120 (_log_wrapper): Player 2 initialized successfully.
+[2025-05-21 08:40:13.049] INFO    logger.py:120 (_log_wrapper): Camera initialized: Viewport(1280.0x649.0), WorldBounds(X: -120.0 to 1880.0, Y: -80.0 to 1200.0)
+[2025-05-21 08:40:13.049] INFO    logger.py:120 (_log_wrapper): Camera Level Dims Set: Width=2000.0, StartX=-120.0, TopY=-80.0, BottomY=1200.0, EffectiveHeight=1280.0
+[2025-05-21 08:40:13.049] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Level dimensions set - TotalW:2000.0, MinX:-120.0, MinY:-80.0, MaxY:1200.0
+[2025-05-21 08:40:13.049] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game entities initialized successfully.
+[2025-05-21 08:40:13.061] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
+[2025-05-21 08:40:13.091] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
+[2025-05-21 08:40:13.219] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
+[2025-05-21 08:40:14.163] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-21 08:40:14.435] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-21 08:40:17.091] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
+[2025-05-21 08:40:17.379] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
+[2025-05-21 08:40:17.556] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
+[2025-05-21 08:40:17.572] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
+[2025-05-21 08:40:20.964] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
+[2025-05-21 08:40:21.685] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
+[2025-05-21 08:41:53.671] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Close event received. Initiating shutdown sequence.
+[2025-05-21 08:41:53.671] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-21 08:41:53.671] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
+[2025-05-21 08:41:53.671] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-21 08:41:53.671] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
+[2025-05-21 08:41:53.671] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
+[2025-05-21 08:41:53.671] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(610.500000, 838.000000).
+[2025-05-21 08:41:53.677] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
+[2025-05-21 08:41:53.677] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
+[2025-05-21 08:41:53.677] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
+[2025-05-21 08:41:53.678] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
+[2025-05-21 08:41:53.678] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(770.500000, 838.000000).
+[2025-05-21 08:41:53.685] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
+[2025-05-21 08:41:53.685] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
+[2025-05-21 08:41:53.685] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
+[2025-05-21 08:41:53.685] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
+[2025-05-21 08:41:53.685] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
+[2025-05-21 08:41:53.685] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
+[2025-05-21 08:41:53.686] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
 
-[2025-05-21 08:34:00.145] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Clearing visual state for new game.
-[2025-05-21 08:34:00.145] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 08:34:00.146] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode stopped and resources cleaned up.
-[2025-05-21 08:34:04.612] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op.
-[2025-05-21 08:34:04.615] INFO    logger.py:120 (_log_wrapper): Switching UI view to: map_select
-[2025-05-21 08:34:05.294] INFO    logger.py:120 (_log_wrapper): MAIN: Map 'one' selected for Couch Co-op via _on_map_selected.
-[2025-05-21 08:34:05.294] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'one'.
-[2025-05-21 08:34:05.294] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: one, Target: None
-[2025-05-21 08:34:05.308] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initializing game entities for map 'one' in mode 'couch_play'.
-[2025-05-21 08:34:05.309] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:34:05.309] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
-[2025-05-21 08:34:05.309] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(610.500000, 838.000000).
-[2025-05-21 08:34:05.313] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:34:05.313] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
-[2025-05-21 08:34:05.313] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-21 08:34:05.313] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
-[2025-05-21 08:34:05.313] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(770.500000, 838.000000).
-[2025-05-21 08:34:05.320] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:34:05.320] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
-[2025-05-21 08:34:05.320] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-21 08:34:05.320] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:34:05.320] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:34:05.320] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:34:05.320] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
-
-[2025-05-21 08:34:05.320] INFO    logger.py:120 (_log_wrapper): LevelLoader initialized (for .py map modules).
-[2025-05-21 08:34:05.320] INFO    logger.py:120 (_log_wrapper): Attempting to load map 'one' from directory 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps' (using .py loader)
-[2025-05-21 08:34:05.320] INFO    logger.py:120 (_log_wrapper): Attempting to load map module 'maps.one' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\one.py
-[2025-05-21 08:34:05.320] DEBUG   logger.py:120 (_log_wrapper): Reloading existing map module: maps.one
-[2025-05-21 08:34:05.321] INFO    logger.py:120 (_log_wrapper): Map data for 'one' loaded successfully via function 'load_map_one'.
-[2025-05-21 08:34:05.441] DEBUG   logger.py:120 (_log_wrapper): Player 1 initialized successfully.
-[2025-05-21 08:34:05.543] DEBUG   logger.py:120 (_log_wrapper): Player 2 initialized successfully.
-[2025-05-21 08:34:05.557] INFO    logger.py:120 (_log_wrapper): Camera initialized: Viewport(1280.0x649.0), WorldBounds(X: 320.0 to 1040.0, Y: 640.0 to 1000.0)
-[2025-05-21 08:34:05.557] INFO    logger.py:120 (_log_wrapper): Camera Level Dims Set: Width=720.0, StartX=320.0, TopY=640.0, BottomY=1000.0, EffectiveHeight=360.0
-[2025-05-21 08:34:05.557] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Level dimensions set - TotalW:720.0, MinX:320.0, MinY:640.0, MaxY:1000.0
-[2025-05-21 08:34:05.557] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game entities initialized successfully.
-[2025-05-21 08:34:05.567] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
-[2025-05-21 08:34:05.605] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
-[2025-05-21 08:34:05.733] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:34:06.355] INFO    logger.py:120 (_log_wrapper): Escape key pressed. Active UI: 'game_scene', Current View: 'game_scene', Modal: 'None'
-[2025-05-21 08:34:06.355] INFO    logger.py:120 (_log_wrapper): Escape in game mode 'couch_play'. Stopping game and returning to menu.
-[2025-05-21 08:34:06.355] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
-[2025-05-21 08:34:06.355] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:34:06.355] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
-[2025-05-21 08:34:06.355] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(610.500000, 838.000000).
-[2025-05-21 08:34:06.360] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:34:06.360] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
-[2025-05-21 08:34:06.360] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-21 08:34:06.360] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
-[2025-05-21 08:34:06.360] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(770.500000, 838.000000).
-[2025-05-21 08:34:06.365] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:34:06.365] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
-[2025-05-21 08:34:06.365] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-21 08:34:06.366] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:34:06.366] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:34:06.366] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:34:06.366] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
-
-[2025-05-21 08:34:06.366] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Clearing visual state for new game.
-[2025-05-21 08:34:06.367] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 08:34:06.368] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode stopped and resources cleaned up.
-[2025-05-21 08:34:07.855] INFO    logger.py:120 (_log_wrapper): Switching UI view to: editor
-[2025-05-21 08:34:07.855] INFO    logger.py:120 (_log_wrapper): UI_VIEWS: Editor instance embedded.
-[2025-05-21 08:35:07.612] INFO    logger.py:120 (_log_wrapper): Returning to menu from: editor
-[2025-05-21 08:35:07.613] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 08:35:08.731] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op.
-[2025-05-21 08:35:08.734] INFO    logger.py:120 (_log_wrapper): Switching UI view to: map_select
-[2025-05-21 08:35:09.782] INFO    logger.py:120 (_log_wrapper): MAIN: Map 'one' selected for Couch Co-op via _on_map_selected.
-[2025-05-21 08:35:09.783] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'one'.
-[2025-05-21 08:35:09.783] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: one, Target: None
-[2025-05-21 08:35:09.798] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Initializing game entities for map 'one' in mode 'couch_play'.
-[2025-05-21 08:35:09.798] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:35:09.798] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
-[2025-05-21 08:35:09.798] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(610.500000, 838.000000).
-[2025-05-21 08:35:09.804] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:35:09.804] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
-[2025-05-21 08:35:09.804] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-21 08:35:09.804] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
-[2025-05-21 08:35:09.804] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(770.500000, 838.000000).
-[2025-05-21 08:35:09.810] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:35:09.810] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
-[2025-05-21 08:35:09.810] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-21 08:35:09.810] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:35:09.810] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:35:09.810] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:35:09.810] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
-
-[2025-05-21 08:35:09.811] INFO    logger.py:120 (_log_wrapper): LevelLoader initialized (for .py map modules).
-[2025-05-21 08:35:09.811] INFO    logger.py:120 (_log_wrapper): Attempting to load map 'one' from directory 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps' (using .py loader)
-[2025-05-21 08:35:09.811] INFO    logger.py:120 (_log_wrapper): Attempting to load map module 'maps.one' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\one.py
-[2025-05-21 08:35:09.811] DEBUG   logger.py:120 (_log_wrapper): Reloading existing map module: maps.one
-[2025-05-21 08:35:09.816] INFO    logger.py:120 (_log_wrapper): Map data for 'one' loaded successfully via function 'load_map_one'.
-[2025-05-21 08:35:09.938] DEBUG   logger.py:120 (_log_wrapper): Player 1 initialized successfully.
-[2025-05-21 08:35:10.043] DEBUG   logger.py:120 (_log_wrapper): Player 2 initialized successfully.
-[2025-05-21 08:35:10.058] INFO    logger.py:120 (_log_wrapper): Camera initialized: Viewport(1280.0x649.0), WorldBounds(X: -120.0 to 1880.0, Y: -80.0 to 1200.0)
-[2025-05-21 08:35:10.058] INFO    logger.py:120 (_log_wrapper): Camera Level Dims Set: Width=2000.0, StartX=-120.0, TopY=-80.0, BottomY=1200.0, EffectiveHeight=1280.0
-[2025-05-21 08:35:10.058] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Level dimensions set - TotalW:2000.0, MinX:-120.0, MinY:-80.0, MaxY:1200.0
-[2025-05-21 08:35:10.058] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game entities initialized successfully.
-[2025-05-21 08:35:10.070] INFO    logger.py:120 (_log_wrapper): Switching UI view to: game_scene
-[2025-05-21 08:35:10.101] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'fall' (request was 'fall')
-[2025-05-21 08:35:10.229] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:35:10.949] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'run' (request was 'run')
-[2025-05-21 08:35:11.109] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'jump' (request was 'jump')
-[2025-05-21 08:35:11.381] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:35:11.557] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'jump' (request was 'jump')
-[2025-05-21 08:35:11.845] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:35:12.022] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:35:12.037] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'run' (request was 'run')
-[2025-05-21 08:35:12.214] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'crouch' (request was 'crouch')
-[2025-05-21 08:35:12.214] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch' to 'run' (request was 'run')
-[2025-05-21 08:35:12.277] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'run' to 'idle' (request was 'idle')
-[2025-05-21 08:35:12.789] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'crouch' (request was 'crouch')
-[2025-05-21 08:35:12.789] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch' to 'idle' (request was 'idle')
-[2025-05-21 08:35:13.237] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-21 08:35:13.511] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:35:13.702] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:35:13.717] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:35:13.781] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'crouch' (request was 'crouch')
-[2025-05-21 08:35:13.781] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'crouch' to 'idle' (request was 'idle')
-[2025-05-21 08:35:15.381] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-21 08:35:15.669] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:35:15.861] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:35:15.879] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:35:16.374] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-21 08:35:16.661] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:35:16.853] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:35:16.870] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:35:17.765] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'jump' (request was 'jump')
-[2025-05-21 08:35:18.037] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump' to 'jump_fall_trans' (request was 'jump_fall_trans')
-[2025-05-21 08:35:18.229] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (request was 'fall')
-[2025-05-21 08:35:18.245] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State changing from 'fall' to 'idle' (request was 'idle')
-[2025-05-21 08:35:29.565] INFO    logger.py:120 (_log_wrapper): Escape key pressed. Active UI: 'game_scene', Current View: 'game_scene', Modal: 'None'
-[2025-05-21 08:35:29.565] INFO    logger.py:120 (_log_wrapper): Escape in game mode 'couch_play'. Stopping game and returning to menu.
-[2025-05-21 08:35:29.565] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
-[2025-05-21 08:35:29.565] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:35:29.566] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
-[2025-05-21 08:35:29.566] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(610.500000, 838.000000).
-[2025-05-21 08:35:29.570] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:35:29.570] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
-[2025-05-21 08:35:29.570] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-21 08:35:29.570] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
-[2025-05-21 08:35:29.570] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(770.500000, 838.000000).
-[2025-05-21 08:35:29.575] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:35:29.575] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
-[2025-05-21 08:35:29.575] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-21 08:35:29.575] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:35:29.575] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:35:29.575] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:35:29.575] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
-
-[2025-05-21 08:35:29.575] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Clearing visual state for new game.
-[2025-05-21 08:35:29.576] INFO    logger.py:120 (_log_wrapper): Switching UI view to: menu
-[2025-05-21 08:35:29.578] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode stopped and resources cleaned up.
-[2025-05-21 08:35:30.337] INFO    logger.py:120 (_log_wrapper): Escape key pressed. Active UI: 'menu', Current View: 'menu', Modal: 'None'
-[2025-05-21 08:35:30.337] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Quit action triggered from UI (request_close_app called).
-[2025-05-21 08:35:30.338] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Close event received. Initiating shutdown sequence.
-[2025-05-21 08:35:30.338] INFO    logger.py:120 (_log_wrapper): Editor instance scheduled for deletion.
-[2025-05-21 08:35:30.338] INFO    logger.py:120 (_log_wrapper): APP_STATUS: quit_app() called.
-[2025-05-21 08:35:30.338] DEBUG   logger.py:120 (_log_wrapper): APP_STATUS: Requesting QApplication.quit().
-[2025-05-21 08:35:30.338] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Stopping current game mode: None
-[2025-05-21 08:35:30.338] INFO    logger.py:120 (_log_wrapper): GSM: --- Resetting Game State (PySide6) ---
-[2025-05-21 08:35:30.338] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P1 at initial spawn
-[2025-05-21 08:35:30.338] WARNING logger.py:120 (_log_wrapper): Player 1: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(610.500000, 838.000000).
-[2025-05-21 08:35:30.343] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P1): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:35:30.343] INFO    logger.py:120 (_log_wrapper): Player 1 reset_state complete. State: idle
-[2025-05-21 08:35:30.343] DEBUG   logger.py:120 (_log_wrapper): GSM: P1 Reset complete.
-[2025-05-21 08:35:30.343] DEBUG   logger.py:120 (_log_wrapper): GSM: Resetting P2 at initial spawn
-[2025-05-21 08:35:30.343] WARNING logger.py:120 (_log_wrapper): Player 2: reset_state called with invalid spawn_position_tuple 'None'. Using initial_spawn_pos PySide6.QtCore.QPointF(770.500000, 838.000000).
-[2025-05-21 08:35:30.348] DEBUG   logger.py:120 (_log_wrapper): PlayerStateHandler (P2): State change to 'idle' not allowed or no actual change needed.
-[2025-05-21 08:35:30.348] INFO    logger.py:120 (_log_wrapper): Player 2 reset_state complete. State: idle
-[2025-05-21 08:35:30.349] DEBUG   logger.py:120 (_log_wrapper): GSM: P2 Reset complete.
-[2025-05-21 08:35:30.349] DEBUG   logger.py:120 (_log_wrapper): GSM: Statues processed for reset. New count: 0.
-[2025-05-21 08:35:30.349] DEBUG   logger.py:120 (_log_wrapper): GSM: Projectiles list cleared.
-[2025-05-21 08:35:30.349] DEBUG   logger.py:120 (_log_wrapper): GSM: Camera position reset/re-evaluated.
-[2025-05-21 08:35:30.349] INFO    logger.py:120 (_log_wrapper): GSM: --- Game State Reset Finished (PySide6) ---
-
-[2025-05-21 08:35:30.349] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Clearing visual state for new game.
-[2025-05-21 08:35:30.349] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode stopped and resources cleaned up.
-[2025-05-21 08:35:30.597] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame quit.
-[2025-05-21 08:35:30.597] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application shutdown sequence complete. Accepting close event.
-[2025-05-21 08:35:30.648] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
-[2025-05-21 08:35:30.648] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application fully terminated.
+[2025-05-21 08:41:53.686] INFO    logger.py:120 (_log_wrapper): GameSceneWidget: Clearing visual state for new game.
+[2025-05-21 08:41:53.686] INFO    logger.py:120 (_log_wrapper): GAME_MODES: Game mode stopped and resources cleaned up.
+[2025-05-21 08:41:53.936] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Pygame quit.
+[2025-05-21 08:41:53.936] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application shutdown sequence complete. Accepting close event.
+[2025-05-21 08:41:53.960] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
+[2025-05-21 08:41:53.960] INFO    logger.py:120 (_log_wrapper): MAIN PySide6: Application fully terminated.
