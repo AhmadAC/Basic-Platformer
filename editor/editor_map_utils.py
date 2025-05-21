@@ -3,78 +3,54 @@
 """
 Utility functions for map operations in the Level Editor (PySide6 version).
 Handles saving/loading editor JSON and exporting game-compatible Python data scripts.
-VERSION 2.2.6 (Refined conditional imports for standalone execution)
+VERSION 2.2.7 (Removed automatic boundary platform generation)
 """
 import sys
 import os
 import json
 import traceback
-import re # For fixing map files
+import re 
 from typing import Optional, Dict, List, Tuple, Any
 import logging
 
 # Conditional imports based on how the script is run
 if __name__ == "__main__" or not __package__:
-    # Script is run directly or `python -m editor.editor_map_utils` was not used
-    # We need to adjust sys.path to find sibling modules in 'editor' and project root 'constants'
     current_script_dir_for_main = os.path.dirname(os.path.abspath(__file__))
     project_root_for_main = os.path.dirname(current_script_dir_for_main)
     
     if project_root_for_main not in sys.path:
         sys.path.insert(0, project_root_for_main)
-    if current_script_dir_for_main not in sys.path and current_script_dir_for_main != project_root_for_main : # if editor is a subdir
-        sys.path.insert(0, current_script_dir_for_main) # for editor_config etc. if needed by batch fix
 
-    # Now attempt to import, these might still fail if structure is very different
-    # but this gives a better chance for standalone utility execution.
     try:
-        if not __package__ : # if run as script, relative imports won't work.
+        if not __package__ : 
             import editor_config as ED_CONFIG
-            from editor_state import EditorState # Not used by batch fix but part of original structure
-            import editor_history # Not used by batch fix
-        else: # if run as part of a package (e.g. python -m editor.editor_map_utils)
+            from editor_state import EditorState 
+            import editor_history 
+        else: 
             from . import editor_config as ED_CONFIG
             from .editor_state import EditorState
             from . import editor_history
+        import constants as C
     except ImportError as e:
         print(f"WARNING (editor_map_utils standalone/module context): Could not perform some relative imports: {e}")
-        # Minimal fallback for ED_CONFIG attributes needed by batch fix or export if called standalone
         class ED_CONFIG_FALLBACK:
-            GAME_LEVEL_FILE_EXTENSION = ".py"
-            LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
-            BASE_GRID_SIZE = 40 # Example
-            DEFAULT_MAP_WIDTH_TILES = 30
-            DEFAULT_MAP_HEIGHT_TILES = 20
-            DEFAULT_BACKGROUND_COLOR_TUPLE = (173,216,230)
-            MAPS_DIRECTORY="maps"
-        ED_CONFIG = ED_CONFIG_FALLBACK() # type: ignore
-        # Define dummy EditorState and editor_history if they are truly needed by functions
-        # called from __main__, but batch_fix should be self-contained or take simple args.
+            GAME_LEVEL_FILE_EXTENSION = ".py"; LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
+            BASE_GRID_SIZE = 40; DEFAULT_MAP_WIDTH_TILES = 30; DEFAULT_MAP_HEIGHT_TILES = 20
+            DEFAULT_BACKGROUND_COLOR_TUPLE = (173,216,230); MAPS_DIRECTORY="maps"
+        ED_CONFIG = ED_CONFIG_FALLBACK() 
         class EditorState: pass
         class editor_history:
             @staticmethod
             def get_map_snapshot(state): return {}
-
-
-    try:
-        import constants as C
-    except ImportError as e_proj_imp:
-        print(f"EDITOR_MAP_UTILS CRITICAL Error importing project constants: {e_proj_imp}")
         class FallbackConstants:
             TILE_SIZE = 40; GRAY = (128,128,128); DARK_GREEN=(0,100,0); ORANGE_RED=(255,69,0)
             DARK_GRAY=(50,50,50); LIGHT_BLUE=(173,216,230); MAGENTA=(255,0,255)
-            EDITOR_SCREEN_INITIAL_WIDTH=1000
-            MAPS_DIR = "maps"
-            LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
-            GAME_LEVEL_FILE_EXTENSION = ".py"
+            EDITOR_SCREEN_INITIAL_WIDTH=1000; MAPS_DIR = "maps"
+            LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"; GAME_LEVEL_FILE_EXTENSION = ".py"
         C = FallbackConstants()
-        if not hasattr(ED_CONFIG, 'LEVEL_EDITOR_SAVE_FORMAT_EXTENSION'):
-            ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = C.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION # type: ignore
-        if not hasattr(ED_CONFIG, 'GAME_LEVEL_FILE_EXTENSION'):
-            ED_CONFIG.GAME_LEVEL_FILE_EXTENSION = C.GAME_LEVEL_FILE_EXTENSION # type: ignore
-
+        if not hasattr(ED_CONFIG, 'LEVEL_EDITOR_SAVE_FORMAT_EXTENSION'): ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = C.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION # type: ignore
+        if not hasattr(ED_CONFIG, 'GAME_LEVEL_FILE_EXTENSION'): ED_CONFIG.GAME_LEVEL_FILE_EXTENSION = C.GAME_LEVEL_FILE_EXTENSION # type: ignore
 else:
-    # Script is imported as part of a package (normal execution path)
     from . import editor_config as ED_CONFIG
     from .editor_state import EditorState
     from . import editor_history
@@ -82,12 +58,12 @@ else:
 
 
 logger = logging.getLogger(__name__)
-if not logger.hasHandlers(): # Ensure logger has a handler if not configured by parent
+if not logger.hasHandlers(): 
     _handler = logging.StreamHandler(sys.stdout)
     _formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     _handler.setFormatter(_formatter)
     logger.addHandler(_handler)
-    logger.setLevel(logging.INFO) # Default to INFO for this utility script if run alone
+    logger.setLevel(logging.INFO) 
     logger.propagate = False
 
 
@@ -143,9 +119,8 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     
     maps_abs_dir = getattr(C, "MAPS_DIR", ED_CONFIG.MAPS_DIRECTORY)
     if not os.path.isabs(maps_abs_dir):
-        # Corrected assumption: __file__ in editor_map_utils.py is inside 'editor' directory
-        current_dir = os.path.dirname(os.path.abspath(__file__)) # .../project_root/editor
-        project_root = os.path.dirname(current_dir)              # .../project_root
+        current_dir = os.path.dirname(os.path.abspath(__file__)) 
+        project_root = os.path.dirname(current_dir)              
         maps_abs_dir = os.path.join(project_root, maps_abs_dir)
         logger.debug(f"Derived absolute maps directory: {maps_abs_dir}")
 
@@ -236,7 +211,6 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
 
 
 def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_category_name: str) -> List[Dict[str, Any]]:
-    # ... (Implementation remains the same, no changes needed for this part based on the error) ...
     if not objects_raw:
         logger.debug(f"No raw objects provided for merging (category: {object_category_name}).")
         return []
@@ -388,8 +362,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                 obj_w, obj_h = float(w_param), float(h_param)
                 default_color_from_asset_tuple = c_param
         elif asset_entry.get("original_size_pixels"):
-             orig_w_tuple, orig_h_tuple = asset_entry["original_size_pixels"]
-             obj_w, obj_h = float(orig_w_tuple), float(orig_h_tuple)
+             orig_w_tuple_val, orig_h_tuple_val = asset_entry["original_size_pixels"] # Ensure these are unpacked
+             obj_w, obj_h = float(orig_w_tuple_val), float(orig_h_tuple_val)
         
         final_color_for_export = tuple(override_color_tuple) if isinstance(override_color_tuple, list) else \
                                  (override_color_tuple if isinstance(override_color_tuple, tuple) else default_color_from_asset_tuple)
@@ -413,9 +387,16 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                                      'color': final_color_for_export, 'type': 'ladder', 
                                      'properties': obj_props})
         elif is_hazard_type:
+            # --- MODIFICATION FOR LAVA COLOR ---
+            if "lava" in game_id.lower(): # Specifically for lava
+                hazard_color_to_export = getattr(C, 'ORANGE_RED', (255, 69, 0)) # Force game constant color
+            else: # For other hazards, use editor color
+                hazard_color_to_export = final_color_for_export
             hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 
-                                     'color': final_color_for_export, 'type': game_id, 
+                                     'color': hazard_color_to_export, 
+                                     'type': game_id, 
                                      'properties': obj_props})
+            # --- END MODIFICATION ---
         elif is_background_tile_type:
             bg_tile_game_type = game_id
             bg_tile_image_path = asset_entry.get("source_file")
@@ -460,57 +441,48 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             )
         )
 
+    # --- Determine map boundaries for camera clamping, based on placed content ---
     if not all_placed_objects_rect_data_for_bounds:
-        map_min_x_content = 0.0; map_max_x_content = float(editor_state.map_width_tiles * ts)
-        map_min_y_content = 0.0; map_max_y_content = float(editor_state.map_height_tiles * ts)
+        # If map is empty, use editor canvas size as fallback boundaries
+        level_min_x_abs_for_camera = 0.0
+        level_max_x_abs_for_camera = float(editor_state.map_width_tiles * ts)
+        level_min_y_abs_for_camera = 0.0
+        level_max_y_abs_for_camera = float(editor_state.map_height_tiles * ts)
         logger.warning("Exporting an empty map. Using editor canvas dimensions for boundaries.")
     else:
         map_min_x_content = min(r['x'] for r in all_placed_objects_rect_data_for_bounds)
         map_max_x_content = max(r['x'] + r['width'] for r in all_placed_objects_rect_data_for_bounds)
         map_min_y_content = min(r['y'] for r in all_placed_objects_rect_data_for_bounds)
         map_max_y_content = max(r['y'] + r['height'] for r in all_placed_objects_rect_data_for_bounds)
-    
-    _boundary_thickness_val = float(getattr(C, 'TILE_SIZE', 40))
-    visual_padding_around_content = float(C.TILE_SIZE) * 1.0 
-
-    level_min_x_abs_for_camera = map_min_x_content - visual_padding_around_content - _boundary_thickness_val
-    level_max_x_abs_for_camera = map_max_x_content + visual_padding_around_content + _boundary_thickness_val
-    level_min_y_abs_for_camera = map_min_y_content - visual_padding_around_content - _boundary_thickness_val
-    level_max_y_abs_for_camera = map_max_y_content + visual_padding_around_content + _boundary_thickness_val
+        
+        # Add some padding around the content for camera movement
+        visual_padding_around_content = float(C.TILE_SIZE) * 2.0 # Increased padding
+        level_min_x_abs_for_camera = map_min_x_content - visual_padding_around_content
+        level_max_x_abs_for_camera = map_max_x_content + visual_padding_around_content
+        level_min_y_abs_for_camera = map_min_y_content - visual_padding_around_content # Allow camera to go above content
+        level_max_y_abs_for_camera = map_max_y_content + visual_padding_around_content
     
     level_pixel_width_for_camera = level_max_x_abs_for_camera - level_min_x_abs_for_camera
-
-    _boundary_color_tuple = getattr(C, 'DARK_GRAY', (50,50,50))
     
-    boundary_platforms_data = [
-        _create_platform_data(level_min_x_abs_for_camera, level_min_y_abs_for_camera, 
-                              level_pixel_width_for_camera, _boundary_thickness_val, 
-                              _boundary_color_tuple, "boundary_wall_top"),
-        _create_platform_data(level_min_x_abs_for_camera, level_max_y_abs_for_camera - _boundary_thickness_val, 
-                              level_pixel_width_for_camera, _boundary_thickness_val, 
-                              _boundary_color_tuple, "boundary_wall_bottom"),
-        _create_platform_data(level_min_x_abs_for_camera, level_min_y_abs_for_camera + _boundary_thickness_val, 
-                              _boundary_thickness_val, level_max_y_abs_for_camera - level_min_y_abs_for_camera - 2 * _boundary_thickness_val, 
-                              _boundary_color_tuple, "boundary_wall_left"),
-        _create_platform_data(level_max_x_abs_for_camera - _boundary_thickness_val, level_min_y_abs_for_camera + _boundary_thickness_val, 
-                              _boundary_thickness_val, level_max_y_abs_for_camera - level_min_y_abs_for_camera - 2 * _boundary_thickness_val, 
-                              _boundary_color_tuple, "boundary_wall_right"),
-    ]
-    platforms_list_export.extend(boundary_platforms_data)
+    # --- REMOVED AUTOMATIC BOUNDARY WALL GENERATION ---
+    # The boundary_platforms_data creation and extension to platforms_list_export is removed.
+    # Players will now be constrained by camera limits or fall off if no platforms.
 
-    main_ground_y_ref = map_max_y_content 
+    main_ground_y_ref = map_max_y_content if all_placed_objects_rect_data_for_bounds else float(editor_state.map_height_tiles * ts)
     ground_platform_height_ref = float(C.TILE_SIZE)
-    all_platforms_for_ground_check = [p for p in platforms_list_export if "boundary" not in p.get('type', '')]
-    if all_platforms_for_ground_check:
-        lowest_platform_top_y = max(p['rect'][1] for p in all_platforms_for_ground_check)
-        candidate_ground_platforms = [p for p in all_platforms_for_ground_check if abs(p['rect'][1] - lowest_platform_top_y) < (ts * 0.1)]
+    # Re-calculate main_ground_y_ref and ground_platform_height_ref based on *actual* platforms,
+    # excluding any auto-generated boundary walls (which are now removed anyway).
+    all_non_boundary_platforms = [p for p in platforms_list_export if "boundary" not in p.get('type', '')] # Should be all platforms now
+    if all_non_boundary_platforms:
+        lowest_platform_top_y = max(p['rect'][1] for p in all_non_boundary_platforms)
+        candidate_ground_platforms = [p for p in all_non_boundary_platforms if abs(p['rect'][1] - lowest_platform_top_y) < (ts * 0.1)]
         if candidate_ground_platforms:
             widest_candidate = max(candidate_ground_platforms, key=lambda p: p['rect'][2])
             main_ground_y_ref = widest_candidate['rect'][1]
             ground_platform_height_ref = widest_candidate['rect'][3]
-        elif all_platforms_for_ground_check: 
+        elif all_non_boundary_platforms: 
             main_ground_y_ref = lowest_platform_top_y 
-            first_ground_plat = next((p for p in all_platforms_for_ground_check if abs(p['rect'][1] - main_ground_y_ref) < (ts*0.1)), None)
+            first_ground_plat = next((p for p in all_non_boundary_platforms if abs(p['rect'][1] - main_ground_y_ref) < (ts*0.1)), None)
             if first_ground_plat: ground_platform_height_ref = first_ground_plat['rect'][3]
 
 
@@ -632,7 +604,6 @@ def batch_fix_map_files_repr_key_issue(maps_directory: str):
                         key_as_string_literal = captured_key_name
                     
                     found_match = True
-                    # Ensure the key is properly quoted as a string literal for the dictionary
                     return f'"{key_as_string_literal}":'
 
                 modified_content = re.sub(pattern, replace_func, content)
@@ -653,31 +624,29 @@ def batch_fix_map_files_repr_key_issue(maps_directory: str):
 
 
 if __name__ == "__main__":
-    # --- This block is for when editor_map_utils.py is run directly ---
-    print("Running editor_map_utils.py directly...")
-
-    # Adjust sys.path to allow imports from the parent directory (project root)
-    # and from the 'editor' package if this script is inside it.
-    current_script_dir_main = os.path.dirname(os.path.abspath(__file__))
-    project_root_main = os.path.dirname(current_script_dir_main) 
+    print("Running editor_map_utils.py directly for batch map file fixing...")
     
-    if project_root_main not in sys.path:
-        sys.path.insert(0, project_root_main)
-        print(f"__main__ in editor_map_utils: Added project root '{project_root_main}' to sys.path.")
+    # This block now uses the conditional imports defined at the top of the file.
+    # The sys.path adjustment within the conditional import block should handle making
+    # 'constants' and 'editor.editor_config' (if needed by batch fix) findable.
 
-    # For the batch fix to access ED_CONFIG and C, they need to be available.
-    # The conditional import at the top handles this if __name__ == "__main__".
-    # We also need to ensure the logger is minimally configured for standalone execution.
-    if not logging.getLogger().hasHandlers(): # Basic logger config if not already set
+    if not logging.getLogger().hasHandlers(): 
         logging.basicConfig(level=logging.INFO, format='%(levelname)s (editor_map_utils utility): %(message)s')
     
-    # Now, it's safe to call functions that might rely on these imports.
-    maps_dir_to_fix = getattr(C, "MAPS_DIR", "maps") # Get from constants or fallback
+    # Determine maps_dir_to_fix using the (potentially fallbacked) C module
+    # Get the directory of the current script (editor_map_utils.py)
+    _current_script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Assume the project root is one level up from the 'editor' directory
+    _project_root_for_main_script = os.path.dirname(_current_script_dir)
+    
+    maps_dir_name_from_const = getattr(C, "MAPS_DIR", "maps")
+    maps_dir_to_fix = maps_dir_name_from_const
     if not os.path.isabs(maps_dir_to_fix):
-        maps_dir_to_fix = os.path.join(project_root_main, maps_dir_to_fix)
+        maps_dir_to_fix = os.path.join(_project_root_for_main_script, maps_dir_to_fix)
 
     if not os.path.isdir(maps_dir_to_fix):
         print(f"ERROR: The resolved maps directory does not exist: {maps_dir_to_fix}")
+        print(f"       (Derived from C.MAPS_DIR or fallback, relative to project root: {_project_root_for_main_script})")
         print("Please ensure the path is correct or create the directory with your .py map files.")
     else:
         print(f"Attempting to batch fix map files in: {maps_dir_to_fix}")
