@@ -7,12 +7,13 @@ Manages game state, including reset and network synchronization for PySide6.
 # version 2.0.6 (Ensure level_data is passed to enemy/statue respawn, added more debug for chest reset)
 # version 2.0.7 (Preserve level_data during reset, rely on _initialize_game_entities for loading it)
 # version 2.0.8 (Removed self-import of reset_game_state)
+# version 2.0.9 (Corrected game mode check for entity respawn)
 import os
 from typing import Optional, List, Dict, Any, Tuple
 
 from PySide6.QtCore import QRectF, QPointF
 # Game-specific imports
-# from game_setup import spawn_chest_qt # spawn_chest_qt is deprecated for random spawns # Keep this commented if not used
+# from game_setup import spawn_chest_qt # spawn_chest_qt is deprecated for random spawns
 from enemy import Enemy
 from items import Chest
 from statue import Statue
@@ -36,7 +37,6 @@ except ImportError:
     def error(msg, *args, **kwargs): logger_gsm.error(msg, *args, **kwargs)
     def critical(msg, *args, **kwargs): logger_gsm.critical(msg, *args, **kwargs)
 
-# REMOVED: from game_state_manager import reset_game_state
 
 def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
     info("GSM: --- Resetting Game State (PySide6) ---")
@@ -92,65 +92,77 @@ def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
         debug("GSM: P2 Reset complete.")
 
     current_game_mode = game_elements.get("current_game_mode", "unknown")
+    
+    # MODIFIED Condition: Changed the list of game modes where dynamic entities are respawned.
+    # "host_game" is an initial setup mode. The active modes where reset occurs are "host_waiting" (host alone)
+    # or "host_active" (host + client). "couch_play" is for local co-op.
+    server_authoritative_modes = ["couch_play", "host_waiting", "host_active"]
+    debug(f"GSM: Current game mode for entity respawn check: '{current_game_mode}'. Authoritative modes: {server_authoritative_modes}")
 
-    if (current_game_mode in ["host", "couch_play", "host_game"]) and enemy_spawns_cache:
-        debug(f"GSM: Respawning {len(enemy_spawns_cache)} enemies from cache for {current_game_mode} mode.")
-        for i, spawn_info in enumerate(enemy_spawns_cache):
-            try:
-                patrol_raw = spawn_info.get('patrol_rect_data')
-                patrol_qrectf: Optional[QRectF] = None
-                if isinstance(patrol_raw, dict) and all(k in patrol_raw for k in ['x','y','width','height']):
-                    patrol_qrectf = QRectF(float(patrol_raw['x']), float(patrol_raw['y']),
-                                           float(patrol_raw['width']), float(patrol_raw['height']))
-                enemy_color_name_from_map = str(spawn_info.get('type', 'enemy_green'))
-                start_pos_tuple_enemy = tuple(map(float, spawn_info.get('start_pos', (100.0, 100.0))))
-                new_enemy_instance = Enemy(start_x=start_pos_tuple_enemy[0], start_y=start_pos_tuple_enemy[1],
-                                           patrol_area=patrol_qrectf, enemy_id=i,
-                                           color_name=enemy_color_name_from_map,
-                                           properties=spawn_info.get('properties', {}))
-                if new_enemy_instance._valid_init and new_enemy_instance.alive():
-                    game_elements["enemy_list"].append(new_enemy_instance)
-                    game_elements["all_renderable_objects"].append(new_enemy_instance)
-            except Exception as e_respawn: error(f"GSM: Error respawning enemy {i} from cache: {e_respawn}", exc_info=True)
-
-    if (current_game_mode in ["host", "couch_play", "host_game"]) and statue_spawns_cache:
-        debug(f"GSM: Respawning {len(statue_spawns_cache)} statues from cache.")
-        for i, statue_data in enumerate(statue_spawns_cache):
-            try:
-                s_id = statue_data.get('id', f"map_statue_reset_{i}")
-                s_pos_x, s_pos_y = float(statue_data['pos'][0]), float(statue_data['pos'][1])
-                new_statue = Statue(s_pos_x, s_pos_y, statue_id=s_id, properties=statue_data.get('properties', {}))
-                if new_statue._valid_init and new_statue.alive():
-                    game_elements["statue_objects"].append(new_statue)
-                    game_elements["all_renderable_objects"].append(new_statue)
-            except Exception as e_stat_respawn: error(f"GSM: Error respawning statue {i} from cache: {e_stat_respawn}", exc_info=True)
-    debug(f"GSM: Statues processed for reset. New count: {len(game_elements.get('statue_objects', []))}.")
-
-    new_chest_obj: Optional[Chest] = None
-    map_items_data_for_reset = []
-    if level_data_for_reset and isinstance(level_data_for_reset, dict):
-        map_items_data_for_reset = level_data_for_reset.get("items_list", [])
-        debug(f"GSM: items_list from (preserved) level_data for chest reset: {map_items_data_for_reset}")
-    elif not level_data_for_reset:
-         error("GSM: Preserved 'level_data' is missing during reset. Cannot respawn chest from map definition.")
-
-    if (current_game_mode in ["host", "couch_play", "host_game"]) and map_items_data_for_reset:
-        for item_data in map_items_data_for_reset:
-            if item_data.get('type', '').lower() == 'chest':
+    if current_game_mode in server_authoritative_modes:
+        debug(f"GSM: Respawning dynamic entities for authoritative mode '{current_game_mode}'.")
+        if enemy_spawns_cache:
+            debug(f"GSM: Respawning {len(enemy_spawns_cache)} enemies from cache.")
+            for i, spawn_info in enumerate(enemy_spawns_cache):
                 try:
-                    chest_midbottom_x, chest_midbottom_y = float(item_data['pos'][0]), float(item_data['pos'][1])
-                    new_chest_obj = Chest(chest_midbottom_x, chest_midbottom_y)
-                    if new_chest_obj._valid_init:
-                        game_elements["collectible_list"].append(new_chest_obj)
-                        game_elements["all_renderable_objects"].append(new_chest_obj)
-                        debug(f"GSM: Chest respawned from map data at ({chest_midbottom_x},{chest_midbottom_y}).")
-                    else: debug("GSM: Map-defined chest failed to init on reset.")
-                    break
-                except Exception as e_chest_map: error(f"GSM: Error respawning chest from map data: {e_chest_map}", exc_info=True)
-    elif current_game_mode in ["host", "couch_play", "host_game"]:
-        debug("GSM: No chest data in map_items_data (or level_data was missing). No chest will be respawned.")
+                    patrol_raw = spawn_info.get('patrol_rect_data')
+                    patrol_qrectf: Optional[QRectF] = None
+                    if isinstance(patrol_raw, dict) and all(k in patrol_raw for k in ['x','y','width','height']):
+                        patrol_qrectf = QRectF(float(patrol_raw['x']), float(patrol_raw['y']),
+                                               float(patrol_raw['width']), float(patrol_raw['height']))
+                    enemy_color_name_from_map = str(spawn_info.get('type', 'enemy_green'))
+                    start_pos_tuple_enemy = tuple(map(float, spawn_info.get('start_pos', (100.0, 100.0))))
+                    new_enemy_instance = Enemy(start_x=start_pos_tuple_enemy[0], start_y=start_pos_tuple_enemy[1],
+                                               patrol_area=patrol_qrectf, enemy_id=i,
+                                               color_name=enemy_color_name_from_map,
+                                               properties=spawn_info.get('properties', {}))
+                    if new_enemy_instance._valid_init and new_enemy_instance.alive():
+                        game_elements["enemy_list"].append(new_enemy_instance)
+                        game_elements["all_renderable_objects"].append(new_enemy_instance)
+                except Exception as e_respawn: error(f"GSM: Error respawning enemy {i} from cache: {e_respawn}", exc_info=True)
 
-    game_elements["current_chest"] = new_chest_obj
+        if statue_spawns_cache:
+            debug(f"GSM: Respawning {len(statue_spawns_cache)} statues from cache.")
+            for i, statue_data in enumerate(statue_spawns_cache):
+                try:
+                    s_id = statue_data.get('id', f"map_statue_reset_{i}")
+                    s_pos_x, s_pos_y = float(statue_data['pos'][0]), float(statue_data['pos'][1])
+                    new_statue = Statue(s_pos_x, s_pos_y, statue_id=s_id, properties=statue_data.get('properties', {}))
+                    if new_statue._valid_init and new_statue.alive():
+                        game_elements["statue_objects"].append(new_statue)
+                        game_elements["all_renderable_objects"].append(new_statue)
+                except Exception as e_stat_respawn: error(f"GSM: Error respawning statue {i} from cache: {e_stat_respawn}", exc_info=True)
+        
+        new_chest_obj: Optional[Chest] = None
+        map_items_data_for_reset = []
+        if level_data_for_reset and isinstance(level_data_for_reset, dict):
+            map_items_data_for_reset = level_data_for_reset.get("items_list", [])
+            debug(f"GSM: items_list from (preserved) level_data for chest reset: {map_items_data_for_reset}")
+            if not map_items_data_for_reset:
+                 debug("GSM: 'items_list' is empty or not found in level_data during reset.")
+        elif not level_data_for_reset:
+             error("GSM: Preserved 'level_data' is missing during reset. Cannot respawn chest from map definition.")
+
+        if map_items_data_for_reset:
+            for item_data in map_items_data_for_reset:
+                if item_data.get('type', '').lower() == 'chest':
+                    try:
+                        chest_midbottom_x, chest_midbottom_y = float(item_data['pos'][0]), float(item_data['pos'][1])
+                        new_chest_obj = Chest(chest_midbottom_x, chest_midbottom_y)
+                        if new_chest_obj._valid_init:
+                            game_elements["collectible_list"].append(new_chest_obj)
+                            game_elements["all_renderable_objects"].append(new_chest_obj)
+                            debug(f"GSM: Chest respawned from map data at ({chest_midbottom_x},{chest_midbottom_y}). Added to lists.")
+                        else:
+                            debug("GSM: Map-defined chest failed to init on reset.")
+                        break 
+                    except Exception as e_chest_map: error(f"GSM: Error respawning chest from map data: {e_chest_map}", exc_info=True)
+        else:
+            debug("GSM: No chest data in map_items_data (or level_data was missing). No chest will be respawned for authoritative mode.")
+        game_elements["current_chest"] = new_chest_obj
+    else:
+        debug(f"GSM: Dynamic entities (enemies, statues, chest) not respawned for mode '{current_game_mode}'.")
+        game_elements["current_chest"] = None # Ensure chest is None if not in authoritative mode
 
     camera = game_elements.get("camera")
     if camera and hasattr(camera, 'set_offset'):
@@ -177,7 +189,7 @@ def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
     if ground_platform_height_ref_cache is not None: game_elements["ground_platform_height_ref"] = ground_platform_height_ref_cache
     if level_background_color_cache is not None: game_elements["level_background_color"] = level_background_color_cache
 
-    debug(f"GSM: game_elements at END of reset_game_state: Keys={list(game_elements.keys())}")
+    debug(f"GSM END: current_chest is now: {'None' if game_elements.get('current_chest') is None else type(game_elements.get('current_chest'))}. Collectibles count: {len(game_elements['collectible_list'])}. Renderables count: {len(game_elements['all_renderable_objects'])}")
     if 'level_data' in game_elements and game_elements['level_data'] is not None:
         debug(f"GSM: 'level_data' IS PRESENT at END of reset. Items: {game_elements['level_data'].get('items_list', 'N/A') if isinstance(game_elements['level_data'], dict) else 'Not a dict'}")
     else:
