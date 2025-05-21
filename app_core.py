@@ -20,7 +20,8 @@ _project_root = os.path.abspath(os.path.dirname(__file__))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from logger import info, debug, warning, critical, error, LOGGING_ENABLED, LOG_FILE_PATH, PrintLimiter
+from logger import info, debug, warning, critical, error, LOGGING_ENABLED, LOG_FILE_PATH
+from utils import PrintLimiter # <<< CORRECTED IMPORT
 import constants as C
 from game_ui import GameSceneWidget, IPInputDialog # SelectMapDialog is now handled by app_ui_creator
 import config as game_config
@@ -585,5 +586,3 @@ if __name__ == "__main__":
             print(f"FATAL: Could not display Qt error dialog: {e_msgbox}")
             traceback.print_exc() # Print to console as last resort
         sys.exit(1)
-
-#################### END OF FILE: app_core.py ####################
