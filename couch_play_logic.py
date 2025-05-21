@@ -7,6 +7,7 @@ UI rendering and input capture are handled by the main Qt application.
 # version 2.0.11 (Fixed old_chest_bottom definition, refined chest physics check)
 # version 2.0.12 (Ensure player references are valid before use)
 # version 2.0.13 (Corrected input callback arguments to match MainWindow method signatures)
+# version 2.0.14 (Added debug for platforms_list content)
 
 import time
 from typing import Dict, List, Any, Optional
@@ -53,8 +54,8 @@ def get_current_ticks_monotonic() -> int:
 def run_couch_play_mode(
     game_elements_ref: Dict[str, Any],
     app_status_obj: Any,
-    get_p1_input_callback: callable, # Points to MainWindow.get_p1_input_snapshot_for_server_thread
-    get_p2_input_callback: callable, # Points to MainWindow.get_p2_input_snapshot_for_client_thread
+    get_p1_input_callback: callable,
+    get_p2_input_callback: callable,
     process_qt_events_callback: callable,
     dt_sec_provider: callable,
     show_status_message_callback: Optional[callable] = None
@@ -71,37 +72,52 @@ def run_couch_play_mode(
     collectible_items_list: List[Any] = game_elements_ref.get("collectible_list", [])
     camera_obj: Optional[Any] = game_elements_ref.get("camera")
 
+    # ADDED DEBUG PRINT for platforms_list
+    if not hasattr(run_couch_play_mode, "_platform_debug_printed"): # Print only once per game start
+        log_debug(f"COUCH_PLAY: Starting tick. Number of platforms: {len(platforms_list)}")
+        if platforms_list:
+            for i, p in enumerate(platforms_list[:3]): # Log first 3 platforms
+                 log_debug(f"COUCH_PLAY: Platform {i} rect: {getattr(p, 'rect', 'N/A')}, type: {getattr(p, 'platform_type', 'N/A')}")
+        elif game_elements_ref.get("level_data") is None:
+            log_warning("COUCH_PLAY: platforms_list is empty AND level_data is missing from game_elements!")
+        else:
+            log_warning("COUCH_PLAY: platforms_list is empty. Check map data and initialization.")
+        run_couch_play_mode._platform_debug_printed = True # type: ignore
+
+
     dt_sec = dt_sec_provider()
     current_game_time_ms = get_current_ticks_monotonic()
 
     p1_action_events: Dict[str, bool] = {}
     if player1 and hasattr(player1, '_valid_init') and player1._valid_init:
-        # MainWindow.get_p1_input_snapshot_for_server_thread now only takes player_instance
-        p1_action_events = get_p1_input_callback(player1)
+        p1_action_events = get_p1_input_callback(player1) # platform_list removed
 
     p2_action_events: Dict[str, bool] = {}
     if player2 and hasattr(player2, '_valid_init') and player2._valid_init and \
        hasattr(player2, 'control_scheme') and player2.control_scheme is not None:
-        # MainWindow.get_p2_input_snapshot_for_client_thread only takes player_instance
-        p2_action_events = get_p2_input_callback(player2)
+        p2_action_events = get_p2_input_callback(player2) # platform_list removed
 
     if p1_action_events.get("pause") or p2_action_events.get("pause"):
         log_info("Couch Play: Pause action detected. Signaling app to stop this game mode.")
         if show_status_message_callback: show_status_message_callback("Exiting Couch Play...")
+        run_couch_play_mode._platform_debug_printed = False # Reset for next game
         return False
 
     if p1_action_events.get("reset") or p2_action_events.get("reset"):
         log_info("Couch Play: Game state reset initiated by player action.")
+        # reset_game_state should use the level_data already in game_elements_ref
         new_chest_after_reset = reset_game_state(game_elements_ref)
         game_elements_ref["current_chest"] = new_chest_after_reset
         current_enemies_list = game_elements_ref.get("enemy_list", [])
         statue_list = game_elements_ref.get("statue_objects", [])
         projectiles_list = game_elements_ref.get("projectiles_list", [])
         collectible_items_list = game_elements_ref.get("collectible_list", [])
-        if player1 and player1._valid_init and player1.alive() and player1 not in game_elements_ref.get("all_renderable_objects",[]):
-             game_elements_ref.get("all_renderable_objects",[]).append(player1)
-        if player2 and player2._valid_init and player2.alive() and player2 not in game_elements_ref.get("all_renderable_objects",[]):
-             game_elements_ref.get("all_renderable_objects",[]).append(player2)
+        # Players are reset by reset_game_state, ensure they are in renderables if alive
+        renderables = game_elements_ref.get("all_renderable_objects", [])
+        if player1 and player1._valid_init and player1.alive() and player1 not in renderables:
+             renderables.append(player1)
+        if player2 and player2._valid_init and player2.alive() and player2 not in renderables:
+             renderables.append(player2)
 
 
     if player1 and hasattr(player1, '_valid_init') and player1._valid_init:
@@ -266,6 +282,7 @@ def run_couch_play_mode(
         if show_status_message_callback: show_status_message_callback("Game Over! Both players defeated.")
         process_qt_events_callback()
         time.sleep(1.5)
+        run_couch_play_mode._platform_debug_printed = False # Reset for next game
         return False
 
     return True
