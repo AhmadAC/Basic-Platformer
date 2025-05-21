@@ -4,8 +4,8 @@
 Handles server-side game logic, connection management, and broadcasting for PySide6.
 UI updates are handled by emitting signals or using callbacks.
 """
-# version 2.0.4 (Fixed platforms_list not defined in chest physics, general consistency)
-from tiles import Platform, Ladder, Lava, BackgroundTile 
+# version 2.0.5 (Fixed QRectF import, refined chest physics, uses get_current_ticks_monotonic)
+
 import os
 import socket
 import threading
@@ -13,8 +13,9 @@ import time
 import traceback
 from typing import Optional, Dict, Any, List
 
-# PySide6 imports (none strictly needed for core server logic, but good for context)
-from PySide6.QtCore import QRectF, QPointF # Added for type hints
+from tiles import Platform, Ladder, Lava, BackgroundTile
+# PySide6 imports
+from PySide6.QtCore import QRectF, QPointF # Import QRectF for type checking
 
 # Game imports
 import constants as C
@@ -23,7 +24,7 @@ from game_state_manager import get_network_game_state, reset_game_state
 from enemy import Enemy
 from items import Chest
 from statue import Statue
-from tiles import Platform # Import Platform for type hint if needed by Chest
+from tiles import Platform # For type hinting platforms_list passed to chest update
 import config as game_config
 
 try:
@@ -95,11 +96,11 @@ def broadcast_presence_thread(server_state_obj: ServerState):
     while server_state_obj.app_running:
         if server_state_obj.current_map_name != broadcast_message_dict.get("map_name"):
             broadcast_message_dict["map_name"] = server_state_obj.current_map_name or "Unknown Map"
-            new_broadcast_bytes = encode_data(broadcast_message_dict) # Use new variable
+            new_broadcast_bytes = encode_data(broadcast_message_dict)
             if not new_broadcast_bytes:
                 error("Server Error: Could not re-encode broadcast message with updated map name.")
             else:
-                broadcast_message_bytes = new_broadcast_bytes # Assign if successful
+                broadcast_message_bytes = new_broadcast_bytes
                 debug(f"Server (broadcast): Updated broadcast message with map: {server_state_obj.current_map_name}")
 
         try:
@@ -340,7 +341,13 @@ def run_server_mode(server_state_obj: ServerState,
         dt_sec = frame_duration 
 
         # --- Fetch platforms_list for this frame ---
-        platforms_list_this_frame: List[Any] = game_elements_ref.get("platforms_list", [])
+        platforms_list_this_frame: List[Any] = game_elements_ref.get("platforms_list", []) # Ensure this is fetched
+        ladders_list_this_frame: List[Any] = game_elements_ref.get("ladders_list", [])
+        hazards_list_this_frame: List[Any] = game_elements_ref.get("hazards_list", [])
+        current_enemies_list_ref: List[Enemy] = game_elements_ref.get("enemy_list", []) # Use ref for modification
+        statue_list_ref: List[Statue] = game_elements_ref.get("statue_objects", [])
+        projectiles_list_ref: List[Any] = game_elements_ref.get("projectiles_list", [])
+        collectible_items_list_ref: List[Any] = game_elements_ref.get("collectible_list", [])
 
 
         p1_action_events_current_frame: Dict[str, bool] = {}
@@ -350,6 +357,12 @@ def run_server_mode(server_state_obj: ServerState,
                 server_game_active = False; info("Server: P1 (host) pressed Pause. Ending game mode.")
             if p1_action_events_current_frame.get("reset"):
                  info("Server: P1 (host) requested Reset action."); game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
+                 # Re-fetch lists that might have been repopulated by reset_game_state
+                 current_enemies_list_ref = game_elements_ref.get("enemy_list", []) 
+                 statue_list_ref = game_elements_ref.get("statue_objects", [])
+                 projectiles_list_ref = game_elements_ref.get("projectiles_list", [])
+                 collectible_items_list_ref = game_elements_ref.get("collectible_list", [])
+
                  if p1 and p1._valid_init and not p1.alive() and p1 not in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).append(p1)
                  if p2 and p2._valid_init and not p2.alive() and p2 not in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).append(p2)
         if not server_game_active: break 
@@ -369,6 +382,10 @@ def run_server_mode(server_state_obj: ServerState,
                     if is_p1_truly_dead: 
                         info("Server: Client P2 reset action received and P1 is game over. Resetting state.")
                         game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
+                        current_enemies_list_ref = game_elements_ref.get("enemy_list", []) 
+                        statue_list_ref = game_elements_ref.get("statue_objects", [])
+                        projectiles_list_ref = game_elements_ref.get("projectiles_list", [])
+                        collectible_items_list_ref = game_elements_ref.get("collectible_list", [])
                         if p1 and p1._valid_init and not p1.alive(): game_elements_ref.get("all_renderable_objects",[]).append(p1)
                         if p2 and p2._valid_init and not p2.alive(): game_elements_ref.get("all_renderable_objects",[]).append(p2)
         if not server_game_active: break
@@ -382,22 +399,21 @@ def run_server_mode(server_state_obj: ServerState,
             other_players_for_p1 = [char for char in [p2] if char and hasattr(char, '_valid_init') and char._valid_init and hasattr(char, 'alive') and char.alive() and char is not p1]
             p1.game_elements_ref_for_projectiles = game_elements_ref 
             p1.update(dt_sec, platforms_list_this_frame, 
-                      game_elements_ref.get("ladders_list", []), 
-                      game_elements_ref.get("hazards_list", []), 
+                      ladders_list_this_frame, 
+                      hazards_list_this_frame, 
                       other_players_for_p1, 
-                      game_elements_ref.get("enemy_list", []))
+                      current_enemies_list_ref)
 
         if p2 and hasattr(p2, '_valid_init') and p2._valid_init:
             other_players_for_p2 = [char for char in [p1] if char and hasattr(char, '_valid_init') and char._valid_init and hasattr(char, 'alive') and char.alive() and char is not p2]
             p2.game_elements_ref_for_projectiles = game_elements_ref
             p2.update(dt_sec, platforms_list_this_frame, 
-                      game_elements_ref.get("ladders_list", []), 
-                      game_elements_ref.get("hazards_list", []), 
+                      ladders_list_this_frame, 
+                      hazards_list_this_frame, 
                       other_players_for_p2, 
-                      game_elements_ref.get("enemy_list", []))
+                      current_enemies_list_ref)
         
         active_players_for_ai = [char for char in [p1,p2] if char and hasattr(char,'_valid_init') and char._valid_init and not getattr(char,'is_dead',True) and hasattr(char,'alive') and char.alive()]
-        current_enemies_list_ref = game_elements_ref.get("enemy_list", [])
         for enemy_instance in list(current_enemies_list_ref): 
             if hasattr(enemy_instance, '_valid_init') and enemy_instance._valid_init:
                 if hasattr(enemy_instance, 'is_petrified') and enemy_instance.is_petrified: 
@@ -410,18 +426,17 @@ def run_server_mode(server_state_obj: ServerState,
                 
                 enemy_instance.update(dt_sec, active_players_for_ai, 
                                       platforms_list_this_frame, 
-                                      game_elements_ref.get("hazards_list", []), 
+                                      hazards_list_this_frame, 
                                       current_enemies_list_ref) 
                 if getattr(enemy_instance, 'is_dead', False) and hasattr(enemy_instance, 'death_animation_finished') and enemy_instance.death_animation_finished and enemy_instance.alive():
                     enemy_instance.kill()
         
         game_elements_ref["enemy_list"][:] = [e for e in current_enemies_list_ref if hasattr(e, 'alive') and e.alive()]
 
-        current_statue_list_ref = game_elements_ref.get("statue_objects", [])
-        for statue_obj in list(current_statue_list_ref):
+        for statue_obj in list(statue_list_ref):
             if hasattr(statue_obj, 'update'): statue_obj.update(dt_sec)
             if not (hasattr(statue_obj, 'alive') and statue_obj.alive()):
-                if statue_obj in current_statue_list_ref: current_statue_list_ref.remove(statue_obj)
+                if statue_obj in statue_list_ref: statue_list_ref.remove(statue_obj)
             
         hittable_targets_on_server = []
         if p1 and p1.alive() and p1._valid_init and not getattr(p1,'is_petrified',False): hittable_targets_on_server.append(p1)
@@ -431,12 +446,11 @@ def run_server_mode(server_state_obj: ServerState,
         for st_target in game_elements_ref.get("statue_objects",[]):
             if st_target.alive() and not getattr(st_target,'is_smashed',False) : hittable_targets_on_server.append(st_target)
         
-        projectiles_current_list_ref = game_elements_ref.get("projectiles_list", [])
-        for proj_obj in list(projectiles_current_list_ref): 
+        for proj_obj in list(projectiles_list_ref): 
             if hasattr(proj_obj, 'update'):
                 proj_obj.update(dt_sec, platforms_list_this_frame, hittable_targets_on_server)
             if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
-                if proj_obj in projectiles_current_list_ref: projectiles_current_list_ref.remove(proj_obj)
+                if proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj)
         
         # Chest Physics (Server-side)
         current_chest_on_server = game_elements_ref.get("current_chest")
@@ -447,9 +461,11 @@ def run_server_mode(server_state_obj: ServerState,
                 current_chest_on_server.apply_physics_step(dt_sec)
 
             current_chest_on_server.on_ground = False
-            if hasattr(current_chest_on_server, 'rect') and isinstance(current_chest_on_server.rect, QRectF): # Use QRectF
-                old_chest_bottom = current_chest_on_server.rect.bottom() - (current_chest_on_server.vel_y * dt_sec * C.FPS)
-                for platform_coll in platforms_list_this_frame: # Use fetched list
+            if hasattr(current_chest_on_server, 'rect') and isinstance(current_chest_on_server.rect, QRectF):
+                # Estimate previous bottom based on current velocity (which is per-frame at this point)
+                old_chest_bottom = current_chest_on_server.rect.bottom() - current_chest_on_server.vel_y 
+
+                for platform_coll in platforms_list_this_frame: 
                     if hasattr(platform_coll, 'rect') and isinstance(platform_coll.rect, QRectF) and \
                        current_chest_on_server.rect.intersects(platform_coll.rect):
                         if current_chest_on_server.vel_y >= 0 and \
@@ -468,11 +484,10 @@ def run_server_mode(server_state_obj: ServerState,
                     current_chest_on_server._update_rect_from_image_and_pos()
 
         # Collectible Animation/State Update (after physics)
-        collectibles_current_list_ref = game_elements_ref.get("collectible_list", [])
-        for collectible_obj in list(collectibles_current_list_ref): 
+        for collectible_obj in list(collectible_items_list_ref): 
             if hasattr(collectible_obj, 'update'): collectible_obj.update(dt_sec) 
             if not (hasattr(collectible_obj, 'alive') and collectible_obj.alive()):
-                 if collectible_obj in collectibles_current_list_ref: collectibles_current_list_ref.remove(collectible_obj)
+                 if collectible_obj in collectible_items_list_ref: collectible_items_list_ref.remove(collectible_obj)
                  if game_elements_ref.get("current_chest") is collectible_obj: game_elements_ref["current_chest"] = None
 
         if current_chest_on_server and isinstance(current_chest_on_server, Chest) and \
@@ -498,9 +513,9 @@ def run_server_mode(server_state_obj: ServerState,
         current_all_renderables_server = game_elements_ref.get("all_renderable_objects", [])
         new_all_renderables_server = []
         for obj_server in current_all_renderables_server:
-            if isinstance(obj_server, (Platform, Ladder, Lava, BackgroundTile)):
+            if isinstance(obj_server, (Platform, Ladder, Lava, BackgroundTile)): # Keep static tiles
                 new_all_renderables_server.append(obj_server)
-            elif hasattr(obj_server, 'alive') and obj_server.alive():
+            elif hasattr(obj_server, 'alive') and obj_server.alive(): # Keep dynamic if alive
                 new_all_renderables_server.append(obj_server)
         game_elements_ref["all_renderable_objects"] = new_all_renderables_server
 
