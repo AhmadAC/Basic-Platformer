@@ -4,54 +4,47 @@
 Manages UI elements for the PySide6 version of the game.
 This includes GameSceneWidget rendering and dialogs.
 """
-# version 2.0.7 (Refined logger setup, ensure QRectF/QPointF for drawing, added clear_scene_for_new_game)
+# version 2.0.8 (Added BackgroundTile drawing)
 
 import sys
 import os
-# import time # Not strictly needed here anymore as QTimer drives updates
 from typing import Dict, Optional, Any, List, Tuple
 
 from PySide6.QtWidgets import (
     QWidget,QLabel, QDialog, QListWidget, QListWidgetItem, QLineEdit,
-    QDialogButtonBox, QMessageBox, QVBoxLayout # Minimal necessary QtWidget imports
+    QDialogButtonBox, QMessageBox, QVBoxLayout 
 )
 from PySide6.QtGui import (
     QPainter, QColor, QFont, QPen, QBrush, QPixmap, QPalette,
-    QFontMetrics, QResizeEvent, QPaintEvent # Essential QtGUI imports
+    QFontMetrics, QResizeEvent, QPaintEvent 
 )
-from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF # Essential QtCore imports
+from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF 
 
 # --- Logging Setup ---
-import logging # Crucial: Import the standard logging module
+import logging 
 
-# Attempt to import custom logger functions; if fails, logger instance below will use basic config.
 try:
     from logger import info as log_info, debug as log_debug, \
                        warning as log_warning, error as log_error, \
                        critical as log_critical
-    # If central logger is set up, getLogger will likely inherit its config.
     logger = logging.getLogger(__name__)
-    if not logger.hasHandlers() and not logging.getLogger().hasHandlers(): # Check if neither this nor root logger has handlers
-        # This case means 'from logger import ...' passed but no handlers were set up centrally.
-        # Add a basic console handler to this module's logger.
+    if not logger.hasHandlers() and not logging.getLogger().hasHandlers(): 
         _gameui_fallback_console_handler = logging.StreamHandler(sys.stdout)
         _gameui_fallback_console_formatter = logging.Formatter('GAME_UI (FallbackConsole): %(levelname)s - %(message)s')
         _gameui_fallback_console_handler.setFormatter(_gameui_fallback_console_formatter)
         logger.addHandler(_gameui_fallback_console_handler)
-        logger.setLevel(logging.DEBUG) # Default to DEBUG for this fallback
-        logger.propagate = False # Prevent duplicate messages if root logger gets configured later
+        logger.setLevel(logging.DEBUG) 
+        logger.propagate = False 
         logger.warning("Central logger might be unconfigured; game_ui.py added its own console handler.")
-    else:
-        logger.debug("game_ui.py using centrally configured logger (or its own if it was set up).")
+    # else:
+        # logger.debug("game_ui.py using centrally configured logger (or its own if it was set up).")
 
 except ImportError:
-    # This is a more severe fallback: if 'from logger import ...' itself fails.
     logging.basicConfig(level=logging.DEBUG,
                         format='GAME_UI (CriticalImportFallback): %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
                         handlers=[logging.StreamHandler(sys.stdout)])
-    logger = logging.getLogger(__name__) # Get a logger instance for this module
+    logger = logging.getLogger(__name__) 
     logger.critical("Failed to import custom logger. Using isolated fallback for game_ui.py.")
-    # Define dummy log functions if the import failed, so calls don't break
     def log_info(msg, *args, **kwargs): logger.info(msg, *args, **kwargs)
     def log_debug(msg, *args, **kwargs): logger.debug(msg, *args, **kwargs)
     def log_warning(msg, *args, **kwargs): logger.warning(msg, *args, **kwargs)
@@ -61,11 +54,10 @@ except ImportError:
 
 
 import constants as C
-# Game object classes for type hinting and isinstance checks
-from tiles import Platform, Ladder, Lava # Assuming these are your tile classes for PySide6
-from player import Player # For type hinting in HUD
-from camera import Camera # Your PySide6 Camera class
-from utils import PrintLimiter # If used for debug prints
+from tiles import Platform, Ladder, Lava, BackgroundTile # Added BackgroundTile
+from player import Player 
+from camera import Camera 
+from utils import PrintLimiter 
 
 
 # --- Helper Drawing Functions ---
@@ -126,27 +118,24 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: P
                        float(player_instance.current_health), float(player_instance.max_health))
     
     health_value_text = f"{int(player_instance.current_health)}/{int(player_instance.max_health)}"
-    text_bounding_rect = font_metrics.boundingRect(health_value_text) # QRect
+    text_bounding_rect = font_metrics.boundingRect(health_value_text) 
     health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 10.0
-    health_text_pos_y = health_bar_pos_y + (hud_health_bar_height / 2.0) + (float(text_bounding_rect.height()) / 4.0) # Better vertical centering
+    health_text_pos_y = health_bar_pos_y + (hud_health_bar_height / 2.0) + (float(text_bounding_rect.height()) / 4.0) 
     
     painter.drawText(QPointF(health_text_pos_x, health_text_pos_y), health_value_text)
 
 
 class GameSceneWidget(QWidget):
-    # render_print_limiter = PrintLimiter(default_limit=1, default_period=2.0) # Optional for debug
-
     def __init__(self, game_elements_ref: Dict[str, Any], fonts_ref: Dict[str, QFont], parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.game_elements = game_elements_ref
-        self.fonts = fonts_ref # Store the font dictionary
+        self.fonts = fonts_ref 
         self.download_status_message: Optional[str] = None
         self.download_progress_percent: Optional[float] = None
         
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
         self.setAutoFillBackground(False)
 
-        # These will be set by set_level_dimensions from game_setup/app_game_modes
         self._level_pixel_width: float = float(getattr(C, 'GAME_WIDTH', 800.0))
         self._level_min_x_abs: float = 0.0
         self._level_min_y_abs: float = 0.0
@@ -170,13 +159,12 @@ class GameSceneWidget(QWidget):
         if camera:
             camera.set_level_dimensions(level_total_width, level_min_x, level_min_y, level_max_y)
         log_info(f"GameSceneWidget: Level dimensions set - TotalW:{level_total_width}, MinX:{level_min_x}, MinY:{level_min_y}, MaxY:{level_max_y}")
-        self.update() # Trigger repaint if dimensions change while visible
+        self.update() 
 
     def update_game_state(self, game_time_ticks: int, download_msg: Optional[str] = None, download_prog: Optional[float] = None):
-        # game_time_ticks is not used for rendering timing, QTimer in app_core drives updates
         self.download_status_message = download_msg
         self.download_progress_percent = download_prog
-        self.update() # Schedules a repaint
+        self.update() 
 
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
@@ -187,74 +175,75 @@ class GameSceneWidget(QWidget):
         if camera:
             log_debug(f"GameSceneWidget: Updating camera screen dimensions to {new_width}x{new_height}")
             camera.set_screen_dimensions(new_width, new_height)
-        self.game_elements['main_app_screen_width'] = new_width # Share with other modules
+        self.game_elements['main_app_screen_width'] = new_width 
         self.game_elements['main_app_screen_height'] = new_height
         self.update()
 
-    def paintEvent(self, event: QPaintEvent): # Type hint event
+    def paintEvent(self, event: QPaintEvent): 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
 
         camera = self.get_camera()
         bg_color_tuple = self.game_elements.get("level_background_color", getattr(C, 'LIGHT_BLUE', (173, 216, 230)))
-        painter.fillRect(self.rect(), QColor(*bg_color_tuple)) # Fill entire widget
+        painter.fillRect(self.rect(), QColor(*bg_color_tuple)) 
 
         if not camera:
             log_warning("GameSceneWidget Paint: No camera instance. Drawing fallback message.")
             painter.setPen(QColor(Qt.GlobalColor.red))
-            font = self.fonts.get("medium", QFont("Arial", 12)) # Use a key from your self.fonts
+            font = self.fonts.get("medium", QFont("Arial", 12)) 
             painter.setFont(font)
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "GAME CAMERA NOT INITIALIZED")
             painter.end()
             return
 
-        # --- Render Game Objects ---
+        # --- Render Background Tiles FIRST ---
+        background_tiles: List[BackgroundTile] = self.game_elements.get("background_tiles_list", [])
+        for bg_tile in background_tiles:
+            if hasattr(bg_tile, 'draw_pyside') and callable(bg_tile.draw_pyside):
+                bg_tile.draw_pyside(painter, camera)
+            # Add generic rect/image drawing for BackgroundTile if needed, though draw_pyside is preferred.
+
+        # --- Render Main Game Objects ---
         all_renderables: List[Any] = self.game_elements.get("all_renderable_objects", [])
         
-        # Example debug log, limited
-        # current_game_mode_str = str(self.game_elements.get('current_game_mode', 'N/A_MODE'))
-        # if GameSceneWidget.render_print_limiter.can_print(f"paint_event_start_{current_game_mode_str}"):
-        #     log_debug(f"PaintEvent (Mode: {current_game_mode_str}): Renderables: {len(all_renderables)}")
-
         for entity in all_renderables:
+            # Skip drawing BackgroundTiles here if they were drawn in a separate pass above
+            if isinstance(entity, BackgroundTile): 
+                continue
+
             if hasattr(entity, 'draw_pyside') and callable(entity.draw_pyside):
-                entity.draw_pyside(painter, camera) # Entity handles camera transform
+                entity.draw_pyside(painter, camera) 
             elif hasattr(entity, 'rect') and isinstance(entity.rect, QRectF) and \
                  hasattr(entity, 'image') and isinstance(entity.image, QPixmap) and not entity.image.isNull():
                 
-                if not (hasattr(entity, 'alive') and not entity.alive()):
+                # Check 'alive' attribute for dynamic objects, always draw static tiles if they end up here
+                should_draw_generic = True
+                if hasattr(entity, 'alive') and not entity.alive(): # Check if it's a dynamic object that is not alive
+                    should_draw_generic = False 
+                
+                if should_draw_generic:
                     screen_rect_qrectf = camera.apply(entity.rect)
-                    if self.rect().intersects(screen_rect_qrectf.toRect()): # Culling
+                    if self.rect().intersects(screen_rect_qrectf.toRect()): 
                         painter.drawPixmap(screen_rect_qrectf.topLeft(), entity.image)
-            elif isinstance(entity, (Platform, Ladder, Lava)) and hasattr(entity, 'draw') and callable(entity.draw) : # Legacy Tile draw
-                 # This assumes tile's own .draw() method handles camera transform.
-                 # It's better if tiles also have draw_pyside(painter, camera) or are drawn generically above.
-                 # For now, if it's a legacy tile, it might draw at world 0,0 if not camera-aware.
-                 # To fix:
-                 # 1. Give tiles draw_pyside(painter, camera) OR
-                 # 2. Ensure they have .rect and .image for the generic block above to handle them.
-                 # For now, let's assume the generic block handles them IF they have .rect and .image.
-                 pass # Already handled by generic QPixmap drawing block if rect and image exist
-
+            # Note: Platform, Ladder, Lava now have draw_pyside, so the old specific instanceof checks aren't strictly needed
+            # if they are correctly added to all_renderables and their draw_pyside is called.
 
         # --- Render HUD ---
         player1 = self.game_elements.get("player1")
         player2 = self.game_elements.get("player2")
-        # Ensure the font key "medium" exists in self.fonts (initialized in MainWindow)
         hud_font = self.fonts.get("medium", QFont("Arial", 12))
 
         if player1 and isinstance(player1, Player) and player1.alive() and not getattr(player1, 'is_petrified', False):
             draw_player_hud_qt(painter, 10.0, 10.0, player1, 1, hud_font)
         
         if player2 and isinstance(player2, Player) and player2.alive() and not getattr(player2, 'is_petrified', False):
-            p2_hud_width_estimate = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100.0)) + 120.0 # Estimate text width
-            p2_hud_x = self.width() - p2_hud_width_estimate - 10.0 # Use current widget width
+            p2_hud_width_estimate = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100.0)) + 120.0 
+            p2_hud_x = self.width() - p2_hud_width_estimate - 10.0 
             draw_player_hud_qt(painter, p2_hud_x, 10.0, player2, 2, hud_font)
 
         # --- Render Download Status (if any) ---
         if self.download_status_message:
-            # Position relative to current widget size
             dialog_w = self.width() * 0.6; dialog_h = self.height() * 0.3
             dialog_rect = QRectF(0, 0, dialog_w, dialog_h)
             dialog_rect.moveCenter(QPointF(self.width() / 2.0, self.height() / 2.0))
@@ -267,12 +256,12 @@ class GameSceneWidget(QWidget):
             msg_font = self.fonts.get("medium", QFont("Arial", 12))
             
             painter.setFont(title_font)
-            title_text_rect = dialog_rect.adjusted(10,10,-10,-10) # Adjust for padding
+            title_text_rect = dialog_rect.adjusted(10,10,-10,-10) 
             painter.drawText(title_text_rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, "File Transfer")
             
             painter.setFont(msg_font)
             title_fm = QFontMetrics(title_font)
-            msg_y_start = title_text_rect.top() + float(title_fm.height()) + 10.0 # Space after title
+            msg_y_start = title_text_rect.top() + float(title_fm.height()) + 10.0 
             msg_rect_adjusted = QRectF(dialog_rect.left() + 10, msg_y_start, dialog_rect.width() - 20, dialog_rect.height() - msg_y_start - 10)
 
             painter.drawText(msg_rect_adjusted,
@@ -282,18 +271,12 @@ class GameSceneWidget(QWidget):
             if self.download_progress_percent is not None and self.download_progress_percent >= 0:
                 bar_margin = 20.0; bar_h = 30.0
                 msg_fm = QFontMetrics(msg_font)
-                # Calculate bounding rect for the message text to position progress bar below it
-                # This is a bit complex for multi-line wrapped text, using an approximation.
-                # A simpler way might be to fix the Y pos of progress bar relative to dialog center.
-                approx_msg_height = float(msg_fm.height()) * (len(self.download_status_message) // 30 + 1) # Rough line count
+                approx_msg_height = float(msg_fm.height()) * (len(self.download_status_message) // 30 + 1) 
                 bar_y_pos = msg_y_start + approx_msg_height + 15.0
-
-                # Ensure progress bar fits
                 if bar_y_pos + bar_h > dialog_rect.bottom() - bar_margin:
-                    bar_y_pos = dialog_rect.center().y() + 10 # Fallback position if text makes it too low
-
+                    bar_y_pos = dialog_rect.center().y() + 10 
                 bar_rect = QRectF(dialog_rect.left() + bar_margin, bar_y_pos, dialog_rect.width() - 2 * bar_margin, bar_h)
-                if bar_rect.bottom() > dialog_rect.bottom() - bar_margin: # Final clamp
+                if bar_rect.bottom() > dialog_rect.bottom() - bar_margin: 
                     bar_rect.setHeight(max(5.0, dialog_rect.bottom() - bar_margin - bar_y_pos))
                 
                 painter.fillRect(bar_rect, QColor(*getattr(C, 'GRAY', (128,128,128))))
@@ -308,13 +291,10 @@ class GameSceneWidget(QWidget):
         painter.end()
 
     def clear_scene_for_new_game(self):
-        """Clears dynamic visual elements when a game mode stops or changes."""
         log_info("GameSceneWidget: Clearing visual state for new game.")
         self.download_status_message = None
         self.download_progress_percent = None
-        # Game elements themselves are reset by game_state_manager.
-        # This widget will fetch fresh data from self.game_elements on the next paint.
-        self.update() # Schedule a repaint to show the cleared state.
+        self.update() 
 
 
 # --- Dialogs ---
@@ -324,11 +304,11 @@ class SelectMapDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Select Map")
         self.selected_map_name: Optional[str] = None
-        self.fonts = fonts # Store for potential use, though not directly used in this version
+        self.fonts = fonts 
         
         layout = QVBoxLayout(self)
         self.list_widget = QListWidget(self)
-        self.populate_maps()
+        self.populate_maps() # Now populates with .py files
         layout.addWidget(self.list_widget)
         
         self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -337,47 +317,35 @@ class SelectMapDialog(QDialog):
         layout.addWidget(self.button_box)
         
         self.list_widget.itemDoubleClicked.connect(self.accept)
-        self.setMinimumWidth(350) # Set a reasonable minimum width
+        self.setMinimumWidth(350)
 
     def populate_maps(self):
         self.list_widget.clear()
-        maps_dir_from_const = getattr(C, "MAPS_DIR", "maps") # From constants.py
+        maps_dir_from_const = getattr(C, "MAPS_DIR", "maps")
         
-        # Determine project root (assuming game_ui.py is in the root or a known subdir)
         project_root_guess = os.path.dirname(os.path.abspath(__file__))
-        if os.path.basename(project_root_guess) in ["editor", "controller_settings"]: # If in a common subdir
+        if os.path.basename(project_root_guess) in ["editor", "controller_settings"]:
             project_root_guess = os.path.dirname(project_root_guess)
 
         maps_dir_abs = maps_dir_from_const
         if not os.path.isabs(maps_dir_from_const):
             maps_dir_abs = os.path.join(project_root_guess, maps_dir_from_const)
-        
-        log_debug(f"SelectMapDialog: Populating maps from '{maps_dir_abs}'")
+       
+        log_debug(f"SelectMapDialog: Populating maps from '{maps_dir_abs}' (PY files only)")
 
         if os.path.exists(maps_dir_abs) and os.path.isdir(maps_dir_abs):
             try:
-                # Prefer .py files as they are the game-ready format
-                map_files_py = [f[:-3] for f in os.listdir(maps_dir_abs) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"]
-                # Also consider .json files from editor, but don't list if .py exists
-                map_files_json = [f[:-5] for f in os.listdir(maps_dir_abs) if f.endswith(getattr(C, "LEVEL_EDITOR_SAVE_FORMAT_EXTENSION", ".json"))]
-
-                all_map_names_set = set(map_files_py)
-                for mj_name in map_files_json:
-                    if mj_name not in all_map_names_set: # Add if no .py version
-                        all_map_names_set.add(mj_name)
+                map_files_py = sorted([f[:-3] for f in os.listdir(maps_dir_abs) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"])
                 
-                sorted_map_names_list = sorted(list(all_map_names_set))
-
-                # Prioritize common maps (as in app_ui_creator)
-                prio_maps = ["original", "lava", "cpu_extended", "noenemy", "bigmap1"]
-                final_ordered_maps = [m for m in prio_maps if m in sorted_map_names_list] + \
-                                     [m for m in sorted_map_names_list if m not in prio_maps]
+                prio_maps = ["original", "lava", "cpu_extended", "noenemy", "bigmap1"] 
+                final_ordered_maps = [m for m in prio_maps if m in map_files_py] + \
+                                     [m for m in map_files_py if m not in prio_maps]
 
                 if final_ordered_maps:
                     self.list_widget.addItems(final_ordered_maps)
                     if self.list_widget.count() > 0: self.list_widget.setCurrentRow(0)
                 else:
-                    self.list_widget.addItem("No selectable maps found.");
+                    self.list_widget.addItem("No selectable game maps (.py) found.");
                     self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
             except OSError as e:
                 self.list_widget.addItem(f"Error reading maps: {e}");
@@ -439,5 +407,5 @@ class IPInputDialog(QDialog):
         self.line_edit.clear()
         self.line_edit.setFocus()
 
-    def get_ip_port(self) -> Optional[str]: # Helper to retrieve the value after dialog is accepted
+    def get_ip_port(self) -> Optional[str]: 
         return self.ip_port_string

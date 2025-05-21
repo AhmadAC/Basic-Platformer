@@ -3,47 +3,113 @@
 """
 Utility functions for map operations in the Level Editor (PySide6 version).
 Handles saving/loading editor JSON and exporting game-compatible Python data scripts.
-VERSION 2.2.3 (Moved data creation helpers here)
+VERSION 2.2.6 (Refined conditional imports for standalone execution)
 """
 import sys
 import os
 import json
 import traceback
+import re # For fixing map files
 from typing import Optional, Dict, List, Tuple, Any
 import logging
 
-# Editor-specific config and state
-from . import editor_config as ED_CONFIG
-from .editor_state import EditorState
-from . import editor_history
+# Conditional imports based on how the script is run
+if __name__ == "__main__" or not __package__:
+    # Script is run directly or `python -m editor.editor_map_utils` was not used
+    # We need to adjust sys.path to find sibling modules in 'editor' and project root 'constants'
+    current_script_dir_for_main = os.path.dirname(os.path.abspath(__file__))
+    project_root_for_main = os.path.dirname(current_script_dir_for_main)
+    
+    if project_root_for_main not in sys.path:
+        sys.path.insert(0, project_root_for_main)
+    if current_script_dir_for_main not in sys.path and current_script_dir_for_main != project_root_for_main : # if editor is a subdir
+        sys.path.insert(0, current_script_dir_for_main) # for editor_config etc. if needed by batch fix
+
+    # Now attempt to import, these might still fail if structure is very different
+    # but this gives a better chance for standalone utility execution.
+    try:
+        if not __package__ : # if run as script, relative imports won't work.
+            import editor_config as ED_CONFIG
+            from editor_state import EditorState # Not used by batch fix but part of original structure
+            import editor_history # Not used by batch fix
+        else: # if run as part of a package (e.g. python -m editor.editor_map_utils)
+            from . import editor_config as ED_CONFIG
+            from .editor_state import EditorState
+            from . import editor_history
+    except ImportError as e:
+        print(f"WARNING (editor_map_utils standalone/module context): Could not perform some relative imports: {e}")
+        # Minimal fallback for ED_CONFIG attributes needed by batch fix or export if called standalone
+        class ED_CONFIG_FALLBACK:
+            GAME_LEVEL_FILE_EXTENSION = ".py"
+            LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
+            BASE_GRID_SIZE = 40 # Example
+            DEFAULT_MAP_WIDTH_TILES = 30
+            DEFAULT_MAP_HEIGHT_TILES = 20
+            DEFAULT_BACKGROUND_COLOR_TUPLE = (173,216,230)
+            MAPS_DIRECTORY="maps"
+        ED_CONFIG = ED_CONFIG_FALLBACK() # type: ignore
+        # Define dummy EditorState and editor_history if they are truly needed by functions
+        # called from __main__, but batch_fix should be self-contained or take simple args.
+        class EditorState: pass
+        class editor_history:
+            @staticmethod
+            def get_map_snapshot(state): return {}
 
 
-try:
+    try:
+        import constants as C
+    except ImportError as e_proj_imp:
+        print(f"EDITOR_MAP_UTILS CRITICAL Error importing project constants: {e_proj_imp}")
+        class FallbackConstants:
+            TILE_SIZE = 40; GRAY = (128,128,128); DARK_GREEN=(0,100,0); ORANGE_RED=(255,69,0)
+            DARK_GRAY=(50,50,50); LIGHT_BLUE=(173,216,230); MAGENTA=(255,0,255)
+            EDITOR_SCREEN_INITIAL_WIDTH=1000
+            MAPS_DIR = "maps"
+            LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
+            GAME_LEVEL_FILE_EXTENSION = ".py"
+        C = FallbackConstants()
+        if not hasattr(ED_CONFIG, 'LEVEL_EDITOR_SAVE_FORMAT_EXTENSION'):
+            ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = C.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION # type: ignore
+        if not hasattr(ED_CONFIG, 'GAME_LEVEL_FILE_EXTENSION'):
+            ED_CONFIG.GAME_LEVEL_FILE_EXTENSION = C.GAME_LEVEL_FILE_EXTENSION # type: ignore
+
+else:
+    # Script is imported as part of a package (normal execution path)
+    from . import editor_config as ED_CONFIG
+    from .editor_state import EditorState
+    from . import editor_history
     import constants as C
-except ImportError as e_proj_imp:
-    print(f"EDITOR_MAP_UTILS CRITICAL Error importing project constants: {e_proj_imp}")
-    class FallbackConstants: # Minimal fallback
-        TILE_SIZE = 40; GRAY = (128,128,128); DARK_GREEN=(0,100,0); ORANGE_RED=(255,69,0)
-        DARK_GRAY=(50,50,50); LIGHT_BLUE=(173,216,230); MAGENTA=(255,0,255)
-        EDITOR_SCREEN_INITIAL_WIDTH=1000
-        MAPS_DIR = "maps"
-    C = FallbackConstants()
+
 
 logger = logging.getLogger(__name__)
+if not logger.hasHandlers(): # Ensure logger has a handler if not configured by parent
+    _handler = logging.StreamHandler(sys.stdout)
+    _formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    _handler.setFormatter(_formatter)
+    logger.addHandler(_handler)
+    logger.setLevel(logging.INFO) # Default to INFO for this utility script if run alone
+    logger.propagate = False
 
-# --- START: Moved Helper functions from levels.py ---
+
+# --- Helper functions for creating data dictionaries ---
 def _create_platform_data(x: float, y: float, w: float, h: float, color: Tuple[int,int,int], p_type: str, props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
     return {'rect': (float(x), float(y), float(w), float(h)), 'color': color, 'type': p_type, 'properties': props or {}}
 
-def _create_ladder_data(x: float, y: float, w: float, h: float) -> Dict[str, Any]: # Color not typically used for ladder data for game
-    return {'rect': (float(x), float(y), float(w), float(h))} # Removed color, add if needed
+def _create_ladder_data(x: float, y: float, w: float, h: float) -> Dict[str, Any]:
+    return {'rect': (float(x), float(y), float(w), float(h))}
 
 def _create_hazard_data(h_type: str, x: float, y: float, w: float, h: float, color: Tuple[int,int,int]) -> Dict[str, Any]:
     return {'type': h_type, 'rect': (float(x), float(y), float(w), float(h)), 'color': color}
 
+def _create_background_tile_data(x: float, y: float, w: float, h: float, color: Tuple[int,int,int], tile_type: str, image_path: Optional[str]=None, props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
+    data = {'rect': (float(x), float(y), float(w), float(h)), 'color': color, 'type': tile_type, 'properties': props or {}}
+    if image_path:
+        data['image_path'] = image_path
+    return data
+
 def _create_enemy_spawn_data(start_pos_tuple: Tuple[float,float], enemy_type_str: str, patrol_rect_data_dict: Optional[Dict[str,float]]=None, props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
     data = {'start_pos': start_pos_tuple, 'type': enemy_type_str, 'properties': props or {}}
-    if patrol_rect_data_dict: # Only add patrol_rect_data if it's provided
+    if patrol_rect_data_dict:
         data['patrol_rect_data'] = patrol_rect_data_dict
     return data
 
@@ -52,12 +118,11 @@ def _create_item_spawn_data(item_type_str: str, pos_tuple: Tuple[float,float], p
 
 def _create_statue_spawn_data(statue_id_str: str, pos_tuple: Tuple[float,float], props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
     return {'id': statue_id_str, 'pos': pos_tuple, 'properties': props or {}}
-# --- END: Moved Helper functions ---
+# --- End Helper functions ---
 
 
 def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
                        map_width_tiles: int, map_height_tiles: int):
-    # ... (rest of the function remains the same)
     logger.info(f"Initializing new map state. Name: '{map_name_for_function}', Size: {map_width_tiles}x{map_height_tiles}")
     clean_map_name = map_name_for_function.strip().lower().replace(" ", "_").replace("-", "_")
     if not clean_map_name: clean_map_name = "untitled_map"; logger.warning("map_name empty, defaulting to 'untitled_map'")
@@ -78,7 +143,9 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     
     maps_abs_dir = getattr(C, "MAPS_DIR", ED_CONFIG.MAPS_DIRECTORY)
     if not os.path.isabs(maps_abs_dir):
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # Corrected assumption: __file__ in editor_map_utils.py is inside 'editor' directory
+        current_dir = os.path.dirname(os.path.abspath(__file__)) # .../project_root/editor
+        project_root = os.path.dirname(current_dir)              # .../project_root
         maps_abs_dir = os.path.join(project_root, maps_abs_dir)
         logger.debug(f"Derived absolute maps directory: {maps_abs_dir}")
 
@@ -90,10 +157,10 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
 
 
 def ensure_maps_directory_exists() -> bool:
-    # ... (function remains the same)
     maps_dir_to_check = getattr(C, "MAPS_DIR", ED_CONFIG.MAPS_DIRECTORY)
     if not os.path.isabs(maps_dir_to_check):
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)      
         maps_dir_to_check = os.path.join(project_root, maps_dir_to_check)
 
     if not os.path.exists(maps_dir_to_check):
@@ -108,7 +175,6 @@ def ensure_maps_directory_exists() -> bool:
 
 
 def save_map_to_json(editor_state: EditorState) -> bool:
-    # ... (function remains the same)
     logger.info(f"Saving map to JSON. Map name from state: '{editor_state.map_name_for_function}'")
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
         logger.error("Map name not set or 'untitled_map'. Cannot save JSON."); return False
@@ -119,17 +185,21 @@ def save_map_to_json(editor_state: EditorState) -> bool:
     
     maps_abs_dir = getattr(C, "MAPS_DIR", ED_CONFIG.MAPS_DIRECTORY)
     if not os.path.isabs(maps_abs_dir):
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
         maps_abs_dir = os.path.join(project_root, maps_abs_dir)
 
     expected_json_filename = editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
     expected_json_filepath = os.path.join(maps_abs_dir, expected_json_filename)
 
-    if os.path.normpath(json_filepath) != os.path.normpath(expected_json_filepath):
+    if os.path.normpath(str(json_filepath)) != os.path.normpath(expected_json_filepath): 
         json_filepath = expected_json_filepath
         editor_state.current_json_filename = json_filepath
         logger.warning(f"JSON filepath re-derived for save: '{json_filepath}'")
     
+    if not json_filepath: 
+        logger.error("JSON filepath is None after derivation. Cannot save."); return False
+        
     logger.debug(f"Attempting to save JSON to: '{json_filepath}'")
     data_to_save = editor_history.get_map_snapshot(editor_state)
 
@@ -142,7 +212,6 @@ def save_map_to_json(editor_state: EditorState) -> bool:
 
 
 def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
-    # ... (function remains the same)
     logger.info(f"Loading map from JSON: '{json_filepath}'")
     if not os.path.exists(json_filepath) or not os.path.isfile(json_filepath):
         logger.error(f"JSON map file not found: '{json_filepath}'"); return False
@@ -152,7 +221,8 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
 
         maps_abs_dir = getattr(C, "MAPS_DIR", ED_CONFIG.MAPS_DIRECTORY)
         if not os.path.isabs(maps_abs_dir):
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
             maps_abs_dir = os.path.join(project_root, maps_abs_dir)
         
         py_filename_for_state = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
@@ -166,7 +236,7 @@ def load_map_from_json(editor_state: EditorState, json_filepath: str) -> bool:
 
 
 def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_category_name: str) -> List[Dict[str, Any]]:
-    # ... (function remains the same)
+    # ... (Implementation remains the same, no changes needed for this part based on the error) ...
     if not objects_raw:
         logger.debug(f"No raw objects provided for merging (category: {object_category_name}).")
         return []
@@ -257,19 +327,20 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
         logger.error("Map name not set. Cannot export .py data file."); return False
     
-    py_filepath_to_use = editor_state.current_map_filename
+    py_filepath_to_use = editor_state.current_map_filename 
     maps_abs_dir = getattr(C, "MAPS_DIR", ED_CONFIG.MAPS_DIRECTORY)
     if not os.path.isabs(maps_abs_dir):
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
         maps_abs_dir = os.path.join(project_root, maps_abs_dir)
 
     expected_py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
     expected_py_filepath = os.path.join(maps_abs_dir, expected_py_filename)
 
-    if os.path.normpath(py_filepath_to_use) != os.path.normpath(expected_py_filepath):
+    if py_filepath_to_use is None or os.path.normpath(str(py_filepath_to_use)) != os.path.normpath(expected_py_filepath):
         py_filepath_to_use = expected_py_filepath
-        editor_state.current_map_filename = py_filepath_to_use
-        logger.warning(f"PY data filepath for export re-derived: '{py_filepath_to_use}'")
+        editor_state.current_map_filename = py_filepath_to_use 
+        logger.warning(f"PY data filepath for export re-derived/set to: '{py_filepath_to_use}'")
 
     if not ensure_maps_directory_exists():
         logger.error(f"Maps directory issue. PY data export aborted."); return False
@@ -280,6 +351,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     platforms_data_raw: List[Dict[str, Any]] = []
     ladders_data_raw: List[Dict[str, Any]] = []
     hazards_data_raw: List[Dict[str, Any]] = []
+    background_tiles_data_raw: List[Dict[str, Any]] = []
     
     enemies_list_export: List[Dict[str, Any]] = []
     items_list_export: List[Dict[str, Any]] = []
@@ -290,6 +362,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     
     player_start_pos_p1: Optional[Tuple[float, float]] = None
     player_start_pos_p2: Optional[Tuple[float, float]] = None
+    player1_spawn_props: Dict[str, Any] = {} 
+    player2_spawn_props: Dict[str, Any] = {} 
     
     all_placed_objects_rect_data_for_bounds: List[Dict[str, float]] = []
 
@@ -314,8 +388,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                 obj_w, obj_h = float(w_param), float(h_param)
                 default_color_from_asset_tuple = c_param
         elif asset_entry.get("original_size_pixels"):
-             orig_w, orig_h = asset_entry["original_size_pixels"]
-             obj_w, obj_h = float(orig_w), float(orig_h)
+             orig_w_tuple, orig_h_tuple = asset_entry["original_size_pixels"]
+             obj_w, obj_h = float(orig_w_tuple), float(orig_h_tuple)
         
         final_color_for_export = tuple(override_color_tuple) if isinstance(override_color_tuple, list) else \
                                  (override_color_tuple if isinstance(override_color_tuple, tuple) else default_color_from_asset_tuple)
@@ -327,6 +401,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         is_ladder_type = "ladder" in game_id.lower()
         is_hazard_type = "hazard" in game_id.lower()
         is_statue_type = "object_stone" in game_id.lower()
+        is_background_tile_type = asset_entry.get("category") == "background_tile"
 
         if is_platform_type:
             platform_game_type = game_id 
@@ -341,30 +416,50 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 
                                      'color': final_color_for_export, 'type': game_id, 
                                      'properties': obj_props})
+        elif is_background_tile_type:
+            bg_tile_game_type = game_id
+            bg_tile_image_path = asset_entry.get("source_file")
+            background_tiles_data_raw.append({
+                'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h,
+                'color': final_color_for_export, 'type': bg_tile_game_type,
+                'image_path': bg_tile_image_path,
+                'properties': obj_props
+            })
         elif is_statue_type:
             statue_id = obj_data.get("unique_id", f"statue_{len(statue_list_export)}")
             statue_pos = (export_x + obj_w / 2.0, export_y + obj_h / 2.0)
-            statue_list_export.append(_create_statue_spawn_data(statue_id, statue_pos, props=obj_props)) # Use helper
+            statue_list_export.append(_create_statue_spawn_data(statue_id, statue_pos, props=obj_props))
         elif game_id == "player1_spawn":
-            player_start_pos_p1 = (export_x + obj_w / 2.0, export_y + obj_h) 
+            player_start_pos_p1 = (export_x + obj_w / 2.0, export_y + obj_h)
+            player1_spawn_props = obj_props.copy() 
         elif game_id == "player2_spawn":
             player_start_pos_p2 = (export_x + obj_w / 2.0, export_y + obj_h)
+            player2_spawn_props = obj_props.copy() 
         elif "enemy" in game_id.lower():
             enemy_type_for_game = game_id 
             spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h)
-            enemies_list_export.append(_create_enemy_spawn_data(spawn_pos, enemy_type_for_game, props=obj_props)) # Use helper
+            enemies_list_export.append(_create_enemy_spawn_data(spawn_pos, enemy_type_for_game, props=obj_props))
         elif any(item_key in game_id.lower() for item_key in ["chest", "item", "collectible"]):
             item_type_for_game = game_id
             item_pos = (export_x + obj_w / 2.0, export_y + obj_h / 2.0) 
-            items_list_export.append(_create_item_spawn_data(item_type_for_game, item_pos, props=obj_props)) # Use helper
+            items_list_export.append(_create_item_spawn_data(item_type_for_game, item_pos, props=obj_props))
 
     if player_start_pos_p1 is None: player_start_pos_p1 = (default_spawn_world_x, default_spawn_world_y)
+    if player_start_pos_p2 is None: player_start_pos_p2 = (player_start_pos_p1[0] + ts*2, player_start_pos_p1[1])
+
 
     platforms_list_export = _merge_rect_objects_to_data(platforms_data_raw, "platform")
     ladders_list_export = _merge_rect_objects_to_data(ladders_data_raw, "ladder")
     hazards_list_export = _merge_rect_objects_to_data(hazards_data_raw, "hazard")
+    background_tiles_list_export: List[Dict[str, Any]] = []
+    for bg_raw in background_tiles_data_raw:
+        background_tiles_list_export.append(
+            _create_background_tile_data(
+                bg_raw['x'], bg_raw['y'], bg_raw['w'], bg_raw['h'],
+                bg_raw['color'], bg_raw['type'], bg_raw.get('image_path'), bg_raw.get('properties', {})
+            )
+        )
 
-    # --- MODIFIED BOUNDARY AND CAMERA EXTENT LOGIC ---
     if not all_placed_objects_rect_data_for_bounds:
         map_min_x_content = 0.0; map_max_x_content = float(editor_state.map_width_tiles * ts)
         map_min_y_content = 0.0; map_max_y_content = float(editor_state.map_height_tiles * ts)
@@ -402,7 +497,6 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                               _boundary_color_tuple, "boundary_wall_right"),
     ]
     platforms_list_export.extend(boundary_platforms_data)
-    # --- END MODIFIED BOUNDARY LOGIC ---
 
     main_ground_y_ref = map_max_y_content 
     ground_platform_height_ref = float(C.TILE_SIZE)
@@ -414,32 +508,36 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             widest_candidate = max(candidate_ground_platforms, key=lambda p: p['rect'][2])
             main_ground_y_ref = widest_candidate['rect'][1]
             ground_platform_height_ref = widest_candidate['rect'][3]
-        elif all_platforms_for_ground_check:
-            main_ground_y_ref = min(p['rect'][1] for p in all_platforms_for_ground_check)
+        elif all_platforms_for_ground_check: 
+            main_ground_y_ref = lowest_platform_top_y 
+            first_ground_plat = next((p for p in all_platforms_for_ground_check if abs(p['rect'][1] - main_ground_y_ref) < (ts*0.1)), None)
+            if first_ground_plat: ground_platform_height_ref = first_ground_plat['rect'][3]
 
 
     final_game_data_for_script = {
         "level_name": editor_state.map_name_for_function,
         "background_color": editor_state.background_color,
         "player_start_pos_p1": player_start_pos_p1,
+        "player1_spawn_props": player1_spawn_props,
+        "player_start_pos_p2": player_start_pos_p2,
+        "player2_spawn_props": player2_spawn_props,
         "platforms_list": platforms_list_export,
         "ladders_list": ladders_list_export,
         "hazards_list": hazards_list_export,
+        "background_tiles_list": background_tiles_list_export, 
         "enemies_list": enemies_list_export,
         "items_list": items_list_export,
         "statues_list": statue_list_export,
-        "level_pixel_width": level_pixel_width_for_camera,    # Use corrected width
-        "level_min_x_absolute": level_min_x_abs_for_camera, # Add min_x
+        "level_pixel_width": level_pixel_width_for_camera,
+        "level_min_x_absolute": level_min_x_abs_for_camera,
         "level_min_y_absolute": level_min_y_abs_for_camera,
         "level_max_y_absolute": level_max_y_abs_for_camera,
         "ground_level_y_ref": main_ground_y_ref,
         "ground_platform_height_ref": ground_platform_height_ref,
     }
-    if player_start_pos_p2:
-        final_game_data_for_script["player_start_pos_p2"] = player_start_pos_p2
     
-    for key in ["platforms_list", "ladders_list", "hazards_list", "enemies_list", "items_list", "statues_list"]:
-        final_game_data_for_script.setdefault(key, [])
+    for key_default_list in ["platforms_list", "ladders_list", "hazards_list", "background_tiles_list", "enemies_list", "items_list", "statues_list"]:
+        final_game_data_for_script.setdefault(key_default_list, [])
 
     script_content_parts = [
         f"# Level Data: {editor_state.map_name_for_function}",
@@ -448,8 +546,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         f"def {game_function_name}():",
         "    game_data = {"
     ]
-    for key, value in final_game_data_for_script.items():
-        script_content_parts.append(f"        {repr(key)}: {repr(value)},")
+    for data_key, data_value in final_game_data_for_script.items():
+        script_content_parts.append(f"        {repr(data_key)}: {repr(data_value)},")
     
     script_content_parts.extend([
         "    }",
@@ -457,14 +555,14 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         "",
         "if __name__ == '__main__':",
         f"    data = {game_function_name}()",
-        "    import json",
-        "    print(json.dumps(data, indent=4))"
+        "    import json", 
+        "    print(json.dumps(data, indent=4))" 
     ])
     script_content = "\n".join(script_content_parts)
 
     try:
-        with open(py_filepath_to_use, "w") as f: f.write(script_content)
-        logger.info(f"Map data exported to game script: {os.path.basename(py_filepath_to_use)}")
+        with open(str(py_filepath_to_use), "w") as f: f.write(script_content) 
+        logger.info(f"Map data exported to game script: {os.path.basename(str(py_filepath_to_use))}")
         editor_state.unsaved_changes = False 
         return True
     except Exception as e:
@@ -472,7 +570,6 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
 
 
 def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) -> bool:
-    # ... (function remains the same)
     logger.info(f"Attempting to delete map files. Base JSON path: {json_filepath_to_delete}")
     if not json_filepath_to_delete.endswith(ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION):
         logger.error(f"Invalid file type for deletion: {json_filepath_to_delete}."); return False
@@ -496,3 +593,93 @@ def delete_map_files(editor_state: EditorState, json_filepath_to_delete: str) ->
             return True 
     except OSError as e:
         logger.error(f"Error deleting map files for '{map_name_base}': {e}", exc_info=True); return False
+
+
+def batch_fix_map_files_repr_key_issue(maps_directory: str):
+    """
+    Scans all .py files in the maps_directory and attempts to fix the
+    `repr(key): value` issue by changing it to `"key_string": value`.
+    This is a one-time utility.
+    """
+    logger.info(f"Starting batch fix for map files in: {maps_directory}")
+    fixed_count = 0
+    error_count = 0
+
+    if not os.path.isdir(maps_directory):
+        logger.error(f"Provided maps directory does not exist: {maps_directory}")
+        return
+
+    for filename in os.listdir(maps_directory):
+        if filename.endswith(".py") and filename != "__init__.py":
+            filepath = os.path.join(maps_directory, filename)
+            logger.debug(f"Processing map file: {filename}")
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                pattern = r"repr\(([^)]+)\)\s*:"
+                
+                modified_content = content
+                found_match = False
+
+                def replace_func(match):
+                    nonlocal found_match
+                    captured_key_name = match.group(1).strip()
+                    if (captured_key_name.startswith("'") and captured_key_name.endswith("'")) or \
+                       (captured_key_name.startswith('"') and captured_key_name.endswith('"')):
+                        key_as_string_literal = captured_key_name[1:-1] 
+                    else:
+                        key_as_string_literal = captured_key_name
+                    
+                    found_match = True
+                    # Ensure the key is properly quoted as a string literal for the dictionary
+                    return f'"{key_as_string_literal}":'
+
+                modified_content = re.sub(pattern, replace_func, content)
+
+                if found_match:
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write(modified_content)
+                    logger.info(f"Fixed `repr(key)` issue in: {filename}")
+                    fixed_count += 1
+                else:
+                    logger.debug(f"No `repr(key):` pattern found in: {filename} (or already correct)")
+
+            except Exception as e:
+                logger.error(f"Error processing or fixing file {filename}: {e}", exc_info=True)
+                error_count += 1
+    
+    logger.info(f"Batch fix complete. Fixed: {fixed_count} files. Errors: {error_count} files.")
+
+
+if __name__ == "__main__":
+    # --- This block is for when editor_map_utils.py is run directly ---
+    print("Running editor_map_utils.py directly...")
+
+    # Adjust sys.path to allow imports from the parent directory (project root)
+    # and from the 'editor' package if this script is inside it.
+    current_script_dir_main = os.path.dirname(os.path.abspath(__file__))
+    project_root_main = os.path.dirname(current_script_dir_main) 
+    
+    if project_root_main not in sys.path:
+        sys.path.insert(0, project_root_main)
+        print(f"__main__ in editor_map_utils: Added project root '{project_root_main}' to sys.path.")
+
+    # For the batch fix to access ED_CONFIG and C, they need to be available.
+    # The conditional import at the top handles this if __name__ == "__main__".
+    # We also need to ensure the logger is minimally configured for standalone execution.
+    if not logging.getLogger().hasHandlers(): # Basic logger config if not already set
+        logging.basicConfig(level=logging.INFO, format='%(levelname)s (editor_map_utils utility): %(message)s')
+    
+    # Now, it's safe to call functions that might rely on these imports.
+    maps_dir_to_fix = getattr(C, "MAPS_DIR", "maps") # Get from constants or fallback
+    if not os.path.isabs(maps_dir_to_fix):
+        maps_dir_to_fix = os.path.join(project_root_main, maps_dir_to_fix)
+
+    if not os.path.isdir(maps_dir_to_fix):
+        print(f"ERROR: The resolved maps directory does not exist: {maps_dir_to_fix}")
+        print("Please ensure the path is correct or create the directory with your .py map files.")
+    else:
+        print(f"Attempting to batch fix map files in: {maps_dir_to_fix}")
+        batch_fix_map_files_repr_key_issue(maps_dir_to_fix)
+        print("Batch fixing process finished.")

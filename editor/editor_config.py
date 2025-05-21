@@ -1,9 +1,7 @@
-#################### START OF FILE: editor\editor_config.py ####################
-
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.3 
+## version 2.0.4 (Added BackgroundTile category and examples)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 """
 import sys
@@ -12,7 +10,6 @@ import traceback
 from typing import Dict, Optional, Tuple, Any
 
 # --- Add parent directory to sys.path ---
-# This ensures that 'constants.py' (from the project root) can be imported.
 current_script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root_dir = os.path.dirname(current_script_dir)
 
@@ -26,59 +23,60 @@ try:
 except ImportError as e:
     print(f"CRITICAL CONFIG ERROR: Failed to import 'constants as C' from '{project_root_dir}'. Error: {e}")
     print(f"Current sys.path: {sys.path}")
-    class FallbackConstants: # Define a fallback if main constants cannot be loaded
-        TILE_SIZE = 40 # Ensure this matches your game's default
+    class FallbackConstants: 
+        TILE_SIZE = 40 
         WHITE = (255,255,255); BLACK = (0,0,0); RED = (255,0,0); GREEN = (0,255,0)
         BLUE = (0,0,255); GRAY = (128,128,128); DARK_GRAY = (50,50,50); YELLOW = (255,255,0)
         LIGHT_BLUE = (173,216,230); DARK_GREEN = (0,100,0); ORANGE_RED = (255,69,0)
         LIGHT_GRAY = (200,200,200); FPS = 60
         MAGENTA = (255, 0, 255)
         PURPLE_BACKGROUND = (75,0,130)
-        MAPS_DIR = "maps" # Relative to project root
-        EDITOR_SCREEN_INITIAL_WIDTH = 1000 # Example fallback
+        MAPS_DIR = "maps" 
+        EDITOR_SCREEN_INITIAL_WIDTH = 1000
+        LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
+        GAME_LEVEL_FILE_EXTENSION = ".py"
     C = FallbackConstants()
     print("CRITICAL editor_config.py: Using fallback constants. Ensure TILE_SIZE matches your game.")
 except Exception as e_gen:
     print(f"CRITICAL CONFIG ERROR: Unexpected error importing 'constants': {e_gen}"); traceback.print_exc()
     sys.exit("Failed to initialize constants in editor_config.py")
 
-
 # --- Editor Window Dimensions ---
-EDITOR_SCREEN_INITIAL_WIDTH = getattr(C, 'EDITOR_SCREEN_INITIAL_WIDTH', 1380) # Use from C if defined, else default
-EDITOR_SCREEN_INITIAL_HEIGHT = getattr(C, 'EDITOR_SCREEN_INITIAL_HEIGHT', 820) # Use from C if defined, else default
+EDITOR_SCREEN_INITIAL_WIDTH = getattr(C, 'EDITOR_SCREEN_INITIAL_WIDTH', 1380) 
+EDITOR_SCREEN_INITIAL_HEIGHT = getattr(C, 'EDITOR_SCREEN_INITIAL_HEIGHT', 820)
 
-# --- Section Preferred Sizes (Qt Layouts will manage actual sizes) ---
+# --- Section Preferred Sizes ---
 MENU_SECTION_PREFERRED_WIDTH = 250
 ASSET_PALETTE_PREFERRED_WIDTH = 300
 
 # --- Grid and Tile Size ---
-BASE_GRID_SIZE = getattr(C, 'TILE_SIZE', 40) # Default to 40 if not in C
+BASE_GRID_SIZE = getattr(C, 'TILE_SIZE', 40) 
 
-# --- Camera Control & Zoom (for QGraphicsView) ---
+# --- Camera Control & Zoom ---
 KEY_PAN_SPEED_UNITS_PER_SECOND = 400
 EDGE_SCROLL_ZONE_THICKNESS = 25
 EDGE_SCROLL_SPEED_UNITS_PER_SECOND = 300
-
 MIN_ZOOM_LEVEL = 0.1
 MAX_ZOOM_LEVEL = 8.0
 ZOOM_FACTOR_INCREMENT = 1.2
 ZOOM_FACTOR_DECREMENT = 1 / 1.2
 
-# --- Map View Appearance (for QGraphicsView/Scene custom drawing) ---
+# --- Map View Appearance ---
 MAP_VIEW_GRID_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'GRAY', (128,128,128))
 MAP_VIEW_SELECTION_RECT_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'YELLOW', (255,255,0))
 MAP_VIEW_HOVER_RECT_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'LIGHT_BLUE', (173,216,230))
-CURSOR_ASSET_ALPHA = 100 # Opacity for cursor preview (0-255)
+CURSOR_ASSET_ALPHA = 100
 
 # --- Minimap Configuration ---
 MINIMAP_ENABLED = True
 MINIMAP_DEFAULT_WIDTH = 200
 MINIMAP_DEFAULT_HEIGHT = 150
-MINIMAP_BACKGROUND_COLOR_TUPLE: Tuple[int,int,int,int] = (40, 40, 50, 230) # RGBA
+MINIMAP_BACKGROUND_COLOR_TUPLE: Tuple[int,int,int,int] = (40, 40, 50, 230) 
 MINIMAP_BORDER_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'GRAY', (128,128,128))
-MINIMAP_VIEW_RECT_FILL_COLOR_TUPLE: Tuple[int,int,int,int] = (255, 255, 0, 70) # Yellow, semi-transparent
+MINIMAP_VIEW_RECT_FILL_COLOR_TUPLE: Tuple[int,int,int,int] = (255, 255, 0, 70) 
 MINIMAP_VIEW_RECT_BORDER_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'YELLOW', (255,255,0))
 MINIMAP_OBJECT_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'LIGHT_GRAY', (200,200,200))
+MINIMAP_OBJECT_REPRESENTATION_SIZE_PX = 2.0
 MINIMAP_UPDATE_INTERVAL_MS = 50
 
 # --- Asset Palette ---
@@ -88,12 +86,11 @@ ASSET_PALETTE_ICON_SIZE_H = ASSET_THUMBNAIL_SIZE
 ASSET_ITEM_BACKGROUND_SELECTED_COLOR_TUPLE: Tuple[int,int,int] = (70, 100, 150)
 
 # --- File Paths and Extensions ---
-# MAPS_DIRECTORY is now robustly determined by C.MAPS_DIR.
-MAPS_DIRECTORY = getattr(C, 'MAPS_DIR', os.path.join(project_root_dir, "maps")) # Ensure fallback if C.MAPS_DIR missing
-LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
-GAME_LEVEL_FILE_EXTENSION = ".py"
+MAPS_DIRECTORY = getattr(C, 'MAPS_DIR', os.path.join(project_root_dir, "maps")) 
+LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = getattr(C, "LEVEL_EDITOR_SAVE_FORMAT_EXTENSION", ".json")
+GAME_LEVEL_FILE_EXTENSION = getattr(C, "GAME_LEVEL_FILE_EXTENSION", ".py")
 
-TS = BASE_GRID_SIZE # Alias for TILE_SIZE for asset definitions
+TS = BASE_GRID_SIZE 
 
 # 'source_file' paths are relative to the project root.
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
@@ -109,10 +106,10 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "enemy_yellow": { "source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
     # Items
     "chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "category": "item", "name_in_palette": "Chest"},
-    # New PNG Assets (Stone objects)
+    # Objects
     "object_stone_idle": {"source_file": "characters/Stone/__Stone.png", "game_type_id": "object_stone_idle", "category": "object", "name_in_palette": "Stone Block"},
     "object_stone_crouch": {"source_file": "characters/Stone/__StoneCrouch.png", "game_type_id": "object_stone_crouch", "category": "object", "name_in_palette": "Stone Crouch Block"},
-    # Tiles - Full Size (Procedurally generated in editor_assets.py)
+    # Tiles - Full Size
     "platform_wall_gray": {"surface_params": (TS, TS, getattr(C, 'GRAY', (128,128,128))), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
     "platform_ledge_green_full": {"surface_params": (TS, TS, getattr(C, 'DARK_GREEN', (0,100,0))), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
     # Tiles - Thin Ledges
@@ -127,26 +124,41 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "platform_wall_gray_bottom_half": {"render_mode": "half_tile", "half_type": "bottom", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "colorable": True, "game_type_id": "platform_wall_gray_bottom_half", "category": "tile", "name_in_palette": "Wall Bottom Half (Gray)"},
     # Hazards
     "hazard_lava_tile": {"source_file": "characters/assets/lava.gif", "game_type_id": "hazard_lava", "category": "hazard", "name_in_palette": "Lava Tile"},
-    # Tools (Generated icons in editor_assets.py)
+    # Background Tiles
+    "background_dark_fill": {
+        "surface_params": (TS * 5, TS * 5, getattr(C, 'DARK_GRAY', (50, 50, 50))), 
+        "colorable": True, 
+        "game_type_id": "background_dark_fill", 
+        "category": "background_tile", 
+        "name_in_palette": "BG Dark Fill (5x5)"
+    },
+    "background_sky_blue_fill": {
+        "surface_params": (TS * 10, TS * 10, getattr(C, 'LIGHT_BLUE', (173, 216, 230))), 
+        "colorable": True, 
+        "game_type_id": "background_sky_blue_fill", 
+        "category": "background_tile", 
+        "name_in_palette": "BG Sky Blue (10x10)"
+    },
+    # Example: "background_forest_image": {"source_file": "characters/assets/backgrounds/forest_tile.png", "original_size_pixels": (256, 256), "game_type_id": "background_forest_image", "category": "background_tile", "name_in_palette": "Forest BG Tile"},
+    # Tools
     "tool_eraser": {"icon_type": "eraser", "base_color_tuple": getattr(C, 'RED', (255,0,0)), "game_type_id": "tool_eraser", "category": "tool", "name_in_palette": "Eraser Tool"},
     "platform_wall_gray_2x2_placer": {"icon_type": "2x2_placer", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "places_asset_key": "platform_wall_gray", "game_type_id": "tool_wall_2x2_placer", "category": "tool", "name_in_palette": "2x2 Wall Placer"},
     "tool_color_picker": {"icon_type": "color_swatch", "base_color_tuple": getattr(C, 'BLUE', (0,0,255)), "game_type_id": "tool_tile_color_picker", "category": "tool", "name_in_palette": "Color Picker Tool"},
 }
 
-EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER = ["tool", "tile", "hazard", "item", "object", "enemy", "spawn", "unknown"]
+EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER = ["tool", "tile", "background_tile", "hazard", "item", "object", "enemy", "spawn", "unknown"]
 
 EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "player1_spawn": {
         "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health"},
-        "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"}, # Example scaling
-        "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"} # Example scaling
+        "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"}, 
+        "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"} 
     },
     "player2_spawn": {
         "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"},
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"}
     },
-    # ... (other enemy and item properties as before) ...
     "enemy_green": {
         "patrol_range_tiles": {"type": "int", "default": 6, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"},
         "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0) * 20, "min": 10.0, "max": 300.0, "label": "Move Speed (units/s)"},
@@ -181,16 +193,27 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     },
     "object_stone_crouch": {
         "is_passable_from_below": {"type": "bool", "default": False, "label": "Passable From Below"}
-    }
+    },
+    # Add properties for background tiles if needed, e.g., parallax scroll speed
+    "background_dark_fill": {
+        "parallax_factor_x": {"type": "float", "default": 0.8, "min": 0.0, "max": 2.0, "decimals": 2, "label": "Parallax X"},
+        "parallax_factor_y": {"type": "float", "default": 0.9, "min": 0.0, "max": 2.0, "decimals": 2, "label": "Parallax Y"},
+    },
+    "background_sky_blue_fill": {
+        "parallax_factor_x": {"type": "float", "default": 0.5, "min": 0.0, "max": 2.0, "decimals": 2, "label": "Parallax X"},
+        "parallax_factor_y": {"type": "float", "default": 0.7, "min": 0.0, "max": 2.0, "decimals": 2, "label": "Parallax Y"},
+    },
+    # "background_forest_image": {
+    #     "layer_depth": {"type": "int", "default": -10, "min": -100, "max": 0, "label": "Layer Depth (Z-order)"}
+    # }
 }
 
 # --- Map Defaults ---
 DEFAULT_MAP_WIDTH_TILES = 40
 DEFAULT_MAP_HEIGHT_TILES = 25
 DEFAULT_BACKGROUND_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'LIGHT_BLUE', (173,216,230))
-# In editor_config.py
-MINIMAP_OBJECT_REPRESENTATION_SIZE_PX = 2.0 # Or 1.0 or 3.0, experiment for best visibility
-# --- Qt Font Configuration (Examples) ---
+
+# --- Qt Font Configuration ---
 FONT_FAMILY_UI_DEFAULT = "Arial"
 FONT_SIZE_SMALL = 9
 FONT_SIZE_MEDIUM = 10
@@ -198,7 +221,7 @@ FONT_SIZE_LARGE = 12
 FONT_CATEGORY_TITLE_SIZE = 11
 FONT_CATEGORY_TITLE_BOLD = True
 
-# --- Color Presets for QColorDialog or custom color pickers ---
+# --- Color Presets ---
 COLOR_PICKER_PRESETS: Dict[str, Tuple[int,int,int]] = {
     "Light Blue": getattr(C, 'LIGHT_BLUE', (173,216,230)), "White": getattr(C, 'WHITE', (255,255,255)),
     "Black": getattr(C, 'BLACK', (0,0,0)), "Gray": getattr(C, 'GRAY', (128,128,128)),
@@ -212,12 +235,9 @@ COLOR_PICKER_PRESETS: Dict[str, Tuple[int,int,int]] = {
     "Magenta": getattr(C, 'MAGENTA', (255, 0, 255))
 }
 
-# Status bar message timeout (in milliseconds for QStatusBar.showMessage)
-STATUS_BAR_MESSAGE_TIMEOUT = 3000 # 3 seconds
+STATUS_BAR_MESSAGE_TIMEOUT = 3000 
 
 # Logging configuration
 LOG_LEVEL = "DEBUG"
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log"
-
-#################### END OF FILE: editor\editor_config.py ####################

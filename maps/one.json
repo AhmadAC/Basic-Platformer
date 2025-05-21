@@ -142,10 +142,902 @@
                 "move_speed": 350,
                 "jump_strength": -900
             }
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 440,
+            "world_y": 800,
+            "game_type_id": "hazard_lava",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "hazard_lava_tile",
+            "world_x": 920,
+            "world_y": 760,
+            "game_type_id": "hazard_lava",
+            "properties": {}
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400,
+            "world_y": 720,
+            "game_type_id": "platform_wall_gray",
+            "properties": {},
+            "override_color": [
+                255,
+                170,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400,
+            "world_y": 760,
+            "game_type_id": "platform_wall_gray",
+            "properties": {},
+            "override_color": [
+                255,
+                170,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400,
+            "world_y": 800,
+            "game_type_id": "platform_wall_gray",
+            "properties": {},
+            "override_color": [
+                255,
+                170,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400,
+            "world_y": 840,
+            "game_type_id": "platform_wall_gray",
+            "properties": {},
+            "override_color": [
+                255,
+                170,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "chest",
+            "world_x": 520,
+            "world_y": 800,
+            "game_type_id": "chest",
+            "properties": {
+                "item_type": "coin",
+                "item_quantity": 1
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 0,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 40,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 80,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 120,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 160,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 200,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 240,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 280,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 320,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 360,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 400,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 600,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 640,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 680,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 720,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": -40,
+            "world_y": 720,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": -40,
+            "world_y": 760,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": -40,
+            "world_y": 800,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 0,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 200,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 240,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 280,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 320,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 360,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 400,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 440,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 480,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 520,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 560,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 600,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 640,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 680,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 720,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 760,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 960,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1000,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1040,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1080,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1120,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1160,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1200,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1240,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1280,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1320,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1360,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1400,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1520,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1560,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1600,
+            "world_y": 920,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 760,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 760,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 720,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 680,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 640,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1520,
+            "world_y": 640,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1520,
+            "world_y": 600,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1520,
+            "world_y": 560,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1520,
+            "world_y": 520,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 640,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 600,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 560,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 520,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 480,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 480,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 440,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 400,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 360,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 320,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1480,
+            "world_y": 280,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 400,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 360,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 320,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 280,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 240,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 200,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 160,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 120,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 80,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 40,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
+        },
+        {
+            "asset_editor_key": "background_dark_fill",
+            "world_x": 1440,
+            "world_y": 0,
+            "game_type_id": "background_dark_fill",
+            "properties": {
+                "parallax_factor_x": 0.8,
+                "parallax_factor_y": 0.9
+            }
         }
     ],
-    "camera_offset_x": 317.0,
-    "camera_offset_y": 517.0,
+    "camera_offset_x": 175.0,
+    "camera_offset_y": 535.0,
     "zoom_level": 1.0,
     "show_grid": true,
     "asset_specific_variables": {}

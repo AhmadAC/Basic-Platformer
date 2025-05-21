@@ -3,17 +3,19 @@
 """
 Defines classes for static and interactive tiles in the game world.
 Refactored for PySide6 with deferred QPixmap creation.
+BackgroundTile added.
 """
-# version 2.1.3 (Deferred QPixmap creation)
+# version 2.1.4 (BackgroundTile added and integrated)
 
 import sys # For logger fallback
-from typing import Optional, Any, Tuple, Dict
+from typing import Optional, Any, Tuple, Dict, List # Added List for type hint consistency
 
 from PySide6.QtGui import QPixmap, QColor, QPainter, QPen
-from PySide6.QtCore import QRectF, QPointF, Qt
+from PySide6.QtCore import QRectF, QPointF, Qt, QSize # Added QSize
 import logging
 
 import constants as C # Assuming C.GRAY, C.TILE_SIZE, C.ORANGE_RED exist
+from assets import resource_path, load_gif_frames # For BackgroundTile image loading
 
 # --- Logger Setup ---
 logger = logging.getLogger(__name__)
@@ -45,33 +47,28 @@ class Platform:
 
         self.color_tuple = color_tuple
         self.q_color = QColor(*self.color_tuple)
-        # logger.debug(f"{self.log_prefix}: Effective dims {_w}x{_h}. Color: {self.q_color.name()}") # Logged in image property
 
         self._image: Optional[QPixmap] = None # Initialize as None for deferred creation
 
         self.rect = QRectF(float(x), float(y), self.width, self.height)
         self.platform_type = platform_type
         self.properties = properties if properties is not None else {}
-        self.is_collidable = True # Typically true for platforms
+        self.is_collidable = True 
         if "boundary" in self.platform_type: self.properties.setdefault("is_boundary", True)
-        self._graphics_item_ref: Optional[Any] = None # For QGraphicsScene integration if used
+        self._graphics_item_ref: Optional[Any] = None 
 
     @property
     def image(self) -> QPixmap:
-        """
-        Lazily creates and caches the QPixmap for this platform.
-        """
         if self._image is None or self._image.isNull():
             pix_w = max(1, int(self.width))
             pix_h = max(1, int(self.height))
             log_msg_detail = f"{self.log_prefix}: Creating QPixmap({pix_w}, {pix_h}), Color: {self.q_color.name()}"
             try:
-                # logger.debug(log_msg_detail) # Uncomment for very verbose logging
+                # logger.debug(log_msg_detail) 
                 temp_pixmap = QPixmap(pix_w, pix_h)
                 if temp_pixmap.isNull():
                     logger.error(f"{self.log_prefix}: QPixmap creation FAILED (isNull=True) for size {pix_w}x{pix_h}.")
-                    temp_pixmap = QPixmap(1,1) # Minimal valid pixmap
-                    temp_pixmap.fill(Qt.GlobalColor.magenta) # Magenta error color
+                    temp_pixmap = QPixmap(1,1); temp_pixmap.fill(Qt.GlobalColor.magenta)
                 else:
                     temp_pixmap.fill(self.q_color)
                 self._image = temp_pixmap
@@ -80,20 +77,21 @@ class Platform:
                 self._image = QPixmap(1,1); self._image.fill(Qt.GlobalColor.magenta)
         return self._image
 
-    def draw_pyside(self, painter: QPainter, camera: Any): # Use 'Any' for camera if Camera class isn't imported here to avoid circularity
-        """Draws the platform using PySide6 QPainter, transformed by camera."""
+    def draw_pyside(self, painter: QPainter, camera: Any): 
         if not self.rect.isValid(): return
         
-        img_to_draw = self.image # Access via property to ensure it's created
+        img_to_draw = self.image 
         if img_to_draw and not img_to_draw.isNull():
-            screen_rect = camera.apply(self.rect) # Assume camera.apply exists and returns QRectF
-            # Optional: Add culling here if screen_rect is outside painter.viewport()
-            if painter.window().intersects(screen_rect.toRect()): # Basic culling
+            screen_rect = camera.apply(self.rect) 
+            if painter.window().intersects(screen_rect.toRect()): 
                  painter.drawPixmap(screen_rect.topLeft(), img_to_draw)
-        else: # Fallback if image is somehow still null
+        else: 
             logger.warning(f"{self.log_prefix}: image is null during draw_pyside. Drawing solid rect.")
             screen_rect_fb = camera.apply(self.rect)
             painter.fillRect(screen_rect_fb, self.q_color)
+
+    def alive(self) -> bool: # Static tiles are always "alive" for rendering purposes
+        return True
 
 
 class Ladder:
@@ -119,23 +117,21 @@ class Ladder:
                     logger.error(f"{self.log_prefix}: QPixmap creation FAILED (isNull=True) for size {pix_w}x{pix_h}.")
                     temp_pixmap = QPixmap(1,1); temp_pixmap.fill(Qt.GlobalColor.magenta)
                 else:
-                    temp_pixmap.fill(Qt.GlobalColor.transparent) # Ladders are mostly transparent with rungs
+                    temp_pixmap.fill(Qt.GlobalColor.transparent) 
                     painter = QPainter(temp_pixmap)
                     painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
                     
-                    # Safe getattr for C.TILE_SIZE with a fallback
                     tile_size = float(getattr(C, 'TILE_SIZE', 40.0))
-                    rung_qcolor = QColor(139, 69, 19, 220) # Brownish, semi-transparent
+                    rung_qcolor = QColor(139, 69, 19, 220) 
                     pen = QPen(rung_qcolor)
                     
                     num_rungs = int(self.height / (tile_size * 0.35))
                     if num_rungs > 0:
-                        rung_spacing = self.height / (num_rungs + 1) # Distribute rungs evenly
+                        rung_spacing = self.height / (num_rungs + 1) 
                         pen.setWidth(max(1, int(tile_size * 0.05)))
                         painter.setPen(pen)
                         for i in range(1, num_rungs + 1):
                             rung_y_pos = i * rung_spacing
-                            # Ensure rung_y_pos is float for QPointF
                             if rung_y_pos < self.height - 1:
                                 painter.drawLine(QPointF(0.0, float(rung_y_pos)), QPointF(self.width, float(rung_y_pos)))
                     
@@ -145,11 +141,11 @@ class Ladder:
                     left_rail_x = float(rail_thickness / 2.0)
                     right_rail_x = self.width - float(rail_thickness / 2.0)
 
-                    if self.width >= rail_thickness: # Draw left rail
+                    if self.width >= rail_thickness: 
                         painter.drawLine(QPointF(left_rail_x, 0.0), QPointF(left_rail_x, self.height))
-                    if self.width >= rail_thickness * 2: # Draw right rail if space
+                    if self.width >= rail_thickness * 2: 
                         painter.drawLine(QPointF(right_rail_x, 0.0), QPointF(right_rail_x, self.height))
-                    elif self.width > rail_thickness: # Or a single central rail if very narrow
+                    elif self.width > rail_thickness: 
                         painter.drawLine(QPointF(self.width / 2.0, 0.0), QPointF(self.width / 2.0, self.height))
                     painter.end()
                 self._image = temp_pixmap
@@ -165,6 +161,9 @@ class Ladder:
             screen_rect = camera.apply(self.rect)
             if painter.window().intersects(screen_rect.toRect()):
                 painter.drawPixmap(screen_rect.topLeft(), img_to_draw)
+    
+    def alive(self) -> bool:
+        return True
 
 
 class Lava:
@@ -207,7 +206,91 @@ class Lava:
             screen_rect = camera.apply(self.rect)
             if painter.window().intersects(screen_rect.toRect()):
                  painter.drawPixmap(screen_rect.topLeft(), img_to_draw)
-        else: # Fallback if image is null
+        else: 
             logger.warning(f"{self.log_prefix}: image is null during draw_pyside. Drawing solid rect.")
             screen_rect_fb = camera.apply(self.rect)
             painter.fillRect(screen_rect_fb, self.q_color)
+            
+    def alive(self) -> bool:
+        return True
+
+
+class BackgroundTile:
+    def __init__(self, x: float, y: float, width: float, height: float,
+                 color_tuple: Tuple[int, int, int] = getattr(C, 'DARK_GRAY', (50, 50, 50)),
+                 tile_type: str = "generic_background",
+                 image_path: Optional[str] = None,
+                 properties: Optional[Dict[str, Any]] = None):
+
+        self.log_prefix = f"BackgroundTile(type='{tile_type}', rect=({x},{y},{width},{height}))"
+
+        _w = float(width)
+        _h = float(height)
+        if _w <= 0: logger.warning(f"{self.log_prefix}: Non-positive width: {width}. Using 1.0."); _w = 1.0
+        if _h <= 0: logger.warning(f"{self.log_prefix}: Non-positive height: {height}. Using 1.0."); _h = 1.0
+        
+        self.width = _w
+        self.height = _h
+
+        self.color_tuple = color_tuple
+        self.q_color = QColor(*self.color_tuple)
+        self.tile_type = tile_type
+        self.properties = properties if properties is not None else {}
+        self.image_path = image_path
+        self._image: Optional[QPixmap] = None 
+
+        self.rect = QRectF(float(x), float(y), self.width, self.height)
+        self._graphics_item_ref: Optional[Any] = None
+
+    @property
+    def image(self) -> QPixmap:
+        if self._image is None or self._image.isNull():
+            pix_w = max(1, int(self.width))
+            pix_h = max(1, int(self.height))
+            log_msg_detail = f"{self.log_prefix}: Creating QPixmap({pix_w}, {pix_h})"
+            
+            if self.image_path:
+                full_path = resource_path(self.image_path)
+                loaded_frames = load_gif_frames(full_path) # load_gif_frames returns List[QPixmap]
+                if loaded_frames and not loaded_frames[0].isNull():
+                    # Scale the loaded image to fit the tile dimensions
+                    # Use IgnoreAspectRatio if the tile's rect dimensions are the desired final dimensions.
+                    # Use KeepAspectRatio if you want to preserve the image's aspect ratio within the tile's bounds.
+                    self._image = loaded_frames[0].scaled(QSize(pix_w, pix_h), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    logger.debug(f"{self.log_prefix}: Loaded image from '{self.image_path}' and scaled to {pix_w}x{pix_h}.")
+                else:
+                    logger.warning(f"{self.log_prefix}: Failed to load image from '{self.image_path}'. Using color fill.")
+                    self._image = QPixmap(pix_w, pix_h)
+                    if self._image.isNull(): # Extra check for QPixmap creation itself
+                         logger.error(f"{self.log_prefix}: Fallback QPixmap creation FAILED (color fill) for size {pix_w}x{pix_h}.")
+                         self._image = QPixmap(1,1); self._image.fill(Qt.GlobalColor.magenta)
+                    else:
+                         self._image.fill(self.q_color)
+            else:
+                # logger.debug(log_msg_detail + f", Color: {self.q_color.name()}") # For procedural color fill
+                self._image = QPixmap(pix_w, pix_h)
+                if self._image.isNull():
+                    logger.error(f"{self.log_prefix}: QPixmap creation FAILED (isNull=True) for color fill, size {pix_w}x{pix_h}.")
+                    self._image = QPixmap(1,1); self._image.fill(Qt.GlobalColor.magenta)
+                else:
+                    self._image.fill(self.q_color)
+        return self._image
+
+    def draw_pyside(self, painter: QPainter, camera: Any):
+        if not self.rect.isValid(): return
+        
+        img_to_draw = self.image 
+        if img_to_draw and not img_to_draw.isNull():
+            screen_rect = camera.apply(self.rect) 
+            # Background tiles are often large; culling is important.
+            # The painter's clipRegion or window is in widget coordinates.
+            # screen_rect is also in widget coordinates.
+            if painter.window().intersects(screen_rect.toRect()): 
+                 painter.drawPixmap(screen_rect.topLeft(), img_to_draw)
+        else:
+            logger.warning(f"{self.log_prefix}: image is null during draw_pyside. Drawing solid rect.")
+            screen_rect_fb = camera.apply(self.rect)
+            painter.fillRect(screen_rect_fb, self.q_color)
+
+    def alive(self) -> bool:
+        return True

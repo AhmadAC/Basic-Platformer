@@ -382,6 +382,16 @@ def _reset_all_prev_press_flags(main_window: 'MainWindow'):
     main_window._prev_lan_confirm_pressed = False; main_window._prev_lan_cancel_pressed = False; main_window._prev_lan_retry_pressed = False
     main_window._prev_ip_dialog_confirm_pressed = False; main_window._prev_ip_dialog_cancel_pressed = False
 
+def _update_status_dialog(main_window: 'MainWindow', message: str, progress: float = -1.0, title: Optional[str] = None):
+    if main_window.status_dialog and main_window.status_dialog.isVisible():
+        if title: # If a new title is provided, update it
+            main_window.status_dialog.setWindowTitle(title)
+        if main_window.status_label_in_dialog: main_window.status_label_in_dialog.setText(message)
+        if main_window.status_progress_bar_in_dialog:
+            if 0 <= progress <= 100: main_window.status_progress_bar_in_dialog.setValue(int(progress)); main_window.status_progress_bar_in_dialog.setVisible(True)
+            else: main_window.status_progress_bar_in_dialog.setVisible(False)
+    QApplication.processEvents()
+
 def _activate_ip_dialog_button(main_window: 'MainWindow'):
     if main_window.ip_input_dialog and main_window._ip_dialog_buttons_ref and 0 <= main_window._ip_dialog_selected_button_idx < len(main_window._ip_dialog_buttons_ref):
         main_window._ip_dialog_buttons_ref[main_window._ip_dialog_selected_button_idx].click()
