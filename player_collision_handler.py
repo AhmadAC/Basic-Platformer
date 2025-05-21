@@ -3,7 +3,7 @@
 """
 Handles all player-related collision detection and resolution for PySide6.
 """
-# version 2.0.4 (Improved platform collision resolution using snap thresholds)
+# version 2.0.5 (Corrected gravity application logic after landing/wall interaction)
 
 from typing import List, Any, Optional, TYPE_CHECKING
 import time
@@ -39,7 +39,7 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
     if not player._valid_init: return
 
     rect_before_collision_resolution_for_this_axis = QRectF(player.rect)
-    collided_with_wall_on_side = 0
+    collided_with_wall_on_side_this_frame = 0 # Track wall collision for this specific axis check
 
     for platform_obj in platforms_list:
         if not hasattr(platform_obj, 'rect') or not isinstance(platform_obj.rect, QRectF):
@@ -53,11 +53,9 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                            (QRectF(player.rect), QRectF(platform_obj.rect), getattr(platform_obj, 'platform_type', 'unknown')))
 
         if direction == 'x':
-            wall_snap_tolerance = getattr(C, 'CEILING_SNAP_THRESHOLD', 2.0) # Using ceiling snap as a small side snap tolerance
+            wall_snap_tolerance = getattr(C, 'CEILING_SNAP_THRESHOLD', 2.0)
 
             if player.vel.x() > 0: # Moving right
-                # Condition: Player's right edge is past platform's left edge,
-                # AND player's right edge (before resolve) was not already too far past platform's left edge.
                 if player.rect.right() > platform_obj.rect.left() and \
                    rect_before_collision_resolution_for_this_axis.right() <= platform_obj.rect.left() + wall_snap_tolerance:
                     player.rect.moveRight(platform_obj.rect.left())
@@ -65,7 +63,7 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                     if not player.on_ground and not player.on_ladder:
                         if player.rect.bottom() > platform_obj.rect.top() + C.MIN_WALL_OVERLAP_PX and \
                            player.rect.top() < platform_obj.rect.bottom() - C.MIN_WALL_OVERLAP_PX:
-                            collided_with_wall_on_side = 1
+                            collided_with_wall_on_side_this_frame = 1
             elif player.vel.x() < 0: # Moving left
                 if player.rect.left() < platform_obj.rect.right() and \
                    rect_before_collision_resolution_for_this_axis.left() >= platform_obj.rect.right() - wall_snap_tolerance:
@@ -74,15 +72,12 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                     if not player.on_ground and not player.on_ladder:
                         if player.rect.bottom() > platform_obj.rect.top() + C.MIN_WALL_OVERLAP_PX and \
                            player.rect.top() < platform_obj.rect.bottom() - C.MIN_WALL_OVERLAP_PX:
-                            collided_with_wall_on_side = -1
+                            collided_with_wall_on_side_this_frame = -1
             player.pos.setX(player.rect.center().x())
             log_player_physics(player, f"PLAT_COLL_RESOLVED_X", (QRectF(player.rect), QRectF(rect_before_collision_resolution_for_this_axis), (player.pos.x(), player.pos.y()), player.vel.x(), player.on_ground, 'x'))
 
         elif direction == 'y':
             if player.vel.y() >= 0: # Moving down (or stationary and intersecting)
-                # Condition: Player's bottom is at or below platform top,
-                # AND player's bottom (before resolve) was not already too far below platform top.
-                # Use GROUND_SNAP_THRESHOLD for more robust landing from slight initial penetrations.
                 if player.rect.bottom() >= platform_obj.rect.top() and \
                    rect_before_collision_resolution_for_this_axis.bottom() <= platform_obj.rect.top() + C.GROUND_SNAP_THRESHOLD:
                     min_overlap_ratio = getattr(C, 'MIN_PLATFORM_OVERLAP_RATIO_FOR_LANDING', 0.15)
@@ -97,13 +92,11 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                             if not player.is_sliding and not (hasattr(player, 'state') and str(player.state).startswith('slide_trans')):
                                 player.vel.setX(player.vel.x() * C.LANDING_FRICTION_MULTIPLIER)
                         player.on_ground = True; player.vel.setY(0.0)
+                        # player.acc.setY(0.0) # REMOVED - Gravity should persist in acc.y
                         player.pos.setY(player.rect.bottom())
                         log_player_physics(player, f"PLAT_COLL_Y_LAND", (QRectF(player.rect), QRectF(rect_before_collision_resolution_for_this_axis), (player.pos.x(), player.pos.y()), player.vel.y(), player.on_ground, 'y_land'))
 
             elif player.vel.y() < 0: # Moving up
-                # Condition: Player's top is at or above platform bottom,
-                # AND player's top (before resolve) was not already too far above platform bottom.
-                # Use CEILING_SNAP_THRESHOLD.
                 if player.rect.top() <= platform_obj.rect.bottom() and \
                    rect_before_collision_resolution_for_this_axis.top() >= platform_obj.rect.bottom() - C.CEILING_SNAP_THRESHOLD:
                     min_overlap_ratio_ceil = getattr(C, 'MIN_PLATFORM_OVERLAP_RATIO_FOR_CEILING', 0.15)
@@ -117,12 +110,23 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                         player.pos.setY(player.rect.bottom())
                         log_player_physics(player, f"PLAT_COLL_Y_CEIL", (QRectF(player.rect), QRectF(rect_before_collision_resolution_for_this_axis), (player.pos.x(), player.pos.y()), player.vel.y(), player.on_ground, 'y_ceil'))
 
-    if direction == 'x' and collided_with_wall_on_side != 0 and not player.on_ground and not player.on_ladder:
-        player.touching_wall = collided_with_wall_on_side
-        can_set_wall_jump = not (hasattr(player, 'state') and player.state == 'wall_climb' and \
-                                 hasattr(player, 'is_holding_climb_ability_key') and player.is_holding_climb_ability_key)
-        if can_set_wall_jump:
-            player.can_wall_jump = True
+    # Update touching_wall status only if a wall collision occurred in this axis check
+    # and player is not on ground or ladder (which would override wall interactions)
+    if direction == 'x' and collided_with_wall_on_side_this_frame != 0:
+        if not player.on_ground and not player.on_ladder:
+            player.touching_wall = collided_with_wall_on_side_this_frame
+            can_set_wall_jump = not (hasattr(player, 'state') and player.state == 'wall_climb' and \
+                                     hasattr(player, 'is_holding_climb_ability_key') and player.is_holding_climb_ability_key)
+            if can_set_wall_jump:
+                player.can_wall_jump = True
+        # If player became grounded during this X-axis check (unlikely but possible due to complex shapes),
+        # then wall interactions might be voided. However, on_ground is primarily set by Y-axis collision.
+    elif direction == 'x' and collided_with_wall_on_side_this_frame == 0:
+        # If no X collision with a platform this frame, and not already on a ladder, clear touching_wall
+        # (unless it's maintained by a character collision, handled elsewhere)
+        if not player.on_ladder:
+             player.touching_wall = 0 # Reset if no wall hit this frame for X
+             player.can_wall_jump = False # Cannot wall jump if not touching wall from platform
 
 
 def check_player_ladder_collisions(player: 'PlayerClass_TYPE', ladders_list: List[Any]):
