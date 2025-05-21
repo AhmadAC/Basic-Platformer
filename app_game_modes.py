@@ -6,6 +6,7 @@ managing network interactions, and UI dialogs for PySide6.
 """
 # version 2.0.1 (Added BackgroundTile handling)
 # version 2.0.2 (Ensured map_dir_path robustness, more logging for level_data)
+# version 2.0.3 (Corrected _update_status_dialog arguments)
 
 import os
 import sys
@@ -25,7 +26,7 @@ import config as game_config
 # UI Creator Imports
 from app_ui_creator import (
     _show_status_dialog,
-    _update_status_dialog,
+    _update_status_dialog, # This is the function signature we need to match
     _close_status_dialog,
     _show_lan_search_dialog,
     _update_lan_search_list_focus,
@@ -65,13 +66,10 @@ class LANServerSearchThread(QThread):
         self._running = True
         self.search_status_signal.emit("Searching for LAN games...")
         info("LAN_SEARCH_THREAD: Placeholder search started.")
-        # Simulate network delay and potential findings
-        time.sleep(1) # Initial delay
-        # Example: self.found_server_signal.emit("Dummy LAN Game", "192.168.1.100", C.SERVER_PORT_TCP, "test_map")
-        # self.search_status_signal.emit("Found 1 server. Still searching...")
-        time.sleep(1.5) # Further delay
+        time.sleep(1)
+        time.sleep(1.5)
 
-        if self._running: # Check if still running before emitting final status
+        if self._running:
             self.search_status_signal.emit("No LAN games found. Retry or enter IP manually.")
         info("LAN_SEARCH_THREAD: Placeholder search finished.")
         self._running = False
@@ -83,25 +81,20 @@ class LANServerSearchThread(QThread):
 
 def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: str) -> bool:
     info(f"GAME_MODES: Initializing game entities for map '{map_name}' in mode '{mode}'.")
-    reset_game_state(main_window.game_elements) # Start with a clean slate
+    reset_game_state(main_window.game_elements)
 
     try:
         level_loader = LevelLoader()
-        # Ensure maps_dir_path is absolute and correct
         maps_dir_path = str(getattr(C, "MAPS_DIR", "maps"))
         if not os.path.isabs(maps_dir_path):
             project_root_path = getattr(C, 'PROJECT_ROOT', None)
             if project_root_path is None:
-                # Fallback: assume constants.py is in project root, and this file is also there or a subdir
-                # This might need adjustment based on your project structure
                 project_root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                if not os.path.isdir(os.path.join(str(project_root_path), maps_dir_path)): # If relative to where this file is
+                if not os.path.isdir(os.path.join(str(project_root_path), maps_dir_path)):
                     project_root_path = os.path.dirname(os.path.abspath(__file__))
-
                 warning(f"C.PROJECT_ROOT not defined. Guessed project root for maps: {project_root_path}")
             maps_dir_path = os.path.join(str(project_root_path), maps_dir_path)
             info(f"GAME_MODES: Resolved relative MAPS_DIR to absolute: {maps_dir_path}")
-
 
         info(f"Attempting to load map '{map_name}' from directory '{maps_dir_path}' (using .py loader)")
         level_data = level_loader.load_map(map_name, maps_dir_path)
@@ -110,21 +103,20 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
             error_msg_detail = f"LevelLoader returned type: {type(level_data)}" if level_data is not None else "LevelLoader returned None."
             error_msg = f"Failed to load map data for '{map_name}'. Ensure 'maps/{map_name}.py' exists and defines 'load_map_{map_name.replace('-', '_').replace(' ', '_')}()' returning a dict. {error_msg_detail}"
             error(error_msg)
-            _update_status_dialog(main_window, "Map Load Error", error_msg, -1) # Ensure message is also updated
-            # QMessageBox.critical might be too intrusive if status dialog is already shown
-            # QMessageBox.critical(main_window, "Map Load Error", error_msg)
+            _update_status_dialog(main_window,
+                                  title="Map Load Error",
+                                  message=error_msg,
+                                  progress=-1.0)
             return False
 
         main_window.game_elements['map_name'] = map_name
         main_window.game_elements['level_data'] = level_data
-        debug(f"GAME_MODES: level_data for '{map_name}' loaded into game_elements. Keys: {list(level_data.keys())}")
+        debug(f"GAME_MODES: level_data for '{map_name}' loaded. Keys: {list(level_data.keys())}")
         if 'items_list' in level_data:
             debug(f"GAME_MODES: Initial items_list from level_data: {level_data['items_list']}")
         else:
             debug("GAME_MODES: No 'items_list' found in loaded level_data.")
 
-
-        # Initialize lists in game_elements
         main_window.game_elements['platforms_list'] = []
         main_window.game_elements['ladders_list'] = []
         main_window.game_elements['hazards_list'] = []
@@ -135,8 +127,6 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
         main_window.game_elements['projectiles_list'] = []
         main_window.game_elements['all_renderable_objects'] = []
 
-        # --- Populate Game World Entities from Level Data ---
-        # Platforms
         for p_data in level_data.get('platforms_list', []):
             rect_tuple = p_data.get('rect')
             if rect_tuple and len(rect_tuple) == 4:
@@ -148,7 +138,6 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
                 main_window.game_elements['platforms_list'].append(plat)
                 main_window.game_elements['all_renderable_objects'].append(plat)
 
-        # Ladders
         for l_data in level_data.get('ladders_list', []):
             rect_tuple = l_data.get('rect')
             if rect_tuple and len(rect_tuple) == 4:
@@ -157,7 +146,6 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
                 main_window.game_elements['ladders_list'].append(lad)
                 main_window.game_elements['all_renderable_objects'].append(lad)
 
-        # Hazards (e.g., Lava)
         for h_data in level_data.get('hazards_list', []):
             rect_tuple = h_data.get('rect')
             if rect_tuple and len(rect_tuple) == 4:
@@ -168,7 +156,6 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
                     main_window.game_elements['hazards_list'].append(lava)
                     main_window.game_elements['all_renderable_objects'].append(lava)
 
-        # Background Tiles
         for bg_data in level_data.get('background_tiles_list', []):
             rect_tuple = bg_data.get('rect')
             if rect_tuple and len(rect_tuple) == 4:
@@ -181,17 +168,14 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
                 main_window.game_elements['background_tiles_list'].append(bg_tile)
                 main_window.game_elements['all_renderable_objects'].append(bg_tile)
 
-
-        # Player 1
         p1_start_pos_tuple = tuple(level_data.get('player_start_pos_p1', (50.0, float(C.GAME_HEIGHT - C.TILE_SIZE * 2))))
         player1_props = level_data.get('player1_spawn_props', {})
         player1 = Player(p1_start_pos_tuple[0], p1_start_pos_tuple[1], 1, initial_properties=player1_props)
         main_window.game_elements['player1'] = player1
         if player1._valid_init: main_window.game_elements['all_renderable_objects'].append(player1)
         else: critical(f"P1 failed to initialize for map {map_name}"); return False
-        player1.control_scheme = game_config.CURRENT_P1_INPUT_DEVICE # Assign control scheme
+        player1.control_scheme = game_config.CURRENT_P1_INPUT_DEVICE
 
-        # Player 2
         if mode in ["couch_play", "join_ip", "join_lan", "host"]:
             p2_start_pos_tuple = tuple(level_data.get('player_start_pos_p2', (100.0, float(C.GAME_HEIGHT - C.TILE_SIZE * 2))))
             player2_props = level_data.get('player2_spawn_props', {})
@@ -199,13 +183,11 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
             main_window.game_elements['player2'] = player2
             if player2._valid_init: main_window.game_elements['all_renderable_objects'].append(player2)
             else: warning(f"P2 failed to initialize for map {map_name} in mode {mode}.")
-            # Assign control scheme for P2 if relevant (client or couch play)
-            if mode != "host": # Host's P2 is a shell, client P2 needs controls
+            if mode != "host":
                 player2.control_scheme = game_config.CURRENT_P2_INPUT_DEVICE
         else:
              main_window.game_elements['player2'] = None
 
-        # Game elements reference for projectiles
         ge_ref_for_proj = {
             "projectiles_list": main_window.game_elements['projectiles_list'],
             "all_renderable_objects": main_window.game_elements['all_renderable_objects'],
@@ -215,12 +197,9 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
         player2_ref = main_window.game_elements.get('player2')
         if player2_ref: player2_ref.game_elements_ref_for_projectiles = ge_ref_for_proj
 
-        # Cache enemy spawn data for server/host to use for respawns
         main_window.game_elements['enemy_spawns_data_cache'] = level_data.get('enemies_list', [])
-
-        # Enemies (Only for host or couch_play initial spawn)
         if mode in ["host_game", "couch_play"]:
-            for i, e_data in enumerate(main_window.game_elements['enemy_spawns_data_cache']): # Use cached data
+            for i, e_data in enumerate(main_window.game_elements['enemy_spawns_data_cache']):
                 try:
                     start_pos = tuple(map(float, e_data.get('start_pos', (100.0, 100.0))))
                     enemy_type = str(e_data.get('type', 'enemy_green'))
@@ -237,12 +216,9 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
                         main_window.game_elements['all_renderable_objects'].append(enemy)
                 except Exception as ex_enemy: error(f"Error spawning enemy {i}: {ex_enemy}", exc_info=True)
 
-        # Cache statue spawn data
         main_window.game_elements['statue_spawns_data_cache'] = level_data.get('statues_list', [])
-
-        # Statues (Host/Couch)
         if mode in ["host_game", "couch_play"]:
-            for i, s_data in enumerate(main_window.game_elements['statue_spawns_data_cache']): # Use cached data
+            for i, s_data in enumerate(main_window.game_elements['statue_spawns_data_cache']):
                 try:
                     statue_pos = tuple(map(float, s_data.get('pos', (200.0, 200.0))))
                     statue = Statue(center_x=statue_pos[0], center_y=statue_pos[1],
@@ -253,9 +229,8 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
                         main_window.game_elements['all_renderable_objects'].append(statue)
                 except Exception as ex_statue: error(f"Error spawning statue {i}: {ex_statue}", exc_info=True)
 
-        # Items (e.g., Chest) (Host/Couch)
         if mode in ["host_game", "couch_play"]:
-            main_window.game_elements['current_chest'] = None # Ensure it's reset
+            main_window.game_elements['current_chest'] = None
             for i_data in level_data.get('items_list', []):
                 if str(i_data.get('type', '')).lower() == 'chest':
                     try:
@@ -264,30 +239,25 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
                         if chest._valid_init:
                             main_window.game_elements['collectible_list'].append(chest)
                             main_window.game_elements['all_renderable_objects'].append(chest)
-                            main_window.game_elements['current_chest'] = chest # Store ref to the initial chest
+                            main_window.game_elements['current_chest'] = chest
                             debug(f"GAME_MODES: Initial chest spawned at ({chest_pos[0]}, {chest_pos[1]})")
                         else:
                             warning("GAME_MODES: Initial map-defined chest failed to initialize.")
                     except Exception as ex_item: error(f"Error spawning item (chest): {ex_item}", exc_info=True)
 
-        # --- Camera Initialization ---
         lvl_total_width = float(level_data.get('level_pixel_width', C.GAME_WIDTH * 2))
         lvl_min_x_abs = float(level_data.get('level_min_x_absolute', 0.0))
         lvl_min_y_abs = float(level_data.get('level_min_y_absolute', 0.0))
         lvl_max_y_abs = float(level_data.get('level_max_y_absolute', C.GAME_HEIGHT))
-
         initial_screen_width = float(main_window.game_scene_widget.width())
         initial_screen_height = float(main_window.game_scene_widget.height())
         if initial_screen_width <= 1: initial_screen_width = float(C.GAME_WIDTH)
         if initial_screen_height <= 1: initial_screen_height = float(C.GAME_HEIGHT)
-
-        camera_instance = Camera(
-            initial_level_width=lvl_total_width, initial_world_start_x=lvl_min_x_abs,
-            initial_world_start_y=lvl_min_y_abs, initial_level_bottom_y_abs=lvl_max_y_abs,
-            screen_width=initial_screen_width, screen_height=initial_screen_height
-        )
+        camera_instance = Camera(initial_level_width=lvl_total_width, initial_world_start_x=lvl_min_x_abs,
+                                 initial_world_start_y=lvl_min_y_abs, initial_level_bottom_y_abs=lvl_max_y_abs,
+                                 screen_width=initial_screen_width, screen_height=initial_screen_height)
         main_window.game_elements['camera'] = camera_instance
-        main_window.game_elements['camera_level_dims_set'] = True # Mark that camera has received level dims
+        main_window.game_elements['camera_level_dims_set'] = True
 
         main_window.game_elements['level_pixel_width'] = lvl_total_width
         main_window.game_elements['level_min_x_absolute'] = lvl_min_x_abs
@@ -298,21 +268,17 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: st
         main_window.game_elements['ground_platform_height_ref'] = float(level_data.get('ground_platform_height_ref', C.TILE_SIZE))
 
         if hasattr(main_window.game_scene_widget, 'set_level_dimensions'):
-            main_window.game_scene_widget.set_level_dimensions(
-                lvl_total_width, lvl_min_x_abs, lvl_min_y_abs, lvl_max_y_abs
-            )
+            main_window.game_scene_widget.set_level_dimensions(lvl_total_width, lvl_min_x_abs, lvl_min_y_abs, lvl_max_y_abs)
 
         info("GAME_MODES: Game entities initialized successfully.")
         return True
 
     except Exception as e:
         critical(f"Exception during game entity initialization for map '{map_name}': {e}", exc_info=True)
-        _update_status_dialog(main_window, "Game Init Error", f"Critical error initializing game: {e}", -1) # Ensure message update
-        # QMessageBox.critical(main_window, "Game Init Error", f"A critical error occurred: {e}")
+        _update_status_dialog(main_window, title="Game Init Error", message=f"Critical error initializing game: {e}", progress=-1.0)
         return False
 
 
-# --- Map Selection Initiators ---
 def initiate_couch_play_map_selection(main_window: 'MainWindow'):
     info("GAME_MODES: Initiating map selection for Couch Co-op.")
     if main_window.map_select_title_label:
@@ -327,7 +293,6 @@ def initiate_host_game_map_selection(main_window: 'MainWindow'):
     main_window._populate_map_list_for_selection("host_game")
     main_window.show_view("map_select")
 
-# --- Game Start Triggers ---
 def start_couch_play_logic(main_window: 'MainWindow', map_name: str):
     info(f"GAME_MODES: Starting Couch Co-op with map '{map_name}'.")
     prepare_and_start_game_logic(main_window, "couch_play", map_name)
@@ -336,7 +301,6 @@ def start_host_game_logic(main_window: 'MainWindow', map_name: str):
     info(f"GAME_MODES: Starting Host Game with map '{map_name}'.")
     prepare_and_start_game_logic(main_window, "host_game", map_name)
 
-# --- Dialog Initiators ---
 def initiate_join_lan_dialog(main_window: 'MainWindow'):
     info("GAME_MODES: Initiating Join LAN Dialog.")
     _show_lan_search_dialog(main_window)
@@ -365,36 +329,31 @@ def initiate_join_ip_dialog(main_window: 'MainWindow'):
     main_window.ip_input_dialog.show()
 
 
-# --- Core Game Setup and Management ---
 def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str, map_name: Optional[str] = None, target_ip_port: Optional[str] = None):
     info(f"GAME_MODES: Preparing game. Mode: {mode}, Map: {map_name}, Target: {target_ip_port}")
     main_window.current_game_mode = mode
-    main_window.game_elements['camera_level_dims_set'] = False # Reset flag
+    main_window.game_elements['camera_level_dims_set'] = False
 
     if mode in ["couch_play", "host_game"]:
         if not map_name:
             error("Map name required for couch_play/host_game."); return
         _show_status_dialog(main_window, f"Starting {mode.replace('_',' ').title()}", f"Loading map: {map_name}...")
         if not _initialize_game_entities(main_window, map_name, mode):
-            error(f"Failed to initialize game entities for map '{map_name}'. Cannot start game mode '{mode}'.");
+            error(f"Failed to initialize game entities for map '{map_name}'. Mode '{mode}'.");
             _close_status_dialog(main_window);
             main_window.show_view("menu"); return
-        _update_status_dialog(main_window, "Entities initialized.", "Entities initialized successfully.", 50) # Added title
+        _update_status_dialog(main_window, message="Entities initialized successfully.", progress=50.0, title="Entities initialized.")
     elif mode in ["join_ip", "join_lan"]:
         if not target_ip_port:
             error("Target IP:Port required."); return
         _show_status_dialog(main_window, f"Joining Game ({mode.replace('_',' ').title()})", f"Connecting to {target_ip_port}...")
-        reset_game_state(main_window.game_elements) # Clear local state for client
+        reset_game_state(main_window.game_elements)
         initial_sw = float(main_window.game_scene_widget.width()) if main_window.game_scene_widget.width() > 1 else float(C.GAME_WIDTH)
         initial_sh = float(main_window.game_scene_widget.height()) if main_window.game_scene_widget.height() > 1 else float(C.GAME_HEIGHT)
-        # Client camera needs placeholders, will be updated by server data or map sync
         main_window.game_elements['camera'] = Camera(
-            initial_level_width=float(C.GAME_WIDTH),
-            initial_world_start_x=0.0,
-            initial_world_start_y=0.0,
-            initial_level_bottom_y_abs=float(C.GAME_HEIGHT),
-            screen_width=initial_sw,
-            screen_height=initial_sh
+            initial_level_width=float(C.GAME_WIDTH), initial_world_start_x=0.0,
+            initial_world_start_y=0.0, initial_level_bottom_y_abs=float(C.GAME_HEIGHT),
+            screen_width=initial_sw, screen_height=initial_sh
         )
     else:
         error(f"Unknown game mode: {mode}"); main_window.show_view("menu"); return
@@ -403,14 +362,14 @@ def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str, map_name:
         _close_status_dialog(main_window)
         main_window.show_view("game_scene")
     elif mode == "host_game":
-        main_window.current_game_mode = "host_waiting" # Specific mode while host waits
-        _update_status_dialog(main_window, "Starting server...", "Server starting. Waiting for client...", 75) # Added title
+        main_window.current_game_mode = "host_waiting"
+        _update_status_dialog(main_window, message="Server starting. Waiting for client...", progress=75.0, title="Starting server...")
         start_network_mode_logic(main_window, "host")
         main_window.show_view("game_scene")
     elif mode in ["join_ip", "join_lan"]:
+        _update_status_dialog(main_window, message=f"Attempting to connect to {target_ip_port}...", progress=0.0, title="Connecting...")
         start_network_mode_logic(main_window, "join", target_ip_port)
 
-# --- Network Logic and LAN Search ---
 def stop_current_game_mode_logic(main_window: 'MainWindow', show_menu: bool = True):
     info(f"GAME_MODES: Stopping current game mode: {main_window.current_game_mode}")
     if main_window.network_thread and main_window.network_thread.isRunning():
@@ -421,9 +380,9 @@ def stop_current_game_mode_logic(main_window: 'MainWindow', show_menu: bool = Tr
             warning("Network thread did not terminate gracefully, forcing."); main_window.network_thread.terminate(); main_window.network_thread.wait()
         main_window.network_thread = None; info("GAME_MODES: Network thread stopped.")
     main_window.server_state = None; main_window.client_state = None
-    reset_game_state(main_window.game_elements); # Full reset of game_elements content
+    reset_game_state(main_window.game_elements);
     main_window.current_game_mode = None
-    main_window.game_elements['camera_level_dims_set'] = False # Reset flag
+    main_window.game_elements['camera_level_dims_set'] = False
     _close_status_dialog(main_window)
     if hasattr(main_window.game_scene_widget, 'clear_scene_for_new_game'): main_window.game_scene_widget.clear_scene_for_new_game()
     if show_menu: main_window.show_view("menu")
@@ -438,58 +397,54 @@ def start_network_mode_logic(main_window: 'MainWindow', mode_name: str, target_i
         main_window.server_state = ServerState();
         server_map_name = ge_ref.get('map_name', 'unknown_map_server_default')
         main_window.server_state.current_map_name = server_map_name
-
         main_window.network_thread = main_window.NetworkThread(mode="host", game_elements_ref=ge_ref, server_state_ref=main_window.server_state, parent=main_window)
-        _update_status_dialog(main_window, "Server Setup", "Server starting. Waiting for client...", 0.0)
+        # _update_status_dialog call moved to prepare_and_start_game_logic
     elif mode_name == "join":
-        if not target_ip_port: error("Target IP:Port required for join."); _update_status_dialog(main_window, "Connection Error", "No target IP.", -1); return
+        if not target_ip_port: error("Target IP:Port required for join."); _update_status_dialog(main_window, title="Connection Error", message="No target IP.", progress=-1.0); return
         main_window.client_state = ClientState()
         main_window.network_thread = main_window.NetworkThread(mode="join", game_elements_ref=ge_ref, client_state_ref=main_window.client_state, target_ip_port=target_ip_port, parent=main_window)
-        _update_status_dialog(main_window, "Connecting...", f"Attempting to connect to {target_ip_port}...", 0.0)
+        # _update_status_dialog call moved to prepare_and_start_game_logic
     else: error(f"Unknown network mode: {mode_name}"); return
 
-    # Connect signals
     main_window.network_thread.status_update_signal.connect(main_window.on_network_status_update_slot)
     main_window.network_thread.operation_finished_signal.connect(main_window.on_network_operation_finished_slot)
     main_window.network_thread.client_fully_synced_signal.connect(main_window.on_client_fully_synced_for_host)
-
     main_window.network_thread.start(); info(f"GAME_MODES: NetworkThread for '{mode_name}' started.")
 
 def on_client_fully_synced_for_host_logic(main_window: 'MainWindow'):
     info("GAME_MODES (Host): Client fully synced. Transitioning to active game.")
     if main_window.current_game_mode == "host_waiting" and main_window.server_state:
-        main_window.current_game_mode = "host_active" # Transition to active hosting
+        main_window.current_game_mode = "host_active"
         main_window.server_state.client_ready = True
         _close_status_dialog(main_window)
         info("Client connected and synced. Game is active for host.")
     else: warning(f"GAME_MODES: Received client_fully_synced in unexpected state: {main_window.current_game_mode}")
 
 def on_network_status_update_logic(main_window: 'MainWindow', title: str, message: str, progress: float):
-    debug(f"GAME_MODES (Net Status): {title} - {message} - Prog: {progress}")
+    debug(f"GAME_MODES (Net Status Update): Title='{title}', Msg='{message}', Prog={progress}")
     is_net_mode = main_window.current_game_mode in ["host_game", "host_waiting", "host_active", "join_ip", "join_lan", "join_active"]
 
-    if progress == -2.0: # Special signal to close dialog immediately
+    if progress == -2.0:
         _close_status_dialog(main_window)
     elif (not main_window.status_dialog or not main_window.status_dialog.isVisible()) and is_net_mode:
         _show_status_dialog(main_window, title, message) # Show if not visible, pass title here
     
     # Update existing dialog if visible
     if main_window.status_dialog and main_window.status_dialog.isVisible():
-        _update_status_dialog(main_window, title, message, progress) # Pass title to _update_status_dialog
+         _update_status_dialog(main_window, message=message, progress=progress, title=title)
 
 
 def on_network_operation_finished_logic(main_window: 'MainWindow', result_message: str):
     info(f"GAME_MODES: Network op finished: {result_message}")
     _close_status_dialog(main_window)
-    current_mode_stopped = str(main_window.current_game_mode) # Store before stopping
+    current_mode_stopped = str(main_window.current_game_mode)
 
     if result_message == "client_initial_sync_complete":
         info("Client initial sync complete. Showing game scene.");
-        main_window.current_game_mode = "join_active" # Set the mode
+        main_window.current_game_mode = "join_active"
         main_window.show_view("game_scene");
-        return # Don't stop mode yet, game is starting for client
+        return
 
-    # For other messages, stop the current mode first
     stop_current_game_mode_logic(main_window, show_menu=False)
 
     if result_message == "host_ended":
@@ -500,7 +455,7 @@ def on_network_operation_finished_logic(main_window: 'MainWindow', result_messag
         err_type = "Server Error" if "host" in result_message or (current_mode_stopped and "host" in current_mode_stopped) else "Connection Error"
         QMessageBox.critical(main_window, err_type, f"Network operation failed: {result_message}")
 
-    main_window.show_view("menu") # Default to menu after most network ops finish
+    main_window.show_view("menu")
 
 _lan_search_thread_instance: Optional[LANServerSearchThread] = None
 def on_lan_server_search_status_update_logic(main_window: 'MainWindow', data: Any):
@@ -514,9 +469,9 @@ def on_lan_server_search_status_update_logic(main_window: 'MainWindow', data: An
         s_name, ip, port, map_name = data
         item_text = f"{s_name} ({ip}:{port}) - Map: {map_name}"
         list_item = QListWidgetItem(item_text)
-        list_item.setData(Qt.ItemDataRole.UserRole, (ip, port, map_name)) # Store data with item
+        list_item.setData(Qt.ItemDataRole.UserRole, (ip, port, map_name))
         main_window.lan_servers_list_widget.addItem(list_item)
-        if main_window.lan_servers_list_widget.count() == 1: # Auto-select first found
+        if main_window.lan_servers_list_widget.count() == 1:
             main_window._lan_search_list_selected_idx = 0
         _update_lan_search_list_focus(main_window)
         main_window.lan_search_status_label.setText(f"Found: {s_name}. Searching...")
@@ -529,15 +484,15 @@ def start_lan_server_search_thread_logic(main_window: 'MainWindow'):
     if _lan_search_thread_instance and _lan_search_thread_instance.isRunning():
         info("LAN search already running. Stopping and restarting.");
         _lan_search_thread_instance.stop()
-        _lan_search_thread_instance.wait(500) # Wait for thread to finish
+        _lan_search_thread_instance.wait(500)
 
     if main_window.lan_servers_list_widget: main_window.lan_servers_list_widget.clear()
     if main_window.lan_search_status_label: main_window.lan_search_status_label.setText("Initializing search...")
-    main_window._lan_search_list_selected_idx = -1 # Reset selection
+    main_window._lan_search_list_selected_idx = -1
 
-    _lan_search_thread_instance = LANServerSearchThread(main_window) # Pass main_window as parent
-    _lan_search_thread_instance.found_server_signal.connect(main_window.lan_server_search_status) # Type matches
-    _lan_search_thread_instance.search_status_signal.connect(main_window.lan_server_search_status) # Type matches
+    _lan_search_thread_instance = LANServerSearchThread(main_window)
+    _lan_search_thread_instance.found_server_signal.connect(main_window.lan_server_search_status)
+    _lan_search_thread_instance.search_status_signal.connect(main_window.lan_server_search_status)
     _lan_search_thread_instance.start()
 
 def join_selected_lan_server_from_dialog_logic(main_window: 'MainWindow'):
@@ -545,7 +500,6 @@ def join_selected_lan_server_from_dialog_logic(main_window: 'MainWindow'):
     if not main_window.lan_search_dialog or not main_window.lan_servers_list_widget:
         error("LAN dialog/list widget not available."); return
 
-    # Use _lan_search_list_selected_idx from MainWindow for the currently focused item
     selected_row_index = main_window._lan_search_list_selected_idx
     if selected_row_index < 0 or selected_row_index >= main_window.lan_servers_list_widget.count():
         QMessageBox.warning(main_window.lan_search_dialog, "No Server Selected", "Please select a server from the list.")
@@ -566,7 +520,7 @@ def join_selected_lan_server_from_dialog_logic(main_window: 'MainWindow'):
     target_ip_port = f"{ip}:{port}"
     info(f"Selected LAN server: {target_ip_port}, Map: {map_name_lan}")
 
-    main_window.lan_search_dialog.accept() # Close the dialog
-    setattr(main_window, 'current_modal_dialog', None) # Clear modal flag
+    main_window.lan_search_dialog.accept()
+    setattr(main_window, 'current_modal_dialog', None)
 
     prepare_and_start_game_logic(main_window, "join_lan", target_ip_port=target_ip_port)
