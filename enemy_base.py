@@ -1,47 +1,39 @@
-#################### START OF FILE: enemy_base.py ####################
-
 # enemy_base.py
 # -*- coding: utf-8 -*-
 """
 Defines the EnemyBase class, the foundational class for enemies.
 Handles core attributes, animation loading, and common assets for PySide6.
 """
-# version 2.0.3 (Fixed QPointF.copy() error, refined placeholder creation, fixed _update_rect_from_image_and_pos target_pos logic)
+# version 2.0.4 (Robust color_name handling in init)
 import os
 import random
-import time # For monotonic timer
+import time 
 from typing import List, Optional, Any, Dict, Tuple
 
-# PySide6 imports
 from PySide6.QtGui import QPixmap, QColor, QPainter, QFont, QTransform, QImage
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
 
-# Game imports
 import constants as C
 from assets import load_all_player_animations, load_gif_frames, resource_path
 
-# Logger import
 try:
     from logger import info, debug, warning, error, critical
 except ImportError:
     print("CRITICAL ENEMY_BASE: logger.py not found. Falling back to print statements for logging.")
-    def info(msg): print(f"INFO: {msg}")
-    def debug(msg): print(f"DEBUG: {msg}")
-    def warning(msg): print(f"WARNING: {msg}")
-    def error(msg): print(f"ERROR: {msg}")
-    def critical(msg): print(f"CRITICAL: {msg}")
+    def info(msg, *args, **kwargs): print(f"INFO: {msg}", *args)
+    def debug(msg, *args, **kwargs): print(f"DEBUG: {msg}", *args)
+    def warning(msg, *args, **kwargs): print(f"WARNING: {msg}", *args)
+    def error(msg, *args, **kwargs): print(f"ERROR: {msg}", *args)
+    def critical(msg, *args, **kwargs): print(f"CRITICAL: {msg}", *args)
 
-# --- Monotonic Timer ---
 _start_time_enemy_base_monotonic = time.monotonic()
 def get_current_ticks_monotonic() -> int:
-    """Returns monotonic time in milliseconds since module load or a fixed point."""
     return int((time.monotonic() - _start_time_enemy_base_monotonic) * 1000)
-# --- End Monotonic Timer ---
 
 
 class EnemyBase:
     def __init__(self, start_x: float, start_y: float, patrol_area: Optional[QRectF] = None,
-                 enemy_id: Optional[Any] = None, color_name: Optional[str] = None,
+                 enemy_id: Optional[Any] = None, color_name: Optional[str] = None, # This is the 'type' like 'enemy_gray' from map data
                  properties: Optional[Dict[str, Any]] = None):
 
         self.spawn_pos = QPointF(float(start_x), float(start_y))
@@ -49,52 +41,62 @@ class EnemyBase:
         self.enemy_id = enemy_id if enemy_id is not None else id(self)
         self._valid_init = True
         self._alive = True
-        self.color_name = "unknown"
+        self.final_asset_color_name = "unknown" # This will be the actual asset folder name like 'gray', 'green'
         self.properties = properties if properties is not None else {}
 
         character_base_asset_folder = 'characters'
-        available_enemy_colors = ['green', 'pink', 'purple', 'gray', 'yellow', 'orange']
+        # These are the actual folder names for assets
+        available_enemy_asset_folders = ['green', 'pink', 'purple', 'gray', 'yellow', 'orange']
 
-        if not available_enemy_colors:
-             warning(f"EnemyBase Warning (ID: {self.enemy_id}): No enemy colors defined! Defaulting to 'player1' for asset structure check.")
-             available_enemy_colors = ['player1']
+        # Process the input 'color_name' (which might be 'enemy_gray' or just 'gray')
+        processed_color_input = color_name 
+        if isinstance(processed_color_input, str) and processed_color_input.startswith("enemy_"):
+            processed_color_input = processed_color_input.replace("enemy_", "", 1) # Strip "enemy_" to get "gray"
 
-        if color_name and color_name in available_enemy_colors:
-            self.color_name = color_name
-        elif color_name:
-            warning(f"EnemyBase Warning (ID: {self.enemy_id}): Specified color '{color_name}' not available. Using random from {available_enemy_colors}.")
-            self.color_name = random.choice(available_enemy_colors) if available_enemy_colors else "unknown"
-        else:
-            self.color_name = random.choice(available_enemy_colors) if available_enemy_colors else "unknown"
+        if processed_color_input and processed_color_input in available_enemy_asset_folders:
+            self.final_asset_color_name = processed_color_input
+        elif color_name: # Original input was something, but not directly mappable after processing
+            warning(f"EnemyBase Warning (ID: {self.enemy_id}): Processed color '{processed_color_input}' (from input '{color_name}') not in {available_enemy_asset_folders}. Using random.")
+            self.final_asset_color_name = random.choice(available_enemy_asset_folders) if available_enemy_asset_folders else "unknown"
+        else: # No color_name provided at all
+            self.final_asset_color_name = random.choice(available_enemy_asset_folders) if available_enemy_asset_folders else "unknown"
 
-        if self.color_name == "unknown" and available_enemy_colors:
-             self.color_name = available_enemy_colors[0]
-        elif self.color_name == "unknown":
-             critical(f"EnemyBase CRITICAL (ID: {self.enemy_id}): No available enemy colors to choose from. Animation loading will fail.")
-             self._valid_init = False
+        # Fallback if still unknown
+        if self.final_asset_color_name == "unknown":
+            if available_enemy_asset_folders:
+                self.final_asset_color_name = available_enemy_asset_folders[0]
+                warning(f"EnemyBase Warning (ID: {self.enemy_id}): color_name resolved to 'unknown', falling back to first available: '{self.final_asset_color_name}'.")
+            else:
+                critical(f"EnemyBase CRITICAL (ID: {self.enemy_id}): No available enemy asset folders to choose from. Animation loading will fail.")
+                self._valid_init = False
+        
+        self.color_name = self.final_asset_color_name # Keep `color_name` for compatibility if other parts use it, but animations load from `final_asset_color_name`
 
-        debug(f"EnemyBase (ID: {self.enemy_id}): Initializing with color: '{self.color_name}'.")
+        debug(f"EnemyBase (ID: {self.enemy_id}): Initializing with final_asset_color_name: '{self.final_asset_color_name}' (input was '{color_name}').")
 
         self.animations: Optional[Dict[str, List[QPixmap]]] = None
-        if self._valid_init and self.color_name != "unknown":
-            chosen_enemy_asset_folder = os.path.join(character_base_asset_folder, self.color_name)
+        if self._valid_init and self.final_asset_color_name != "unknown":
+            chosen_enemy_asset_folder = os.path.join(character_base_asset_folder, self.final_asset_color_name)
+            debug(f"EnemyBase (ID: {self.enemy_id}): Loading animations from: '{chosen_enemy_asset_folder}'")
             self.animations = load_all_player_animations(relative_asset_folder=chosen_enemy_asset_folder)
 
         self.image: Optional[QPixmap] = None
         self.rect = QRectF()
 
         if self.animations is None:
-            critical_msg_suffix = f"from '{chosen_enemy_asset_folder}'" if self.color_name != "unknown" else "(no valid color/asset path)"
-            critical(f"EnemyBase CRITICAL (ID: {self.enemy_id}, Color: {self.color_name}): Failed loading animations {critical_msg_suffix}.")
+            critical_msg_suffix = f"from '{chosen_enemy_asset_folder}'" if self.final_asset_color_name != "unknown" else "(no valid color/asset path)"
+            critical(f"EnemyBase CRITICAL (ID: {self.enemy_id}, FinalAssetColor: {self.final_asset_color_name}): Failed loading animations {critical_msg_suffix}.")
             blue_color = getattr(C, 'BLUE', (0, 0, 255))
-            self.image = self._create_placeholder_qpixmap(QColor(*blue_color), f"AnimFail-{self.color_name[:3]}")
+            self.image = self._create_placeholder_qpixmap(QColor(*blue_color), f"AnimFail-{self.final_asset_color_name[:3]}")
             self._update_rect_from_image_and_pos(QPointF(float(start_x), float(start_y)))
             self._valid_init = False; self._alive = False; self.is_dead = True
+            # Initialize core physics attributes even on failure to prevent crashes
             self.pos = QPointF(float(start_x), float(start_y)); self.vel = QPointF(0.0, 0.0); self.acc = QPointF(0.0, 0.0)
             self.state = 'idle'; self.current_frame = 0; self.last_anim_update = 0
             self.facing_right = True; self.on_ground = False
             self.current_health = 0; self.max_health = 0
         else:
+            # ... (rest of successful initialization as before) ...
             self._last_facing_right = True
             self._last_state_for_debug = "init"
             self.state = 'idle'
@@ -103,7 +105,7 @@ class EnemyBase:
 
             initial_idle_animation = self.animations.get('idle')
             if not initial_idle_animation or not initial_idle_animation[0] or initial_idle_animation[0].isNull():
-                 warning(f"EnemyBase Warning (ID: {self.enemy_id}, Color: {self.color_name}): 'idle' animation missing/empty. Attempting fallback.")
+                 warning(f"EnemyBase Warning (ID: {self.enemy_id}, FinalAssetColor: {self.final_asset_color_name}): 'idle' animation missing/empty. Attempting fallback.")
                  first_anim_key = next((key for key, anim_list in self.animations.items() if anim_list and anim_list[0] and not anim_list[0].isNull()), None)
                  initial_idle_animation = self.animations.get(first_anim_key) if first_anim_key else None
 
@@ -111,12 +113,13 @@ class EnemyBase:
                 self.image = initial_idle_animation[0]
             else:
                 blue_color = getattr(C, 'BLUE', (0, 0, 255))
-                self.image = self._create_placeholder_qpixmap(QColor(*blue_color), f"NoIdle-{self.color_name[:3]}")
-                critical(f"EnemyBase CRITICAL (ID: {self.enemy_id}, Color: {self.color_name}): No suitable initial animation. Enemy invalid.")
+                self.image = self._create_placeholder_qpixmap(QColor(*blue_color), f"NoIdle-{self.final_asset_color_name[:3]}")
+                critical(f"EnemyBase CRITICAL (ID: {self.enemy_id}, FinalAssetColor: {self.final_asset_color_name}): No suitable initial animation. Enemy invalid.")
                 self._valid_init = False; self._alive = False; self.is_dead = True
 
             self._update_rect_from_image_and_pos(QPointF(float(start_x), float(start_y)))
-
+        
+        # Initialize all other attributes as before...
         self.pos = QPointF(float(start_x), float(start_y))
         self.vel = QPointF(0.0, 0.0)
         enemy_gravity = float(getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.8)))
@@ -241,8 +244,8 @@ class EnemyBase:
         self._alive = False
 
     def reset(self):
-        if not self._valid_init and self.animations is None and self.color_name != "unknown":
-             chosen_enemy_asset_folder = os.path.join('characters', self.color_name)
+        if not self._valid_init and self.animations is None and self.final_asset_color_name != "unknown":
+             chosen_enemy_asset_folder = os.path.join('characters', self.final_asset_color_name)
              self.animations = load_all_player_animations(relative_asset_folder=chosen_enemy_asset_folder)
              if self.animations is not None:
                  self._valid_init = True
@@ -260,7 +263,7 @@ class EnemyBase:
             self.is_dead = True; self.current_health = 0; self._alive = False
             return
 
-        self.pos = QPointF(self.spawn_pos) # QPointF constructor creates a copy
+        self.pos = QPointF(self.spawn_pos) 
         self._update_rect_from_image_and_pos()
 
         self.vel = QPointF(0.0, 0.0)
@@ -294,5 +297,3 @@ class EnemyBase:
         self.state = 'idle'; self.current_frame = 0
         self.last_anim_update = get_current_ticks_monotonic()
         debug(f"EnemyBase (ID: {self.enemy_id}): Core attributes reset.")
-
-#################### END OF FILE: enemy_base.py ####################

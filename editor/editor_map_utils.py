@@ -4,6 +4,7 @@
 Utility functions for map operations in the Level Editor (PySide6 version).
 Handles saving/loading editor JSON and exporting game-compatible Python data scripts.
 VERSION 2.2.9 (Fixed map_max_y_content not defined, refined chest reset)
+VERSION 2.3.0 (Added default 2-tile border to new maps)
 """
 import sys
 import os
@@ -37,6 +38,7 @@ if __name__ == "__main__" or not __package__:
             GAME_LEVEL_FILE_EXTENSION = ".py"; LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
             BASE_GRID_SIZE = 40; DEFAULT_MAP_WIDTH_TILES = 30; DEFAULT_MAP_HEIGHT_TILES = 20
             DEFAULT_BACKGROUND_COLOR_TUPLE = (173,216,230); MAPS_DIRECTORY="maps"
+            EDITOR_PALETTE_ASSETS = {"platform_wall_gray": {"game_type_id": "platform_wall_gray", "base_color_tuple": (128,128,128)}} # Min required for border
         ED_CONFIG = ED_CONFIG_FALLBACK()
         class EditorState: pass
         class editor_history:
@@ -107,12 +109,12 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     editor_state.map_width_tiles = map_width_tiles
     editor_state.map_height_tiles = map_height_tiles
     editor_state.grid_size = ED_CONFIG.BASE_GRID_SIZE
-    editor_state.placed_objects = []
+    editor_state.placed_objects = [] # Start with an empty list
     editor_state.asset_specific_variables.clear()
     editor_state.background_color = ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE
     editor_state.camera_offset_x = 0.0; editor_state.camera_offset_y = 0.0
     editor_state.zoom_level = 1.0
-    editor_state.unsaved_changes = True
+    editor_state.unsaved_changes = True # New map is unsaved
 
     py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION
     json_filename = editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION
@@ -126,6 +128,64 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
 
     editor_state.current_map_filename = os.path.join(maps_abs_dir, py_filename)
     editor_state.current_json_filename = os.path.join(maps_abs_dir, json_filename)
+
+    # --- Add default 2-tile thick border ---
+    logger.info("Adding default 2-tile border to new map.")
+    gs = float(editor_state.grid_size)
+    map_pixel_width = float(map_width_tiles * gs)
+    map_pixel_height = float(map_height_tiles * gs)
+    border_asset_key = "platform_wall_gray" # Ensure this key exists in ED_CONFIG.EDITOR_PALETTE_ASSETS
+    border_asset_data = ED_CONFIG.EDITOR_PALETTE_ASSETS.get(border_asset_key)
+
+    if border_asset_data:
+        border_game_type_id = border_asset_data.get("game_type_id", border_asset_key)
+        border_color_tuple = border_asset_data.get("base_color_tuple", getattr(C, 'GRAY', (128,128,128)))
+
+        # Top border (2 tiles thick)
+        for i in range(map_width_tiles):
+            editor_state.placed_objects.append({
+                "asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": 0,
+                "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": {"is_boundary": True}
+            })
+            editor_state.placed_objects.append({
+                "asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int(gs),
+                "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": {"is_boundary": True}
+            })
+        # Bottom border (2 tiles thick) - Ensure Y positions are correct relative to map_height_tiles
+        for i in range(map_width_tiles):
+            editor_state.placed_objects.append({
+                "asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int((map_height_tiles - 1) * gs),
+                "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": {"is_boundary": True}
+            })
+            editor_state.placed_objects.append({
+                "asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int((map_height_tiles - 2) * gs),
+                "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": {"is_boundary": True}
+            })
+        # Left border (2 tiles thick, excluding corners already covered by top/bottom)
+        for i in range(2, map_height_tiles - 2): # Start from y=2*gs up to (map_height_tiles-3)*gs
+            editor_state.placed_objects.append({
+                "asset_editor_key": border_asset_key, "world_x": 0, "world_y": int(i * gs),
+                "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": {"is_boundary": True}
+            })
+            editor_state.placed_objects.append({
+                "asset_editor_key": border_asset_key, "world_x": int(gs), "world_y": int(i * gs),
+                "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": {"is_boundary": True}
+            })
+        # Right border (2 tiles thick, excluding corners)
+        for i in range(2, map_height_tiles - 2):
+            editor_state.placed_objects.append({
+                "asset_editor_key": border_asset_key, "world_x": int((map_width_tiles - 1) * gs), "world_y": int(i * gs),
+                "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": {"is_boundary": True}
+            })
+            editor_state.placed_objects.append({
+                "asset_editor_key": border_asset_key, "world_x": int((map_width_tiles - 2) * gs), "world_y": int(i * gs),
+                "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": {"is_boundary": True}
+            })
+        logger.info(f"Added default 2-tile border with '{border_asset_key}'. Placed objects count: {len(editor_state.placed_objects)}")
+    else:
+        logger.error(f"Asset key '{border_asset_key}' for default border not found in ED_CONFIG.EDITOR_PALETTE_ASSETS. Border not added.")
+    # --- End default border ---
+
 
     editor_state.undo_stack.clear(); editor_state.redo_stack.clear()
     logger.info(f"Editor state initialized for new map: '{editor_state.map_name_for_function}'. PY: '{editor_state.current_map_filename}', JSON: '{editor_state.current_json_filename}'")
@@ -640,3 +700,5 @@ if __name__ == "__main__":
         print(f"Attempting to batch fix map files in: {maps_dir_to_fix}")
         batch_fix_map_files_repr_key_issue(maps_dir_to_fix)
         print("Batch fixing process finished.")
+
+#################### END OF FILE: editor_map_utils.py ####################

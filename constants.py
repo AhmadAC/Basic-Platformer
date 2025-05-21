@@ -93,7 +93,7 @@ POISON_DIMENSIONS = (40.0, 40.0)
 
 # Bolt (Key 3)
 BOLT_DAMAGE = 35
-BOLT_SPEED = 15.0
+BOLT_SPEED = 5.0
 BOLT_COOLDOWN = 600 # ms
 BOLT_LIFESPAN = 1500 # ms
 BOLT_SPRITE_PATH = "characters/weapons/bolt1_resized_11x29.gif"

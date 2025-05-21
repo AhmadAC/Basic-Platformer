@@ -1,5 +1,3 @@
-#################### START OF FILE: levels.py ####################
-
 # levels.py
 # -*- coding: utf-8 -*-
 """
@@ -8,7 +6,7 @@ Returns data structures (dictionaries) for platforms, ladders, hazards,
 spawns, level width, and absolute min/max Y coordinates for the entire level.
 This data is then used by game_setup.py to create PySide6 game objects.
 """
-# version 2.0.2 (Changed enemy spawn key to 'start_pos', use helper functions for data dicts, fixed extents calculation)
+# version 2.0.3 (Added chest to cpu_extended map)
 import random
 from typing import List, Dict, Tuple, Any, Optional
 
@@ -36,7 +34,6 @@ def _calculate_content_extents(
                 y, h = float(rect_coords[1]), float(rect_coords[3])
                 all_tops.append(y)
                 all_bottoms.append(y + h)
-            # Legacy support if some data still uses direct x,y,w,h (should be migrated to 'rect')
             elif all(k in obj_data for k in ['x','y','w','h']):
                 print(f"Levels.py Warning: Object data {obj_data.get('type', 'Unknown type')} is using legacy x,y,w,h keys. Please migrate to 'rect'.")
                 y, h = float(obj_data['y']), float(obj_data['h'])
@@ -152,7 +149,7 @@ def load_map_original() -> Dict[str, Any]:
         "items_list": collectible_spawns_data,
         "statues_list": statue_spawns_data,
         "player_start_pos_p1": player_spawn_pos,
-        "player1_spawn_props": player_spawn_props, # For potential future use
+        "player1_spawn_props": player_spawn_props, 
         "level_pixel_width": map_total_width,
         "level_min_y_absolute": level_min_y_abs,
         "level_max_y_absolute": level_max_y_abs,
@@ -217,7 +214,7 @@ def load_map_lava() -> Dict[str, Any]:
         "level_min_y_absolute": level_min_y_abs,
         "level_max_y_absolute": level_max_y_abs,
         "ground_level_y_ref": main_ground_y_ref,
-        "ground_platform_height_ref": 0.0,
+        "ground_platform_height_ref": 0.0, 
         "background_color": level_bg_color
     }
 
@@ -239,7 +236,7 @@ def load_map_cpu_extended() -> Dict[str, Any]:
     player_spawn_pos = (float(C.TILE_SIZE) * 2.0, main_ground_y_ref - 1.0)
     player_spawn_props = {}
     gap_width_lava = float(C.TILE_SIZE) * 4.0
-    lava_collision_y_level = main_ground_y_ref + 1.0
+    lava_collision_y_level = main_ground_y_ref + 1.0 
     fence_y_pos = main_ground_y_ref - FENCE_HEIGHT
 
     seg1_start_x = float(C.TILE_SIZE)
@@ -260,7 +257,11 @@ def load_map_cpu_extended() -> Dict[str, Any]:
     plat1_x = float(C.TILE_SIZE) + (initial_width * 0.3 - float(C.TILE_SIZE))
     plat1_x = max(seg1_start_x + float(C.TILE_SIZE), min(plat1_x, seg1_end_x - float(C.TILE_SIZE)*7))
     platforms_data.append(_create_platform_data(plat1_x, main_ground_y_ref - float(C.TILE_SIZE) * 1.8, float(C.TILE_SIZE) * 6.0, float(C.TILE_SIZE) * 0.5, C.DARK_GREEN, "ledge"))
-    platforms_data.append(_create_platform_data(seg2_start_x + float(C.TILE_SIZE) * 2.0, main_ground_y_ref - float(C.TILE_SIZE) * 3.0, float(C.TILE_SIZE) * 8.0, float(C.TILE_SIZE) * 0.5, C.DARK_GREEN, "ledge"))
+    
+    enemy2_platform_y = main_ground_y_ref - float(C.TILE_SIZE) * 3.0
+    enemy2_platform_x_start = seg2_start_x + float(C.TILE_SIZE) * 2.0
+    enemy2_platform_width = float(C.TILE_SIZE) * 8.0
+    platforms_data.append(_create_platform_data(enemy2_platform_x_start, enemy2_platform_y, enemy2_platform_width, float(C.TILE_SIZE) * 0.5, C.DARK_GREEN, "ledge"))
     
     seg3_start_x = seg2_start_x + seg2_width + gap_width_lava * 0.8
     seg3_width = (map_total_width - float(C.TILE_SIZE)) - seg3_start_x
@@ -272,15 +273,19 @@ def load_map_cpu_extended() -> Dict[str, Any]:
     patrol_data_e1 = {'x': seg2_start_x + float(C.TILE_SIZE), 'y': main_ground_y_ref - float(C.TILE_SIZE)*2, 'width': seg2_width - float(C.TILE_SIZE)*2, 'height': float(C.TILE_SIZE)*2.0}
     enemy_spawns_data.append(_create_enemy_spawn_data((enemy1_x_pos, spawn_y_on_ground), 'enemy_green', patrol_data_e1))
 
-    enemy2_platform_y = main_ground_y_ref - float(C.TILE_SIZE) * 3.0
-    enemy2_platform_x = seg2_start_x + float(C.TILE_SIZE) * 2.0
-    enemy2_x_pos = enemy2_platform_x + (float(C.TILE_SIZE) * 8.0) / 2.0
+    enemy2_x_pos = enemy2_platform_x_start + enemy2_platform_width / 2.0
     enemy2_y_pos = enemy2_platform_y - 1.0
     enemy_spawns_data.append(_create_enemy_spawn_data((enemy2_x_pos, enemy2_y_pos), 'enemy_pink'))
     
     if seg3_width > float(C.TILE_SIZE):
         enemy3_x_pos = seg3_start_x + seg3_width * 0.3
         enemy_spawns_data.append(_create_enemy_spawn_data((enemy3_x_pos, spawn_y_on_ground), 'enemy_purple'))
+
+    # ADDED CHEST DEFINITION
+    chest_x_midbottom = enemy2_platform_x_start + enemy2_platform_width - float(C.TILE_SIZE) * 1.5 # Position midbottom_x
+    chest_y_midbottom = enemy2_platform_y # Position midbottom_y (on the platform)
+    collectible_spawns_data.append(_create_item_spawn_data('chest', (chest_x_midbottom, chest_y_midbottom)))
+
 
     level_min_y_abs, level_max_y_abs = _add_map_boundary_walls_data(platforms_data, map_total_width, ladders_data, hazards_data, initial_height, extra_sky_clearance=float(C.TILE_SIZE) * 10.0)
     level_bg_color = getattr(C, "LIGHT_BLUE", (173, 216, 230))
@@ -304,5 +309,3 @@ def load_map_cpu_extended() -> Dict[str, Any]:
     }
 
 load_map_cpu = load_map_cpu_extended
-
-#################### END OF FILE: levels.py ####################
