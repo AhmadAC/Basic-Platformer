@@ -4,29 +4,21 @@
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 2.0.2 (Added LAVA_SPRITE_PATH, clarified some comments)
+# version 2.0.3 (Added Chest constants, logging toggle)
 import os
 import sys
 
+# --- Per-script logging toggle ---
+_SCRIPT_LOGGING_ENABLED = True # For per-script logging control
+# --- End per-script logging toggle ---
+
 # --- Project Root (useful for resolving relative paths if needed elsewhere) ---
-# Assumes constants.py is in the project root directory.
-# If it's in a subdirectory, this needs to be adjusted, or PROJECT_ROOT should
-# be set by the main entry script of your application.
 try:
-    # This assumes the script that imports constants.py is in the project root,
-    # or that the project root is already in sys.path.
-    # For robustness, especially if constants.py might be imported from different locations
-    # (e.g., editor scripts vs. main game scripts), it's better if the main application
-    # sets a well-defined project root if needed by other modules.
-    # However, for `resource_path` in `assets.py`, `os.path.dirname(os.path.abspath(__file__))`
-    # where __file__ refers to assets.py itself, is more direct for finding assets relative to assets.py.
-    # For MAPS_DIR, we want it relative to the project structure.
     PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 except NameError:
-    # __file__ is not defined if running in some interactive interpreters or frozen apps without this info.
-    # Fallback to current working directory, but this can be unreliable.
     PROJECT_ROOT = os.getcwd()
-    print(f"CONSTANTS.PY WARNING: __file__ not defined, PROJECT_ROOT defaulted to CWD: {PROJECT_ROOT}")
+    if _SCRIPT_LOGGING_ENABLED: # Gated print
+        print(f"CONSTANTS.PY WARNING: __file__ not defined, PROJECT_ROOT defaulted to CWD: {PROJECT_ROOT}")
 
 
 # --- Gameplay / Physics / Screen Dimensions ---
@@ -73,9 +65,14 @@ PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER = 1.5 # attack2 animation plays slower
 CHARACTER_ATTACK_STATE_DURATION = 480 # ms (default duration if not derived from animation frames)
 
 # --- Item Constants ---
-CHEST_CLOSED_SPRITE_PATH = "characters/items/chest.gif" # Path relative to project root via resource_path
-CHEST_STAY_OPEN_DURATION_MS = 3000 # Not currently used if chest stays open indefinitely
-CHEST_FADE_OUT_DURATION_MS = 1000  # Not currently used
+CHEST_CLOSED_SPRITE_PATH = "characters/items/chest.gif"
+CHEST_OPEN_DISPLAY_DURATION_MS = 5000 # Time chest stays fully open after animation
+CHEST_FADE_OUT_DURATION_MS = 1000  # Duration of the fade-out effect
+CHEST_ANIM_FRAME_DURATION_MS = int(ANIM_FRAME_DURATION * 0.7) # Animation speed for chest opening
+CHEST_FRICTION = -0.12 # Friction for chest movement
+CHEST_MAX_SPEED_X = 3.0 # Max horizontal speed when pushed
+CHEST_PUSH_ACCEL_BASE = 0.8 # Base acceleration when pushed
+CHEST_MASS = 5.0 # Conceptual mass for pushing
 
 # --- Projectile Constants ---
 # Fireball (Key 1)
@@ -187,7 +184,7 @@ ORANGE_RED = (255, 69, 0); MAGENTA = (255, 0, 255)
 PURPLE_BACKGROUND = (75, 0, 130)
 
 # --- UI ---
-HEALTH_BAR_WIDTH = 50.0 
+HEALTH_BAR_WIDTH = 50.0
 HEALTH_BAR_HEIGHT = 8.0
 HEALTH_BAR_OFFSET_ABOVE = 5.0
 HUD_HEALTH_BAR_WIDTH = HEALTH_BAR_WIDTH * 2.0
@@ -212,14 +209,13 @@ def get_maps_directory():
         maps_next_to_exe = os.path.join(exe_dir, 'maps')
         if os.path.isdir(maps_next_to_exe):
             return maps_next_to_exe
-        return bundled_maps_path 
+        return bundled_maps_path
     else:
-        # Development mode: 'maps' directory in the project root
-        # Ensure PROJECT_ROOT is defined correctly at the top of this file.
         if PROJECT_ROOT:
             return os.path.join(PROJECT_ROOT, 'maps')
-        else: # Fallback if PROJECT_ROOT couldn't be determined
-            print("CONSTANTS.PY ERROR: PROJECT_ROOT not determined. MAPS_DIR will be relative to CWD.")
+        else:
+            if _SCRIPT_LOGGING_ENABLED:
+                print("CONSTANTS.PY ERROR: PROJECT_ROOT not determined. MAPS_DIR will be relative to CWD.")
             return 'maps'
 
 MAPS_DIR = get_maps_directory()
@@ -227,18 +223,18 @@ MAPS_DIR = get_maps_directory()
 # --- Network Constants ---
 SERVER_IP_BIND = '0.0.0.0'
 SERVER_PORT_TCP = 5555
-SERVICE_NAME = "platformer_adventure_lan_v1" 
+SERVICE_NAME = "platformer_adventure_lan_v1"
 DISCOVERY_PORT_UDP = 5556
-BUFFER_SIZE = 8192 
-BROADCAST_INTERVAL_S = 1.0 
-CLIENT_SEARCH_TIMEOUT_S = 5.0 
-MAP_DOWNLOAD_CHUNK_SIZE = 4096 
+BUFFER_SIZE = 8192
+BROADCAST_INTERVAL_S = 1.0
+CLIENT_SEARCH_TIMEOUT_S = 5.0
+MAP_DOWNLOAD_CHUNK_SIZE = 4096
 
 # --- Editor Specific Constants (referenced by editor_config.py) ---
 EDITOR_SCREEN_INITIAL_WIDTH = 1380
 EDITOR_SCREEN_INITIAL_HEIGHT = 820
-LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json" 
-GAME_LEVEL_FILE_EXTENSION = ".py"           
+LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
+GAME_LEVEL_FILE_EXTENSION = ".py"
 
 # --- Other ---
 PLAYER_SELF_DAMAGE = 10
@@ -284,9 +280,3 @@ JOYSTICK_AXIS_EVENT_ACTIONS = [
     "projectile5", "projectile6", "projectile7",
     "pause", "menu_confirm", "menu_cancel", "reset"
 ]
-
-# --- Qt Type Aliases (Optional, if you want to avoid direct PySide6 imports elsewhere for these specific types) ---
-# from PySide6.QtCore import QRectF, QPointF # Example
-# QT_RECTF_TYPE = QRectF
-# QT_POINTF_TYPE = QPointF
-# Using them directly (e.g., `from PySide6.QtCore import QRectF`) in modules that need them is often clearer.
