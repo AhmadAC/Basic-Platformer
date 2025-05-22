@@ -38,22 +38,38 @@ except ImportError:
         MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH = "controller_mappings_fallback.json"
         _pygame_initialized_globally = False; _joystick_initialized_globally = False
         LOADED_PYGAME_JOYSTICK_MAPPINGS: Dict[str, Dict[str, Any]] = {}
-        DEFAULT_P1_INPUT_DEVICE = "keyboard_p1"; DEFAULT_P1_KEYBOARD_ENABLED = True; DEFAULT_P1_CONTROLLER_ENABLED = False
-        DEFAULT_P2_INPUT_DEVICE = "keyboard_p2"; DEFAULT_P2_KEYBOARD_ENABLED = False; DEFAULT_P2_CONTROLLER_ENABLED = False
-        DEFAULT_P3_INPUT_DEVICE = "unassigned"; DEFAULT_P3_KEYBOARD_ENABLED = False; DEFAULT_P3_CONTROLLER_ENABLED = False
-        DEFAULT_P4_INPUT_DEVICE = "unassigned"; DEFAULT_P4_KEYBOARD_ENABLED = False; DEFAULT_P4_CONTROLLER_ENABLED = False
-        CURRENT_P1_INPUT_DEVICE = DEFAULT_P1_INPUT_DEVICE; P1_KEYBOARD_ENABLED = DEFAULT_P1_KEYBOARD_ENABLED; P1_CONTROLLER_ENABLED = DEFAULT_P1_CONTROLLER_ENABLED
-        CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE; P2_KEYBOARD_ENABLED = DEFAULT_P2_KEYBOARD_ENABLED; P2_CONTROLLER_ENABLED = DEFAULT_P2_CONTROLLER_ENABLED
-        CURRENT_P3_INPUT_DEVICE = DEFAULT_P3_INPUT_DEVICE; P3_KEYBOARD_ENABLED = DEFAULT_P3_KEYBOARD_ENABLED; P3_CONTROLLER_ENABLED = DEFAULT_P3_CONTROLLER_ENABLED
-        CURRENT_P4_INPUT_DEVICE = DEFAULT_P4_INPUT_DEVICE; P4_KEYBOARD_ENABLED = DEFAULT_P4_KEYBOARD_ENABLED; P4_CONTROLLER_ENABLED = DEFAULT_P4_CONTROLLER_ENABLED
-        KEYBOARD_DEVICE_IDS = ["keyboard_p1", "keyboard_p2", "unassigned_keyboard"]
-        KEYBOARD_DEVICE_NAMES = ["Keyboard (P1)", "Keyboard (P2)", "Keyboard (Unassigned)"]
-        DEFAULT_GENERIC_JOYSTICK_MAPPINGS: Dict[str, Any] = {"jump": {"type": "button", "id": 0}} # Simplified
-        UNASSIGNED_DEVICE_ID = "unassigned" # Added for fallback
-        UNASSIGNED_DEVICE_NAME = "Unassigned" # Added for fallback
+
+        UNASSIGNED_DEVICE_ID = "unassigned"
+        UNASSIGNED_DEVICE_NAME = "Unassigned"
+
+        KEYBOARD_DEVICE_IDS = ["keyboard_p1", "keyboard_p2"]
+        KEYBOARD_DEVICE_NAMES = ["Keyboard (P1 Default)", "Keyboard (P2)"]
+
+        DEFAULT_P1_KEYBOARD_DEVICE = KEYBOARD_DEVICE_IDS[0] if KEYBOARD_DEVICE_IDS else UNASSIGNED_DEVICE_ID
+        DEFAULT_P1_CONTROLLER_DEVICE = UNASSIGNED_DEVICE_ID
+        DEFAULT_P2_KEYBOARD_DEVICE = UNASSIGNED_DEVICE_ID
+        DEFAULT_P2_CONTROLLER_DEVICE = UNASSIGNED_DEVICE_ID
+        DEFAULT_P3_KEYBOARD_DEVICE = UNASSIGNED_DEVICE_ID
+        DEFAULT_P3_CONTROLLER_DEVICE = UNASSIGNED_DEVICE_ID
+        DEFAULT_P4_KEYBOARD_DEVICE = UNASSIGNED_DEVICE_ID
+        DEFAULT_P4_CONTROLLER_DEVICE = UNASSIGNED_DEVICE_ID
+
+        CURRENT_P1_KEYBOARD_DEVICE = DEFAULT_P1_KEYBOARD_DEVICE
+        CURRENT_P1_CONTROLLER_DEVICE = DEFAULT_P1_CONTROLLER_DEVICE
+        CURRENT_P2_KEYBOARD_DEVICE = DEFAULT_P2_KEYBOARD_DEVICE
+        CURRENT_P2_CONTROLLER_DEVICE = DEFAULT_P2_CONTROLLER_DEVICE
+        CURRENT_P3_KEYBOARD_DEVICE = DEFAULT_P3_KEYBOARD_DEVICE
+        CURRENT_P3_CONTROLLER_DEVICE = DEFAULT_P3_CONTROLLER_DEVICE
+        CURRENT_P4_KEYBOARD_DEVICE = DEFAULT_P4_KEYBOARD_DEVICE
+        CURRENT_P4_CONTROLLER_DEVICE = DEFAULT_P4_CONTROLLER_DEVICE
+
+        DEFAULT_GENERIC_JOYSTICK_MAPPINGS: Dict[str, Any] = {"jump": {"type": "button", "id": 0}}
 
         @staticmethod
-        def init_pygame_and_joystick_globally(force_rescan=False): print("Fallback: Pygame Init")
+        def init_pygame_and_joystick_globally(force_rescan=False):
+            print("Fallback: Pygame Init called")
+            GameConfigFallback._pygame_initialized_globally = True
+            GameConfigFallback._joystick_initialized_globally = True # Simulate successful init
         @staticmethod
         def get_available_joystick_names_with_indices_and_guids() -> List[Tuple[str, str, Optional[str], int]]: return []
         @staticmethod
@@ -61,7 +77,14 @@ except ImportError:
         @staticmethod
         def save_config(): print("Fallback save_config called"); return False
         @staticmethod
-        def load_config(): print("Fallback load_config called"); GameConfigFallback.LOADED_PYGAME_JOYSTICK_MAPPINGS = {}; # ... (rest of defaults)
+        def load_config():
+            print("Fallback load_config called")
+            GameConfigFallback.LOADED_PYGAME_JOYSTICK_MAPPINGS = {}
+            GameConfigFallback.CURRENT_P1_KEYBOARD_DEVICE = GameConfigFallback.DEFAULT_P1_KEYBOARD_DEVICE
+            GameConfigFallback.CURRENT_P1_CONTROLLER_DEVICE = GameConfigFallback.DEFAULT_P1_CONTROLLER_DEVICE
+            for p_num in range(2, 5):
+                setattr(GameConfigFallback, f"CURRENT_P{p_num}_KEYBOARD_DEVICE", getattr(GameConfigFallback, f"DEFAULT_P{p_num}_KEYBOARD_DEVICE"))
+                setattr(GameConfigFallback, f"CURRENT_P{p_num}_CONTROLLER_DEVICE", getattr(GameConfigFallback, f"DEFAULT_P{p_num}_CONTROLLER_DEVICE"))
         @staticmethod
         def update_player_mappings_from_config(): print("Fallback update_player_mappings called")
         @staticmethod
@@ -75,7 +98,7 @@ if not logger_cmg.hasHandlers():
     _cmg_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     _cmg_handler.setFormatter(_cmg_formatter)
     logger_cmg.addHandler(_cmg_handler)
-    logger_cmg.setLevel(logging.INFO)
+    logger_cmg.setLevel(logging.INFO) # Set to DEBUG for more verbose thread logs if needed
     logger_cmg.propagate = False
 
 # --- Constants and Mappings ---
@@ -128,12 +151,12 @@ def _convert_runtime_default_to_gui_storage(action: str, runtime_map: Dict[str, 
         details["value"] = list(runtime_map.get("value", (0,0)))
         raw_str_parts.append(f"Hat {map_id} {tuple(details['value'])}")
     else: logger_cmg.warning(f"Unknown map type '{map_type}' for '{action}'."); return None
-        
+
     gui_storage_map["details"] = details; gui_storage_map["raw_str"] = " ".join(raw_str_parts)
     return gui_storage_map
 
 # --- PygameControllerThread ---
-class PygameControllerThread(QThread): # (Contents mostly unchanged from your provided version)
+class PygameControllerThread(QThread):
     controllerEventCaptured = Signal(dict, str)
     mappedEventTriggered = Signal(str, bool)
     controllerHotplug = Signal(str)
@@ -146,7 +169,7 @@ class PygameControllerThread(QThread): # (Contents mostly unchanged from your pr
         self._translated_mappings_for_triggering: Dict[str, Any] = {}
         self.active_axis_keys: Dict[Tuple[int, int], str] = {}
         self.active_hat_keys: Dict[Tuple[int, Tuple[int,int]], str] = {}
-        self._last_joystick_count = -1
+        self._last_joystick_count = -1 # Initialize to ensure first check triggers update
         self.joystick_idx_to_monitor = -1
         self.joystick_instance_id_to_monitor: Optional[int] = None
         logger_cmg.debug("PygameControllerThread initialized.")
@@ -162,64 +185,81 @@ class PygameControllerThread(QThread): # (Contents mostly unchanged from your pr
         if self.joystick_idx_to_monitor != pygame_index:
             logger_cmg.info(f"PygameControllerThread: Monitor change from idx {self.joystick_idx_to_monitor} to {pygame_index}")
             self.joystick_idx_to_monitor = pygame_index
-            if self.joystick:
+            if self.joystick and self.joystick.get_init():
                 try: self.joystick.quit()
-                except pygame.error: pass
+                except pygame.error: pass # Ignore error if already quit or invalid
             self.joystick = None; self.joystick_instance_id_to_monitor = None
             self.active_axis_keys.clear(); self.active_hat_keys.clear()
+
             if 0 <= self.joystick_idx_to_monitor < pygame.joystick.get_count():
                 try:
                     self.joystick = pygame.joystick.Joystick(self.joystick_idx_to_monitor)
-                    self.joystick.init()
+                    self.joystick.init() # Essential for receiving events from this joystick
                     self.joystick_instance_id_to_monitor = self.joystick.get_instance_id()
                     logger_cmg.info(f"PygameControllerThread: Monitoring '{self.joystick.get_name()}' (Idx:{pygame_index}, InstID:{self.joystick_instance_id_to_monitor}).")
                 except pygame.error as e:
                     logger_cmg.error(f"PygameControllerThread: Error init joystick idx {pygame_index}: {e}")
-                    self.joystick = None
-            elif self.joystick_idx_to_monitor != -1:
+                    self.joystick = None # Ensure joystick is None on failure
+            elif self.joystick_idx_to_monitor != -1 : # Only warn if a specific (but invalid) index was requested
                  logger_cmg.warning(f"PygameControllerThread: Invalid joystick index {pygame_index} for monitoring.")
+
 
     def start_listening(self): self.is_listening_for_mapping = True
     def stop_listening(self): self.is_listening_for_mapping = False
-    def stop(self): self.stop_flag.set()
+    def stop(self): self.stop_flag.set(); logger_cmg.debug("PygameControllerThread stop_flag set.")
 
-    def run(self): # (Logic for run is mostly the same, ensure stop_flag is respected)
-        logger_cmg.info("PygameControllerThread started running.")
+    def run(self):
+        logger_cmg.info("PygameControllerThread: Thread trying to start running.")
         if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
-            logger_cmg.error("Pygame/Joystick system not globally initialized! Thread cannot run."); return
+            logger_cmg.warning("PygameControllerThread: Pygame/Joystick not globally initialized on first check. Retrying after short delay...");
+            time.sleep(0.2) # Wait a moment for global init to potentially complete
+            if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
+                logger_cmg.error("PygameControllerThread: Pygame/Joystick system STILL not globally initialized! Thread cannot run.");
+                self.controllerHotplug.emit("Error: Pygame thread could not start.") # Signal UI
+                return
+
+        logger_cmg.info("PygameControllerThread: Pygame/Joystick confirmed. Starting main loop.")
+        self._last_joystick_count = pygame.joystick.get_count() # Initialize with current count
 
         while not self.stop_flag.is_set():
             try:
-                pygame.event.pump()
+                pygame.event.pump() # Process Pygame's internal event queue
                 current_joystick_count = pygame.joystick.get_count()
+
                 if self._last_joystick_count != current_joystick_count:
+                    logger_cmg.info(f"PygameControllerThread: Joystick count changed from {self._last_joystick_count} to {current_joystick_count}.")
                     self.controllerHotplug.emit(f"Joystick count changed: {current_joystick_count}")
-                    logger_cmg.info(f"Joystick count changed: {self._last_joystick_count} -> {current_joystick_count}.")
-                    if self.joystick: self.joystick.quit()
-                    self.joystick = None; self.joystick_instance_id_to_monitor = None
+                    # Re-evaluate the monitored joystick
+                    # The main GUI thread will handle repopulating combos and calling set_joystick_to_monitor
+                    # We just update our internal last_count here. The hotplug signal will trigger GUI update.
                     self._last_joystick_count = current_joystick_count
-                    if 0 <= self.joystick_idx_to_monitor < current_joystick_count:
-                        self.set_joystick_to_monitor(self.joystick_idx_to_monitor)
-                    else: self.set_joystick_to_monitor(-1)
+                    # It's safer for the GUI to manage set_joystick_to_monitor on hotplug.
+                    # If current joystick becomes invalid, set_joystick_to_monitor(-1) will be called by GUI.
 
                 if self.joystick is None or not self.joystick.get_init():
+                    # Attempt to re-acquire joystick if it was set but became uninitialized (e.g., after hotplug)
                     if self.joystick_idx_to_monitor != -1 and 0 <= self.joystick_idx_to_monitor < current_joystick_count:
-                        # logger_cmg.warning(f"Re-init joystick index {self.joystick_idx_to_monitor}")
-                        self.set_joystick_to_monitor(self.joystick_idx_to_monitor)
-                    else: # No valid joystick or index is -1
-                        if self.joystick: self.joystick.quit(); self.joystick = None
-                    time.sleep(0.1); continue
+                        logger_cmg.debug(f"PygameControllerThread: Monitored joystick (idx {self.joystick_idx_to_monitor}) is not valid/initialized. Attempting to re-set.")
+                        self.set_joystick_to_monitor(self.joystick_idx_to_monitor) # Try to re-init
+                    elif self.joystick_idx_to_monitor != -1: # Was set to a specific index, but it's now out of bounds
+                        logger_cmg.warning(f"PygameControllerThread: Monitored joystick index {self.joystick_idx_to_monitor} is out of bounds ({current_joystick_count}). Setting to -1.")
+                        self.set_joystick_to_monitor(-1) # No valid joystick to monitor
 
-                for event in pygame.event.get():
+                    if self.joystick is None or not self.joystick.get_init(): # Still not valid after attempt
+                        time.sleep(0.1); continue # Sleep and retry next loop
+
+                # Process events for the monitored joystick
+                for event in pygame.event.get(): # Get all events
                     if self.stop_flag.is_set(): break
-                    if not hasattr(event, 'instance_id') or event.instance_id != self.joystick_instance_id_to_monitor: continue
-                    
+                    if not hasattr(event, 'instance_id') or event.instance_id != self.joystick_instance_id_to_monitor:
+                        continue # Skip events not from our monitored joystick
+
                     event_details: Optional[Dict[str, Any]] = None; raw_str = ""
                     if event.type == pygame.JOYAXISMOTION:
                         axis, value = event.axis, event.value; raw_str = f"Joy{self.joystick_idx_to_monitor} Axis {axis}: {value:.2f}"
                         if self.is_listening_for_mapping and abs(value) > AXIS_THRESHOLD:
                             event_details = {"type": "axis", "axis_id": axis, "direction": 1 if value > 0 else -1, "threshold": AXIS_THRESHOLD}
-                        elif not self.is_listening_for_mapping: # Simulate
+                        elif not self.is_listening_for_mapping:
                             for (ax_id, direction), act_key in list(self.active_axis_keys.items()):
                                 if ax_id == axis:
                                     thresh = self.translated_mappings_for_triggering.get(act_key, {}).get("threshold", AXIS_THRESHOLD) * 0.5
@@ -245,11 +285,11 @@ class PygameControllerThread(QThread): # (Contents mostly unchanged from your pr
                     elif event.type == pygame.JOYHATMOTION:
                         hat, value_tuple = event.hat, event.value; raw_str = f"Joy{self.joystick_idx_to_monitor} Hat {hat} {value_tuple}"
                         if self.is_listening_for_mapping and value_tuple != (0,0): event_details = {"type": "hat", "hat_id": hat, "value": list(value_tuple)}
-                        elif not self.is_listening_for_mapping: # Simulate
+                        elif not self.is_listening_for_mapping:
                             for (h_id, h_val), act_key in list(self.active_hat_keys.items()):
-                                if h_id == hat and h_val != value_tuple:
+                                if h_id == hat and h_val != value_tuple: # Hat value changed from active
                                     self.mappedEventTriggered.emit(act_key, False); self.active_hat_keys.pop((h_id, h_val), None)
-                            if value_tuple != (0,0):
+                            if value_tuple != (0,0): # New hat press
                                 for act_key, map_info in self.translated_mappings_for_triggering.items():
                                     if map_info.get("type")=="hat" and map_info.get("id")==hat and tuple(map_info.get("value",(9,9)))==value_tuple:
                                         if (hat, value_tuple) not in self.active_hat_keys:
@@ -257,10 +297,16 @@ class PygameControllerThread(QThread): # (Contents mostly unchanged from your pr
                                         break
                     if self.is_listening_for_mapping and event_details:
                         self.controllerEventCaptured.emit(event_details, raw_str); self.is_listening_for_mapping = False
-                time.sleep(0.01)
-            except pygame.error as e: logger_cmg.error(f"Pygame error in controller loop (joy {self.joystick_idx_to_monitor}): {e}"); self.controllerHotplug.emit(f"Pygame error Joy {self.joystick_idx_to_monitor}"); time.sleep(0.5) # Basic retry logic implied by loop
-            except Exception as e_unhandled: logger_cmg.exception(f"Unhandled exception in controller thread (joy {self.joystick_idx_to_monitor}): {e_unhandled}"); time.sleep(0.5)
-        if self.joystick:
+                time.sleep(0.01) # Brief sleep to yield CPU
+            except pygame.error as e:
+                logger_cmg.error(f"Pygame error in controller loop (joy {self.joystick_idx_to_monitor}): {e}")
+                self.controllerHotplug.emit(f"Pygame error Joy {self.joystick_idx_to_monitor}")
+                time.sleep(0.5)
+            except Exception as e_unhandled:
+                logger_cmg.exception(f"Unhandled exception in controller thread (joy {self.joystick_idx_to_monitor}): {e_unhandled}")
+                time.sleep(0.5)
+
+        if self.joystick and self.joystick.get_init():
             try: self.joystick.quit()
             except pygame.error: pass
         self.controllerHotplug.emit("Controller thread stopped.")
@@ -284,20 +330,23 @@ class ControllerSettingsWindow(QWidget):
 
         config_area_group = QGroupBox("Player Input Configuration")
         self.config_grid_layout = QGridLayout(config_area_group)
-        self.player_device_combos: List[QComboBox] = []
-        self.player_kbd_enable_checks: List[QCheckBox] = []
-        self.player_ctrl_enable_checks: List[QCheckBox] = []
+        self.player_kbd_device_combos: List[QComboBox] = []
+        self.player_ctrl_device_combos: List[QComboBox] = []
 
         for i in range(4): # P1 to P4
-            player_num = i + 1; row_offset = i * 2 
-            self.config_grid_layout.addWidget(QLabel(f"<b>Player {player_num}:</b>"), row_offset, 0, 1, 4)
-            self.config_grid_layout.addWidget(QLabel("Input Device:"), row_offset + 1, 0)
-            dev_combo = QComboBox(); self.player_device_combos.append(dev_combo)
-            self.config_grid_layout.addWidget(dev_combo, row_offset + 1, 1)
-            kbd_chk = QCheckBox("Keyboard"); self.player_kbd_enable_checks.append(kbd_chk)
-            self.config_grid_layout.addWidget(kbd_chk, row_offset + 1, 2)
-            ctrl_chk = QCheckBox("Controller"); self.player_ctrl_enable_checks.append(ctrl_chk)
-            self.config_grid_layout.addWidget(ctrl_chk, row_offset + 1, 3)
+            player_num = i + 1
+            row_offset = i * 2
+            self.config_grid_layout.addWidget(QLabel(f"<b>Player {player_num}:</b>"), row_offset, 0, 1, 4, alignment=Qt.AlignLeft) # Span 4 cols
+
+            self.config_grid_layout.addWidget(QLabel("Keyboard Device:"), row_offset + 1, 0)
+            kbd_combo = QComboBox()
+            self.player_kbd_device_combos.append(kbd_combo)
+            self.config_grid_layout.addWidget(kbd_combo, row_offset + 1, 1)
+
+            self.config_grid_layout.addWidget(QLabel("Controller Device:"), row_offset + 1, 2)
+            ctrl_combo = QComboBox()
+            self.player_ctrl_device_combos.append(ctrl_combo)
+            self.config_grid_layout.addWidget(ctrl_combo, row_offset + 1, 3)
         main_layout.addWidget(config_area_group)
 
         joy_map_group = QGroupBox("Controller Button/Axis Mapping")
@@ -317,7 +366,7 @@ class ControllerSettingsWindow(QWidget):
         tbl_ctrl_layout.addWidget(self.listen_button)
         joy_map_layout.addLayout(tbl_ctrl_layout)
         self.mappings_table = QTableWidget(); self.mappings_table.setColumnCount(8)
-        self.mappings_table.setHorizontalHeaderLabels(["Action", "Input", "", "", "Action", "Input", "", ""]) # Simplified headers
+        self.mappings_table.setHorizontalHeaderLabels(["Action", "Input", "", "", "Action", "Input", "", ""])
         self.mappings_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         for col_idx in [0,4]: self.mappings_table.horizontalHeader().setSectionResizeMode(col_idx, QHeaderView.ResizeToContents)
         for col_idx in [1,5]: self.mappings_table.horizontalHeader().setSectionResizeMode(col_idx, QHeaderView.Stretch)
@@ -332,7 +381,7 @@ class ControllerSettingsWindow(QWidget):
         reset_btn = QPushButton("Reset All to Default"); reset_btn.clicked.connect(self.confirm_reset_all_settings)
         file_btn_layout.addWidget(reset_btn)
         main_layout.addLayout(file_btn_layout)
-        
+
         main_layout.addWidget(QLabel("Event Log:"))
         self.debug_console = QTextEdit(); self.debug_console.setReadOnly(True); self.debug_console.setFixedHeight(100)
         main_layout.addWidget(self.debug_console)
@@ -341,24 +390,56 @@ class ControllerSettingsWindow(QWidget):
         self.controller_thread.controllerEventCaptured.connect(self.on_controller_event_captured_for_mapping)
         self.controller_thread.mappedEventTriggered.connect(self.on_mapped_event_triggered_for_simulation)
         self.controller_thread.controllerHotplug.connect(self.update_status_and_log_and_joystick_combos)
-        
+
         logger_cmg.info("ControllerSettingsWindow initialized.")
-        if not parent: self.load_settings_into_ui(); self.activate_controller_monitoring()
+        if not parent: # Standalone execution
+            self.activate_controller_monitoring() # Calls load_settings_into_ui inside
 
     def activate_controller_monitoring(self):
-        logger_cmg.info("Activating controller monitoring.")
-        if not self.controller_thread.isRunning():
-            self.controller_thread.stop_flag.clear() # Ensure flag is cleared before start
-            self.controller_thread.start()
+        logger_cmg.info("GUI: Activating controller monitoring.")
+
+        # Load settings first, which includes initializing Pygame/Joystick via game_config.load_config()
         self.load_settings_into_ui()
-        self.update_status_and_log_and_joystick_combos("Controller monitoring activated.")
+
+        # Now check if Pygame/Joystick system is truly up
+        if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
+            error_msg = "Error: Pygame Joystick system failed to initialize for GUI."
+            logger_cmg.error(f"GUI: {error_msg}")
+            self.update_status_and_log_and_joystick_combos(error_msg) # Update UI to reflect this
+            return # Cannot start thread
+
+        if not self.controller_thread.isRunning():
+            self.controller_thread.stop_flag.clear()
+            logger_cmg.info("GUI: Pygame/Joystick system confirmed. Starting PygameControllerThread.")
+            self.controller_thread.start()
+        else:
+            logger_cmg.info("GUI: PygameControllerThread is already running.")
+
+        # Update status message based on current state after potential thread start and joystick scan
+        current_joy_data = self.joystick_select_combo_for_mapping.currentData()
+        status_msg = "Controller monitoring active."
+        if isinstance(current_joy_data, dict) and current_joy_data.get("index") is not None:
+            joy_text = self.joystick_select_combo_for_mapping.currentText()
+            status_msg = f"Monitoring '{joy_text}' for mapping. Thread active."
+        elif self.joystick_select_combo_for_mapping.count() > 0:
+            status_msg = "Controller monitoring active. Select controller to map."
+        else:
+            status_msg = "Controller monitoring active. No controllers detected."
+        
+        # update_status_and_log_and_joystick_combos calls populate_joystick_device_combos,
+        # which might re-trigger on_monitor_joystick_changed, so ensure status is set last.
+        self.update_status_and_log_and_joystick_combos(status_msg)
+
 
     def deactivate_controller_monitoring(self):
-        logger_cmg.info("Deactivating controller monitoring.")
+        logger_cmg.info("GUI: Deactivating controller monitoring.")
         if self.controller_thread.isRunning():
             self.controller_thread.stop()
-            if not self.controller_thread.wait(1000): logger_cmg.warning("Controller thread did not stop gracefully.")
-            else: logger_cmg.info("Controller thread stopped.")
+            if not self.controller_thread.wait(1000): logger_cmg.warning("GUI: Controller thread did not stop gracefully.")
+            else: logger_cmg.info("GUI: Controller thread stopped.")
+        else:
+            logger_cmg.info("GUI: Controller thread was not running.")
+
         for key_to_release in list(self.currently_pressed_keys):
             try: self.keyboard.release(key_to_release)
             except Exception: pass
@@ -370,7 +451,7 @@ class ControllerSettingsWindow(QWidget):
     def update_status_and_log(self, message: str):
         if hasattr(self, 'status_label'): self.status_label.setText(message)
         self.log_to_debug_console(message)
-        logger_cmg.log(logging.INFO, f"Settings Status Update: {message}")
+        logger_cmg.log(logging.INFO, f"GUI Status Update: {message}")
 
     def update_status_and_log_and_joystick_combos(self, message: str):
         self.update_status_and_log(message); self.populate_joystick_device_combos()
@@ -386,73 +467,87 @@ class ControllerSettingsWindow(QWidget):
         return f"Ctrl (GUID:...{target_guid[-6:]})" if target_guid else "Unknown Ctrl"
 
     def populate_joystick_device_combos(self):
-        logger_cmg.debug("Populating joystick combos...")
+        logger_cmg.debug("GUI: Populating joystick combos...")
         available_joysticks_full_data: List[Tuple[str, str, Optional[str], int]] = game_config.get_available_joystick_names_with_indices_and_guids()
-        
-        current_player_dev_selections = [combo.currentData() for combo in self.player_device_combos]
+        logger_cmg.debug(f"GUI: Found {len(available_joysticks_full_data)} joysticks from game_config.")
+
+        current_kbd_selections = [combo.currentData() for combo in self.player_kbd_device_combos]
+        current_ctrl_selections = [combo.currentData() for combo in self.player_ctrl_device_combos]
         prev_mapping_guid = self.get_current_mapping_joystick_guid()
-        
-        for combo in self.player_device_combos + [self.joystick_select_combo_for_mapping]:
-            combo.blockSignals(True); combo.clear(); combo.blockSignals(False)
-        
-        # Populate Player Device Combos
-        for i, p_combo in enumerate(self.player_device_combos):
-            p_combo.blockSignals(True)
-            p_combo.addItem(UNASSIGNED_DEVICE_NAME, UNASSIGNED_DEVICE_ID) # Add "Unassigned" first
+
+        for combo_list in [self.player_kbd_device_combos, self.player_ctrl_device_combos]:
+            for combo in combo_list:
+                combo.blockSignals(True); combo.clear(); combo.blockSignals(False)
+        self.joystick_select_combo_for_mapping.blockSignals(True); self.joystick_select_combo_for_mapping.clear(); self.joystick_select_combo_for_mapping.blockSignals(False)
+
+        for i, kbd_combo in enumerate(self.player_kbd_device_combos):
+            kbd_combo.blockSignals(True)
+            kbd_combo.addItem(UNASSIGNED_DEVICE_NAME, UNASSIGNED_DEVICE_ID)
             if hasattr(game_config, 'KEYBOARD_DEVICE_IDS') and hasattr(game_config, 'KEYBOARD_DEVICE_NAMES'):
                 for k_idx, k_id in enumerate(game_config.KEYBOARD_DEVICE_IDS):
-                    if k_id == UNASSIGNED_DEVICE_ID: continue # Skip if already added "Unassigned"
+                    if k_id == UNASSIGNED_DEVICE_ID: continue
                     k_name = game_config.KEYBOARD_DEVICE_NAMES[k_idx] if k_idx < len(game_config.KEYBOARD_DEVICE_NAMES) else k_id
-                    p_combo.addItem(k_name, k_id)
-            else: # Basic fallback
-                p_combo.addItem("Keyboard P1", "keyboard_p1"); p_combo.addItem("Keyboard P2", "keyboard_p2")
-            
-            for joy_disp_name, internal_id_for_assignment, _, _ in available_joysticks_full_data:
-                p_combo.addItem(joy_disp_name, internal_id_for_assignment)
-            
-            p_combo.blockSignals(False)
-            idx_to_set = p_combo.findData(current_player_dev_selections[i] if i < len(current_player_dev_selections) else UNASSIGNED_DEVICE_ID)
-            p_combo.setCurrentIndex(idx_to_set if idx_to_set != -1 else 0)
+                    kbd_combo.addItem(k_name, k_id)
+            kbd_combo.blockSignals(False)
+            idx_to_set_kbd = kbd_combo.findData(current_kbd_selections[i] if i < len(current_kbd_selections) else UNASSIGNED_DEVICE_ID)
+            kbd_combo.setCurrentIndex(idx_to_set_kbd if idx_to_set_kbd != -1 else 0)
 
-        # Populate Joystick Select Combo for Mapping (for editing mappings)
+        for i, ctrl_combo in enumerate(self.player_ctrl_device_combos):
+            ctrl_combo.blockSignals(True)
+            ctrl_combo.addItem(UNASSIGNED_DEVICE_NAME, UNASSIGNED_DEVICE_ID)
+            for joy_disp_name, internal_id_for_assignment, _, _ in available_joysticks_full_data:
+                ctrl_combo.addItem(joy_disp_name, internal_id_for_assignment)
+            ctrl_combo.blockSignals(False)
+            idx_to_set_ctrl = ctrl_combo.findData(current_ctrl_selections[i] if i < len(current_ctrl_selections) else UNASSIGNED_DEVICE_ID)
+            ctrl_combo.setCurrentIndex(idx_to_set_ctrl if idx_to_set_ctrl != -1 else 0)
+
         new_map_combo_idx = -1
         self.joystick_select_combo_for_mapping.blockSignals(True)
-        # Add a "No Controller" option for the mapping editor perhaps, or just leave empty if none.
         if not available_joysticks_full_data:
-             self.joystick_select_combo_for_mapping.addItem("No Controllers Detected", None) # UserData is None
+             self.joystick_select_combo_for_mapping.addItem("No Controllers Detected", None)
         else:
             for joy_disp_name, _, guid_str, pygame_joy_idx in available_joysticks_full_data:
-                # Use a more descriptive name for mapping combo
                 map_combo_display_name = f"Joy {pygame_joy_idx}: {joy_disp_name.split(': ', 1)[-1]}"
                 self.joystick_select_combo_for_mapping.addItem(map_combo_display_name, {"index": pygame_joy_idx, "guid": guid_str, "name": map_combo_display_name})
                 if guid_str == prev_mapping_guid: new_map_combo_idx = self.joystick_select_combo_for_mapping.count() - 1
-        
+
         self.joystick_select_combo_for_mapping.blockSignals(False)
         if new_map_combo_idx != -1: self.joystick_select_combo_for_mapping.setCurrentIndex(new_map_combo_idx)
-        elif self.joystick_select_combo_for_mapping.count() > 0: self.joystick_select_combo_for_mapping.setCurrentIndex(0)
-        
-        if self.joystick_select_combo_for_mapping.count() > 0 and self.joystick_select_combo_for_mapping.currentData() is not None:
-            self.on_monitor_joystick_changed(self.joystick_select_combo_for_mapping.currentIndex())
-        else:
-            self.controller_thread.set_joystick_to_monitor(-1)
-            self.update_simulation_thread_mappings({})
-            self.refresh_joystick_mappings_table(None)
-            self.listen_button.setEnabled(False)
-            self.update_status_and_log("No controllers available for mapping.")
-        logger_cmg.debug("Joystick device combos populated.")
+        elif self.joystick_select_combo_for_mapping.count() > 0: self.joystick_select_combo_for_mapping.setCurrentIndex(0) # Default to first if previous not found
+        else: # No joysticks at all
+             self.on_monitor_joystick_changed(-1) # Explicitly trigger update for "no controller"
+             logger_cmg.debug("GUI: No joysticks, on_monitor_joystick_changed(-1) implicitly called via setCurrentIndex or logic.")
+
+
+        # Ensure on_monitor_joystick_changed is triggered if index actually changed or is 0
+        # This is sometimes tricky due to setCurrentIndex not emitting if index is already 0.
+        # If the count > 0 and current index is >=0, explicitly call it.
+        if self.joystick_select_combo_for_mapping.count() > 0 and self.joystick_select_combo_for_mapping.currentIndex() >=0:
+            if prev_mapping_guid != self.get_current_mapping_joystick_guid() or new_map_combo_idx == -1 : # if selection changed or was defaulted
+                 self.on_monitor_joystick_changed(self.joystick_select_combo_for_mapping.currentIndex())
+        elif self.joystick_select_combo_for_mapping.count() == 0: # No controllers
+             self.on_monitor_joystick_changed(-1)
+
+
+        logger_cmg.debug("GUI: Joystick device combos populated.")
 
     def on_monitor_joystick_changed(self, index_in_combo: int):
-        logger_cmg.debug(f"Monitor joystick changed. Combo index: {index_in_combo}")
+        logger_cmg.info(f"GUI: Monitor joystick changed. Combo index: {index_in_combo}")
         if index_in_combo == -1 or self.joystick_select_combo_for_mapping.count() == 0:
-            self.controller_thread.set_joystick_to_monitor(-1); self.update_status_and_log("No controller selected."); return
+            self.controller_thread.set_joystick_to_monitor(-1)
+            self.update_status_and_log("No controller selected for mapping.")
+            self.listen_button.setEnabled(False)
+            self.update_simulation_thread_mappings({})
+            self.refresh_joystick_mappings_table(None)
+            return
 
         joy_data = self.joystick_select_combo_for_mapping.itemData(index_in_combo)
-        if not isinstance(joy_data, dict): # Handles "No Controllers Detected" case where itemData is None
+        if not isinstance(joy_data, dict) or joy_data.get("index") is None: # Handles "No Controllers Detected" where data might be None
             self.controller_thread.set_joystick_to_monitor(-1)
             self.update_status_and_log("No valid controller selected for mapping."); self.listen_button.setEnabled(False)
             self.update_simulation_thread_mappings({}); self.refresh_joystick_mappings_table(None)
             return
-            
+
         pygame_joy_idx = joy_data.get("index"); current_guid = joy_data.get("guid")
         current_joy_text = self.joystick_select_combo_for_mapping.itemText(index_in_combo)
 
@@ -462,7 +557,6 @@ class ControllerSettingsWindow(QWidget):
 
             if current_guid not in self.all_joystick_mappings_by_guid:
                 logger_cmg.info(f"No mappings for GUID {current_guid}. Trying fallback/default.")
-                # (Fallback/default logic as before)
                 source_guid_for_fallback = next((guid for guid, maps in self.all_joystick_mappings_by_guid.items() if maps and guid != current_guid), None)
                 if source_guid_for_fallback:
                     self.all_joystick_mappings_by_guid[current_guid] = copy.deepcopy(self.all_joystick_mappings_by_guid[source_guid_for_fallback])
@@ -470,11 +564,16 @@ class ControllerSettingsWindow(QWidget):
                     defaults_gui = {act: gui_map for act, rt_map in game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS.items() if act in MAPPABLE_KEYS and (gui_map := _convert_runtime_default_to_gui_storage(act, rt_map, pygame_joy_idx))}
                     self.all_joystick_mappings_by_guid[current_guid] = defaults_gui if defaults_gui else {}
                 else: self.all_joystick_mappings_by_guid[current_guid] = {}
-            
+
             current_maps = self.all_joystick_mappings_by_guid.get(current_guid, {})
             self.update_simulation_thread_mappings(current_maps)
             self.refresh_joystick_mappings_table(current_guid)
-        else: self.controller_thread.set_joystick_to_monitor(-1); self.update_status_and_log("Error with selected controller data."); self.listen_button.setEnabled(False)
+        else:
+            self.controller_thread.set_joystick_to_monitor(-1)
+            self.update_status_and_log("Error with selected controller data."); self.listen_button.setEnabled(False)
+            self.update_simulation_thread_mappings({})
+            self.refresh_joystick_mappings_table(None)
+
 
     def update_simulation_thread_mappings(self, raw_gui_mappings: Dict[str, Any]):
         self.current_translated_mappings_for_thread_sim.clear()
@@ -485,36 +584,56 @@ class ControllerSettingsWindow(QWidget):
         self.controller_thread.translated_mappings_for_triggering = self.current_translated_mappings_for_thread_sim
 
     def load_settings_into_ui(self):
-        logger_cmg.info("Loading settings into UI...")
-        game_config.load_config() 
+        logger_cmg.info("GUI: Loading settings into UI...")
+        game_config.load_config()
         self.all_joystick_mappings_by_guid = copy.deepcopy(getattr(game_config, 'LOADED_PYGAME_JOYSTICK_MAPPINGS', {}))
-        self.populate_joystick_device_combos()
 
+        temp_kbd_selections = []
+        temp_ctrl_selections = []
         for i in range(4):
-            dev_id = getattr(game_config, f"CURRENT_P{i+1}_INPUT_DEVICE", UNASSIGNED_DEVICE_ID)
-            kbd_en = getattr(game_config, f"P{i+1}_KEYBOARD_ENABLED", False)
-            ctrl_en = getattr(game_config, f"P{i+1}_CONTROLLER_ENABLED", False)
-            idx = self.player_device_combos[i].findData(dev_id)
-            self.player_device_combos[i].setCurrentIndex(idx if idx != -1 else 0)
-            self.player_kbd_enable_checks[i].setChecked(kbd_en)
-            self.player_ctrl_enable_checks[i].setChecked(ctrl_en)
-        
+            player_num = i + 1
+            kbd_dev_id = getattr(game_config, f"CURRENT_P{player_num}_KEYBOARD_DEVICE", UNASSIGNED_DEVICE_ID)
+            ctrl_dev_id = getattr(game_config, f"CURRENT_P{player_num}_CONTROLLER_DEVICE", UNASSIGNED_DEVICE_ID)
+            temp_kbd_selections.append(kbd_dev_id)
+            temp_ctrl_selections.append(ctrl_dev_id)
+
+        self.populate_joystick_device_combos() #This also sets current index based on its internal logic
+
+        # Explicitly set player device combos from loaded config again AFTER populate,
+        # as populate might default them if initial data was empty.
+        for i in range(4):
+            kbd_idx = self.player_kbd_device_combos[i].findData(temp_kbd_selections[i])
+            self.player_kbd_device_combos[i].setCurrentIndex(kbd_idx if kbd_idx != -1 else 0)
+
+            ctrl_idx = self.player_ctrl_device_combos[i].findData(temp_ctrl_selections[i])
+            self.player_ctrl_device_combos[i].setCurrentIndex(ctrl_idx if ctrl_idx != -1 else 0)
+
+
+        # Ensure mapping table and simulation thread are updated based on the selected joystick
+        # This is often handled by on_monitor_joystick_changed if a joystick is auto-selected
+        # by populate_joystick_device_combos.
         current_map_guid = self.get_current_mapping_joystick_guid()
         if current_map_guid:
             self.refresh_joystick_mappings_table(current_map_guid)
             self.update_simulation_thread_mappings(self.all_joystick_mappings_by_guid.get(current_map_guid,{}))
-        elif self.joystick_select_combo_for_mapping.count() > 0 and self.joystick_select_combo_for_mapping.currentData() is not None:
-             self.on_monitor_joystick_changed(0)
-        self.update_status_and_log("Settings loaded into UI.")
+        elif self.joystick_select_combo_for_mapping.count() > 0: # If joysticks exist but none selected, select first
+            self.joystick_select_combo_for_mapping.setCurrentIndex(0) # This will trigger on_monitor_joystick_changed
+        # If no joysticks, on_monitor_joystick_changed(-1) was likely called by populate
+
+        self.update_status_and_log("GUI: Settings loaded into UI.")
+
 
     def save_all_settings(self):
-        logger_cmg.info("Saving all settings...")
+        logger_cmg.info("GUI: Saving all settings...")
         for i in range(4):
-            setattr(game_config, f"CURRENT_P{i+1}_INPUT_DEVICE", self.player_device_combos[i].currentData())
-            setattr(game_config, f"P{i+1}_KEYBOARD_ENABLED", self.player_kbd_enable_checks[i].isChecked())
-            setattr(game_config, f"P{i+1}_CONTROLLER_ENABLED", self.player_ctrl_enable_checks[i].isChecked())
+            player_num = i + 1
+            kbd_dev_id = self.player_kbd_device_combos[i].currentData()
+            ctrl_dev_id = self.player_ctrl_device_combos[i].currentData()
+            setattr(game_config, f"CURRENT_P{player_num}_KEYBOARD_DEVICE", kbd_dev_id)
+            setattr(game_config, f"CURRENT_P{player_num}_CONTROLLER_DEVICE", ctrl_dev_id)
+
         game_config.LOADED_PYGAME_JOYSTICK_MAPPINGS = copy.deepcopy(self.all_joystick_mappings_by_guid)
-        if game_config.save_config(): self.update_status_and_log("All settings saved.")
+        if game_config.save_config(): self.update_status_and_log("GUI: All settings saved.")
         else: QMessageBox.critical(self, "Save Error", "Could not save settings."); self.update_status_and_log("Error saving settings.")
 
     def confirm_reset_all_settings(self):
@@ -522,15 +641,19 @@ class ControllerSettingsWindow(QWidget):
             self.perform_reset_all_settings()
 
     def perform_reset_all_settings(self):
-        logger_cmg.info("Resetting all settings to default.")
+        logger_cmg.info("GUI: Resetting all settings to default.")
         for i in range(4):
-            setattr(game_config, f"CURRENT_P{i+1}_INPUT_DEVICE", getattr(game_config, f"DEFAULT_P{i+1}_INPUT_DEVICE"))
-            setattr(game_config, f"P{i+1}_KEYBOARD_ENABLED", getattr(game_config, f"DEFAULT_P{i+1}_KEYBOARD_ENABLED"))
-            setattr(game_config, f"P{i+1}_CONTROLLER_ENABLED", getattr(game_config, f"DEFAULT_P{i+1}_CONTROLLER_ENABLED"))
+            player_num = i + 1
+            default_kbd = getattr(game_config, f"DEFAULT_P{player_num}_KEYBOARD_DEVICE", UNASSIGNED_DEVICE_ID)
+            default_ctrl = getattr(game_config, f"DEFAULT_P{player_num}_CONTROLLER_DEVICE", UNASSIGNED_DEVICE_ID)
+            setattr(game_config, f"CURRENT_P{player_num}_KEYBOARD_DEVICE", default_kbd)
+            setattr(game_config, f"CURRENT_P{player_num}_CONTROLLER_DEVICE", default_ctrl)
+
         self.all_joystick_mappings_by_guid.clear()
         if hasattr(game_config, 'LOADED_PYGAME_JOYSTICK_MAPPINGS'): game_config.LOADED_PYGAME_JOYSTICK_MAPPINGS.clear()
-        self.load_settings_into_ui() 
-        self.update_status_and_log("Settings reset. Save to make permanent.")
+
+        self.load_settings_into_ui() # Reload and repopulate UI
+        self.update_status_and_log("GUI: Settings reset. Save to make permanent.")
 
     def start_listening_for_joystick_map_from_button(self):
         guid = self.get_current_mapping_joystick_guid()
@@ -553,7 +676,7 @@ class ControllerSettingsWindow(QWidget):
         if not action_key or not guid: self.reset_listening_ui_for_joystick_map(); return
         if guid not in self.all_joystick_mappings_by_guid: self.all_joystick_mappings_by_guid[guid] = {}
         current_maps = self.all_joystick_mappings_by_guid[guid]
-        if action_key not in MENU_SPECIFIC_ACTIONS: # Conflict check for non-menu actions
+        if action_key not in MENU_SPECIFIC_ACTIONS:
             for old_key, old_map in list(current_maps.items()):
                 if old_key in MENU_SPECIFIC_ACTIONS: continue
                 if old_map and old_map.get("raw_str") == raw_event_str and old_key != action_key:
@@ -617,7 +740,7 @@ class ControllerSettingsWindow(QWidget):
     def handle_table_double_click(self, row: int, col: int):
         col_grp = 0 if col < 4 else 1; act_item_col = col_grp*4
         act_item = self.mappings_table.item(row, act_item_col)
-        if act_item and (col % 4) <= 1: # Clicked on Action or Input column
+        if act_item and (col % 4) <= 1:
             internal_key = act_item.data(Qt.UserRole)
             if internal_key: self.initiate_listening_sequence_for_joystick_map(internal_key, row)
 
@@ -648,36 +771,56 @@ class ControllerSettingsWindow(QWidget):
 # --- Main execution for standalone testing ---
 if __name__ == "__main__":
     logger_cmg.info("ControllerSettingsWindow application starting (standalone)...")
-    
+
+    # Ensure Pygame is initialized BEFORE QApplication for standalone GUI.
+    # This is critical for the PygameControllerThread.
     if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
-        print("Standalone GUI: Pygame/Joystick not globally initialized. Attempting init now.")
-        game_config.init_pygame_and_joystick_globally(force_rescan=True) # Force scan here for standalone
-        if not game_config._joystick_initialized_globally:
-            temp_app = QApplication.instance() or QApplication(sys.argv)
-            QMessageBox.critical(None, "Init Error", "Failed to initialize Pygame Joystick. Limited functionality.")
-            logger_cmg.critical("Standalone GUI: FAILED to initialize Pygame Joystick system.")
+        print("Standalone GUI: Pygame/Joystick not globally initialized by main config. Attempting init for GUI now.")
+        game_config.init_pygame_and_joystick_globally(force_rescan=True)
+        if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
+            # We need a QApplication instance to show QMessageBox
+            # Create a temporary one if it doesn't exist, or use existing if this script is part of a larger Qt app run.
+            # This is mainly for the edge case where this __main__ block is run, but Pygame init utterly fails.
+            _ensure_app = QApplication.instance() or QApplication(sys.argv)
+            QMessageBox.critical(None, "Init Error", "Failed to initialize Pygame and/or Joystick system for the settings GUI. Controller mapping will not work.")
+            logger_cmg.critical("Standalone GUI: FAILED to initialize Pygame/Joystick system.")
+            # Decide if to exit or continue with limited functionality
+            # For a controller mapper, this is pretty critical.
+            # sys.exit(1) # Or allow to continue but functionality will be broken.
 
     app = QApplication.instance() or QApplication(sys.argv)
-    
-    try: game_config.load_config()
-    except Exception as e: logger_cmg.error(f"Standalone GUI: Error loading game_config: {e}")
+
+    try:
+        # game_config.load_config() # This is called inside ControllerSettingsWindow.__init__ via activate_controller_monitoring -> load_settings_into_ui
+        pass
+    except Exception as e:
+        logger_cmg.error(f"Standalone GUI: Error during initial game_config.load_config (if any was planned here): {e}")
 
     main_window_for_testing = QMainWindow()
-    settings_widget = ControllerSettingsWindow()
+    settings_widget = ControllerSettingsWindow(parent=main_window_for_testing) # Pass parent
     main_window_for_testing.setCentralWidget(settings_widget)
     main_window_for_testing.setWindowTitle("Controller & Input Settings (Standalone Test)")
     main_window_for_testing.setGeometry(100, 100, 1050, 850)
     main_window_for_testing.show()
-    
+
     exit_code = app.exec()
-    
+
+    # Explicitly stop the thread if it's still running after app.exec() finishes
+    # This is good practice, though closeEvent should also handle it.
     if hasattr(settings_widget, 'controller_thread') and settings_widget.controller_thread.isRunning():
-        settings_widget.controller_thread.stop(); settings_widget.controller_thread.wait(500)
+        logger_cmg.info("Standalone GUI: app.exec() finished. Ensuring controller thread is stopped.")
+        settings_widget.deactivate_controller_monitoring() # This will stop the thread
+
+    # Pygame quit for standalone mode only if it was initialized by this context.
+    # If part of larger app, main app should handle global pygame quit.
+    # Here, since we might init it if main config didn't, we should try to quit.
     if game_config._pygame_initialized_globally:
         if game_config._joystick_initialized_globally:
-            try: pygame.joystick.quit()
-            except: pass
-        try: pygame.quit()
-        except: pass
-        logger_cmg.info("Standalone GUI: Pygame quit.")
+            try:
+                if pygame.joystick.get_init(): pygame.joystick.quit()
+            except pygame.error: pass # Ignore errors, might be already quit
+        try:
+            if pygame.get_init(): pygame.quit()
+        except pygame.error: pass
+        logger_cmg.info("Standalone GUI: Pygame quit executed.")
     sys.exit(exit_code)

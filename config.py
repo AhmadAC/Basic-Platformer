@@ -4,27 +4,21 @@
 Configuration for game settings, primarily controls.
 Handles Pygame joystick detection and assignment.
 The controller_settings/controller_mappings.json is used for Pygame control mappings
-and selected input devices/enabled flags for P1/P2.
+and selected input devices for P1-P4.
 """
-# version 2.3.6 (Added MAX_UI_CONTROLLERS_FOR_NAV and GRID_NAV constants)
+# version 2.3.8 (Further robustness in init and load_config)
 from typing import Dict, Optional, Any, List, Tuple
 import json
 import os
-import pygame
+import pygame # Pygame import should be at the top
 import sys
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt # Assuming Qt is used for keyboard mapping constants
 import copy
 
 # --- General App Config ---
-MAX_UI_CONTROLLERS_FOR_NAV = 2 # Max joysticks that can navigate UI (0, 1)
-# For grid navigation in map select, using distinct values
-GRID_NAV_UP = 100
-GRID_NAV_DOWN = 101
-GRID_NAV_LEFT = 102
-GRID_NAV_RIGHT = 103
+MAX_UI_CONTROLLERS_FOR_NAV = 2
+GRID_NAV_UP = 100; GRID_NAV_DOWN = 101; GRID_NAV_LEFT = 102; GRID_NAV_RIGHT = 103
 
-
-# --- Global Pygame State Variables (Managed by this module) ---
 _pygame_initialized_globally = False
 _joystick_initialized_globally = False
 _detected_joystick_count_global = 0
@@ -37,48 +31,69 @@ def init_pygame_and_joystick_globally(force_rescan=False):
 
     if not _pygame_initialized_globally:
         try:
-            pygame.init()
+            pygame.init() # Initializes all imported Pygame modules
             _pygame_initialized_globally = True
             print("Config: Pygame globally initialized.")
         except Exception as e_pg_init:
             print(f"Config CRITICAL ERROR: Pygame global init failed: {e_pg_init}")
             return
 
+    # Joystick system initialization
+    if force_rescan and _joystick_initialized_globally:
+        print("Config: Forcing joystick rescan. Quitting existing joystick system.")
+        try:
+            pygame.joystick.quit() # Quit the Pygame joystick module
+        except pygame.error as e_joy_quit:
+            print(f"Config Warning: Error during pygame.joystick.quit() on rescan: {e_joy_quit}")
+        _joystick_initialized_globally = False # Mark as not initialized to force re-init below
+        # Joystick objects in _joystick_objects_global become invalid after system quit
+        _joystick_objects_global.clear()
+        _detected_joystick_names_global.clear()
+        _detected_joystick_count_global = 0
+
     if not _joystick_initialized_globally:
         try:
-            pygame.joystick.init()
+            pygame.joystick.init() # Initialize/Re-initialize the joystick system
             _joystick_initialized_globally = True
-            print("Config: Pygame Joystick globally initialized.")
+            print("Config: Pygame Joystick system globally initialized/re-initialized.")
         except Exception as e_joy_init:
             print(f"Config CRITICAL ERROR: Pygame Joystick global init failed: {e_joy_init}")
+            _joystick_initialized_globally = False
             return
 
     if _joystick_initialized_globally:
         current_count = pygame.joystick.get_count()
-        if force_rescan or current_count != _detected_joystick_count_global:
-            print(f"Config: Joystick count changed or forced re-scan. Old: {_detected_joystick_count_global}, New: {current_count}")
-            
-            for joy_obj in _joystick_objects_global:
-                if joy_obj and joy_obj.get_init():
-                    try: joy_obj.quit()
-                    except pygame.error: pass
+        # Rescan if forced, or if the count changed, or if it's the first time and lists are empty
+        # Note: force_rescan=True already handled quitting and clearing above.
+        if force_rescan or current_count != _detected_joystick_count_global or not _joystick_objects_global:
+            print(f"Config: Scanning/Re-scanning joysticks. Previous count: {_detected_joystick_count_global}, Current Pygame count: {current_count}")
+
+            # If not a forced rescan (where system was already quit), and lists are not empty,
+            # it implies a hotplug event. We don't need to quit individual joysticks here
+            # as we are about to rebuild the list from scratch based on pygame.joystick.get_count().
             _joystick_objects_global.clear()
             _detected_joystick_names_global.clear()
 
             _detected_joystick_count_global = current_count
             for i in range(_detected_joystick_count_global):
                 try:
-                    joy = pygame.joystick.Joystick(i)
+                    joy = pygame.joystick.Joystick(i) # Get new Joystick instance
+                    # joy.init() is not strictly necessary here if pygame.joystick.init() succeeded,
+                    # but it doesn't hurt to ensure it's ready if we access properties immediately.
                     if not joy.get_init():
-                        joy.init()
+                        joy.init() # Ensure this specific joystick instance is initialized
                     _detected_joystick_names_global.append(joy.get_name())
-                    _joystick_objects_global.append(joy) 
+                    _joystick_objects_global.append(joy)
                 except pygame.error as e_joy_get:
-                    print(f"Config Warning: Error getting info for joystick {i}: {e_joy_get}")
-                    _joystick_objects_global.append(None) 
-            print(f"Config: Global scan/re-scan found {_detected_joystick_count_global} joysticks: {_detected_joystick_names_global}")
+                    print(f"Config Warning: Error getting/initing joystick {i} ('{pygame.joystick.Joystick(i).get_name() if _detected_joystick_count_global > i else 'Unknown Name'}'): {e_joy_get}")
+                    _joystick_objects_global.append(None)
+            print(f"Config: Scan complete. Found {_detected_joystick_count_global} joysticks: {_detected_joystick_names_global}")
+    else:
+        _detected_joystick_count_global = 0
+        _detected_joystick_names_global.clear()
+        _joystick_objects_global.clear()
+        print("Config: Joystick system is not initialized. Joystick count set to 0.")
 
-init_pygame_and_joystick_globally(force_rescan=True)
 
 CONTROLLER_SETTINGS_SUBDIR = "controller_settings"
 MAPPINGS_AND_DEVICE_CHOICES_FILENAME = "controller_mappings.json"
@@ -88,40 +103,37 @@ MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH = os.path.join(
     MAPPINGS_AND_DEVICE_CHOICES_FILENAME
 )
 
-DEFAULT_P1_INPUT_DEVICE = "keyboard_p1"
-DEFAULT_P1_KEYBOARD_ENABLED = True
-DEFAULT_P1_CONTROLLER_ENABLED = False
+UNASSIGNED_DEVICE_ID = "unassigned"
+UNASSIGNED_DEVICE_NAME = "Unassigned"
 
-DEFAULT_P2_INPUT_DEVICE = "unassigned" 
-DEFAULT_P2_KEYBOARD_ENABLED = False
-DEFAULT_P2_CONTROLLER_ENABLED = False
+KEYBOARD_DEVICE_IDS = ["keyboard_p1", "keyboard_p2", "unassigned_keyboard"]
+KEYBOARD_DEVICE_NAMES = ["Keyboard (P1 Default)", "Keyboard (P2 Default)", "Keyboard (Unassigned)"]
 
-DEFAULT_P3_INPUT_DEVICE = "unassigned"
-DEFAULT_P3_KEYBOARD_ENABLED = False
-DEFAULT_P3_CONTROLLER_ENABLED = False
 
-DEFAULT_P4_INPUT_DEVICE = "unassigned"
-DEFAULT_P4_KEYBOARD_ENABLED = False
-DEFAULT_P4_CONTROLLER_ENABLED = False
+DEFAULT_P1_KEYBOARD_DEVICE = KEYBOARD_DEVICE_IDS[0] # "keyboard_p1"
+DEFAULT_P1_CONTROLLER_DEVICE = UNASSIGNED_DEVICE_ID
+DEFAULT_P2_KEYBOARD_DEVICE = UNASSIGNED_DEVICE_ID
+DEFAULT_P2_CONTROLLER_DEVICE = UNASSIGNED_DEVICE_ID
+DEFAULT_P3_KEYBOARD_DEVICE = UNASSIGNED_DEVICE_ID
+DEFAULT_P3_CONTROLLER_DEVICE = UNASSIGNED_DEVICE_ID
+DEFAULT_P4_KEYBOARD_DEVICE = UNASSIGNED_DEVICE_ID
+DEFAULT_P4_CONTROLLER_DEVICE = UNASSIGNED_DEVICE_ID
 
 AXIS_THRESHOLD_DEFAULT = 0.7
 
-CURRENT_P1_INPUT_DEVICE = DEFAULT_P1_INPUT_DEVICE
-P1_KEYBOARD_ENABLED = DEFAULT_P1_KEYBOARD_ENABLED
-P1_CONTROLLER_ENABLED = DEFAULT_P1_CONTROLLER_ENABLED
+CURRENT_P1_KEYBOARD_DEVICE = DEFAULT_P1_KEYBOARD_DEVICE
+CURRENT_P1_CONTROLLER_DEVICE = DEFAULT_P1_CONTROLLER_DEVICE
+CURRENT_P2_KEYBOARD_DEVICE = DEFAULT_P2_KEYBOARD_DEVICE
+CURRENT_P2_CONTROLLER_DEVICE = DEFAULT_P2_CONTROLLER_DEVICE
+CURRENT_P3_KEYBOARD_DEVICE = DEFAULT_P3_KEYBOARD_DEVICE
+CURRENT_P3_CONTROLLER_DEVICE = DEFAULT_P3_CONTROLLER_DEVICE
+CURRENT_P4_KEYBOARD_DEVICE = DEFAULT_P4_KEYBOARD_DEVICE
+CURRENT_P4_CONTROLLER_DEVICE = DEFAULT_P4_CONTROLLER_DEVICE
 
-CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-P2_KEYBOARD_ENABLED = DEFAULT_P2_KEYBOARD_ENABLED
-P2_CONTROLLER_ENABLED = DEFAULT_P2_CONTROLLER_ENABLED
-
-CURRENT_P3_INPUT_DEVICE = DEFAULT_P3_INPUT_DEVICE
-P3_KEYBOARD_ENABLED = DEFAULT_P3_KEYBOARD_ENABLED
-P3_CONTROLLER_ENABLED = DEFAULT_P3_CONTROLLER_ENABLED
-
-CURRENT_P4_INPUT_DEVICE = DEFAULT_P4_INPUT_DEVICE
-P4_KEYBOARD_ENABLED = DEFAULT_P4_KEYBOARD_ENABLED
-P4_CONTROLLER_ENABLED = DEFAULT_P4_CONTROLLER_ENABLED
-
+P1_KEYBOARD_ENABLED = False; P1_CONTROLLER_ENABLED = False
+P2_KEYBOARD_ENABLED = False; P2_CONTROLLER_ENABLED = False
+P3_KEYBOARD_ENABLED = False; P3_CONTROLLER_ENABLED = False
+P4_KEYBOARD_ENABLED = False; P4_CONTROLLER_ENABLED = False
 
 GAME_ACTIONS = [
     "left", "right", "up", "down", "jump", "crouch", "attack1", "attack2",
@@ -129,7 +141,6 @@ GAME_ACTIONS = [
     "projectile5", "projectile6", "projectile7", "pause", "reset",
     "menu_confirm", "menu_cancel", "menu_up", "menu_down", "menu_left", "menu_right"
 ]
-
 EXTERNAL_TO_INTERNAL_ACTION_MAP = {
     "MOVE_UP": "up", "MOVE_LEFT": "left", "MOVE_DOWN": "down", "MOVE_RIGHT": "right",
     "JUMP": "jump", "CROUCH": "crouch", "INTERACT": "interact",
@@ -143,10 +154,6 @@ EXTERNAL_TO_INTERNAL_ACTION_MAP = {
     "3": "projectile3", "4": "projectile4", "5": "projectile5", "Q": "reset", "E": "interact",
     "V": "attack1", "B": "attack2", "SPACE": "jump", "SHIFT": "dash", "CTRL": "roll", "ESCAPE": "pause"
 }
-
-KEYBOARD_DEVICE_IDS = ["keyboard_p1", "keyboard_p2", "unassigned_keyboard"]
-KEYBOARD_DEVICE_NAMES = ["Keyboard (P1 Default)", "Keyboard (P2 Default)", "Keyboard (Unassigned)"]
-
 DEFAULT_KEYBOARD_P1_MAPPINGS: Dict[str, Qt.Key] = {
     "left": Qt.Key.Key_A, "right": Qt.Key.Key_D, "up": Qt.Key.Key_W, "down": Qt.Key.Key_S,
     "jump": Qt.Key.Key_W, "crouch": Qt.Key.Key_S, "attack1": Qt.Key.Key_V, "attack2": Qt.Key.Key_B,
@@ -158,17 +165,16 @@ DEFAULT_KEYBOARD_P1_MAPPINGS: Dict[str, Qt.Key] = {
     "menu_up": Qt.Key.Key_Up, "menu_down": Qt.Key.Key_Down, "menu_left": Qt.Key.Key_Left, "menu_right": Qt.Key.Key_Right,
 }
 DEFAULT_KEYBOARD_P2_MAPPINGS: Dict[str, Qt.Key] = {
-    "left": Qt.Key.Key_Left, "right": Qt.Key.Key_Right, "up": Qt.Key.Key_Up, "down": Qt.Key.Key_Down, 
+    "left": Qt.Key.Key_Left, "right": Qt.Key.Key_Right, "up": Qt.Key.Key_Up, "down": Qt.Key.Key_Down,
     "jump": Qt.Key.Key_Up, "crouch": Qt.Key.Key_Down, "attack1": Qt.Key.Key_Comma, "attack2": Qt.Key.Key_Period,
-    "dash": Qt.Key.Key_Slash, "roll": Qt.Key.Key_Control, "interact": Qt.Key.Key_M, 
-    "projectile1": Qt.Key.Key_7, "projectile2": Qt.Key.Key_8, "projectile3": Qt.Key.Key_9, "projectile4": Qt.Key.Key_0, 
+    "dash": Qt.Key.Key_Slash, "roll": Qt.Key.Key_Control, "interact": Qt.Key.Key_M,
+    "projectile1": Qt.Key.Key_7, "projectile2": Qt.Key.Key_8, "projectile3": Qt.Key.Key_9, "projectile4": Qt.Key.Key_0,
     "projectile5": Qt.Key.Key_Minus, "projectile6": Qt.Key.Key_Equal, "projectile7": Qt.Key.Key_Backspace,
     "reset": Qt.Key.Key_Delete, "pause": Qt.Key.Key_F12,
     "menu_confirm": Qt.Key.Key_Enter, "menu_cancel": Qt.Key.Key_F11,
     "menu_up": Qt.Key.Key_F5, "menu_down": Qt.Key.Key_F6, "menu_left": Qt.Key.Key_F7, "menu_right": Qt.Key.Key_F8,
 }
-
-DEFAULT_GENERIC_JOYSTICK_MAPPINGS: Dict[str, Any] = { 
+DEFAULT_GENERIC_JOYSTICK_MAPPINGS: Dict[str, Any] = {
     "left": {"type": "axis", "id": 0, "value": -1, "threshold": AXIS_THRESHOLD_DEFAULT},
     "right": {"type": "axis", "id": 0, "value": 1, "threshold": AXIS_THRESHOLD_DEFAULT},
     "up": {"type": "axis", "id": 1, "value": -1, "threshold": AXIS_THRESHOLD_DEFAULT},
@@ -188,26 +194,21 @@ DEFAULT_GENERIC_JOYSTICK_MAPPINGS: Dict[str, Any] = {
     "menu_left": {"type": "hat", "id": 0, "value": (-1, 0)}, "menu_right": {"type": "hat", "id": 0, "value": (1, 0)},
 }
 
-LOADED_PYGAME_JOYSTICK_MAPPINGS: Dict[str, Dict[str, Any]] = {} 
-_TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME: Dict[str, Any] = {} 
-P1_MAPPINGS: Dict[str, Any] = {}
-P2_MAPPINGS: Dict[str, Any] = {}
-P3_MAPPINGS: Dict[str, Any] = {}
-P4_MAPPINGS: Dict[str, Any] = {}
-
+LOADED_PYGAME_JOYSTICK_MAPPINGS: Dict[str, Dict[str, Any]] = {}
+_TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME: Dict[str, Any] = {}
+P1_MAPPINGS: Dict[str, Any] = {}; P2_MAPPINGS: Dict[str, Any] = {}
+P3_MAPPINGS: Dict[str, Any] = {}; P4_MAPPINGS: Dict[str, Any] = {}
 
 def translate_mapping_for_runtime(gui_storage_mapping_entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if not isinstance(gui_storage_mapping_entry, dict): return None
     pygame_event_type = gui_storage_mapping_entry.get("event_type")
     details_from_gui = gui_storage_mapping_entry.get("details")
     if not isinstance(details_from_gui, dict) or pygame_event_type not in ["button", "axis", "hat"]: return None
-
     pygame_event_id = None
     if pygame_event_type == "button": pygame_event_id = details_from_gui.get("button_id")
     elif pygame_event_type == "axis": pygame_event_id = details_from_gui.get("axis_id")
     elif pygame_event_type == "hat": pygame_event_id = details_from_gui.get("hat_id")
     if pygame_event_id is None or not isinstance(pygame_event_id, int): return None
-
     final_mapping: Dict[str, Any] = {"type": pygame_event_type, "id": pygame_event_id}
     if pygame_event_type == "axis":
         axis_direction = details_from_gui.get("direction")
@@ -217,12 +218,12 @@ def translate_mapping_for_runtime(gui_storage_mapping_entry: Dict[str, Any]) -> 
         final_mapping["threshold"] = float(axis_threshold)
     elif pygame_event_type == "hat":
         hat_value = details_from_gui.get("value")
-        if not isinstance(hat_value, (tuple, list)) or len(hat_value) != 2: return None
+        if not isinstance(hat_value, (list, tuple)) or len(hat_value) != 2: return None # Allow list from GUI
         final_mapping["value"] = tuple(map(int, hat_value))
     return final_mapping
 
 def _translate_gui_mappings_for_guid_to_runtime(
-    all_gui_mappings_by_guid: Dict[str, Dict[str, Any]], 
+    all_gui_mappings_by_guid: Dict[str, Dict[str, Any]],
     target_guid: Optional[str]
 ) -> Dict[str, Any]:
     if target_guid and target_guid in all_gui_mappings_by_guid:
@@ -233,320 +234,272 @@ def _translate_gui_mappings_for_guid_to_runtime(
             translated_entry = translate_mapping_for_runtime(gui_entry)
             if translated_entry: runtime_mappings[action_key] = translated_entry
         if runtime_mappings:
-            print(f"Config Translator: Translated {len(runtime_mappings)} mappings for GUID {target_guid}.")
+            # print(f"Config Translator: Translated {len(runtime_mappings)} mappings for GUID {target_guid}.")
             return runtime_mappings
-        print(f"Config Translator: GUID {target_guid} translation empty. Using generic defaults.")
-    elif target_guid: print(f"Config Translator: GUID {target_guid} not in loaded mappings. Using generic defaults.")
-    else: print("Config Translator: No target GUID. Using generic defaults.")
+        # print(f"Config Translator: GUID {target_guid} translation empty. Using generic defaults.")
+    # elif target_guid: print(f"Config Translator: GUID {target_guid} not in loaded mappings. Using generic defaults.")
+    # else: print("Config Translator: No target GUID. Using generic defaults.")
     return copy.deepcopy(DEFAULT_GENERIC_JOYSTICK_MAPPINGS)
 
-def get_active_runtime_joystick_mappings() -> Dict[str, Any]:
+def get_active_runtime_joystick_mappings() -> Dict[str, Any]: # Primarily for UI/mapper simulation
     return _TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME.copy()
 
 def get_available_joystick_names_with_indices_and_guids() -> List[Tuple[str, str, Optional[str], int]]:
     devices = []
     if _joystick_initialized_globally:
         for i in range(_detected_joystick_count_global):
-            joy_obj = _joystick_objects_global[i] if i < len(_joystick_objects_global) else None
+            joy_obj = _joystick_objects_global[i] if i < len(_joystick_objects_global) and _joystick_objects_global[i] is not None else None
             if joy_obj:
-                if not joy_obj.get_init():
-                    try: joy_obj.init()
-                    except pygame.error: pass 
-
-                joy_name = joy_obj.get_name()
-                guid_str = None
-                if joy_obj.get_init() and hasattr(joy_obj, 'get_guid'): 
-                    guid_str = joy_obj.get_guid() 
-                else:
-                    guid_str = f"NO_GUID_IDX_{i}" 
-                
-                internal_id = f"joystick_pygame_{i}"
-                display_name = f"Joy {i}: {joy_name}"
-                devices.append((display_name, internal_id, guid_str, i))
+                try:
+                    if not joy_obj.get_init(): joy_obj.init() # Ensure it's init before getting info
+                    joy_name = joy_obj.get_name()
+                    guid_str = joy_obj.get_guid() if hasattr(joy_obj, 'get_guid') else f"NO_GUID_IDX_{i}"
+                    internal_id = f"joystick_pygame_{i}" # Used for assigning to player slots
+                    display_name = f"Joy {i}: {joy_name}"
+                    devices.append((display_name, internal_id, guid_str, i))
+                except pygame.error as e:
+                    print(f"Config Warning: Error accessing joystick {i} properties: {e}")
     return devices
 
 def get_joystick_guid_by_pygame_index(pygame_index: int) -> Optional[str]:
     if 0 <= pygame_index < _detected_joystick_count_global:
-        joy_obj = _joystick_objects_global[pygame_index]
-        if joy_obj :
-            if not joy_obj.get_init(): 
-                try: joy_obj.init()
-                except pygame.error: pass
-            if joy_obj.get_init() and hasattr(joy_obj, 'get_guid'): 
-                return joy_obj.get_guid()
-        return f"NO_GUID_IDX_{pygame_index}" 
+        joy_obj = _joystick_objects_global[pygame_index] if pygame_index < len(_joystick_objects_global) else None
+        if joy_obj:
+            try:
+                if not joy_obj.get_init(): joy_obj.init()
+                if hasattr(joy_obj, 'get_guid'): return joy_obj.get_guid()
+            except pygame.error: pass # Failed to init/get guid
+        return f"NO_GUID_IDX_{pygame_index}" # Fallback if GUID not available
     return None
 
 def get_joystick_objects() -> List[Optional[pygame.joystick.Joystick]]:
     return _joystick_objects_global
 
-
 def save_config():
-    global CURRENT_P1_INPUT_DEVICE, P1_KEYBOARD_ENABLED, P1_CONTROLLER_ENABLED
-    global CURRENT_P2_INPUT_DEVICE, P2_KEYBOARD_ENABLED, P2_CONTROLLER_ENABLED
-    global CURRENT_P3_INPUT_DEVICE, P3_KEYBOARD_ENABLED, P3_CONTROLLER_ENABLED
-    global CURRENT_P4_INPUT_DEVICE, P4_KEYBOARD_ENABLED, P4_CONTROLLER_ENABLED
     global LOADED_PYGAME_JOYSTICK_MAPPINGS
-
     data_to_save = {
-        "config_version": "2.3.6", 
-        "player1_settings": {"input_device": CURRENT_P1_INPUT_DEVICE, "keyboard_enabled": P1_KEYBOARD_ENABLED, "controller_enabled": P1_CONTROLLER_ENABLED},
-        "player2_settings": {"input_device": CURRENT_P2_INPUT_DEVICE, "keyboard_enabled": P2_KEYBOARD_ENABLED, "controller_enabled": P2_CONTROLLER_ENABLED},
-        "player3_settings": {"input_device": CURRENT_P3_INPUT_DEVICE, "keyboard_enabled": P3_KEYBOARD_ENABLED, "controller_enabled": P3_CONTROLLER_ENABLED},
-        "player4_settings": {"input_device": CURRENT_P4_INPUT_DEVICE, "keyboard_enabled": P4_KEYBOARD_ENABLED, "controller_enabled": P4_CONTROLLER_ENABLED},
-        "joystick_mappings_by_guid": LOADED_PYGAME_JOYSTICK_MAPPINGS 
+        "config_version": "2.3.8", # Incremented version
+        "joystick_mappings_by_guid": LOADED_PYGAME_JOYSTICK_MAPPINGS
     }
+    for i in range(1, 5):
+        player_num_str = str(i)
+        data_to_save[f"player{player_num_str}_devices"] = {
+            "keyboard_device": globals()[f"CURRENT_P{player_num_str}_KEYBOARD_DEVICE"],
+            "controller_device": globals()[f"CURRENT_P{player_num_str}_CONTROLLER_DEVICE"]
+        }
     try:
         settings_dir = os.path.dirname(MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH)
-        if not os.path.exists(settings_dir): 
-            os.makedirs(settings_dir)
-            print(f"Config: Created directory {settings_dir}")
-
+        if not os.path.exists(settings_dir): os.makedirs(settings_dir)
         with open(MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH, 'w') as f: json.dump(data_to_save, f, indent=4)
         print(f"Config: Settings saved to {MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH}")
-        load_config(called_from_save=True) 
+        load_config(called_from_save=True) # Reload to apply any derived states consistently
         return True
     except IOError as e:
         print(f"Config Error: Saving settings to {MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH}: {e}")
         return False
 
 def load_config(called_from_save=False):
-    global CURRENT_P1_INPUT_DEVICE, P1_KEYBOARD_ENABLED, P1_CONTROLLER_ENABLED
-    global CURRENT_P2_INPUT_DEVICE, P2_KEYBOARD_ENABLED, P2_CONTROLLER_ENABLED
-    global CURRENT_P3_INPUT_DEVICE, P3_KEYBOARD_ENABLED, P3_CONTROLLER_ENABLED
-    global CURRENT_P4_INPUT_DEVICE, P4_KEYBOARD_ENABLED, P4_CONTROLLER_ENABLED
     global LOADED_PYGAME_JOYSTICK_MAPPINGS, _TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME
+    # Player CURRENT_*_DEVICE and *_ENABLED flags are global and will be updated here
 
-    if not called_from_save: init_pygame_and_joystick_globally(force_rescan=True)
+    if not called_from_save:
+        init_pygame_and_joystick_globally(force_rescan=True)
 
     raw_config_data = {}
+    config_file_found_and_parsed = False
     if os.path.exists(MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH):
         try:
-            with open(MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH, 'r') as f: raw_config_data = json.load(f)
+            with open(MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH, 'r') as f:
+                raw_config_data = json.load(f)
             print(f"Config: Loaded settings from {MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH}")
+            config_file_found_and_parsed = True
         except (IOError, json.JSONDecodeError) as e:
-            print(f"Config Error: Loading {MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH}: {e}. Using defaults."); raw_config_data = {}
-    else: print(f"Config: File {MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH} not found. Using defaults.")
+            print(f"Config Error: Loading {MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH}: {e}. Using defaults.")
+    else:
+        print(f"Config: File {MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH} not found. Using defaults.")
 
-    def _load_player_setting(p_settings: Dict, key: str, default_val: Any) -> Any:
-        val = p_settings.get(key, default_val)
-        if val is None: 
-            print(f"Config Warning: Loaded '{key}' as None. Reverting to default: {default_val}")
-            return default_val
-        return val
+    # Load or default player device choices
+    for i in range(1, 5):
+        player_num_str = str(i)
+        default_kbd_dev = globals()[f"DEFAULT_P{player_num_str}_KEYBOARD_DEVICE"]
+        default_ctrl_dev = globals()[f"DEFAULT_P{player_num_str}_CONTROLLER_DEVICE"]
 
-    player_vars_config = [
-        ("player1_settings", "CURRENT_P1_INPUT_DEVICE", "P1_KEYBOARD_ENABLED", "P1_CONTROLLER_ENABLED", DEFAULT_P1_INPUT_DEVICE, DEFAULT_P1_KEYBOARD_ENABLED, DEFAULT_P1_CONTROLLER_ENABLED, "P1"),
-        ("player2_settings", "CURRENT_P2_INPUT_DEVICE", "P2_KEYBOARD_ENABLED", "P2_CONTROLLER_ENABLED", DEFAULT_P2_INPUT_DEVICE, DEFAULT_P2_KEYBOARD_ENABLED, DEFAULT_P2_CONTROLLER_ENABLED, "P2"),
-        ("player3_settings", "CURRENT_P3_INPUT_DEVICE", "P3_KEYBOARD_ENABLED", "P3_CONTROLLER_ENABLED", DEFAULT_P3_INPUT_DEVICE, DEFAULT_P3_KEYBOARD_ENABLED, DEFAULT_P3_CONTROLLER_ENABLED, "P3"),
-        ("player4_settings", "CURRENT_P4_INPUT_DEVICE", "P4_KEYBOARD_ENABLED", "P4_CONTROLLER_ENABLED", DEFAULT_P4_INPUT_DEVICE, DEFAULT_P4_KEYBOARD_ENABLED, DEFAULT_P4_CONTROLLER_ENABLED, "P4"),
-    ]
+        if config_file_found_and_parsed:
+            p_devices_settings = raw_config_data.get(f"player{player_num_str}_devices", {})
+            globals()[f"CURRENT_P{player_num_str}_KEYBOARD_DEVICE"] = p_devices_settings.get("keyboard_device", default_kbd_dev)
+            globals()[f"CURRENT_P{player_num_str}_CONTROLLER_DEVICE"] = p_devices_settings.get("controller_device", default_ctrl_dev)
+        else: # No config file or parse error, apply full defaults
+            globals()[f"CURRENT_P{player_num_str}_KEYBOARD_DEVICE"] = default_kbd_dev
+            globals()[f"CURRENT_P{player_num_str}_CONTROLLER_DEVICE"] = default_ctrl_dev
 
-    for settings_key, dev_var_name, kbd_en_var_name, ctrl_en_var_name, \
-        def_dev, def_kbd_en, def_ctrl_en, player_log_prefix in player_vars_config:
-        
-        p_settings = raw_config_data.get(settings_key, {})
-        globals()[dev_var_name] = _load_player_setting(p_settings, "input_device", def_dev)
-        globals()[kbd_en_var_name] = _load_player_setting(p_settings, "keyboard_enabled", def_kbd_en)
-        globals()[ctrl_en_var_name] = _load_player_setting(p_settings, "controller_enabled", def_ctrl_en)
-        print(f"Config Loaded: {player_log_prefix} Dev='{globals()[dev_var_name]}', KbdEn={globals()[kbd_en_var_name]}, CtrlEn={globals()[ctrl_en_var_name]}")
+    LOADED_PYGAME_JOYSTICK_MAPPINGS = raw_config_data.get("joystick_mappings_by_guid", {}) if config_file_found_and_parsed else {}
 
+    # Auto-assign joysticks if no config file was loaded (fresh start scenario)
+    if not config_file_found_and_parsed:
+        print("Config: Performing auto-assignment for joysticks (no config file).")
+        available_joys_data = get_available_joystick_names_with_indices_and_guids()
+        if available_joys_data:
+            globals()["CURRENT_P1_CONTROLLER_DEVICE"] = available_joys_data[0][1] # P1 gets first joystick
+            if globals()["CURRENT_P1_KEYBOARD_DEVICE"] == DEFAULT_P1_KEYBOARD_DEVICE : # if P1 kbd was default
+                 globals()["CURRENT_P1_KEYBOARD_DEVICE"] = UNASSIGNED_DEVICE_ID # Prioritize controller
+            if len(available_joys_data) > 1:
+                globals()["CURRENT_P2_CONTROLLER_DEVICE"] = available_joys_data[1][1] # P2 gets second
+                if globals()["CURRENT_P2_KEYBOARD_DEVICE"] == DEFAULT_P2_KEYBOARD_DEVICE:
+                    globals()["CURRENT_P2_KEYBOARD_DEVICE"] = UNASSIGNED_DEVICE_ID
 
-    LOADED_PYGAME_JOYSTICK_MAPPINGS = raw_config_data.get("joystick_mappings_by_guid", {})
-
-    primary_joystick_guid_for_runtime: Optional[str] = None
-    if CURRENT_P1_INPUT_DEVICE.startswith("joystick_pygame_") and P1_CONTROLLER_ENABLED:
-        try:
-            p1_joy_idx = int(CURRENT_P1_INPUT_DEVICE.split('_')[-1])
-            primary_joystick_guid_for_runtime = get_joystick_guid_by_pygame_index(p1_joy_idx)
-        except (ValueError, IndexError): pass 
-    elif _detected_joystick_count_global > 0: 
-        primary_joystick_guid_for_runtime = get_joystick_guid_by_pygame_index(0)
-        
-    _TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME = _translate_gui_mappings_for_guid_to_runtime(
-        LOADED_PYGAME_JOYSTICK_MAPPINGS, primary_joystick_guid_for_runtime
-    )
-
-    if not raw_config_data: 
-        print("Config: No config file found. Performing auto-assignment.")
-        available_joys = get_available_joystick_names_with_indices_and_guids()
-        
-        globals()["CURRENT_P1_INPUT_DEVICE"] = DEFAULT_P1_INPUT_DEVICE
-        globals()["P1_KEYBOARD_ENABLED"] = DEFAULT_P1_KEYBOARD_ENABLED
-        globals()["P1_CONTROLLER_ENABLED"] = DEFAULT_P1_CONTROLLER_ENABLED
-        
-        globals()["CURRENT_P2_INPUT_DEVICE"] = DEFAULT_P2_INPUT_DEVICE
-        globals()["P2_KEYBOARD_ENABLED"] = DEFAULT_P2_KEYBOARD_ENABLED
-        globals()["P2_CONTROLLER_ENABLED"] = DEFAULT_P2_CONTROLLER_ENABLED
-        
-        globals()["CURRENT_P3_INPUT_DEVICE"] = DEFAULT_P3_INPUT_DEVICE; globals()["P3_KEYBOARD_ENABLED"] = DEFAULT_P3_KEYBOARD_ENABLED; globals()["P3_CONTROLLER_ENABLED"] = DEFAULT_P3_CONTROLLER_ENABLED
-        globals()["CURRENT_P4_INPUT_DEVICE"] = DEFAULT_P4_INPUT_DEVICE; globals()["P4_KEYBOARD_ENABLED"] = DEFAULT_P4_KEYBOARD_ENABLED; globals()["P4_CONTROLLER_ENABLED"] = DEFAULT_P4_CONTROLLER_ENABLED
-
-        if available_joys:
-            p1_joy_data = available_joys[0]
-            CURRENT_P1_INPUT_DEVICE = p1_joy_data[1] 
-            P1_CONTROLLER_ENABLED = True
-            
-            if len(available_joys) > 1:
-                p2_joy_data = available_joys[1]
-                CURRENT_P2_INPUT_DEVICE = p2_joy_data[1]
-                P2_CONTROLLER_ENABLED = True
-                P2_KEYBOARD_ENABLED = False 
-            else: 
-                CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
-                P2_CONTROLLER_ENABLED = DEFAULT_P2_CONTROLLER_ENABLED
-                P2_KEYBOARD_ENABLED = DEFAULT_P2_KEYBOARD_ENABLED
-        
-        _TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME = _translate_gui_mappings_for_guid_to_runtime(
-            LOADED_PYGAME_JOYSTICK_MAPPINGS, get_joystick_guid_by_pygame_index(0) if available_joys else None
-        )
-
-
-    assigned_joystick_indices: Dict[int, str] = {} 
-    assigned_keyboard_layouts: Dict[str, str] = {} 
+    # Conflict Resolution & Final Enabled Flag Derivation
+    assigned_joystick_internal_ids: Dict[str, str] = {}
+    assigned_keyboard_layout_ids: Dict[str, str] = {}
 
     for i in range(1, 5):
         player_prefix = f"P{i}"
-        dev_var_name = f"CURRENT_{player_prefix}_INPUT_DEVICE"
-        ctrl_en_var_name = f"{player_prefix}_CONTROLLER_ENABLED"
-        kbd_en_var_name = f"{player_prefix}_KEYBOARD_ENABLED"
-        
-        # Get default values for this player, ensure they exist
-        default_dev_val = getattr(sys.modules[__name__], f"DEFAULT_{player_prefix}_INPUT_DEVICE", "unassigned")
-        default_kbd_en_val = getattr(sys.modules[__name__], f"DEFAULT_{player_prefix}_KEYBOARD_ENABLED", False if player_prefix != "P1" else True)
-        
-        current_dev = globals()[dev_var_name]
-        is_ctrl_enabled = globals()[ctrl_en_var_name]
-        is_kbd_enabled = globals()[kbd_en_var_name]
+        current_kbd_dev_var = f"CURRENT_{player_prefix}_KEYBOARD_DEVICE"
+        current_ctrl_dev_var = f"CURRENT_{player_prefix}_CONTROLLER_DEVICE"
 
-        if current_dev.startswith("joystick_pygame_"):
-            if not is_ctrl_enabled:
-                print(f"Config Warning: {player_prefix} assigned joystick '{current_dev}' but controller use is disabled. Reverting {player_prefix} to default.")
-                globals()[dev_var_name] = default_dev_val 
-                globals()[kbd_en_var_name] = True 
-                current_dev = globals()[dev_var_name] 
+        current_kbd_val = globals()[current_kbd_dev_var]
+        current_ctrl_val = globals()[current_ctrl_dev_var]
 
+        # Validate and resolve controller conflicts
+        if current_ctrl_val != UNASSIGNED_DEVICE_ID and current_ctrl_val.startswith("joystick_pygame_"):
             try:
-                joy_idx = int(current_dev.split('_')[-1])
-                if not (0 <= joy_idx < _detected_joystick_count_global and _joystick_objects_global[joy_idx] is not None):
-                    print(f"Config Warning: {player_prefix}'s joystick '{current_dev}' invalid/unavailable. Reverting to default.")
-                    globals()[dev_var_name] = default_dev_val
-                    globals()[ctrl_en_var_name] = False 
-                    globals()[kbd_en_var_name] = default_kbd_en_val 
-                    current_dev = globals()[dev_var_name]
-                elif joy_idx in assigned_joystick_indices:
-                    other_player = assigned_joystick_indices[joy_idx]
-                    print(f"Config Conflict: {player_prefix} and {other_player} assigned to same joystick index {joy_idx}. Reverting {player_prefix} to default.")
-                    globals()[dev_var_name] = default_dev_val
-                    globals()[ctrl_en_var_name] = False
-                    globals()[kbd_en_var_name] = default_kbd_en_val
-                    current_dev = globals()[dev_var_name]
+                joy_idx = int(current_ctrl_val.split('_')[-1])
+                is_valid_joystick = (0 <= joy_idx < _detected_joystick_count_global and
+                                     _joystick_objects_global[joy_idx] is not None)
+                if not is_valid_joystick:
+                    print(f"Config Warning: {player_prefix}'s controller '{current_ctrl_val}' invalid/unavailable. Reverting to unassigned.")
+                    globals()[current_ctrl_dev_var] = UNASSIGNED_DEVICE_ID
+                elif current_ctrl_val in assigned_joystick_internal_ids:
+                    other_player = assigned_joystick_internal_ids[current_ctrl_val]
+                    print(f"Config Conflict: {player_prefix} and {other_player} assigned to same controller '{current_ctrl_val}'. Reverting {player_prefix}'s controller to unassigned.")
+                    globals()[current_ctrl_dev_var] = UNASSIGNED_DEVICE_ID
                 else:
-                    assigned_joystick_indices[joy_idx] = player_prefix
-            except (ValueError, IndexError): 
-                print(f"Config Warning: {player_prefix}'s joystick ID '{current_dev}' malformed. Reverting to default.")
-                globals()[dev_var_name] = default_dev_val; globals()[ctrl_en_var_name] = False; globals()[kbd_en_var_name] = default_kbd_en_val
-                current_dev = globals()[dev_var_name]
+                    assigned_joystick_internal_ids[current_ctrl_val] = player_prefix
+            except (ValueError, IndexError): # Malformed ID
+                print(f"Config Warning: {player_prefix}'s controller ID '{current_ctrl_val}' malformed. Reverting controller to unassigned.")
+                globals()[current_ctrl_dev_var] = UNASSIGNED_DEVICE_ID
 
-        if current_dev.startswith("keyboard_"):
-            if not is_kbd_enabled and current_dev != "unassigned": 
-                 print(f"Config Warning: {player_prefix} assigned keyboard '{current_dev}' but keyboard use is disabled. Reverting {player_prefix} to 'unassigned'.")
-                 globals()[dev_var_name] = default_dev_val # Use player-specific default (e.g., DEFAULT_P2_INPUT_DEVICE)
-                 current_dev = globals()[dev_var_name]
+        # Validate and resolve keyboard conflicts (excluding "unassigned_keyboard" which is conceptual)
+        if current_kbd_val != UNASSIGNED_DEVICE_ID and current_kbd_val != "unassigned_keyboard":
+            if current_kbd_val in assigned_keyboard_layout_ids:
+                other_player = assigned_keyboard_layout_ids[current_kbd_val]
+                print(f"Config Conflict: {player_prefix} and {other_player} assigned to same keyboard layout '{current_kbd_val}'. Reverting {player_prefix}'s keyboard to unassigned.")
+                globals()[current_kbd_dev_var] = UNASSIGNED_DEVICE_ID
+            else:
+                assigned_keyboard_layout_ids[current_kbd_val] = player_prefix
 
-            if current_dev in assigned_keyboard_layouts and current_dev != "unassigned_keyboard": # unassigned_keyboard can be shared conceptually
-                other_player = assigned_keyboard_layouts[current_dev]
-                print(f"Config Conflict: {player_prefix} and {other_player} assigned to same keyboard layout '{current_dev}'.")
-                if current_dev == "keyboard_p1" and player_prefix != "P1": 
-                    if "keyboard_p2" not in assigned_keyboard_layouts:
-                        print(f"Config Conflict Resolution: Assigning 'keyboard_p2' to {player_prefix}.")
-                        globals()[dev_var_name] = "keyboard_p2"
-                        assigned_keyboard_layouts["keyboard_p2"] = player_prefix
-                    else: 
-                        print(f"Config Conflict Resolution: Reverting {player_prefix} to default device.")
-                        globals()[dev_var_name] = default_dev_val
-                        globals()[kbd_en_var_name] = default_kbd_en_val
-                elif player_prefix > assigned_keyboard_layouts[current_dev]: 
-                     print(f"Config Conflict Resolution: Reverting {player_prefix} to default device.")
-                     globals()[dev_var_name] = default_dev_val
-                     globals()[kbd_en_var_name] = default_kbd_en_val
-            elif current_dev != "unassigned_keyboard" and current_dev != "unassigned":
-                assigned_keyboard_layouts[current_dev] = player_prefix
-    
+        # Derive enabled flags AFTER conflict resolution
+        globals()[f"{player_prefix}_KEYBOARD_ENABLED"] = (globals()[current_kbd_dev_var] != UNASSIGNED_DEVICE_ID)
+        globals()[f"{player_prefix}_CONTROLLER_ENABLED"] = (globals()[current_ctrl_dev_var] != UNASSIGNED_DEVICE_ID and
+                                                          globals()[current_ctrl_dev_var].startswith("joystick_pygame_"))
+        # print(f"Config Loaded/Resolved: {player_prefix} KbdDev='{globals()[current_kbd_dev_var]}', CtrlDev='{globals()[current_ctrl_dev_var]}', KbdEn={globals()[f'{player_prefix}_KEYBOARD_ENABLED']}, CtrlEn={globals()[f'{player_prefix}_CONTROLLER_ENABLED']}")
+
+
+    # Determine the primary joystick GUID for runtime simulation mappings (used by GUI mapper)
+    primary_joystick_guid_for_runtime_simulation: Optional[str] = None
+    if globals()["CURRENT_P1_CONTROLLER_DEVICE"].startswith("joystick_pygame_") and globals()["P1_CONTROLLER_ENABLED"]:
+        try:
+            p1_sim_joy_idx = int(globals()["CURRENT_P1_CONTROLLER_DEVICE"].split('_')[-1])
+            primary_joystick_guid_for_runtime_simulation = get_joystick_guid_by_pygame_index(p1_sim_joy_idx)
+            # if primary_joystick_guid_for_runtime_simulation: print(f"Config: Using P1's controller (Idx {p1_sim_joy_idx}) for runtime simulation mappings.")
+        except (ValueError, IndexError): pass
+    if not primary_joystick_guid_for_runtime_simulation and _detected_joystick_count_global > 0 :
+        if _joystick_objects_global[0] is not None: # Check if first joystick is valid
+            primary_joystick_guid_for_runtime_simulation = get_joystick_guid_by_pygame_index(0)
+        # if primary_joystick_guid_for_runtime_simulation: print(f"Config: Using first detected joystick (Idx 0) for runtime simulation mappings.")
+    # if not primary_joystick_guid_for_runtime_simulation: print("Config: No suitable joystick for runtime simulation mappings. Will use generic defaults.")
+
+    _TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME = _translate_gui_mappings_for_guid_to_runtime(
+        LOADED_PYGAME_JOYSTICK_MAPPINGS, primary_joystick_guid_for_runtime_simulation
+    )
+
     update_player_mappings_from_config()
     return True
 
 def update_player_mappings_from_config():
-    global P1_MAPPINGS, P2_MAPPINGS, P3_MAPPINGS, P4_MAPPINGS 
-    
-    player_configs = [
-        (CURRENT_P1_INPUT_DEVICE, P1_CONTROLLER_ENABLED, P1_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P1_MAPPINGS, "P1"),
-        (CURRENT_P2_INPUT_DEVICE, P2_CONTROLLER_ENABLED, P2_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P2_MAPPINGS, "P2"),
-        (CURRENT_P3_INPUT_DEVICE, P3_CONTROLLER_ENABLED, P3_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P1_MAPPINGS, "P3"), 
-        (CURRENT_P4_INPUT_DEVICE, P4_CONTROLLER_ENABLED, P4_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P2_MAPPINGS, "P4")  
-    ]
-    
-    for i, (player_device_id, player_controller_enabled, player_kbd_enabled, default_kbd_map, p_log_prefix) in enumerate(player_configs):
-        mappings: Dict[str, Any] = {}
-        log_msg_suffix = ""
+    global P1_MAPPINGS, P2_MAPPINGS, P3_MAPPINGS, P4_MAPPINGS
 
-        if player_device_id.startswith("keyboard_") and player_kbd_enabled:
-            if player_device_id == "keyboard_p1": mappings = copy.deepcopy(DEFAULT_KEYBOARD_P1_MAPPINGS)
-            elif player_device_id == "keyboard_p2": mappings = copy.deepcopy(DEFAULT_KEYBOARD_P2_MAPPINGS)
-            else: mappings = copy.deepcopy(default_kbd_map) 
-            log_msg_suffix = f" (kbd map: {player_device_id})"
-        elif player_device_id.startswith("joystick_pygame_") and player_controller_enabled:
-            try:
-                joy_idx = int(player_device_id.split('_')[-1])
-                guid = get_joystick_guid_by_pygame_index(joy_idx)
-                mappings = _translate_gui_mappings_for_guid_to_runtime(LOADED_PYGAME_JOYSTICK_MAPPINGS, guid)
-                log_msg_suffix = f" (joy map for GUID: {guid})"
-            except: 
-                mappings = copy.deepcopy(DEFAULT_GENERIC_JOYSTICK_MAPPINGS) 
-                log_msg_suffix = " (joy map: generic default due to error)"
-        elif player_device_id == "unassigned":
-            log_msg_suffix = " (unassigned)"
-            if player_kbd_enabled: # If unassigned but kbd allowed, give them their default kbd map
-                mappings = copy.deepcopy(default_kbd_map)
-                log_msg_suffix += f" but kbd enabled, using default kbd map ({list(default_kbd_map.keys())[0]}...)"
+    for i in range(1, 5):
+        player_prefix = f"P{i}"
+        mappings_var_name = f"{player_prefix}_MAPPINGS"
+        current_mappings: Dict[str, Any] = {} # Start with empty mappings
 
-
-        globals()[f"P{i+1}_MAPPINGS"] = mappings 
+        player_controller_device = globals()[f"CURRENT_{player_prefix}_CONTROLLER_DEVICE"]
+        player_keyboard_device = globals()[f"CURRENT_{player_prefix}_KEYBOARD_DEVICE"]
+        is_controller_enabled = globals()[f"{player_prefix}_CONTROLLER_ENABLED"]
+        is_keyboard_enabled = globals()[f"{player_prefix}_KEYBOARD_ENABLED"]
         
-        print(f"Config: {p_log_prefix} mappings updated. Device: '{player_device_id}'{log_msg_suffix}.")
-        if not mappings and player_device_id != "unassigned": 
-            print(f"Config Warning: {p_log_prefix} has no active mappings despite assignment.")
+        log_source = "unassigned"
+
+        # Prioritize Controller if enabled and assigned
+        if is_controller_enabled and player_controller_device != UNASSIGNED_DEVICE_ID and player_controller_device.startswith("joystick_pygame_"):
+            try:
+                joy_idx = int(player_controller_device.split('_')[-1])
+                # Ensure joystick is valid before trying to get its GUID and mappings
+                if 0 <= joy_idx < _detected_joystick_count_global and _joystick_objects_global[joy_idx] is not None:
+                    guid = get_joystick_guid_by_pygame_index(joy_idx)
+                    current_mappings = _translate_gui_mappings_for_guid_to_runtime(LOADED_PYGAME_JOYSTICK_MAPPINGS, guid)
+                    log_source = f"controller '{player_controller_device}' (GUID: {guid})"
+                else: # Controller assigned but not available
+                    log_source = f"controller '{player_controller_device}' (unavailable)"
+                    # Fall through to check keyboard if controller is not actually usable
+            except (ValueError, IndexError) as e_joy:
+                print(f"Config Error: Malformed controller ID '{player_controller_device}' for {player_prefix}: {e_joy}")
+                log_source = f"controller '{player_controller_device}' (error)"
+                # Fall through
+        
+        # If no controller mappings were set (or controller was invalid/unassigned), check keyboard
+        if not current_mappings and is_keyboard_enabled and player_keyboard_device != UNASSIGNED_DEVICE_ID:
+            if player_keyboard_device == "keyboard_p1":
+                current_mappings = copy.deepcopy(DEFAULT_KEYBOARD_P1_MAPPINGS)
+                log_source = f"keyboard '{player_keyboard_device}' (P1 default)"
+            elif player_keyboard_device == "keyboard_p2":
+                current_mappings = copy.deepcopy(DEFAULT_KEYBOARD_P2_MAPPINGS)
+                log_source = f"keyboard '{player_keyboard_device}' (P2 default)"
+            # Add more specific keyboard layouts if needed, e.g., "keyboard_generic_arrows"
+            else: # Fallback for other named keyboard schemes, or default if "unassigned_keyboard" but enabled
+                current_mappings = copy.deepcopy(DEFAULT_KEYBOARD_P1_MAPPINGS) # Default to P1 if unknown specific kbd
+                log_source = f"keyboard '{player_keyboard_device}' (fallback/P1 default)"
+        
+        globals()[mappings_var_name] = current_mappings
+        print(f"Config: {player_prefix} mappings updated from {log_source}. Count: {len(current_mappings)}")
 
 
-init_pygame_and_joystick_globally(force_rescan=True) 
+# Initial load when module is imported
+init_pygame_and_joystick_globally(force_rescan=True)
 load_config()
 
 if __name__ == "__main__":
     print("\n--- Running config.py directly for testing ---")
-    
     print(f"\nDetected Joysticks ({_detected_joystick_count_global}):")
-    for i, name in enumerate(_detected_joystick_names_global):
-         joy_obj_test = _joystick_objects_global[i]
+    for i_joy, name_joy in enumerate(_detected_joystick_names_global):
+         joy_obj_test = _joystick_objects_global[i_joy] if i_joy < len(_joystick_objects_global) else None
          guid_test = "N/A"
          if joy_obj_test:
-             if not joy_obj_test.get_init(): joy_obj_test.init() 
-             if joy_obj_test.get_init() and hasattr(joy_obj_test, 'get_guid'): guid_test = joy_obj_test.get_guid()
-         print(f"    Idx {i}: {name} (GUID: {guid_test})")
+             try:
+                 if not joy_obj_test.get_init(): joy_obj_test.init()
+                 if hasattr(joy_obj_test, 'get_guid'): guid_test = joy_obj_test.get_guid()
+             except pygame.error: pass
+         print(f"    Idx {i_joy}: {name_joy} (GUID: {guid_test})")
 
-    print(f"P1: Dev='{CURRENT_P1_INPUT_DEVICE}', KbdEn={P1_KEYBOARD_ENABLED}, CtrlEn={P1_CONTROLLER_ENABLED}, JumpMap: {P1_MAPPINGS.get('jump', 'N/A')}")
-    print(f"P2: Dev='{CURRENT_P2_INPUT_DEVICE}', KbdEn={P2_KEYBOARD_ENABLED}, CtrlEn={P2_CONTROLLER_ENABLED}, JumpMap: {P2_MAPPINGS.get('jump', 'N/A')}")
-    print(f"P3: Dev='{CURRENT_P3_INPUT_DEVICE}', KbdEn={P3_KEYBOARD_ENABLED}, CtrlEn={P3_CONTROLLER_ENABLED}, JumpMap: {P3_MAPPINGS.get('jump', 'N/A')}")
-    print(f"P4: Dev='{CURRENT_P4_INPUT_DEVICE}', KbdEn={P4_KEYBOARD_ENABLED}, CtrlEn={P4_CONTROLLER_ENABLED}, JumpMap: {P4_MAPPINGS.get('jump', 'N/A')}")
-
+    for i_player in range(1, 5):
+        p_prefix = f"P{i_player}"
+        print(f"{p_prefix}: KbdDev='{globals()[f'CURRENT_{p_prefix}_KEYBOARD_DEVICE']}', "
+              f"CtrlDev='{globals()[f'CURRENT_{p_prefix}_CONTROLLER_DEVICE']}', "
+              f"KbdEn={globals()[f'{p_prefix}_KEYBOARD_ENABLED']}, "
+              f"CtrlEn={globals()[f'{p_prefix}_CONTROLLER_ENABLED']}, "
+              f"JumpMap: {globals()[f'{p_prefix}_MAPPINGS'].get('jump', 'N/A')}, "
+              f"MappingsCount: {len(globals()[f'{p_prefix}_MAPPINGS'])}")
 
     if _TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME:
-        print(f"Active Runtime Joystick Mappings (Primary/Fallback): Count={len(_TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME)}")
-    else: print("Active Runtime Joystick Mappings: Empty/Default.")
-    
-    if LOADED_PYGAME_JOYSTICK_MAPPINGS: print(f"Loaded GUI Joystick Mappings (by GUID): {len(LOADED_PYGAME_JOYSTICK_MAPPINGS)} controller(s) mapped.")
+        print(f"Active Runtime Joystick Mappings (for GUI Sim): Count={len(_TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME)}")
+    else: print("Active Runtime Joystick Mappings (for GUI Sim): Empty/Default Generic.")
+    if LOADED_PYGAME_JOYSTICK_MAPPINGS: print(f"Loaded GUI Joystick Mappings (by GUID): {len(LOADED_PYGAME_JOYSTICK_MAPPINGS)} controller profile(s) mapped.")
     else: print("Loaded GUI Joystick Mappings: None.")
 
     if _pygame_initialized_globally:
-        if _joystick_initialized_globally: pygame.joystick.quit()
-        pygame.quit()
+        if _joystick_initialized_globally:
+            try: pygame.joystick.quit()
+            except pygame.error: pass
+        try: pygame.quit()
+        except pygame.error: pass
     print("--- config.py direct test finished ---")

@@ -1,25 +1,5 @@
 {
-    "config_version": "2.3.6",
-    "player1_settings": {
-        "input_device": "keyboard_p1",
-        "keyboard_enabled": true,
-        "controller_enabled": true
-    },
-    "player2_settings": {
-        "input_device": "unassigned",
-        "keyboard_enabled": false,
-        "controller_enabled": false
-    },
-    "player3_settings": {
-        "input_device": "unassigned",
-        "keyboard_enabled": false,
-        "controller_enabled": false
-    },
-    "player4_settings": {
-        "input_device": "unassigned",
-        "keyboard_enabled": false,
-        "controller_enabled": false
-    },
+    "config_version": "2.3.8",
     "joystick_mappings_by_guid": {
         "030056fb7e0500000920000000006803": {
             "left": {
@@ -275,5 +255,21 @@
                 "raw_str": "Joy0 Hat 0 (1, 0)"
             }
         }
+    },
+    "player1_devices": {
+        "keyboard_device": "keyboard_p1",
+        "controller_device": "unassigned"
+    },
+    "player2_devices": {
+        "keyboard_device": "unassigned",
+        "controller_device": "unassigned"
+    },
+    "player3_devices": {
+        "keyboard_device": "unassigned",
+        "controller_device": "unassigned"
+    },
+    "player4_devices": {
+        "keyboard_device": "unassigned",
+        "controller_device": "unassigned"
     }
 }
