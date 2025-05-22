@@ -100,7 +100,7 @@ def get_pynput_key(key_str: str) -> Optional[Any]:
         "SPACE": Key.space, "SHIFT": Key.shift, "CTRL": Key.ctrl, "ALT": Key.alt,
         "ENTER": Key.enter, "TAB": Key.tab, "ESC": Key.esc,
         "UP_ARROW": Key.up, "DOWN_ARROW": Key.down, "LEFT_ARROW": Key.left, "RIGHT_ARROW": Key.right,
-        "up": 'w', "left": 'a', "down": 's', "right": 'd', "jump": Key.space, "attack1": 'v',
+        "up": 'w', "left": 'a', "down": 's', "right": 'd', "jump": 'w', "attack1": 'v',
     }
     if key_str in key_map: return key_map[key_str]
     if len(key_str) == 1 and key_str.isalnum(): return key_str.lower()

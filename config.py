@@ -124,11 +124,11 @@ KEYBOARD_DEVICE_NAMES = ["Keyboard (P1 Default)", "Keyboard (P2 Default)", "Keyb
 
 DEFAULT_KEYBOARD_P1_MAPPINGS: Dict[str, Qt.Key] = {
     "left": Qt.Key.Key_A, "right": Qt.Key.Key_D, "up": Qt.Key.Key_W, "down": Qt.Key.Key_S,
-    "jump": Qt.Key.Key_Space, "crouch": Qt.Key.Key_Control, "attack1": Qt.Key.Key_J, "attack2": Qt.Key.Key_K,
-    "dash": Qt.Key.Key_Shift, "roll": Qt.Key.Key_L, "interact": Qt.Key.Key_E,
+    "jump": Qt.Key.Key_W, "crouch": Qt.Key.Key_S, "attack1": Qt.Key.Key_V, "attack2": Qt.Key.Key_B,
+    "dash": Qt.Key.Key_Shift, "roll": Qt.Key.Key_Control, "interact": Qt.Key.Key_E,
     "projectile1": Qt.Key.Key_1, "projectile2": Qt.Key.Key_2, "projectile3": Qt.Key.Key_3, "projectile4": Qt.Key.Key_4,
-    "projectile5": Qt.Key.Key_R, "projectile6": Qt.Key.Key_F, "projectile7": Qt.Key.Key_G,
-    "reset": Qt.Key.Key_Backspace, "pause": Qt.Key.Key_Escape,
+    "projectile5": Qt.Key.Key_5, "projectile6": Qt.Key.Key_6, "projectile7": Qt.Key.Key_7,
+    "reset": Qt.Key.Key_R, "pause": Qt.Key.Key_Escape,
     "menu_confirm": Qt.Key.Key_Return, "menu_cancel": Qt.Key.Key_Escape,
     "menu_up": Qt.Key.Key_Up, "menu_down": Qt.Key.Key_Down, "menu_left": Qt.Key.Key_Left, "menu_right": Qt.Key.Key_Right,
 }
