@@ -550,7 +550,6 @@ class MainWindow(QMainWindow):
                 dt_sec = 1.0 / C.FPS
                 
                 # REVERTED to old call signature for run_couch_play_mode to prevent TypeError
-                print("MERGE_DEBUG: Calling run_couch_play_mode with OLD signature (P1, P2 inputs only).")
                 continue_game = run_couch_play_mode(
                     self.game_elements,                      # Arg 1
                     self.app_status,                         # Arg 2
