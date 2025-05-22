@@ -22,7 +22,7 @@ if _project_root not in sys.path:
 
 from logger import info, debug, warning, critical, error, LOGGING_ENABLED, LOG_FILE_PATH
 from utils import PrintLimiter
-import constants as C
+import constants as C # Keep for C.FPS if used, or replace C.FPS with direct value
 from game_ui import GameSceneWidget
 import config as game_config
 from player import Player
@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
     _p1_ui_focus_color_str: str = "yellow"
     _p2_ui_focus_color_str: str = "red"
     _p3_ui_focus_color_str: str = "lime"
-    _p4_ui_focus_color_str: str = "#8A2BE2"
+    _p4_ui_focus_color_str: str = "#8A2BE2" # BlueViolet
 
     _map_selection_selected_button_idx: int
     _lan_search_list_selected_idx: int
@@ -200,9 +200,10 @@ class MainWindow(QMainWindow):
     status_label_in_dialog: Optional[QLabel] = None
     status_progress_bar_in_dialog: Optional[QProgressBar] = None
 
-    NUM_MAP_COLUMNS = 3
+    NUM_MAP_COLUMNS = 3 # Default, can be overridden by map selection logic
     NetworkThread = NetworkThread
     render_print_limiter = PrintLimiter(default_limit=1, default_period=3.0)
+    FPS = getattr(C, "FPS", 60) # Get FPS from constants or default to 60
 
     def __init__(self):
         super().__init__()
@@ -277,49 +278,61 @@ class MainWindow(QMainWindow):
         self.lan_server_search_status.connect(self.on_lan_server_search_status_update_slot)
         
         try:
-            from game_ui import IPInputDialog
+            from game_ui import IPInputDialog # game_ui might be better place for this if it's purely UI
             self.ip_input_dialog_class_ref = IPInputDialog
             print("MERGE_DEBUG: IPInputDialog imported successfully.")
         except ImportError:
-            warning("MERGE_DEBUG: FAILED to import IPInputDialog from game_ui. IP Input dialog will not work.")
+            warning("MERGE_DEBUG: FAILED to import IPInputDialog. IP Input dialog will not work.")
             self.ip_input_dialog_class_ref = None
         
         self.game_update_timer = QTimer(self)
         self.game_update_timer.timeout.connect(self.update_game_loop)
-        self.game_update_timer.start(1000 // C.FPS)
+        self.game_update_timer.start(1000 // self.FPS) # Use self.FPS
         info("MainWindow initialization complete.")
         print("MERGE_DEBUG: MainWindow.__init__ finished.")
 
 
     def _refresh_appcore_joystick_list(self):
         print("MERGE_DEBUG: _refresh_appcore_joystick_list called.")
+        # Quit previously held joystick objects before clearing list
+        for joy_obj in self._pygame_joysticks:
+            if joy_obj and joy_obj.get_init():
+                try: joy_obj.quit()
+                except pygame.error: pass # Ignore errors on quit, joystick might be disconnected
         self._pygame_joysticks.clear() 
 
         if game_config._joystick_initialized_globally:
             all_detected_joysticks_from_config = game_config.get_joystick_objects()
-            num_total_joysticks = len(all_detected_joysticks_from_config)
-            print(f"MERGE_DEBUG: Total joysticks detected by config: {num_total_joysticks}")
+            num_total_joysticks_from_pygame = pygame.joystick.get_count() # Direct count from Pygame
+            
+            print(f"MERGE_DEBUG: Total joysticks from config.get_joystick_objects(): {len(all_detected_joysticks_from_config)}")
+            print(f"MERGE_DEBUG: Total joysticks from pygame.joystick.get_count(): {num_total_joysticks_from_pygame}")
 
-            if len(self._pygame_joy_button_prev_state) < num_total_joysticks:
-                self._pygame_joy_button_prev_state.extend([{}] * (num_total_joysticks - len(self._pygame_joy_button_prev_state)))
-            elif len(self._pygame_joy_button_prev_state) > num_total_joysticks:
-                 self._pygame_joy_button_prev_state = self._pygame_joy_button_prev_state[:num_total_joysticks]
+            # Resize prev_state based on the maximum possible joysticks (e.g., instance IDs can be > count)
+            # A safer approach is to use a dictionary for prev_state keyed by instance_id.
+            # For now, ensure it's large enough for num_total_joysticks_from_pygame.
+            max_expected_joysticks = max(num_total_joysticks_from_pygame, 8) # Pad for safety up to 8, or use a defined C.MAX_JOYSTICKS
+            
+            if len(self._pygame_joy_button_prev_state) < max_expected_joysticks:
+                self._pygame_joy_button_prev_state.extend([{}] * (max_expected_joysticks - len(self._pygame_joy_button_prev_state)))
+            # No need to shrink if fewer joysticks, as instance IDs might still be high.
 
             ui_joy_count = 0
-            for joy_obj in all_detected_joysticks_from_config:
-                if ui_joy_count >= 4:
-                    print("MERGE_DEBUG: Max UI joysticks (4) reached.")
+            # Iterate using game_config.get_joystick_objects() as it holds the Joystick instances from config.py's scan
+            for joy_obj in all_detected_joysticks_from_config: 
+                if ui_joy_count >= game_config.MAX_UI_CONTROLLERS_FOR_NAV: # Use constant
+                    print(f"MERGE_DEBUG: Max UI joysticks ({game_config.MAX_UI_CONTROLLERS_FOR_NAV}) reached for UI navigation.")
                     break
-                if joy_obj is not None:
+                if joy_obj is not None: # Check if the object from the list is not None
                     try:
-                        if not joy_obj.get_init(): joy_obj.init()
+                        if not joy_obj.get_init(): joy_obj.init() # Ensure initialized for UI use
                         self._pygame_joysticks.append(joy_obj)
-                        print(f"MERGE_DEBUG: Added joystick '{getattr(joy_obj, 'name', 'N/A')}' (Instance ID: {joy_obj.get_instance_id()}) to UI joysticks list.")
+                        print(f"MERGE_DEBUG: Added joystick '{getattr(joy_obj, 'name', 'N/A')}' (Instance ID: {joy_obj.get_instance_id()}, Pygame Idx: {joy_obj.get_id()}) to UI joysticks list.")
                         ui_joy_count += 1
                     except pygame.error as e_init:
                         warning(f"AppCore Refresh: Failed to init joystick '{getattr(joy_obj, 'name', 'N/A')}' for UI. Error: {e_init}")
             
-            info(f"AppCore: UI Joystick list refreshed. Count: {len(self._pygame_joysticks)} (from {num_total_joysticks} total).")
+            info(f"AppCore: UI Joystick list refreshed. Count: {len(self._pygame_joysticks)} (from {num_total_joysticks_from_pygame} total).")
             info(f"AppCore: Full prev_button_state list size for game input: {len(self._pygame_joy_button_prev_state)}")
         else:
             info("AppCore Refresh: Pygame joystick system not globally initialized. No joysticks for AppCore.")
@@ -329,9 +342,8 @@ class MainWindow(QMainWindow):
 
     def _handle_config_load_failure(self):
         warning("MAIN PySide6: Game config loading issue. Defaults will be used.")
-        for i in range(1, 5): # Max 4 players for now
+        for i in range(1, 5): 
             p_prefix = f"P{i}"
-            # Construct variable names dynamically
             default_input_device_var = f"DEFAULT_{p_prefix}_INPUT_DEVICE"
             current_input_device_var = f"CURRENT_{p_prefix}_INPUT_DEVICE"
             keyboard_enabled_var = f"{p_prefix}_KEYBOARD_ENABLED"
@@ -450,70 +462,92 @@ class MainWindow(QMainWindow):
             if view_name == "editor" and self.actual_editor_module_instance: focus_target = self.actual_editor_module_instance
             elif view_name == "settings" and self.actual_controls_settings_instance: focus_target = self.actual_controls_settings_instance
             elif view_name == "game_scene": focus_target = self.game_scene_widget
+            
+            # Set focus, important for GameSceneWidget to receive key events
             focus_target.setFocus(Qt.FocusReason.OtherFocusReason)
-        clear_qt_key_events_this_frame()
+            debug(f"MainWindow.show_view: Set focus to {type(focus_target).__name__}")
+
+        clear_qt_key_events_this_frame() # Clear after switching view and setting focus
 
 
     def keyPressEvent(self, event: QKeyEvent):
-        # --- CRITICAL CHANGE: Update global input state FIRST ---
         qt_key_enum_press = Qt.Key(event.key())
+        # ALWAYS update the global input state for app_input_manager
         update_qt_key_press(qt_key_enum_press, event.isAutoRepeat())
-        # --- END CRITICAL CHANGE ---
-
+        
+        # --- UI Navigation Logic ---
         active_ui_element = self.current_modal_dialog if self.current_modal_dialog else self.current_view_name
         navigated_by_keyboard_this_event = False
 
-        if active_ui_element in ["menu", "map_select"] and not event.isAutoRepeat():
-            key_pressed = event.key() 
-            nav_direction = 0
-            is_activation_key = key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]
+        # Handle UI navigation if not in game_scene, editor, or settings (where game/sub-app handles input)
+        if active_ui_element not in ["game_scene", "editor", "settings"]:
+            if active_ui_element in ["menu", "map_select"] and not event.isAutoRepeat():
+                key_pressed = event.key() 
+                nav_direction = 0 # 0=none, -1=Up, 1=Down, -2=Left, 2=Right (for list-like menus)
+                                  # For grid menus, map_select uses GRID_NAV constants
+                is_activation_key = key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]
 
-            if not is_activation_key: 
-                if key_pressed == Qt.Key.Key_Up or key_pressed == Qt.Key.Key_W: nav_direction = -1
-                elif key_pressed == Qt.Key.Key_Down or key_pressed == Qt.Key.Key_S: nav_direction = 1
-                elif key_pressed == Qt.Key.Key_Left or key_pressed == Qt.Key.Key_A:
-                    nav_direction = -2 
-                elif key_pressed == Qt.Key.Key_Right or key_pressed == Qt.Key.Key_D:
-                    nav_direction = 2  
+                if not is_activation_key: 
+                    if key_pressed == Qt.Key.Key_Up or key_pressed == Qt.Key.Key_W: nav_direction = -1
+                    elif key_pressed == Qt.Key.Key_Down or key_pressed == Qt.Key.Key_S: nav_direction = 1
+                    elif key_pressed == Qt.Key.Key_Left or key_pressed == Qt.Key.Key_A:
+                        nav_direction = game_config.GRID_NAV_LEFT if active_ui_element == "map_select" else -2
+                    elif key_pressed == Qt.Key.Key_Right or key_pressed == Qt.Key.Key_D:
+                        nav_direction = game_config.GRID_NAV_RIGHT if active_ui_element == "map_select" else 2
+                
+                if nav_direction != 0:
+                    _navigate_current_menu_pygame_joy(self, nav_direction, input_source="keyboard") 
+                    navigated_by_keyboard_this_event = True
+                elif is_activation_key:
+                    _activate_current_menu_selected_button_pygame_joy(self, input_source="keyboard") 
+                    navigated_by_keyboard_this_event = True
             
-            if nav_direction != 0:
-                _navigate_current_menu_pygame_joy(self, nav_direction, input_source="keyboard") 
-                navigated_by_keyboard_this_event = True
-            elif is_activation_key:
-                _activate_current_menu_selected_button_pygame_joy(self, input_source="keyboard") 
-                navigated_by_keyboard_this_event = True
-        
-        elif active_ui_element == "lan_search" and self.lan_search_dialog and self.lan_servers_list_widget and not event.isAutoRepeat():
-            key_pressed = event.key()
-            if key_pressed == Qt.Key.Key_Up or key_pressed == Qt.Key.Key_W:
-                self._lan_search_list_selected_idx = max(0, self._lan_search_list_selected_idx - 1)
-                _update_lan_search_list_focus(self); navigated_by_keyboard_this_event = True
-            elif key_pressed == Qt.Key.Key_Down or key_pressed == Qt.Key.Key_S:
-                self._lan_search_list_selected_idx = min(self.lan_servers_list_widget.count() - 1, self._lan_search_list_selected_idx + 1)
-                _update_lan_search_list_focus(self); navigated_by_keyboard_this_event = True
-            elif key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]:
-                self._join_selected_lan_server_from_dialog(); navigated_by_keyboard_this_event = True
-        
-        elif active_ui_element == "ip_input" and self.ip_input_dialog and not event.isAutoRepeat():
-            if self.ip_input_dialog_class_ref and isinstance(self.ip_input_dialog, self.ip_input_dialog_class_ref) and \
-               self.ip_input_dialog.line_edit and self.ip_input_dialog.line_edit.hasFocus() and \
-               not event.key() in [Qt.Key.Key_Tab, Qt.Key.Key_Backtab, Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Escape]:
-                super().keyPressEvent(event) 
-                return 
+            elif active_ui_element == "lan_search" and self.lan_search_dialog and self.lan_servers_list_widget and not event.isAutoRepeat():
+                key_pressed = event.key()
+                if key_pressed == Qt.Key.Key_Up or key_pressed == Qt.Key.Key_W:
+                    self._lan_search_list_selected_idx = max(0, self._lan_search_list_selected_idx - 1)
+                    _update_lan_search_list_focus(self); navigated_by_keyboard_this_event = True
+                elif key_pressed == Qt.Key.Key_Down or key_pressed == Qt.Key.Key_S:
+                    self._lan_search_list_selected_idx = min(self.lan_servers_list_widget.count() - 1, self._lan_search_list_selected_idx + 1)
+                    _update_lan_search_list_focus(self); navigated_by_keyboard_this_event = True
+                elif key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]:
+                    self._join_selected_lan_server_from_dialog(); navigated_by_keyboard_this_event = True
+            
+            elif active_ui_element == "ip_input" and self.ip_input_dialog and not event.isAutoRepeat():
+                is_line_edit_focused = self.ip_input_dialog_class_ref and \
+                                     isinstance(self.ip_input_dialog, self.ip_input_dialog_class_ref) and \
+                                     self.ip_input_dialog.line_edit and self.ip_input_dialog.line_edit.hasFocus()
 
-            key_pressed = event.key()
-            if key_pressed in [Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_A, Qt.Key.Key_D, Qt.Key.Key_Tab, Qt.Key.Key_Backtab]:
-                if self.ip_input_dialog_class_ref and isinstance(self.ip_input_dialog, self.ip_input_dialog_class_ref) and \
-                   self.ip_input_dialog.line_edit and self.ip_input_dialog.line_edit.hasFocus() and \
-                   key_pressed in [Qt.Key.Key_Tab, Qt.Key.Key_Backtab]:
-                    # Let Qt handle Tab/Backtab focus changes when line_edit has focus
-                    pass # Will be handled by super().keyPressEvent(event) later if not accepted
-                else: # Navigate buttons if line_edit doesn't have focus or for L/R/A/D keys
-                    self._ip_dialog_selected_button_idx = 1 - self._ip_dialog_selected_button_idx
-                    _update_ip_dialog_button_focus(self); navigated_by_keyboard_this_event = True
+                key_pressed = event.key()
+                
+                if is_line_edit_focused and key_pressed not in [Qt.Key.Key_Tab, Qt.Key.Key_Backtab, Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Escape]:
+                    super().keyPressEvent(event) # Let line edit handle character input
+                    return 
+                
+                # Handle Tab/Backtab or L/R/A/D for button navigation, or Enter/Space for activation
+                if key_pressed in [Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_A, Qt.Key.Key_D, Qt.Key.Key_Tab, Qt.Key.Key_Backtab]:
+                    if not is_line_edit_focused or key_pressed in [Qt.Key.Key_Tab, Qt.Key.Key_Backtab]: # Allow Tab to navigate buttons if line_edit not focused
+                        self._ip_dialog_selected_button_idx = 1 - self._ip_dialog_selected_button_idx
+                        _update_ip_dialog_button_focus(self); navigated_by_keyboard_this_event = True
+                elif key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]:
+                    _activate_ip_dialog_button(self); navigated_by_keyboard_this_event = True
 
-            elif key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]:
-                _activate_ip_dialog_button(self); navigated_by_keyboard_this_event = True
+        # Handle Escape key universally (except when line edit in IP dialog has focus and needs it)
+        if event.key() == Qt.Key.Key_Escape and not event.isAutoRepeat():
+            is_ip_line_edit_focused_for_esc = self.current_modal_dialog == "ip_input" and \
+                                           self.ip_input_dialog_class_ref and \
+                                           isinstance(self.ip_input_dialog, self.ip_input_dialog_class_ref) and \
+                                           self.ip_input_dialog.line_edit and self.ip_input_dialog.line_edit.hasFocus()
+            
+            if not is_ip_line_edit_focused_for_esc: # If Esc is not for line edit, process it for UI
+                if active_ui_element == "menu": self.request_close_app()
+                elif active_ui_element == "map_select": self.show_view("menu")
+                elif active_ui_element == "lan_search" and self.lan_search_dialog: self.lan_search_dialog.reject(); self.current_modal_dialog = None; self.show_view("menu")
+                elif active_ui_element == "ip_input" and self.ip_input_dialog: self.ip_input_dialog.reject(); self.current_modal_dialog = None; self.show_view("menu")
+                elif self.current_view_name == "game_scene" and self.current_game_mode: self.stop_current_game_mode(show_menu=True)
+                elif self.current_view_name in ["editor", "settings"]: self.on_return_to_menu_from_sub_view()
+                else: self.show_view("menu") 
+                event.accept(); return
 
         if navigated_by_keyboard_this_event:
             self._last_active_input_source = "keyboard" 
@@ -521,29 +555,31 @@ class MainWindow(QMainWindow):
             if active_ui_element in ["menu", "map_select"]:
                  _update_current_menu_button_focus(self) 
             event.accept(); return
-
-        if event.key() == Qt.Key.Key_Escape and not event.isAutoRepeat():
-            if active_ui_element == "menu": self.request_close_app()
-            elif active_ui_element == "map_select": self.show_view("menu")
-            elif active_ui_element == "lan_search" and self.lan_search_dialog: self.lan_search_dialog.reject(); self.current_modal_dialog = None; self.show_view("menu")
-            elif active_ui_element == "ip_input" and self.ip_input_dialog: self.ip_input_dialog.reject(); self.current_modal_dialog = None; self.show_view("menu")
-            elif self.current_view_name == "game_scene" and self.current_game_mode: self.stop_current_game_mode(show_menu=True)
-            elif self.current_view_name in ["editor", "settings"]: self.on_return_to_menu_from_sub_view()
-            else: self.show_view("menu") 
-            event.accept(); return
         
+        # If the event hasn't been accepted by UI navigation or specific Escape logic,
+        # and it's not for a sub-app that handles its own input (like GameSceneWidget should),
+        # then call super(). This ensures standard Qt behavior (like text input in QLineEdit) works.
         if not event.isAccepted():
-            super().keyPressEvent(event)
+            # For views like GameSceneWidget, editor, settings, their own event handlers
+            # (like GameSceneWidget.keyPressEvent) should be primary.
+            # MainWindow's super().keyPressEvent is a fallback.
+            if self.current_view_name not in ["game_scene", "editor", "settings"] or \
+               (self.current_view_name == "ip_input" and self.ip_input_dialog and self.ip_input_dialog.line_edit and self.ip_input_dialog.line_edit.hasFocus()):
+                 super().keyPressEvent(event)
+            # If it's game_scene, editor, or settings, their specific keyPressEvent (which now calls update_qt_key_press)
+            # will have run. We don't necessarily want MainWindow's super() to run again for those keys
+            # unless the sub-widget explicitly calls super() itself.
 
 
     def keyReleaseEvent(self, event: QKeyEvent):
-        # --- CRITICAL CHANGE: Update global input state FIRST ---
         qt_key_enum_release = Qt.Key(event.key())
         update_qt_key_release(qt_key_enum_release, event.isAutoRepeat())
-        # --- END CRITICAL CHANGE ---
-
+        
         if not event.isAccepted():
-            super().keyReleaseEvent(event)
+            # Similar logic to keyPressEvent for super call
+            if self.current_view_name not in ["game_scene", "editor", "settings"] or \
+               (self.current_view_name == "ip_input" and self.ip_input_dialog and self.ip_input_dialog.line_edit and self.ip_input_dialog.line_edit.hasFocus()):
+                super().keyReleaseEvent(event)
 
     def get_p1_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]:
         return get_input_snapshot(player_instance, 1, game_config.get_joystick_objects(), self._pygame_joy_button_prev_state, self.game_elements)
@@ -559,7 +595,7 @@ class MainWindow(QMainWindow):
         _poll_pygame_joysticks_for_ui_navigation(self)
         
         uses_pygame_joy_for_gameplay = False
-        for i in range(1, 5):
+        for i in range(1, 5): # Max 4 players
             if getattr(game_config, f"P{i}_CONTROLLER_ENABLED", False) and \
                getattr(game_config, f"CURRENT_P{i}_INPUT_DEVICE", "").startswith("joystick_"):
                 uses_pygame_joy_for_gameplay = True; break
@@ -577,16 +613,14 @@ class MainWindow(QMainWindow):
 
         if self.current_game_mode == "couch_play" and self.app_status.app_running:
             if game_is_ready and not init_in_progress:
-                dt_sec = 1.0 / C.FPS
+                dt_sec = 1.0 / self.FPS
                 
                 p_getters = [
                     self.get_p1_input_snapshot_for_logic, self.get_p2_input_snapshot_for_logic,
                     self.get_p3_input_snapshot_for_logic, self.get_p4_input_snapshot_for_logic
                 ]
-                num_configured_players = 0 # Determine how many players are actively configured
+                num_configured_players = 0 
                 for i in range(1, 5):
-                     # A player is considered active if they have an assigned device (not unassigned)
-                     # AND either keyboard or controller is enabled for them.
                     dev_key = f"CURRENT_P{i}_INPUT_DEVICE"
                     kbd_en_key = f"P{i}_KEYBOARD_ENABLED"
                     ctrl_en_key = f"P{i}_CONTROLLER_ENABLED"
@@ -598,23 +632,27 @@ class MainWindow(QMainWindow):
 
                     if is_assigned and is_input_enabled:
                         num_configured_players = i 
-                    elif not is_assigned and num_configured_players < i-1 : # if P2 unassigned, P3/P4 won't be considered.
+                    elif not is_assigned and num_configured_players < i-1 : 
                         break
-
-                # Limit to max 2 players for couch_play_logic until it's updated
-                actual_players_for_couch_logic = min(num_configured_players, 2)
-
+                
+                # Limit actual players for couch_play_logic based on its known support (e.g., 2 players)
+                # This can be adjusted if couch_play_logic is updated for more players.
+                max_players_for_couch_logic = 2 # Assume couch_play_logic currently supports max 2
+                actual_players_for_couch_logic = min(num_configured_players, max_players_for_couch_logic)
 
                 input_getter_args = [p_getters[j] for j in range(actual_players_for_couch_logic)]
-                # Pad with dummy getters if fewer than 2 players for the old signature
-                while len(input_getter_args) < 2:
+                
+                # Pad with dummy getters if couch_play_logic expects more than available/configured
+                # For example, if it always expects 2, but only 1 is configured and active.
+                # The current run_couch_play_mode call takes exactly 2 player input functions.
+                while len(input_getter_args) < 2: # Ensure at least 2 for the hardcoded call below
                     input_getter_args.append(lambda p_inst: {})
 
 
                 continue_game = run_couch_play_mode(
                     self.game_elements,                      
                     self.app_status,                         
-                    input_getter_args[0], # P1 input
+                    input_getter_args[0], # P1 input (or dummy)
                     input_getter_args[1], # P2 input (or dummy)
                     lambda: QApplication.processEvents(),    
                     lambda: dt_sec,                          
@@ -624,11 +662,11 @@ class MainWindow(QMainWindow):
 
         elif self.current_game_mode == "host_active" and self.app_status.app_running and self.server_state and self.server_state.client_ready:
              if game_is_ready and not init_in_progress:
-                 pass
+                 pass # Server logic handles updates for host_active
 
         elif self.current_game_mode == "host_waiting" and self.app_status.app_running and self.server_state:
             if game_is_ready and not init_in_progress:
-                dt_sec = 1.0 / C.FPS
+                dt_sec = 1.0 / self.FPS
                 p1 = self.game_elements.get("player1")
                 
                 if p1:
@@ -664,12 +702,13 @@ class MainWindow(QMainWindow):
                     if camera and p1 and p1.alive(): camera.update(p1)
 
         elif self.current_game_mode == "join_active" and self.app_status.app_running and self.client_state and self.client_state.map_download_status == "present":
-            pass
+            pass # Client logic handles updates
 
         if self.current_view_name == "game_scene":
             if self.game_elements:
-                 self.game_scene_widget.update_game_state(0)
+                 self.game_scene_widget.update_game_state(0) # game_time_ticks is ignored by widget
         
+        # CRITICAL: Clear discrete key events *after* all logic for the frame has used them.
         clear_qt_key_events_this_frame()
 
 
@@ -678,7 +717,7 @@ class MainWindow(QMainWindow):
         print("MERGE_DEBUG: closeEvent called.")
         if self.actual_editor_module_instance:
             can_close_editor = True
-            if isinstance(self.actual_editor_module_instance, QMainWindow):
+            if isinstance(self.actual_editor_module_instance, QMainWindow): # or QWidget if editor is simpler
                 if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and callable(self.actual_editor_module_instance.confirm_unsaved_changes):
                     if not self.actual_editor_module_instance.confirm_unsaved_changes("exit"): can_close_editor = False
             if not can_close_editor: event.ignore(); return
@@ -705,7 +744,7 @@ class MainWindow(QMainWindow):
             self.actual_controls_settings_instance.deleteLater(); self.actual_controls_settings_instance = None
 
         self.app_status.quit_app()
-        app_game_modes.stop_current_game_mode_logic(self, show_menu=False)
+        app_game_modes.stop_current_game_mode_logic(self, show_menu=False) # Clean up game modes
         
         if game_config._pygame_initialized_globally:
             if game_config._joystick_initialized_globally:
@@ -722,17 +761,17 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    if not game_config._pygame_initialized_globally:
+    if not game_config._pygame_initialized_globally: # Ensure Pygame is up before QApplication
         game_config.init_pygame_and_joystick_globally(force_rescan=True)
 
     app = QApplication.instance();
     if app is None: app = QApplication(sys.argv)
     info("MAIN PySide6: Application starting...")
     print("MERGE_DEBUG: Application main() started.")
-    main_window = MainWindow(); main_window.showMaximized()
+    main_window = MainWindow(); main_window.showMaximized() # Or .show()
     exit_code = app.exec()
     info(f"MAIN PySide6: QApplication event loop finished. Exit code: {exit_code}")
-    if APP_STATUS.app_running: APP_STATUS.app_running = False 
+    if APP_STATUS.app_running: APP_STATUS.app_running = False # Ensure app_status reflects exit
     info("MAIN PySide6: Application fully terminated."); sys.exit(exit_code)
 
 if __name__ == "__main__":
@@ -742,15 +781,22 @@ if __name__ == "__main__":
         log_func(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}", exc_info=True) 
         print(f"MERGE_DEBUG_FATAL: MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}\n{traceback.format_exc()}")
         try:
+            # Attempt to show a Qt error dialog even on catastrophic failure
             error_app = QApplication.instance(); 
-            if error_app is None: error_app = QApplication(sys.argv)
+            if error_app is None: error_app = QApplication(sys.argv) # Must exist for QMessageBox
             msg_box = QMessageBox(); msg_box.setIcon(QMessageBox.Icon.Critical)
             msg_box.setWindowTitle("Critical Application Error")
             msg_box.setText("A critical error occurred, and the application must close.")
             log_path_info_str = ""
-            if LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH and os.path.exists(LOG_FILE_PATH): log_path_info_str = f"Please check the log file for details:\n{LOG_FILE_PATH}"
-            elif LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH: log_path_info_str = f"Log file configured at: {LOG_FILE_PATH} (may not exist if error was early)."
-            else: log_path_info_str = "Logging to file is disabled or path not set. Check console output."
+            # Check LOGGING_ENABLED and LOG_FILE_PATH from logger.py if they are global or accessible via a config object
+            # Assuming logger.py defines these or they are available via another means:
+            try: 
+                if LOGGING_ENABLED and LOG_FILE_PATH and os.path.exists(LOG_FILE_PATH): log_path_info_str = f"Please check the log file for details:\n{LOG_FILE_PATH}"
+                elif LOGGING_ENABLED and LOG_FILE_PATH: log_path_info_str = f"Log file configured at: {LOG_FILE_PATH} (may not exist if error was early)."
+                else: log_path_info_str = "Logging to file is disabled or path not set. Check console output."
+            except NameError: # If LOGGING_ENABLED or LOG_FILE_PATH are not globally defined here
+                log_path_info_str = "Log file path information unavailable."
+
             msg_box.setInformativeText(f"Error: {str(e_main_outer)[:1000]}\n\n{log_path_info_str}")
             msg_box.setStandardButtons(QMessageBox.StandardButton.Ok); msg_box.exec()
         except Exception as e_msgbox:
