@@ -123,16 +123,24 @@ def _populate_map_list_for_selection(main_window: 'MainWindow', purpose: str):
     
     main_window._map_selection_buttons_ref.clear()
     maps_dir = str(getattr(C, "MAPS_DIR", "maps"))
-    if not os.path.isabs(maps_dir): 
-        maps_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), maps_dir) # Assuming app_ui_creator is one level down from project root
     
+    # Corrected path assumption: app_ui_creator.py is in the project root
+    # where app_core.py also resides.
+    project_root_dir = os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)) \
+        if hasattr(sys.modules['__main__'], '__file__') and sys.modules['__main__'].__file__ \
+        else os.path.dirname(os.path.abspath(__file__)) # Fallback if __main__ doesn't have __file__ (e.g. interactive)
+    
+    if not os.path.isabs(maps_dir): 
+        maps_dir = os.path.join(project_root_dir, maps_dir) 
+    
+    debug(f"UI Creator: Populating map list from directory: {maps_dir}")
     available_maps = []
     if os.path.exists(maps_dir) and os.path.isdir(maps_dir):
         try:
             map_files = sorted([f[:-3] for f in os.listdir(maps_dir) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"])
-            # Example prioritization
-            prio = ["original", "lava", "cpu_extended", "noenemy", "bigmap1", "one"]
+            prio = ["original", "lava", "cpu_extended", "noenemy", "bigmap1", "one", "three"] 
             available_maps = [m for m in prio if m in map_files] + [m for m in map_files if m not in prio]
+            debug(f"UI Creator: Found map files: {map_files}, Prioritized: {available_maps}")
         except OSError as e: 
             main_window.map_buttons_layout.addWidget(QLabel(f"Error reading maps: {e}"),0,0,1,main_window.NUM_MAP_COLUMNS); return
     else: 
@@ -161,7 +169,7 @@ def _create_view_page_with_back_button(main_window: 'MainWindow', title_text: st
     page_layout.setContentsMargins(10,10,10,10); page_layout.setSpacing(10)
     title_label = QLabel(title_text); title_label.setFont(main_window.fonts["large"])
     title_label.setAlignment(Qt.AlignmentFlag.AlignCenter); page_layout.addWidget(title_label)
-    page_layout.addWidget(content_widget_to_embed, 1) # Stretch factor of 1 for content
+    page_layout.addWidget(content_widget_to_embed, 1) 
     back_button = QPushButton("Back to Main Menu"); back_button.setFont(main_window.fonts["medium"])
     back_button.setMinimumHeight(40); back_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
     back_button.clicked.connect(back_slot)
@@ -179,17 +187,16 @@ def _clear_layout(layout: Optional[QLayout]):
                 if widget:
                     widget.setParent(None) 
                     widget.deleteLater()
-                else: # If it's a layout item
+                else: 
                     sub_layout = item.layout()
                     if sub_layout:
                         _clear_layout(sub_layout)
-                        # sub_layout.deleteLater() # QLayouts don't have deleteLater themselves, items handle widgets
 
 def _ensure_editor_instance(main_window: 'MainWindow'):
-    from PySide6.QtWidgets import QMainWindow as EditorMainWindowType # Local import for type
+    from PySide6.QtWidgets import QMainWindow as EditorMainWindowType 
     if main_window.actual_editor_module_instance and \
        main_window.actual_editor_module_instance.parent() is main_window.editor_content_container:
-        return # Already embedded and correct
+        return 
 
     _clear_layout(main_window.editor_content_container.layout()) 
 
@@ -197,9 +204,9 @@ def _ensure_editor_instance(main_window: 'MainWindow'):
        not isinstance(main_window.actual_editor_module_instance, EditorMainWindowType):
         info("UI Creator: Creating and embedding editor instance.")
         try:
-            from editor.editor import editor_main # Assuming this is your editor's entry point
+            from editor.editor import editor_main 
             instance = editor_main(parent_app_instance=QApplication.instance(), embed_mode=True)
-            if not instance or not isinstance(instance, EditorMainWindowType): # Check type
+            if not instance or not isinstance(instance, EditorMainWindowType): 
                 error("UI Creator: Failed to get QMainWindow editor instance."); 
                 _add_placeholder_to_content_area(main_window, main_window.editor_content_container, "Error: Editor load failed."); return
             main_window.actual_editor_module_instance = instance
@@ -209,20 +216,20 @@ def _ensure_editor_instance(main_window: 'MainWindow'):
             main_window.actual_editor_module_instance = None; return
     
     if main_window.actual_editor_module_instance:
-        if main_window.actual_editor_module_instance.parent() is not None: # Detach if already parented elsewhere
+        if main_window.actual_editor_module_instance.parent() is not None: 
             main_window.actual_editor_module_instance.setParent(None) 
         main_window.editor_content_container.layout().addWidget(main_window.actual_editor_module_instance)
-        main_window.actual_editor_module_instance.setParent(main_window.editor_content_container) # Re-parent
+        main_window.actual_editor_module_instance.setParent(main_window.editor_content_container) 
         info("UI Creator: Editor instance embedded.")
 
 
 def _ensure_controls_settings_instance(main_window: 'MainWindow'):
-    from controller_settings.controller_mapper_gui import ControllerSettingsWindow # Local import for type
+    from controller_settings.controller_mapper_gui import ControllerSettingsWindow 
     if main_window.actual_controls_settings_instance and \
        main_window.actual_controls_settings_instance.parent() is main_window.settings_content_container:
         if hasattr(main_window.actual_controls_settings_instance, 'load_settings_into_ui'):
-             main_window.actual_controls_settings_instance.load_settings_into_ui() # Refresh its UI
-        return # Already embedded and correct
+             main_window.actual_controls_settings_instance.load_settings_into_ui() 
+        return 
 
     _clear_layout(main_window.settings_content_container.layout()) 
 
@@ -230,7 +237,7 @@ def _ensure_controls_settings_instance(main_window: 'MainWindow'):
        not isinstance(main_window.actual_controls_settings_instance, ControllerSettingsWindow) :
         info("UI Creator: Creating ControllerSettingsWindow instance.")
         try:
-            game_config.load_config() # Ensure config is fresh before settings GUI loads
+            game_config.load_config() 
             instance = ControllerSettingsWindow(parent=main_window.settings_content_container)
             main_window.actual_controls_settings_instance = instance
         except ImportError as e_imp: 
@@ -243,10 +250,10 @@ def _ensure_controls_settings_instance(main_window: 'MainWindow'):
             main_window.actual_controls_settings_instance = None; return
     
     if main_window.actual_controls_settings_instance:
-        if main_window.actual_controls_settings_instance.parent() is not None: # Detach
+        if main_window.actual_controls_settings_instance.parent() is not None: 
              main_window.actual_controls_settings_instance.setParent(None)
         main_window.settings_content_container.layout().addWidget(main_window.actual_controls_settings_instance)
-        main_window.actual_controls_settings_instance.setParent(main_window.settings_content_container) # Re-parent
+        main_window.actual_controls_settings_instance.setParent(main_window.settings_content_container) 
         if hasattr(main_window.actual_controls_settings_instance, 'load_settings_into_ui'): 
             main_window.actual_controls_settings_instance.load_settings_into_ui()
         info("UI Creator: ControllerSettingsWindow embedded.")
@@ -256,14 +263,14 @@ def _add_placeholder_to_content_area(main_window: 'MainWindow', container: QWidg
     _clear_layout(container.layout()) 
     lbl = QLabel(msg); lbl.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl.setFont(main_window.fonts["medium"])
     current_layout = container.layout()
-    if not current_layout: # If no layout exists, create one
+    if not current_layout: 
         current_layout = QVBoxLayout(container)
         container.setLayout(current_layout)
     current_layout.addWidget(lbl)
 
 
 def _show_status_dialog(main_window: 'MainWindow', title: str, initial_message: str):
-    from PySide6.QtWidgets import QProgressBar # Local import
+    from PySide6.QtWidgets import QProgressBar 
     if main_window.status_dialog is None:
         main_window.status_dialog = QDialog(main_window)
         main_window.status_dialog.setWindowTitle(title)
@@ -282,9 +289,9 @@ def _show_status_dialog(main_window: 'MainWindow', title: str, initial_message: 
     if main_window.status_label_in_dialog: main_window.status_label_in_dialog.setText(initial_message)
     if main_window.status_progress_bar_in_dialog: 
         main_window.status_progress_bar_in_dialog.setValue(0)
-        main_window.status_progress_bar_in_dialog.setVisible(False) # Hide initially
+        main_window.status_progress_bar_in_dialog.setVisible(False) 
     main_window.status_dialog.show()
-    QApplication.processEvents() # Ensure dialog is shown
+    QApplication.processEvents() 
 
 def _update_status_dialog(main_window: 'MainWindow', message: str, progress: float = -1.0, title: Optional[str] = None):
     if main_window.status_dialog and main_window.status_dialog.isVisible():
@@ -313,7 +320,6 @@ def _show_lan_search_dialog(main_window: 'MainWindow'):
         layout.addWidget(main_window.lan_servers_list_widget)
         
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Retry)
-        # Store button_box on the dialog for access if needed, though not strictly necessary if only connecting signals here
         main_window.lan_search_dialog.button_box = button_box # type: ignore 
         
         ok_button = button_box.button(QDialogButtonBox.StandardButton.Ok)
@@ -349,7 +355,7 @@ def _update_lan_search_list_focus(main_window: 'MainWindow'):
 
     if list_widget.count() > 0:
         if not (0 <= main_window._lan_search_list_selected_idx < list_widget.count()):
-            main_window._lan_search_list_selected_idx = 0 # Default to first item
+            main_window._lan_search_list_selected_idx = 0 
         
         list_widget.setCurrentRow(main_window._lan_search_list_selected_idx)
         selected_item = list_widget.item(main_window._lan_search_list_selected_idx)
@@ -390,10 +396,10 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
         if main_window._last_active_input_source != "keyboard": 
              main_window._last_active_input_source = "keyboard"
              main_window._ui_nav_focus_controller_index = -1
-             _update_current_menu_button_focus(main_window) # Update focus based on keyboard
+             _update_current_menu_button_focus(main_window) 
         _reset_all_prev_press_flags(main_window); return
     
-    if not main_window._pygame_joysticks: # No UI joysticks registered with app_core
+    if not main_window._pygame_joysticks: 
         if main_window._last_active_input_source != "keyboard":
             main_window._last_active_input_source = "keyboard"
             main_window._ui_nav_focus_controller_index = -1
@@ -407,37 +413,41 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
         return
 
     current_time = time.monotonic()
-    if current_time - main_window._last_pygame_joy_nav_time < 0.20: # Debounce joystick UI nav
+    if current_time - main_window._last_pygame_joy_nav_time < 0.20: 
         return 
 
     navigated_this_poll = False
     action_input_source: Optional[str] = None 
 
     for ui_controller_idx, joy in enumerate(main_window._pygame_joysticks):
-        if ui_controller_idx > 1: # Limit UI nav to first 2 controllers for now
+        # Limit UI joystick navigation to first 2 controllers for simplicity/avoid conflicts.
+        # Can be increased to 4 if P3/P4 UI focus colors are defined and logic is extended.
+        if ui_controller_idx >= game_config.MAX_UI_CONTROLLERS_FOR_NAV: # Use a constant from config if defined, else 2
             break
         
         if not joy.get_init():
             try: joy.init()
-            except pygame.error: continue # Skip if cannot init
+            except pygame.error: continue 
         if not joy.get_init(): continue 
 
         joy_instance_id = joy.get_instance_id() 
 
-        # Hat Navigation
         JOY_NAV_HAT_ID = 0; nav_dir_hat = 0
         if joy.get_numhats() > JOY_NAV_HAT_ID:
             hat_x, hat_y = joy.get_hat(JOY_NAV_HAT_ID)
-            if hat_y > 0.5: nav_dir_hat = 1    # Up
-            elif hat_y < -0.5: nav_dir_hat = -1 # Down
-            elif hat_x > 0.5: nav_dir_hat = 2   # Right
-            elif hat_x < -0.5: nav_dir_hat = -2 # Left
+            if hat_y > 0.5: nav_dir_hat = -1   # Up (Pygame hat Y is +1 for up)
+            elif hat_y < -0.5: nav_dir_hat = 1 # Down (Pygame hat Y is -1 for down)
+            elif hat_x > 0.5: nav_dir_hat = 2   # Right (Pygame hat X is +1 for right)
+            elif hat_x < -0.5: nav_dir_hat = -2 # Left (Pygame hat X is -1 for left)
             
             if nav_dir_hat != 0:
-                grid_nav_val = nav_dir_hat
+                grid_nav_val = nav_dir_hat 
                 if active_ui_element == "map_select":
-                    if nav_dir_hat == 2: grid_nav_val = 1 
-                    elif nav_dir_hat == -2: grid_nav_val = -1
+                    # Map select direction needs specific handling for grid
+                    if nav_dir_hat == 2: grid_nav_val = C.GRID_NAV_RIGHT    # e.g., a constant like 102
+                    elif nav_dir_hat == -2: grid_nav_val = C.GRID_NAV_LEFT  # e.g., a constant like 101
+                    elif nav_dir_hat == -1: grid_nav_val = C.GRID_NAV_UP    # e.g., a constant like 100
+                    elif nav_dir_hat == 1: grid_nav_val = C.GRID_NAV_DOWN   # e.g., a constant like 103
                 elif active_ui_element == "ip_input" and nav_dir_hat not in [-2, 2]: # IP dialog only L/R
                     continue 
                 
@@ -446,18 +456,17 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
                 navigated_this_poll = True; break 
         if navigated_this_poll: break
 
-        # Axis Navigation
         JOY_NAV_AXIS_ID_Y = 1; JOY_NAV_AXIS_ID_X = 0; nav_threshold = 0.65; axis_nav_dir = 0
         axis_key_y = f"{joy_instance_id}_y"; axis_key_x = f"{joy_instance_id}_x"
 
-        if joy.get_numaxes() > JOY_NAV_AXIS_ID_Y:
+        if joy.get_numaxes() > JOY_NAV_AXIS_ID_Y: # Vertical axis
             axis_y_val = joy.get_axis(JOY_NAV_AXIS_ID_Y)
             if axis_y_val > nav_threshold and not main_window._pygame_joy_axis_was_active_pos.get(axis_key_y, False): axis_nav_dir = 1    # Down
             elif axis_y_val < -nav_threshold and not main_window._pygame_joy_axis_was_active_neg.get(axis_key_y, False): axis_nav_dir = -1 # Up
             main_window._pygame_joy_axis_was_active_pos[axis_key_y] = axis_y_val > nav_threshold
             main_window._pygame_joy_axis_was_active_neg[axis_key_y] = axis_y_val < -nav_threshold
         
-        if joy.get_numaxes() > JOY_NAV_AXIS_ID_X and axis_nav_dir == 0: # Only check X if Y wasn't triggered
+        if joy.get_numaxes() > JOY_NAV_AXIS_ID_X and axis_nav_dir == 0: # Horizontal axis, only if vertical wasn't triggered
             axis_x_val = joy.get_axis(JOY_NAV_AXIS_ID_X)
             if axis_x_val > nav_threshold and not main_window._pygame_joy_axis_was_active_pos.get(axis_key_x, False): axis_nav_dir = 2   # Right
             elif axis_x_val < -nav_threshold and not main_window._pygame_joy_axis_was_active_neg.get(axis_key_x, False): axis_nav_dir = -2 # Left
@@ -465,10 +474,12 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
             main_window._pygame_joy_axis_was_active_neg[axis_key_x] = axis_x_val < -nav_threshold
             
         if axis_nav_dir != 0:
-            grid_nav_val_axis = axis_nav_dir
+            grid_nav_val_axis = axis_nav_dir 
             if active_ui_element == "map_select":
-                if axis_nav_dir == 2: grid_nav_val_axis = 1 
-                elif axis_nav_dir == -2: grid_nav_val_axis = -1
+                if axis_nav_dir == 2: grid_nav_val_axis = C.GRID_NAV_RIGHT
+                elif axis_nav_dir == -2: grid_nav_val_axis = C.GRID_NAV_LEFT
+                elif axis_nav_dir == -1: grid_nav_val_axis = C.GRID_NAV_UP
+                elif axis_nav_dir == 1: grid_nav_val_axis = C.GRID_NAV_DOWN
             elif active_ui_element == "ip_input" and axis_nav_dir not in [-2,2]: 
                 continue
             
@@ -477,23 +488,26 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
             navigated_this_poll = True; break
         if navigated_this_poll: break
 
-        # Button Press/Activation Navigation
         if joy_instance_id >= len(main_window._pygame_joy_button_prev_state):
-            warning(f"UI Poll: joy_instance_id {joy_instance_id} out of bounds for prev_state. Skipping button check."); continue
+            # This can happen if a joystick is added mid-session and prev_state isn't resized yet
+            # It should be handled by _refresh_appcore_joystick_list ideally
+            warning(f"UI Poll: joy_instance_id {joy_instance_id} out of bounds for prev_state (len {len(main_window._pygame_joy_button_prev_state)}). Resizing prev_state.");
+            while len(main_window._pygame_joy_button_prev_state) <= joy_instance_id:
+                main_window._pygame_joy_button_prev_state.append({})
+            # continue # Skip button check for this frame if resizing was needed, state will be updated at end.
+            # No, don't skip, prev_joy_buttons will be empty dict, which is fine for first check.
 
         current_joy_buttons = {i: joy.get_button(i) for i in range(joy.get_numbuttons())}
         prev_joy_buttons = main_window._pygame_joy_button_prev_state[joy_instance_id] 
 
-        # --- THIS IS THE CORRECTED LINE ---
         joy_mappings_to_use = game_config.get_active_runtime_joystick_mappings() 
-        # --- END OF CORRECTION ---
         
-        if not joy_mappings_to_use: # Fallback if active runtime map is somehow empty
-            joy_mappings_to_use = game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS # Use generic default map
+        if not joy_mappings_to_use: 
+            joy_mappings_to_use = game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS 
         
         confirm_mapping = joy_mappings_to_use.get("menu_confirm")
         cancel_mapping = joy_mappings_to_use.get("menu_cancel")
-        retry_mapping = joy_mappings_to_use.get("reset") # Assuming "reset" is used for "Retry" in LAN dialog
+        retry_mapping = joy_mappings_to_use.get("reset") 
 
         action_input_source_for_button = f"controller_{ui_controller_idx}"
 
@@ -543,41 +557,34 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
                     acted_joy_object = main_window._pygame_joysticks[acted_ui_idx]
                     if acted_joy_object.get_init():
                         acted_joy_instance_id = acted_joy_object.get_instance_id()
-            except (ValueError, IndexError): pass # Keep acted_joy_instance_id as -1
+            except (ValueError, IndexError): pass 
         
-        # Update prev_button_state for the joystick that acted
         if acted_joy_instance_id != -1:
             joy_to_update_state_for = None
-            # Find the correct joystick object from the global list by instance ID
             for j_obj in game_config.get_joystick_objects(): 
                 if j_obj and j_obj.get_init() and j_obj.get_instance_id() == acted_joy_instance_id:
                     joy_to_update_state_for = j_obj
                     break
             
-            if joy_to_update_state_for and acted_joy_instance_id < len(main_window._pygame_joy_button_prev_state):
+            if joy_to_update_state_for and 0 <= acted_joy_instance_id < len(main_window._pygame_joy_button_prev_state): 
                  main_window._pygame_joy_button_prev_state[acted_joy_instance_id] = \
                      {i: joy_to_update_state_for.get_button(i) for i in range(joy_to_update_state_for.get_numbuttons())}
 
         _update_current_menu_button_focus(main_window)
-        return # End polling for this frame as a navigation/action occurred
+        return 
 
-    # If no navigation occurred, update all joystick button states for the next frame
-    for joy_obj_for_state_update in main_window._pygame_joysticks: # Iterate UI joysticks
+    for joy_obj_for_state_update in main_window._pygame_joysticks: 
         if joy_obj_for_state_update and joy_obj_for_state_update.get_init():
             instance_id = joy_obj_for_state_update.get_instance_id()
-            # Ensure _pygame_joy_button_prev_state is large enough for this instance_id
-            # This should ideally be handled when _pygame_joysticks is populated/refreshed.
-            # For safety, we check here.
-            if instance_id >= 0: # Valid instance ID
+            if instance_id >= 0: 
                 while instance_id >= len(main_window._pygame_joy_button_prev_state):
-                    main_window._pygame_joy_button_prev_state.append({}) # Pad if necessary
+                    main_window._pygame_joy_button_prev_state.append({}) 
 
                 main_window._pygame_joy_button_prev_state[instance_id] = \
                     {i: joy_obj_for_state_update.get_button(i) for i in range(joy_obj_for_state_update.get_numbuttons())}
 
 
 def _navigate_current_menu_pygame_joy(main_window: 'MainWindow', direction: int, input_source: str):
-    # info(f"UI Navigate: Dir={direction}, Src='{input_source}'") # Can be verbose
     active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
 
     if active_ui == "map_select":
@@ -590,45 +597,54 @@ def _navigate_current_menu_pygame_joy(main_window: 'MainWindow', direction: int,
         new_idx = current_idx
         num_cols = main_window.NUM_MAP_COLUMNS
         row, col = divmod(current_idx, num_cols)
-        num_rows = (num_buttons + num_cols - 1) // num_cols
+        num_rows = (num_buttons + num_cols - 1) // num_cols # Ceiling division for num_rows
 
-        if direction == -1 : # Up for map select
+        # Using constants for grid navigation from C module
+        if direction == C.GRID_NAV_UP: # Up
             row = max(0, row - 1) 
-        elif direction == 1: # Down for map select
+        elif direction == C.GRID_NAV_DOWN: # Down
             row = min(num_rows - 1, row + 1) 
-        elif direction == -2: # Left for map select (grid nav val -1)
+        elif direction == C.GRID_NAV_LEFT: # Left
              col = max(0, col - 1)
-        elif direction == 2: # Right for map select (grid nav val 1)
-            items_in_this_row = num_cols if row < num_rows - 1 else (num_buttons - (num_rows -1) * num_cols if num_rows > 0 else num_buttons)
-            col = min(items_in_this_row - 1, col + 1) if items_in_this_row > 0 else 0
+        elif direction == C.GRID_NAV_RIGHT: # Right
+            # Calculate items in current row carefully if it's the last row
+            items_in_this_row = num_cols
+            if row == num_rows - 1: # Last row
+                items_in_this_row = num_buttons % num_cols
+                if items_in_this_row == 0: items_in_this_row = num_cols # Full last row
             
+            col = min(items_in_this_row - 1, col + 1) if items_in_this_row > 0 else 0
+        else: # Fallback for simple +/- 1 direction (legacy or non-grid nav constants)
+            if direction == -1: row = max(0, row - 1) 
+            elif direction == 1: row = min(num_rows - 1, row + 1)
+            elif direction == -2: col = max(0, col - 1)
+            elif direction == 2: 
+                items_in_this_row = num_cols if row < num_rows - 1 else (num_buttons % num_cols if num_buttons % num_cols != 0 else num_cols)
+                if num_rows == 1: items_in_this_row = num_buttons
+                col = min(items_in_this_row - 1, col + 1) if items_in_this_row > 0 else 0
+
         new_idx = row * num_cols + col
-        new_idx = min(num_buttons - 1, max(0, new_idx)) # Clamp
+        new_idx = min(num_buttons - 1, max(0, new_idx)) 
         main_window._map_selection_selected_button_idx = new_idx
-        # _set_selected_idx_for_source(main_window, new_idx, input_source) # map_select has its own index
         
     elif active_ui == "lan_search":
         if main_window.lan_servers_list_widget:
             current_lan_idx = main_window._lan_search_list_selected_idx if main_window._lan_search_list_selected_idx != -1 else 0
             if main_window.lan_servers_list_widget.count() > 0:
                 new_lan_idx = current_lan_idx
-                if direction == 1: new_lan_idx = min(main_window.lan_servers_list_widget.count() - 1, current_lan_idx + 1) # Down
-                elif direction == -1: new_lan_idx = max(0, current_lan_idx - 1) # Up
+                if direction == 1 or direction == C.GRID_NAV_DOWN: new_lan_idx = min(main_window.lan_servers_list_widget.count() - 1, current_lan_idx + 1) 
+                elif direction == -1 or direction == C.GRID_NAV_UP: new_lan_idx = max(0, current_lan_idx - 1) 
                 main_window._lan_search_list_selected_idx = new_lan_idx
             _update_lan_search_list_focus(main_window)
-            # if input_source.startswith("controller_"): # No separate controller index for this list
-            #      _set_selected_idx_for_source(main_window, main_window._lan_search_list_selected_idx, input_source)
-            return # Focus update handles it
+            return 
             
-    elif active_ui == "ip_input": # IP dialog L/R navigation for buttons
-        if direction in [-2, 2]: # Left/Right
-            main_window._ip_dialog_selected_button_idx = 1 - main_window._ip_dialog_selected_button_idx # Toggle
+    elif active_ui == "ip_input": 
+        if direction in [-2, 2, -1, 1, C.GRID_NAV_LEFT, C.GRID_NAV_RIGHT, C.GRID_NAV_UP, C.GRID_NAV_DOWN]: # Any directional input
+            main_window._ip_dialog_selected_button_idx = 1 - main_window._ip_dialog_selected_button_idx 
         _update_ip_dialog_button_focus(main_window) 
-        # if input_source.startswith("controller_"): # IP dialog has its own index
-        #      _set_selected_idx_for_source(main_window, main_window._ip_dialog_selected_button_idx, input_source)
-        return # Focus update handles it
+        return 
 
-    else: # Generic menu navigation (e.g., main menu)
+    else: # Generic menu navigation (e.g., main menu - simple list)
         buttons_to_nav = main_window._current_active_menu_buttons
         if not buttons_to_nav: return
         num_buttons = len(buttons_to_nav)
@@ -637,14 +653,12 @@ def _navigate_current_menu_pygame_joy(main_window: 'MainWindow', direction: int,
         current_idx = _get_selected_idx_for_source(main_window, input_source)
         new_idx = current_idx
 
-        actual_direction = 0 # For simple up/down lists
-        if direction == -1: actual_direction = -1 # Up
-        elif direction == 1: actual_direction = 1  # Down
-        elif direction == -2: actual_direction = -1 # Map D-pad Left to Up
-        elif direction == 2: actual_direction = 1  # Map D-pad Right to Down
+        actual_direction_simple_list = 0 
+        if direction in [-1, -2, C.GRID_NAV_UP, C.GRID_NAV_LEFT]: actual_direction_simple_list = -1 
+        elif direction in [1, 2, C.GRID_NAV_DOWN, C.GRID_NAV_RIGHT]: actual_direction_simple_list = 1  
         
-        if actual_direction != 0:
-            new_idx = (current_idx + actual_direction + num_buttons) % num_buttons
+        if actual_direction_simple_list != 0:
+            new_idx = (current_idx + actual_direction_simple_list + num_buttons) % num_buttons
         
         _set_selected_idx_for_source(main_window, new_idx, input_source)
 
@@ -652,7 +666,6 @@ def _navigate_current_menu_pygame_joy(main_window: 'MainWindow', direction: int,
 
 
 def _activate_current_menu_selected_button_pygame_joy(main_window: 'MainWindow', input_source: str):
-    # info(f"UI Activate: Src='{input_source}'") # Can be verbose
     active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
     
     buttons_to_activate: List[QPushButton] = []
@@ -679,7 +692,6 @@ def _activate_current_menu_selected_button_pygame_joy(main_window: 'MainWindow',
 def _reset_all_prev_press_flags(main_window: 'MainWindow'):
     main_window._pygame_joy_axis_was_active_neg.clear()
     main_window._pygame_joy_axis_was_active_pos.clear()
-    # Note: _pygame_joy_button_prev_state is updated at the end of _poll if no nav occurred, or after a nav action.
 
 def _activate_ip_dialog_button(main_window: 'MainWindow'):
     if main_window.ip_input_dialog and main_window._ip_dialog_buttons_ref and \
@@ -688,7 +700,7 @@ def _activate_ip_dialog_button(main_window: 'MainWindow'):
 
 def _update_current_menu_button_focus(main_window: 'MainWindow'):
     active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
-    if active_ui not in ["menu", "map_select"]: return # Only for these simple list/grid menus
+    if active_ui not in ["menu", "map_select"]: return 
 
     buttons_to_update: List[QPushButton] = []
     current_selected_idx = -1
@@ -700,7 +712,7 @@ def _update_current_menu_button_focus(main_window: 'MainWindow'):
         current_selected_idx = _get_selected_idx_for_source(main_window, input_source_for_styling)
     elif active_ui == "map_select":
         buttons_to_update = main_window._map_selection_buttons_ref
-        current_selected_idx = main_window._map_selection_selected_button_idx # Map select uses its own direct index
+        current_selected_idx = main_window._map_selection_selected_button_idx 
     else:
         return
 
@@ -728,7 +740,7 @@ def _update_current_menu_button_focus(main_window: 'MainWindow'):
             button.setStyleSheet(f"QPushButton {{ border: 2px solid {focus_color_hex}; background-color: #555; color: white; }} QPushButton:focus {{ outline: none; }}")
             button.setFocus(Qt.FocusReason.OtherFocusReason); selected_button_widget = button
         else:
-            button.setStyleSheet("") # Reset stylesheet
+            button.setStyleSheet("") 
 
     if selected_button_widget and main_window.current_view_name == "map_select" and main_window.map_select_scroll_area:
-        main_window.map_select_scroll_area.ensureWidgetVisible(selected_button_widget, 50, 50) # Ensure visible with margin
+        main_window.map_select_scroll_area.ensureWidgetVisible(selected_button_widget, 50, 50) 

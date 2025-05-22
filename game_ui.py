@@ -4,7 +4,7 @@
 Manages UI elements for the PySide6 version of the game.
 This includes GameSceneWidget rendering and dialogs.
 """
-# version 2.0.12 (Corrected logger alias scope)
+# version 2.0.13 (Integrated global key state updates in GameSceneWidget)
 
 import sys
 import os
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import (
     QPainter, QColor, QFont, QPen, QBrush, QPixmap, QPalette,
-    QFontMetrics, QResizeEvent, QPaintEvent
+    QFontMetrics, QResizeEvent, QPaintEvent, QKeyEvent # Added QKeyEvent
 )
 from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF
 
@@ -27,12 +27,14 @@ from player import Player
 from camera import Camera
 from utils import PrintLimiter
 
+# --- Crucial import for global key state ---
+from app_input_manager import update_qt_key_press, update_qt_key_release
+
 
 # --- Logging Setup ---
 import logging
-logger = logging.getLogger(__name__) # Get a logger for this module
+logger = logging.getLogger(__name__) 
 
-# Define aliases at the module level, initially as fallbacks
 def log_info(msg, *args, **kwargs): logger.info(msg, *args, **kwargs)
 def log_debug(msg, *args, **kwargs): logger.debug(msg, *args, **kwargs)
 def log_warning(msg, *args, **kwargs): logger.warning(msg, *args, **kwargs)
@@ -40,12 +42,10 @@ def log_error(msg, *args, **kwargs): logger.error(msg, *args, **kwargs)
 def log_critical(msg, *args, **kwargs): logger.critical(msg, *args, **kwargs)
 
 try:
-    # Attempt to import the project's configured logger functions
     from logger import info as project_info, debug as project_debug, \
                        warning as project_warning, error as project_error, \
                        critical as project_critical
     
-    # If successful, re-assign the aliases to use the project's logger functions
     log_info = project_info
     log_debug = project_debug
     log_warning = project_warning
@@ -54,15 +54,13 @@ try:
     logger.debug("GameUI: Successfully aliased project's logger functions.")
 
 except ImportError:
-    # This block executes if the 'from logger import ...' fails
-    # Set up a basic console handler for this module's logger if no handlers are configured anywhere
     if not logger.hasHandlers() and not logging.getLogger().hasHandlers():
         _gameui_fallback_console_handler = logging.StreamHandler(sys.stdout)
         _gameui_fallback_console_formatter = logging.Formatter('GAME_UI (ImportFallbackConsole): %(levelname)s - %(message)s')
         _gameui_fallback_console_handler.setFormatter(_gameui_fallback_console_formatter)
         logger.addHandler(_gameui_fallback_console_handler)
-        logger.setLevel(logging.DEBUG) # Ensure it logs debug messages
-        logger.propagate = False # Prevent duplicates if root logger gets configured later
+        logger.setLevel(logging.DEBUG) 
+        logger.propagate = False 
     log_critical("GameUI: Failed to import project's logger. Using isolated fallback for game_ui.py.")
 
 
@@ -75,7 +73,6 @@ def draw_health_bar_qt(painter: QPainter, x: float, y: float,
     bar_width = max(1.0, float(width)); bar_height = max(1.0, float(height))
     health_ratio = current_hp_clamped / max_hp
     
-    # Use getattr for safe access to C constants with fallbacks
     color_red_rgb = getattr(C, 'RED', (255,0,0))
     color_green_rgb = getattr(C, 'GREEN', (0,255,0))
     color_dark_gray_rgb = getattr(C, 'DARK_GRAY', (50,50,50))
@@ -84,7 +81,6 @@ def draw_health_bar_qt(painter: QPainter, x: float, y: float,
     qcolor_red = QColor(*color_red_rgb); qcolor_green = QColor(*color_green_rgb)
     qcolor_dark_gray = QColor(*color_dark_gray_rgb); qcolor_black = QColor(*color_black_rgb)
     
-    # Interpolate color from red to green based on health ratio
     r = int(qcolor_red.redF()   * (1 - health_ratio) * 255 + qcolor_green.redF()   * health_ratio * 255)
     g = int(qcolor_red.greenF() * (1 - health_ratio) * 255 + qcolor_green.greenF() * health_ratio * 255)
     b = int(qcolor_red.blueF()  * (1 - health_ratio) * 255 + qcolor_green.blueF()  * health_ratio * 255)
@@ -112,12 +108,11 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: P
     
     font_metrics = QFontMetrics(hud_qfont)
     label_text_height = float(font_metrics.height())
-    # Draw player label (P1, P2)
     painter.drawText(QPointF(x, y + label_text_height - float(font_metrics.descent())), player_label_text)
     
     label_height_offset = label_text_height 
     health_bar_pos_x = x
-    health_bar_pos_y = y + label_height_offset + 5.0 # 5px spacing
+    health_bar_pos_y = y + label_height_offset + 5.0 
     
     hud_health_bar_width = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100.0))
     hud_health_bar_height = float(getattr(C, 'HUD_HEALTH_BAR_HEIGHT', 12.0))
@@ -126,13 +121,11 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: P
                        hud_health_bar_width, hud_health_bar_height,
                        float(player_instance.current_health), float(player_instance.max_health))
     
-    # Draw health value text (e.g., 80/100)
     health_value_text = f"{int(player_instance.current_health)}/{int(player_instance.max_health)}"
-    text_bounding_rect = font_metrics.boundingRect(health_value_text) # Get bounds for centering
+    text_bounding_rect = font_metrics.boundingRect(health_value_text) 
     
-    health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 10.0 # 10px spacing after bar
-    # Vertically center text next to the bar
-    health_text_pos_y = health_bar_pos_y + (hud_health_bar_height / 2.0) + (float(text_bounding_rect.height()) / 4.0) # Approximation for vertical center
+    health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 10.0 
+    health_text_pos_y = health_bar_pos_y + (hud_health_bar_height / 2.0) + (float(text_bounding_rect.height()) / 4.0) 
     
     painter.drawText(QPointF(health_text_pos_x, health_text_pos_y), health_value_text)
 
@@ -148,15 +141,39 @@ class GameSceneWidget(QWidget):
         self.download_progress_percent: Optional[float] = None
 
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
-        self.setAutoFillBackground(False) # Background will be drawn by paintEvent
+        self.setAutoFillBackground(False) 
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus) # Ensure it can receive key events
 
-        # These are placeholders; actual values will be set by set_level_dimensions
         self._level_pixel_width: float = float(getattr(C, 'GAME_WIDTH', 800.0))
         self._level_min_x_abs: float = 0.0
         self._level_min_y_abs: float = 0.0
         self._level_max_y_abs: float = float(getattr(C, 'GAME_HEIGHT', 600.0))
         
         logger.debug("GameSceneWidget initialized.")
+
+    # --- Key Event Handling ---
+    def keyPressEvent(self, event: QKeyEvent):
+        # Update the global input state from app_input_manager FIRST
+        qt_key_enum = Qt.Key(event.key())
+        update_qt_key_press(qt_key_enum, event.isAutoRepeat())
+        
+        # If game logic needs to handle these keys directly (e.g., for immediate actions
+        # not covered by the polled snapshot), you could add logic here.
+        # However, usually, the snapshot system in app_input_manager is preferred for game actions.
+
+        # Call superclass's event handler to allow default Qt behavior if needed
+        # (e.g., for QAction shortcuts, or if some keys are meant for Qt, not the game)
+        super().keyPressEvent(event) 
+        # event.accept() # Typically, you accept if you handle it, otherwise super might.
+
+    def keyReleaseEvent(self, event: QKeyEvent):
+        # Update the global input state from app_input_manager FIRST
+        qt_key_enum = Qt.Key(event.key())
+        update_qt_key_release(qt_key_enum, event.isAutoRepeat())
+        
+        super().keyReleaseEvent(event)
+        # event.accept()
+    # --- End Key Event Handling ---
 
     def get_camera(self) -> Optional[Camera]:
         cam = self.game_elements.get("camera")
@@ -183,14 +200,14 @@ class GameSceneWidget(QWidget):
                     f"MinX:{self._level_min_x_abs:.1f}, MinY:{self._level_min_y_abs:.1f}, MaxY:{self._level_max_y_abs:.1f}")
         self.update()
 
-    def update_game_state(self, game_time_ticks_ignored: int, # game_time_ticks not used here
+    def update_game_state(self, game_time_ticks_ignored: int, 
                           download_msg: Optional[str] = None,
                           download_prog: Optional[float] = None):
         self.download_status_message = download_msg
         self.download_progress_percent = download_prog
-        self.update() # Schedule a repaint
+        self.update() 
 
-    def resizeEvent(self, event: QResizeEvent): # Corrected type hint
+    def resizeEvent(self, event: QResizeEvent): 
         super().resizeEvent(event)
         new_width = float(event.size().width())
         new_height = float(event.size().height())
@@ -201,7 +218,6 @@ class GameSceneWidget(QWidget):
             logger.debug(f"GameSceneWidget.resizeEvent: Updating camera screen dimensions to {new_width:.1f}x{new_height:.1f}")
             camera.set_screen_dimensions(new_width, new_height)
             
-            # Re-focus camera with current target after screen resize
             player1 = self.game_elements.get("player1")
             player2 = self.game_elements.get("player2")
             focus_target = None
@@ -217,12 +233,11 @@ class GameSceneWidget(QWidget):
                 logger.debug("GameSceneWidget.resizeEvent: No primary focus target after resize, camera performs static_update.")
                 camera.static_update()
         
-        # Store current screen dimensions in game_elements for other modules (e.g., game_setup)
         self.game_elements['main_app_screen_width'] = new_width
         self.game_elements['main_app_screen_height'] = new_height
         self.update()
 
-    def paintEvent(self, event: QPaintEvent): # Corrected type hint
+    def paintEvent(self, event: QPaintEvent): 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
@@ -243,55 +258,40 @@ class GameSceneWidget(QWidget):
                          f"World(X:{camera.world_start_x:.0f} to {camera.world_start_x+camera.level_width:.0f}, "
                          f"Y:{camera.level_top_y_abs:.0f} to {camera.level_bottom_y_abs:.0f})")
 
-        # Render Background Tiles FIRST
         background_tiles: List[BackgroundTile] = self.game_elements.get("background_tiles_list", [])
         if GameSceneWidget.paint_event_limiter.can_print("bg_tiles_count"):
              logger.debug(f"PaintEvent GSW: Drawing {len(background_tiles)} background tiles.")
         for bg_tile_idx, bg_tile in enumerate(background_tiles):
             if hasattr(bg_tile, 'draw_pyside') and callable(bg_tile.draw_pyside):
-                bg_tile.draw_pyside(painter, camera) # Pass painter and camera
-                # if GameSceneWidget.paint_event_limiter.can_print(f"bg_tile_drawn_{bg_tile_idx}"): # Too verbose for every tile
-                #     logger.debug(f"  Drew BackgroundTile {bg_tile_idx} at world rect: {bg_tile.rect}")
+                bg_tile.draw_pyside(painter, camera) 
 
-        # Render Main Game Objects (Platforms, Ladders, Hazards, Characters, Projectiles, Items)
         all_renderables: List[Any] = self.game_elements.get("all_renderable_objects", [])
         if GameSceneWidget.paint_event_limiter.can_print("renderables_count_main"):
             logger.debug(f"PaintEvent GSW: Drawing {len(all_renderables)} main game objects.")
 
         for i, entity in enumerate(all_renderables):
-            if isinstance(entity, BackgroundTile): continue # Already drawn
+            if isinstance(entity, BackgroundTile): continue 
 
-            # Delegate drawing to the entity if it has a draw_pyside method
             if hasattr(entity, 'draw_pyside') and callable(entity.draw_pyside):
-                entity.draw_pyside(painter, camera) # Pass painter and camera
-                # if GameSceneWidget.paint_event_limiter.can_print(f"entity_draw_pyside_{i}_{type(entity).__name__}"): # Too verbose
-                #     logger.debug(f"  Drew Entity {i} ({type(entity).__name__}) using draw_pyside.")
-            # Fallback generic drawing if no draw_pyside method
+                entity.draw_pyside(painter, camera) 
             elif hasattr(entity, 'rect') and isinstance(entity.rect, QRectF) and \
                  hasattr(entity, 'image') and isinstance(entity.image, QPixmap) and not entity.image.isNull():
                 should_draw_generic = True
                 if hasattr(entity, 'alive') and callable(entity.alive) and not entity.alive():
-                    should_draw_generic = False # Don't draw if not alive
+                    should_draw_generic = False 
                 
                 if should_draw_generic:
                     screen_rect_qrectf = camera.apply(entity.rect)
-                    if self.rect().intersects(screen_rect_qrectf.toRect()): # Culling
+                    if self.rect().intersects(screen_rect_qrectf.toRect()): 
                         painter.drawPixmap(screen_rect_qrectf.topLeft(), entity.image)
-                        # if GameSceneWidget.paint_event_limiter.can_print(f"entity_draw_generic_{i}_{type(entity).__name__}"): # Too verbose
-                        #     logger.debug(f"  Drew Entity {i} ({type(entity).__name__}) using generic drawPixmap.")
-            # else: # Entity is not drawable by known methods or is missing attributes
-                # if GameSceneWidget.paint_event_limiter.can_print(f"entity_skip_{i}_{type(entity).__name__}"): # Too verbose
-                #     logger.debug(f"  Skipped drawing Entity {i} ({type(entity).__name__}), no valid draw method/attributes.")
 
-
-        # Render Player Health Bars (Above Players) - Moved from Player.draw_pyside
         player1: Optional[Player] = self.game_elements.get("player1")
         player2: Optional[Player] = self.game_elements.get("player2")
 
         for p_instance in [player1, player2]:
             if p_instance and isinstance(p_instance, Player) and p_instance.alive() and \
                not getattr(p_instance, 'is_petrified', False) and \
-               p_instance.current_health < p_instance.max_health and not p_instance.is_dead: # Only draw if not full and not dead/petrified
+               p_instance.current_health < p_instance.max_health and not p_instance.is_dead: 
                 
                 if not p_instance.rect.isValid(): continue
 
@@ -301,19 +301,15 @@ class GameSceneWidget(QWidget):
                 hb_y = enemy_screen_rect.top() - hb_h - float(getattr(C, 'HEALTH_BAR_OFFSET_ABOVE', 5))
                 draw_health_bar_qt(painter, hb_x, hb_y, hb_w, hb_h, p_instance.current_health, p_instance.max_health)
 
-
-        # Render HUD
         hud_font = self.fonts.get("medium", QFont("Arial", 12))
         if player1 and isinstance(player1, Player) and player1.alive() and not getattr(player1, 'is_petrified', False):
             draw_player_hud_qt(painter, 10.0, 10.0, player1, 1, hud_font)
         if player2 and isinstance(player2, Player) and player2.alive() and not getattr(player2, 'is_petrified', False):
-            p2_hud_width_estimate = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100.0)) + 120.0 # Approx width of P2 HUD
-            p2_hud_x = self.width() - p2_hud_width_estimate - 10.0 # Position from right
+            p2_hud_width_estimate = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100.0)) + 120.0 
+            p2_hud_x = self.width() - p2_hud_width_estimate - 10.0 
             draw_player_hud_qt(painter, p2_hud_x, 10.0, player2, 2, hud_font)
 
-        # Render Download Status (if any)
         if self.download_status_message:
-            # ... (status message drawing as before, no changes needed here) ...
             dialog_w = self.width() * 0.6; dialog_h = self.height() * 0.3
             dialog_rect = QRectF(0, 0, dialog_w, dialog_h)
             dialog_rect.moveCenter(QPointF(self.width() / 2.0, self.height() / 2.0))
@@ -326,9 +322,9 @@ class GameSceneWidget(QWidget):
             painter.drawText(msg_rect_adjusted, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.WordWrap, self.download_status_message)
             if self.download_progress_percent is not None and self.download_progress_percent >= 0:
                 bar_margin = 20.0; bar_h = 30.0; msg_fm = QFontMetrics(msg_font)
-                approx_msg_height = float(msg_fm.height()) * (len(self.download_status_message) // 30 + 1) # Rough estimate
+                approx_msg_height = float(msg_fm.height()) * (len(self.download_status_message) // 30 + 1) 
                 bar_y_pos = msg_y_start + approx_msg_height + 15.0
-                if bar_y_pos + bar_h > dialog_rect.bottom() - bar_margin: bar_y_pos = dialog_rect.center().y() + 10 # Reposition if too low
+                if bar_y_pos + bar_h > dialog_rect.bottom() - bar_margin: bar_y_pos = dialog_rect.center().y() + 10 
                 bar_rect = QRectF(dialog_rect.left() + bar_margin, bar_y_pos, dialog_rect.width() - 2 * bar_margin, bar_h)
                 if bar_rect.bottom() > dialog_rect.bottom() - bar_margin: bar_rect.setHeight(max(5.0, dialog_rect.bottom() - bar_margin - bar_y_pos))
                 painter.fillRect(bar_rect, QColor(*getattr(C, 'GRAY', (128,128,128))))
@@ -344,9 +340,7 @@ class GameSceneWidget(QWidget):
         logger.info("GameSceneWidget: Clearing visual state for new game (download messages).")
         self.download_status_message = None
         self.download_progress_percent = None
-        # self.game_elements are cleared by app_game_modes.py or app_core.py
-        # This widget just needs to ensure its specific display elements are reset.
-        self.update() # Trigger a repaint with cleared state.
+        self.update() 
 
 
 # --- Dialogs ---
@@ -360,14 +354,19 @@ class SelectMapDialog(QDialog):
         layout.addWidget(self.button_box); self.list_widget.itemDoubleClicked.connect(self.accept); self.setMinimumWidth(350)
     def populate_maps(self):
         self.list_widget.clear(); maps_dir_from_const = getattr(C, "MAPS_DIR", "maps")
-        project_root_guess = getattr(C, "PROJECT_ROOT", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        project_root_guess = os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)) \
+            if hasattr(sys.modules['__main__'], '__file__') and sys.modules['__main__'].__file__ \
+            else os.path.dirname(os.path.abspath(__file__))
+            
         maps_dir_abs = maps_dir_from_const
         if not os.path.isabs(maps_dir_from_const): maps_dir_abs = os.path.join(project_root_guess, maps_dir_from_const)
+        
         log_debug(f"SelectMapDialog: Populating maps from '{maps_dir_abs}' (PY files only)")
         if os.path.exists(maps_dir_abs) and os.path.isdir(maps_dir_abs):
             try:
                 map_files_py = sorted([f[:-3] for f in os.listdir(maps_dir_abs) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"])
-                prio_maps = ["original", "lava", "cpu_extended", "noenemy", "bigmap1", "one"] # Added "one"
+                prio_maps = ["original", "lava", "cpu_extended", "noenemy", "bigmap1", "one", "three"] 
                 final_ordered_maps = [m for m in prio_maps if m in map_files_py] + [m for m in map_files_py if m not in prio_maps]
                 if final_ordered_maps: self.list_widget.addItems(final_ordered_maps);
                 if self.list_widget.count() > 0: self.list_widget.setCurrentRow(0)

@@ -329,11 +329,23 @@ class MainWindow(QMainWindow):
 
     def _handle_config_load_failure(self):
         warning("MAIN PySide6: Game config loading issue. Defaults will be used.")
-        for i in range(1, 5):
-            if hasattr(game_config, f"DEFAULT_P{i}_INPUT_DEVICE"):
-                setattr(game_config, f"CURRENT_P{i}_INPUT_DEVICE", getattr(game_config, f"DEFAULT_P{i}_INPUT_DEVICE"))
-                setattr(game_config, f"P{i}_KEYBOARD_ENABLED", getattr(game_config, f"DEFAULT_P{i}_KEYBOARD_ENABLED"))
-                setattr(game_config, f"P{i}_CONTROLLER_ENABLED", getattr(game_config, f"DEFAULT_P{i}_CONTROLLER_ENABLED"))
+        for i in range(1, 5): # Max 4 players for now
+            p_prefix = f"P{i}"
+            # Construct variable names dynamically
+            default_input_device_var = f"DEFAULT_{p_prefix}_INPUT_DEVICE"
+            current_input_device_var = f"CURRENT_{p_prefix}_INPUT_DEVICE"
+            keyboard_enabled_var = f"{p_prefix}_KEYBOARD_ENABLED"
+            default_keyboard_enabled_var = f"DEFAULT_{p_prefix}_KEYBOARD_ENABLED"
+            controller_enabled_var = f"{p_prefix}_CONTROLLER_ENABLED"
+            default_controller_enabled_var = f"DEFAULT_{p_prefix}_CONTROLLER_ENABLED"
+
+            if hasattr(game_config, default_input_device_var):
+                setattr(game_config, current_input_device_var, getattr(game_config, default_input_device_var))
+            if hasattr(game_config, default_keyboard_enabled_var):
+                setattr(game_config, keyboard_enabled_var, getattr(game_config, default_keyboard_enabled_var))
+            if hasattr(game_config, default_controller_enabled_var):
+                setattr(game_config, controller_enabled_var, getattr(game_config, default_controller_enabled_var))
+        
         game_config.update_player_mappings_from_config()
         info("MAIN PySide6: Fallback to default config settings due to load failure.")
         self._refresh_appcore_joystick_list()
@@ -441,14 +453,18 @@ class MainWindow(QMainWindow):
             focus_target.setFocus(Qt.FocusReason.OtherFocusReason)
         clear_qt_key_events_this_frame()
 
+
     def keyPressEvent(self, event: QKeyEvent):
-        qt_key_enum = Qt.Key(event.key())
-        update_qt_key_press(qt_key_enum, event.isAutoRepeat())
+        # --- CRITICAL CHANGE: Update global input state FIRST ---
+        qt_key_enum_press = Qt.Key(event.key())
+        update_qt_key_press(qt_key_enum_press, event.isAutoRepeat())
+        # --- END CRITICAL CHANGE ---
+
         active_ui_element = self.current_modal_dialog if self.current_modal_dialog else self.current_view_name
         navigated_by_keyboard_this_event = False
 
         if active_ui_element in ["menu", "map_select"] and not event.isAutoRepeat():
-            key_pressed = event.key()
+            key_pressed = event.key() 
             nav_direction = 0
             is_activation_key = key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]
 
@@ -456,9 +472,9 @@ class MainWindow(QMainWindow):
                 if key_pressed == Qt.Key.Key_Up or key_pressed == Qt.Key.Key_W: nav_direction = -1
                 elif key_pressed == Qt.Key.Key_Down or key_pressed == Qt.Key.Key_S: nav_direction = 1
                 elif key_pressed == Qt.Key.Key_Left or key_pressed == Qt.Key.Key_A:
-                    nav_direction = -1 # Simplified for generic menus, map_select specific logic is in _navigate
+                    nav_direction = -2 
                 elif key_pressed == Qt.Key.Key_Right or key_pressed == Qt.Key.Key_D:
-                    nav_direction = 1  # Simplified for generic menus, map_select specific logic is in _navigate
+                    nav_direction = 2  
             
             if nav_direction != 0:
                 _navigate_current_menu_pygame_joy(self, nav_direction, input_source="keyboard") 
@@ -482,12 +498,20 @@ class MainWindow(QMainWindow):
             if self.ip_input_dialog_class_ref and isinstance(self.ip_input_dialog, self.ip_input_dialog_class_ref) and \
                self.ip_input_dialog.line_edit and self.ip_input_dialog.line_edit.hasFocus() and \
                not event.key() in [Qt.Key.Key_Tab, Qt.Key.Key_Backtab, Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Escape]:
-                super().keyPressEvent(event); return 
+                super().keyPressEvent(event) 
+                return 
 
             key_pressed = event.key()
             if key_pressed in [Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_A, Qt.Key.Key_D, Qt.Key.Key_Tab, Qt.Key.Key_Backtab]:
-                self._ip_dialog_selected_button_idx = 1 - self._ip_dialog_selected_button_idx
-                _update_ip_dialog_button_focus(self); navigated_by_keyboard_this_event = True
+                if self.ip_input_dialog_class_ref and isinstance(self.ip_input_dialog, self.ip_input_dialog_class_ref) and \
+                   self.ip_input_dialog.line_edit and self.ip_input_dialog.line_edit.hasFocus() and \
+                   key_pressed in [Qt.Key.Key_Tab, Qt.Key.Key_Backtab]:
+                    # Let Qt handle Tab/Backtab focus changes when line_edit has focus
+                    pass # Will be handled by super().keyPressEvent(event) later if not accepted
+                else: # Navigate buttons if line_edit doesn't have focus or for L/R/A/D keys
+                    self._ip_dialog_selected_button_idx = 1 - self._ip_dialog_selected_button_idx
+                    _update_ip_dialog_button_focus(self); navigated_by_keyboard_this_event = True
+
             elif key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]:
                 _activate_ip_dialog_button(self); navigated_by_keyboard_this_event = True
 
@@ -505,15 +529,21 @@ class MainWindow(QMainWindow):
             elif active_ui_element == "ip_input" and self.ip_input_dialog: self.ip_input_dialog.reject(); self.current_modal_dialog = None; self.show_view("menu")
             elif self.current_view_name == "game_scene" and self.current_game_mode: self.stop_current_game_mode(show_menu=True)
             elif self.current_view_name in ["editor", "settings"]: self.on_return_to_menu_from_sub_view()
-            else: self.show_view("menu")
+            else: self.show_view("menu") 
             event.accept(); return
         
-        if not event.isAccepted(): super().keyPressEvent(event)
+        if not event.isAccepted():
+            super().keyPressEvent(event)
 
 
     def keyReleaseEvent(self, event: QKeyEvent):
-        qt_key_enum = Qt.Key(event.key()); update_qt_key_release(qt_key_enum, event.isAutoRepeat())
-        if not event.isAccepted(): super().keyReleaseEvent(event)
+        # --- CRITICAL CHANGE: Update global input state FIRST ---
+        qt_key_enum_release = Qt.Key(event.key())
+        update_qt_key_release(qt_key_enum_release, event.isAutoRepeat())
+        # --- END CRITICAL CHANGE ---
+
+        if not event.isAccepted():
+            super().keyReleaseEvent(event)
 
     def get_p1_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]:
         return get_input_snapshot(player_instance, 1, game_config.get_joystick_objects(), self._pygame_joy_button_prev_state, self.game_elements)
@@ -549,23 +579,51 @@ class MainWindow(QMainWindow):
             if game_is_ready and not init_in_progress:
                 dt_sec = 1.0 / C.FPS
                 
-                # REVERTED to old call signature for run_couch_play_mode to prevent TypeError
+                p_getters = [
+                    self.get_p1_input_snapshot_for_logic, self.get_p2_input_snapshot_for_logic,
+                    self.get_p3_input_snapshot_for_logic, self.get_p4_input_snapshot_for_logic
+                ]
+                num_configured_players = 0 # Determine how many players are actively configured
+                for i in range(1, 5):
+                     # A player is considered active if they have an assigned device (not unassigned)
+                     # AND either keyboard or controller is enabled for them.
+                    dev_key = f"CURRENT_P{i}_INPUT_DEVICE"
+                    kbd_en_key = f"P{i}_KEYBOARD_ENABLED"
+                    ctrl_en_key = f"P{i}_CONTROLLER_ENABLED"
+                    
+                    is_assigned = getattr(game_config, dev_key, "unassigned") != "unassigned"
+                    is_input_enabled = getattr(game_config, kbd_en_key, False) or \
+                                       (getattr(game_config, ctrl_en_key, False) and \
+                                        getattr(game_config, dev_key, "").startswith("joystick_"))
+
+                    if is_assigned and is_input_enabled:
+                        num_configured_players = i 
+                    elif not is_assigned and num_configured_players < i-1 : # if P2 unassigned, P3/P4 won't be considered.
+                        break
+
+                # Limit to max 2 players for couch_play_logic until it's updated
+                actual_players_for_couch_logic = min(num_configured_players, 2)
+
+
+                input_getter_args = [p_getters[j] for j in range(actual_players_for_couch_logic)]
+                # Pad with dummy getters if fewer than 2 players for the old signature
+                while len(input_getter_args) < 2:
+                    input_getter_args.append(lambda p_inst: {})
+
+
                 continue_game = run_couch_play_mode(
-                    self.game_elements,                      # Arg 1
-                    self.app_status,                         # Arg 2
-                    self.get_p1_input_snapshot_for_logic,    # Arg 3 (P1 input)
-                    self.get_p2_input_snapshot_for_logic,    # Arg 4 (P2 input)
-                    # self.get_p3_input_snapshot_for_logic,  # COMMENTED_OUT_NEW_FEATURE
-                    # self.get_p4_input_snapshot_for_logic,  # COMMENTED_OUT_NEW_FEATURE
-                    lambda: QApplication.processEvents(),    # Arg 5
-                    lambda: dt_sec,                          # Arg 6
-                    lambda msg: self.game_scene_widget.update_game_state(0, download_msg=msg) # Arg 7
+                    self.game_elements,                      
+                    self.app_status,                         
+                    input_getter_args[0], # P1 input
+                    input_getter_args[1], # P2 input (or dummy)
+                    lambda: QApplication.processEvents(),    
+                    lambda: dt_sec,                          
+                    lambda msg: self.game_scene_widget.update_game_state(0, download_msg=msg) 
                 )
                 if not continue_game: self.stop_current_game_mode(show_menu=True)
 
         elif self.current_game_mode == "host_active" and self.app_status.app_running and self.server_state and self.server_state.client_ready:
              if game_is_ready and not init_in_progress:
-                 # Server logic handles updates for host_active
                  pass
 
         elif self.current_game_mode == "host_waiting" and self.app_status.app_running and self.server_state:
@@ -578,21 +636,13 @@ class MainWindow(QMainWindow):
                     if p1_actions.get("pause"): self.stop_current_game_mode(show_menu=True); return
                     if p1_actions.get("reset"): reset_game_state(self.game_elements)
                     
-                    # Player 1 update (locally controlled by host)
-                    # OLDER Player update signature for reference (from original old app_core):
-                    # p1.update(dt_sec, self.game_elements.get("platforms_list", []), self.game_elements.get("ladders_list", []), self.game_elements.get("hazards_list", []), [], self.game_elements.get("enemy_list", []))
-                    
-                    # Current Player update, commenting out NEW interactions:
-                    # p1.game_elements_ref = self.game_elements # COMMENTED_OUT_NEW_FEATURE (Player class might not expect this yet)
                     p1.update(dt_sec, self.game_elements.get("platforms_list", []),
                               self.game_elements.get("ladders_list", []),
                               self.game_elements.get("hazards_list", []),
-                              [], # No other players to collide with in host_waiting for P1 logic
+                              [], 
                               self.game_elements.get("enemy_list", [])
-                              # self.game_elements.get("current_chest") # COMMENTED_OUT_NEW_FEATURE (Player interaction with chest)
                               )
 
-                    # Enemy updates (AI uses P1 as target)
                     active_players_for_ai = [p1] if p1 and p1.alive() else []
                     for enemy in list(self.game_elements.get("enemy_list",[])):
                         if hasattr(enemy, 'update'):
@@ -601,33 +651,15 @@ class MainWindow(QMainWindow):
                                          self.game_elements.get("hazards_list",[]),
                                          self.game_elements.get("enemy_list",[]))
                     
-                    # Projectile updates
                     projectiles_current_list = self.game_elements.get("projectiles_list", [])
                     for proj_obj in list(projectiles_current_list):
                         if hasattr(proj_obj, 'update'):
                             proj_targets = [e for e in self.game_elements.get("enemy_list",[]) if hasattr(e, 'alive') and e.alive()]
-                            if p1 and p1.alive(): proj_targets.insert(0,p1) # Add player if alive
-                            
-                            # statues = self.game_elements.get("statue_objects", []) # COMMENTED_OUT_NEW_FEATURE
-                            # proj_targets.extend([s for s in statues if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)]) # COMMENTED_OUT_NEW_FEATURE
-                            
+                            if p1 and p1.alive(): proj_targets.insert(0,p1) 
                             proj_obj.update(dt_sec, self.game_elements.get("platforms_list",[]), proj_targets)
                         if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
                             if proj_obj in projectiles_current_list: projectiles_current_list.remove(proj_obj)
                     
-                    # Chest Update (only chest's own update, player interaction commented)
-                    # current_chest_server = self.game_elements.get("current_chest") # COMMENTED_OUT_NEW_FEATURE
-                    # if current_chest_server and hasattr(current_chest_server, 'update'): # COMMENTED_OUT_NEW_FEATURE
-                    #     current_chest_server.update(dt_sec) # COMMENTED_OUT_NEW_FEATURE
-                        # if current_chest_server.state == 'closed' and p1_actions.get("interact", False) and \
-                        #    hasattr(p1,'rect') and p1.rect.colliderect(current_chest_server.rect): # COMMENTED_OUT_NEW_FEATURE
-                        #    current_chest_server.collect(p1) # COMMENTED_OUT_NEW_FEATURE
-                    
-                    # Statue updates (independent of player/enemy for now)
-                    # for statue in list(self.game_elements.get("statue_objects", [])): # COMMENTED_OUT_NEW_FEATURE
-                    #     if hasattr(statue, 'update'): # COMMENTED_OUT_NEW_FEATURE
-                    #         statue.update(dt_sec) # COMMENTED_OUT_NEW_FEATURE
-
                     camera = self.game_elements.get("camera")
                     if camera and p1 and p1.alive(): camera.update(p1)
 
