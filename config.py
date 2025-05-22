@@ -11,13 +11,13 @@ from typing import Dict, Optional, Any, List, Tuple
 import json
 import os
 import pygame
+import sys
 from PySide6.QtCore import Qt
 import copy
 
 # --- General App Config ---
 MAX_UI_CONTROLLERS_FOR_NAV = 2 # Max joysticks that can navigate UI (0, 1)
 # For grid navigation in map select, using distinct values
-# (Can also be defined in constants.py and imported if preferred)
 GRID_NAV_UP = 100
 GRID_NAV_DOWN = 101
 GRID_NAV_LEFT = 102
@@ -371,33 +371,31 @@ def load_config(called_from_save=False):
         print("Config: No config file found. Performing auto-assignment.")
         available_joys = get_available_joystick_names_with_indices_and_guids()
         
-        # P1 default: keyboard
         globals()["CURRENT_P1_INPUT_DEVICE"] = DEFAULT_P1_INPUT_DEVICE
         globals()["P1_KEYBOARD_ENABLED"] = DEFAULT_P1_KEYBOARD_ENABLED
         globals()["P1_CONTROLLER_ENABLED"] = DEFAULT_P1_CONTROLLER_ENABLED
         
-        # P2 default: unassigned
         globals()["CURRENT_P2_INPUT_DEVICE"] = DEFAULT_P2_INPUT_DEVICE
         globals()["P2_KEYBOARD_ENABLED"] = DEFAULT_P2_KEYBOARD_ENABLED
         globals()["P2_CONTROLLER_ENABLED"] = DEFAULT_P2_CONTROLLER_ENABLED
         
-        # P3, P4 default: unassigned
         globals()["CURRENT_P3_INPUT_DEVICE"] = DEFAULT_P3_INPUT_DEVICE; globals()["P3_KEYBOARD_ENABLED"] = DEFAULT_P3_KEYBOARD_ENABLED; globals()["P3_CONTROLLER_ENABLED"] = DEFAULT_P3_CONTROLLER_ENABLED
         globals()["CURRENT_P4_INPUT_DEVICE"] = DEFAULT_P4_INPUT_DEVICE; globals()["P4_KEYBOARD_ENABLED"] = DEFAULT_P4_KEYBOARD_ENABLED; globals()["P4_CONTROLLER_ENABLED"] = DEFAULT_P4_CONTROLLER_ENABLED
 
         if available_joys:
-            # If a joystick is present, P1 gets it IN ADDITION to keyboard if KbdEn is True
-            # But the PRIMARY assignment changes.
             p1_joy_data = available_joys[0]
             CURRENT_P1_INPUT_DEVICE = p1_joy_data[1] 
             P1_CONTROLLER_ENABLED = True
-            # P1_KEYBOARD_ENABLED remains as per its default (True)
             
             if len(available_joys) > 1:
                 p2_joy_data = available_joys[1]
                 CURRENT_P2_INPUT_DEVICE = p2_joy_data[1]
                 P2_CONTROLLER_ENABLED = True
-                P2_KEYBOARD_ENABLED = False # Default P2 kbd to False if joy assigned
+                P2_KEYBOARD_ENABLED = False 
+            else: 
+                CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE
+                P2_CONTROLLER_ENABLED = DEFAULT_P2_CONTROLLER_ENABLED
+                P2_KEYBOARD_ENABLED = DEFAULT_P2_KEYBOARD_ENABLED
         
         _TRANSLATED_ACTIVE_JOYSTICK_MAPPINGS_RUNTIME = _translate_gui_mappings_for_guid_to_runtime(
             LOADED_PYGAME_JOYSTICK_MAPPINGS, get_joystick_guid_by_pygame_index(0) if available_joys else None
@@ -412,20 +410,21 @@ def load_config(called_from_save=False):
         dev_var_name = f"CURRENT_{player_prefix}_INPUT_DEVICE"
         ctrl_en_var_name = f"{player_prefix}_CONTROLLER_ENABLED"
         kbd_en_var_name = f"{player_prefix}_KEYBOARD_ENABLED"
-        default_dev_val = globals()[f"DEFAULT_{player_prefix}_INPUT_DEVICE"]
-        default_kbd_en_val = globals()[f"DEFAULT_{player_prefix}_KEYBOARD_ENABLED"]
+        
+        # Get default values for this player, ensure they exist
+        default_dev_val = getattr(sys.modules[__name__], f"DEFAULT_{player_prefix}_INPUT_DEVICE", "unassigned")
+        default_kbd_en_val = getattr(sys.modules[__name__], f"DEFAULT_{player_prefix}_KEYBOARD_ENABLED", False if player_prefix != "P1" else True)
         
         current_dev = globals()[dev_var_name]
-        
         is_ctrl_enabled = globals()[ctrl_en_var_name]
         is_kbd_enabled = globals()[kbd_en_var_name]
 
         if current_dev.startswith("joystick_pygame_"):
-            if not is_ctrl_enabled: # Device is joystick, but controller not enabled for player
-                print(f"Config Warning: {player_prefix} assigned joystick '{current_dev}' but controller use is disabled. Reverting {player_prefix} to default keyboard.")
-                globals()[dev_var_name] = default_dev_val # e.g. "keyboard_p1" or "unassigned"
-                globals()[kbd_en_var_name] = True # Enable keyboard for them
-                current_dev = globals()[dev_var_name] # update current_dev for next checks
+            if not is_ctrl_enabled:
+                print(f"Config Warning: {player_prefix} assigned joystick '{current_dev}' but controller use is disabled. Reverting {player_prefix} to default.")
+                globals()[dev_var_name] = default_dev_val 
+                globals()[kbd_en_var_name] = True 
+                current_dev = globals()[dev_var_name] 
 
             try:
                 joy_idx = int(current_dev.split('_')[-1])
@@ -444,34 +443,30 @@ def load_config(called_from_save=False):
                     current_dev = globals()[dev_var_name]
                 else:
                     assigned_joystick_indices[joy_idx] = player_prefix
-            except (ValueError, IndexError): # Malformed joystick_pygame_X string
+            except (ValueError, IndexError): 
                 print(f"Config Warning: {player_prefix}'s joystick ID '{current_dev}' malformed. Reverting to default.")
                 globals()[dev_var_name] = default_dev_val; globals()[ctrl_en_var_name] = False; globals()[kbd_en_var_name] = default_kbd_en_val
                 current_dev = globals()[dev_var_name]
 
         if current_dev.startswith("keyboard_"):
-            if not is_kbd_enabled and current_dev != "unassigned": # Device is kbd, but kbd not enabled
+            if not is_kbd_enabled and current_dev != "unassigned": 
                  print(f"Config Warning: {player_prefix} assigned keyboard '{current_dev}' but keyboard use is disabled. Reverting {player_prefix} to 'unassigned'.")
-                 globals()[dev_var_name] = f"DEFAULT_{player_prefix}_INPUT_DEVICE" # This should be 'unassigned' for P2,P3,P4
-                 if player_prefix == "P1": globals()[kbd_en_var_name] = True # P1 kbd usually always available
+                 globals()[dev_var_name] = default_dev_val # Use player-specific default (e.g., DEFAULT_P2_INPUT_DEVICE)
                  current_dev = globals()[dev_var_name]
 
-            if current_dev in assigned_keyboard_layouts:
+            if current_dev in assigned_keyboard_layouts and current_dev != "unassigned_keyboard": # unassigned_keyboard can be shared conceptually
                 other_player = assigned_keyboard_layouts[current_dev]
                 print(f"Config Conflict: {player_prefix} and {other_player} assigned to same keyboard layout '{current_dev}'.")
-                # Attempt to assign P2 layout to current player if P1 took P1 default, and current is P2
-                if current_dev == "keyboard_p1" and player_prefix != "P1": # Someone else took kbd_p1
+                if current_dev == "keyboard_p1" and player_prefix != "P1": 
                     if "keyboard_p2" not in assigned_keyboard_layouts:
                         print(f"Config Conflict Resolution: Assigning 'keyboard_p2' to {player_prefix}.")
                         globals()[dev_var_name] = "keyboard_p2"
                         assigned_keyboard_layouts["keyboard_p2"] = player_prefix
-                    else: # keyboard_p2 also taken
-                        print(f"Config Conflict Resolution: Reverting {player_prefix} to unassigned.")
-                        globals()[dev_var_name] = DEFAULT_P2_INPUT_DEVICE # or PX_INPUT_DEVICE
-                        globals()[kbd_en_var_name] = DEFAULT_P2_KEYBOARD_ENABLED
-                # Similar logic if P2 took P2 default, and current is P1 etc.
-                # For now, simpler: if conflict and not resolved, revert player with lower P number or just current
-                elif player_prefix > assigned_keyboard_layouts[current_dev]: # Crude way to decide who keeps it
+                    else: 
+                        print(f"Config Conflict Resolution: Reverting {player_prefix} to default device.")
+                        globals()[dev_var_name] = default_dev_val
+                        globals()[kbd_en_var_name] = default_kbd_en_val
+                elif player_prefix > assigned_keyboard_layouts[current_dev]: 
                      print(f"Config Conflict Resolution: Reverting {player_prefix} to default device.")
                      globals()[dev_var_name] = default_dev_val
                      globals()[kbd_en_var_name] = default_kbd_en_val
@@ -482,17 +477,15 @@ def load_config(called_from_save=False):
     return True
 
 def update_player_mappings_from_config():
-    global P1_MAPPINGS, P2_MAPPINGS, P3_MAPPINGS, P4_MAPPINGS # Include P3/P4
+    global P1_MAPPINGS, P2_MAPPINGS, P3_MAPPINGS, P4_MAPPINGS 
     
     player_configs = [
         (CURRENT_P1_INPUT_DEVICE, P1_CONTROLLER_ENABLED, P1_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P1_MAPPINGS, "P1"),
         (CURRENT_P2_INPUT_DEVICE, P2_CONTROLLER_ENABLED, P2_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P2_MAPPINGS, "P2"),
-        (CURRENT_P3_INPUT_DEVICE, P3_CONTROLLER_ENABLED, P3_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P1_MAPPINGS, "P3"), # P3 defaults to P1 kbd layout for now
-        (CURRENT_P4_INPUT_DEVICE, P4_CONTROLLER_ENABLED, P4_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P2_MAPPINGS, "P4")  # P4 defaults to P2 kbd layout for now
+        (CURRENT_P3_INPUT_DEVICE, P3_CONTROLLER_ENABLED, P3_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P1_MAPPINGS, "P3"), 
+        (CURRENT_P4_INPUT_DEVICE, P4_CONTROLLER_ENABLED, P4_KEYBOARD_ENABLED, DEFAULT_KEYBOARD_P2_MAPPINGS, "P4")  
     ]
     
-    player_map_vars = [P1_MAPPINGS, P2_MAPPINGS, P3_MAPPINGS, P4_MAPPINGS]
-
     for i, (player_device_id, player_controller_enabled, player_kbd_enabled, default_kbd_map, p_log_prefix) in enumerate(player_configs):
         mappings: Dict[str, Any] = {}
         log_msg_suffix = ""
@@ -513,20 +506,19 @@ def update_player_mappings_from_config():
                 log_msg_suffix = " (joy map: generic default due to error)"
         elif player_device_id == "unassigned":
             log_msg_suffix = " (unassigned)"
-            # If KBD is enabled even if device is unassigned, provide a default keyboard map
-            # This primarily benefits P1 if it somehow becomes "unassigned" but keyboard is still true.
-            if player_kbd_enabled:
+            if player_kbd_enabled: # If unassigned but kbd allowed, give them their default kbd map
                 mappings = copy.deepcopy(default_kbd_map)
-                log_msg_suffix += f" but kbd enabled, using default kbd map"
+                log_msg_suffix += f" but kbd enabled, using default kbd map ({list(default_kbd_map.keys())[0]}...)"
 
-        globals()[f"P{i+1}_MAPPINGS"] = mappings # P1_MAPPINGS, P2_MAPPINGS etc.
+
+        globals()[f"P{i+1}_MAPPINGS"] = mappings 
         
         print(f"Config: {p_log_prefix} mappings updated. Device: '{player_device_id}'{log_msg_suffix}.")
         if not mappings and player_device_id != "unassigned": 
             print(f"Config Warning: {p_log_prefix} has no active mappings despite assignment.")
 
 
-init_pygame_and_joystick_globally(force_rescan=True) # Initial scan
+init_pygame_and_joystick_globally(force_rescan=True) 
 load_config()
 
 if __name__ == "__main__":
@@ -537,7 +529,7 @@ if __name__ == "__main__":
          joy_obj_test = _joystick_objects_global[i]
          guid_test = "N/A"
          if joy_obj_test:
-             if not joy_obj_test.get_init(): joy_obj_test.init() # Ensure init for GUID
+             if not joy_obj_test.get_init(): joy_obj_test.init() 
              if joy_obj_test.get_init() and hasattr(joy_obj_test, 'get_guid'): guid_test = joy_obj_test.get_guid()
          print(f"    Idx {i}: {name} (GUID: {guid_test})")
 

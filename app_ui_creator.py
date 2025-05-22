@@ -14,8 +14,7 @@ from PySide6.QtCore import Qt, Slot, QTimer
 
 import pygame 
 
-# import constants as C # Keep for other constants if used elsewhere
-import config as game_config # Use game_config for grid nav constants now
+import config as game_config # Use game_config for grid nav constants
 from logger import info, debug, warning, error 
 
 if TYPE_CHECKING:
@@ -115,15 +114,13 @@ def _populate_map_list_for_selection(main_window: 'MainWindow', purpose: str):
     _clear_layout(main_window.map_buttons_layout) 
     
     main_window._map_selection_buttons_ref.clear()
-    # Use C.MAPS_DIR from constants.py if available and an absolute path.
-    # Otherwise, construct path relative to the project root.
+    
     maps_dir = getattr(game_config.C, "MAPS_DIR", "maps") if hasattr(game_config, "C") and hasattr(game_config.C, "MAPS_DIR") else "maps"
 
     if not os.path.isabs(maps_dir):
-        # Determine project root (assuming app_ui_creator.py is in the same dir as app_core.py, which is likely project root)
         project_root_dir = os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)) \
             if hasattr(sys.modules['__main__'], '__file__') and sys.modules['__main__'].__file__ \
-            else os.path.dirname(os.path.abspath(__file__))
+            else os.path.dirname(os.path.abspath(__file__)) # Fallback for __file__ in app_ui_creator.py
         maps_dir = os.path.join(project_root_dir, maps_dir)
     
     debug(f"UI Creator: Populating map list from directory: {maps_dir}")
@@ -413,7 +410,7 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
     action_input_source: Optional[str] = None 
 
     for ui_controller_idx, joy in enumerate(main_window._pygame_joysticks):
-        if ui_controller_idx >= game_config.MAX_UI_CONTROLLERS_FOR_NAV: 
+        if ui_controller_idx >= game_config.MAX_UI_CONTROLLERS_FOR_NAV: # Use constant from config
             break
         
         if not joy.get_init():
@@ -601,11 +598,11 @@ def _navigate_current_menu_pygame_joy(main_window: 'MainWindow', direction: int,
         else: # Fallback for simple +/- 1 or +/-2 direction (legacy keyboard or simple joystick input)
             if direction == -1: row = max(0, row - 1) 
             elif direction == 1: row = min(num_rows - 1, row + 1)
-            elif direction == -2: col = max(0, col - 1) # Map old -2 (Left) to grid left
-            elif direction == 2:  # Map old +2 (Right) to grid right
-                items_in_this_row = num_cols if row < num_rows - 1 else (num_buttons % num_cols if num_buttons % num_cols != 0 else num_cols)
-                if num_rows == 1: items_in_this_row = num_buttons
-                col = min(items_in_this_row - 1, col + 1) if items_in_this_row > 0 else 0
+            elif direction == -2: col = max(0, col - 1) 
+            elif direction == 2:  
+                items_in_this_row_legacy = num_cols if row < num_rows - 1 else (num_buttons % num_cols if num_buttons % num_cols != 0 else num_cols)
+                if num_rows == 1: items_in_this_row_legacy = num_buttons
+                col = min(items_in_this_row_legacy - 1, col + 1) if items_in_this_row_legacy > 0 else 0
 
         new_idx = row * num_cols + col
         new_idx = min(num_buttons - 1, max(0, new_idx)) 
@@ -623,7 +620,7 @@ def _navigate_current_menu_pygame_joy(main_window: 'MainWindow', direction: int,
             return 
             
     elif active_ui == "ip_input": 
-        if direction in [-2, 2, -1, 1, game_config.GRID_NAV_LEFT, game_config.GRID_NAV_RIGHT, game_config.GRID_NAV_UP, game_config.GRID_NAV_DOWN]: # Any directional input
+        if direction in [-2, 2, -1, 1, game_config.GRID_NAV_LEFT, game_config.GRID_NAV_RIGHT, game_config.GRID_NAV_UP, game_config.GRID_NAV_DOWN]: 
             main_window._ip_dialog_selected_button_idx = 1 - main_window._ip_dialog_selected_button_idx 
         _update_ip_dialog_button_focus(main_window) 
         return 
