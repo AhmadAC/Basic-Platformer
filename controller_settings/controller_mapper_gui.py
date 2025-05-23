@@ -1,5 +1,6 @@
 # controller_settings/controller_mapper_gui.py
 # controller mapping>json>config>app ui creator
+# playerinput handler is related to
 import sys
 import json
 import threading

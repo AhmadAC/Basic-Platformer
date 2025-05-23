@@ -18,7 +18,7 @@ if _project_root_app_input not in sys.path:
 import config as game_config
 import constants as C # For JOYSTICK_AXIS/HAT_EVENT_ACTIONS if used
 # Assuming process_player_input_logic_pyside is in player_input_handler.py at the same level
-from player_input_handler import process_player_input_logic_pyside as process_player_input_logic
+from player_input_handler import process_player_input_logic # No _pyside, no alias needed if name matches
 from logger import warning, debug, error # Added error
 from utils import PrintLimiter
 

@@ -6,9 +6,9 @@
         "controller_enabled": true
     },
     "player2_settings": {
-        "input_device": "keyboard_p1",
-        "keyboard_enabled": true,
-        "controller_enabled": false
+        "input_device": "joystick_pygame_1",
+        "keyboard_enabled": false,
+        "controller_enabled": true
     },
     "player3_settings": {
         "input_device": "unassigned",
@@ -31,16 +31,6 @@
                     "type": "axis"
                 },
                 "raw_str": "Joy0 Axis 0: -0.76"
-            },
-            "up": {
-                "event_type": "axis",
-                "details": {
-                    "axis_id": 1,
-                    "direction": -1,
-                    "threshold": 0.7,
-                    "type": "axis"
-                },
-                "raw_str": "Joy0 Axis 1: -1.00"
             },
             "right": {
                 "event_type": "axis",
@@ -243,6 +233,264 @@
                     "type": "button"
                 },
                 "raw_str": "Joy0 Btn 9 Down"
+            },
+            "jump": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 1: -1.00"
+            },
+            "up": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 0,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 0 Down"
+            }
+        },
+        "030003f05e0400008e02000000007200": {
+            "left": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 0: -1.00"
+            },
+            "right": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 0: 1.00"
+            },
+            "down": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 1: 0.79"
+            },
+            "crouch": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 1: 0.77"
+            },
+            "attack2": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 3,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 3 Down"
+            },
+            "attack1": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 2,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 2 Down"
+            },
+            "interact": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 7,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 7 Down"
+            },
+            "pause": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 10,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 10 Down"
+            },
+            "menu_confirm": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 1,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 1 Down"
+            },
+            "menu_cancel": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 2,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 2 Down"
+            },
+            "menu_down": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 1: 0.70"
+            },
+            "menu_up": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 1: -1.00"
+            },
+            "menu_left": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 0: -0.74"
+            },
+            "menu_right": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 0: 0.72"
+            },
+            "projectile1": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 4,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 4: -1.00"
+            },
+            "projectile2": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 5,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 5: -1.00"
+            },
+            "projectile3": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "type": "hat",
+                    "value": [
+                        0,
+                        1
+                    ]
+                },
+                "raw_str": "Joy1 Hat 0 (0, 1)"
+            },
+            "projectile4": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "type": "hat",
+                    "value": [
+                        -1,
+                        0
+                    ]
+                },
+                "raw_str": "Joy1 Hat 0 (-1, 0)"
+            },
+            "projectile5": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "type": "hat",
+                    "value": [
+                        1,
+                        0
+                    ]
+                },
+                "raw_str": "Joy1 Hat 0 (1, 0)"
+            },
+            "projectile6": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "type": "hat",
+                    "value": [
+                        0,
+                        -1
+                    ]
+                },
+                "raw_str": "Joy1 Hat 0 (0, -1)"
+            },
+            "projectile7": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 9,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 9 Down"
+            },
+            "reset": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 6,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 6 Down"
+            },
+            "roll": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 5,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 5 Down"
+            },
+            "dash": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 4,
+                    "type": "button"
+                },
+                "raw_str": "Joy1 Btn 4 Down"
+            },
+            "up": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy1 Axis 1: -0.71"
             }
         }
     }
