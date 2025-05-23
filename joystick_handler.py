@@ -1,4 +1,4 @@
-# player_input_handler.py
+# Joystick_handler.py
 # -*- coding: utf-8 -*-
 """
 version 2.1.0 (Adapted for Pygame joystick data and mappings)
