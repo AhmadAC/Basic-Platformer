@@ -3,6 +3,10 @@ pip install --force-reinstall PySide6 PySide6-Addons
 pip install PySDL2
 update main aspect ratio of png2gif
 
+#Return to main menu controller doesnt work in editor.
+#make controller setup controller navigation friendly
+#try to make editor controller friendly
+
 fix auto save map wrong name after rename stuff
 
 wont load map if its renamed
