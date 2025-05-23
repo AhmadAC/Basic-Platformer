@@ -1,10 +1,12 @@
 # config.py
 # -*- coding: utf-8 -*-
+###############################33
 """
 Configuration for game settings, primarily controls.
 Handles Pygame joystick detection and assignment.
 The controller_settings/controller_mappings.json is used for Pygame control mappings
 and selected input devices/enabled flags for P1-P4.
+update this to remove debug prints
 """
 # version 2.3.5 (Ultra-debug for Px_MAPPINGS content)
 from typing import Dict, Optional, Any, List, Tuple
