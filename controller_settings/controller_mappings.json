@@ -6,7 +6,7 @@
         "controller_enabled": false
     },
     "player2_settings": {
-        "input_device": "keyboard_p1",
+        "input_device": "keyboard_p2",
         "keyboard_enabled": true,
         "controller_enabled": false
     },
