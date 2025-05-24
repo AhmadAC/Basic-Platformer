@@ -1,0 +1,20 @@
+Fixed:
+added up to 4 players to the game
+player 1-4 movement
+4 player UI main screen
+Player select screen
+Controller Settings
+Errors with controller input
+Error with player auto firing
+Error glitch jumping
+Error crouch jumping
+blank space padding under map on reset
+reset
+
+Need to fix:
+projectile spawn, speed, attack etc.
+stone
+electricity
+player on fire, animation and what happens
+enemy movement, collision, health bar, attacks
+need to fix flying enemys
