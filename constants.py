@@ -4,7 +4,7 @@
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
 """
-# version 2.0.5 (Defined P2, P3, P4 projectile keys)
+# version 2.0.6 (Added DRAW_ENEMY_ABOVE_HEALTH_BAR)
 import os
 import sys
 import math
@@ -112,6 +112,7 @@ ORANGE_RED = (255, 69, 0); MAGENTA = (255, 0, 255); PURPLE_BACKGROUND = (75, 0, 
 
 HEALTH_BAR_WIDTH = 50.0; HEALTH_BAR_HEIGHT = 8.0; HEALTH_BAR_OFFSET_ABOVE = 5.0
 HUD_HEALTH_BAR_WIDTH = HEALTH_BAR_WIDTH * 2.0; HUD_HEALTH_BAR_HEIGHT = HEALTH_BAR_HEIGHT + 4.0
+DRAW_ENEMY_ABOVE_HEALTH_BAR = True # <<< ADDED/MODIFIED FOR FIX
 
 LAVA_PATCH_HEIGHT = 20.0; LAVA_DAMAGE = 25; LAVA_SPRITE_PATH = "characters/assets/lava.gif"
 

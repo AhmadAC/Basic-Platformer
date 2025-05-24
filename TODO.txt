@@ -3,16 +3,10 @@ pip install --force-reinstall PySide6 PySide6-Addons
 pip install PySDL2
 update main aspect ratio of png2gif
 
-#Return to main menu controller doesnt work in editor.
-#make controller setup controller navigation friendly
-#try to make editor controller friendly
 
-fix auto save map wrong name after rename stuff
+update editor, have a portal to another map or random map etc 
+have the option to hide a map from main menu lock/unlocked
 
-wont load map if its renamed
-
-enemy's gifs are breaking somewhere
-getting thrown throw a wall when i get attacked
 
 fix delete menu
 Current Platformer game issues, things to test, and features to add:

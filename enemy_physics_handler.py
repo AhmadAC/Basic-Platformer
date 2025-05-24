@@ -4,9 +4,9 @@
 Handles enemy physics, movement, and collisions for PySide6.
 Ensures robust platform (wall/floor/ceiling) collision resolution.
 """
-# version 2.0.4 (Comprehensive platform collision, refined pos/rect syncing)
+# version 2.0.5 (Corrected ground check, lava bounce, enemy pushback)
 
-import time 
+import time
 from typing import List, Any, Optional, TYPE_CHECKING
 
 from PySide6.QtCore import QPointF, QRectF
@@ -15,7 +15,7 @@ import constants as C
 from tiles import Lava # For type hinting if needed, ensure Platform is also available if used
 
 if TYPE_CHECKING:
-    from enemy import Enemy as EnemyClass_TYPE 
+    from enemy import Enemy as EnemyClass_TYPE
 
 try:
     from enemy_ai_handler import set_enemy_new_patrol_target
@@ -39,7 +39,7 @@ def get_current_ticks_monotonic() -> int:
     return int((time.monotonic() - _start_time_enemy_phys_monotonic) * 1000)
 
 
-def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, platforms_list: List[Any]):
+def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, platforms_list: List[Any], dt_sec: float): # Added dt_sec for estimate
     """
     Checks and resolves collisions between the enemy and platforms for a given axis.
     Assumes enemy.rect has already been moved by velocity for this axis.
@@ -54,7 +54,7 @@ def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, p
         if not hasattr(platform_obj, 'rect') or not isinstance(platform_obj.rect, QRectF) or not platform_obj.rect.isValid():
             warning(f"Enemy Collision: Platform object {platform_obj} missing valid rect. Skipping.")
             continue
-        
+
         if not enemy.rect.intersects(platform_obj.rect):
             continue
 
@@ -72,7 +72,7 @@ def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, p
                 if overlap_x > 0:
                     enemy.rect.translate(overlap_x, 0) # Move enemy right by overlap
                     enemy.vel.setX(0.0)
-            
+
             # AI reaction to wall bump if patrolling
             if getattr(enemy, 'ai_state', None) == 'patrolling' and \
                abs(original_vel_x_for_ai_reaction) > 0.05 and enemy.vel.x() == 0.0:
@@ -82,7 +82,7 @@ def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, p
                 if vertical_overlap_for_patrol_turn > enemy.rect.height() * 0.5: # Need significant vertical overlap
                     debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} hit wall while patrolling. Turning around.")
                     set_enemy_new_patrol_target(enemy)
-        
+
         # --- Vertical Collision (Floor/Ceiling) ---
         elif direction == 'y':
             if enemy.vel.y() >= 0: # Moving down or stationary and intersecting from above
@@ -93,11 +93,27 @@ def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, p
                     actual_h_overlap = min(enemy.rect.right(), platform_obj.rect.right()) - \
                                        max(enemy.rect.left(), platform_obj.rect.left())
                     if actual_h_overlap >= min_h_overlap_pixels:
-                        enemy.rect.translate(0, -overlap_y) # Move enemy up by overlap
-                        setattr(enemy, 'on_ground', True)
-                        enemy.vel.setY(0.0)
-                        if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setY'): enemy.acc.setY(0.0)
-            
+                        # Corrected: previous_enemy_bottom_y_estimate calculation
+                        # Uses dt_sec if vel is speed, assumes vel is displacement per frame if dt_sec is not used.
+                        # The main physics update uses: enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * C.FPS)
+                        # So displacement_y_this_frame should be enemy.vel.y() * dt_sec * C.FPS
+                        displacement_y_this_frame = enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0)
+                        previous_enemy_bottom_y_estimate = enemy.rect.bottom() - displacement_y_this_frame
+
+                        was_above_or_at_surface_epsilon = 1.0
+                        was_truly_above_or_at_surface = previous_enemy_bottom_y_estimate <= platform_obj.rect.top() + was_above_or_at_surface_epsilon
+
+                        can_snap_down_from_current = enemy.rect.bottom() > platform_obj.rect.top() and \
+                                                     enemy.rect.bottom() <= platform_obj.rect.top() + getattr(C, 'GROUND_SNAP_THRESHOLD', 5.0)
+
+                        # Corrected: getattr(enemy, 'on_ground', False)
+                        if was_truly_above_or_at_surface or (getattr(enemy, 'on_ground', False) and can_snap_down_from_current):
+                            # just_landed = not getattr(enemy, 'on_ground', False) # Check before setting
+                            enemy.rect.translate(0, -overlap_y) # Move enemy up by overlap
+                            setattr(enemy, 'on_ground', True)
+                            enemy.vel.setY(0.0)
+                            if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setY'): enemy.acc.setY(0.0)
+
             elif enemy.vel.y() < 0: # Moving up, collided with platform's bottom edge (ceiling)
                 overlap_y = platform_obj.rect.bottom() - enemy.rect.top()
                 if overlap_y > 0:
@@ -133,7 +149,7 @@ def _check_enemy_character_collision(enemy: 'EnemyClass_TYPE', direction: str, c
         if enemy.rect.intersects(other_char.rect):
             collision_occurred = True
             is_other_petrified_solid = getattr(other_char, 'is_petrified', False) and not getattr(other_char, 'is_stone_smashed', False)
-            
+
             # Aflame interaction (effect-based, might not involve pushback)
             is_other_target_susceptible_to_fire = not (getattr(other_char, 'is_aflame', False) or \
                                                      getattr(other_char, 'is_frozen', False) or \
@@ -142,32 +158,56 @@ def _check_enemy_character_collision(enemy: 'EnemyClass_TYPE', direction: str, c
                hasattr(other_char, 'apply_aflame_effect') and callable(other_char.apply_aflame_effect) and \
                is_other_target_susceptible_to_fire and \
                not getattr(enemy, 'has_ignited_another_enemy_this_cycle', True) :
-                
+
                 other_char_id_log = getattr(other_char, 'enemy_id', getattr(other_char, 'player_id', 'UnknownChar'))
                 debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} (aflame) touched Character {other_char_id_log}. Igniting.")
                 other_char.apply_aflame_effect()
-                enemy.has_ignited_another_enemy_this_cycle = True 
-                # Decide if ignition also causes pushback. If not, 'continue' here.
-                # For now, let's assume it might also push.
+                enemy.has_ignited_another_enemy_this_cycle = True
 
             # Physical pushback logic
             bounce_vel_char = float(getattr(C, 'CHARACTER_BOUNCE_VELOCITY', 2.5)) * 0.7 # Enemies might bounce less aggressively
 
             if direction == 'x':
                 overlap_x_char = 0.0
+                push_dir_self = 0 # Direction 'enemy' will be pushed/move away
                 # Determine who pushes whom based on relative positions and movement
                 if enemy.vel.x() > 0: # Enemy moving right
                     overlap_x_char = enemy.rect.right() - other_char.rect.left()
-                    if overlap_x_char > 0: enemy.rect.translate(-overlap_x_char, 0)
+                    if overlap_x_char > 0:
+                        enemy.rect.translate(-overlap_x_char, 0)
+                        push_dir_self = -1 # Enemy was pushed left
                 elif enemy.vel.x() < 0: # Enemy moving left
                     overlap_x_char = other_char.rect.right() - enemy.rect.left()
-                    if overlap_x_char > 0: enemy.rect.translate(overlap_x_char, 0)
-                
-                if overlap_x_char > 0: # If a push occurred
-                    enemy.vel.setX(-enemy.vel.x() * 0.3) # Enemy bounces back a bit
-                    # Optionally push other character if it's not static/heavy/petrified
-                    if hasattr(other_char, 'vel') and isinstance(other_char.vel, QPointF) and not is_other_petrified_solid:
-                        other_char.vel.setX(other_char.vel.x() + enemy.vel.x() * 0.3) # Transfer some momentum
+                    if overlap_x_char > 0:
+                        enemy.rect.translate(overlap_x_char, 0)
+                        push_dir_self = 1 # Enemy was pushed right
+                else: # Enemy might be stationary, or pushed into other_char by another force
+                    if enemy.rect.center().x() < other_char.rect.center().x(): # Enemy is to the left of other_char
+                        overlap_x_char = enemy.rect.right() - other_char.rect.left()
+                        if overlap_x_char > 0:
+                            enemy.rect.translate(-overlap_x_char / 2.0, 0) # Both move apart
+                            if hasattr(other_char, 'rect') and hasattr(other_char.rect, 'translate'): other_char.rect.translate(overlap_x_char / 2.0, 0)
+                            push_dir_self = -1
+                    else: # Enemy is to the right
+                        overlap_x_char = other_char.rect.right() - enemy.rect.left()
+                        if overlap_x_char > 0:
+                            enemy.rect.translate(overlap_x_char / 2.0, 0)
+                            if hasattr(other_char, 'rect') and hasattr(other_char.rect, 'translate'): other_char.rect.translate(-overlap_x_char / 2.0, 0)
+                            push_dir_self = 1
+
+                if overlap_x_char > 0 and push_dir_self != 0: # If a push occurred
+                    enemy.vel.setX(push_dir_self * bounce_vel_char) # Enemy bounces
+
+                    can_push_other_char = not (getattr(other_char, 'is_attacking', False) or \
+                                         is_other_petrified_solid or \
+                                         getattr(other_char, 'is_dashing', False) or \
+                                         getattr(other_char, 'is_rolling', False) or \
+                                         getattr(other_char, 'is_aflame', False) or \
+                                         getattr(other_char, 'is_frozen', False) )
+
+                    if hasattr(other_char, 'vel') and isinstance(other_char.vel, QPointF) and can_push_other_char:
+                        other_char_push_direction = -push_dir_self # other_char pushed opposite to enemy's bounce
+                        other_char.vel.setX(other_char_push_direction * bounce_vel_char)
 
             elif direction == 'y': # Vertical collision with another character
                 overlap_y_char = 0.0
@@ -181,7 +221,6 @@ def _check_enemy_character_collision(enemy: 'EnemyClass_TYPE', direction: str, c
 
 
 def _check_enemy_hazard_collisions(enemy: 'EnemyClass_TYPE', hazards_list: List[Any]):
-    # (This function from your previous version was mostly okay for applying effects)
     current_time_ms = get_current_ticks_monotonic()
     if not getattr(enemy, '_valid_init', False) or getattr(enemy, 'is_dead', True) or \
        not (hasattr(enemy, 'alive') and enemy.alive()) or \
@@ -208,14 +247,10 @@ def _check_enemy_hazard_collisions(enemy: 'EnemyClass_TYPE', hazards_list: List[
                     if lava_damage > 0 and hasattr(enemy, 'take_damage') and callable(enemy.take_damage):
                         enemy.take_damage(lava_damage)
                     damage_taken_this_frame = True
-                    if not getattr(enemy, 'is_dead', False):
-                        if hasattr(enemy, 'vel') and isinstance(enemy.vel, QPointF):
-                            enemy.vel.setY(float(getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0)) * 0.2)
-                            push_dir_lava = 1 if enemy.rect.center().x() < hazard_obj.rect.center().x() else -1
-                            enemy.vel.setX(-push_dir_lava * 2.0)
-                        setattr(enemy, 'on_ground', False)
-                    break 
-        if damage_taken_this_frame: break 
+                    # Removed bounce logic from here as per Issue #1 Fix #2
+                    break
+        if damage_taken_this_frame:
+            break
 
 
 def update_enemy_physics_and_collisions(enemy: 'EnemyClass_TYPE', dt_sec: float, platforms_list: List[Any],
@@ -229,9 +264,10 @@ def update_enemy_physics_and_collisions(enemy: 'EnemyClass_TYPE', dt_sec: float,
             if not getattr(enemy, 'on_ground', True) and hasattr(enemy, 'vel') and hasattr(enemy, 'acc') and hasattr(enemy, 'pos') and hasattr(enemy, 'rect'):
                 enemy.vel.setY(enemy.vel.y() + enemy.acc.y()) # Gravity
                 enemy.vel.setY(min(enemy.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
-                enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * C.FPS)
+                # Position update uses scaled velocity
+                enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0))
                 if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
-                _check_enemy_platform_collisions(enemy, 'y', platforms_list) # Minimal collision for falling body
+                _check_enemy_platform_collisions(enemy, 'y', platforms_list, dt_sec) # Minimal collision for falling body
                 if hasattr(enemy, 'pos'): enemy.pos.setY(enemy.rect.bottom()) # Sync pos
         return # Main physics update skipped
 
@@ -270,7 +306,7 @@ def update_enemy_physics_and_collisions(enemy: 'EnemyClass_TYPE', dt_sec: float,
     speed_limit = float(getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0))
     if getattr(enemy, 'is_aflame', False): speed_limit *= float(getattr(C, 'ENEMY_AFLAME_SPEED_MULTIPLIER', 1.3))
     elif getattr(enemy, 'is_deflaming', False): speed_limit *= float(getattr(C, 'ENEMY_DEFLAME_SPEED_MULTIPLIER', 1.2))
-    
+
     enemy.vel.setX(max(-speed_limit, min(speed_limit, enemy.vel.x())))
     enemy.vel.setY(min(enemy.vel.y(), float(getattr(C, 'TERMINAL_VELOCITY_Y', 18.0))))
 
@@ -279,18 +315,18 @@ def update_enemy_physics_and_collisions(enemy: 'EnemyClass_TYPE', dt_sec: float,
     setattr(enemy, 'on_ground', False)
 
     # Horizontal movement and collision
-    enemy.pos.setX(enemy.pos.x() + enemy.vel.x() * dt_sec * C.FPS) # Scale velocity by frame time
+    enemy.pos.setX(enemy.pos.x() + enemy.vel.x() * dt_sec * getattr(C, 'FPS', 60.0)) # Scale velocity by frame time
     if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
-    _check_enemy_platform_collisions(enemy, 'x', platforms_list)
+    _check_enemy_platform_collisions(enemy, 'x', platforms_list, dt_sec)
     _check_enemy_character_collision(enemy, 'x', all_other_characters_list)
     # Sync logical pos from rect AFTER all X-axis resolutions
     if hasattr(enemy, 'pos') and hasattr(enemy.rect, 'center'): enemy.pos.setX(enemy.rect.center().x())
 
 
     # Vertical movement and collision
-    enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * C.FPS) # Scale velocity by frame time
+    enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0)) # Scale velocity by frame time
     if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
-    _check_enemy_platform_collisions(enemy, 'y', platforms_list)
+    _check_enemy_platform_collisions(enemy, 'y', platforms_list, dt_sec)
     _check_enemy_character_collision(enemy, 'y', all_other_characters_list)
     # Sync logical pos from rect AFTER all Y-axis resolutions
     if hasattr(enemy, 'pos') and hasattr(enemy.rect, 'bottom'): enemy.pos.setY(enemy.rect.bottom())
