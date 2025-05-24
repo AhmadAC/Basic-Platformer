@@ -1,7 +1,9 @@
+#################### START OF FILE: player_input_handler.py ####################
+
 # player_input_handler.py
 # -*- coding: utf-8 -*-
 """
-Version 2.1.6 (Removed wall climbing logic)
+Version 2.1.7 (Corrected PrintLimiter.can_log call)
 Handles processing of player input (Qt keyboard events, Pygame joystick polling)
 and translating it to game actions.
 """
@@ -14,7 +16,7 @@ from PySide6.QtCore import Qt, QPointF
 import constants as C
 import config as game_config
 from utils import PrintLimiter
-from logger import debug, warning, error 
+from logger import debug, warning, error
 
 try:
     from player_state_handler import set_player_state
@@ -40,10 +42,16 @@ def process_player_input_logic(
     joystick_data: Optional[Dict[str, Any]] = None
 ) -> Dict[str, bool]:
     if not hasattr(player, '_valid_init') or not player._valid_init:
+        # Corrected call to PrintLimiter's method (assuming it was intended to be can_print or a similar existing method)
+        # If can_log was a custom method, ensure it's defined in PrintLimiter.
+        # For now, using can_print as it's a common pattern for these limiters.
+        if input_print_limiter.can_print(f"invalid_player_input_handler_{getattr(player, 'player_id', 'unknown')}skip"):
+            warning(f"PlayerInputHandler: Skipping input for invalid player instance (ID: {getattr(player, 'player_id', 'unknown')}).")
         return {}
 
     current_time_ms = get_input_handler_ticks()
     player_id_str = f"P{player.player_id}"
+    
     debug_this_frame = input_print_limiter.can_print(f"input_proc_tick_{player_id_str}")
 
     is_pygame_joystick_input = player.control_scheme and player.control_scheme.startswith("joystick_pygame_")
@@ -51,7 +59,7 @@ def process_player_input_logic(
 
     player.is_trying_to_move_left = False
     player.is_trying_to_move_right = False
-    player.is_holding_climb_ability_key = False # Still used for ladders
+    player.is_holding_climb_ability_key = False 
     player.is_holding_crouch_ability_key = False
 
     # --- 1. Process Keyboard Input (Qt Events) ---
@@ -61,21 +69,20 @@ def process_player_input_logic(
             if isinstance(key_code_for_action, Qt.Key) and qt_keys_held_snapshot.get(key_code_for_action, False):
                 if action_name == "left": player.is_trying_to_move_left = True
                 elif action_name == "right": player.is_trying_to_move_right = True
-                elif action_name == "up": player.is_holding_climb_ability_key = True # For ladders
+                elif action_name == "up": player.is_holding_climb_ability_key = True 
                 elif action_name == "down": player.is_holding_crouch_ability_key = True
         
         if debug_this_frame and input_print_limiter.can_print(f"kbd_intent_{player.player_id}"):
             debug(f"{player_id_str} Kbd Intent: L={player.is_trying_to_move_left}, R={player.is_trying_to_move_right}, U={player.is_holding_climb_ability_key}, D={player.is_holding_crouch_ability_key}")
 
         for event_type, key_code_from_event, _is_auto_repeat in qt_key_event_data_this_frame:
-            if event_type == QKeyEvent.Type.KeyPress:
+            if event_type == QKeyEvent.Type.KeyPress: 
                 for action_name, mapped_qt_key in active_mappings.items():
                     if isinstance(mapped_qt_key, Qt.Key) and key_code_from_event == mapped_qt_key:
                         action_events[action_name] = True
-                        # Special handling for combined actions from one key
-                        if action_name == "up": action_events["jump"] = True # "Up" can also mean "jump"
-                        if action_name == "down": action_events["crouch"] = True # "Down" can also mean "crouch" event
-                        break
+                        if action_name == "up": action_events["jump"] = True
+                        if action_name == "down": action_events["crouch"] = True 
+                        break 
     
     # --- 2. Process Pygame Joystick Input ---
     elif is_pygame_joystick_input and joystick_data:
@@ -85,7 +92,7 @@ def process_player_input_logic(
         current_hats = joystick_data.get('hats', {})
 
         if not hasattr(player, '_prev_discrete_axis_hat_state'):
-            player._prev_discrete_axis_hat_state = {} # To track first press for discrete actions on axes/hats
+            player._prev_discrete_axis_hat_state = {}
 
         for action_name, mapping_details in active_mappings.items():
             if not isinstance(mapping_details, dict): continue
@@ -93,20 +100,18 @@ def process_player_input_logic(
             
             if m_type == "axis":
                 axis_val = current_axes.get(m_id, 0.0)
-                m_axis_direction = mapping_details.get("value") # -1 for neg, 1 for pos
+                m_axis_direction = mapping_details.get("value") 
                 m_threshold = mapping_details.get("threshold", game_config.AXIS_THRESHOLD_DEFAULT)
                 is_axis_held_active = (m_axis_direction == -1 and axis_val < -m_threshold) or \
                                       (m_axis_direction == 1 and axis_val > m_threshold)
 
-                # Update continuous intent flags
                 if action_name == "left": player.is_trying_to_move_left = is_axis_held_active or player.is_trying_to_move_left
                 elif action_name == "right": player.is_trying_to_move_right = is_axis_held_active or player.is_trying_to_move_right
                 elif action_name == "up": player.is_holding_climb_ability_key = is_axis_held_active or player.is_holding_climb_ability_key
                 elif action_name == "down": player.is_holding_crouch_ability_key = is_axis_held_active or player.is_holding_crouch_ability_key
                 
-                # Check for discrete event generation from axis (e.g., jump mapped to axis pull)
-                if action_name in getattr(C, 'JOYSTICK_AXIS_EVENT_ACTIONS', []): # Actions that can be events
-                    axis_event_key = ("axis", m_id, m_axis_direction) # Unique key for this axis direction
+                if action_name in getattr(C, 'JOYSTICK_AXIS_EVENT_ACTIONS', []): 
+                    axis_event_key = ("axis", m_id, m_axis_direction) 
                     was_previously_active_for_event = player._prev_discrete_axis_hat_state.get(axis_event_key, False)
                     if is_axis_held_active and not was_previously_active_for_event:
                         action_events[action_name] = True
@@ -117,14 +122,14 @@ def process_player_input_logic(
             elif m_type == "button":
                 is_pressed_now = current_buttons.get(m_id, False)
                 was_pressed_prev = prev_buttons.get(m_id, False)
-                if is_pressed_now and not was_pressed_prev: # Button just pressed
+                if is_pressed_now and not was_pressed_prev: 
                     action_events[action_name] = True
                     if action_name == "up": action_events["jump"] = True
                     if action_name == "down": action_events["crouch"] = True
             
             elif m_type == "hat":
-                hat_val_target_tuple = tuple(mapping_details.get("value", (0,0))) # e.g., (0,1) for up
-                current_hat_val_tuple = tuple(current_hats.get(m_id, (0,0)))
+                hat_val_target_tuple = tuple(mapping_details.get("value", (0,0))) 
+                current_hat_val_tuple = tuple(current_hats.get(m_id, (0,0))) 
                 is_hat_held_active = (current_hat_val_tuple == hat_val_target_tuple and hat_val_target_tuple != (0,0))
 
                 if action_name == "left": player.is_trying_to_move_left = is_hat_held_active or player.is_trying_to_move_left
@@ -150,19 +155,19 @@ def process_player_input_logic(
     aim_x, aim_y = 0.0, 0.0
     if player.is_trying_to_move_left: aim_x = -1.0
     elif player.is_trying_to_move_right: aim_x = 1.0
-    if player.is_holding_climb_ability_key: aim_y = -1.0 # Aim up
-    elif player.is_holding_crouch_ability_key or getattr(player, 'is_crouching', False): aim_y = 1.0 # Aim down
+    if player.is_holding_climb_ability_key: aim_y = -1.0 
+    elif player.is_holding_crouch_ability_key or getattr(player, 'is_crouching', False): aim_y = 1.0 
 
     if not hasattr(player, 'fireball_last_input_dir') or not isinstance(player.fireball_last_input_dir, QPointF):
         player.fireball_last_input_dir = QPointF(1.0 if getattr(player, 'facing_right', True) else -1.0, 0.0)
 
-    if abs(aim_x) > 1e-6 or abs(aim_y) > 1e-6: # If there's any directional input
+    if abs(aim_x) > 1e-6 or abs(aim_y) > 1e-6: 
         player.fireball_last_input_dir.setX(aim_x)
         player.fireball_last_input_dir.setY(aim_y)
     elif player.fireball_last_input_dir.isNull() or \
-         (abs(player.fireball_last_input_dir.x()) < 1e-6 and abs(player.fireball_last_input_dir.y()) < 1e-6) : # If current aim is neutral
+         (abs(player.fireball_last_input_dir.x()) < 1e-6 and abs(player.fireball_last_input_dir.y()) < 1e-6) : 
         player.fireball_last_input_dir.setX(1.0 if getattr(player, 'facing_right', True) else -1.0)
-        player.fireball_last_input_dir.setY(0.0) # Default to horizontal aim based on facing
+        player.fireball_last_input_dir.setY(0.0)
 
     # --- 4. Block Input Processing for Certain Player States ---
     is_on_fire_visual = player.state in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame', 'deflame_crouch']
@@ -172,21 +177,19 @@ def process_player_input_logic(
                               (getattr(player, 'is_defrosting', False) and player.state == 'defrost')
     
     if is_fully_action_blocked:
-        if hasattr(player, 'acc') and hasattr(player.acc, 'setX'): player.acc.setX(0.0) # Stop horizontal acceleration
+        if hasattr(player, 'acc') and hasattr(player.acc, 'setX'): player.acc.setX(0.0) 
         if debug_this_frame: debug(f"{player_id_str} Input: Fully action blocked. State={player.state}")
-        # Only allow reset/pause if fully blocked
         return {"reset": action_events.get("reset", False), "pause": action_events.get("pause", False)}
 
-    # --- 5. Set Horizontal Acceleration based on Intent (if not blocked by other states) ---
+    # --- 5. Set Horizontal Acceleration based on Intent ---
     if hasattr(player, 'acc') and hasattr(player.acc, 'setX'):
         intended_accel_x = 0.0
         if player.is_trying_to_move_left and not player.is_trying_to_move_right:
             intended_accel_x = -C.PLAYER_ACCEL
-            # Turn animation logic if applicable (and not in a state that prevents turning)
             if player.facing_right and player.on_ground and not player.is_crouching and \
                not player.is_attacking and player.state in ['idle','run'] and not is_on_fire_visual:
                 set_player_state(player, 'turn')
-            player.facing_right = False # Set facing direction based on input
+            player.facing_right = False 
         elif player.is_trying_to_move_right and not player.is_trying_to_move_left:
             intended_accel_x = C.PLAYER_ACCEL
             if not player.facing_right and player.on_ground and not player.is_crouching and \
@@ -196,50 +199,45 @@ def process_player_input_logic(
         
         can_control_horizontal_movement = not (
             player.is_dashing or player.is_rolling or player.is_sliding or player.on_ladder or
-            (player.is_attacking and player.state.endswith('_nm')) or # No movement during no-movement attacks
-            player.state in ['turn','hit','death','death_nm','wall_hang','wall_slide', 'frozen', 'defrost'] # REMOVED wall_climb, wall_climb_nm
+            (player.is_attacking and player.state.endswith('_nm')) or 
+            player.state in ['turn','hit','death','death_nm','wall_hang','wall_slide', 'frozen', 'defrost']
         )
-        # If stunned by hit (and not on fire, which has its own movement), cannot control horizontal
         if player.is_taking_hit and not is_on_fire_visual and player.state == 'hit':
             can_control_horizontal_movement = False
 
         if can_control_horizontal_movement:
             accel_to_apply_x = intended_accel_x
-            # Modify acceleration if on fire
             if player.is_aflame: accel_to_apply_x *= getattr(C, 'PLAYER_AFLAME_ACCEL_MULTIPLIER', 1.0)
             elif player.is_deflaming: accel_to_apply_x *= getattr(C, 'PLAYER_DEFLAME_ACCEL_MULTIPLIER', 1.0)
             player.acc.setX(accel_to_apply_x)
-        # If cannot control horizontal (e.g. dashing), acc.x might be set by state logic or remain 0 if not set by input
-        # If player.acc.x was not set by intent and not blocked, it remains what it was (e.g. 0.0 from previous frame or physics)
     else:
-        warning(f"{player_id_str} Input: Player 'acc' attribute or 'setX' method missing!")
+        if input_print_limiter.can_print(f"player_acc_missing_{player_id_str}"): # Use can_print for this limiter
+            warning(f"{player_id_str} Input: Player 'acc' attribute or 'setX' method missing!")
 
     # --- 6. Ladder Movement (vertical only) ---
     if player.on_ladder:
-        if hasattr(player, 'acc') and hasattr(player.acc, 'setX'): player.acc.setX(0.0) # No horizontal accel on ladder
+        if hasattr(player, 'acc') and hasattr(player.acc, 'setX'): player.acc.setX(0.0) 
         if hasattr(player, 'vel') and hasattr(player.vel, 'setY'):
-            if player.is_holding_climb_ability_key: # Up key/input
+            if player.is_holding_climb_ability_key: 
                 player.vel.setY(-C.PLAYER_LADDER_CLIMB_SPEED)
-            elif player.is_holding_crouch_ability_key: # Down key/input
+            elif player.is_holding_crouch_ability_key: 
                 player.vel.setY(C.PLAYER_LADDER_CLIMB_SPEED)
             else:
-                player.vel.setY(0.0) # Stop vertical movement if no up/down ladder input
+                player.vel.setY(0.0) 
 
-    # --- 7. Process Discrete Action Events (Jump, Attack, etc.) ---
+    # --- 7. Process Discrete Action Events ---
     is_stunned_or_busy_for_general_actions = (player.is_taking_hit and current_time_ms - player.hit_timer < player.hit_duration) or \
                                      player.is_attacking or player.is_dashing or player.is_rolling or \
                                      player.is_sliding or player.state == 'turn'
 
-    # Crouching Logic
-    if action_events.get("crouch"): # This is a discrete "crouch button pressed" event
-        if player.is_crouching: # If already crouching, try to stand
+    if action_events.get("crouch"): 
+        if player.is_crouching: 
             if player.can_stand_up(platforms_list):
-                # Determine next state after uncrouching (respecting fire status)
                 next_state_after_uncrouch = ('burning' if player.is_aflame else \
                                             ('deflame' if player.is_deflaming else \
                                             ('run' if player_intends_horizontal_move else 'idle')))
                 set_player_state(player, next_state_after_uncrouch)
-        else: # If not crouching, try to crouch
+        else: 
             can_crouch_now = player.on_ground and not player.on_ladder and not player.is_sliding and \
                                not (player.is_dashing or player.is_rolling or player.is_attacking or \
                                     player.state in ['turn','hit','death','death_nm', 'frozen', 'defrost', 'jump'])
@@ -249,73 +247,63 @@ def process_player_input_logic(
                                        ('crouch_trans' if player.animations and player.animations.get('crouch_trans') else 'crouch')))
                 set_player_state(player, next_state_to_crouch)
     
-    # Uncrouch with "up" key if "jump" and "up" are the same mapping (typical for keyboard)
-    # This specific check is for keyboard where one key might serve multiple roles.
     if not is_pygame_joystick_input and action_events.get("up") and \
-       active_mappings.get("jump") == active_mappings.get("up"):
+       active_mappings.get("jump") == active_mappings.get("up"): 
         if player.is_crouching and player.can_stand_up(platforms_list):
             next_state_after_uncrouch_key = ('burning' if player.is_aflame else \
                                             ('deflame' if player.is_deflaming else \
                                             ('run' if player_intends_horizontal_move else 'idle')))
             set_player_state(player, next_state_after_uncrouch_key)
-            action_events["jump"] = False # Consume the jump event if 'up' was used to uncrouch
+            action_events["jump"] = False 
 
-    # Jump Logic
-    if action_events.get("jump"): # This is a discrete "jump button pressed" event
+    if action_events.get("jump"): 
         can_initiate_jump_action = not (player.is_attacking or player.is_dashing or
                                          player.is_rolling or player.is_sliding or
                                          player.state in ['turn', 'death', 'death_nm', 'frozen', 'defrost'])
-        # Further restrict if in hit stun (and not on fire, which has own movement)
         if not is_on_fire_visual:
             if player.state == 'hit': can_initiate_jump_action = False
             if player.is_taking_hit and (current_time_ms - player.hit_timer < player.hit_duration):
                 can_initiate_jump_action = False
         
         if can_initiate_jump_action:
-            can_actually_execute_jump = True
-            if player.is_crouching: # If crouching, must be able to stand to jump
+            can_actually_execute_jump = True 
+            if player.is_crouching: 
                 can_actually_execute_jump = player.can_stand_up(platforms_list)
-                if can_actually_execute_jump: # Uncrouch first if possible
+                if can_actually_execute_jump: 
                     player_intends_move_after_uncrouch = player.is_trying_to_move_left or player.is_trying_to_move_right
                     next_state_after_uncrouch_for_jump = ('burning' if player.is_aflame else \
                                                           ('deflame' if player.is_deflaming else \
                                                           ('run' if player_intends_move_after_uncrouch else 'idle')))
                     set_player_state(player, next_state_after_uncrouch_for_jump)
             
-            if can_actually_execute_jump: # If not crouching, or could stand from crouch
+            if can_actually_execute_jump: 
                 if player.on_ground:
                     player.vel.setY(C.PLAYER_JUMP_STRENGTH); set_player_state(player, 'jump'); player.on_ground = False
                 elif player.on_ladder:
-                    player.vel.setY(C.PLAYER_JUMP_STRENGTH * 0.8)
-                    player.vel.setX(C.PLAYER_RUN_SPEED_LIMIT * 0.5 * (1 if player.facing_right else -1))
+                    player.vel.setY(C.PLAYER_JUMP_STRENGTH * 0.8) 
+                    player.vel.setX(C.PLAYER_RUN_SPEED_LIMIT * 0.5 * (1 if player.facing_right else -1)) 
                     player.on_ladder = False; set_player_state(player, 'jump')
-                elif player.can_wall_jump and player.touching_wall != 0: # Wall Jump
+                elif player.can_wall_jump and player.touching_wall != 0: 
                     player.vel.setY(C.PLAYER_JUMP_STRENGTH)
-                    player.vel.setX(C.PLAYER_RUN_SPEED_LIMIT * 1.5 * (-player.touching_wall)) # Push off wall
-                    player.facing_right = not player.facing_right # Turn
+                    player.vel.setX(C.PLAYER_RUN_SPEED_LIMIT * 1.5 * (-player.touching_wall)) 
+                    player.facing_right = not player.facing_right 
                     set_player_state(player, 'jump')
                     player.can_wall_jump = False; player.touching_wall = 0
-                    # player.wall_climb_timer = 0 # No longer exists
 
-    # Other Abilities (Attack, Dash, Roll, Interact, Projectiles)
     can_perform_other_abilities_now = not is_on_fire_visual and not is_stunned_or_busy_for_general_actions
 
-    if action_events.get("attack1") and can_perform_other_abilities_now:
-        set_player_state(player, 'attack') # Player.set_state will handle crouch_attack etc.
-    if action_events.get("attack2") and can_perform_other_abilities_now:
-        set_player_state(player, 'attack2')
-    if action_events.get("dash") and can_perform_other_abilities_now and player.on_ground and not player.is_crouching:
-        set_player_state(player, 'dash')
-    if action_events.get("roll") and can_perform_other_abilities_now and player.on_ground and not player.is_crouching:
-        set_player_state(player, 'roll')
+    if action_events.get("attack1") and can_perform_other_abilities_now: set_player_state(player, 'attack') 
+    if action_events.get("attack2") and can_perform_other_abilities_now: set_player_state(player, 'attack2')
+    if action_events.get("dash") and can_perform_other_abilities_now and player.on_ground and not player.is_crouching: set_player_state(player, 'dash')
+    if action_events.get("roll") and can_perform_other_abilities_now and player.on_ground and not player.is_crouching: set_player_state(player, 'roll')
     
-    if action_events.get("interact") and not is_on_fire_visual: # Interact not blocked by "busy" as much
+    if action_events.get("interact") and not is_on_fire_visual: 
         if player.can_grab_ladder and not player.on_ladder:
-            set_player_state(player, 'ladder_idle') # Handles setting on_ladder=True
+            set_player_state(player, 'ladder_idle') 
         elif player.on_ladder:
-            set_player_state(player, 'fall' if not player.on_ground else 'idle') # Handles on_ladder=False
+            set_player_state(player, 'fall' if not player.on_ground else 'idle') 
 
-    if can_perform_other_abilities_now: # Projectiles
+    if can_perform_other_abilities_now: 
         if action_events.get("projectile1") and hasattr(player, 'fire_fireball'): player.fire_fireball()
         if action_events.get("projectile2") and hasattr(player, 'fire_poison'): player.fire_poison()
         if action_events.get("projectile3") and hasattr(player, 'fire_bolt'): player.fire_bolt()
@@ -324,50 +312,45 @@ def process_player_input_logic(
         if action_events.get("projectile6") and hasattr(player, 'fire_shadow'): player.fire_shadow()
         if action_events.get("projectile7") and hasattr(player, 'fire_grey'): player.fire_grey()
 
-    # --- 8. Final State Transitions based on Movement/Environment (if not in an overriding action) ---
+    # --- 8. Final State Transitions based on Movement/Environment ---
     is_in_non_interruptible_action_by_movement = player.is_attacking or player.is_dashing or \
                                                  player.is_rolling or player.is_sliding or \
                                                  player.is_taking_hit or player.state in [
                                                      'jump','turn','death','death_nm','hit','jump_fall_trans',
                                                      'crouch_trans', 'slide_trans_start','slide_trans_end',
-                                                     'wall_hang','wall_slide', # REMOVED 'wall_climb','wall_climb_nm'
+                                                     'wall_hang','wall_slide',
                                                      'ladder_idle','ladder_climb', 'frozen', 'defrost',
                                                      'petrified', 'smashed'
                                                  ]
 
-    if not is_in_non_interruptible_action_by_movement or is_on_fire_visual:
+    if not is_in_non_interruptible_action_by_movement or is_on_fire_visual: 
         if player.on_ladder:
             if abs(player.vel.y()) > 0.1 and player.state != 'ladder_climb': set_player_state(player, 'ladder_climb')
             elif abs(player.vel.y()) <= 0.1 and player.state != 'ladder_idle': set_player_state(player, 'ladder_idle')
         elif player.on_ground:
-            if player.is_crouching: # Includes aflame_crouch, deflame_crouch via earlier state adjustment
+            if player.is_crouching: 
                 crouch_prefix = 'burning' if player.is_aflame else ('deflame' if player.is_deflaming else '')
                 target_crouch_state = (crouch_prefix + ('_crouch' if crouch_prefix else ('crouch_walk' if player_intends_horizontal_move else 'crouch')) )
                 if player.state != target_crouch_state and player.animations and player.animations.get(target_crouch_state):
                     set_player_state(player, target_crouch_state)
-            elif player_intends_horizontal_move:
+            elif player_intends_horizontal_move: 
                 target_run_state = ('burning' if player.is_aflame else ('deflame' if player.is_deflaming else 'run'))
                 if player.state != target_run_state and player.animations and player.animations.get(target_run_state):
                     set_player_state(player, target_run_state)
-            else: # Standing still on ground
+            else: 
                 target_idle_state = ('burning' if player.is_aflame else ('deflame' if player.is_deflaming else 'idle'))
                 if player.state != target_idle_state and player.animations and player.animations.get(target_idle_state):
                     set_player_state(player, target_idle_state)
         else: # In air, not on ladder
-            # REMOVED WALL CLIMB BLOCK
-            # if player.touching_wall != 0 and not player.is_dashing and not player.is_rolling and not is_on_fire_visual:
-            #     # Wall slide logic (no climb)
-            #     if player.vel.y() > C.PLAYER_WALL_SLIDE_SPEED * 0.5 : # Sliding down
-            #         if player.state != 'wall_slide': set_player_state(player, 'wall_slide'); player.can_wall_jump = True
-            #     # else: # Not sliding fast enough, could be wall_hang if implemented or just fall
-            #     # For now, if not actively sliding, it will fall into the 'fall' state below
-            #     # unless wall_hang is specifically set.
-            if player.vel.y() > getattr(C, 'MIN_SIGNIFICANT_FALL_VEL', 1.0) and \
-               player.state not in ['jump','jump_fall_trans']: # If falling significantly
+            if player.touching_wall != 0 and not player.is_dashing and not player.is_rolling and not is_on_fire_visual:
+                if player.vel.y() > C.PLAYER_WALL_SLIDE_SPEED * 0.5 : 
+                    if player.state != 'wall_slide': set_player_state(player, 'wall_slide'); player.can_wall_jump = True
+            elif player.vel.y() > getattr(C, 'MIN_SIGNIFICANT_FALL_VEL', 1.0) and \
+               player.state not in ['jump','jump_fall_trans']: 
                 target_fall_state = ('burning' if player.is_aflame else ('deflame' if player.is_deflaming else 'fall'))
                 if player.state != target_fall_state and player.animations and player.animations.get(target_fall_state):
                     set_player_state(player, target_fall_state)
-            elif player.state not in ['jump','jump_fall_trans','fall'] and not is_on_fire_visual and player.state != 'idle': # Fallback to idle if airborne but not distinctly falling/jumping
+            elif player.state not in ['jump','jump_fall_trans','fall', 'wall_slide', 'wall_hang'] and not is_on_fire_visual and player.state != 'idle': 
                 set_player_state(player, 'idle')
 
     if debug_this_frame and input_print_limiter.can_print(f"p_input_final_{player.player_id}"):
