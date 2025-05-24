@@ -1,3 +1,5 @@
+#################### START OF FILE: enemy.py ####################
+
 # enemy.py
 # -*- coding: utf-8 -*-
 ## version 2.0.3 (Add properties to __init__ and pass to super)
@@ -30,7 +32,8 @@ try:
     from enemy_ai_handler import enemy_ai_update, set_enemy_new_patrol_target
     from enemy_combat_handler import check_enemy_attack_collisions, enemy_take_damage
     from enemy_network_handler import get_enemy_network_data, set_enemy_network_data
-    from enemy_state_handler import set_enemy_state
+    # MODIFIED IMPORT: Changed from 'from enemy_state_handler import set_enemy_state'
+    import enemy_state_handler
     from enemy_animation_handler import update_enemy_animation
     from enemy_status_effects import (
         update_enemy_status_effects,
@@ -83,7 +86,10 @@ class Enemy(EnemyBase):
     def get_network_data(self): return get_enemy_network_data(self)
     def set_network_data(self, received_network_data): set_enemy_network_data(self, received_network_data)
 
-    def set_state(self, new_state: str): set_enemy_state(self, new_state)
+    def set_state(self, new_state: str):
+        # MODIFIED CALL: Use qualified name
+        enemy_state_handler.set_enemy_state(self, new_state)
+
     def animate(self): update_enemy_animation(self)
 
     def update(self, dt_sec: float, players_list_for_logic: list,
@@ -152,7 +158,10 @@ class Enemy(EnemyBase):
         if self._valid_init:
             if hasattr(self, 'pos') and hasattr(self, 'rect'): # Ensure necessary for patrol target
                  set_enemy_new_patrol_target(self)
-            set_enemy_state(self, 'idle')
+            # MODIFIED CALL: Use qualified name
+            enemy_state_handler.set_enemy_state(self, 'idle')
             debug(f"Enemy (ID: {self.enemy_id}) fully reset. State: {getattr(self, 'state', 'N/A')}, AI State: {getattr(self, 'ai_state', 'N/A')}")
         else:
             warning(f"Enemy (ID: {self.enemy_id}): Reset called, but _valid_init is False. State not fully reset.")
+
+#################### END OF FILE: enemy.py ####################

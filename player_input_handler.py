@@ -42,17 +42,16 @@ def process_player_input_logic(
     joystick_data: Optional[Dict[str, Any]] = None
 ) -> Dict[str, bool]:
     if not hasattr(player, '_valid_init') or not player._valid_init:
-        # Corrected call to PrintLimiter's method (assuming it was intended to be can_print or a similar existing method)
-        # If can_log was a custom method, ensure it's defined in PrintLimiter.
-        # For now, using can_print as it's a common pattern for these limiters.
-        if input_print_limiter.can_print(f"invalid_player_input_handler_{getattr(player, 'player_id', 'unknown')}skip"):
+        # MODIFIED: Changed from can_print to can_log
+        if input_print_limiter.can_log(f"invalid_player_input_handler_{getattr(player, 'player_id', 'unknown')}skip"):
             warning(f"PlayerInputHandler: Skipping input for invalid player instance (ID: {getattr(player, 'player_id', 'unknown')}).")
         return {}
 
     current_time_ms = get_input_handler_ticks()
     player_id_str = f"P{player.player_id}"
     
-    debug_this_frame = input_print_limiter.can_print(f"input_proc_tick_{player_id_str}")
+    # MODIFIED: Changed from can_print to can_log
+    debug_this_frame = input_print_limiter.can_log(f"input_proc_tick_{player_id_str}")
 
     is_pygame_joystick_input = player.control_scheme and player.control_scheme.startswith("joystick_pygame_")
     action_events: Dict[str, bool] = {action: False for action in game_config.GAME_ACTIONS}
@@ -72,7 +71,8 @@ def process_player_input_logic(
                 elif action_name == "up": player.is_holding_climb_ability_key = True 
                 elif action_name == "down": player.is_holding_crouch_ability_key = True
         
-        if debug_this_frame and input_print_limiter.can_print(f"kbd_intent_{player.player_id}"):
+        # MODIFIED: Changed from can_print to can_log
+        if debug_this_frame and input_print_limiter.can_log(f"kbd_intent_{player.player_id}"):
             debug(f"{player_id_str} Kbd Intent: L={player.is_trying_to_move_left}, R={player.is_trying_to_move_right}, U={player.is_holding_climb_ability_key}, D={player.is_holding_crouch_ability_key}")
 
         for event_type, key_code_from_event, _is_auto_repeat in qt_key_event_data_this_frame:
@@ -146,7 +146,8 @@ def process_player_input_logic(
                         if action_name == "down": action_events["crouch"] = True
                     player._prev_discrete_axis_hat_state[hat_event_key] = is_hat_held_active
         
-        if debug_this_frame and input_print_limiter.can_print(f"joy_intent_{player.player_id}"):
+        # MODIFIED: Changed from can_print to can_log
+        if debug_this_frame and input_print_limiter.can_log(f"joy_intent_{player.player_id}"):
             debug(f"{player_id_str} Joy Intent: L={player.is_trying_to_move_left}, R={player.is_trying_to_move_right}, U={player.is_holding_climb_ability_key}, D={player.is_holding_crouch_ability_key}")
 
     player_intends_horizontal_move = player.is_trying_to_move_left or player.is_trying_to_move_right
@@ -211,7 +212,8 @@ def process_player_input_logic(
             elif player.is_deflaming: accel_to_apply_x *= getattr(C, 'PLAYER_DEFLAME_ACCEL_MULTIPLIER', 1.0)
             player.acc.setX(accel_to_apply_x)
     else:
-        if input_print_limiter.can_print(f"player_acc_missing_{player_id_str}"): # Use can_print for this limiter
+        # MODIFIED: Changed from can_print to can_log
+        if input_print_limiter.can_log(f"player_acc_missing_{player_id_str}"):
             warning(f"{player_id_str} Input: Player 'acc' attribute or 'setX' method missing!")
 
     # --- 6. Ladder Movement (vertical only) ---
@@ -266,16 +268,12 @@ def process_player_input_logic(
                 can_initiate_jump_action = False
         
         if can_initiate_jump_action:
-            can_actually_execute_jump = True 
-            if player.is_crouching: 
-                can_actually_execute_jump = player.can_stand_up(platforms_list)
-                if can_actually_execute_jump: 
-                    player_intends_move_after_uncrouch = player.is_trying_to_move_left or player.is_trying_to_move_right
-                    next_state_after_uncrouch_for_jump = ('burning' if player.is_aflame else \
-                                                          ('deflame' if player.is_deflaming else \
-                                                          ('run' if player_intends_move_after_uncrouch else 'idle')))
-                    set_player_state(player, next_state_after_uncrouch_for_jump)
-            
+            can_actually_execute_jump = not player.is_crouching or \
+                (hasattr(player, 'can_stand_up') and player.can_stand_up(platforms_list))
+            if player.is_crouching and can_actually_execute_jump: 
+                 player.is_crouching = False
+                 if player.is_aflame: set_player_state(player, 'burning')
+                 elif player.is_deflaming: set_player_state(player, 'deflame')
             if can_actually_execute_jump: 
                 if player.on_ground:
                     player.vel.setY(C.PLAYER_JUMP_STRENGTH); set_player_state(player, 'jump'); player.on_ground = False
@@ -288,7 +286,7 @@ def process_player_input_logic(
                     player.vel.setX(C.PLAYER_RUN_SPEED_LIMIT * 1.5 * (-player.touching_wall)) 
                     player.facing_right = not player.facing_right 
                     set_player_state(player, 'jump')
-                    player.can_wall_jump = False; player.touching_wall = 0
+                    player.can_wall_jump = False; player.touching_wall = 0; player.wall_climb_timer = 0
 
     can_perform_other_abilities_now = not is_on_fire_visual and not is_stunned_or_busy_for_general_actions
 
@@ -353,7 +351,8 @@ def process_player_input_logic(
             elif player.state not in ['jump','jump_fall_trans','fall', 'wall_slide', 'wall_hang'] and not is_on_fire_visual and player.state != 'idle': 
                 set_player_state(player, 'idle')
 
-    if debug_this_frame and input_print_limiter.can_print(f"p_input_final_{player.player_id}"):
+    # MODIFIED: Changed from can_print to can_log
+    if debug_this_frame and input_print_limiter.can_log(f"p_input_final_{player.player_id}"):
         active_events_str = ", ".join([f"{k.replace('_pressed_event','')}" for k, v in action_events.items() if v and k not in ["left","right","up","down"]])
         debug(f"{player_id_str} InputHandler Final: state='{player.state}', "
               f"is_trying_L/R=({player.is_trying_to_move_left}/{player.is_trying_to_move_right}), "

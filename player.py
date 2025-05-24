@@ -1,3 +1,5 @@
+#################### START OF FILE: player.py ####################
+
 # player.py
 # -*- coding: utf-8 -*-
 """
@@ -10,7 +12,7 @@ Collision rect is now tighter than visual sprite.
 can_stand_up logic improved.
 Corrected camera.apply usage in draw_pyside.
 """
-# version 2.1.4 (Corrected camera.apply usage in draw_pyside)
+# version 2.1.4 (Corrected camera.apply usage in draw_pyside) # Updated to 2.1.5
 
 import os
 import sys
@@ -315,17 +317,20 @@ class Player:
             active_mappings = getattr(game_config, f"P{player_id_for_map_get}_MAPPINGS", game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS)
         else:
             active_mappings = game_config.P1_MAPPINGS if self.player_id == 1 else game_config.P2_MAPPINGS
-            if Player.print_limiter.can_print(f"p_input_scheme_fallback_{self.player_id}"): 
+            # MODIFIED: Changed from can_print to can_log
+            if Player.print_limiter.can_log(f"p_input_scheme_fallback_{self.player_id}"): 
                 warning(f"Player {self.player_id}: Unrecognized control_scheme '{self.control_scheme}'. Using default keyboard map.")
         return process_player_input_logic(self, qt_keys_held_snapshot, qt_key_event_data_this_frame, active_mappings, platforms_list, joystick_data_for_handler)
 
     def _generic_fire_projectile(self, projectile_class: type, cooldown_attr_name: str, cooldown_const: int, projectile_config_name: str):
         if not self._valid_init or self.is_dead or not self._alive or self.is_petrified or self.is_frozen or self.is_defrosting: return
         if self.game_elements_ref_for_projectiles is None:
-            if Player.print_limiter.can_print(f"proj_fire_no_game_elements_{self.player_id}"): warning(f"Player {self.player_id}: game_elements_ref_for_projectiles not set. Cannot fire {projectile_config_name}."); return
+            # MODIFIED: Changed from can_print to can_log
+            if Player.print_limiter.can_log(f"proj_fire_no_game_elements_{self.player_id}"): warning(f"Player {self.player_id}: game_elements_ref_for_projectiles not set. Cannot fire {projectile_config_name}."); return
         projectiles_list_ref = self.game_elements_ref_for_projectiles.get("projectiles_list"); all_renderables_ref = self.game_elements_ref_for_projectiles.get("all_renderable_objects")
         if projectiles_list_ref is None or all_renderables_ref is None:
-            if Player.print_limiter.can_print(f"proj_fire_list_missing_{self.player_id}"): warning(f"Player {self.player_id}: Projectile or renderable list missing. Cannot fire {projectile_config_name}."); return
+            # MODIFIED: Changed from can_print to can_log
+            if Player.print_limiter.can_log(f"proj_fire_list_missing_{self.player_id}"): warning(f"Player {self.player_id}: Projectile or renderable list missing. Cannot fire {projectile_config_name}."); return
         current_time_ms = get_current_ticks_monotonic(); last_fire_time = getattr(self, cooldown_attr_name, 0)
         if current_time_ms - last_fire_time >= cooldown_const:
             setattr(self, cooldown_attr_name, current_time_ms)
@@ -340,7 +345,8 @@ class Player:
             spawn_x += norm_x * offset_dist; spawn_y += norm_y * offset_dist
             new_projectile = projectile_class(spawn_x, spawn_y, aim_dir, self); new_projectile.game_elements_ref = self.game_elements_ref_for_projectiles
             projectiles_list_ref.append(new_projectile); all_renderables_ref.append(new_projectile)
-            if Player.print_limiter.can_print(f"fired_{projectile_config_name}_{self.player_id}"): 
+            # MODIFIED: Changed from can_print to can_log
+            if Player.print_limiter.can_log(f"fired_{projectile_config_name}_{self.player_id}"): 
                 debug(f"Player {self.player_id} fired {projectile_config_name} at ({spawn_x:.1f},{spawn_y:.1f}) dir ({aim_dir.x():.1f},{aim_dir.y():.1f})")
             if projectile_config_name == 'blood' and self.current_health > 0:
                 self.current_health -= self.current_health * 0.05 
@@ -384,38 +390,20 @@ class Player:
 
         if not should_draw: return
         
-        # Pass the player's collision rect (self.rect) to the camera's apply method.
-        # camera.apply() is expected to return a QRectF representing the rect on screen.
         collision_rect_on_screen: QRectF = camera.apply(self.rect)
         
         if not painter.window().intersects(collision_rect_on_screen.toRect()):
-            return # Cull if the collision rect is not visible
+            return 
 
         visual_sprite_width = float(self.image.width())
         visual_sprite_height = float(self.image.height())
         
-        # Calculate the top-left position for drawing the visual sprite (self.image)
-        # so its visual bottom aligns with the collision_rect_on_screen's bottom,
-        # and it's horizontally centered over the collision_rect_on_screen.
         draw_x_visual = collision_rect_on_screen.center().x() - (visual_sprite_width / 2.0)
         draw_y_visual = collision_rect_on_screen.bottom() - visual_sprite_height 
         
         draw_pos_visual = QPointF(draw_x_visual, draw_y_visual)
 
         painter.drawPixmap(draw_pos_visual, self.image)
-
-        # Optional: Draw collision rect for debugging
-        # debug_draw_player_rects_flag = getattr(C, "DEBUG_DRAW_PLAYER_RECTS", False)
-        # if debug_draw_player_rects_flag:
-        #     debug_pen_color = QColor(255, 0, 0, 150) # Red, semi-transparent
-        #     if self.player_id == 2: debug_pen_color = QColor(0, 255, 0, 150) # Green for P2
-        #     elif self.player_id == 3: debug_pen_color = QColor(0, 0, 255, 150) # Blue for P3
-        #     elif self.player_id == 4: debug_pen_color = QColor(255, 255, 0, 150) # Yellow for P4
-            
-        #     pen = QPen(debug_pen_color); pen.setWidth(1)
-        #     painter.setPen(pen); painter.setBrush(Qt.BrushStyle.NoBrush)
-        #     painter.drawRect(collision_rect_on_screen)
-
 
     def update_status_effects(self, current_time_ms: int):
         if self.is_aflame:
@@ -483,3 +471,5 @@ class Player:
     def get_network_data(self) -> Dict[str, Any]: return get_player_network_data(self)
     def set_network_data(self, network_data: Dict[str, Any]): set_player_network_data(self, network_data)
     def handle_network_input(self, received_input_data_dict: Dict[str, Any]): handle_player_network_input(self, received_input_data_dict)
+
+#################### END OF FILE: player.py ####################
