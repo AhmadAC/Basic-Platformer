@@ -1,7 +1,7 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.4 (Added BackgroundTile category and examples)
+## version 2.0.5 (Added Player 3 and Player 4 spawn assets and editable variables)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 """
 import sys
@@ -32,9 +32,13 @@ except ImportError as e:
         MAGENTA = (255, 0, 255)
         PURPLE_BACKGROUND = (75,0,130)
         MAPS_DIR = "maps" 
-        EDITOR_SCREEN_INITIAL_WIDTH = 1000
+        EDITOR_SCREEN_INITIAL_WIDTH = 1000 # Default if not in C
         LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
         GAME_LEVEL_FILE_EXTENSION = ".py"
+        # Default player properties if C is missing them
+        PLAYER_MAX_HEALTH = 100
+        PLAYER_RUN_SPEED_LIMIT = 7.0
+        PLAYER_JUMP_STRENGTH = -15.0
     C = FallbackConstants()
     print("CRITICAL editor_config.py: Using fallback constants. Ensure TILE_SIZE matches your game.")
 except Exception as e_gen:
@@ -97,6 +101,8 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Spawns
     "player1_spawn": {"source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn", "category": "spawn", "name_in_palette": "Player 1 Spawn"},
     "player2_spawn": {"source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn", "category": "spawn", "name_in_palette": "Player 2 Spawn"},
+    "player3_spawn": {"source_file": "characters/player3/__Idle.gif", "game_type_id": "player3_spawn", "category": "spawn", "name_in_palette": "Player 3 Spawn"}, # NEW
+    "player4_spawn": {"source_file": "characters/player4/__Idle.gif", "game_type_id": "player4_spawn", "category": "spawn", "name_in_palette": "Player 4 Spawn"}, # NEW
     # Enemies
     "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_gray", "category": "enemy", "name_in_palette": "Enemy Gray"},
     "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "category": "enemy", "name_in_palette": "Enemy Green"},
@@ -139,7 +145,6 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
         "category": "background_tile", 
         "name_in_palette": "BG Sky Blue (10x10)"
     },
-    # Example: "background_forest_image": {"source_file": "characters/assets/backgrounds/forest_tile.png", "original_size_pixels": (256, 256), "game_type_id": "background_forest_image", "category": "background_tile", "name_in_palette": "Forest BG Tile"},
     # Tools
     "tool_eraser": {"icon_type": "eraser", "base_color_tuple": getattr(C, 'RED', (255,0,0)), "game_type_id": "tool_eraser", "category": "tool", "name_in_palette": "Eraser Tool"},
     "platform_wall_gray_2x2_placer": {"icon_type": "2x2_placer", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "places_asset_key": "platform_wall_gray", "game_type_id": "tool_wall_2x2_placer", "category": "tool", "name_in_palette": "2x2 Wall Placer"},
@@ -154,10 +159,20 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"}, 
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"} 
     },
-    "player2_spawn": {
+    "player2_spawn": { # Assuming P2 has same editable props as P1 by default
         "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"},
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"}
+    },
+    "player3_spawn": { # NEW: P3 spawn properties
+        "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health (P3)"},
+        "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (P3)"},
+        "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (P3)"}
+    },
+    "player4_spawn": { # NEW: P4 spawn properties
+        "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health (P4)"},
+        "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (P4)"},
+        "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (P4)"}
     },
     "enemy_green": {
         "patrol_range_tiles": {"type": "int", "default": 6, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"},
@@ -194,7 +209,6 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "object_stone_crouch": {
         "is_passable_from_below": {"type": "bool", "default": False, "label": "Passable From Below"}
     },
-    # Add properties for background tiles if needed, e.g., parallax scroll speed
     "background_dark_fill": {
         "parallax_factor_x": {"type": "float", "default": 0.8, "min": 0.0, "max": 2.0, "decimals": 2, "label": "Parallax X"},
         "parallax_factor_y": {"type": "float", "default": 0.9, "min": 0.0, "max": 2.0, "decimals": 2, "label": "Parallax Y"},
@@ -203,9 +217,6 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "parallax_factor_x": {"type": "float", "default": 0.5, "min": 0.0, "max": 2.0, "decimals": 2, "label": "Parallax X"},
         "parallax_factor_y": {"type": "float", "default": 0.7, "min": 0.0, "max": 2.0, "decimals": 2, "label": "Parallax Y"},
     },
-    # "background_forest_image": {
-    #     "layer_depth": {"type": "int", "default": -10, "min": -100, "max": 0, "label": "Layer Depth (Z-order)"}
-    # }
 }
 
 # --- Map Defaults ---
