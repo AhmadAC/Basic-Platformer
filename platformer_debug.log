@@ -1,10 +1,2 @@
-[2025-05-24 21:41:53.977] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-24 21:41:53.977] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
-[2025-05-24 21:41:54.162] DEBUG   logger.py:143 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
-[2025-05-24 21:41:54.192] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
-[2025-05-24 21:41:54.195] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 1.
-[2025-05-24 21:41:54.196] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
-[2025-05-24 21:41:54.207] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
-[2025-05-24 21:41:54.208] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
-[2025-05-24 21:41:55.070] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: editor
-[2025-05-24 21:41:55.071] INFO    logger.py:143 (_log_wrapper): UI_VIEWS: Creating editor instance.
+[2025-05-24 21:52:53.878] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-24 21:52:53.878] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.

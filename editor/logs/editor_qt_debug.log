@@ -1,9 +1,622 @@
-2025-05-24 21:41:55,122 - INFO - editor.py:140 - <module> - Editor session started. Logging initialized successfully to 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\logs\editor_qt_debug.log'. Imports via: Relative (as package) with absolute main_game_config
-2025-05-24 21:41:55,123 - INFO - editor.py:705 - editor_main - editor_main(). Embed:True, StandaloneCtx:False
-2025-05-24 21:41:55,124 - INFO - editor.py:165 - __init__ - Initializing EditorMainWindow... Embedded: True
-2025-05-24 21:41:55,124 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState for PySide6...
-2025-05-24 21:41:55,124 - DEBUG - editor_state.py:57 - __init__ - EditorState initialized.
-2025-05-24 21:41:55,124 - DEBUG - editor.py:232 - init_ui - Initializing UI components...
-2025-05-24 21:41:55,125 - DEBUG - map_view_widget.py:301 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-24 21:41:55,125 - DEBUG - map_view_widget.py:286 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-24 21:41:55,125 - DEBUG - map_view_widget.py:298 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-24 21:52:54,101 - INFO - editor.py:134 - <module> - Editor session started. Logging initialized successfully to 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor\logs\editor_qt_debug.log'. Imports via: Absolute (from editor.*)
+2025-05-24 21:52:54,102 - INFO - editor.py:1016 - editor_main - Standalone mode: Changed CWD to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor
+2025-05-24 21:52:54,102 - INFO - editor.py:1020 - editor_main - editor_main() called. Embed mode: False, Standalone context: True
+2025-05-24 21:52:54,128 - DEBUG - editor.py:1028 - editor_main - New QApplication instance created for standalone editor.
+2025-05-24 21:52:54,128 - INFO - editor.py:181 - __init__ - Initializing EditorMainWindow... Embedded: False
+2025-05-24 21:52:54,129 - DEBUG - editor_state.py:19 - __init__ - Initializing EditorState for PySide6...
+2025-05-24 21:52:54,129 - DEBUG - editor_state.py:57 - __init__ - EditorState initialized.
+2025-05-24 21:52:54,129 - DEBUG - editor.py:263 - init_ui - Initializing UI components...
+2025-05-24 21:52:54,140 - DEBUG - map_view_widget.py:291 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-24 21:52:54,140 - DEBUG - map_view_widget.py:274 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-24 21:52:54,141 - DEBUG - map_view_widget.py:288 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-24 21:52:54,166 - DEBUG - map_view_widget.py:315 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-24 21:52:54,166 - DEBUG - map_view_widget.py:160 - __init__ - MapViewWidget initialized.
+2025-05-24 21:52:54,353 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-24 21:52:54,357 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
+2025-05-24 21:52:54,357 - INFO - minimap_widget.py:52 - __init__ - MinimapWidget initialized. Update interval: 50ms.
+2025-05-24 21:52:54,359 - DEBUG - editor.py:316 - init_ui - UI components initialized.
+2025-05-24 21:52:54,360 - DEBUG - editor.py:520 - create_actions - Creating actions...
+2025-05-24 21:52:54,366 - DEBUG - editor.py:547 - create_actions - Actions created.
+2025-05-24 21:52:54,366 - DEBUG - editor.py:550 - create_menus - Creating menus...
+2025-05-24 21:52:54,372 - DEBUG - editor.py:587 - create_menus - Menus created.
+2025-05-24 21:52:54,372 - DEBUG - editor.py:590 - create_status_bar - Creating status bar...
+2025-05-24 21:52:54,374 - DEBUG - editor.py:599 - create_status_bar - Status bar created.
+2025-05-24 21:52:54,374 - INFO - editor_assets.py:208 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-24 21:52:54,374 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: player1_spawn
+2025-05-24 21:52:54,374 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player1_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
+2025-05-24 21:52:54,379 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,381 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,382 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,383 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'player1_spawn'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,383 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'player1_spawn' determined as: 21x38
+2025-05-24 21:52:54,383 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player1_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
+2025-05-24 21:52:54,384 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,384 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,384 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,386 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'player1_spawn' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,386 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'player1_spawn' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,386 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'player1_spawn' at native size: 21x38
+2025-05-24 21:52:54,386 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player1_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'
+2025-05-24 21:52:54,386 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,386 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player1\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,386 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,386 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'player1_spawn'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,391 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'player1_spawn' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,391 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: player2_spawn
+2025-05-24 21:52:54,391 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player2_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
+2025-05-24 21:52:54,392 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,392 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,392 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,392 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'player2_spawn'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,393 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'player2_spawn' determined as: 21x38
+2025-05-24 21:52:54,393 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player2_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
+2025-05-24 21:52:54,393 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,393 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,393 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,393 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'player2_spawn' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,393 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'player2_spawn' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,393 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'player2_spawn' at native size: 21x38
+2025-05-24 21:52:54,394 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player2_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'
+2025-05-24 21:52:54,394 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,394 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player2\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,394 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,394 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'player2_spawn'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,394 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'player2_spawn' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,394 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: player3_spawn
+2025-05-24 21:52:54,394 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player3_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'
+2025-05-24 21:52:54,395 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,395 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,395 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,395 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'player3_spawn'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'player3_spawn' determined as: 21x38
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player3_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'player3_spawn' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'player3_spawn' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'player3_spawn' at native size: 21x38
+2025-05-24 21:52:54,396 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player3_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'
+2025-05-24 21:52:54,397 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,397 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player3\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,397 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,397 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'player3_spawn'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,397 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'player3_spawn' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,397 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: player4_spawn
+2025-05-24 21:52:54,397 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player4_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'
+2025-05-24 21:52:54,398 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,398 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,398 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,398 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'player4_spawn'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,398 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'player4_spawn' determined as: 21x38
+2025-05-24 21:52:54,398 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player4_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'
+2025-05-24 21:52:54,398 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'player4_spawn' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'player4_spawn' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'player4_spawn' at native size: 21x38
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'player4_spawn' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\player4\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'player4_spawn'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'player4_spawn' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,399 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: enemy_gray
+2025-05-24 21:52:54,400 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_gray' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
+2025-05-24 21:52:54,400 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,400 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,400 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,400 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_gray'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'enemy_gray' determined as: 21x38
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_gray' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'enemy_gray' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'enemy_gray' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'enemy_gray' at native size: 21x38
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_gray' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'
+2025-05-24 21:52:54,402 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,403 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\gray\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,403 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,403 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_gray'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,403 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'enemy_gray' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,403 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: enemy_green
+2025-05-24 21:52:54,403 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_green' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
+2025-05-24 21:52:54,404 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,404 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,404 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,404 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_green'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'enemy_green' determined as: 21x38
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_green' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'enemy_green' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'enemy_green' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'enemy_green' at native size: 21x38
+2025-05-24 21:52:54,405 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_green' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'
+2025-05-24 21:52:54,406 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,406 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\green\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,406 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,406 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_green'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,406 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'enemy_green' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,406 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: enemy_pink
+2025-05-24 21:52:54,406 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_pink' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_pink'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'enemy_pink' determined as: 21x38
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_pink' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'enemy_pink' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'enemy_pink' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'enemy_pink' at native size: 21x38
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_pink' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'
+2025-05-24 21:52:54,407 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,408 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\pink\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,408 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,408 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_pink'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,408 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'enemy_pink' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,408 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: enemy_purple
+2025-05-24 21:52:54,408 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_purple' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
+2025-05-24 21:52:54,409 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,409 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,409 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,409 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_purple'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,409 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'enemy_purple' determined as: 21x38
+2025-05-24 21:52:54,409 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_purple' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
+2025-05-24 21:52:54,409 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,409 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,410 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,410 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'enemy_purple' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,410 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'enemy_purple' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,410 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'enemy_purple' at native size: 21x38
+2025-05-24 21:52:54,410 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_purple' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'
+2025-05-24 21:52:54,411 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,411 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\purple\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,411 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,411 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_purple'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,411 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'enemy_purple' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,411 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: enemy_orange
+2025-05-24 21:52:54,411 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_orange' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
+2025-05-24 21:52:54,412 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,412 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,412 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,412 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_orange'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,412 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'enemy_orange' determined as: 21x38
+2025-05-24 21:52:54,412 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_orange' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
+2025-05-24 21:52:54,412 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'enemy_orange' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'enemy_orange' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'enemy_orange' at native size: 21x38
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_orange' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\orange\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_orange'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'enemy_orange' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,413 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: enemy_yellow
+2025-05-24 21:52:54,414 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_yellow' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
+2025-05-24 21:52:54,414 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,414 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,414 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,414 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_yellow'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'enemy_yellow' determined as: 21x38
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_yellow' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'enemy_yellow' from PySide6.QtCore.QSize(21, 38) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(22, 40)).
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'enemy_yellow' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(22, 40)
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'enemy_yellow' at native size: 21x38
+2025-05-24 21:52:54,415 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'enemy_yellow' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'
+2025-05-24 21:52:54,416 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Can read: True
+2025-05-24 21:52:54,416 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\yellow\__Idle.gif'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,416 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,416 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'enemy_yellow'. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,416 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'enemy_yellow' created with alpha. Size: PySide6.QtCore.QSize(21, 38)
+2025-05-24 21:52:54,416 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: chest
+2025-05-24 21:52:54,416 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'chest' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
+2025-05-24 21:52:54,417 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Can read: True
+2025-05-24 21:52:54,417 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,417 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,417 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'chest'. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'chest' determined as: 42x50
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'chest' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Can read: True
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'chest' from PySide6.QtCore.QSize(42, 50) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(33, 40)).
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'chest' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(33, 40)
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'chest' at native size: 42x50
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'chest' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'
+2025-05-24 21:52:54,418 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Can read: True
+2025-05-24 21:52:54,419 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\items\chest.gif'. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,419 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,419 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'chest'. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,419 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'chest' created with alpha. Size: PySide6.QtCore.QSize(42, 50)
+2025-05-24 21:52:54,419 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: object_stone_idle
+2025-05-24 21:52:54,419 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'object_stone_idle' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
+2025-05-24 21:52:54,419 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Can read: True
+2025-05-24 21:52:54,426 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,426 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,426 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'object_stone_idle'. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,427 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'object_stone_idle' determined as: 33x36
+2025-05-24 21:52:54,427 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'object_stone_idle' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
+2025-05-24 21:52:54,427 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Can read: True
+2025-05-24 21:52:54,427 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'object_stone_idle' from PySide6.QtCore.QSize(33, 36) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(36, 40)).
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'object_stone_idle' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(36, 40)
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'object_stone_idle' at native size: 33x36
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'object_stone_idle' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Can read: True
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__Stone.png'. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,428 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'object_stone_idle'. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,429 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'object_stone_idle' created with alpha. Size: PySide6.QtCore.QSize(33, 36)
+2025-05-24 21:52:54,429 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: object_stone_crouch
+2025-05-24 21:52:54,429 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'object_stone_crouch' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
+2025-05-24 21:52:54,430 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Can read: True
+2025-05-24 21:52:54,430 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,430 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,431 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'object_stone_crouch'. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,431 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'object_stone_crouch' determined as: 34x27
+2025-05-24 21:52:54,431 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'object_stone_crouch' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
+2025-05-24 21:52:54,431 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Can read: True
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'object_stone_crouch' from PySide6.QtCore.QSize(34, 27) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(40, 31)).
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'object_stone_crouch' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 31)
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'object_stone_crouch' at native size: 34x27
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'object_stone_crouch' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Can read: True
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\Stone\__StoneCrouch.png'. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,432 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'object_stone_crouch'. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,433 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'object_stone_crouch' created with alpha. Size: PySide6.QtCore.QSize(34, 27)
+2025-05-24 21:52:54,433 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_wall_gray
+2025-05-24 21:52:54,433 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_wall_gray'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,433 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,433 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_wall_gray' determined as: 40x40
+2025-05-24 21:52:54,433 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_wall_gray'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,433 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'platform_wall_gray' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_wall_gray' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_wall_gray' at native size: 40x40
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_wall_gray'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_wall_gray' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_ledge_green_full
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_full'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_green_full'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_ledge_green_full' determined as: 40x40
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_full'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'platform_ledge_green_full' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_ledge_green_full' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_ledge_green_full' at native size: 40x40
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_full'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_green_full'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_ledge_green_full' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_ledge_green_one_fourth
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_green_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,435 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_ledge_green_one_fourth' determined as: 40x10
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'platform_ledge_green_one_fourth' from PySide6.QtCore.QSize(40, 10) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(40, 10)).
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_ledge_green_one_fourth' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_ledge_green_one_fourth' at native size: 40x10
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_green_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_ledge_green_one_fourth' created with alpha. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_ledge_gray_one_fourth
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_gray_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_gray_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_ledge_gray_one_fourth' determined as: 40x10
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_gray_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'platform_ledge_gray_one_fourth' from PySide6.QtCore.QSize(40, 10) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(40, 10)).
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_ledge_gray_one_fourth' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_ledge_gray_one_fourth' at native size: 40x10
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_gray_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_gray_one_fourth'. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,436 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_ledge_gray_one_fourth' created with alpha. Size: PySide6.QtCore.QSize(40, 10)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_ledge_green_one_third
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_green_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_ledge_green_one_third' determined as: 40x13
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'platform_ledge_green_one_third' from PySide6.QtCore.QSize(40, 13) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(40, 13)).
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_ledge_green_one_third' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_ledge_green_one_third' at native size: 40x13
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_green_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_green_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_ledge_green_one_third' created with alpha. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_ledge_gray_one_third
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_gray_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_gray_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_ledge_gray_one_third' determined as: 40x13
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_gray_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'platform_ledge_gray_one_third' from PySide6.QtCore.QSize(40, 13) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(40, 13)).
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_ledge_gray_one_third' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_ledge_gray_one_third' at native size: 40x13
+2025-05-24 21:52:54,437 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'platform_ledge_gray_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,438 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_ledge_gray_one_third'. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,438 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_ledge_gray_one_third' created with alpha. Size: PySide6.QtCore.QSize(40, 13)
+2025-05-24 21:52:54,438 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_wall_gray_left_half
+2025-05-24 21:52:54,442 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_left_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,442 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_left_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,442 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_wall_gray_left_half' determined as: 40x40
+2025-05-24 21:52:54,442 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_left_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'platform_wall_gray_left_half' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_wall_gray_left_half' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_wall_gray_left_half' at native size: 40x40
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_left_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_left_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_wall_gray_left_half' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_wall_gray_right_half
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_right_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_right_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_wall_gray_right_half' determined as: 40x40
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_right_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,443 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'platform_wall_gray_right_half' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_wall_gray_right_half' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_wall_gray_right_half' at native size: 40x40
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_right_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_right_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_wall_gray_right_half' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_wall_gray_top_half
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_top_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_top_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_wall_gray_top_half' determined as: 40x40
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_top_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'platform_wall_gray_top_half' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_wall_gray_top_half' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_wall_gray_top_half' at native size: 40x40
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_top_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_top_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,444 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_wall_gray_top_half' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_wall_gray_bottom_half
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_bottom_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_bottom_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_wall_gray_bottom_half' determined as: 40x40
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_bottom_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'platform_wall_gray_bottom_half' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_wall_gray_bottom_half' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_wall_gray_bottom_half' at native size: 40x40
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:173 - get_asset_pixmap - get_asset_pixmap: Created procedural half_tile pixmap for 'platform_wall_gray_bottom_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_bottom_half'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_wall_gray_bottom_half' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: hazard_lava_tile
+2025-05-24 21:52:54,445 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'hazard_lava_tile' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
+2025-05-24 21:52:54,446 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Can read: True
+2025-05-24 21:52:54,447 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,447 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,447 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'hazard_lava_tile'. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,447 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'hazard_lava_tile' determined as: 40x42
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'hazard_lava_tile' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Can read: True
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'hazard_lava_tile' from PySide6.QtCore.QSize(40, 42) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(38, 40)).
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'hazard_lava_tile' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(38, 40)
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'hazard_lava_tile' at native size: 40x42
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:124 - get_asset_pixmap - get_asset_pixmap: Attempting to load 'hazard_lava_tile' from 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'
+2025-05-24 21:52:54,448 - DEBUG - editor_assets.py:131 - get_asset_pixmap - get_asset_pixmap: QImageReader created for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Can read: True
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:135 - get_asset_pixmap - get_asset_pixmap: Image read successfully for 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\assets\lava.gif'. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:140 - get_asset_pixmap - get_asset_pixmap: Pixmap created from image. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'hazard_lava_tile'. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'hazard_lava_tile' created with alpha. Size: PySide6.QtCore.QSize(40, 42)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: background_dark_fill
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'background_dark_fill' determined as: 200x200
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'background_dark_fill' from PySide6.QtCore.QSize(200, 200) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(40, 40)).
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'background_dark_fill' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'background_dark_fill' at native size: 200x200
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'background_dark_fill' created with alpha. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: background_sky_blue_fill
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_sky_blue_fill'. Size: PySide6.QtCore.QSize(400, 400)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_sky_blue_fill'. Size: PySide6.QtCore.QSize(400, 400)
+2025-05-24 21:52:54,449 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'background_sky_blue_fill' determined as: 400x400
+2025-05-24 21:52:54,450 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_sky_blue_fill'. Size: PySide6.QtCore.QSize(400, 400)
+2025-05-24 21:52:54,453 - DEBUG - editor_assets.py:196 - get_asset_pixmap - get_asset_pixmap: SCALED pixmap for 'background_sky_blue_fill' from PySide6.QtCore.QSize(400, 400) to PySide6.QtCore.QSize(40, 40) (actual: PySide6.QtCore.QSize(40, 40)).
+2025-05-24 21:52:54,453 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'background_sky_blue_fill' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,453 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'background_sky_blue_fill' at native size: 400x400
+2025-05-24 21:52:54,453 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_sky_blue_fill'. Size: PySide6.QtCore.QSize(400, 400)
+2025-05-24 21:52:54,453 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_sky_blue_fill'. Size: PySide6.QtCore.QSize(400, 400)
+2025-05-24 21:52:54,454 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'background_sky_blue_fill' created with alpha. Size: PySide6.QtCore.QSize(400, 400)
+2025-05-24 21:52:54,454 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: tool_eraser
+2025-05-24 21:52:54,456 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'tool_eraser'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,456 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'tool_eraser'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,456 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'tool_eraser' determined as: 40x40
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'tool_eraser'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'tool_eraser' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'tool_eraser' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'tool_eraser' at native size: 40x40
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'tool_eraser'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'tool_eraser'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'tool_eraser' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: platform_wall_gray_2x2_placer
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'platform_wall_gray_2x2_placer'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_2x2_placer'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,457 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'platform_wall_gray_2x2_placer' determined as: 40x40
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'platform_wall_gray_2x2_placer'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'platform_wall_gray_2x2_placer' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'platform_wall_gray_2x2_placer' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'platform_wall_gray_2x2_placer' at native size: 40x40
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'platform_wall_gray_2x2_placer'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'platform_wall_gray_2x2_placer'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'platform_wall_gray_2x2_placer' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:217 - load_editor_palette_assets - Processing palette asset: tool_color_picker
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'tool_color_picker'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'tool_color_picker'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:243 - load_editor_palette_assets - Native size for 'tool_color_picker' determined as: 40x40
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'tool_color_picker'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:199 - get_asset_pixmap - get_asset_pixmap: Returning pixmap for 'tool_color_picker' (already at requested size). Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:269 - load_editor_palette_assets - Palette pixmap for 'tool_color_picker' (thumbnail) loaded/created. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,458 - DEBUG - editor_assets.py:285 - load_editor_palette_assets - Creating cursor pixmap for 'tool_color_picker' at native size: 40x40
+2025-05-24 21:52:54,459 - DEBUG - editor_assets.py:178 - get_asset_pixmap - get_asset_pixmap: Created procedural icon pixmap for 'tool_color_picker'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,459 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'tool_color_picker'. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,459 - DEBUG - editor_assets.py:304 - load_editor_palette_assets - Cursor pixmap for 'tool_color_picker' created with alpha. Size: PySide6.QtCore.QSize(40, 40)
+2025-05-24 21:52:54,459 - INFO - editor_assets.py:319 - load_editor_palette_assets - Palette asset loading complete. Success: 29, Failed/Fallback: 0.
+2025-05-24 21:52:54,469 - INFO - editor.py:319 - _init_controller_system - Initializing controller system...
+2025-05-24 21:52:54,469 - INFO - editor.py:334 - _init_controller_system - Primary joystick set to: Xbox 360 Controller (Index: 0, GUID: 030003f05e0400008e02000000007200)
+2025-05-24 21:52:54,469 - INFO - editor.py:347 - _init_controller_system - Controller input polling timer started.
+2025-05-24 21:52:54,559 - DEBUG - editor.py:995 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
+2025-05-24 21:52:54,559 - INFO - editor.py:225 - __init__ - Standalone mode: Restored geometry/state, showing window with restored settings.
+2025-05-24 21:52:54,568 - INFO - minimap_widget.py:321 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(283, 161). Scheduling content redraw.
+2025-05-24 21:52:54,568 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-24 21:52:54,568 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 114.8, 84.7)
+2025-05-24 21:52:54,652 - INFO - editor.py:250 - __init__ - EditorMainWindow initialized.
+2025-05-24 21:52:54,653 - INFO - editor.py:605 - show_status_message - Status: Editor started. Welcome!
+2025-05-24 21:52:54,658 - DEBUG - map_view_widget.py:192 - on_controller_focus_gained - MapView: Controller focus gained.
+2025-05-24 21:52:54,659 - INFO - editor.py:605 - show_status_message - Status: Controller Focus: Map View
+2025-05-24 21:52:54,659 - INFO - editor.py:507 - _set_panel_controller_focus - Controller focus set to: Map View (Index: 0)
+2025-05-24 21:52:54,698 - DEBUG - minimap_widget.py:100 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-24 21:52:54,699 - DEBUG - minimap_widget.py:185 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-24 21:52:54,706 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (41.2, 2.9, 115.1, 93.5)
+2025-05-24 21:52:55,399 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (42.6, 2.9, 115.1, 93.5)
+2025-05-24 21:52:56,103 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (42.6, 16.9, 115.1, 93.5)
+2025-05-24 21:52:56,166 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (42.6, 30.9, 115.1, 93.5)
+2025-05-24 21:52:56,232 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (42.6, 58.9, 115.1, 93.5)
+2025-05-24 21:52:57,063 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: None, Grid Coords: (19,12)
+2025-05-24 21:52:57,063 - DEBUG - map_view_widget.py:579 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-24 21:52:57,647 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: None, Grid Coords: (19,12)
+2025-05-24 21:52:57,648 - DEBUG - map_view_widget.py:579 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-24 21:52:57,949 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: None, Grid Coords: (21,12)
+2025-05-24 21:52:57,949 - DEBUG - map_view_widget.py:579 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-24 21:52:58,326 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: None, Grid Coords: (21,13)
+2025-05-24 21:52:58,326 - DEBUG - map_view_widget.py:579 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-24 21:52:58,790 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (42.6, 67.5, 115.1, 93.5)
+2025-05-24 21:52:59,166 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (42.6, 39.4, 115.1, 93.5)
+2025-05-24 21:52:59,229 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (42.6, 25.4, 115.1, 93.5)
+2025-05-24 21:52:59,413 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'None', Item under mouse: None, Grid Coords: (20,8)
+2025-05-24 21:52:59,413 - DEBUG - map_view_widget.py:579 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-24 21:53:00,583 - DEBUG - map_view_widget.py:972 - on_asset_selected - MapView: on_asset_selected received key: 'background_dark_fill'
+2025-05-24 21:53:00,583 - INFO - editor_state.py:77 - selected_asset_editor_key - selected_asset_editor_key changed to: 'background_dark_fill'
+2025-05-24 21:53:00,583 - DEBUG - map_view_widget.py:990 - on_asset_selected - MapView: current_tool set to 'place', selected_asset_key in state: 'background_dark_fill'
+2025-05-24 21:53:00,587 - INFO - editor.py:605 - show_status_message - Status: Asset selected: BG Dark Fill (5x5)
+2025-05-24 21:53:01,040 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'background_dark_fill', Item under mouse: QGraphicsPixmapItem, Grid Coords: (15,9)
+2025-05-24 21:53:01,040 - DEBUG - map_view_widget.py:573 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (15,9).
+2025-05-24 21:53:01,040 - DEBUG - map_view_widget.py:742 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='background_dark_fill', Grid=(15,9), FirstAction=True, Continuous=False
+2025-05-24 21:53:01,040 - DEBUG - map_view_widget.py:757 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'background_dark_fill' (derived from palette key 'background_dark_fill')
+2025-05-24 21:53:01,040 - DEBUG - map_view_widget.py:766 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
+2025-05-24 21:53:01,040 - DEBUG - editor_history.py:139 - push_undo_state - Pushed state to undo stack. Size: 1
+2025-05-24 21:53:01,041 - DEBUG - map_view_widget.py:792 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'background_dark_fill' (GameID: background_dark_fill) at grid (15,9), world (600.0,360.0). IsSpawn: False
+2025-05-24 21:53:01,041 - DEBUG - map_view_widget.py:848 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 1
+2025-05-24 21:53:01,041 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:01,041 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:01,041 - DEBUG - map_view_widget.py:864 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(200, 200)). Creating and adding item to scene.
+2025-05-24 21:53:01,042 - INFO - map_view_widget.py:869 - _place_single_object_on_map - MapView: Placed 'background_dark_fill' at grid (15,9) with color None.
+2025-05-24 21:53:01,042 - DEBUG - map_view_widget.py:781 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
+2025-05-24 21:53:01,042 - DEBUG - editor.py:615 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
+2025-05-24 21:53:01,042 - DEBUG - editor.py:617 - handle_map_content_changed - Map content changed, unsaved_changes was False, now set to True.
+2025-05-24 21:53:01,042 - DEBUG - editor.py:626 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
+2025-05-24 21:53:01,043 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-24 21:53:01,043 - DEBUG - editor.py:629 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
+2025-05-24 21:53:01,053 - DEBUG - minimap_widget.py:100 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-24 21:53:01,053 - DEBUG - minimap_widget.py:185 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-24 21:53:01,162 - DEBUG - map_view_widget.py:742 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='background_dark_fill', Grid=(14,9), FirstAction=False, Continuous=True
+2025-05-24 21:53:01,162 - DEBUG - map_view_widget.py:757 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'background_dark_fill' (derived from palette key 'background_dark_fill')
+2025-05-24 21:53:01,162 - DEBUG - map_view_widget.py:792 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'background_dark_fill' (GameID: background_dark_fill) at grid (14,9), world (560.0,360.0). IsSpawn: False
+2025-05-24 21:53:01,162 - DEBUG - map_view_widget.py:848 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 2
+2025-05-24 21:53:01,162 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:01,162 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:01,162 - DEBUG - map_view_widget.py:864 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(200, 200)). Creating and adding item to scene.
+2025-05-24 21:53:01,163 - INFO - map_view_widget.py:869 - _place_single_object_on_map - MapView: Placed 'background_dark_fill' at grid (14,9) with color None.
+2025-05-24 21:53:01,163 - DEBUG - map_view_widget.py:781 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
+2025-05-24 21:53:01,163 - DEBUG - editor.py:615 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
+2025-05-24 21:53:01,163 - DEBUG - editor.py:626 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
+2025-05-24 21:53:01,163 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-24 21:53:01,163 - DEBUG - editor.py:629 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
+2025-05-24 21:53:01,165 - DEBUG - minimap_widget.py:100 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-24 21:53:01,165 - DEBUG - minimap_widget.py:185 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-24 21:53:01,551 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'place', Selected Asset: 'background_dark_fill', Item under mouse: None, Grid Coords: (9,9)
+2025-05-24 21:53:01,551 - DEBUG - map_view_widget.py:573 - mousePressEvent - MapView: Left click with 'place' tool. Calling _perform_place_action for grid (9,9).
+2025-05-24 21:53:01,551 - DEBUG - map_view_widget.py:742 - _perform_place_action - MapView (_perform_place_action): Palette AssetKey='background_dark_fill', Grid=(9,9), FirstAction=True, Continuous=False
+2025-05-24 21:53:01,551 - DEBUG - map_view_widget.py:757 - _perform_place_action - MapView (_perform_place_action): Resolved actual_asset_key_to_place: 'background_dark_fill' (derived from palette key 'background_dark_fill')
+2025-05-24 21:53:01,551 - DEBUG - map_view_widget.py:766 - _perform_place_action - MapView (_perform_place_action): First action in stroke, pushing undo state.
+2025-05-24 21:53:01,551 - DEBUG - editor_history.py:139 - push_undo_state - Pushed state to undo stack. Size: 2
+2025-05-24 21:53:01,551 - DEBUG - map_view_widget.py:792 - _place_single_object_on_map - MapView (_place_single_object): Attempting to place 'background_dark_fill' (GameID: background_dark_fill) at grid (9,9), world (360.0,360.0). IsSpawn: False
+2025-05-24 21:53:01,551 - DEBUG - map_view_widget.py:848 - _place_single_object_on_map - MapView (_place_single_object): Added object data to editor_state.placed_objects. New count: 3
+2025-05-24 21:53:01,552 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:01,552 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:01,552 - DEBUG - map_view_widget.py:864 - _place_single_object_on_map - MapView (_place_single_object): Got valid pixmap for MapObjectItem (Size: PySide6.QtCore.QSize(200, 200)). Creating and adding item to scene.
+2025-05-24 21:53:01,552 - INFO - map_view_widget.py:869 - _place_single_object_on_map - MapView: Placed 'background_dark_fill' at grid (9,9) with color None.
+2025-05-24 21:53:01,552 - DEBUG - map_view_widget.py:781 - _perform_place_action - MapView (_perform_place_action): Change made, emitting map_content_changed.
+2025-05-24 21:53:01,552 - DEBUG - editor.py:615 - handle_map_content_changed - EditorMainWindow: handle_map_content_changed triggered.
+2025-05-24 21:53:01,552 - DEBUG - editor.py:626 - handle_map_content_changed - Notifying minimap to redraw content due to map change via handle_map_content_changed.
+2025-05-24 21:53:01,553 - DEBUG - minimap_widget.py:60 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-24 21:53:01,553 - DEBUG - editor.py:629 - handle_map_content_changed - EditorMainWindow: After handle_map_content_changed - unsaved_changes: True, save_map_action enabled: False
+2025-05-24 21:53:01,555 - DEBUG - minimap_widget.py:100 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-24 21:53:01,555 - DEBUG - minimap_widget.py:185 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-24 21:53:02,135 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (41.2, 25.4, 115.1, 93.5)
+2025-05-24 21:53:02,166 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (39.7, 25.4, 115.1, 93.5)
+2025-05-24 21:53:02,198 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (38.3, 25.4, 115.1, 93.5)
+2025-05-24 21:53:02,231 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (36.8, 25.4, 115.1, 93.5)
+2025-05-24 21:53:02,262 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (35.4, 25.4, 115.1, 93.5)
+2025-05-24 21:53:02,291 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (34.0, 25.4, 115.1, 93.5)
+2025-05-24 21:53:02,319 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (32.5, 25.4, 115.1, 93.5)
+2025-05-24 21:53:02,570 - INFO - editor.py:888 - undo - Undo action triggered.
+2025-05-24 21:53:02,571 - WARNING - editor_history.py:95 - restore_map_from_snapshot - Camera offset from loaded map snapshot is temporarily overridden to (0,0) for visibility testing.
+2025-05-24 21:53:02,571 - INFO - editor_history.py:111 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-24 21:53:02,571 - INFO - editor_history.py:164 - undo - Undo successful. Undo stack size: 1, Redo stack size: 1
+2025-05-24 21:53:02,571 - DEBUG - map_view_widget.py:291 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-24 21:53:02,571 - DEBUG - map_view_widget.py:274 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-24 21:53:02,571 - DEBUG - map_view_widget.py:288 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-24 21:53:02,572 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:02,572 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:02,572 - DEBUG - editor_assets.py:167 - get_asset_pixmap - get_asset_pixmap: Created procedural colored pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:02,572 - DEBUG - editor_assets.py:190 - get_asset_pixmap - get_asset_pixmap: Returning NATIVE size pixmap for 'background_dark_fill'. Size: PySide6.QtCore.QSize(200, 200)
+2025-05-24 21:53:02,573 - DEBUG - map_view_widget.py:315 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-24 21:53:02,573 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (41.0, 25.4, 115.1, 93.5)
+2025-05-24 21:53:02,573 - INFO - editor.py:605 - show_status_message - Status: Undo successful.
+2025-05-24 21:53:02,937 - INFO - editor.py:888 - undo - Undo action triggered.
+2025-05-24 21:53:02,938 - WARNING - editor_history.py:95 - restore_map_from_snapshot - Camera offset from loaded map snapshot is temporarily overridden to (0,0) for visibility testing.
+2025-05-24 21:53:02,938 - INFO - editor_history.py:111 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-24 21:53:02,938 - INFO - editor_history.py:164 - undo - Undo successful. Undo stack size: 0, Redo stack size: 2
+2025-05-24 21:53:02,938 - DEBUG - map_view_widget.py:291 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-24 21:53:02,938 - DEBUG - map_view_widget.py:274 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-24 21:53:02,938 - DEBUG - map_view_widget.py:288 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-24 21:53:02,939 - DEBUG - map_view_widget.py:315 - load_map_from_state - MapViewWidget: Map loaded. Scene rect: PySide6.QtCore.QRectF(0.000000, 0.000000, 1600.000000, 1000.000000), Zoom: 1.00, Offset: (0.0, 0.0)
+2025-05-24 21:53:02,939 - INFO - editor.py:605 - show_status_message - Status: Undo successful.
+2025-05-24 21:53:03,742 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (39.6, 25.4, 115.1, 93.5)
+2025-05-24 21:53:03,776 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (38.1, 25.4, 115.1, 93.5)
+2025-05-24 21:53:03,804 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (36.7, 25.4, 115.1, 93.5)
+2025-05-24 21:53:05,182 - DEBUG - map_view_widget.py:1016 - on_tool_selected - MapView: on_tool_selected received tool_key: 'tool_color_picker'
+2025-05-24 21:53:05,182 - INFO - editor_state.py:77 - selected_asset_editor_key - selected_asset_editor_key changed to: 'None'
+2025-05-24 21:53:05,182 - DEBUG - map_view_widget.py:1055 - on_tool_selected - MapView: current_tool set to 'select', controller tool mode: 'select'
+2025-05-24 21:53:05,182 - INFO - editor.py:605 - show_status_message - Status: Tool selected: Color Picker Tool
+2025-05-24 21:53:05,560 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'select', Selected Asset: 'None', Item under mouse: QGraphicsLineItem, Grid Coords: (18,12)
+2025-05-24 21:53:05,560 - DEBUG - map_view_widget.py:579 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-24 21:53:05,773 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (38.1, 25.4, 115.1, 93.5)
+2025-05-24 21:53:05,808 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (39.6, 25.4, 115.1, 93.5)
+2025-05-24 21:53:05,846 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (41.0, 25.4, 115.1, 93.5)
+2025-05-24 21:53:05,873 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (42.5, 25.4, 115.1, 93.5)
+2025-05-24 21:53:05,910 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (43.9, 25.4, 115.1, 93.5)
+2025-05-24 21:53:05,930 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (45.4, 25.4, 115.1, 93.5)
+2025-05-24 21:53:05,960 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (46.8, 25.4, 115.1, 93.5)
+2025-05-24 21:53:05,991 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (48.3, 25.4, 115.1, 93.5)
+2025-05-24 21:53:06,168 - DEBUG - map_view_widget.py:561 - mousePressEvent - MapView: mousePressEvent - Button: MouseButton.LeftButton, Tool: 'select', Selected Asset: 'None', Item under mouse: None, Grid Coords: (21,12)
+2025-05-24 21:53:06,168 - DEBUG - map_view_widget.py:579 - mousePressEvent - MapView: Left click, no specific tool action. Setting RubberBandDrag.
+2025-05-24 21:53:06,604 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (48.3, 67.5, 115.1, 93.5)
+2025-05-24 21:53:07,570 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (48.1, 67.5, 115.1, 93.5)
+2025-05-24 21:53:07,604 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (40.6, 67.5, 115.1, 93.5)
+2025-05-24 21:53:07,634 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (20.6, 67.5, 115.1, 93.5)
+2025-05-24 21:53:07,664 - DEBUG - minimap_widget.py:217 - update_view_rect - Minimap: View rect updated to (12.7, 67.5, 115.1, 93.5)
+2025-05-24 21:53:16,499 - INFO - editor.py:957 - closeEvent - Close event triggered for EditorMainWindow. Embedded: False
+2025-05-24 21:53:18,554 - INFO - editor.py:961 - closeEvent - Controller input timer stopped.
+2025-05-24 21:53:18,554 - INFO - editor.py:966 - closeEvent - Pygame joysticks un-initialized.
+2025-05-24 21:53:18,554 - INFO - editor.py:975 - closeEvent - Window geometry and state saved on close.
+2025-05-24 21:53:18,573 - INFO - editor.py:1043 - editor_main - QApplication event loop finished. Exit code: 0
+2025-05-24 21:53:18,573 - INFO - editor.py:1052 - editor_main - Editor session (standalone) ended.
+2025-05-24 21:53:18,623 - INFO - editor.py:1057 - editor_main - Pygame quit globally at end of editor_main (standalone).
