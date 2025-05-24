@@ -1,5 +1,5 @@
 {
-    "config_version": "2.3.6",
+    "config_version": "2.3.7",
     "player1_settings": {
         "input_device": "joystick_pygame_0",
         "keyboard_enabled": false,
@@ -11,12 +11,12 @@
         "controller_enabled": true
     },
     "player3_settings": {
-        "input_device": "joystick_pygame_2",
-        "keyboard_enabled": false,
-        "controller_enabled": true
+        "input_device": "keyboard_p1",
+        "keyboard_enabled": true,
+        "controller_enabled": false
     },
     "player4_settings": {
-        "input_device": "keyboard_p1",
+        "input_device": "keyboard_p2",
         "keyboard_enabled": true,
         "controller_enabled": false
     },

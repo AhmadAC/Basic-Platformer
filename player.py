@@ -12,7 +12,7 @@ Collision rect is now tighter than visual sprite.
 can_stand_up logic improved.
 Corrected camera.apply usage in draw_pyside.
 """
-# version 2.1.6 (Added _prev_discrete_axis_hat_state in __init__)
+# version 2.1.8 (Added reset_for_new_game_or_round for input priming)
 
 import os
 import sys
@@ -63,7 +63,9 @@ except ImportError as e:
     def critical(msg, *args, **kwargs): print(f"CRITICAL: {msg}")
     # Dummy for set_player_state if its import failed
     if 'set_player_state' not in globals():
-        def set_player_state(player, new_state): player.state = new_state; warning("Fallback set_player_state used.")
+        def set_player_state(player, new_state):
+            if hasattr(player, 'state'): player.state = new_state
+            warning("Fallback set_player_state used.")
 
 
 if TYPE_CHECKING:
@@ -149,10 +151,17 @@ class Player:
         self.is_trying_to_move_left: bool = False; self.is_trying_to_move_right: bool = False
         self.is_holding_climb_ability_key: bool = False
         self.is_holding_crouch_ability_key: bool = False
-        self.fireball_cooldown_timer: int = 0; self.poison_cooldown_timer: int = 0
-        self.bolt_cooldown_timer: int = 0; self.blood_cooldown_timer: int = 0
-        self.ice_cooldown_timer: int = 0; self.shadow_cooldown_timer: int = 0
-        self.grey_cooldown_timer: int = 0
+        
+        # Projectile Cooldowns
+        current_time_for_init_cooldown = get_current_ticks_monotonic()
+        self.fireball_cooldown_timer: int = current_time_for_init_cooldown 
+        self.poison_cooldown_timer: int = current_time_for_init_cooldown
+        self.bolt_cooldown_timer: int = current_time_for_init_cooldown
+        self.blood_cooldown_timer: int = current_time_for_init_cooldown
+        self.ice_cooldown_timer: int = current_time_for_init_cooldown
+        self.shadow_cooldown_timer: int = current_time_for_init_cooldown
+        self.grey_cooldown_timer: int = current_time_for_init_cooldown
+
         self.fireball_last_input_dir = QPointF(1.0, 0.0)
         self.is_aflame: bool = False; self.aflame_timer_start: int = 0
         self.is_deflaming: bool = False; self.deflame_timer_start: int = 0
@@ -164,7 +173,10 @@ class Player:
         self.facing_at_petrification: bool = True
         self.was_crouching_when_petrified: bool = False
         self.state_timer: int = 0
-        self._prev_discrete_axis_hat_state: Dict[Tuple[str, int, Tuple[int, int]], bool] = {} ### ADDED ### For hat input
+        
+        # Input Priming Attributes
+        self._prev_discrete_axis_hat_state: Dict[Tuple[str, int, Tuple[int, int]], bool] = {}
+        self._first_joystick_input_poll_done: bool = False
 
         if self._valid_init and self.animations:
             try:
@@ -202,6 +214,25 @@ class Player:
         else:
             self.last_anim_update = get_current_ticks_monotonic()
             debug(f"Player {self.player_id} initialized. Valid: {self._valid_init}. CollisionRect: W{self.rect.width():.1f} H{self.rect.height():.1f}")
+
+    def reset_for_new_game_or_round(self):
+        """Resets flags related to input priming and cooldowns for a new game/map session."""
+        debug(f"Player {self.player_id}: Resetting input priming and cooldowns.")
+        self._first_joystick_input_poll_done = False
+        self._prev_discrete_axis_hat_state.clear()
+        
+        current_time_reset = get_current_ticks_monotonic()
+        # Reset cooldowns to allow immediate action if desired, or set to current_time_reset to enforce cooldown
+        # For "ready on first frame after reset", subtract cooldown. Otherwise, just set to current_time_reset.
+        self.fireball_cooldown_timer = current_time_reset - C.FIREBALL_COOLDOWN 
+        self.poison_cooldown_timer = current_time_reset - C.POISON_COOLDOWN
+        self.bolt_cooldown_timer = current_time_reset - C.BOLT_COOLDOWN
+        self.blood_cooldown_timer = current_time_reset - C.BLOOD_COOLDOWN
+        self.ice_cooldown_timer = current_time_reset - C.ICE_COOLDOWN
+        self.shadow_cooldown_timer = current_time_reset - C.SHADOW_PROJECTILE_COOLDOWN
+        self.grey_cooldown_timer = current_time_reset - C.GREY_PROJECTILE_COOLDOWN
+        debug(f"Player {self.player_id}: Projectile cooldowns reset to allow immediate use.")
+
 
     def _init_stone_assets(self):
         stone_common_folder = os.path.join('characters', 'Stone')
@@ -256,7 +287,7 @@ class Player:
 
     def _is_placeholder_qpixmap(self, pixmap: QPixmap) -> bool:
         if pixmap.isNull(): return True
-        if pixmap.size() in [QSize(30,40), QSize(30,60), QSize(10,10)]:
+        if pixmap.size() in [QSize(30,40), QSize(30,60), QSize(10,10)]: # Common placeholder sizes
             qimage = pixmap.toImage()
             if not qimage.isNull() and qimage.width() > 0 and qimage.height() > 0:
                 color_at_origin = qimage.pixelColor(0,0)
@@ -267,12 +298,16 @@ class Player:
     def _update_rect_from_image_and_pos(self, midbottom_pos_qpointf: Optional[QPointF] = None):
         target_pos = midbottom_pos_qpointf if midbottom_pos_qpointf is not None else self.pos
         if not isinstance(target_pos, QPointF): target_pos = self.pos if isinstance(self.pos, QPointF) else QPointF(self.initial_spawn_pos)
+        
         current_collision_height = self.crouching_collision_height if self.is_crouching else self.standing_collision_height
         current_collision_width = self.base_crouch_collision_width if self.is_crouching else self.base_standing_collision_width
+        
         if current_collision_height <= 1e-6: current_collision_height = self.standard_height
         if current_collision_width <= 1e-6: current_collision_width = current_collision_height * 0.5
+        
         rect_x = target_pos.x() - current_collision_width / 2.0
         rect_y = target_pos.y() - current_collision_height 
+        
         if not hasattr(self, 'rect') or self.rect is None: 
             self.rect = QRectF(rect_x, rect_y, current_collision_width, current_collision_height)
         else: self.rect.setRect(rect_x, rect_y, current_collision_width, current_collision_height)
@@ -285,14 +320,18 @@ class Player:
     def can_stand_up(self, platforms_list: List[Any]) -> bool:
         if not self.is_crouching or not self._valid_init: return True 
         if self.standing_collision_height <= self.crouching_collision_height + 1e-6 : return True 
+        
         current_crouch_rect = self.rect 
         current_feet_y = current_crouch_rect.bottom()
         current_center_x = current_crouch_rect.center().x()
+        
         potential_standing_width = self.base_standing_collision_width
         potential_standing_height = self.standing_collision_height
+        
         potential_standing_rect_left = current_center_x - (potential_standing_width / 2.0)
         potential_standing_rect_top = current_feet_y - potential_standing_height
         potential_standing_rect = QRectF(potential_standing_rect_left, potential_standing_rect_top, potential_standing_width, potential_standing_height)
+
         for platform_obj in platforms_list:
             if hasattr(platform_obj, 'rect') and isinstance(platform_obj.rect, QRectF):
                 if potential_standing_rect.intersects(platform_obj.rect):
@@ -306,45 +345,63 @@ class Player:
 
     def set_state(self, new_state: str): set_player_state(self, new_state)
     def animate(self): update_player_animation(self)
+    
     def process_input(self, qt_keys_held_snapshot: Dict[Qt.Key, bool], 
                       qt_key_event_data_this_frame: List[Tuple[QKeyEvent.Type, Qt.Key, bool]], 
                       platforms_list: List[Any], 
                       joystick_data_for_handler: Optional[Dict[str, Any]] = None ):
         active_mappings = {}; player_id_for_map_get = self.player_id
+        
         if self.control_scheme == "keyboard_p1": active_mappings = game_config.P1_MAPPINGS
         elif self.control_scheme == "keyboard_p2": active_mappings = game_config.P2_MAPPINGS
         elif self.control_scheme and self.control_scheme.startswith("joystick_pygame_"):
             active_mappings = getattr(game_config, f"P{player_id_for_map_get}_MAPPINGS", game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS)
-        else:
-            active_mappings = game_config.P1_MAPPINGS if self.player_id == 1 else game_config.P2_MAPPINGS
-            if Player.print_limiter.can_log(f"p_input_scheme_fallback_{self.player_id}"): 
+        else: 
+            active_mappings = game_config.P1_MAPPINGS if self.player_id == 1 else game_config.P2_MAPPINGS 
+            if Player.print_limiter.can_log(f"p_input_scheme_fallback_{self.player_id}"):
                 warning(f"Player {self.player_id}: Unrecognized control_scheme '{self.control_scheme}'. Using default keyboard map.")
+        
         return process_player_input_logic(self, qt_keys_held_snapshot, qt_key_event_data_this_frame, active_mappings, platforms_list, joystick_data_for_handler)
 
     def _generic_fire_projectile(self, projectile_class: type, cooldown_attr_name: str, cooldown_const: int, projectile_config_name: str):
         if not self._valid_init or self.is_dead or not self._alive or self.is_petrified or self.is_frozen or self.is_defrosting: return
         if self.game_elements_ref_for_projectiles is None:
             if Player.print_limiter.can_log(f"proj_fire_no_game_elements_{self.player_id}"): warning(f"Player {self.player_id}: game_elements_ref_for_projectiles not set. Cannot fire {projectile_config_name}."); return
+        
         projectiles_list_ref = self.game_elements_ref_for_projectiles.get("projectiles_list"); all_renderables_ref = self.game_elements_ref_for_projectiles.get("all_renderable_objects")
+        
         if projectiles_list_ref is None or all_renderables_ref is None:
             if Player.print_limiter.can_log(f"proj_fire_list_missing_{self.player_id}"): warning(f"Player {self.player_id}: Projectile or renderable list missing. Cannot fire {projectile_config_name}."); return
+
         current_time_ms = get_current_ticks_monotonic(); last_fire_time = getattr(self, cooldown_attr_name, 0)
+        
         if current_time_ms - last_fire_time >= cooldown_const:
             setattr(self, cooldown_attr_name, current_time_ms)
+            
             if self.rect.isNull(): self._update_rect_from_image_and_pos()
             if self.rect.isNull(): error(f"Player {self.player_id}: Rect is null, cannot fire."); return
+
             spawn_x, spawn_y = self.rect.center().x(), self.rect.center().y(); aim_dir = QPointF(self.fireball_last_input_dir.x(), self.fireball_last_input_dir.y())
             if aim_dir.isNull() or (abs(aim_dir.x()) < 1e-6 and abs(aim_dir.y()) < 1e-6): aim_dir.setX(1.0 if self.facing_right else -1.0); aim_dir.setY(0.0)
-            proj_dims_tuple = getattr(C, f"{projectile_config_name.upper()}_DIMENSIONS", (10.0,10.0)); offset_dist = (self.rect.width() / 2.0) + (float(proj_dims_tuple[0]) / 2.0) - 5.0
-            if abs(aim_dir.y()) > 0.8 * abs(aim_dir.x()): offset_dist = (self.rect.height() / 2.0) + (float(proj_dims_tuple[1]) / 2.0) - 5.0
+            
+            proj_dims_tuple = getattr(C, f"{projectile_config_name.upper()}_DIMENSIONS", (10.0,10.0)); 
+            offset_dist = (self.rect.width() / 2.0) + (float(proj_dims_tuple[0]) / 2.0) - 5.0 
+            if abs(aim_dir.y()) > 0.8 * abs(aim_dir.x()): 
+                 offset_dist = (self.rect.height() / 2.0) + (float(proj_dims_tuple[1]) / 2.0) - 5.0 
+            
             norm_x, norm_y = 0.0, 0.0; length = math.sqrt(aim_dir.x()**2 + aim_dir.y()**2)
             if length > 1e-6: norm_x = aim_dir.x()/length; norm_y = aim_dir.y()/length
+            
             spawn_x += norm_x * offset_dist; spawn_y += norm_y * offset_dist
+            
             new_projectile = projectile_class(spawn_x, spawn_y, aim_dir, self); new_projectile.game_elements_ref = self.game_elements_ref_for_projectiles
+            
             projectiles_list_ref.append(new_projectile); all_renderables_ref.append(new_projectile)
+            
             if Player.print_limiter.can_log(f"fired_{projectile_config_name}_{self.player_id}"): 
                 debug(f"Player {self.player_id} fired {projectile_config_name} at ({spawn_x:.1f},{spawn_y:.1f}) dir ({aim_dir.x():.1f},{aim_dir.y():.1f})")
-            if projectile_config_name == 'blood' and self.current_health > 0:
+            
+            if projectile_config_name == 'blood' and self.current_health > 0: 
                 self.current_health -= self.current_health * 0.05 
                 if self.current_health <= 0 and not self.is_dead: set_player_state(self, 'death')
 
@@ -369,12 +426,15 @@ class Player:
                hazards_list: List[Any], other_players_list: List[Any], enemies_list: List[Any]):
         if not self._valid_init or not self._alive: return
         current_time_ms = get_current_ticks_monotonic(); self.update_status_effects(current_time_ms)
+        
         if self.is_stone_smashed:
             if current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS: self.kill(); return
             self.animate(); return 
+            
         if self.is_petrified: 
             update_player_core_logic(self, dt_sec, platforms_list, ladders_list, hazards_list, other_players_list, enemies_list)
             return 
+            
         update_player_core_logic(self, dt_sec, platforms_list, ladders_list, hazards_list, other_players_list, enemies_list)
 
     def draw_pyside(self, painter: QPainter, camera: 'CameraClass_TYPE'): 
@@ -412,17 +472,19 @@ class Player:
         elif self.is_deflaming:
             if current_time_ms - self.deflame_timer_start > C.PLAYER_DEFLAME_DURATION_MS:
                 set_player_state(self, 'crouch' if self.is_crouching else ('idle' if self.on_ground else 'fall'))
+        
         if self.is_frozen:
             if current_time_ms - self.frozen_effect_timer > C.PLAYER_FROZEN_DURATION_MS:
                 set_player_state(self, 'defrost')
         elif self.is_defrosting:
             if current_time_ms - self.frozen_effect_timer > (C.PLAYER_FROZEN_DURATION_MS + C.PLAYER_DEFROST_DURATION_MS):
                 set_player_state(self, 'idle' if self.on_ground else 'fall')
-        if self.is_stone_smashed: 
+
+        if self.is_stone_smashed: # This check should be inside update() or before game logic for kill
             if current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS:
                 if not self.death_animation_finished: 
                     self.death_animation_finished = True
-                self.kill() 
+                self.kill() # This sets _alive = False
     
     def apply_aflame_effect(self):
         if self.is_aflame or self.is_deflaming or self.is_dead or self.is_petrified or self.is_frozen or self.is_defrosting: return

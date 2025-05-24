@@ -1,9 +1,11 @@
+#################### START OF FILE: player_combat_handler.py ####################
+
 # player_combat_handler.py
 # -*- coding: utf-8 -*-
 """
 Handles player combat: attacks, damage dealing/taking, healing for PySide6.
 """
-# version 2.0.2 (Fixed QRectF.moveTopLeft/Right argument to QPointF)
+# version 2.0.3 (Corrected PrintLimiter call)
 
 from typing import List, Any, Optional, TYPE_CHECKING # Added Optional, TYPE_CHECKING
 import time 
@@ -169,8 +171,8 @@ def player_take_damage(player: 'PlayerClass_TYPE', damage_amount: int):
             if player.state != 'hit': # Only transition to 'hit' if not already in it
                  if hasattr(player, 'set_state'): player.set_state('hit')
         else: # Player is on fire and took damage
-            if hasattr(player, 'print_limiter') and player.print_limiter.can_print(f"player_hit_while_on_fire_{player.player_id}"):
-                debug(f"PlayerCombatHandler ({player_id_log}): Took damage while on fire. State remains '{player.state}'. is_taking_hit=True.")
+            if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"player_hit_while_on_fire_{player.player_id}"): # MODIFIED
+                debug(f"PlayerCombatHandler ({player_id_log}): Was aflame/deflaming. Took damage, in hit cooldown, remains visually on fire. State: '{getattr(player, 'state', 'N/A')}'")
 
 
 def player_self_inflict_damage(player: 'PlayerClass_TYPE', damage_amount: int):
@@ -198,3 +200,5 @@ def player_heal_to_full(player: 'PlayerClass_TYPE'):
         if hasattr(player, 'set_state'):
             next_state = 'idle' if player.on_ground else 'fall'
             player.set_state(next_state)
+
+#################### END OF FILE: player_combat_handler.py ####################

@@ -3,7 +3,7 @@
 # player_input_handler.py
 # -*- coding: utf-8 -*-
 """
-Version 2.1.8 (Fix discrete hat event logic)
+Version 2.2.0 (Add priming for joystick axis/hat discrete events)
 Handles processing of player input (Qt keyboard events, Pygame joystick polling)
 and translating it to game actions.
 """
@@ -54,6 +54,7 @@ def process_player_input_logic(
     is_pygame_joystick_input = player.control_scheme and player.control_scheme.startswith("joystick_pygame_")
     action_events: Dict[str, bool] = {action: False for action in game_config.GAME_ACTIONS}
 
+    # Reset continuous intent flags before processing current input
     player.is_trying_to_move_left = False
     player.is_trying_to_move_right = False
     player.is_holding_climb_ability_key = False 
@@ -77,8 +78,8 @@ def process_player_input_logic(
                 for action_name, mapped_qt_key in active_mappings.items():
                     if isinstance(mapped_qt_key, Qt.Key) and key_code_from_event == mapped_qt_key:
                         action_events[action_name] = True
-                        if action_name == "up": action_events["jump"] = True
-                        if action_name == "down": action_events["crouch"] = True 
+                        if action_name == "up" and active_mappings.get("jump") == key_code_from_event: action_events["jump"] = True
+                        if action_name == "down" and active_mappings.get("crouch") == key_code_from_event: action_events["crouch"] = True 
                         break 
     
     # --- 2. Process Pygame Joystick Input ---
@@ -88,8 +89,11 @@ def process_player_input_logic(
         prev_buttons = joystick_data.get('buttons_prev', {})
         current_hats = joystick_data.get('hats', {})
 
-        if not hasattr(player, '_prev_discrete_axis_hat_state'):
-            player._prev_discrete_axis_hat_state = {} 
+        if not hasattr(player, '_prev_discrete_axis_hat_state') or not isinstance(player._prev_discrete_axis_hat_state, dict):
+            player._prev_discrete_axis_hat_state = {}
+        
+        # ### MODIFIED: Priming logic for first poll ###
+        is_first_poll_for_player_joystick = not getattr(player, '_first_joystick_input_poll_done', False)
 
         for action_name, mapping_details in active_mappings.items():
             if not isinstance(mapping_details, dict): continue
@@ -97,10 +101,10 @@ def process_player_input_logic(
             
             if m_type == "axis":
                 axis_val = current_axes.get(m_id, 0.0)
-                m_axis_direction = mapping_details.get("value") 
+                m_axis_direction_value = mapping_details.get("value") 
                 m_threshold = mapping_details.get("threshold", game_config.AXIS_THRESHOLD_DEFAULT)
-                is_axis_held_active = (m_axis_direction == -1 and axis_val < -m_threshold) or \
-                                      (m_axis_direction == 1 and axis_val > m_threshold)
+                is_axis_held_active = (m_axis_direction_value == -1 and axis_val < -m_threshold) or \
+                                      (m_axis_direction_value == 1 and axis_val > m_threshold)
 
                 if action_name == "left": player.is_trying_to_move_left = is_axis_held_active or player.is_trying_to_move_left
                 elif action_name == "right": player.is_trying_to_move_right = is_axis_held_active or player.is_trying_to_move_right
@@ -108,50 +112,60 @@ def process_player_input_logic(
                 elif action_name == "down": player.is_holding_crouch_ability_key = is_axis_held_active or player.is_holding_crouch_ability_key
                 
                 if action_name in getattr(C, 'JOYSTICK_AXIS_EVENT_ACTIONS', []): 
-                    axis_event_key = ("axis", m_id, m_axis_direction) 
-                    was_previously_active_for_event = player._prev_discrete_axis_hat_state.get(axis_event_key, False)
-                    if is_axis_held_active and not was_previously_active_for_event:
+                    axis_event_key_tuple = ("axis", m_id, m_axis_direction_value) 
+                    was_previously_active_for_event = player._prev_discrete_axis_hat_state.get(axis_event_key_tuple, False)
+                    
+                    if is_first_poll_for_player_joystick: # On first poll, just record current state as "previous"
+                        player._prev_discrete_axis_hat_state[axis_event_key_tuple] = is_axis_held_active
+                    elif is_axis_held_active and not was_previously_active_for_event: # Subsequent polls: detect change
                         action_events[action_name] = True
-                        if action_name == "up": action_events["jump"] = True
-                        if action_name == "down": action_events["crouch"] = True
-                    player._prev_discrete_axis_hat_state[axis_event_key] = is_axis_held_active
+                        if action_name == "up" and active_mappings.get("jump", {}).get("id") == m_id and active_mappings.get("jump", {}).get("value") == m_axis_direction_value: 
+                            action_events["jump"] = True
+                        if action_name == "down" and active_mappings.get("crouch", {}).get("id") == m_id and active_mappings.get("crouch", {}).get("value") == m_axis_direction_value: 
+                            action_events["crouch"] = True
+                    
+                    if not is_first_poll_for_player_joystick: # Only update prev state if not first poll (it was set above if first)
+                         player._prev_discrete_axis_hat_state[axis_event_key_tuple] = is_axis_held_active
+
 
             elif m_type == "button":
                 is_pressed_now = current_buttons.get(m_id, False)
-                was_pressed_prev = prev_buttons.get(m_id, False)
+                was_pressed_prev = prev_buttons.get(m_id, False) # This relies on app_core's prev_state list
                 if is_pressed_now and not was_pressed_prev: 
                     action_events[action_name] = True
-                    if action_name == "up": action_events["jump"] = True
-                    if action_name == "down": action_events["crouch"] = True
+                    if action_name == "up" and active_mappings.get("jump", {}).get("id") == m_id: action_events["jump"] = True
+                    if action_name == "down" and active_mappings.get("crouch", {}).get("id") == m_id: action_events["crouch"] = True
             
             elif m_type == "hat":
                 hat_val_target_tuple = tuple(mapping_details.get("value", (0,0))) 
                 current_hat_val_tuple = tuple(current_hats.get(m_id, (0,0))) 
                 is_hat_held_active_now = (current_hat_val_tuple == hat_val_target_tuple and hat_val_target_tuple != (0,0))
 
-                ### MODIFIED ### Discrete hat event logic
-                hat_event_key = ("hat", m_id, hat_val_target_tuple) # Key to track this specific hat direction
-                was_hat_held_active_prev = player._prev_discrete_axis_hat_state.get(hat_event_key, False)
-
-                # Update continuous "held" states for movement
                 if action_name == "left": player.is_trying_to_move_left = is_hat_held_active_now or player.is_trying_to_move_left
                 elif action_name == "right": player.is_trying_to_move_right = is_hat_held_active_now or player.is_trying_to_move_right
                 elif action_name == "up": player.is_holding_climb_ability_key = is_hat_held_active_now or player.is_holding_climb_ability_key
                 elif action_name == "down": player.is_holding_crouch_ability_key = is_hat_held_active_now or player.is_holding_crouch_ability_key
                 
-                # Trigger discrete "event" if this specific hat direction was just activated
                 if action_name in getattr(C, 'JOYSTICK_HAT_EVENT_ACTIONS', []):
-                    if is_hat_held_active_now and not was_hat_held_active_prev:
+                    hat_event_key_tuple = ("hat", m_id, hat_val_target_tuple) 
+                    was_hat_held_active_prev = player._prev_discrete_axis_hat_state.get(hat_event_key_tuple, False)
+
+                    if is_first_poll_for_player_joystick: # On first poll, just record current state as "previous"
+                        player._prev_discrete_axis_hat_state[hat_event_key_tuple] = is_hat_held_active_now
+                    elif is_hat_held_active_now and not was_hat_held_active_prev: # Subsequent polls: detect change
                         action_events[action_name] = True
-                        # Special handling for combined actions from one hat direction (like up for jump)
-                        if action_name == "up" and active_mappings.get("jump", {}).get("value") == hat_val_target_tuple:
+                        if action_name == "up" and active_mappings.get("jump", {}).get("value") == hat_val_target_tuple and active_mappings.get("jump", {}).get("type") == "hat" and active_mappings.get("jump", {}).get("id") == m_id:
                             action_events["jump"] = True
-                        if action_name == "down" and active_mappings.get("crouch", {}).get("value") == hat_val_target_tuple:
+                        if action_name == "down" and active_mappings.get("crouch", {}).get("value") == hat_val_target_tuple and active_mappings.get("crouch", {}).get("type") == "hat" and active_mappings.get("crouch", {}).get("id") == m_id:
                             action_events["crouch"] = True
-                
-                # Update the previous state for this hat direction
-                player._prev_discrete_axis_hat_state[hat_event_key] = is_hat_held_active_now
+                    
+                    if not is_first_poll_for_player_joystick: # Only update prev state if not first poll
+                        player._prev_discrete_axis_hat_state[hat_event_key_tuple] = is_hat_held_active_now
         
+        if is_first_poll_for_player_joystick:
+            player._first_joystick_input_poll_done = True
+            debug(f"{player_id_str} Joy Input: First poll priming complete for discrete axis/hat states.")
+
         if debug_this_frame and input_print_limiter.can_log(f"joy_intent_{player.player_id}"):
             debug(f"{player_id_str} Joy Intent: L={player.is_trying_to_move_left}, R={player.is_trying_to_move_right}, U={player.is_holding_climb_ability_key}, D={player.is_holding_crouch_ability_key}")
 
@@ -275,10 +289,12 @@ def process_player_input_logic(
         if can_initiate_jump_action:
             can_actually_execute_jump = not player.is_crouching or \
                 (hasattr(player, 'can_stand_up') and player.can_stand_up(platforms_list))
+            
             if player.is_crouching and can_actually_execute_jump: 
-                 player.is_crouching = False
+                 player.is_crouching = False 
                  if player.is_aflame: set_player_state(player, 'burning')
                  elif player.is_deflaming: set_player_state(player, 'deflame')
+
             if can_actually_execute_jump: 
                 if player.on_ground:
                     player.vel.setY(C.PLAYER_JUMP_STRENGTH); set_player_state(player, 'jump'); player.on_ground = False
@@ -303,7 +319,7 @@ def process_player_input_logic(
     if action_events.get("interact") and not is_on_fire_visual: 
         if player.can_grab_ladder and not player.on_ladder:
             set_player_state(player, 'ladder_idle') 
-        elif player.on_ladder:
+        elif player.on_ladder: 
             set_player_state(player, 'fall' if not player.on_ground else 'idle') 
 
     if can_perform_other_abilities_now: 
@@ -315,7 +331,6 @@ def process_player_input_logic(
         if action_events.get("projectile6") and hasattr(player, 'fire_shadow'): player.fire_shadow()
         if action_events.get("projectile7") and hasattr(player, 'fire_grey'): player.fire_grey()
 
-    # --- 8. Final State Transitions based on Movement/Environment ---
     is_in_non_interruptible_action_by_movement = player.is_attacking or player.is_dashing or \
                                                  player.is_rolling or player.is_sliding or \
                                                  player.is_taking_hit or player.state in [
@@ -345,7 +360,7 @@ def process_player_input_logic(
                 if player.state != target_idle_state and player.animations and player.animations.get(target_idle_state):
                     set_player_state(player, target_idle_state)
         else: 
-            if player.touching_wall != 0 and not player.is_dashing and not player.is_rolling and not is_on_fire_visual:
+            if player.touching_wall != 0 and not player.is_dashing and not player.is_rolling and not is_on_fire_visual: 
                 if player.vel.y() > C.PLAYER_WALL_SLIDE_SPEED * 0.5 : 
                     if player.state != 'wall_slide': set_player_state(player, 'wall_slide'); player.can_wall_jump = True
             elif player.vel.y() > getattr(C, 'MIN_SIGNIFICANT_FALL_VEL', 1.0) and \

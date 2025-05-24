@@ -712,8 +712,8 @@ class MainWindow(QMainWindow):
                     self.app_status,                        
                     self.get_p1_input_snapshot_for_logic,   
                     self.get_p2_input_snapshot_for_logic,   
-                    # self.get_p3_input_snapshot_for_logic, # Can be added if couch_play_logic uses them
-                    # self.get_p4_input_snapshot_for_logic,
+                    self.get_p3_input_snapshot_for_logic, # Can be added if couch_play_logic uses them
+                    self.get_p4_input_snapshot_for_logic,
                     lambda: QApplication.processEvents(),   
                     lambda: dt_sec,                         # Pass dt_sec
                     lambda msg, prog=0.0: self.game_scene_widget.update_game_state(0, download_msg=msg, download_prog=prog) 

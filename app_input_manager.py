@@ -44,7 +44,7 @@ def get_input_snapshot(
     player_instance: Any, 
     player_id: int,
     pygame_joysticks_list_from_app_core: List[Optional[pygame.joystick.Joystick]],
-    pygame_joy_button_prev_state_map: Dict[int, Dict[int, bool]], ### MODIFIED ### Type hint changed
+    pygame_joy_button_prev_state_list: List[Dict[int, bool]], # MODIFIED: Renamed and type hint corrected
     game_elements_ref: Dict[str, Any]
 ) -> Dict[str, bool]:
     
@@ -102,35 +102,48 @@ def get_input_snapshot(
                 current_buttons_state = {i: joy.get_button(i) for i in range(joy.get_numbuttons())}
                 joy_instance_id = joy.get_instance_id()
                 
-                ### MODIFIED ### Access dict using instance ID
-                prev_buttons_state_for_this_joy = pygame_joy_button_prev_state_map.get(joy_instance_id, {})
-                if not prev_buttons_state_for_this_joy and joy_instance_id not in pygame_joy_button_prev_state_map : # Check if key was missing vs. key exists but value is {}
-                     if _app_input_limiter.can_log(f"prev_state_missing_instanceid_{player_id_str_log}"):
-                        warning(f"APP_INPUT_MANAGER ({player_id_str_log}): Instance ID {joy_instance_id} not found in prev_state_map. Input events might be incorrect this frame.")
+                prev_buttons_state_for_this_joy: Dict[int, bool] = {} # Default to empty
+                if 0 <= joy_instance_id < len(pygame_joy_button_prev_state_list):
+                    button_state_dict_at_instance_id = pygame_joy_button_prev_state_list[joy_instance_id]
+                    if button_state_dict_at_instance_id is not None: # Should be {}, not None
+                        prev_buttons_state_for_this_joy = button_state_dict_at_instance_id
+                else:
+                     if _app_input_limiter.can_log(f"prev_state_missing_instanceid_{player_id_str_log}_{joy_instance_id}"):
+                        warning(f"APP_INPUT_MANAGER ({player_id_str_log}): Instance ID {joy_instance_id} out of bounds for prev_state_list (len {len(pygame_joy_button_prev_state_list)}). Using empty prev_buttons.")
                 
                 joystick_data_for_handler = {
                     'axes': {i: joy.get_axis(i) for i in range(joy.get_numaxes())},
                     'buttons_current': current_buttons_state, 
-                    'buttons_prev': prev_buttons_state_for_this_joy.copy(), ### MODIFIED ### Pass a copy
+                    'buttons_prev': prev_buttons_state_for_this_joy.copy(), 
                     'hats': {i: joy.get_hat(i) for i in range(joy.get_numhats())}
                 }
-                pygame_joy_button_prev_state_map[joy_instance_id] = current_buttons_state.copy() ### MODIFIED ### Update map
                 
+                if 0 <= joy_instance_id < len(pygame_joy_button_prev_state_list):
+                    pygame_joy_button_prev_state_list[joy_instance_id] = current_buttons_state.copy()
+                else:
+                    if _app_input_limiter.can_log(f"prev_state_update_fail_instanceid_{player_id_str_log}_{joy_instance_id}"):
+                        warning(f"APP_INPUT_MANAGER ({player_id_str_log}): Failed to update prev_state_list. Instance ID {joy_instance_id} out of bounds (len {len(pygame_joy_button_prev_state_list)}).")
+
+
                 active_runtime_joystick_map = player_specific_runtime_mappings
                 if not active_runtime_joystick_map:
                     if _app_input_limiter.can_log(f"joy_map_fallback_{player_id_str_log}"): 
                         warning(f"APP_INPUT_MANAGER ({player_id_str_log}): Player-specific runtime map (P{player_id}_MAPPINGS) is empty. Falling back to DEFAULT_GENERIC_JOYSTICK_MAPPINGS.")
                     active_runtime_joystick_map = game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS
-                if _app_input_limiter.can_log(f"joy_map_used_debug_{player_id_str_log}"): 
-                    debug(f"APP_INPUT_MANAGER ({player_id_str_log}): Using joystick map for Player {player_id} (Device: {assigned_device_str}):")
-                    try: debug(json.dumps(active_runtime_joystick_map, indent=2))
-                    except TypeError: debug(str(active_runtime_joystick_map))
+                
+                # Optional: Deep log of map being used
+                # if _app_input_limiter.can_log(f"joy_map_used_debug_{player_id_str_log}"): 
+                #     debug(f"APP_INPUT_MANAGER ({player_id_str_log}): Using joystick map for Player {player_id} (Device: {assigned_device_str}):")
+                #     try: debug(json.dumps(active_runtime_joystick_map, indent=2))
+                #     except TypeError: debug(str(active_runtime_joystick_map))
+                
                 controller_action_events = process_player_input_logic(
                     player_instance, {}, [], active_runtime_joystick_map,
                     game_elements_ref.get("platforms_list", []), joystick_data=joystick_data_for_handler
                 )
                 for action, is_active in controller_action_events.items():
                     if is_active: final_action_events[action] = True
+                
                 if _app_input_limiter.can_log(f"ctrl_snapshot_events_{player_id_str_log}"): 
                     active_ctrl_events = {k:v for k,v in controller_action_events.items() if v}
                     if active_ctrl_events: debug(f"APP_INPUT_MANAGER ({player_id_str_log}) CTRL Events (JoyIdx {joystick_py_idx}, InstID {joy_instance_id}): {active_ctrl_events}")
