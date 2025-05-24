@@ -3431,9 +3431,9 @@
             "world_y": 880,
             "game_type_id": "player1_spawn",
             "properties": {
-                "max_health": 100,
-                "move_speed": 350.0,
-                "jump_strength": -900.0
+                "jump_strength": -1000.0,
+                "max_health": 300,
+                "move_speed": 350.0
             }
         },
         {
@@ -3442,9 +3442,9 @@
             "world_y": 840,
             "game_type_id": "player2_spawn",
             "properties": {
-                "max_health": 100,
-                "move_speed": 350.0,
-                "jump_strength": -900.0
+                "jump_strength": -1000.0,
+                "max_health": 300,
+                "move_speed": 350.0
             }
         },
         {
@@ -3453,8 +3453,8 @@
             "world_y": 800,
             "game_type_id": "chest",
             "properties": {
-                "item_type": "coin",
-                "item_quantity": 1
+                "item_quantity": 1,
+                "item_type": "potion_health"
             }
         },
         {
@@ -3536,7 +3536,7 @@
                 "patrol_range_tiles": 6,
                 "move_speed": 100.0,
                 "health": 4,
-                "can_fly": false
+                "can_fly": true
             }
         },
         {
@@ -3842,10 +3842,20 @@
             "world_y": 520,
             "game_type_id": "platform_ledge_green_one_third",
             "properties": {}
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 320,
+            "world_y": 840,
+            "game_type_id": "object_stone_idle",
+            "properties": {
+                "destructible": true,
+                "hardness": 1
+            }
         }
     ],
-    "camera_offset_x": 905.0,
-    "camera_offset_y": 535.0,
+    "camera_offset_x": 107.0,
+    "camera_offset_y": 419.0,
     "zoom_level": 1.0,
     "show_grid": true,
     "asset_specific_variables": {}
