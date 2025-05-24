@@ -7,43 +7,43 @@ Handles player combat: attacks, damage dealing/taking, healing for PySide6.
 """
 # version 2.0.3 (Corrected PrintLimiter call)
 
-from typing import List, Any, Optional, TYPE_CHECKING # Added Optional, TYPE_CHECKING
+from typing import List, Any, Optional, TYPE_CHECKING 
 import time 
 
-# PySide6 imports
-from PySide6.QtCore import QRectF, QPointF, QSize, Qt # QSize, Qt not directly used but good for context
+from PySide6.QtCore import QRectF, QPointF
+from PySide6.QtGui import QColor # Added QColor for type hinting
 
-# Game imports
 import constants as C
 from statue import Statue 
 from enemy import Enemy 
 
-if TYPE_CHECKING: # To avoid circular import issues at runtime but allow type hinting
-    from player import Player as PlayerClass_TYPE # If Player class is in player.py
+if TYPE_CHECKING: 
+    from player import Player as PlayerClass_TYPE 
+
+try:
+    from player_state_handler import set_player_state
+except ImportError:
+    print(f"CRITICAL PLAYER_COMBAT_HANDLER: player_state_handler.set_player_state not found.")
+    def set_player_state(player, new_state):
+        if hasattr(player, 'state'): player.state = new_state
+        else: print(f"CRITICAL PLAYER_COMBAT_HANDLER (Fallback): Cannot set state for Player ID {getattr(player, 'player_id', 'N/A')}.")
+
 
 try:
     from logger import debug, info 
 except ImportError:
-    def debug(msg): print(f"DEBUG_PCOMBAT: {msg}")
-    def info(msg): print(f"INFO_PCOMBAT: {msg}")
+    def debug(msg, *args, **kwargs): print(f"DEBUG_PCOMBAT: {msg}")
+    def info(msg, *args, **kwargs): print(f"INFO_PCOMBAT: {msg}")
 
 _start_time_pcombat = time.monotonic()
-def get_current_ticks_monotonic(): # Renamed for clarity
-    """
-    Returns the number of milliseconds since this module was initialized.
-    """
+def get_current_ticks_monotonic(): 
     return int((time.monotonic() - _start_time_pcombat) * 1000)
 
 
 def check_player_attack_collisions(player: 'PlayerClass_TYPE', targets_list: List[Any]):
-    """
-    Checks if the player's current attack hits any target in the list.
-    Targets can be Enemies or Statues. Assumes player.rect, target.rect are QRectF.
-    """
     if not player._valid_init or not player.is_attacking or player.is_dead or not player.alive() or player.is_petrified:
         return
 
-    # Ensure rect and attack_hitbox are valid QRectF instances
     if not (hasattr(player, 'rect') and isinstance(player.rect, QRectF) and
             hasattr(player, 'attack_hitbox') and isinstance(player.attack_hitbox, QRectF)):
         debug(f"Player {player.player_id}: Missing or invalid rect/attack_hitbox for collision.")
@@ -53,9 +53,6 @@ def check_player_attack_collisions(player: 'PlayerClass_TYPE', targets_list: Lis
         debug(f"Player {player.player_id}: rect or attack_hitbox missing necessary methods (right, center, height, width).")
         return
 
-
-    # Position the attack hitbox
-    # The y-coordinate for the top-left/top-right should center the hitbox vertically relative to the player's rect center.
     hitbox_half_height = player.attack_hitbox.height() / 2.0
     player_center_y = player.rect.center().y()
     
@@ -63,41 +60,32 @@ def check_player_attack_collisions(player: 'PlayerClass_TYPE', targets_list: Lis
         top_left_x = player.rect.right()
         top_left_y = player_center_y - hitbox_half_height
         player.attack_hitbox.moveTopLeft(QPointF(top_left_x, top_left_y))
-    else: # Facing left
-        # moveTopRight moves the top-right corner to the specified QPointF
-        # So, the x for top-right is player.rect.left()
-        # The y for top-right is still player_center_y - hitbox_half_height
-        # Alternatively, calculate top-left and use moveTopLeft for consistency:
+    else: 
         top_left_x_facing_left = player.rect.left() - player.attack_hitbox.width()
         top_left_y_facing_left = player_center_y - hitbox_half_height
         player.attack_hitbox.moveTopLeft(QPointF(top_left_x_facing_left, top_left_y_facing_left))
 
-
-    # Further adjust hitbox vertically for crouch attack
     vertical_offset_for_crouch_attack = 0.0
-    if player.is_crouching and player.attack_type == 4: # Assuming attack_type 4 is crouch_attack
-        vertical_offset_for_crouch_attack = 10.0 # Pixels downwards, adjust as needed
+    if player.is_crouching and player.attack_type == 4: 
+        vertical_offset_for_crouch_attack = 10.0 
 
     if vertical_offset_for_crouch_attack != 0.0:
-        # moveCenter expects a QPointF for the new center.
-        # Only adjust the Y center if there's an offset.
         current_hitbox_center_x = player.attack_hitbox.center().x()
         new_hitbox_center_y_with_offset = player.attack_hitbox.center().y() + vertical_offset_for_crouch_attack
         player.attack_hitbox.moveCenter(QPointF(current_hitbox_center_x, new_hitbox_center_y_with_offset))
-
 
     current_time_ms = get_current_ticks_monotonic()
 
     for target_sprite in targets_list:
         if target_sprite is player or not hasattr(target_sprite, 'rect') or not isinstance(target_sprite.rect, QRectF):
-             continue # Skip self or invalid targets
+             continue 
 
         is_statue = isinstance(target_sprite, Statue)
 
         if is_statue:
             if player.attack_hitbox.intersects(target_sprite.rect): 
                 if hasattr(target_sprite, 'take_damage') and callable(target_sprite.take_damage) and \
-                   not getattr(target_sprite, 'is_smashed', False): # Don't damage already smashed statues
+                   not getattr(target_sprite, 'is_smashed', False): 
                     damage_to_inflict_on_statue = 0
                     if player.attack_type == 1: damage_to_inflict_on_statue = C.PLAYER_ATTACK1_DAMAGE
                     elif player.attack_type == 2: damage_to_inflict_on_statue = C.PLAYER_ATTACK2_DAMAGE
@@ -107,9 +95,8 @@ def check_player_attack_collisions(player: 'PlayerClass_TYPE', targets_list: Lis
                     if damage_to_inflict_on_statue > 0:
                         debug(f"Player {player.player_id} (AttackType {player.attack_type}) hit Statue {getattr(target_sprite, 'statue_id', 'Unknown')} for {damage_to_inflict_on_statue} damage.")
                         target_sprite.take_damage(damage_to_inflict_on_statue)
-            continue # Move to next target after processing statue
+            continue 
 
-        # For other characters (Enemies, other Players)
         if not (hasattr(target_sprite, '_valid_init') and target_sprite._valid_init and \
                 hasattr(target_sprite, 'is_dead') and not target_sprite.is_dead and \
                 hasattr(target_sprite, 'alive') and target_sprite.alive()):
@@ -147,7 +134,7 @@ def player_take_damage(player: 'PlayerClass_TYPE', damage_amount: int):
     player_id_log = f"P{player.player_id}"
 
     if not player._valid_init or player.is_dead or not player.alive(): return
-    if player.is_petrified: # Smashed state is handled by is_dead or not alive()
+    if player.is_petrified: 
         debug(f"PlayerCombatHandler ({player_id_log}): Take damage ({damage_amount}) ignored, player is petrified.")
         return
     if player.is_taking_hit and (current_time_ms - player.hit_timer < player.hit_cooldown):
@@ -162,16 +149,16 @@ def player_take_damage(player: 'PlayerClass_TYPE', damage_amount: int):
     player.hit_timer = current_time_ms
 
     if player.current_health <= 0:
-        if not player.is_dead: # Only set to death state once
+        if not player.is_dead: 
             debug(f"PlayerCombatHandler ({player_id_log}): Health <= 0. Setting state to 'death'.")
-            if hasattr(player, 'set_state'): player.set_state('death') # set_state handles is_dead = True
-    else: # Player still has health
+            if hasattr(player, 'set_state'): player.set_state('death') 
+    else: 
         is_in_fire_visual_state = player.state in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame', 'deflame_crouch']
-        if not is_in_fire_visual_state: # Don't interrupt fire animation with hit animation
-            if player.state != 'hit': # Only transition to 'hit' if not already in it
+        if not is_in_fire_visual_state: 
+            if player.state != 'hit': 
                  if hasattr(player, 'set_state'): player.set_state('hit')
-        else: # Player is on fire and took damage
-            if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"player_hit_while_on_fire_{player.player_id}"): # MODIFIED
+        else: 
+            if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"player_hit_while_on_fire_{player.player_id}"): # MODIFIED can_print to can_log
                 debug(f"PlayerCombatHandler ({player_id_log}): Was aflame/deflaming. Took damage, in hit cooldown, remains visually on fire. State: '{getattr(player, 'state', 'N/A')}'")
 
 
@@ -184,19 +171,17 @@ def player_heal_to_full(player: 'PlayerClass_TYPE'):
     if player.is_petrified or player.is_stone_smashed:
         debug(f"PlayerCombatHandler (P{player.player_id}): Cannot heal, player is petrified/smashed.")
         return
-    # If player was "dead" (health 0) but not petrified/smashed, healing revives them.
     if player.is_dead and player.current_health <=0 :
         debug(f"PlayerCombatHandler (P{player.player_id}): Healing a 'dead' player. Reviving and setting health.")
-        player.is_dead = False # Revive
-        player.death_animation_finished = False # Reset death animation flag
+        player.is_dead = False 
+        player.death_animation_finished = False 
 
     player.current_health = player.max_health
     debug(f"PlayerCombatHandler (P{player.player_id}): Healed to full health: {player.current_health}/{player.max_health}")
 
-    if player.is_taking_hit: player.is_taking_hit = False # Clear hit stun
+    if player.is_taking_hit: player.is_taking_hit = False 
     
-    # If player was in 'hit' or 'death' state visually, transition to appropriate idle/fall state
-    if player.state in ['hit', 'death', 'death_nm'] and not player.is_dead: # Check is_dead again as it was just reset
+    if player.state in ['hit', 'death', 'death_nm'] and not player.is_dead: 
         if hasattr(player, 'set_state'):
             next_state = 'idle' if player.on_ground else 'fall'
             player.set_state(next_state)

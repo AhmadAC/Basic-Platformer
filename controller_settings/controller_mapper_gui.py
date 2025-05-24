@@ -26,7 +26,7 @@ except ImportError:
     PYNPUT_AVAILABLE = False
     print("WARNING in controller_mapper_gui.py: pynput.keyboard not found. Keyboard simulation will not work.")
     class Key: # type: ignore
-        space = 'stub_space'; shift = 'stub_shift'; ctrl = 'stub_ctrl'; alt = 'stub_alt'
+        shift = 'stub_shift'; ctrl = 'stub_ctrl'; alt = 'stub_alt'
         enter = 'stub_enter'; tab = 'stub_tab'; esc = 'stub_esc'
         up = 'stub_up'; down = 'stub_down'; left = 'stub_left'; right = 'stub_right'
     class KeyboardController: # type: ignore
@@ -210,7 +210,7 @@ def get_pynput_key(key_str: str) -> Optional[Any]:
     if not PYNPUT_AVAILABLE: return None
     # Extended key map, ensure 'Key' is from pynput.keyboard
     key_map = {
-        "SPACE": Key.space, "SHIFT": Key.shift, "CTRL": Key.ctrl, "ALT": Key.alt,
+        "SHIFT": Key.shift, "CTRL": Key.ctrl, "ALT": Key.alt,
         "ENTER": Key.enter, "RETURN": Key.enter, "TAB": Key.tab, "ESC": Key.esc,
         "UP_ARROW": Key.up, "DOWN_ARROW": Key.down, "LEFT_ARROW": Key.left, "RIGHT_ARROW": Key.right,
         # Game action to key string mapping for simulation (can be game specific)

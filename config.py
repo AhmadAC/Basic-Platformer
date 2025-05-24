@@ -92,7 +92,7 @@ GAME_ACTIONS = [
 EXTERNAL_TO_INTERNAL_ACTION_MAP = {
     "MOVE_UP": "up", "MOVE_LEFT": "left", "MOVE_DOWN": "down", "MOVE_RIGHT": "right",
     "JUMP_ACTION": "jump", "PRIMARY_ATTACK": "attack1",
-    "W": "up", "A": "left", "S": "down", "D": "right", "SPACE": "jump", "V": "attack1", "B": "attack2", "SHIFT": "dash"
+    "W": "up", "A": "left", "S": "down", "D": "right", "V": "attack1", "B": "attack2", "SHIFT": "dash"
 }
 
 # --- Default Keyboard Mappings (Qt.Key format) ---

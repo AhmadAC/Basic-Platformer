@@ -152,15 +152,14 @@ class Player:
         self.is_holding_climb_ability_key: bool = False
         self.is_holding_crouch_ability_key: bool = False
         
-        # Projectile Cooldowns
         current_time_for_init_cooldown = get_current_ticks_monotonic()
-        self.fireball_cooldown_timer: int = current_time_for_init_cooldown 
-        self.poison_cooldown_timer: int = current_time_for_init_cooldown
-        self.bolt_cooldown_timer: int = current_time_for_init_cooldown
-        self.blood_cooldown_timer: int = current_time_for_init_cooldown
-        self.ice_cooldown_timer: int = current_time_for_init_cooldown
-        self.shadow_cooldown_timer: int = current_time_for_init_cooldown
-        self.grey_cooldown_timer: int = current_time_for_init_cooldown
+        self.fireball_cooldown_timer: int = current_time_for_init_cooldown - C.FIREBALL_COOLDOWN # Ready to fire
+        self.poison_cooldown_timer: int = current_time_for_init_cooldown - C.POISON_COOLDOWN
+        self.bolt_cooldown_timer: int = current_time_for_init_cooldown - C.BOLT_COOLDOWN
+        self.blood_cooldown_timer: int = current_time_for_init_cooldown - C.BLOOD_COOLDOWN
+        self.ice_cooldown_timer: int = current_time_for_init_cooldown - C.ICE_COOLDOWN
+        self.shadow_cooldown_timer: int = current_time_for_init_cooldown - C.SHADOW_PROJECTILE_COOLDOWN
+        self.grey_cooldown_timer: int = current_time_for_init_cooldown - C.GREY_PROJECTILE_COOLDOWN
 
         self.fireball_last_input_dir = QPointF(1.0, 0.0)
         self.is_aflame: bool = False; self.aflame_timer_start: int = 0
@@ -174,7 +173,6 @@ class Player:
         self.was_crouching_when_petrified: bool = False
         self.state_timer: int = 0
         
-        # Input Priming Attributes
         self._prev_discrete_axis_hat_state: Dict[Tuple[str, int, Tuple[int, int]], bool] = {}
         self._first_joystick_input_poll_done: bool = False
 
@@ -217,13 +215,12 @@ class Player:
 
     def reset_for_new_game_or_round(self):
         """Resets flags related to input priming and cooldowns for a new game/map session."""
-        debug(f"Player {self.player_id}: Resetting input priming and cooldowns.")
+        debug(f"Player {self.player_id}: Resetting input priming and cooldowns for new game/round.")
         self._first_joystick_input_poll_done = False
         self._prev_discrete_axis_hat_state.clear()
         
         current_time_reset = get_current_ticks_monotonic()
-        # Reset cooldowns to allow immediate action if desired, or set to current_time_reset to enforce cooldown
-        # For "ready on first frame after reset", subtract cooldown. Otherwise, just set to current_time_reset.
+        # Reset cooldowns to allow immediate action.
         self.fireball_cooldown_timer = current_time_reset - C.FIREBALL_COOLDOWN 
         self.poison_cooldown_timer = current_time_reset - C.POISON_COOLDOWN
         self.bolt_cooldown_timer = current_time_reset - C.BOLT_COOLDOWN
@@ -231,7 +228,7 @@ class Player:
         self.ice_cooldown_timer = current_time_reset - C.ICE_COOLDOWN
         self.shadow_cooldown_timer = current_time_reset - C.SHADOW_PROJECTILE_COOLDOWN
         self.grey_cooldown_timer = current_time_reset - C.GREY_PROJECTILE_COOLDOWN
-        debug(f"Player {self.player_id}: Projectile cooldowns reset to allow immediate use.")
+        debug(f"Player {self.player_id}: Projectile cooldowns reset for immediate use.")
 
 
     def _init_stone_assets(self):
@@ -287,7 +284,7 @@ class Player:
 
     def _is_placeholder_qpixmap(self, pixmap: QPixmap) -> bool:
         if pixmap.isNull(): return True
-        if pixmap.size() in [QSize(30,40), QSize(30,60), QSize(10,10)]: # Common placeholder sizes
+        if pixmap.size() in [QSize(30,40), QSize(30,60), QSize(10,10)]: 
             qimage = pixmap.toImage()
             if not qimage.isNull() and qimage.width() > 0 and qimage.height() > 0:
                 color_at_origin = qimage.pixelColor(0,0)
@@ -480,11 +477,11 @@ class Player:
             if current_time_ms - self.frozen_effect_timer > (C.PLAYER_FROZEN_DURATION_MS + C.PLAYER_DEFROST_DURATION_MS):
                 set_player_state(self, 'idle' if self.on_ground else 'fall')
 
-        if self.is_stone_smashed: # This check should be inside update() or before game logic for kill
+        if self.is_stone_smashed: 
             if current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS:
                 if not self.death_animation_finished: 
                     self.death_animation_finished = True
-                self.kill() # This sets _alive = False
+                self.kill() 
     
     def apply_aflame_effect(self):
         if self.is_aflame or self.is_deflaming or self.is_dead or self.is_petrified or self.is_frozen or self.is_defrosting: return
