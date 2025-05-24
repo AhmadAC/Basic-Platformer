@@ -1,5 +1,3 @@
-#################### START OF FILE: editor\editor.py ####################
-
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
@@ -64,16 +62,17 @@ try:
         from . import editor_history
         from .map_view_widget import MapViewWidget, MapObjectItem
         from .editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
-        from .editor_actions import * 
+        from .editor_actions import *
         if ED_CONFIG.MINIMAP_ENABLED:
             from .minimap_widget import MinimapWidget
         if _PYGAME_AVAILABLE:
             # This assumes 'config' is in the parent directory of 'editor' package
-            from .. import config as main_game_config 
+            # MODIFIED LINE: Changed from relative import to absolute import
+            import config as main_game_config
             init_pygame_and_joystick_globally = main_game_config.init_pygame_and_joystick_globally
             get_joystick_objects = main_game_config.get_joystick_objects
-        _IMPORTS_SUCCESSFUL_METHOD = "Relative (as package)"
-        logger_init_pygame.info("Editor modules imported successfully using RELATIVE paths (as package).")
+        _IMPORTS_SUCCESSFUL_METHOD = "Relative (as package) with absolute main_game_config" # Updated comment
+        logger_init_pygame.info("Editor modules imported successfully using RELATIVE paths (as package), main_game_config via ABSOLUTE path.")
     else: # Standalone execution or no package context (direct run of editor.py)
         logger_init_pygame.info("Attempting absolute imports for editor modules (standalone or no package context)...")
         # This assumes project_root is in sys.path, which it should be for standalone
@@ -101,7 +100,7 @@ except ImportError as e:
     logger_init_pygame.critical(err_msg, exc_info=True)
     logger_init_pygame.critical(f"  Current sys.path: {sys.path}")
     logger_init_pygame.critical(f"  __name__: {__name__}, __package__: {__package__}, _IS_STANDALONE_EXECUTION: {_IS_STANDALONE_EXECUTION}")
-except AttributeError as e_attr: 
+except AttributeError as e_attr:
     _critical_import_failed = True
     err_msg = f"CRITICAL ATTRIBUTE ERROR during import (likely ED_CONFIG issue or main_game_config): {e_attr}"
     _import_errors_list.append(err_msg)
@@ -113,35 +112,35 @@ if _critical_import_failed:
 
 
 # --- Logger Setup (now that ED_CONFIG is expected to be loaded) ---
-logger: Optional[logging.Logger] = None 
-log_file_path_for_error_msg = "editor_qt_debug.log" 
+logger: Optional[logging.Logger] = None
+log_file_path_for_error_msg = "editor_qt_debug.log"
 try:
     current_script_dir_for_logs = os.path.dirname(os.path.abspath(__file__))
-    logs_dir = os.path.join(current_script_dir_for_logs, 'logs') 
+    logs_dir = os.path.join(current_script_dir_for_logs, 'logs')
     if not os.path.exists(logs_dir): os.makedirs(logs_dir)
-    
+
     log_file_name = ED_CONFIG.LOG_FILE_NAME # type: ignore
     log_file_path_for_error_msg = os.path.join(logs_dir, log_file_name)
-    
+
     log_level_str = ED_CONFIG.LOG_LEVEL.upper() # type: ignore
     numeric_log_level = getattr(logging, log_level_str, logging.DEBUG)
-    
+
     log_format_str = ED_CONFIG.LOG_FORMAT # type: ignore
 
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-        handler.close() 
+        handler.close()
 
     logging.basicConfig(
         level=numeric_log_level,
         format=log_format_str,
         handlers=[logging.FileHandler(log_file_path_for_error_msg, mode='w')]
     )
-    logger = logging.getLogger("EditorMainWindowLogger") 
+    logger = logging.getLogger("EditorMainWindowLogger")
     logger.info(f"Editor session started. Logging initialized successfully to '{log_file_path_for_error_msg}'. Imports via: {_IMPORTS_SUCCESSFUL_METHOD}")
 except Exception as e_log_setup:
     logging.basicConfig(level=logging.DEBUG, format='CONSOLE FALLBACK (editor.py logger setup): %(asctime)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger("EditorMainWindowLogger_Fallback") 
+    logger = logging.getLogger("EditorMainWindowLogger_Fallback")
     logger.error(f"CRITICAL ERROR DURING FILE LOGGING SETUP (editor.py): {e_log_setup}. Using console.", exc_info=True)
     logger.info(f"Imports were attempted via: {_IMPORTS_SUCCESSFUL_METHOD}")
 # --- End Logger Setup ---
@@ -158,17 +157,17 @@ SWITCH_DPAD_HAT_ID = 0
 
 
 class EditorMainWindow(QMainWindow):
-    controller_action_dispatched = Signal(str, object) 
+    controller_action_dispatched = Signal(str, object)
 
     def __init__(self, parent: Optional[QWidget] = None, embed_mode: bool = False):
-        super().__init__(parent) 
-        self._is_embedded = embed_mode 
+        super().__init__(parent)
+        self._is_embedded = embed_mode
         logger.info(f"Initializing EditorMainWindow... Embedded: {self._is_embedded}")
 
         self.editor_state = EditorState()
         self.settings = QSettings("MyPlatformerGame", "LevelEditor_Qt")
-        
-        self.init_ui() 
+
+        self.init_ui()
         self.create_actions()
         self.create_menus()
         self.create_status_bar()
@@ -181,21 +180,21 @@ class EditorMainWindow(QMainWindow):
         editor_assets.load_editor_palette_assets(self.editor_state, self) # type: ignore
         self.asset_palette_widget.populate_assets()
 
-        if not self._is_embedded: 
+        if not self._is_embedded:
             self.update_window_title()
         self.update_edit_actions_enabled_state()
 
-        self._current_focused_panel_index: int = 0 
+        self._current_focused_panel_index: int = 0
         self._controller_input_timer: Optional[QTimer] = None
         self._joysticks: List[pygame.joystick.Joystick] = [] # type: ignore
         self._primary_joystick: Optional[pygame.joystick.Joystick] = None # type: ignore
-        
-        self._controller_axis_deadzone = 0.4 
-        self._controller_axis_last_event_time: Dict[Tuple[int, int, int], float] = {} 
-        self._controller_axis_repeat_delay = 0.3 
-        self._controller_axis_repeat_interval = 0.1 
+
+        self._controller_axis_deadzone = 0.4
+        self._controller_axis_last_event_time: Dict[Tuple[int, int, int], float] = {}
+        self._controller_axis_repeat_delay = 0.3
+        self._controller_axis_repeat_interval = 0.1
         self._last_dpad_value: Optional[Tuple[int, int]] = None
-        self._button_last_state: Dict[int, bool] = {} 
+        self._button_last_state: Dict[int, bool] = {}
 
         if _PYGAME_AVAILABLE:
             self._init_controller_system()
@@ -203,7 +202,7 @@ class EditorMainWindow(QMainWindow):
 
         if not self._is_embedded:
             restored_successfully = self.restore_geometry_and_state()
-            if restored_successfully: self.show() 
+            if restored_successfully: self.show()
             else:
                 primary_screen = QApplication.primaryScreen()
                 if primary_screen:
@@ -212,14 +211,14 @@ class EditorMainWindow(QMainWindow):
                     pos_x, pos_y = screen_geo.x() + (screen_geo.width() - default_w)//2, screen_geo.y() + (screen_geo.height() - default_h)//2
                     self.setGeometry(pos_x, pos_y, default_w, default_h)
                 else: self.setGeometry(50, 50, ED_CONFIG.EDITOR_SCREEN_INITIAL_WIDTH, ED_CONFIG.EDITOR_SCREEN_INITIAL_HEIGHT) # type: ignore
-                self.showMaximized() 
+                self.showMaximized()
         else: self.restore_geometry_and_state()
 
         if not editor_map_utils.ensure_maps_directory_exists(): # type: ignore
             err_msg_maps_dir = f"Maps directory issue: {ED_CONFIG.MAPS_DIRECTORY}" # type: ignore
             logger.error(err_msg_maps_dir + " (Embedded mode, no QMessageBox)" if self._is_embedded else err_msg_maps_dir)
             if not self._is_embedded: QMessageBox.critical(self, "Error", err_msg_maps_dir)
-        
+
         logger.info("EditorMainWindow initialized.")
         self.show_status_message("Editor started.", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2) # type: ignore
 
@@ -231,8 +230,8 @@ class EditorMainWindow(QMainWindow):
 
     def init_ui(self):
         logger.debug("Initializing UI components...")
-        self._focusable_panels: List[QWidget] = [] 
-        
+        self._focusable_panels: List[QWidget] = []
+
         self.map_view_widget = MapViewWidget(self.editor_state, self) # type: ignore
         self.setCentralWidget(self.map_view_widget)
         self._focusable_panels.append(self.map_view_widget)
@@ -256,8 +255,8 @@ class EditorMainWindow(QMainWindow):
             self.minimap_dock = QDockWidget("Minimap", self)
             self.minimap_widget = MinimapWidget(self.editor_state, self.map_view_widget, self) # type: ignore
             self.minimap_dock.setWidget(self.minimap_widget)
-            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.minimap_dock) 
-            self.splitDockWidget(self.minimap_dock, self.properties_editor_dock, Qt.Orientation.Vertical) 
+            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.minimap_dock)
+            self.splitDockWidget(self.minimap_dock, self.properties_editor_dock, Qt.Orientation.Vertical)
             self.minimap_dock.setFixedHeight(ED_CONFIG.MINIMAP_DEFAULT_HEIGHT + 35) # type: ignore
         else:
             self.minimap_dock = None; self.minimap_widget = None # type: ignore
@@ -271,12 +270,12 @@ class EditorMainWindow(QMainWindow):
         self.map_view_widget.map_object_selected_for_properties.connect(self.properties_editor_widget.display_map_object_properties)
         self.map_view_widget.map_content_changed.connect(self.handle_map_content_changed)
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
-        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed) 
+        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed)
         self.properties_editor_widget.controller_focus_requested_elsewhere.connect(self._cycle_panel_focus_next)
 
-        if self.minimap_widget: 
+        if self.minimap_widget:
             self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_view_rect_update_and_repaint)
-        
+
         self.setDockOptions(QMainWindow.DockOption.AnimatedDocks | QMainWindow.DockOption.AllowNestedDocks | QMainWindow.DockOption.AllowTabbedDocks | QMainWindow.DockOption.VerticalTabs)
         logger.debug("UI components initialized.")
 
@@ -285,7 +284,7 @@ class EditorMainWindow(QMainWindow):
         try:
             init_pygame_and_joystick_globally(force_rescan=True) # Uses imported function
             self._joysticks = get_joystick_objects() # Uses imported function
-            
+
             if not self._joysticks or all(joy is None for joy in self._joysticks):
                 logger.info("No joysticks detected by Pygame or all are None.")
                 self._primary_joystick = None; return
@@ -298,9 +297,9 @@ class EditorMainWindow(QMainWindow):
                         logger.info(f"Primary joystick set to: {joy.get_name()} (Index: {i}, GUID: {joy.get_guid()})")
                         break
                     except pygame.error as e: logger.warning(f"Could not initialize joystick {i} ({joy.get_name()}): {e}")
-            
+
             if not self._primary_joystick: logger.warning("No valid joystick could be initialized as primary."); return
-            
+
             self._controller_input_timer = QTimer(self)
             self._controller_input_timer.setInterval(ED_CONFIG.CONTROLLER_POLL_INTERVAL_MS) # type: ignore
             self._controller_input_timer.timeout.connect(self._poll_controller_input)
@@ -311,7 +310,7 @@ class EditorMainWindow(QMainWindow):
 
     def _poll_controller_input(self):
         if not _PYGAME_AVAILABLE or not self._primary_joystick: return
-        
+
         pygame.event.pump(); current_time = time.monotonic()
         joy = self._primary_joystick
         if not joy.get_init():
@@ -323,27 +322,27 @@ class EditorMainWindow(QMainWindow):
             SWITCH_Y_BTN: ACTION_MAP_TOOL_PRIMARY, SWITCH_X_BTN: ACTION_MAP_TOOL_SECONDARY,
             SWITCH_L_BTN: ACTION_UI_TAB_PREV, SWITCH_R_BTN: ACTION_UI_TAB_NEXT,
             SWITCH_ZL_BTN: ACTION_MAP_ZOOM_OUT, SWITCH_ZR_BTN: ACTION_MAP_ZOOM_IN,
-            SWITCH_PLUS_BTN: ACTION_UI_MENU, SWITCH_MINUS_BTN: ACTION_UI_FOCUS_NEXT, 
+            SWITCH_PLUS_BTN: ACTION_UI_MENU, SWITCH_MINUS_BTN: ACTION_UI_FOCUS_NEXT,
         }
         for btn_id, action in button_map.items():
             if btn_id >= joy.get_numbuttons(): continue
             pressed = joy.get_button(btn_id)
             if pressed and not self._button_last_state.get(btn_id, False):
-                self.controller_action_dispatched.emit(action, True) 
+                self.controller_action_dispatched.emit(action, True)
             self._button_last_state[btn_id] = pressed
 
         if joy.get_numhats() > 0:
             hat_value = joy.get_hat(SWITCH_DPAD_HAT_ID)
-            if hat_value != self._last_dpad_value: 
+            if hat_value != self._last_dpad_value:
                 if hat_value == (0,1): self.controller_action_dispatched.emit(ACTION_UI_UP, None)
                 elif hat_value == (0,-1): self.controller_action_dispatched.emit(ACTION_UI_DOWN, None)
                 elif hat_value == (-1,0): self.controller_action_dispatched.emit(ACTION_UI_LEFT, None)
                 elif hat_value == (1,0): self.controller_action_dispatched.emit(ACTION_UI_RIGHT, None)
                 self._last_dpad_value = hat_value
-        
+
         axis_map = {
             SWITCH_L_STICK_X_AXIS: (ACTION_UI_LEFT, ACTION_UI_RIGHT),
-            SWITCH_L_STICK_Y_AXIS: (ACTION_UI_UP, ACTION_UI_DOWN), 
+            SWITCH_L_STICK_Y_AXIS: (ACTION_UI_UP, ACTION_UI_DOWN),
             SWITCH_R_STICK_Y_AXIS: (ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN),
         }
         for axis_id, actions in axis_map.items():
@@ -356,13 +355,13 @@ class EditorMainWindow(QMainWindow):
             if action_to_emit:
                 if action_to_emit.startswith("CAMERA_PAN_"):
                     self.controller_action_dispatched.emit(action_to_emit, axis_val)
-                else: 
+                else:
                     last_event_time = self._controller_axis_last_event_time.get(key, 0)
                     if current_time - last_event_time > self._controller_axis_repeat_delay or \
                        current_time - last_event_time > self._controller_axis_repeat_interval:
                         self.controller_action_dispatched.emit(action_to_emit, axis_val)
                         self._controller_axis_last_event_time[key] = current_time
-            else: 
+            else:
                  for ds in [-1, 1]: self._controller_axis_last_event_time[(joy.get_id(), axis_id, ds)] = 0
 
 
@@ -401,10 +400,10 @@ class EditorMainWindow(QMainWindow):
                 except Exception as e: logger.error(f"Error in {type(old_panel).__name__}.on_controller_focus_lost: {e}", exc_info=True)
             parent_dock_old = old_panel.parent()
             while parent_dock_old and not isinstance(parent_dock_old, QDockWidget): parent_dock_old = parent_dock_old.parent()
-            if isinstance(parent_dock_old, QDockWidget): parent_dock_old.setStyleSheet("") 
+            if isinstance(parent_dock_old, QDockWidget): parent_dock_old.setStyleSheet("")
         self._current_focused_panel_index = new_index
         new_panel = self._focusable_panels[new_index]
-        new_panel.setFocus(Qt.FocusReason.OtherFocusReason) 
+        new_panel.setFocus(Qt.FocusReason.OtherFocusReason)
         if hasattr(new_panel, "on_controller_focus_gained"):
             try: new_panel.on_controller_focus_gained() # type: ignore
             except Exception as e: logger.error(f"Error in {type(new_panel).__name__}.on_controller_focus_gained: {e}", exc_info=True)
@@ -654,20 +653,20 @@ class EditorMainWindow(QMainWindow):
     def keyPressEvent(self,event:QKeyEvent):
         key,active_panel=event.key(),next((p for i,p in enumerate(self._focusable_panels) if i==self._current_focused_panel_index),None) if self._focusable_panels else None
         if active_panel and hasattr(active_panel,'handle_key_event_for_controller_nav') and active_panel.handle_key_event_for_controller_nav(event): event.accept();return # type: ignore
-        
-        if key==Qt.Key.Key_Escape and not self._is_embedded: 
+
+        if key==Qt.Key.Key_Escape and not self._is_embedded:
             self.close();event.accept()
         # MODIFIED: Corrected syntax for conditional return
-        elif self.map_view_widget.hasFocus() and hasattr(self.map_view_widget,'keyPressEvent'): 
+        elif self.map_view_widget.hasFocus() and hasattr(self.map_view_widget,'keyPressEvent'):
             self.map_view_widget.keyPressEvent(event) # type: ignore
-            if event.isAccepted(): 
-                return 
+            if event.isAccepted():
+                return
         super().keyPressEvent(event)
     def closeEvent(self,event):
         if self.confirm_unsaved_changes("exit editor"):
             if self._controller_input_timer and self._controller_input_timer.isActive(): self._controller_input_timer.stop()
             if _PYGAME_AVAILABLE and self._joysticks:
-                for joy in self._joysticks: 
+                for joy in self._joysticks:
                     if joy and joy.get_init(): joy.quit()
             for dock_attr_name in ["asset_palette_dock", "properties_editor_dock", "minimap_dock"]:
                 dock = getattr(self, dock_attr_name, None)
@@ -699,7 +698,7 @@ class EditorMainWindow(QMainWindow):
             return False
 
 def editor_main(parent_app_instance: Optional[QApplication]=None, embed_mode:bool=False):
-    if _IS_STANDALONE_EXECUTION: 
+    if _IS_STANDALONE_EXECUTION:
         try: os.chdir(os.path.dirname(os.path.abspath(__file__))); logger.info(f"Standalone CWD: {os.getcwd()}") if logger else None
         except Exception as e_chdir: logger.error(f"Standalone CWD change error: {e_chdir}") if logger else None
 
@@ -709,7 +708,7 @@ def editor_main(parent_app_instance: Optional[QApplication]=None, embed_mode:boo
         if parent_app_instance: app=parent_app_instance
         elif _IS_STANDALONE_EXECUTION: app=QApplication(sys.argv)
         else: raise RuntimeError("Editor needs QApplication instance, especially in embed_mode.")
-    
+
     main_window=EditorMainWindow(embed_mode=embed_mode)
     if not embed_mode:
         exit_code=0
@@ -731,5 +730,3 @@ if __name__ == "__main__":
         try: pygame.init(); pygame.joystick.init() if not pygame.joystick.get_init() else None; print("INFO: Pygame init for standalone.")
         except Exception as e_py_main: print(f"WARN: Pygame init failed in main: {e_py_main}")
     sys.exit(editor_main(embed_mode=False))
-
-#################### END OF FILE: editor\editor.py ####################

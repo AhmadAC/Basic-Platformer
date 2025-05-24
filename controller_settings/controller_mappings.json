@@ -16,9 +16,9 @@
         "controller_enabled": false
     },
     "player4_settings": {
-        "input_device": "joystick_pygame_1",
+        "input_device": "unassigned",
         "keyboard_enabled": false,
-        "controller_enabled": true
+        "controller_enabled": false
     },
     "joystick_mappings": {
         "030056fb7e0500000920000000006803": {
