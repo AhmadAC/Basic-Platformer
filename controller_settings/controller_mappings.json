@@ -6,9 +6,9 @@
         "controller_enabled": true
     },
     "player2_settings": {
-        "input_device": "joystick_pygame_1",
-        "keyboard_enabled": false,
-        "controller_enabled": true
+        "input_device": "keyboard_p1",
+        "keyboard_enabled": true,
+        "controller_enabled": false
     },
     "player3_settings": {
         "input_device": "unassigned",
