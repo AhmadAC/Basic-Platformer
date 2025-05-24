@@ -1,10 +1,12 @@
+#################### START OF FILE: app_game_modes.py ####################
+
 # app_game_modes.py
 # -*- coding: utf-8 -*-
 """
 Handles game mode logic: initialization, starting/stopping modes,
 managing network interactions, and UI dialogs for PySide6.
 """
-# version 2.0.10 (Added full 4-player initialization in _initialize_game_entities)
+# version 2.0.11 (Pass num_players to _initialize_game_entities for couch_coop)
 
 import os
 import sys
@@ -17,7 +19,7 @@ from PySide6.QtCore import QThread, Signal, Qt, QRectF, QPointF
 
 from logger import info, debug, warning, error, critical
 import constants as C
-import config as game_config # Used for player control schemes
+import config as game_config 
 
 from app_ui_creator import (
     _show_status_dialog,
@@ -29,7 +31,7 @@ from app_ui_creator import (
 )
 
 from game_ui import IPInputDialog
-from game_state_manager import reset_game_state
+from game_state_manager import reset_game_state # Still used for specific reset scenarios, not map init
 from player import Player
 from enemy import Enemy
 from statue import Statue
@@ -37,6 +39,8 @@ from items import Chest
 from tiles import Platform, Ladder, Lava, BackgroundTile
 from camera import Camera
 from level_loader import LevelLoader
+# Import initialize_game_elements which is now the primary map/entity setup function
+from game_setup import initialize_game_elements
 
 from server_logic import ServerState
 from client_logic import ClientState, find_server_on_lan
@@ -44,7 +48,7 @@ from client_logic import ClientState, find_server_on_lan
 if TYPE_CHECKING:
     from app_core import MainWindow
 else:
-    MainWindow = Any # Fallback for runtime if app_core is not available for type hint
+    MainWindow = Any 
 
 
 class LANServerSearchThread(QThread):
@@ -82,230 +86,60 @@ class LANServerSearchThread(QThread):
             self.client_state_for_search.app_running = False
 
 
-def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: str) -> bool:
-    info(f"GAME_MODES: === INITIALIZING NEW GAME SESSION === Map: '{map_name}', Mode: '{mode}'.")
-    debug(f"GAME_MODES Init Start: Current game_elements keys before clear: {list(main_window.game_elements.keys())}")
-
-    main_window.game_elements.clear()
-    main_window.game_elements['initialization_in_progress'] = True
-    main_window.game_elements['game_ready_for_logic'] = False
-    debug("GAME_MODES Init: Cleared main_window.game_elements and set init flags.")
-
-    level_loader = LevelLoader()
-    maps_dir_path = str(getattr(C, "MAPS_DIR", "maps"))
-    if not os.path.isabs(maps_dir_path):
-        project_root_path = getattr(C, 'PROJECT_ROOT', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        maps_dir_path = os.path.join(str(project_root_path), maps_dir_path)
-    level_data = level_loader.load_map(map_name, maps_dir_path)
-
-    if not level_data or not isinstance(level_data, dict):
-        error(f"GAME_MODES Init: Failed to load map data for '{map_name}'. LevelLoader returned: {type(level_data)}.")
-        _update_status_dialog(main_window, title="Map Load Error", message=f"Failed to load map: {map_name}", progress=-1.0)
-        main_window.game_elements['initialization_in_progress'] = False
-        return False
-    debug(f"GAME_MODES Init: Map data for '{map_name}' loaded successfully. Keys: {list(level_data.keys())}")
-    main_window.game_elements['level_data'] = level_data
-
-    main_window.game_elements['map_name'] = map_name
-    main_window.game_elements['loaded_map_name'] = map_name
-    main_window.game_elements['enemy_spawns_data_cache'] = list(level_data.get('enemies_list', []))
-    main_window.game_elements['statue_spawns_data_cache'] = list(level_data.get('statues_list', []))
+# MODIFIED: Added num_players_for_couch_coop parameter
+# This function is now a wrapper around game_setup.initialize_game_elements
+# It ensures that game_setup is called with the correct context.
+def _initialize_game_entities(main_window: 'MainWindow', map_name: str, mode: str, num_players_for_couch_coop: Optional[int] = None) -> bool:
+    info(f"GAME_MODES (_initialize_game_entities): Delegating to game_setup.initialize_game_elements for map '{map_name}', mode '{mode}', couch_players: {num_players_for_couch_coop}.")
     
-    # Default spawn positions (used if map data doesn't provide them for P1/P2)
-    scene_h = float(main_window.game_scene_widget.height() if main_window.game_scene_widget.height() > 1 else C.GAME_HEIGHT)
-    p1_default_spawn = (50.0, scene_h - C.TILE_SIZE * 3) # Adjusted Y to be a bit higher
-    p2_default_spawn = (100.0, scene_h - C.TILE_SIZE * 3)
-    # P3 and P4 defaults are not strictly needed here as they will be None if not in map_data
+    # game_setup.initialize_game_elements modifies main_window.game_elements in-place
+    # It needs the current screen dimensions
+    screen_w = main_window.game_scene_widget.width() if main_window.game_scene_widget.width() > 1 else main_window.width()
+    screen_h = main_window.game_scene_widget.height() if main_window.game_scene_widget.height() > 1 else main_window.height()
 
-    main_window.game_elements['player1_spawn_pos'] = tuple(level_data.get('player_start_pos_p1', p1_default_spawn))
-    main_window.game_elements['player1_spawn_props'] = dict(level_data.get('player1_spawn_props', {}))
-    main_window.game_elements['player2_spawn_pos'] = tuple(level_data.get('player_start_pos_p2', p2_default_spawn))
-    main_window.game_elements['player2_spawn_props'] = dict(level_data.get('player2_spawn_props', {}))
-    # --- MODIFICATION: Get P3 and P4 spawn data ---
-    main_window.game_elements['player3_spawn_pos'] = level_data.get('player_start_pos_p3') # Will be None if not present
-    main_window.game_elements['player3_spawn_props'] = dict(level_data.get('player3_spawn_props', {}))
-    main_window.game_elements['player4_spawn_pos'] = level_data.get('player_start_pos_p4') # Will be None if not present
-    main_window.game_elements['player4_spawn_props'] = dict(level_data.get('player4_spawn_props', {}))
-    # ---
-
-    main_window.game_elements['level_pixel_width'] = float(level_data.get('level_pixel_width', main_window.game_scene_widget.width() * 2.0))
-    main_window.game_elements['level_min_x_absolute'] = float(level_data.get('level_min_x_absolute', 0.0))
-    main_window.game_elements['level_min_y_absolute'] = float(level_data.get('level_min_y_absolute', 0.0))
-    main_window.game_elements['level_max_y_absolute'] = float(level_data.get('level_max_y_absolute', scene_h))
-    main_window.game_elements['level_background_color'] = tuple(level_data.get('background_color', C.LIGHT_BLUE))
-    main_window.game_elements['ground_level_y_ref'] = float(level_data.get('ground_level_y_ref', main_window.game_elements['level_max_y_absolute'] - C.TILE_SIZE))
-    main_window.game_elements['ground_platform_height_ref'] = float(level_data.get('ground_platform_height_ref', C.TILE_SIZE))
+    # Pass num_players_for_couch_coop to initialize_game_elements if relevant
+    # initialize_game_elements in game_setup.py needs to be adapted to use this parameter
+    # for now, we'll just pass it. The actual logic for using it will be in game_setup.py.
+    # (The game_setup.py provided previously already handles this concept by checking map data)
     
-    debug(f"GAME_MODES Init: Populated map dims. LevelPixelWidth: {main_window.game_elements['level_pixel_width']:.1f}, "
-          f"MinX: {main_window.game_elements['level_min_x_absolute']:.1f}, MinY: {main_window.game_elements['level_min_y_absolute']:.1f}, MaxY: {main_window.game_elements['level_max_y_absolute']:.1f}")
+    # The number of players logic for couch co-op is now primarily handled by how many player
+    # instances are created within initialize_game_elements based on the map data and the
+    # `num_players_for_couch_coop` IF `initialize_game_elements` is adapted to use it.
+    # For now, the critical part is that `initialize_game_elements` loads the map and creates entities.
+    # The `main_window.selected_couch_coop_players` will be used by `couch_play_logic.py` to know
+    # how many players to process input for.
+    # `game_setup.initialize_game_elements` should already only create players if their spawns exist.
 
-    platforms_list: List[Platform] = []; ladders_list: List[Ladder] = []; hazards_list: List[Lava] = []
-    background_tiles_list: List[BackgroundTile] = []; enemy_list: List[Enemy] = []; statue_objects_list: List[Statue] = []
-    collectible_list: List[Any] = []; projectiles_list: List[Any] = []; all_renderable_objects: List[Any] = []
-    current_chest_obj: Optional[Chest] = None
+    # Store the number of players intended for couch co-op in game_elements for other modules (like couch_play_logic)
+    if mode == "couch_play" and num_players_for_couch_coop is not None:
+        main_window.game_elements['num_active_players_for_mode'] = num_players_for_couch_coop
+    else: # For host/join, it's usually 2, or determined by server
+        main_window.game_elements['num_active_players_for_mode'] = 2 # Default assumption
 
-    for p_data in level_data.get('platforms_list', []):
-        rect_tuple = p_data.get('rect')
-        if rect_tuple and len(rect_tuple) == 4:
-            platforms_list.append(Platform(x=float(rect_tuple[0]), y=float(rect_tuple[1]), width=float(rect_tuple[2]), height=float(rect_tuple[3]), color_tuple=tuple(p_data.get('color', C.GRAY)), platform_type=str(p_data.get('type', 'generic_platform')), properties=p_data.get('properties', {})))
-    all_renderable_objects.extend(platforms_list)
-
-    for l_data in level_data.get('ladders_list', []):
-        rect_tuple = l_data.get('rect')
-        if rect_tuple and len(rect_tuple) == 4: ladders_list.append(Ladder(x=float(rect_tuple[0]), y=float(rect_tuple[1]), width=float(rect_tuple[2]), height=float(rect_tuple[3])))
-    all_renderable_objects.extend(ladders_list)
-
-    for h_data in level_data.get('hazards_list', []):
-        rect_tuple = h_data.get('rect')
-        if rect_tuple and len(rect_tuple) == 4 and (str(h_data.get('type', '')).lower() == 'lava' or "lava" in str(h_data.get('type', '')).lower()):
-            hazards_list.append(Lava(x=float(rect_tuple[0]), y=float(rect_tuple[1]), width=float(rect_tuple[2]), height=float(rect_tuple[3]), color_tuple=tuple(h_data.get('color', C.ORANGE_RED))))
-    all_renderable_objects.extend(hazards_list)
-
-    for bg_data in level_data.get('background_tiles_list', []):
-        rect_tuple = bg_data.get('rect')
-        if rect_tuple and len(rect_tuple) == 4:
-            background_tiles_list.append(BackgroundTile(x=float(rect_tuple[0]), y=float(rect_tuple[1]), width=float(rect_tuple[2]), height=float(rect_tuple[3]), color_tuple=tuple(bg_data.get('color', C.DARK_GRAY)), tile_type=str(bg_data.get('type', 'generic_background')), image_path=bg_data.get('image_path'), properties=bg_data.get('properties', {})))
-    all_renderable_objects.extend(background_tiles_list)
-
-    main_window.game_elements['platforms_list'] = platforms_list
-    main_window.game_elements['ladders_list'] = ladders_list
-    main_window.game_elements['hazards_list'] = hazards_list
-    main_window.game_elements['background_tiles_list'] = background_tiles_list
-
-    # Initialize Players
-    player_objects: List[Optional[Player]] = [None, None, None, None] # List to hold P1, P2, P3, P4
-
-    # Player 1
-    p1_spawn_pos = main_window.game_elements['player1_spawn_pos']
-    p1_props = main_window.game_elements['player1_spawn_props']
-    player1 = Player(p1_spawn_pos[0], p1_spawn_pos[1], 1, initial_properties=p1_props)
-    if not player1._valid_init: critical(f"P1 failed to initialize for map {map_name}"); main_window.game_elements['initialization_in_progress'] = False; return False
-    player1.control_scheme = game_config.CURRENT_P1_INPUT_DEVICE
-    all_renderable_objects.append(player1)
-    player_objects[0] = player1
-    main_window.game_elements['player1'] = player1
-    debug(f"GAME_MODES Init: Player 1 initialized. Control: {player1.control_scheme}")
-
-    # Player 2
-    if mode in ["couch_play", "join_ip", "join_lan", "host"]: # P2 is always relevant in these modes if data exists
-        p2_spawn_pos = main_window.game_elements['player2_spawn_pos']
-        p2_props = main_window.game_elements['player2_spawn_props']
-        if p2_spawn_pos: # Only create if spawn point exists
-            player2 = Player(p2_spawn_pos[0], p2_spawn_pos[1], 2, initial_properties=p2_props)
-            if not player2._valid_init: warning(f"P2 failed to initialize for map {map_name} in mode {mode}.")
-            else:
-                all_renderable_objects.append(player2)
-                if mode != "host": player2.control_scheme = game_config.CURRENT_P2_INPUT_DEVICE
-                player_objects[1] = player2
-                debug(f"GAME_MODES Init: Player 2 initialized. Control: {getattr(player2, 'control_scheme', 'N/A')}")
-    main_window.game_elements['player2'] = player_objects[1]
-
-    # --- MODIFICATION: Initialize Player 3 ---
-    if mode in ["couch_play", "host"]: # P3 relevant for couch and host if data exists
-        p3_spawn_pos = main_window.game_elements.get('player3_spawn_pos')
-        p3_props = main_window.game_elements.get('player3_spawn_props', {})
-        if p3_spawn_pos: # Only create if spawn point data exists in the map
-            player3 = Player(p3_spawn_pos[0], p3_spawn_pos[1], 3, initial_properties=p3_props)
-            if not player3._valid_init:
-                warning(f"P3 failed to initialize for map {map_name} in mode {mode}.")
-            else:
-                all_renderable_objects.append(player3)
-                if mode != "host": player3.control_scheme = game_config.CURRENT_P3_INPUT_DEVICE
-                player_objects[2] = player3
-                debug(f"GAME_MODES Init: Player 3 initialized. Control: {getattr(player3, 'control_scheme', 'N/A')}")
-    main_window.game_elements['player3'] = player_objects[2]
-
-    # --- MODIFICATION: Initialize Player 4 ---
-    if mode in ["couch_play", "host"]: # P4 relevant for couch and host if data exists
-        p4_spawn_pos = main_window.game_elements.get('player4_spawn_pos')
-        p4_props = main_window.game_elements.get('player4_spawn_props', {})
-        if p4_spawn_pos: # Only create if spawn point data exists in the map
-            player4 = Player(p4_spawn_pos[0], p4_spawn_pos[1], 4, initial_properties=p4_props)
-            if not player4._valid_init:
-                warning(f"P4 failed to initialize for map {map_name} in mode {mode}.")
-            else:
-                all_renderable_objects.append(player4)
-                if mode != "host": player4.control_scheme = game_config.CURRENT_P4_INPUT_DEVICE
-                player_objects[3] = player4
-                debug(f"GAME_MODES Init: Player 4 initialized. Control: {getattr(player4, 'control_scheme', 'N/A')}")
-    main_window.game_elements['player4'] = player_objects[3]
-    # --- End Player Initialization Modification ---
-
-    screen_w_hint = float(main_window.width())
-    screen_h_hint = float(main_window.height())
-    camera_instance = Camera(
-        initial_level_width=main_window.game_elements['level_pixel_width'],
-        initial_world_start_x=main_window.game_elements['level_min_x_absolute'],
-        initial_world_start_y=main_window.game_elements['level_min_y_absolute'],
-        initial_level_bottom_y_abs=main_window.game_elements['level_max_y_absolute'],
-        screen_width=screen_w_hint, screen_height=screen_h_hint
+    success = initialize_game_elements(
+        current_width=int(screen_w),
+        current_height=int(screen_h),
+        game_elements_ref=main_window.game_elements,
+        for_game_mode=mode,
+        map_module_name=map_name
+        # If initialize_game_elements is adapted to take num_players:
+        # num_players_to_init=num_players_for_couch_coop if mode == "couch_play" else None 
     )
-    main_window.game_elements['camera'] = camera_instance
-    main_window.game_elements['camera_level_dims_set'] = False
 
-    if mode in ["host", "couch_play", "host_game"]:
-        for i, e_data in enumerate(main_window.game_elements['enemy_spawns_data_cache']):
-            try:
-                start_pos = tuple(map(float, e_data.get('start_pos', (100.0, 100.0))))
-                enemy_type = str(e_data.get('type', 'enemy_green'))
-                patrol_raw = e_data.get('patrol_rect_data')
-                patrol_qrectf: Optional[QRectF] = None
-                if isinstance(patrol_raw, dict) and all(k in patrol_raw for k in ['x','y','width','height']):
-                    patrol_qrectf = QRectF(float(patrol_raw['x']), float(patrol_raw['y']), float(patrol_raw['width']), float(patrol_raw['height']))
-                enemy = Enemy(start_x=start_pos[0], start_y=start_pos[1], patrol_area=patrol_qrectf, enemy_id=i, color_name=enemy_type, properties=e_data.get('properties', {}))
-                if enemy._valid_init: enemy_list.append(enemy); all_renderable_objects.append(enemy)
-            except Exception as ex_enemy: error(f"Error spawning enemy {i}: {ex_enemy}", exc_info=True)
-
-        for i, s_data in enumerate(main_window.game_elements['statue_spawns_data_cache']):
-            try:
-                statue_pos = tuple(map(float, s_data.get('pos', (200.0, 200.0))))
-                statue = Statue(center_x=statue_pos[0], center_y=statue_pos[1], statue_id=s_data.get('id', f"statue_{i}"), properties=s_data.get('properties', {}))
-                if statue._valid_init: statue_objects_list.append(statue); all_renderable_objects.append(statue)
-            except Exception as ex_statue: error(f"Error spawning statue {i}: {ex_statue}", exc_info=True)
-
-        for i_data in level_data.get('items_list', []):
-            if str(i_data.get('type', '')).lower() == 'chest':
-                try:
-                    chest_pos = tuple(map(float, i_data.get('pos', (300.0, 300.0))))
-                    chest = Chest(x=chest_pos[0], y=chest_pos[1], initial_properties=i_data.get('properties', {})) # Pass properties to chest
-                    if chest._valid_init: collectible_list.append(chest); all_renderable_objects.append(chest); current_chest_obj = chest
-                    else: warning("GAME_MODES Init: Map-defined chest failed to initialize.")
-                except Exception as ex_item: error(f"Error spawning item (chest): {ex_item}", exc_info=True)
-                break
+    if not success:
+        error(f"GAME_MODES: game_setup.initialize_game_elements FAILED for map '{map_name}', mode '{mode}'.")
+        _update_status_dialog(main_window, title="Map Load Error", message=f"Failed to set up game for map: {map_name}", progress=-1.0)
+    else:
+        info(f"GAME_MODES: game_setup.initialize_game_elements SUCCEEDED for map '{map_name}', mode '{mode}'.")
     
-    main_window.game_elements['enemy_list'] = enemy_list
-    main_window.game_elements['statue_objects'] = statue_objects_list
-    main_window.game_elements['collectible_list'] = collectible_list
-    main_window.game_elements['current_chest'] = current_chest_obj
-    main_window.game_elements['projectiles_list'] = projectiles_list
-    main_window.game_elements['all_renderable_objects'] = all_renderable_objects
-
-    ge_ref_for_proj = {
-        "projectiles_list": main_window.game_elements['projectiles_list'],
-        "all_renderable_objects": main_window.game_elements['all_renderable_objects'],
-        "platforms_list": main_window.game_elements['platforms_list']
-    }
-    for p_idx, p_obj in enumerate(player_objects): # Assign to all valid players
-        if p_obj:
-            p_obj.game_elements_ref_for_projectiles = ge_ref_for_proj
-
-    if hasattr(main_window.game_scene_widget, 'set_level_dimensions'):
-        main_window.game_scene_widget.set_level_dimensions(
-            main_window.game_elements['level_pixel_width'], main_window.game_elements['level_min_x_absolute'],
-            main_window.game_elements['level_min_y_absolute'], main_window.game_elements['level_max_y_absolute']
-        )
-    
-    main_window.game_elements['initialization_in_progress'] = False
-    main_window.game_elements['game_ready_for_logic'] = True
-    debug(f"GAME_MODES Init End: game_ready_for_logic=True. All_renderables count: {len(all_renderable_objects)}")
-    info("GAME_MODES: Game entities fully initialized and populated from new map data.")
-    return True
+    return success
 
 
-# --- Map Selection Initiators (Unchanged) ---
+# --- Map Selection Initiators ---
 def initiate_couch_play_map_selection(main_window: 'MainWindow'):
-    info("GAME_MODES: Initiating map selection for Couch Co-op.")
-    if main_window.map_select_title_label: main_window.map_select_title_label.setText("Select Map (Couch Co-op)")
+    info(f"GAME_MODES: Initiating map selection for Couch Co-op ({main_window.selected_couch_coop_players} players).") # Log selected players
+    if main_window.map_select_title_label: 
+        main_window.map_select_title_label.setText(f"Select Map ({main_window.selected_couch_coop_players} Players Couch Co-op)")
     main_window._populate_map_list_for_selection("couch_coop"); main_window.show_view("map_select")
 
 def initiate_host_game_map_selection(main_window: 'MainWindow'):
@@ -313,11 +147,17 @@ def initiate_host_game_map_selection(main_window: 'MainWindow'):
     if main_window.map_select_title_label: main_window.map_select_title_label.setText("Select Map to Host")
     main_window._populate_map_list_for_selection("host_game"); main_window.show_view("map_select")
 
-# --- Game Start Triggers (Unchanged) ---
-def start_couch_play_logic(main_window: 'MainWindow', map_name: str): info(f"GAME_MODES: Starting Couch Co-op with map '{map_name}'."); prepare_and_start_game_logic(main_window, "couch_play", map_name)
-def start_host_game_logic(main_window: 'MainWindow', map_name: str): info(f"GAME_MODES: Starting Host Game with map '{map_name}'."); prepare_and_start_game_logic(main_window, "host_game", map_name)
+# --- Game Start Triggers ---
+def start_couch_play_logic(main_window: 'MainWindow', map_name: str): 
+    info(f"GAME_MODES: Starting Couch Co-op with map '{map_name}' for {main_window.selected_couch_coop_players} players.")
+    # Pass the selected number of players to prepare_and_start_game_logic
+    prepare_and_start_game_logic(main_window, "couch_play", map_name, num_players_for_couch_coop=main_window.selected_couch_coop_players)
 
-# --- Dialog Initiators (Unchanged) ---
+def start_host_game_logic(main_window: 'MainWindow', map_name: str): 
+    info(f"GAME_MODES: Starting Host Game with map '{map_name}'.")
+    prepare_and_start_game_logic(main_window, "host_game", map_name)
+
+# --- Dialog Initiators ---
 def initiate_join_lan_dialog(main_window: 'MainWindow'): info("GAME_MODES: Initiating Join LAN Dialog."); _show_lan_search_dialog(main_window)
 def initiate_join_ip_dialog(main_window: 'MainWindow'):
     info("GAME_MODES: Initiating Join by IP Dialog.")
@@ -330,41 +170,61 @@ def initiate_join_ip_dialog(main_window: 'MainWindow'):
     main_window.current_modal_dialog = "ip_input"; main_window._ip_dialog_selected_button_idx = 0
     _update_ip_dialog_button_focus(main_window); main_window.ip_input_dialog.clear_input_and_focus(); main_window.ip_input_dialog.show()
 
-# --- Core Game Setup and Management (Unchanged) ---
-def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str, map_name: Optional[str] = None, target_ip_port: Optional[str] = None):
-    info(f"GAME_MODES: Preparing game. Mode: {mode}, Map: {map_name}, Target: {target_ip_port}")
+# --- Core Game Setup and Management ---
+# MODIFIED: Added num_players_for_couch_coop parameter
+def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str, 
+                                 map_name: Optional[str] = None, 
+                                 target_ip_port: Optional[str] = None,
+                                 num_players_for_couch_coop: Optional[int] = None): # NEW PARAM
+    info(f"GAME_MODES: Preparing game. Mode: {mode}, Map: {map_name}, Target: {target_ip_port}, CouchPlayers: {num_players_for_couch_coop}")
     main_window.current_game_mode = mode; main_window.game_elements['current_game_mode'] = mode
-    if mode in ["couch_play", "host_game"]:
-        if not map_name: error("Map name required for couch_play/host_game."); main_window.show_view("menu"); return
-        _show_status_dialog(main_window, f"Starting {mode.replace('_',' ').title()}", f"Loading map: {map_name}...")
-        if not _initialize_game_entities(main_window, map_name, mode): error(f"Failed to initialize game entities for map '{map_name}'. Mode '{mode}'."); _close_status_dialog(main_window); main_window.show_view("menu"); return
-        _update_status_dialog(main_window, message="Entities initialized successfully.", progress=50.0, title=f"Starting {mode.replace('_',' ').title()}")
+    
+    if mode == "couch_play": # Pass num_players for couch co-op init
+        if not map_name: error("Map name required for couch_play."); main_window.show_view("menu"); return
+        _show_status_dialog(main_window, f"Starting Couch Co-op", f"Loading map: {map_name}...")
+        if not _initialize_game_entities(main_window, map_name, mode, num_players_for_couch_coop=num_players_for_couch_coop): 
+            # Error already logged by _initialize_game_entities
+            _close_status_dialog(main_window); main_window.show_view("menu"); return
+        _update_status_dialog(main_window, message="Entities initialized successfully.", progress=50.0, title=f"Starting Couch Co-op")
+    elif mode == "host_game":
+        if not map_name: error("Map name required for host_game."); main_window.show_view("menu"); return
+        _show_status_dialog(main_window, f"Starting Host Game", f"Loading map: {map_name}...")
+        if not _initialize_game_entities(main_window, map_name, mode): # num_players_for_couch_coop is None
+            # Error already logged
+            _close_status_dialog(main_window); main_window.show_view("menu"); return
+        _update_status_dialog(main_window, message="Entities initialized successfully.", progress=50.0, title=f"Starting Host Game")
     elif mode in ["join_ip", "join_lan"]:
         if not target_ip_port: error("Target IP:Port required for join."); _close_status_dialog(main_window); main_window.show_view("menu"); return
         _show_status_dialog(main_window, title=f"Joining Game ({mode.replace('_',' ').title()})", message=f"Connecting to {target_ip_port}...")
+        # For join modes, game elements are mostly set by network state, but a camera is needed.
         main_window.game_elements.clear(); main_window.game_elements['initialization_in_progress'] = True; main_window.game_elements['game_ready_for_logic'] = False
         initial_sw = float(main_window.game_scene_widget.width()) if main_window.game_scene_widget.width() > 1 else float(C.GAME_WIDTH)
         initial_sh = float(main_window.game_scene_widget.height()) if main_window.game_scene_widget.height() > 1 else float(C.GAME_HEIGHT)
         main_window.game_elements['camera'] = Camera(initial_level_width=initial_sw, initial_world_start_x=0.0, initial_world_start_y=0.0, initial_level_bottom_y_abs=initial_sh, screen_width=initial_sw, screen_height=initial_sh)
-        main_window.game_elements['camera_level_dims_set'] = False
+        main_window.game_elements['camera_level_dims_set'] = False # Will be set once map data is known
     else: error(f"Unknown game mode: {mode}"); main_window.show_view("menu"); return
-    main_window.show_view("game_scene"); QApplication.processEvents()
+    
+    main_window.show_view("game_scene"); QApplication.processEvents() # Process events to ensure UI updates
     camera = main_window.game_elements.get("camera"); game_scene_widget = main_window.game_scene_widget
     if camera and game_scene_widget:
         actual_screen_w = float(game_scene_widget.width()); actual_screen_h = float(game_scene_widget.height())
-        if actual_screen_w <= 1 or actual_screen_h <= 1: actual_screen_w = float(main_window.width()); actual_screen_h = float(main_window.height())
+        if actual_screen_w <= 1 or actual_screen_h <= 1: # Fallback if widget not fully sized yet
+            actual_screen_w = float(main_window.width()); actual_screen_h = float(main_window.height())
         debug(f"GAME_MODES: Finalizing camera screen dimensions to: {actual_screen_w}x{actual_screen_h}")
         camera.set_screen_dimensions(actual_screen_w, actual_screen_h)
+        # Camera level dimensions are set by _initialize_game_entities (or set_network_game_state for client)
+        # So, focus camera if dimensions are known
         if main_window.game_elements.get('camera_level_dims_set', False) or (main_window.game_elements.get('level_pixel_width') is not None):
             player1_focus = main_window.game_elements.get("player1")
             if player1_focus and hasattr(player1_focus, 'alive') and player1_focus.alive(): camera.update(player1_focus)
             else: camera.static_update()
-        main_window.game_elements['camera_level_dims_set'] = True
+        main_window.game_elements['camera_level_dims_set'] = True # Mark as set if not already
+    
     if mode == "couch_play": _close_status_dialog(main_window); info("GAME_MODES: Couch play ready.")
     elif mode == "host_game": main_window.current_game_mode = "host_waiting"; _update_status_dialog(main_window, message="Server starting. Waiting for client connection...", progress=75.0, title="Server Hosting"); start_network_mode_logic(main_window, "host")
     elif mode in ["join_ip", "join_lan"]: start_network_mode_logic(main_window, "join", target_ip_port)
 
-def stop_current_game_mode_logic(main_window: 'MainWindow', show_menu: bool = True): # (Unchanged)
+def stop_current_game_mode_logic(main_window: 'MainWindow', show_menu: bool = True): 
     current_mode_being_stopped = main_window.current_game_mode; info(f"GAME_MODES: Stopping current game mode: {current_mode_being_stopped}")
     if main_window.network_thread and main_window.network_thread.isRunning():
         info("GAME_MODES: Stopping network thread.")
@@ -376,8 +236,9 @@ def stop_current_game_mode_logic(main_window: 'MainWindow', show_menu: bool = Tr
     main_window.server_state = None; main_window.client_state = None; main_window.current_game_mode = None
     if 'game_elements' in main_window.__dict__:
         main_window.game_elements['initialization_in_progress'] = False; main_window.game_elements['game_ready_for_logic'] = False; main_window.game_elements['camera_level_dims_set'] = False
-        if show_menu: info("GAME_MODES: Clearing all game_elements as returning to menu."); main_window.game_elements.clear()
-        else: info("GAME_MODES: Clearing all game_elements (show_menu=False)."); main_window.game_elements.clear()
+        # Clearing all game_elements on stop to ensure fresh state for next game.
+        main_window.game_elements.clear()
+        info("GAME_MODES: Cleared all game_elements.")
     _close_status_dialog(main_window)
     if hasattr(main_window, 'lan_search_dialog') and main_window.lan_search_dialog and main_window.lan_search_dialog.isVisible(): main_window.lan_search_dialog.reject()
     if hasattr(main_window, 'game_scene_widget') and hasattr(main_window.game_scene_widget, 'clear_scene_for_new_game'): main_window.game_scene_widget.clear_scene_for_new_game()
@@ -483,3 +344,5 @@ def join_selected_lan_server_from_dialog_logic(main_window: 'MainWindow'):
     ip, port = str(data[0]), int(data[1]); target_ip_port = f"{ip}:{port}"; info(f"Selected LAN server: {target_ip_port}")
     main_window.lan_search_dialog.accept(); setattr(main_window, 'current_modal_dialog', None)
     prepare_and_start_game_logic(main_window, "join_lan", target_ip_port=target_ip_port)
+
+#################### END OF FILE: app_game_modes.py ####################

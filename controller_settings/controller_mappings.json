@@ -1,7 +1,7 @@
 {
     "config_version": "2.3.7",
     "player1_settings": {
-        "input_device": "joystick_pygame_1",
+        "input_device": "joystick_pygame_0",
         "keyboard_enabled": false,
         "controller_enabled": true
     },
@@ -16,19 +16,21 @@
         "controller_enabled": false
     },
     "player4_settings": {
-        "input_device": "joystick_pygame_0",
+        "input_device": "joystick_pygame_1",
         "keyboard_enabled": false,
         "controller_enabled": true
     },
     "joystick_mappings": {
         "030056fb7e0500000920000000006803": {
             "left": {
-                "event_type": "button",
+                "event_type": "axis",
                 "details": {
-                    "button_id": 1,
-                    "type": "button"
+                    "axis_id": 0,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
                 },
-                "raw_str": "Joy0 Btn 1 Down"
+                "raw_str": "Joy0 Axis 0: -1.00"
             },
             "right": {
                 "event_type": "axis",
@@ -38,7 +40,7 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 0: 0.76"
+                "raw_str": "Joy0 Axis 0: 1.00"
             },
             "down": {
                 "event_type": "axis",
@@ -48,7 +50,7 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 1: 0.71"
+                "raw_str": "Joy0 Axis 1: 0.70"
             },
             "crouch": {
                 "event_type": "axis",
@@ -58,7 +60,7 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 1: 0.88"
+                "raw_str": "Joy0 Axis 1: 0.83"
             },
             "attack2": {
                 "event_type": "button",
@@ -116,7 +118,7 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 1: 0.93"
+                "raw_str": "Joy0 Axis 1: 0.78"
             },
             "menu_up": {
                 "event_type": "axis",
@@ -126,17 +128,7 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 1: -0.71"
-            },
-            "menu_left": {
-                "event_type": "axis",
-                "details": {
-                    "axis_id": 0,
-                    "direction": -1,
-                    "threshold": 0.7,
-                    "type": "axis"
-                },
-                "raw_str": "Joy0 Axis 0: -0.95"
+                "raw_str": "Joy0 Axis 1: -0.96"
             },
             "menu_right": {
                 "event_type": "axis",
@@ -146,7 +138,7 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 0: 0.77"
+                "raw_str": "Joy0 Axis 0: 0.71"
             },
             "projectile1": {
                 "event_type": "axis",
@@ -233,6 +225,14 @@
                 "raw_str": "Joy0 Btn 9 Down"
             },
             "jump": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 0,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 0 Down"
+            },
+            "up": {
                 "event_type": "axis",
                 "details": {
                     "axis_id": 1,
@@ -240,15 +240,73 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 1: -1.00"
+                "raw_str": "Joy0 Axis 1: -0.91"
             },
-            "up": {
+            "gui_nav_up": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 1: -0.84"
+            },
+            "gui_nav_down": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 1: 0.78"
+            },
+            "gui_nav_left": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 0: -0.85"
+            },
+            "gui_nav_right": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 0: 0.99"
+            },
+            "gui_nav_confirm": {
                 "event_type": "button",
                 "details": {
                     "button_id": 0,
                     "type": "button"
                 },
                 "raw_str": "Joy0 Btn 0 Down"
+            },
+            "gui_nav_cancel": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 3,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 3 Down"
+            },
+            "menu_left": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 0: -0.98"
             }
         },
         "030003f05e0400008e02000000007200": {

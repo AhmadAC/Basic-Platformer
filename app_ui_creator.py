@@ -1,6 +1,11 @@
 #################### START OF FILE: app_ui_creator.py ####################
 
 # app_ui_creator.py
+# -*- coding: utf-8 -*-
+"""
+Helper functions for creating UI elements and managing UI navigation state for app_core.
+Version 2.1.0 (Added Couch Co-op Player Select Dialog creation and navigation, map filtering)
+"""
 import os
 import sys
 import time
@@ -19,6 +24,7 @@ import pygame
 import constants as C
 import config as game_config
 from logger import info, debug, warning, error
+from level_loader import LevelLoader # For map inspection
 
 if TYPE_CHECKING:
     from app_core import MainWindow
@@ -29,6 +35,14 @@ else:
 
 def _get_selected_idx_for_source(main_window: 'MainWindow', input_source: str) -> int:
     """Gets the selected button index based on the input source."""
+    active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
+    
+    if active_ui == "couch_coop_player_select": # NEW
+        return main_window._couch_coop_player_select_dialog_selected_idx
+    elif active_ui == "map_select":
+        return main_window._map_selection_selected_button_idx
+    
+    # Fallback to general menu navigation selected indices
     if input_source == "keyboard":
         return main_window._keyboard_selected_button_idx
     elif input_source == "controller_0":
@@ -39,17 +53,19 @@ def _get_selected_idx_for_source(main_window: 'MainWindow', input_source: str) -
         return main_window._controller2_selected_button_idx
     elif input_source == "controller_3":
         return main_window._controller3_selected_button_idx
-
-    active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
-    if active_ui == "map_select":
-        return main_window._map_selection_selected_button_idx
-
-    return main_window._keyboard_selected_button_idx
+    
+    return main_window._keyboard_selected_button_idx # Default fallback
 
 
 def _set_selected_idx_for_source(main_window: 'MainWindow', new_idx: int, input_source: str):
     """Sets the selected button index for the given input source and updates global state."""
-    if input_source == "keyboard":
+    active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
+    
+    if active_ui == "couch_coop_player_select": # NEW
+        main_window._couch_coop_player_select_dialog_selected_idx = new_idx
+    elif active_ui == "map_select": # Map select has its own dedicated index
+        main_window._map_selection_selected_button_idx = new_idx
+    elif input_source == "keyboard":
         main_window._keyboard_selected_button_idx = new_idx
     elif input_source == "controller_0":
         main_window._controller0_selected_button_idx = new_idx
@@ -59,7 +75,7 @@ def _set_selected_idx_for_source(main_window: 'MainWindow', new_idx: int, input_
         main_window._controller2_selected_button_idx = new_idx
     elif input_source == "controller_3":
         main_window._controller3_selected_button_idx = new_idx
-    else:
+    else: # Fallback for other UIs (like main menu) or if source is not specific controller
         main_window._keyboard_selected_button_idx = new_idx
 
     main_window._last_active_input_source = input_source
@@ -111,7 +127,15 @@ def _create_map_select_widget(main_window: 'MainWindow') -> QWidget:
     main_window.map_buttons_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter); main_window.map_buttons_layout.setSpacing(10)
     main_window.map_select_scroll_area.setWidget(main_window.map_buttons_container); main_layout.addWidget(main_window.map_select_scroll_area, 1)
     back_button = QPushButton("Back to Main Menu"); back_button.setFont(main_window.fonts["medium"])
-    back_button.setMinimumHeight(40); back_button.setMinimumWidth(250); back_button.clicked.connect(lambda: main_window.show_view("menu"))
+    back_button.setMinimumHeight(40); back_button.setMinimumWidth(250)
+    # MODIFIED: Back button from map select for couch co-op should go to player select, otherwise main menu
+    def back_from_map_select():
+        if main_window.map_select_title_label and "Couch Co-op" in main_window.map_select_title_label.text():
+            main_window.on_start_couch_play() # Re-show player select dialog
+        else:
+            main_window.show_view("menu")
+    back_button.clicked.connect(back_from_map_select)
+    
     button_layout_wrapper = QHBoxLayout(); button_layout_wrapper.addStretch(); button_layout_wrapper.addWidget(back_button)
     button_layout_wrapper.addStretch(); main_layout.addLayout(button_layout_wrapper)
     return page_widget
@@ -123,16 +147,49 @@ def _populate_map_list_for_selection(main_window: 'MainWindow', purpose: str):
     main_window._map_selection_buttons_ref.clear()
     maps_dir = str(getattr(C, "MAPS_DIR", "maps"))
     if not os.path.isabs(maps_dir): maps_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), maps_dir)
-    available_maps = [];
+    
+    available_maps_raw: List[str] = []
     if os.path.exists(maps_dir) and os.path.isdir(maps_dir):
         try:
             map_files = sorted([f[:-3] for f in os.listdir(maps_dir) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"])
-            prio = ["original", "lava", "cpu_extended", "noenemy", "bigmap1", "one"]; available_maps = [m for m in prio if m in map_files] + [m for m in map_files if m not in prio]
-        except OSError as e: main_window.map_buttons_layout.addWidget(QLabel(f"Error: {e}"),0,0,1,main_window.NUM_MAP_COLUMNS); return
+            prio = ["original", "lava", "cpu_extended", "noenemy", "bigmap1", "one"]; available_maps_raw = [m for m in prio if m in map_files] + [m for m in map_files if m not in prio]
+        except OSError as e: main_window.map_buttons_layout.addWidget(QLabel(f"Error reading maps: {e}"),0,0,1,main_window.NUM_MAP_COLUMNS); return
     else: main_window.map_buttons_layout.addWidget(QLabel(f"Maps dir not found: {maps_dir}"),0,0,1,main_window.NUM_MAP_COLUMNS); return
-    if not available_maps: main_window.map_buttons_layout.addWidget(QLabel("No maps found."),0,0,1,main_window.NUM_MAP_COLUMNS); return
+    
+    if not available_maps_raw: main_window.map_buttons_layout.addWidget(QLabel("No maps found."),0,0,1,main_window.NUM_MAP_COLUMNS); return
 
-    for idx, map_name in enumerate(available_maps):
+    filtered_maps_to_display: List[str] = []
+    if purpose == "couch_coop":
+        num_selected_players = main_window.selected_couch_coop_players
+        loader = LevelLoader()
+        for map_name_raw in available_maps_raw:
+            map_data = loader.load_map(map_name_raw, maps_dir)
+            if map_data:
+                num_sequential_map_spawns = 0
+                if map_data.get('player_start_pos_p1'):
+                    num_sequential_map_spawns = 1
+                    if map_data.get('player_start_pos_p2'):
+                        num_sequential_map_spawns = 2
+                        if map_data.get('player_start_pos_p3'):
+                            num_sequential_map_spawns = 3
+                            if map_data.get('player_start_pos_p4'):
+                                num_sequential_map_spawns = 4
+                
+                if num_sequential_map_spawns == num_selected_players:
+                    filtered_maps_to_display.append(map_name_raw)
+                    debug(f"Map '{map_name_raw}' IS suitable for {num_selected_players} players (has {num_sequential_map_spawns} spawns).")
+                else:
+                    debug(f"Map '{map_name_raw}' NOT suitable for {num_selected_players} players (has {num_sequential_map_spawns} spawns).")
+            else:
+                warning(f"Could not load map data for '{map_name_raw}' to check spawns for couch co-op.")
+    else: 
+        filtered_maps_to_display = available_maps_raw
+
+    if not filtered_maps_to_display:
+        no_maps_msg = "No maps found suitable for the selected number of players." if purpose == "couch_coop" else "No maps found."
+        main_window.map_buttons_layout.addWidget(QLabel(no_maps_msg),0,0,1,main_window.NUM_MAP_COLUMNS); return
+
+    for idx, map_name in enumerate(filtered_maps_to_display):
         button = QPushButton(map_name.replace("_", " ").title()); button.setFont(main_window.fonts["medium"]); button.setMinimumHeight(40); button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         if purpose == "couch_coop": button.clicked.connect(lambda checked=False, mn=map_name: main_window._on_map_selected_for_couch_coop(mn))
         elif purpose == "host_game": button.clicked.connect(lambda checked=False, mn=map_name: main_window._on_map_selected_for_host_game(mn))
@@ -320,11 +377,57 @@ def _update_ip_dialog_button_focus(main_window: 'MainWindow'):
         button.setStyleSheet(f"QPushButton {{ border: 2px solid {focus_color_str}; background-color: #555; color: white; }} QPushButton:focus {{ outline: none; }}" if is_selected else "")
         if is_selected: button.setFocus(Qt.FocusReason.OtherFocusReason)
 
+# --- NEW: Couch Co-op Player Select Dialog Creation ---
+def _create_couch_coop_player_select_dialog(main_window: 'MainWindow') -> QDialog:
+    dialog = QDialog(main_window)
+    dialog.setWindowTitle("Select Number of Players (Couch Co-op)")
+    dialog.setModal(True)
+    dialog.selected_players = 2 # Default, will be set on accept
+
+    layout = QVBoxLayout(dialog)
+    title_label = QLabel("Choose Number of Players"); title_label.setFont(main_window.fonts["large"])
+    title_label.setAlignment(Qt.AlignmentFlag.AlignCenter); layout.addWidget(title_label)
+
+    main_window._couch_coop_player_select_dialog_buttons_ref.clear()
+    num_controllers = len(main_window._pygame_joysticks)
+    
+    # Button data: (Text, Number Value, Enabled by default (ignoring controller count for now))
+    button_data = [
+        ("1 Player", 1, True),
+        ("2 Players", 2, True),
+        ("3 Players", 3, True), # Enabled status will be updated by MainWindow
+        ("4 Players", 4, True)  # Enabled status will be updated by MainWindow
+    ]
+
+    for text, num_val, _ in button_data: # Enabled status is handled by MainWindow
+        button = QPushButton(text)
+        button.setFont(main_window.fonts["medium"])
+        button.setMinimumHeight(40)
+        button.setMinimumWidth(200)
+        # button.setEnabled(enabled) # MainWindow will call setEnabled before showing
+        button.setProperty("num_players_val", num_val) 
+        button.clicked.connect(lambda checked=False, b=button, mw=main_window: _handle_couch_coop_player_button_click(mw, b))
+        layout.addWidget(button)
+        main_window._couch_coop_player_select_dialog_buttons_ref.append(button)
+
+    button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
+    button_box.rejected.connect(dialog.reject)
+    layout.addWidget(button_box)
+    
+    dialog.setMinimumWidth(300)
+    return dialog
+
+def _handle_couch_coop_player_button_click(main_window: 'MainWindow', button: QPushButton):
+    num_players_val = button.property("num_players_val")
+    if num_players_val is not None and main_window._couch_coop_player_select_dialog:
+        main_window._couch_coop_player_select_dialog.selected_players = int(num_players_val) # type: ignore
+        main_window._couch_coop_player_select_dialog.accept()
+
 # --- UI Navigation Functions (Updated) ---
 
 def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
     active_ui_element = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
-    if active_ui_element not in ["menu", "map_select", "lan_search", "ip_input"]:
+    if active_ui_element not in ["menu", "map_select", "lan_search", "ip_input", "couch_coop_player_select"]: # MODIFIED
         _reset_all_prev_press_flags(main_window); return
 
     if not game_config._joystick_initialized_globally:
@@ -333,28 +436,28 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
         if main_window._last_active_input_source != "keyboard":
              main_window._last_active_input_source = "keyboard"
              main_window._ui_nav_focus_controller_index = -1
-             _update_current_menu_button_focus(main_window)
+             _update_current_menu_button_focus(main_window) # This will call the correct focus update
         _reset_all_prev_press_flags(main_window); return
 
     if not main_window._pygame_joysticks:
         if main_window._last_active_input_source != "keyboard":
             main_window._last_active_input_source = "keyboard"
             main_window._ui_nav_focus_controller_index = -1
-            _update_current_menu_button_focus(main_window)
+            _update_current_menu_button_focus(main_window) # This will call the correct focus update
         _reset_all_prev_press_flags(main_window); return
 
     try: pygame.event.pump()
     except pygame.error as e_pump: warning(f"UI Poll Creator: Pygame event pump error: {e_pump}"); return
 
     current_time = time.monotonic()
-    if current_time - main_window._last_pygame_joy_nav_time < 0.18:
+    if current_time - main_window._last_pygame_joy_nav_time < 0.18: # Nav debounce
         return
 
     navigated_this_poll = False
     action_input_source: Optional[str] = None
 
     for ui_controller_idx, joy in enumerate(main_window._pygame_joysticks):
-        if ui_controller_idx >= 4: break
+        if ui_controller_idx >= 4: break # Max 4 UI controllers
 
         if not joy or not joy.get_init():
             if joy:
@@ -364,6 +467,7 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
 
         joy_instance_id = joy.get_instance_id()
 
+        # Hat Navigation
         JOY_NAV_HAT_ID = 0; nav_dir_hat = 0
         if joy.get_numhats() > JOY_NAV_HAT_ID:
             hat_x, hat_y = joy.get_hat(JOY_NAV_HAT_ID)
@@ -373,93 +477,76 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
             elif hat_x < -0.5: nav_dir_hat = -2  # Left
 
             if nav_dir_hat != 0:
-                grid_nav_val = nav_dir_hat
-                if active_ui_element == "map_select":
-                    if nav_dir_hat == 2: grid_nav_val = 1
-                    elif nav_dir_hat == -2: grid_nav_val = -1
-                elif active_ui_element == "ip_input" and nav_dir_hat not in [-2, 2]:
-                    continue
                 action_input_source = f"controller_{ui_controller_idx}"
-                _navigate_current_menu_pygame_joy(main_window, grid_nav_val, action_input_source)
+                _navigate_current_menu_pygame_joy(main_window, nav_dir_hat, action_input_source) # Generic nav call
                 navigated_this_poll = True; break
         if navigated_this_poll: break
 
+        # Axis Navigation
         JOY_NAV_AXIS_ID_Y = 1; JOY_NAV_AXIS_ID_X = 0; nav_threshold = 0.65; axis_nav_dir = 0
         axis_key_y = f"{joy_instance_id}_y"; axis_key_x = f"{joy_instance_id}_x"
 
         if joy.get_numaxes() > JOY_NAV_AXIS_ID_Y:
             axis_y_val = joy.get_axis(JOY_NAV_AXIS_ID_Y)
-            if axis_y_val > nav_threshold and not main_window._pygame_joy_axis_was_active_pos.get(axis_key_y, False): axis_nav_dir = 1
-            elif axis_y_val < -nav_threshold and not main_window._pygame_joy_axis_was_active_neg.get(axis_key_y, False): axis_nav_dir = -1
+            if axis_y_val > nav_threshold and not main_window._pygame_joy_axis_was_active_pos.get(axis_key_y, False): axis_nav_dir = 1 # Down
+            elif axis_y_val < -nav_threshold and not main_window._pygame_joy_axis_was_active_neg.get(axis_key_y, False): axis_nav_dir = -1 # Up
             main_window._pygame_joy_axis_was_active_pos[axis_key_y] = axis_y_val > nav_threshold
             main_window._pygame_joy_axis_was_active_neg[axis_key_y] = axis_y_val < -nav_threshold
 
-        if joy.get_numaxes() > JOY_NAV_AXIS_ID_X and axis_nav_dir == 0:
+        if joy.get_numaxes() > JOY_NAV_AXIS_ID_X and axis_nav_dir == 0: # Only if Y axis didn't trigger
             axis_x_val = joy.get_axis(JOY_NAV_AXIS_ID_X)
-            if axis_x_val > nav_threshold and not main_window._pygame_joy_axis_was_active_pos.get(axis_key_x, False): axis_nav_dir = 2
-            elif axis_x_val < -nav_threshold and not main_window._pygame_joy_axis_was_active_neg.get(axis_key_x, False): axis_nav_dir = -2
+            if axis_x_val > nav_threshold and not main_window._pygame_joy_axis_was_active_pos.get(axis_key_x, False): axis_nav_dir = 2 # Right
+            elif axis_x_val < -nav_threshold and not main_window._pygame_joy_axis_was_active_neg.get(axis_key_x, False): axis_nav_dir = -2 # Left
             main_window._pygame_joy_axis_was_active_pos[axis_key_x] = axis_x_val > nav_threshold
             main_window._pygame_joy_axis_was_active_neg[axis_key_x] = axis_x_val < -nav_threshold
 
         if axis_nav_dir != 0:
-            grid_nav_val_axis = axis_nav_dir
-            if active_ui_element == "map_select":
-                if axis_nav_dir == 2: grid_nav_val_axis = 1
-                elif axis_nav_dir == -2: grid_nav_val_axis = -1
-            elif active_ui_element == "ip_input" and axis_nav_dir not in [-2,2]:
-                continue
             action_input_source = f"controller_{ui_controller_idx}"
-            _navigate_current_menu_pygame_joy(main_window, grid_nav_val_axis, action_input_source)
+            _navigate_current_menu_pygame_joy(main_window, axis_nav_dir, action_input_source) # Generic nav call
             navigated_this_poll = True; break
         if navigated_this_poll: break
 
+        # Button Activation
         current_joy_buttons = {i: joy.get_button(i) for i in range(joy.get_numbuttons())}
-        prev_joy_buttons: Dict[int, bool] = {} # Default to empty
-
-        # Access _pygame_joy_button_prev_state as a list, indexed by joy_instance_id
+        prev_joy_buttons: Dict[int, bool] = {}
         if 0 <= joy_instance_id < len(main_window._pygame_joy_button_prev_state):
             button_state_dict_for_instance = main_window._pygame_joy_button_prev_state[joy_instance_id]
-            if button_state_dict_for_instance is not None: # Should be {}, not None
-                prev_joy_buttons = button_state_dict_for_instance
-            # else: prev_joy_buttons remains {} - log if this is unexpected
+            if button_state_dict_for_instance is not None: prev_joy_buttons = button_state_dict_for_instance
         else:
-            # Log if joy_instance_id is out of expected range
             if hasattr(main_window, 'render_print_limiter') and main_window.render_print_limiter.can_print(f"joy_id_oob_poll_{joy_instance_id}"):
-                warning(f"Polling: Joy instance ID {joy_instance_id} out of bounds for _pygame_joy_button_prev_state (len {len(main_window._pygame_joy_button_prev_state)}). Using empty prev_buttons.")
+                warning(f"Polling: Joy instance ID {joy_instance_id} out of bounds for _pygame_joy_button_prev_state (len {len(main_window._pygame_joy_button_prev_state)}).")
 
         joy_mappings_to_use: Dict[str, Any] = {}
         for p_idx_loop in range(1, 5):
             player_device_setting = getattr(game_config, f"CURRENT_P{p_idx_loop}_INPUT_DEVICE", game_config.UNASSIGNED_DEVICE_ID)
             expected_joy_device_id = f"joystick_pygame_{ui_controller_idx}"
-
             if player_device_setting == expected_joy_device_id and getattr(game_config, f"P{p_idx_loop}_CONTROLLER_ENABLED", False):
                 joy_mappings_to_use = getattr(game_config, f"P{p_idx_loop}_MAPPINGS", {})
                 break
-        if not joy_mappings_to_use:
-            joy_mappings_to_use = game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS.copy()
+        if not joy_mappings_to_use: joy_mappings_to_use = game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS.copy()
 
         confirm_mapping = joy_mappings_to_use.get("menu_confirm")
         cancel_mapping = joy_mappings_to_use.get("menu_cancel")
-        retry_mapping = joy_mappings_to_use.get("reset")
-
+        retry_mapping = joy_mappings_to_use.get("reset") 
         action_input_source_for_button = f"controller_{ui_controller_idx}"
 
         if confirm_mapping and confirm_mapping.get("type") == "button" and \
            current_joy_buttons.get(confirm_mapping["id"], False) and \
            not prev_joy_buttons.get(confirm_mapping["id"], False):
-            if active_ui_element in ["menu", "map_select"]:
-                _activate_current_menu_selected_button_pygame_joy(main_window, action_input_source_for_button)
-            elif active_ui_element == "lan_search": main_window._join_selected_lan_server_from_dialog()
-            elif active_ui_element == "ip_input": _activate_ip_dialog_button(main_window)
+            # Generic activation call
+            _activate_current_menu_selected_button_pygame_joy(main_window, action_input_source_for_button)
             navigated_this_poll = True; action_input_source = action_input_source_for_button; break
 
         if cancel_mapping and cancel_mapping.get("type") == "button" and \
            current_joy_buttons.get(cancel_mapping["id"], False) and \
            not prev_joy_buttons.get(cancel_mapping["id"], False):
+            # Handle cancel based on active UI
             if active_ui_element == "menu": main_window.request_close_app()
             elif active_ui_element == "map_select": main_window.show_view("menu")
             elif active_ui_element == "lan_search" and main_window.lan_search_dialog: main_window.lan_search_dialog.reject()
             elif active_ui_element == "ip_input" and main_window.ip_input_dialog: main_window.ip_input_dialog.reject()
+            elif active_ui_element == "couch_coop_player_select" and main_window._couch_coop_player_select_dialog: # NEW
+                main_window._couch_coop_player_select_dialog.reject()
             navigated_this_poll = True; action_input_source = action_input_source_for_button; break
 
         if active_ui_element == "lan_search" and retry_mapping and retry_mapping.get("type") == "button" and \
@@ -468,9 +555,7 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
            main_window.lan_search_dialog and hasattr(main_window.lan_search_dialog, 'button_box'):
             main_window.lan_search_dialog.button_box.button(QDialogButtonBox.StandardButton.Retry).click() # type: ignore
             navigated_this_poll = True; action_input_source = action_input_source_for_button; break
-
         if navigated_this_poll: break
-
 
     if navigated_this_poll and action_input_source:
         main_window._last_pygame_joy_nav_time = current_time
@@ -481,7 +566,7 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
             main_window._ui_nav_focus_controller_index = -1
 
         acted_joy_instance_id = -1
-        acted_joy_object_to_update: Optional[pygame.joystick.Joystick] = None # Store the joystick object
+        acted_joy_object_to_update: Optional[pygame.joystick.Joystick] = None 
         if action_input_source.startswith("controller_"):
             try:
                 acted_ui_idx = int(action_input_source.split("_")[1])
@@ -489,40 +574,39 @@ def _poll_pygame_joysticks_for_ui_navigation(main_window: 'MainWindow'):
                     candidate_joy = main_window._pygame_joysticks[acted_ui_idx]
                     if candidate_joy and candidate_joy.get_init():
                         acted_joy_instance_id = candidate_joy.get_instance_id()
-                        acted_joy_object_to_update = candidate_joy # Store for use
-            except (ValueError, IndexError, AttributeError):
-                pass
+                        acted_joy_object_to_update = candidate_joy 
+            except (ValueError, IndexError, AttributeError): pass
 
         if acted_joy_instance_id != -1 and acted_joy_object_to_update:
-            # Update _pygame_joy_button_prev_state list for the acted joystick
             if 0 <= acted_joy_instance_id < len(main_window._pygame_joy_button_prev_state):
                  main_window._pygame_joy_button_prev_state[acted_joy_instance_id] = \
                      {i: acted_joy_object_to_update.get_button(i) for i in range(acted_joy_object_to_update.get_numbuttons())}
             else:
                 if hasattr(main_window, 'render_print_limiter') and main_window.render_print_limiter.can_print(f"joy_id_oob_update_acted_{acted_joy_instance_id}"):
-                    warning(f"Updating acted joy: Instance ID {acted_joy_instance_id} out of bounds for _pygame_joy_button_prev_state (len {len(main_window._pygame_joy_button_prev_state)}).")
+                    warning(f"Updating acted joy: Instance ID {acted_joy_instance_id} out of bounds for _pygame_joy_button_prev_state.")
+        
+        _update_current_menu_button_focus(main_window) # This will call the correct focus update function
+        return 
 
-        _update_current_menu_button_focus(main_window)
-        return # Return early as an action was processed
-
-    # If no navigation or action occurred, update all joystick previous button states
-    # This ensures prev_state is current for the next poll cycle.
     for joy_obj_for_state_update in main_window._pygame_joysticks:
         if joy_obj_for_state_update and joy_obj_for_state_update.get_init():
             instance_id = joy_obj_for_state_update.get_instance_id()
-            # Update _pygame_joy_button_prev_state list
             if 0 <= instance_id < len(main_window._pygame_joy_button_prev_state):
                 main_window._pygame_joy_button_prev_state[instance_id] = \
                      {i: joy_obj_for_state_update.get_button(i) for i in range(joy_obj_for_state_update.get_numbuttons())}
             else:
                 if hasattr(main_window, 'render_print_limiter') and main_window.render_print_limiter.can_print(f"joy_id_oob_update_all_{instance_id}"):
-                    warning(f"Updating all joys: Instance ID {instance_id} out of bounds for _pygame_joy_button_prev_state (len {len(main_window._pygame_joy_button_prev_state)}).")
+                    warning(f"Updating all joys: Instance ID {instance_id} out of bounds for _pygame_joy_button_prev_state.")
 
 
 def _navigate_current_menu_pygame_joy(main_window: 'MainWindow', direction: int, input_source: str):
     active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
 
-    if active_ui == "map_select":
+    if active_ui == "couch_coop_player_select": # NEW
+        _navigate_couch_coop_player_select_dialog(main_window, direction, input_source)
+        # Focus update is handled by the specific dialog function now
+        return
+    elif active_ui == "map_select":
         buttons_to_nav = main_window._map_selection_buttons_ref
         current_idx = main_window._map_selection_selected_button_idx
         if not buttons_to_nav or len(buttons_to_nav) == 0: return
@@ -531,92 +615,140 @@ def _navigate_current_menu_pygame_joy(main_window: 'MainWindow', direction: int,
         row, col = divmod(current_idx, main_window.NUM_MAP_COLUMNS)
         num_rows = (len(buttons_to_nav) + main_window.NUM_MAP_COLUMNS - 1) // main_window.NUM_MAP_COLUMNS
 
-        if direction == -1 : row = max(0, row - 1)
-        elif direction == 1: row = min(num_rows - 1, row + 1)
-        elif direction == -2: col = max(0, col - 1)
-        elif direction == 2:
+        if direction == -1 : row = max(0, row - 1) # Up
+        elif direction == 1: row = min(num_rows - 1, row + 1) # Down
+        elif direction == -2: col = max(0, col - 1) # Left
+        elif direction == 2: # Right
             current_row_start_index = row * main_window.NUM_MAP_COLUMNS
             items_in_this_row = min(main_window.NUM_MAP_COLUMNS, len(buttons_to_nav) - current_row_start_index)
             col = min(items_in_this_row - 1, col + 1) if items_in_this_row > 0 else 0
 
         new_idx_candidate = row * main_window.NUM_MAP_COLUMNS + col
         if new_idx_candidate < len(buttons_to_nav): new_idx = new_idx_candidate
-        else:
+        else: # Handle uneven rows
             new_row_start_index = row * main_window.NUM_MAP_COLUMNS
             items_in_new_row = min(main_window.NUM_MAP_COLUMNS, len(buttons_to_nav) - new_row_start_index)
             if items_in_new_row > 0: new_idx = new_row_start_index + items_in_new_row -1
-
-        main_window._map_selection_selected_button_idx = new_idx
+        
+        # main_window._map_selection_selected_button_idx = new_idx # Set by _set_selected_idx_for_source
         _set_selected_idx_for_source(main_window, new_idx, input_source)
 
     elif active_ui == "lan_search":
         if main_window.lan_servers_list_widget:
             current_lan_idx = main_window._lan_search_list_selected_idx if main_window._lan_search_list_selected_idx != -1 else 0
             if main_window.lan_servers_list_widget.count() > 0:
-                if direction == 1: new_lan_idx = min(main_window.lan_servers_list_widget.count() - 1, current_lan_idx + 1)
-                elif direction == -1: new_lan_idx = max(0, current_lan_idx - 1)
-                else: new_lan_idx = current_lan_idx
+                if direction == 1: new_lan_idx = min(main_window.lan_servers_list_widget.count() - 1, current_lan_idx + 1) # Down
+                elif direction == -1: new_lan_idx = max(0, current_lan_idx - 1) # Up
+                else: new_lan_idx = current_lan_idx # Left/Right no-op for list
                 main_window._lan_search_list_selected_idx = new_lan_idx
             _update_lan_search_list_focus(main_window)
             if input_source.startswith("controller_"): _set_selected_idx_for_source(main_window, main_window._lan_search_list_selected_idx, input_source)
-            return
+            return # Focus is handled by _update_lan_search_list_focus
 
     elif active_ui == "ip_input":
-        if direction in [-2, 2]:
+        if direction in [-2, 2]: # Left/Right toggles OK/Cancel
             main_window._ip_dialog_selected_button_idx = 1 - main_window._ip_dialog_selected_button_idx
         _update_ip_dialog_button_focus(main_window)
         if input_source.startswith("controller_"): _set_selected_idx_for_source(main_window, main_window._ip_dialog_selected_button_idx, input_source)
-        return
+        return # Focus handled by _update_ip_dialog_button_focus
 
-    else:
+    else: # Default to main menu navigation
         buttons_to_nav = main_window._current_active_menu_buttons
         if not buttons_to_nav or len(buttons_to_nav) == 0: return
 
         current_idx = _get_selected_idx_for_source(main_window, input_source)
         new_idx = current_idx
-        actual_direction = 0
-        if direction == -1: actual_direction = -1
-        elif direction == 1: actual_direction = 1
-        elif direction == -2: actual_direction = -1
-        elif direction == 2: actual_direction = 1
+        actual_direction_main_menu = 0
+        if direction == -1 or direction == -2: actual_direction_main_menu = -1 # Up/Left
+        elif direction == 1 or direction == 2: actual_direction_main_menu = 1  # Down/Right
 
-        if actual_direction != 0: new_idx = (current_idx + actual_direction + len(buttons_to_nav)) % len(buttons_to_nav)
+        if actual_direction_main_menu != 0: new_idx = (current_idx + actual_direction_main_menu + len(buttons_to_nav)) % len(buttons_to_nav)
         _set_selected_idx_for_source(main_window, new_idx, input_source)
 
-    _update_current_menu_button_focus(main_window)
+    _update_current_menu_button_focus(main_window) # This will call the correct focus update
 
 
 def _activate_current_menu_selected_button_pygame_joy(main_window: 'MainWindow', input_source: str):
     active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
+    
+    if active_ui == "couch_coop_player_select": # NEW
+        _activate_couch_coop_player_select_dialog_button(main_window, input_source)
+        return
+    elif active_ui == "lan_search":
+        main_window._join_selected_lan_server_from_dialog()
+        return
+    elif active_ui == "ip_input":
+        _activate_ip_dialog_button(main_window)
+        return
+    
+    # Existing logic for map_select and menu
     buttons_to_activate: List[QPushButton] = []
     current_idx = -1
-
     if active_ui == "map_select":
         buttons_to_activate = main_window._map_selection_buttons_ref
         current_idx = main_window._map_selection_selected_button_idx
     elif active_ui == "menu":
         buttons_to_activate = main_window._main_menu_buttons_ref
         current_idx = _get_selected_idx_for_source(main_window, input_source)
-    else: return
+    else: return # Not a UI we activate this way
 
     if not buttons_to_activate or not (0 <= current_idx < len(buttons_to_activate)):
         warning(f"Activation index {current_idx} out of bounds for {len(buttons_to_activate)} buttons. UI: {active_ui}, Source: {input_source}"); return
 
     selected_button = buttons_to_activate[current_idx]
     main_window._last_active_input_source = input_source
-    _set_selected_idx_for_source(main_window, current_idx, input_source)
+    # _set_selected_idx_for_source ensures the correct index is stored for the source
+    _set_selected_idx_for_source(main_window, current_idx, input_source) 
     selected_button.click()
+
+# --- NEW Navigation and Activation functions for Couch Co-op Player Select Dialog ---
+def _navigate_couch_coop_player_select_dialog(main_window: 'MainWindow', direction: int, input_source: str):
+    if not main_window._couch_coop_player_select_dialog_buttons_ref: return
+
+    buttons_to_nav = main_window._couch_coop_player_select_dialog_buttons_ref
+    current_idx = main_window._couch_coop_player_select_dialog_selected_idx # Uses its own index
+    num_buttons = len(buttons_to_nav)
+    new_idx = current_idx
+
+    # Ensure direction is simple up (-1) or down (1)
+    actual_direction = 0
+    if direction == -1 or direction == -2: actual_direction = -1 # Up/Left
+    elif direction == 1 or direction == 2: actual_direction = 1 # Down/Right
+
+    if actual_direction != 0:
+        candidate_idx = current_idx
+        for _ in range(num_buttons): # Max iterations to prevent infinite loop
+            candidate_idx = (candidate_idx + actual_direction + num_buttons) % num_buttons
+            if buttons_to_nav[candidate_idx].isEnabled():
+                new_idx = candidate_idx
+                break
+    
+    _set_selected_idx_for_source(main_window, new_idx, input_source) # This updates _couch_coop_player_select_dialog_selected_idx
+    _update_couch_coop_player_select_dialog_focus(main_window) # Explicitly call focus update for this dialog
+
+def _activate_couch_coop_player_select_dialog_button(main_window: 'MainWindow', input_source: str):
+    if not main_window._couch_coop_player_select_dialog or not main_window._couch_coop_player_select_dialog_buttons_ref: return
+    
+    current_idx = main_window._couch_coop_player_select_dialog_selected_idx
+    if not (0 <= current_idx < len(main_window._couch_coop_player_select_dialog_buttons_ref)):
+        warning(f"Couch Co-op Player Select: Activation index {current_idx} out of bounds.")
+        return
+
+    selected_button = main_window._couch_coop_player_select_dialog_buttons_ref[current_idx]
+    if selected_button.isEnabled():
+        main_window._last_active_input_source = input_source
+        _set_selected_idx_for_source(main_window, current_idx, input_source) # Update global state
+        selected_button.click() # This will trigger _handle_couch_coop_player_button_click -> dialog.accept()
+    else:
+        debug(f"Couch Co-op Player Select: Attempted to activate disabled button: {selected_button.text()}")
+
+# ... (rest of app_ui_creator.py, including _reset_all_prev_press_flags, _activate_ip_dialog_button) ...
+
 
 def _reset_all_prev_press_flags(main_window: 'MainWindow'):
     main_window._pygame_joy_axis_was_active_neg.clear()
     main_window._pygame_joy_axis_was_active_pos.clear()
-
-    # _pygame_joy_button_prev_state is List[Dict[int, bool]]
-    # Each element is a dict that should be cleared or reset to an empty dict.
-    # The list is indexed by joystick instance_id.
     for i in range(len(main_window._pygame_joy_button_prev_state)):
-        # Assigning a new empty dict is safe and handles if an element was somehow None.
-        # app_core initializes these list elements with {} during _refresh_appcore_joystick_list.
         main_window._pygame_joy_button_prev_state[i] = {}
 
 
@@ -628,8 +760,14 @@ def _activate_ip_dialog_button(main_window: 'MainWindow'):
 
 def _update_current_menu_button_focus(main_window: 'MainWindow'):
     active_ui = main_window.current_modal_dialog if main_window.current_modal_dialog else main_window.current_view_name
-    if active_ui not in ["menu", "map_select"]:
+    
+    if active_ui == "couch_coop_player_select": # NEW
+        _update_couch_coop_player_select_dialog_focus(main_window)
         return
+    
+    # Existing logic for menu and map_select
+    if active_ui not in ["menu", "map_select"]:
+        return # Not a UI we manage visual focus for with this function
 
     buttons_to_update: List[QPushButton] = []
     is_map_select_view = False
@@ -644,7 +782,7 @@ def _update_current_menu_button_focus(main_window: 'MainWindow'):
         return
 
     for button in buttons_to_update:
-        button.setStyleSheet("")
+        button.setStyleSheet("") # Clear existing styles
 
     def apply_visual_highlight(button_idx: int, color_hex: str, give_qt_focus: bool):
         if 0 <= button_idx < len(buttons_to_update):
@@ -664,7 +802,7 @@ def _update_current_menu_button_focus(main_window: 'MainWindow'):
     idx_for_qt_focus = -1
     if is_map_select_view:
         idx_for_qt_focus = main_window._map_selection_selected_button_idx
-    else:
+    else: # For main menu
         idx_for_qt_focus = _get_selected_idx_for_source(main_window, last_active_source)
 
 
@@ -678,9 +816,50 @@ def _update_current_menu_button_focus(main_window: 'MainWindow'):
 
     for input_type, selected_idx, color_str in player_inputs_config:
         idx_to_highlight_for_this_source = selected_idx
-        if is_map_select_view:
+        if is_map_select_view: # Map select always uses its own _map_selection_selected_button_idx
             idx_to_highlight_for_this_source = main_window._map_selection_selected_button_idx
 
+        is_source_considered_active = True # Keyboard is always active
+        if input_type.startswith("controller_"):
+            try:
+                controller_list_idx = int(input_type.split("_")[1])
+                if not (controller_list_idx < len(main_window._pygame_joysticks) and \
+                        main_window._pygame_joysticks[controller_list_idx] is not None):
+                    is_source_considered_active = False # Controller not detected/available
+            except: is_source_considered_active = False
+
+        if is_source_considered_active:
+            give_qt_focus_to_this_button = (idx_to_highlight_for_this_source == idx_for_qt_focus)
+            apply_visual_highlight(idx_to_highlight_for_this_source, color_str, give_qt_focus_to_this_button)
+
+# --- NEW: Focus update for Couch Co-op Player Select Dialog ---
+def _update_couch_coop_player_select_dialog_focus(main_window: 'MainWindow'):
+    if not main_window._couch_coop_player_select_dialog or not main_window._couch_coop_player_select_dialog_buttons_ref:
+        return
+
+    buttons_to_update = main_window._couch_coop_player_select_dialog_buttons_ref
+    
+    for button in buttons_to_update:
+        # Reset style only if the button is enabled; disabled buttons might have their own style
+        if button.isEnabled():
+            button.setStyleSheet("") 
+        else: # Ensure disabled buttons have a distinct, non-highlighted style
+            button.setStyleSheet("QPushButton { background-color: #777; color: #bbb; border: 1px solid #555; }")
+
+
+    last_active_source = main_window._last_active_input_source
+    # For this dialog, the selected index is always main_window._couch_coop_player_select_dialog_selected_idx
+    idx_to_highlight = main_window._couch_coop_player_select_dialog_selected_idx
+
+    player_inputs_config = [
+        ("keyboard", main_window._keyboard_ui_focus_color_str),
+        ("controller_0", main_window._p1_ui_focus_color_str),
+        ("controller_1", main_window._p2_ui_focus_color_str),
+        ("controller_2", main_window._p3_ui_focus_color_str),
+        ("controller_3", main_window._p4_ui_focus_color_str),
+    ]
+    
+    for input_type, color_str in player_inputs_config:
         is_source_considered_active = True
         if input_type.startswith("controller_"):
             try:
@@ -690,8 +869,14 @@ def _update_current_menu_button_focus(main_window: 'MainWindow'):
                     is_source_considered_active = False
             except: is_source_considered_active = False
 
-        if is_source_considered_active:
-            give_qt_focus_to_this_button = (idx_to_highlight_for_this_source == idx_for_qt_focus)
-            apply_visual_highlight(idx_to_highlight_for_this_source, color_str, give_qt_focus_to_this_button)
+        if is_source_considered_active and 0 <= idx_to_highlight < len(buttons_to_update) and buttons_to_update[idx_to_highlight].isEnabled():
+            button = buttons_to_update[idx_to_highlight]
+            base_style = "background-color: #484848; color: white; padding: 2px;" # Standard focused style
+            focus_style_part = "QPushButton:focus { outline: none; }"
+            final_style_parts = [f"QPushButton {{ border: 3px solid {color_str}; {base_style} }}", focus_style_part]
+            button.setStyleSheet(" ".join(final_style_parts))
+
+            if input_type == last_active_source: 
+                button.setFocus(Qt.FocusReason.OtherFocusReason)
 
 #################### END OF FILE: app_ui_creator.py ####################

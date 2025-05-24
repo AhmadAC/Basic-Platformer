@@ -84,8 +84,8 @@ class Chest:
         self.alpha = 255 # 0-255
         self.opened_visible_start_time = 0 # Time when 'opened_visible' state began
         self.fading_start_time = 0         # Time when 'fading' state began
-        self.fade_duration_ms = int(getattr(C, 'CHEST_FADE_OUT_DURATION_MS', 1000))
-        self.open_display_duration_ms = int(getattr(C, 'CHEST_OPEN_DISPLAY_DURATION_MS', 5000))
+        self.fade_duration_ms = int(getattr(C, 'CHEST_FADE_OUT_DURATION_MS', 300))
+        self.open_display_duration_ms = int(getattr(C, 'CHEST_OPEN_DISPLAY_DURATION_MS', 300))
 
         if not self._valid_init:
              self.image = self.all_frames[0]
