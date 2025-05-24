@@ -3731,10 +3731,17 @@
                 85,
                 255
             ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 80,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "properties": {}
         }
     ],
     "camera_offset_x": 0.0,
-    "camera_offset_y": 419.0,
+    "camera_offset_y": 535.0,
     "zoom_level": 1.0,
     "show_grid": true,
     "asset_specific_variables": {}
