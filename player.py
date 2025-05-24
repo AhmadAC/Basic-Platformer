@@ -12,7 +12,7 @@ Collision rect is now tighter than visual sprite.
 can_stand_up logic improved.
 Corrected camera.apply usage in draw_pyside.
 """
-# version 2.1.4 (Corrected camera.apply usage in draw_pyside) # Updated to 2.1.5
+# version 2.1.6 (Added _prev_discrete_axis_hat_state in __init__)
 
 import os
 import sys
@@ -67,8 +67,8 @@ except ImportError as e:
 
 
 if TYPE_CHECKING:
-    from app_core import MainWindow # For type hinting if needed, not directly used in logic
-    from camera import Camera as CameraClass_TYPE # For type hinting camera argument
+    from app_core import MainWindow 
+    from camera import Camera as CameraClass_TYPE 
 
 _start_time_player_monotonic = time.monotonic()
 def get_current_ticks_monotonic() -> int:
@@ -87,14 +87,13 @@ class Player:
         self.game_elements_ref_for_projectiles: Optional[Dict[str, Any]] = None
 
         self.initial_spawn_pos = QPointF(float(start_x), float(start_y))
-        self.pos = QPointF(self.initial_spawn_pos) # Represents mid-bottom of collision rect
+        self.pos = QPointF(self.initial_spawn_pos) 
 
-        # Determine asset folder based on player_id
         if self.player_id == 1: asset_folder = 'characters/player1'
         elif self.player_id == 2: asset_folder = 'characters/player2'
         elif self.player_id == 3: asset_folder = 'characters/player3'
         elif self.player_id == 4: asset_folder = 'characters/player4'
-        else: asset_folder = 'characters/player1' # Fallback
+        else: asset_folder = 'characters/player1' 
 
         self.animations: Optional[Dict[str, List[QPixmap]]] = None
         try:
@@ -165,6 +164,7 @@ class Player:
         self.facing_at_petrification: bool = True
         self.was_crouching_when_petrified: bool = False
         self.state_timer: int = 0
+        self._prev_discrete_axis_hat_state: Dict[Tuple[str, int, Tuple[int, int]], bool] = {} ### ADDED ### For hat input
 
         if self._valid_init and self.animations:
             try:
@@ -317,7 +317,6 @@ class Player:
             active_mappings = getattr(game_config, f"P{player_id_for_map_get}_MAPPINGS", game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS)
         else:
             active_mappings = game_config.P1_MAPPINGS if self.player_id == 1 else game_config.P2_MAPPINGS
-            # MODIFIED: Changed from can_print to can_log
             if Player.print_limiter.can_log(f"p_input_scheme_fallback_{self.player_id}"): 
                 warning(f"Player {self.player_id}: Unrecognized control_scheme '{self.control_scheme}'. Using default keyboard map.")
         return process_player_input_logic(self, qt_keys_held_snapshot, qt_key_event_data_this_frame, active_mappings, platforms_list, joystick_data_for_handler)
@@ -325,11 +324,9 @@ class Player:
     def _generic_fire_projectile(self, projectile_class: type, cooldown_attr_name: str, cooldown_const: int, projectile_config_name: str):
         if not self._valid_init or self.is_dead or not self._alive or self.is_petrified or self.is_frozen or self.is_defrosting: return
         if self.game_elements_ref_for_projectiles is None:
-            # MODIFIED: Changed from can_print to can_log
             if Player.print_limiter.can_log(f"proj_fire_no_game_elements_{self.player_id}"): warning(f"Player {self.player_id}: game_elements_ref_for_projectiles not set. Cannot fire {projectile_config_name}."); return
         projectiles_list_ref = self.game_elements_ref_for_projectiles.get("projectiles_list"); all_renderables_ref = self.game_elements_ref_for_projectiles.get("all_renderable_objects")
         if projectiles_list_ref is None or all_renderables_ref is None:
-            # MODIFIED: Changed from can_print to can_log
             if Player.print_limiter.can_log(f"proj_fire_list_missing_{self.player_id}"): warning(f"Player {self.player_id}: Projectile or renderable list missing. Cannot fire {projectile_config_name}."); return
         current_time_ms = get_current_ticks_monotonic(); last_fire_time = getattr(self, cooldown_attr_name, 0)
         if current_time_ms - last_fire_time >= cooldown_const:
@@ -345,7 +342,6 @@ class Player:
             spawn_x += norm_x * offset_dist; spawn_y += norm_y * offset_dist
             new_projectile = projectile_class(spawn_x, spawn_y, aim_dir, self); new_projectile.game_elements_ref = self.game_elements_ref_for_projectiles
             projectiles_list_ref.append(new_projectile); all_renderables_ref.append(new_projectile)
-            # MODIFIED: Changed from can_print to can_log
             if Player.print_limiter.can_log(f"fired_{projectile_config_name}_{self.player_id}"): 
                 debug(f"Player {self.player_id} fired {projectile_config_name} at ({spawn_x:.1f},{spawn_y:.1f}) dir ({aim_dir.x():.1f},{aim_dir.y():.1f})")
             if projectile_config_name == 'blood' and self.current_health > 0:
@@ -381,7 +377,7 @@ class Player:
             return 
         update_player_core_logic(self, dt_sec, platforms_list, ladders_list, hazards_list, other_players_list, enemies_list)
 
-    def draw_pyside(self, painter: QPainter, camera: 'CameraClass_TYPE'): # Added type hint for camera
+    def draw_pyside(self, painter: QPainter, camera: 'CameraClass_TYPE'): 
         if not self._valid_init or not self.image or self.image.isNull() or not self.rect.isValid(): return
         
         should_draw = self.alive() or \

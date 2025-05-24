@@ -1,42 +1,20 @@
-[2025-05-24 16:49:19.898] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-24 16:49:19.898] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
-[2025-05-24 16:49:20.664] DEBUG   logger.py:143 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
-[2025-05-24 16:49:20.693] INFO    logger.py:143 (_log_wrapper): MAIN PySide6: Application starting...
-[2025-05-24 16:49:20.968] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list refreshed. Count: 3 (from 3 total).
-[2025-05-24 16:49:20.968] INFO    logger.py:143 (_log_wrapper): AppCore: Full prev_button_state list size for game input: 3
-[2025-05-24 16:49:20.984] INFO    logger.py:143 (_log_wrapper): Switching UI view to: menu
-[2025-05-24 16:49:20.986] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
-[2025-05-24 16:49:22.197] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op.
-[2025-05-24 16:49:22.198] INFO    logger.py:143 (_log_wrapper): Switching UI view to: map_select
-[2025-05-24 16:49:22.198] DEBUG   logger.py:143 (_log_wrapper): show_view called for: map_select
-[2025-05-24 16:49:22.639] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map '4p2'.
-[2025-05-24 16:49:22.639] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: 4p2, Target: None
-[2025-05-24 16:49:22.678] INFO    logger.py:143 (_log_wrapper): GAME_MODES: === INITIALIZING NEW GAME SESSION === Map: '4p2', Mode: 'couch_play'.
-[2025-05-24 16:49:22.679] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules).
-[2025-05-24 16:49:22.679] INFO    logger.py:143 (_log_wrapper): Attempting to load map module 'maps.4p2' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\4p2.py
-[2025-05-24 16:49:22.681] INFO    logger.py:143 (_log_wrapper): Map data for '4p2' loaded successfully via function 'load_map_4p2'.
-[2025-05-24 16:49:23.148] INFO    logger.py:143 (_log_wrapper): Camera initialized: Viewport(1280.0x649.0), WorldBounds(X: 0.0 to 1600.0, Y: 0.0 to 1000.0)
-[2025-05-24 16:49:23.148] INFO    logger.py:143 (_log_wrapper): Camera Level Dims Set: Width=1600.0, StartX=0.0, TopY=0.0, BottomY=1000.0, EffectiveHeight=1000.0
-[2025-05-24 16:49:23.149] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Level dimensions set - TotalW:1600.0, MinX:0.0, MinY:0.0, MaxY:1000.0
-[2025-05-24 16:49:23.149] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game entities fully initialized and populated from new map data.
-[2025-05-24 16:49:23.161] INFO    logger.py:143 (_log_wrapper): Switching UI view to: game_scene
-[2025-05-24 16:49:23.162] INFO    logger.py:143 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
-[2025-05-24 16:49:23.180] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Couch play ready.
-[2025-05-24 16:49:23.195] DEBUG   logger.py:143 (_log_wrapper): APP_INPUT_MANAGER (P1): Using joystick map for Player 1 (Device: joystick_pygame_0):
-[2025-05-24 16:49:25.162] DEBUG   logger.py:143 (_log_wrapper): APP_INPUT_MANAGER (P1): Using joystick map for Player 1 (Device: joystick_pygame_0):
-[2025-05-24 16:49:25.458] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
-[2025-05-24 16:49:25.459] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Clearing all game_elements as returning to menu.
-[2025-05-24 16:49:25.459] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
-[2025-05-24 16:49:25.460] INFO    logger.py:143 (_log_wrapper): Switching UI view to: menu
-[2025-05-24 16:49:25.463] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'couch_play' stopped and resources cleaned up.
-[2025-05-24 16:49:25.893] INFO    logger.py:143 (_log_wrapper): MAIN PySide6: Close event. Shutting down.
-[2025-05-24 16:49:25.895] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
-[2025-05-24 16:49:25.895] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: None
-[2025-05-24 16:49:25.896] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Clearing all game_elements (show_menu=False).
-[2025-05-24 16:49:25.896] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
-[2025-05-24 16:49:25.896] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
-[2025-05-24 16:49:25.916] INFO    logger.py:143 (_log_wrapper): MAIN PySide6: Pygame Joystick system quit.
-[2025-05-24 16:49:25.950] INFO    logger.py:143 (_log_wrapper): MAIN PySide6: Pygame quit.
-[2025-05-24 16:49:25.951] INFO    logger.py:143 (_log_wrapper): MAIN PySide6: Application shutdown sequence complete.
-[2025-05-24 16:49:25.978] INFO    logger.py:143 (_log_wrapper): MAIN PySide6: QApplication event loop finished. Exit code: 0
-[2025-05-24 16:49:25.978] INFO    logger.py:143 (_log_wrapper): MAIN PySide6: Application fully terminated.
+[2025-05-24 17:39:05.910] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-24 17:39:05.910] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-24 17:39:06.784] DEBUG   logger.py:143 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
+[2025-05-24 17:39:06.855] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
+[2025-05-24 17:39:07.117] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 2.
+[2025-05-24 17:39:07.118] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
+[2025-05-24 17:39:07.199] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-24 17:39:07.217] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
+[2025-05-24 17:39:10.193] INFO    logger.py:143 (_log_wrapper): MainWindow: Close event received. Shutting down application.
+[2025-05-24 17:39:10.194] DEBUG   logger.py:143 (_log_wrapper): closeEvent called.
+[2025-05-24 17:39:10.194] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-24 17:39:10.195] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: None
+[2025-05-24 17:39:10.196] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Clearing all game_elements (show_menu=False).
+[2025-05-24 17:39:10.196] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-24 17:39:10.197] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
+[2025-05-24 17:39:10.230] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame Joystick system quit.
+[2025-05-24 17:39:10.273] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame system quit.
+[2025-05-24 17:39:10.273] INFO    logger.py:143 (_log_wrapper): MainWindow: Application shutdown sequence complete.
+[2025-05-24 17:39:10.301] INFO    logger.py:143 (_log_wrapper): QApplication event loop finished. Exit code: 0
+[2025-05-24 17:39:10.301] INFO    logger.py:143 (_log_wrapper): Application fully terminated.

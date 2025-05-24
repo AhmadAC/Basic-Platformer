@@ -3,7 +3,7 @@
 # player_input_handler.py
 # -*- coding: utf-8 -*-
 """
-Version 2.1.7 (Corrected PrintLimiter.can_log call)
+Version 2.1.8 (Fix discrete hat event logic)
 Handles processing of player input (Qt keyboard events, Pygame joystick polling)
 and translating it to game actions.
 """
@@ -38,11 +38,10 @@ def process_player_input_logic(
     qt_keys_held_snapshot: Dict[Qt.Key, bool],
     qt_key_event_data_this_frame: List[Tuple[QKeyEvent.Type, Qt.Key, bool]],
     active_mappings: Dict[str, Any],
-    platforms_list: List[Any], # For player's can_stand_up check
+    platforms_list: List[Any], 
     joystick_data: Optional[Dict[str, Any]] = None
 ) -> Dict[str, bool]:
     if not hasattr(player, '_valid_init') or not player._valid_init:
-        # MODIFIED: Changed from can_print to can_log
         if input_print_limiter.can_log(f"invalid_player_input_handler_{getattr(player, 'player_id', 'unknown')}skip"):
             warning(f"PlayerInputHandler: Skipping input for invalid player instance (ID: {getattr(player, 'player_id', 'unknown')}).")
         return {}
@@ -50,7 +49,6 @@ def process_player_input_logic(
     current_time_ms = get_input_handler_ticks()
     player_id_str = f"P{player.player_id}"
     
-    # MODIFIED: Changed from can_print to can_log
     debug_this_frame = input_print_limiter.can_log(f"input_proc_tick_{player_id_str}")
 
     is_pygame_joystick_input = player.control_scheme and player.control_scheme.startswith("joystick_pygame_")
@@ -71,7 +69,6 @@ def process_player_input_logic(
                 elif action_name == "up": player.is_holding_climb_ability_key = True 
                 elif action_name == "down": player.is_holding_crouch_ability_key = True
         
-        # MODIFIED: Changed from can_print to can_log
         if debug_this_frame and input_print_limiter.can_log(f"kbd_intent_{player.player_id}"):
             debug(f"{player_id_str} Kbd Intent: L={player.is_trying_to_move_left}, R={player.is_trying_to_move_right}, U={player.is_holding_climb_ability_key}, D={player.is_holding_crouch_ability_key}")
 
@@ -92,7 +89,7 @@ def process_player_input_logic(
         current_hats = joystick_data.get('hats', {})
 
         if not hasattr(player, '_prev_discrete_axis_hat_state'):
-            player._prev_discrete_axis_hat_state = {}
+            player._prev_discrete_axis_hat_state = {} 
 
         for action_name, mapping_details in active_mappings.items():
             if not isinstance(mapping_details, dict): continue
@@ -130,23 +127,31 @@ def process_player_input_logic(
             elif m_type == "hat":
                 hat_val_target_tuple = tuple(mapping_details.get("value", (0,0))) 
                 current_hat_val_tuple = tuple(current_hats.get(m_id, (0,0))) 
-                is_hat_held_active = (current_hat_val_tuple == hat_val_target_tuple and hat_val_target_tuple != (0,0))
+                is_hat_held_active_now = (current_hat_val_tuple == hat_val_target_tuple and hat_val_target_tuple != (0,0))
 
-                if action_name == "left": player.is_trying_to_move_left = is_hat_held_active or player.is_trying_to_move_left
-                elif action_name == "right": player.is_trying_to_move_right = is_hat_held_active or player.is_trying_to_move_right
-                elif action_name == "up": player.is_holding_climb_ability_key = is_hat_held_active or player.is_holding_climb_ability_key
-                elif action_name == "down": player.is_holding_crouch_ability_key = is_hat_held_active or player.is_holding_crouch_ability_key
+                ### MODIFIED ### Discrete hat event logic
+                hat_event_key = ("hat", m_id, hat_val_target_tuple) # Key to track this specific hat direction
+                was_hat_held_active_prev = player._prev_discrete_axis_hat_state.get(hat_event_key, False)
 
+                # Update continuous "held" states for movement
+                if action_name == "left": player.is_trying_to_move_left = is_hat_held_active_now or player.is_trying_to_move_left
+                elif action_name == "right": player.is_trying_to_move_right = is_hat_held_active_now or player.is_trying_to_move_right
+                elif action_name == "up": player.is_holding_climb_ability_key = is_hat_held_active_now or player.is_holding_climb_ability_key
+                elif action_name == "down": player.is_holding_crouch_ability_key = is_hat_held_active_now or player.is_holding_crouch_ability_key
+                
+                # Trigger discrete "event" if this specific hat direction was just activated
                 if action_name in getattr(C, 'JOYSTICK_HAT_EVENT_ACTIONS', []):
-                    hat_event_key = ("hat", m_id, hat_val_target_tuple)
-                    was_previously_active_for_event = player._prev_discrete_axis_hat_state.get(hat_event_key, False)
-                    if is_hat_held_active and not was_previously_active_for_event:
+                    if is_hat_held_active_now and not was_hat_held_active_prev:
                         action_events[action_name] = True
-                        if action_name == "up": action_events["jump"] = True
-                        if action_name == "down": action_events["crouch"] = True
-                    player._prev_discrete_axis_hat_state[hat_event_key] = is_hat_held_active
+                        # Special handling for combined actions from one hat direction (like up for jump)
+                        if action_name == "up" and active_mappings.get("jump", {}).get("value") == hat_val_target_tuple:
+                            action_events["jump"] = True
+                        if action_name == "down" and active_mappings.get("crouch", {}).get("value") == hat_val_target_tuple:
+                            action_events["crouch"] = True
+                
+                # Update the previous state for this hat direction
+                player._prev_discrete_axis_hat_state[hat_event_key] = is_hat_held_active_now
         
-        # MODIFIED: Changed from can_print to can_log
         if debug_this_frame and input_print_limiter.can_log(f"joy_intent_{player.player_id}"):
             debug(f"{player_id_str} Joy Intent: L={player.is_trying_to_move_left}, R={player.is_trying_to_move_right}, U={player.is_holding_climb_ability_key}, D={player.is_holding_crouch_ability_key}")
 
@@ -212,7 +217,6 @@ def process_player_input_logic(
             elif player.is_deflaming: accel_to_apply_x *= getattr(C, 'PLAYER_DEFLAME_ACCEL_MULTIPLIER', 1.0)
             player.acc.setX(accel_to_apply_x)
     else:
-        # MODIFIED: Changed from can_print to can_log
         if input_print_limiter.can_log(f"player_acc_missing_{player_id_str}"):
             warning(f"{player_id_str} Input: Player 'acc' attribute or 'setX' method missing!")
 
@@ -229,8 +233,9 @@ def process_player_input_logic(
 
     # --- 7. Process Discrete Action Events ---
     is_stunned_or_busy_for_general_actions = (player.is_taking_hit and current_time_ms - player.hit_timer < player.hit_duration) or \
-                                     player.is_attacking or player.is_dashing or player.is_rolling or \
-                                     player.is_sliding or player.state == 'turn'
+                                     player.is_attacking or player.is_dashing or \
+                                     player.is_rolling or player.is_sliding or \
+                                     player.state == 'turn'
 
     if action_events.get("crouch"): 
         if player.is_crouching: 
@@ -264,7 +269,7 @@ def process_player_input_logic(
                                          player.state in ['turn', 'death', 'death_nm', 'frozen', 'defrost'])
         if not is_on_fire_visual:
             if player.state == 'hit': can_initiate_jump_action = False
-            if player.is_taking_hit and (current_time_ms - player.hit_timer < player.hit_duration):
+            if player.is_taking_hit and (get_input_handler_ticks() - player.hit_timer < player.hit_duration):
                 can_initiate_jump_action = False
         
         if can_initiate_jump_action:
@@ -339,7 +344,7 @@ def process_player_input_logic(
                 target_idle_state = ('burning' if player.is_aflame else ('deflame' if player.is_deflaming else 'idle'))
                 if player.state != target_idle_state and player.animations and player.animations.get(target_idle_state):
                     set_player_state(player, target_idle_state)
-        else: # In air, not on ladder
+        else: 
             if player.touching_wall != 0 and not player.is_dashing and not player.is_rolling and not is_on_fire_visual:
                 if player.vel.y() > C.PLAYER_WALL_SLIDE_SPEED * 0.5 : 
                     if player.state != 'wall_slide': set_player_state(player, 'wall_slide'); player.can_wall_jump = True
@@ -351,7 +356,6 @@ def process_player_input_logic(
             elif player.state not in ['jump','jump_fall_trans','fall', 'wall_slide', 'wall_hang'] and not is_on_fire_visual and player.state != 'idle': 
                 set_player_state(player, 'idle')
 
-    # MODIFIED: Changed from can_print to can_log
     if debug_this_frame and input_print_limiter.can_log(f"p_input_final_{player.player_id}"):
         active_events_str = ", ".join([f"{k.replace('_pressed_event','')}" for k, v in action_events.items() if v and k not in ["left","right","up","down"]])
         debug(f"{player_id_str} InputHandler Final: state='{player.state}', "
@@ -360,3 +364,5 @@ def process_player_input_logic(
               f"Events Fired: [{active_events_str}]")
 
     return action_events
+
+#################### END OF FILE: player_input_handler.py ####################
