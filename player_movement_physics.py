@@ -1,19 +1,21 @@
+#################### START OF FILE: player_movement_physics.py ####################
+
 # player_movement_physics.py
 # -*- coding: utf-8 -*-
 """
 Handles core movement physics, state timers, and collision orchestration for the Player using PySide6 types.
 """
-# version 2.0.6 (File-level global rate limit for all logs: max 1 per second from this file)
+# version 2.0.7 (Refined logging and debug messages for clarity)
 
 from typing import List, Any, Optional, TYPE_CHECKING
 import time
-
+from items import Chest
 # PySide6 imports
 from PySide6.QtCore import QPointF, QRectF
 
 # Game imports
 import constants as C
-from statue import Statue 
+from statue import Statue # For type hinting
 from player_collision_handler import (
     check_player_platform_collisions,
     check_player_ladder_collisions,
@@ -23,49 +25,35 @@ from player_collision_handler import (
 from player_state_handler import set_player_state
 
 # Logger import - import the module itself and specific flags/classes
-import logger as app_logger
-from logger import ENABLE_DETAILED_PHYSICS_LOGS, RateLimiter # Make sure RateLimiter is importable from logger.py
+import logger as app_logger 
+from logger import ENABLE_DETAILED_PHYSICS_LOGS, RateLimiter 
+
+if TYPE_CHECKING:
+    from player import Player as PlayerClass_TYPE
+
 
 # --- File-specific Rate Limiter Setup ---
-# This rate limiter ensures that this entire script ('player_movement_physics.py')
-# does not log more than one message (of any level) per second.
-_physics_file_rate_limiter = RateLimiter(default_period_sec=1.0)
-_PHYSICS_FILE_LOG_KEY = "player_movement_physics_log_tick_v2" # Unique key for this file
+_physics_file_rate_limiter = RateLimiter(default_period_sec=1.0) # Log from this file at most once per second
+_PHYSICS_FILE_LOG_KEY = "player_movement_physics_log_tick_v3" 
 
 def _can_log_from_this_file_internal() -> bool:
-    """Checks if a log message can be emitted from this file based on its rate limit."""
-    # This check is independent of whether LOGGING_ENABLED is true in app_logger,
-    # as the app_logger functions will handle that.
     return _physics_file_rate_limiter.can_proceed(_PHYSICS_FILE_LOG_KEY, period_sec=1.0)
 
 # --- Local Logging Wrappers for this File ---
-# These wrappers apply the file-specific rate limit before calling the app_logger.
-
 def _file_debug(message: str, *args: Any, **kwargs: Any):
-    if _can_log_from_this_file_internal():
-        app_logger.debug(message, *args, **kwargs)
-
+    if _can_log_from_this_file_internal(): app_logger.debug(message, *args, **kwargs)
 def _file_info(message: str, *args: Any, **kwargs: Any):
-    if _can_log_from_this_file_internal():
-        app_logger.info(message, *args, **kwargs)
-
+    if _can_log_from_this_file_internal(): app_logger.info(message, *args, **kwargs)
 def _file_warning(message: str, *args: Any, **kwargs: Any):
-    if _can_log_from_this_file_internal():
-        app_logger.warning(message, *args, **kwargs)
-
+    if _can_log_from_this_file_internal(): app_logger.warning(message, *args, **kwargs)
 def _file_error(message: str, *args: Any, **kwargs: Any):
-    if _can_log_from_this_file_internal():
-        app_logger.error(message, *args, **kwargs)
-
+    if _can_log_from_this_file_internal(): app_logger.error(message, *args, **kwargs)
 def _file_critical(message: str, *args: Any, **kwargs: Any):
-    if _can_log_from_this_file_internal():
-        app_logger.critical(message, *args, **kwargs)
-
+    if _can_log_from_this_file_internal(): app_logger.critical(message, *args, **kwargs)
 def _file_log_player_physics(player: Any, message_tag: str, extra_info: Any = ""):
-    # app_logger.log_player_physics already checks ENABLE_DETAILED_PHYSICS_LOGS
-    # and uses its own (potentially global debug) rate limiter.
-    # We add this file's specific rate limit on top.
-    if _can_log_from_this_file_internal():
+    # log_player_physics has its own global debug rate limiter via _shared_debug_rate_limiter
+    # This file's _can_log_from_this_file_internal() adds an additional layer of throttling for physics logs from THIS file.
+    if ENABLE_DETAILED_PHYSICS_LOGS and _can_log_from_this_file_internal():
         app_logger.log_player_physics(player, message_tag, extra_info)
 # --- End of Local Logging Wrappers ---
 
@@ -75,7 +63,7 @@ def get_current_ticks() -> int:
     return int((time.monotonic() - _start_time_player_physics) * 1000)
 
 
-def manage_player_state_timers_and_cooldowns(player: Any): 
+def manage_player_state_timers_and_cooldowns(player: 'PlayerClass_TYPE'): 
     current_time_ms = get_current_ticks()
     player_id_str = f"P{player.player_id}"
 
@@ -106,16 +94,9 @@ def manage_player_state_timers_and_cooldowns(player: Any):
              set_player_state(player, 'idle' if player.on_ground else 'fall')
 
 
-def apply_player_movement_and_physics(player: Any): 
+def apply_player_movement_and_physics(player: 'PlayerClass_TYPE'): 
     player_id_str = f"P{player.player_id}"
-    debug_this_call = ENABLE_DETAILED_PHYSICS_LOGS 
-
-    # if debug_this_call:
-    #     _file_debug(f"{player_id_str} ApplyPhysics START: state='{player.state}', on_ground={player.on_ground}, on_ladder={player.on_ladder}, "
-    #           f"is_dashing={player.is_dashing}, is_rolling={player.is_rolling}, is_sliding={player.is_sliding}, "
-    #           f"is_frozen={player.is_frozen}, is_petrified={player.is_petrified}, "
-    #           f"vel=({player.vel.x():.2f}, {player.vel.y():.2f}), acc=({player.acc.x():.2f}, {player.acc.y():.2f})")
-
+    
     should_apply_gravity = not (
         player.on_ladder or
         player.state == 'wall_hang' or
@@ -124,20 +105,16 @@ def apply_player_movement_and_physics(player: Any):
         player.is_defrosting or
         (player.is_petrified and not getattr(player, 'is_stone_smashed', False) and player.on_ground)
     )
-    # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: should_apply_gravity = {should_apply_gravity}")
 
     if player.is_petrified and not getattr(player, 'is_stone_smashed', False) and player.on_ground:
         player.acc.setY(0.0)
-        # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: Petrified on ground, acc.y set to 0.")
-    elif not player.on_ladder:
+    elif not player.on_ladder: # Not on ladder OR not petrified on ground (or other conditions above met)
         player.acc.setY(float(getattr(C, 'PLAYER_GRAVITY', 0.7)))
-        # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: Not on ladder, acc.y set to gravity: {player.acc.y():.2f}")
 
     if should_apply_gravity:
-        old_vel_y = player.vel.y()
         player.vel.setY(player.vel.y() + player.acc.y()) 
-        # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: Gravity applied. Old vel.y={old_vel_y:.2f}, acc.y={player.acc.y():.2f}, New vel.y={player.vel.y():.2f}")
 
+    # Determine base acceleration and speed limit, potentially modified by status effects
     base_player_accel = C.PLAYER_ACCEL
     base_player_run_speed_limit = C.PLAYER_RUN_SPEED_LIMIT
     if player.is_aflame:
@@ -167,21 +144,16 @@ def apply_player_movement_and_physics(player: Any):
         if nudge_accel_x == 0 and abs(player.vel.x()) > 0.1: 
              player.vel.setX(player.vel.x() * 0.99) 
              if abs(player.vel.x()) < 0.5: player.vel.setX(0.0) 
-        # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics (Rolling): Nudge={nudge_accel_x:.2f}, Final vel.x={player.vel.x():.2f}")
-    else: 
+    else: # Not rolling
         should_apply_horizontal_physics = not (
             player.is_dashing or player.on_ladder or
             player.is_frozen or player.is_defrosting or
             (player.is_petrified and not getattr(player, 'is_stone_smashed', False))
         )
-        # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: should_apply_horizontal_physics = {should_apply_horizontal_physics}")
 
         if should_apply_horizontal_physics:
-            actual_accel_to_apply_x = player.acc.x() 
-            
-            old_vel_x = player.vel.x()
+            actual_accel_to_apply_x = player.acc.x() # player.acc.x is set by input_handler based on intent
             player.vel.setX(player.vel.x() + actual_accel_to_apply_x) 
-            # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: Horizontal accel. Old vel.x={old_vel_x:.2f}, input_accel={player.acc.x():.2f}, actual_accel_applied={actual_accel_to_apply_x:.2f}, New vel.x={player.vel.x():.2f}")
 
             friction_coeff = 0.0
             if player.on_ground and player.acc.x() == 0 and not player.is_sliding and player.state != 'slide':
@@ -196,42 +168,31 @@ def apply_player_movement_and_physics(player: Any):
                  friction_force_per_frame = player.vel.x() * friction_coeff 
                  if abs(player.vel.x()) > 0.1:
                      player.vel.setX(player.vel.x() + friction_force_per_frame)
-                     # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: Friction applied ({friction_coeff:.2f}). New vel.x={player.vel.x():.2f}")
                  else:
                      player.vel.setX(0.0)
-                     # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: Friction brought vel.x to 0.")
 
                  if abs(player.vel.x()) < 0.5 and (player.is_sliding or player.state == 'slide'):
                      player.is_sliding = False
                      slide_end_key = 'slide_trans_end' if player.animations and 'slide_trans_end' in player.animations else None
                      if slide_end_key: set_player_state(player, slide_end_key)
                      else: set_player_state(player, 'crouch' if player.is_crouching else 'idle')
-                     # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics: Exited slide due to low speed.")
 
             current_h_speed_limit = base_player_run_speed_limit
             if player.is_crouching and player.state == 'crouch_walk':
                 current_h_speed_limit *= 0.6
             
             if not player.is_dashing and not player.is_rolling and not player.is_sliding and player.state != 'slide':
-                old_vel_x_before_clamp = player.vel.x()
                 player.vel.setX(max(-current_h_speed_limit, min(current_h_speed_limit, player.vel.x())))
-                # if debug_this_call and abs(old_vel_x_before_clamp - player.vel.x()) > 0.01:
-                #     _file_debug(f"{player_id_str} ApplyPhysics: Speed limit applied. Old vel.x={old_vel_x_before_clamp:.2f}, Limit={current_h_speed_limit:.2f}, New vel.x={player.vel.x():.2f}")
 
         elif player.is_frozen or player.is_defrosting or \
              (player.is_petrified and not getattr(player, 'is_stone_smashed', False)):
             player.vel.setX(0.0); player.acc.setX(0.0) 
 
     if player.vel.y() > 0 and not player.on_ladder: 
-        old_vel_y_before_terminal = player.vel.y()
         player.vel.setY(min(player.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
-        # if debug_this_call and abs(old_vel_y_before_terminal - player.vel.y()) > 0.01 :
-        #     _file_debug(f"{player_id_str} ApplyPhysics: Terminal velocity applied. Old vel.y={old_vel_y_before_terminal:.2f}, New vel.y={player.vel.y():.2f}")
-
-    # if debug_this_call: _file_debug(f"{player_id_str} ApplyPhysics END: Final vel=({player.vel.x():.2f}, {player.vel.y():.2f})")
 
 
-def update_player_core_logic(player: Any, dt_sec: float, platforms_list: List[Any], ladders_list: List[Any],
+def update_player_core_logic(player: 'PlayerClass_TYPE', dt_sec: float, platforms_list: List[Any], ladders_list: List[Any],
                              hazards_list: List[Any], other_players_list: List[Any], enemies_list: List[Any]):
     player_id_str = f"P{player.player_id}"
     if not player._valid_init or not player.alive():
@@ -239,26 +200,25 @@ def update_player_core_logic(player: Any, dt_sec: float, platforms_list: List[An
         return
 
     _file_log_player_physics(player, "UPDATE_START")
-    # _file_debug(f"{player_id_str} CoreLogic START: state={player.state}, pos=({player.pos.x():.1f},{player.pos.y():.1f}), vel=({player.vel.x():.1f},{player.vel.y():.1f}), acc=({player.acc.x():.1f},{player.acc.y():.1f}), on_ground={player.on_ground}")
 
     if player.is_dead and not player.is_petrified: 
-        if player.alive() and not player.death_animation_finished: 
-            if not player.on_ground: 
+        if player.alive() and not player.death_animation_finished: # Still "alive" for animation
+            if not player.on_ground: # Apply gravity to dead body
                 original_acc_y_dead = player.acc.y() 
                 player.acc.setY(float(getattr(C, 'PLAYER_GRAVITY', 0.7)))
                 player.vel.setY(player.vel.y() + player.acc.y())
                 player.vel.setY(min(player.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
+                # Use per-frame velocity for position update (dt_sec * FPS is already baked in by how vel is used)
                 player.pos.setY(player.pos.y() + player.vel.y()) 
                 if hasattr(player, '_update_rect_from_image_and_pos'): player._update_rect_from_image_and_pos()
                 
-                player.on_ground = False 
-                check_player_platform_collisions(player, 'y', platforms_list)
-                player.pos = QPointF(player.rect.center().x(), player.rect.bottom()) 
-                player.acc.setY(original_acc_y_dead) 
+                player.on_ground = False # Assume not on ground until check
+                check_player_platform_collisions(player, 'y', platforms_list) # Minimal collision for falling body
+                player.pos = QPointF(player.rect.center().x(), player.rect.bottom()) # Sync pos from rect
+                player.acc.setY(original_acc_y_dead) # Restore original acc.y if needed (though usually 0 for dead)
         
         if hasattr(player, 'animate'): player.animate()
         _file_log_player_physics(player, "UPDATE_END", "Player is dead (normal)")
-        _file_debug(f"{player_id_str} CoreLogic END (Dead): Final pos=({player.pos.x():.1f},{player.pos.y():.1f})")
         return
 
     if player.is_petrified:
@@ -278,76 +238,92 @@ def update_player_core_logic(player: Any, dt_sec: float, platforms_list: List[An
         
         if hasattr(player, 'animate'): player.animate() 
         _file_log_player_physics(player, "UPDATE_END", "Player is petrified/smashed")
-        _file_debug(f"{player_id_str} CoreLogic END (Petrified): Final pos=({player.pos.x():.1f},{player.pos.y():.1f})")
         return
 
     manage_player_state_timers_and_cooldowns(player)
     check_player_ladder_collisions(player, ladders_list) 
     
-    if player.on_ladder and not player.can_grab_ladder:
+    if player.on_ladder and not player.can_grab_ladder: # Fell off ladder
         player.on_ladder = False
         set_player_state(player, 'fall' if not player.on_ground else 'idle')
 
     apply_player_movement_and_physics(player) 
 
     player.touching_wall = 0 
-    player.on_ground = False 
+    player.on_ground = False # Reset before Y collision checks
 
-    old_pos_x = player.pos.x()
-    player.pos.setX(player.pos.x() + player.vel.x()) 
+    # --- Horizontal Movement and Collisions ---
+    # Scale velocity by frame time (dt_sec * FPS_CONSTANT) to get per-frame displacement
+    # Assuming velocity is units/second, displacement = vel * dt_sec
+    # If velocity is units/frame (already scaled by FPS elsewhere), then displacement = vel
+    # Your code uses vel * dt_sec * C.FPS, which suggests vel is in units "per physics tick at reference FPS"
+    # If dt_sec is actual time slice, then vel * dt_sec is correct displacement.
+    # Let's assume vel is units per "conceptual frame" if FPS is stable.
+    # If dt_sec = 1/FPS, then vel * dt_sec * C.FPS = vel. This implies vel is "displacement per fixed update".
+    # For now, proceeding with current logic: vel * dt_sec * C.FPS
+    
+    scaled_vel_x = player.vel.x() * dt_sec * C.FPS
+    scaled_vel_y = player.vel.y() * dt_sec * C.FPS
+
+    player.pos.setX(player.pos.x() + scaled_vel_x) 
     if hasattr(player, '_update_rect_from_image_and_pos'): player._update_rect_from_image_and_pos()
     _file_log_player_physics(player, "X_MOVE_APPLIED")
-    # _file_debug(f"{player_id_str} CoreLogic X-Move: old_pos_x={old_pos_x:.2f}, vel_x={player.vel.x():.2f}, new_pos_x_before_coll={player.pos.x():.2f}")
     
     check_player_platform_collisions(player, 'x', platforms_list)
     _file_log_player_physics(player, "X_PLAT_COLL_DONE")
-    # _file_debug(f"{player_id_str} CoreLogic X-PlatColl: pos_x_after={player.rect.center().x():.2f}, vel_x_after={player.vel.x():.2f}, touching_wall={player.touching_wall}")
 
     all_other_char_sprites = [p for p in other_players_list if p and p._valid_init and p.alive() and p is not player] + \
-                             [e for e in enemies_list if e and e._valid_init and e.alive()]
+                             [e for e in enemies_list if e and e._valid_init and e.alive()] # Only consider alive enemies
+    
+    # Add Statues and Chest if they are physical obstacles
+    for item in player.game_elements_ref_for_projectiles.get("collectible_list", []):
+        if isinstance(item, Chest) and item.alive() and item.state == 'closed':
+            all_other_char_sprites.append(item)
+    for item in player.game_elements_ref_for_projectiles.get("statue_objects", []):
+        if isinstance(item, Statue) and item.alive() and not item.is_smashed:
+            all_other_char_sprites.append(item)
+
+
     collided_horizontally_char = check_player_character_collisions(player, 'x', all_other_char_sprites)
     if collided_horizontally_char:
         _file_log_player_physics(player, "X_CHAR_COLL_POST")
         player.pos.setX(player.rect.center().x()) 
-        check_player_platform_collisions(player, 'x', platforms_list) 
-        _file_log_player_physics(player, "X_PLAT_RECHECK")
-        # _file_debug(f"{player_id_str} CoreLogic X-CharCollRecheck: pos_x={player.rect.center().x():.2f}, vel_x={player.vel.x():.2f}")
+        check_player_platform_collisions(player, 'x', platforms_list) # Re-check platforms after char push
+        _file_log_player_physics(player, "X_PLAT_RECHECK_POST_CHAR")
 
-    old_pos_y = player.pos.y()
-    player.pos.setY(player.pos.y() + player.vel.y()) 
+    # --- Vertical Movement and Collisions ---
+    player.pos.setY(player.pos.y() + scaled_vel_y) 
     if hasattr(player, '_update_rect_from_image_and_pos'): player._update_rect_from_image_and_pos()
     _file_log_player_physics(player, "Y_MOVE_APPLIED")
-    # _file_debug(f"{player_id_str} CoreLogic Y-Move: old_pos_y={old_pos_y:.2f}, vel_y={player.vel.y():.2f}, new_pos_y_before_coll={player.pos.y():.2f}")
 
     check_player_platform_collisions(player, 'y', platforms_list) 
     _file_log_player_physics(player, "Y_PLAT_COLL_DONE")
-    # _file_debug(f"{player_id_str} CoreLogic Y-PlatColl: pos_y_after={player.rect.bottom():.2f}, vel_y_after={player.vel.y():.2f}, on_ground={player.on_ground}")
 
-    if not collided_horizontally_char: 
+    if not collided_horizontally_char: # Only check vertical char collision if no horizontal occurred this frame
         collided_vertically_char = check_player_character_collisions(player, 'y', all_other_char_sprites)
         if collided_vertically_char:
             _file_log_player_physics(player, "Y_CHAR_COLL_POST")
             player.pos = QPointF(player.rect.center().x(), player.rect.bottom()) 
-            check_player_platform_collisions(player, 'y', platforms_list) 
-            _file_log_player_physics(player, "Y_PLAT_RECHECK")
-            # _file_debug(f"{player_id_str} CoreLogic Y-CharCollRecheck: pos_y={player.rect.bottom():.2f}, vel_y={player.vel.y():.2f}, on_ground={player.on_ground}")
+            check_player_platform_collisions(player, 'y', platforms_list) # Re-check platforms after char push
+            _file_log_player_physics(player, "Y_PLAT_RECHECK_POST_CHAR")
 
+    # Final position sync from rect after all resolutions for this axis
     player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
     _file_log_player_physics(player, "FINAL_POS_SYNC")
-    # _file_debug(f"{player_id_str} CoreLogic FinalSync: pos=({player.pos.x():.1f},{player.pos.y():.1f}) rect_bottom={player.rect.bottom():.1f}")
 
     check_player_hazard_collisions(player, hazards_list)
 
+    # Player Attack Collision (after all movement resolved for this frame)
     if player.alive() and not player.is_dead and player.is_attacking:
         targets_for_player_attack = [p for p in other_players_list if p and p._valid_init and p.alive() and p is not player] + \
                                     [e for e in enemies_list if e and e._valid_init and e.alive()]
         statues_list_for_attack = player.game_elements_ref_for_projectiles.get("statue_objects", []) if player.game_elements_ref_for_projectiles else []
         targets_for_player_attack.extend([s for s in statues_list_for_attack if isinstance(s, Statue) and s.alive()])
 
-
         if hasattr(player, 'check_attack_collisions'):
             player.check_attack_collisions(targets_for_player_attack)
 
     if hasattr(player, 'animate'): player.animate()
     _file_log_player_physics(player, "UPDATE_END")
-    # _file_debug(f"{player_id_str} CoreLogic END: state={player.state}, pos=({player.pos.x():.1f},{player.pos.y():.1f}), vel=({player.vel.x():.1f},{player.vel.y():.1f}), on_ground={player.on_ground}")
+
+#################### END OF FILE: player_movement_physics.py ####################

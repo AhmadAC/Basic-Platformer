@@ -30,12 +30,25 @@ _app_input_limiter = PrintLimiter(default_limit=5, default_period=2.0)
 
 
 def update_qt_key_press(key: Qt.Key, is_auto_repeat: bool):
+    # Always update the snapshot to True when a key press (initial or auto-repeat) is received.
+    # The keyReleaseEvent will set it to False.
+    _qt_keys_pressed_snapshot_global[key] = True
+    
+    # Only add to discrete event list if it's NOT an auto-repeat,
+    # to prevent multiple jump/attack events from a single held key.
     if not is_auto_repeat:
-        _qt_keys_pressed_snapshot_global[key] = True
-    _qt_key_events_this_frame_global.append((QKeyEvent.Type.KeyPress, key, is_auto_repeat))
+        _qt_key_events_this_frame_global.append((QKeyEvent.Type.KeyPress, key, is_auto_repeat))
 
 def update_qt_key_release(key: Qt.Key, is_auto_repeat: bool):
+    # is_auto_repeat is usually False for release events, but check just in case
+    # Only set to False if it's not an auto-repeat of a release (which is rare/unlikely for Qt).
+    # The main thing is that a release event means the key is no longer considered pressed for the snapshot.
     _qt_keys_pressed_snapshot_global[key] = False
+    # Typically, you don't add KeyRelease to the discrete event list for game actions,
+    # but you might if your game has "on key up" specific actions.
+    # For now, mirroring the original append logic but this is often not needed for game logic.
+    # _qt_key_events_this_frame_global.append((QKeyEvent.Type.KeyRelease, key, is_auto_repeat))
+
 
 def clear_qt_key_events_this_frame():
     _qt_key_events_this_frame_global.clear()
@@ -44,7 +57,7 @@ def get_input_snapshot(
     player_instance: Any, 
     player_id: int,
     pygame_joysticks_list_from_app_core: List[Optional[pygame.joystick.Joystick]],
-    pygame_joy_button_prev_state_list: List[Dict[int, bool]], # MODIFIED: Renamed and type hint corrected
+    pygame_joy_button_prev_state_list: List[Dict[int, bool]],
     game_elements_ref: Dict[str, Any]
 ) -> Dict[str, bool]:
     
@@ -67,16 +80,21 @@ def get_input_snapshot(
         elif assigned_device_str == "keyboard_p2": keyboard_map_to_use_for_qt = game_config.DEFAULT_KEYBOARD_P2_MAPPINGS
         else: keyboard_map_to_use_for_qt = game_config.DEFAULT_KEYBOARD_P1_MAPPINGS
         
+        # Pass a copy of _qt_key_events_this_frame_global in case it's modified elsewhere during processing
         keyboard_action_events = process_player_input_logic(
-            player_instance, _qt_keys_pressed_snapshot_global, list(_qt_key_events_this_frame_global),
-            keyboard_map_to_use_for_qt, game_elements_ref.get("platforms_list", []), joystick_data=None
+            player_instance, 
+            dict(_qt_keys_pressed_snapshot_global), # Pass a copy of the snapshot
+            list(_qt_key_events_this_frame_global), # Pass a copy of the event list
+            keyboard_map_to_use_for_qt, 
+            game_elements_ref.get("platforms_list", []), 
+            joystick_data=None
         )
         for action, is_active in keyboard_action_events.items():
             if is_active: final_action_events[action] = True
         
         if _app_input_limiter.can_log(f"kbd_snapshot_events_{player_id_str_log}"): 
             active_kbd_events = {k:v for k,v in keyboard_action_events.items() if v}
-            if active_kbd_events: debug(f"APP_INPUT_MANAGER ({player_id_str_log}) KBD Events: {active_kbd_events}")
+            if active_kbd_events: debug(f"APP_INPUT_MANAGER ({player_id_str_log}) KBD Events from process_player_input_logic: {active_kbd_events}")
 
     elif controller_actually_enabled and assigned_device_str.startswith("joystick_pygame_"):
         joystick_data_for_handler: Optional[Dict[str, Any]] = None
@@ -102,10 +120,10 @@ def get_input_snapshot(
                 current_buttons_state = {i: joy.get_button(i) for i in range(joy.get_numbuttons())}
                 joy_instance_id = joy.get_instance_id()
                 
-                prev_buttons_state_for_this_joy: Dict[int, bool] = {} # Default to empty
+                prev_buttons_state_for_this_joy: Dict[int, bool] = {} 
                 if 0 <= joy_instance_id < len(pygame_joy_button_prev_state_list):
                     button_state_dict_at_instance_id = pygame_joy_button_prev_state_list[joy_instance_id]
-                    if button_state_dict_at_instance_id is not None: # Should be {}, not None
+                    if button_state_dict_at_instance_id is not None: 
                         prev_buttons_state_for_this_joy = button_state_dict_at_instance_id
                 else:
                      if _app_input_limiter.can_log(f"prev_state_missing_instanceid_{player_id_str_log}_{joy_instance_id}"):
@@ -124,18 +142,11 @@ def get_input_snapshot(
                     if _app_input_limiter.can_log(f"prev_state_update_fail_instanceid_{player_id_str_log}_{joy_instance_id}"):
                         warning(f"APP_INPUT_MANAGER ({player_id_str_log}): Failed to update prev_state_list. Instance ID {joy_instance_id} out of bounds (len {len(pygame_joy_button_prev_state_list)}).")
 
-
                 active_runtime_joystick_map = player_specific_runtime_mappings
                 if not active_runtime_joystick_map:
                     if _app_input_limiter.can_log(f"joy_map_fallback_{player_id_str_log}"): 
                         warning(f"APP_INPUT_MANAGER ({player_id_str_log}): Player-specific runtime map (P{player_id}_MAPPINGS) is empty. Falling back to DEFAULT_GENERIC_JOYSTICK_MAPPINGS.")
                     active_runtime_joystick_map = game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS
-                
-                # Optional: Deep log of map being used
-                # if _app_input_limiter.can_log(f"joy_map_used_debug_{player_id_str_log}"): 
-                #     debug(f"APP_INPUT_MANAGER ({player_id_str_log}): Using joystick map for Player {player_id} (Device: {assigned_device_str}):")
-                #     try: debug(json.dumps(active_runtime_joystick_map, indent=2))
-                #     except TypeError: debug(str(active_runtime_joystick_map))
                 
                 controller_action_events = process_player_input_logic(
                     player_instance, {}, [], active_runtime_joystick_map,
@@ -146,7 +157,7 @@ def get_input_snapshot(
                 
                 if _app_input_limiter.can_log(f"ctrl_snapshot_events_{player_id_str_log}"): 
                     active_ctrl_events = {k:v for k,v in controller_action_events.items() if v}
-                    if active_ctrl_events: debug(f"APP_INPUT_MANAGER ({player_id_str_log}) CTRL Events (JoyIdx {joystick_py_idx}, InstID {joy_instance_id}): {active_ctrl_events}")
+                    if active_ctrl_events: debug(f"APP_INPUT_MANAGER ({player_id_str_log}) CTRL Events (JoyIdx {joystick_py_idx}, InstID {joy_instance_id}) from process_player_input_logic: {active_ctrl_events}")
             else:
                 if _app_input_limiter.can_log(f"joy_idx_unavailable_{player_id_str_log}"): 
                     warning(f"APP_INPUT_MANAGER: {player_id_str_log} assigned joystick index {joystick_py_idx} but it's not available or None in app_core's list (list size: {len(pygame_joysticks_list_from_app_core)}).")
@@ -156,7 +167,7 @@ def get_input_snapshot(
     
     if _app_input_limiter.can_log(f"final_actions_{player_id_str_log}"): 
         active_final_events = {k:v for k,v in final_action_events.items() if v}
-        if active_final_events: debug(f"APP_INPUT_MANAGER ({player_id_str_log}) Final Combined Action Events: {active_final_events}")
+        if active_final_events: debug(f"APP_INPUT_MANAGER ({player_id_str_log}) Final Combined Action Events to return: {active_final_events}")
 
     return final_action_events
 
