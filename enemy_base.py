@@ -1,3 +1,5 @@
+#################### START OF FILE: enemy_base.py ####################
+
 # enemy_base.py
 # -*- coding: utf-8 -*-
 """
@@ -6,6 +8,7 @@ Handles core attributes, animation loading, and common assets for PySide6.
 Now uses load_enemy_animations.
 """
 # version 2.0.5 (Uses load_enemy_animations)
+# MODIFIED: Added zapped attributes (version 2.0.6)
 import os
 import random
 import time
@@ -161,6 +164,12 @@ class EnemyBase:
         self.is_petrified = False; self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
         self.facing_at_petrification = self.facing_right
+        
+        # Zapped attributes
+        self.is_zapped: bool = False
+        self.zapped_timer_start: int = 0
+        self.zapped_damage_last_tick: int = 0
+
 
         gray_color = getattr(C, 'GRAY', (128, 128, 128))
         dark_gray_color = getattr(C, 'DARK_GRAY', (50, 50, 50))
@@ -304,6 +313,9 @@ class EnemyBase:
         self.is_petrified = False; self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
         self.facing_at_petrification = self.facing_right
+        
+        # Zapped attributes reset
+        self.is_zapped = False; self.zapped_timer_start = 0; self.zapped_damage_last_tick = 0
 
         # Restore original stone images (copies were made for dynamic scaling/tinting)
         self.stone_image_frame = self.stone_image_frame_original.copy()
@@ -349,3 +361,5 @@ class EnemyBase:
                 from game_ui import draw_health_bar_qt # Assuming it's safe to import here
                 draw_health_bar_qt(painter, hb_x, hb_y, hb_w, hb_h, 
                                    float(self.current_health), float(self.max_health))
+
+#################### END OF FILE: enemy_base.py ####################

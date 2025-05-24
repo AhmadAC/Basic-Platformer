@@ -1,9 +1,12 @@
+#################### START OF FILE: enemy_network_handler.py ####################
+
 # enemy_network_handler.py
 # -*- coding: utf-8 -*-
 """
 Handles network data serialization and deserialization for the Enemy class (PySide6).
 """
 # version 2.0.2 
+# MODIFIED: Added zapped attributes (version 2.0.3)
 
 import os
 import time # For monotonic timer
@@ -75,13 +78,14 @@ def get_enemy_network_data(enemy: 'Enemy') -> Dict[str, Any]:
         'is_stone_smashed': getattr(enemy, 'is_stone_smashed', False),
         'stone_smashed_timer_start': getattr(enemy, 'stone_smashed_timer_start', 0),
         'facing_at_petrification': getattr(enemy, 'facing_at_petrification', True),
+        'is_zapped': getattr(enemy, 'is_zapped', False), # ADDED
+        'zapped_timer_start': getattr(enemy, 'zapped_timer_start', 0), # ADDED
     }
     return data
 
 def set_enemy_network_data(enemy: 'Enemy', network_data: Dict[str, Any]):
     if network_data is None: return
-    # Lazy import to break potential cycles if enemy_state_handler imports this module
-    from enemy_state_handler import set_enemy_state
+    from enemy_state_handler import set_enemy_state # Local import
 
     enemy._valid_init = network_data.get('_valid_init', getattr(enemy, '_valid_init', False))
     if not enemy._valid_init:
@@ -109,7 +113,7 @@ def set_enemy_network_data(enemy: 'Enemy', network_data: Dict[str, Any]):
     state_changed_by_priority = False
     if new_is_petrified_net:
         if not getattr(enemy, 'is_petrified', False): enemy.is_petrified = True; state_changed_by_priority = True
-        enemy.is_aflame = False; enemy.is_deflaming = False; enemy.is_frozen = False; enemy.is_defrosting = False
+        enemy.is_aflame = False; enemy.is_deflaming = False; enemy.is_frozen = False; enemy.is_defrosting = False; enemy.is_zapped = False
         if new_is_smashed_net:
             if not getattr(enemy, 'is_stone_smashed', False): enemy.is_stone_smashed = True; state_changed_by_priority = True
             enemy.stone_smashed_timer_start = network_data.get('stone_smashed_timer_start', getattr(enemy, 'stone_smashed_timer_start', 0))
@@ -164,20 +168,25 @@ def set_enemy_network_data(enemy: 'Enemy', network_data: Dict[str, Any]):
             enemy.frozen_effect_timer = network_data.get('frozen_effect_timer', getattr(enemy, 'frozen_effect_timer', current_ticks_val))
         enemy.is_defrosting = new_is_defrosting
 
+        new_is_zapped = network_data.get('is_zapped', getattr(enemy, 'is_zapped', False)) # ADDED
+        if new_is_zapped and not getattr(enemy, 'is_zapped', False):
+            enemy.zapped_timer_start = network_data.get('zapped_timer_start', current_ticks_val)
+            enemy.zapped_damage_last_tick = enemy.zapped_timer_start # Init damage tick timer
+        enemy.is_zapped = new_is_zapped
+
         new_is_stomp_dying_net = network_data.get('is_stomp_dying', False)
         if new_is_stomp_dying_net and not getattr(enemy, 'is_stomp_dying', False):
             enemy.is_stomp_dying = True
             enemy.stomp_death_start_time = network_data.get('stomp_death_start_time', current_ticks_val)
             enemy.original_stomp_facing_right = network_data.get('original_stomp_facing_right', getattr(enemy, 'facing_right', True))
-            # Visual update for stomp image might be needed here if not handled by state change
             if hasattr(enemy, 'animate') and hasattr(enemy, 'image'):
                 original_facing_for_stomp_img = enemy.facing_right
                 enemy.facing_right = enemy.original_stomp_facing_right
-                _temp_stomp_flag = enemy.is_stomp_dying; enemy.is_stomp_dying = False # Temporarily disable for clean anim call
-                enemy.animate() # Get the base frame
+                _temp_stomp_flag = enemy.is_stomp_dying; enemy.is_stomp_dying = False 
+                enemy.animate() 
                 enemy.is_stomp_dying = _temp_stomp_flag
                 enemy.original_stomp_death_image = enemy.image.copy() if enemy.image and not enemy.image.isNull() else None
-                enemy.facing_right = original_facing_for_stomp_img # Restore actual facing
+                enemy.facing_right = original_facing_for_stomp_img 
             if getattr(enemy, 'state', 'idle') != 'stomp_death': set_enemy_state(enemy, 'stomp_death')
         elif not new_is_stomp_dying_net and getattr(enemy, 'is_stomp_dying', False):
             enemy.is_stomp_dying = False
@@ -187,7 +196,7 @@ def set_enemy_network_data(enemy: 'Enemy', network_data: Dict[str, Any]):
     can_sync_actions = can_sync_other_statuses and not \
                        (getattr(enemy, 'is_aflame', False) or getattr(enemy, 'is_deflaming', False) or \
                         getattr(enemy, 'is_frozen', False) or getattr(enemy, 'is_defrosting', False) or \
-                        getattr(enemy, 'is_stomp_dying', False))
+                        getattr(enemy, 'is_stomp_dying', False) or getattr(enemy, 'is_zapped', False)) # Check zapped
 
     if can_sync_actions:
         enemy.is_attacking = network_data.get('is_attacking', getattr(enemy, 'is_attacking', False))
@@ -213,7 +222,7 @@ def set_enemy_network_data(enemy: 'Enemy', network_data: Dict[str, Any]):
         current_enemy_state = getattr(enemy, 'state', 'idle')
         # Check if current state is one that shouldn't be easily overridden by a generic 'idle' or 'run' from network
         is_current_state_a_priority_status = current_enemy_state in [
-            'aflame','deflame','frozen','defrost','petrified','smashed','death','death_nm','stomp_death', 'hit'
+            'aflame','deflame','frozen','defrost','petrified','smashed','death','death_nm','stomp_death', 'hit', 'zapped' # Added zapped
         ]
         if not is_current_state_a_priority_status and current_enemy_state != new_logical_state_from_net:
             set_enemy_state(enemy, new_logical_state_from_net)
@@ -246,3 +255,5 @@ def set_enemy_network_data(enemy: 'Enemy', network_data: Dict[str, Any]):
     # Final animation call if still valid and alive
     if getattr(enemy, '_valid_init', False) and hasattr(enemy, 'alive') and enemy.alive():
         if hasattr(enemy, 'animate'): enemy.animate()
+
+#################### END OF FILE: enemy_network_handler.py ####################
