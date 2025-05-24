@@ -1,70 +1,67 @@
-[2025-05-24 22:40:32.345] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-24 22:40:32.345] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
-[2025-05-24 22:40:32.690] DEBUG   logger.py:143 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
-[2025-05-24 22:40:32.714] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
-[2025-05-24 22:40:32.718] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 0.
-[2025-05-24 22:40:32.718] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
-[2025-05-24 22:40:32.730] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
-[2025-05-24 22:40:32.731] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
-[2025-05-24 22:40:33.721] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating Player Selection for Couch Co-op.
-[2025-05-24 22:40:34.764] INFO    logger.py:143 (_log_wrapper): Couch Co-op: 2 players selected.
-[2025-05-24 22:40:34.764] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op (2 players).
-[2025-05-24 22:40:34.765] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules with cache busting).
-[2025-05-24 22:40:34.765] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.4p2' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\4p2.py
-[2025-05-24 22:40:34.766] DEBUG   logger.py:143 (_log_wrapper): LevelLoader: Invalidated import caches.
-[2025-05-24 22:40:34.772] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for '4p2' loaded successfully via function 'load_map_4p2'.
-[2025-05-24 22:40:34.773] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.4players' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\4players.py
-[2025-05-24 22:40:34.775] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for '4players' loaded successfully via function 'load_map_4players'.
-[2025-05-24 22:40:34.775] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.four' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\four.py
-[2025-05-24 22:40:34.777] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'four' loaded successfully via function 'load_map_four'.
-[2025-05-24 22:40:34.779] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.test' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\test.py
-[2025-05-24 22:40:34.781] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'test' loaded successfully via function 'load_map_test'.
-[2025-05-24 22:40:34.781] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three.py
-[2025-05-24 22:40:34.783] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' loaded successfully via function 'load_map_three'.
-[2025-05-24 22:40:34.784] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: map_select
-[2025-05-24 22:40:35.435] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'three' for 2 players.
-[2025-05-24 22:40:35.435] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: three, Target: None, CouchPlayers: 2
-[2025-05-24 22:40:35.459] INFO    logger.py:143 (_log_wrapper): GAME_MODES (_initialize_game_entities): Delegating to game_setup.initialize_game_elements for map 'three', mode 'couch_play', couch_players: 2.
-[2025-05-24 22:40:35.459] INFO    logger.py:143 (_log_wrapper): GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---
-[2025-05-24 22:40:35.459] INFO    logger.py:143 (_log_wrapper): GameSetup: Mode: 'couch_play', Screen: 100x30, Target Map: 'three'
-[2025-05-24 22:40:35.473] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules with cache busting).
-[2025-05-24 22:40:35.475] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three.py
-[2025-05-24 22:40:35.476] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' loaded successfully via function 'load_map_three'.
-[2025-05-24 22:40:35.477] INFO    logger.py:143 (_log_wrapper): GameSetup: Successfully reloaded pristine map data for 'three'.
-[2025-05-24 22:40:35.477] INFO    logger.py:143 (_log_wrapper): GameSetup: Static map elements re-created. Platforms: 11
-[2025-05-24 22:40:35.608] INFO    logger.py:143 (_log_wrapper): GameSetup: player1 RE-CREATED. Pos: (210.5,918.0), Control: keyboard_p1
-[2025-05-24 22:40:35.716] INFO    logger.py:143 (_log_wrapper): GameSetup: player2 RE-CREATED. Pos: (130.5,918.0), Control: keyboard_p2
-[2025-05-24 22:40:35.716] INFO    logger.py:143 (_log_wrapper): GameSetup: Total active players RE-CREATED: 2
-[2025-05-24 22:40:35.765] DEBUG   logger.py:143 (_log_wrapper): Enemy (ID: 0, Color: gray) main class initialized.
-[2025-05-24 22:40:35.949] INFO    logger.py:143 (_log_wrapper): GameSetup: Enemies re-created: 5
-[2025-05-24 22:40:35.949] INFO    logger.py:143 (_log_wrapper): GameSetup: Statues re-created: 0
-[2025-05-24 22:40:35.965] INFO    logger.py:143 (_log_wrapper): GameSetup (Reset): Chest RE-CREATED at (181.0, 625.0) from fresh map data.
-[2025-05-24 22:40:35.965] INFO    logger.py:143 (_log_wrapper): Camera initialized: Viewport(100.0x30.0), WorldBounds(X: 0.0 to 1600.0, Y: 0.0 to 1000.0)
-[2025-05-24 22:40:35.966] INFO    logger.py:143 (_log_wrapper): GameSetup: Camera re-initialized and focused.
-[2025-05-24 22:40:35.966] INFO    logger.py:143 (_log_wrapper): GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map 'three' ---
-[2025-05-24 22:40:35.966] INFO    logger.py:143 (_log_wrapper): GAME_MODES: game_setup.initialize_game_elements SUCCEEDED for map 'three', mode 'couch_play'.
-[2025-05-24 22:40:35.992] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: game_scene
-[2025-05-24 22:40:35.993] INFO    logger.py:143 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
-[2025-05-24 22:40:35.993] INFO    logger.py:143 (_log_wrapper): Camera Screen Dims Set: 1280.0x649.0
-[2025-05-24 22:40:36.043] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Couch play ready.
-[2025-05-24 22:40:36.875] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P1): State changing from 'idle' to 'turn' (original request was 'turn')
-[2025-05-24 22:40:37.963] DEBUG   logger.py:143 (_log_wrapper): APP_INPUT_MANAGER (P1) KBD Events from process_player_input_logic: {'left': True, 'right': True, 'up': True, 'down': True, 'jump': True, 'crouch': True}
-[2025-05-24 22:40:38.971] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=False, R=False, U=False, D=False
-[2025-05-24 22:40:39.682] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
-[2025-05-24 22:40:39.682] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
-[2025-05-24 22:40:39.682] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
-[2025-05-24 22:40:39.682] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
-[2025-05-24 22:40:39.683] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'couch_play' stopped and resources cleaned up.
-[2025-05-24 22:40:40.323] INFO    logger.py:143 (_log_wrapper): MainWindow: request_close_app called. Initiating close sequence.
-[2025-05-24 22:40:40.323] INFO    logger.py:143 (_log_wrapper): MainWindow: Close event received. Shutting down application.
-[2025-05-24 22:40:40.324] DEBUG   logger.py:143 (_log_wrapper): closeEvent called.
-[2025-05-24 22:40:40.324] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
-[2025-05-24 22:40:40.324] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: None
-[2025-05-24 22:40:40.325] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
-[2025-05-24 22:40:40.325] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
-[2025-05-24 22:40:40.325] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
-[2025-05-24 22:40:40.326] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame Joystick system quit.
-[2025-05-24 22:40:40.362] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame system quit.
-[2025-05-24 22:40:40.362] INFO    logger.py:143 (_log_wrapper): MainWindow: Application shutdown sequence complete.
-[2025-05-24 22:40:40.390] INFO    logger.py:143 (_log_wrapper): QApplication event loop finished. Exit code: 0
-[2025-05-24 22:40:40.390] INFO    logger.py:143 (_log_wrapper): Application fully terminated.
+[2025-05-24 22:43:49.626] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-24 22:43:49.626] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-24 22:43:49.785] DEBUG   logger.py:143 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
+[2025-05-24 22:43:49.809] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
+[2025-05-24 22:43:49.812] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 0.
+[2025-05-24 22:43:49.812] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
+[2025-05-24 22:43:49.822] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-24 22:43:49.823] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
+[2025-05-24 22:43:50.692] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating Player Selection for Couch Co-op.
+[2025-05-24 22:43:51.545] INFO    logger.py:143 (_log_wrapper): Couch Co-op: 2 players selected.
+[2025-05-24 22:43:51.545] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op (2 players).
+[2025-05-24 22:43:51.545] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules with cache busting).
+[2025-05-24 22:43:51.546] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.4p2' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\4p2.py
+[2025-05-24 22:43:51.546] DEBUG   logger.py:143 (_log_wrapper): LevelLoader: Invalidated import caches.
+[2025-05-24 22:43:51.548] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for '4p2' loaded successfully via function 'load_map_4p2'.
+[2025-05-24 22:43:51.548] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.4players' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\4players.py
+[2025-05-24 22:43:51.549] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for '4players' loaded successfully via function 'load_map_4players'.
+[2025-05-24 22:43:51.549] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.four' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\four.py
+[2025-05-24 22:43:51.550] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'four' loaded successfully via function 'load_map_four'.
+[2025-05-24 22:43:51.551] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.test' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\test.py
+[2025-05-24 22:43:51.552] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'test' loaded successfully via function 'load_map_test'.
+[2025-05-24 22:43:51.552] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three.py
+[2025-05-24 22:43:51.553] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' loaded successfully via function 'load_map_three'.
+[2025-05-24 22:43:51.554] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: map_select
+[2025-05-24 22:43:52.560] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'three' for 2 players.
+[2025-05-24 22:43:52.561] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: three, Target: None, CouchPlayers: 2
+[2025-05-24 22:43:52.581] INFO    logger.py:143 (_log_wrapper): GAME_MODES (_initialize_game_entities): Delegating to game_setup.initialize_game_elements for map 'three', mode 'couch_play', couch_players: 2.
+[2025-05-24 22:43:52.582] INFO    logger.py:143 (_log_wrapper): GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---
+[2025-05-24 22:43:52.582] INFO    logger.py:143 (_log_wrapper): GameSetup: Mode: 'couch_play', Screen: 100x30, Target Map: 'three'
+[2025-05-24 22:43:52.582] DEBUG   logger.py:143 (_log_wrapper): GameSetup: Clearing all existing game elements from game_elements_ref...
+[2025-05-24 22:43:52.597] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules with cache busting).
+[2025-05-24 22:43:52.597] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three' from file: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three.py
+[2025-05-24 22:43:52.599] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' loaded successfully via function 'load_map_three'.
+[2025-05-24 22:43:52.599] INFO    logger.py:143 (_log_wrapper): GameSetup: Successfully reloaded pristine map data for 'three'.
+[2025-05-24 22:43:52.599] INFO    logger.py:143 (_log_wrapper): GameSetup: Static map elements re-created. Platforms: 11
+[2025-05-24 22:43:52.722] INFO    logger.py:143 (_log_wrapper): GameSetup: player1 RE-CREATED. Pos: (210.5,918.0), Control: keyboard_p1
+[2025-05-24 22:43:52.827] INFO    logger.py:143 (_log_wrapper): GameSetup: player2 RE-CREATED. Pos: (130.5,918.0), Control: keyboard_p2
+[2025-05-24 22:43:52.828] INFO    logger.py:143 (_log_wrapper): GameSetup: Total active players RE-CREATED: 2
+[2025-05-24 22:43:53.052] INFO    logger.py:143 (_log_wrapper): GameSetup: Enemies re-created: 5
+[2025-05-24 22:43:53.052] INFO    logger.py:143 (_log_wrapper): GameSetup: Statues re-created: 0
+[2025-05-24 22:43:53.065] INFO    logger.py:143 (_log_wrapper): GameSetup (Reset): Chest RE-CREATED at (181.0, 625.0) from fresh map data.
+[2025-05-24 22:43:53.065] INFO    logger.py:143 (_log_wrapper): Camera initialized: Viewport(100.0x30.0), WorldBounds(X: 0.0 to 1600.0, Y: 0.0 to 1000.0)
+[2025-05-24 22:43:53.065] INFO    logger.py:143 (_log_wrapper): GameSetup: Camera re-initialized and focused.
+[2025-05-24 22:43:53.065] INFO    logger.py:143 (_log_wrapper): GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map 'three' ---
+[2025-05-24 22:43:53.065] INFO    logger.py:143 (_log_wrapper): GAME_MODES: game_setup.initialize_game_elements SUCCEEDED for map 'three', mode 'couch_play'.
+[2025-05-24 22:43:53.089] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: game_scene
+[2025-05-24 22:43:53.090] INFO    logger.py:143 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
+[2025-05-24 22:43:53.091] INFO    logger.py:143 (_log_wrapper): Camera Screen Dims Set: 1280.0x649.0
+[2025-05-24 22:43:53.135] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Couch play ready.
+[2025-05-24 22:43:53.920] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-24 22:43:53.920] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-24 22:43:53.920] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-24 22:43:53.921] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-24 22:43:53.921] DEBUG   logger.py:143 (_log_wrapper): show_view called for: menu
+[2025-05-24 22:43:53.922] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'couch_play' stopped and resources cleaned up.
+[2025-05-24 22:43:54.467] INFO    logger.py:143 (_log_wrapper): MainWindow: request_close_app called. Initiating close sequence.
+[2025-05-24 22:43:54.467] INFO    logger.py:143 (_log_wrapper): MainWindow: Close event received. Shutting down application.
+[2025-05-24 22:43:54.468] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-24 22:43:54.468] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: None
+[2025-05-24 22:43:54.468] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-24 22:43:54.469] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-24 22:43:54.470] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
+[2025-05-24 22:43:54.470] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame Joystick system quit.
+[2025-05-24 22:43:54.501] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame system quit.
+[2025-05-24 22:43:54.501] INFO    logger.py:143 (_log_wrapper): MainWindow: Application shutdown sequence complete.
+[2025-05-24 22:43:54.532] INFO    logger.py:143 (_log_wrapper): QApplication event loop finished. Exit code: 0
+[2025-05-24 22:43:54.533] INFO    logger.py:143 (_log_wrapper): Application fully terminated.

@@ -8,7 +8,7 @@ Handles window creation, UI views, game loop, input management,
 and game mode orchestration.
 """
 # version 2.1.1 (Added Couch Co-op player selection dialog logic)
-#
+
 import sys
 import os
 import traceback
