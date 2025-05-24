@@ -61,7 +61,7 @@ def update_player_status_effects(player: 'PlayerClass_TYPE', current_time_ms: in
 
     # 3. Zapped - Immobilized, takes damage over time.
     if player.is_zapped:
-        # Immobilize (movement physics might still apply gravity if zapped mid-air)
+        # Immobilization (movement physics might still apply gravity if zapped mid-air)
         player.vel.setX(0.0)
         player.acc.setX(0.0)
         if player.on_ground: # Only stop Y velocity/acceleration if on ground
