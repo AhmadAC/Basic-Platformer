@@ -632,7 +632,7 @@ class EditorMainWindow(QMainWindow):
     def update_window_title(self):
         if self._is_embedded: return
         
-        title = "Platformer Level Editor (PySide6)"
+        title = "Platformer Level Editor"
         map_name = self.editor_state.map_name_for_function
         if map_name and map_name != "untitled_map":
             title += f" - {map_name}"
@@ -932,7 +932,7 @@ class EditorMainWindow(QMainWindow):
 
     @Slot()
     def about_dialog(self):
-        QMessageBox.about(self, "About Platformer Level Editor", "Platformer Level Editor (PySide6 Version)\n\nCreate and edit levels for your platformer game.")
+        QMessageBox.about(self, "About Platformer Level Editor", "Platformer Level Editor  by Ahmad Cooper 2025\n\nCreate and edit levels for the platformer game.")
 
     def keyPressEvent(self, event: QKeyEvent):
         key = event.key()

@@ -1,2 +1,27 @@
-[2025-05-24 21:52:53.878] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-24 21:52:53.878] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-24 21:55:09.000] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-24 21:55:09.000] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-24 21:55:09.198] DEBUG   logger.py:143 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
+[2025-05-24 21:55:09.233] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
+[2025-05-24 21:55:09.238] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 1.
+[2025-05-24 21:55:09.238] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
+[2025-05-24 21:55:09.251] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-24 21:55:09.253] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
+[2025-05-24 21:55:19.036] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: editor
+[2025-05-24 21:55:19.036] DEBUG   logger.py:143 (_log_wrapper): show_view called for: editor
+[2025-05-24 21:55:19.037] INFO    logger.py:143 (_log_wrapper): UI_VIEWS: Creating editor instance.
+[2025-05-24 21:55:19.199] INFO    logger.py:143 (_log_wrapper): UI_VIEWS: Editor instance embedded.
+[2025-05-24 21:55:24.725] INFO    logger.py:143 (_log_wrapper): MainWindow: Returning to menu from: editor
+[2025-05-24 21:55:24.725] DEBUG   logger.py:143 (_log_wrapper): Returning to menu from editor
+[2025-05-24 21:55:24.728] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-24 21:55:25.313] INFO    logger.py:143 (_log_wrapper): MainWindow: request_close_app called. Initiating close sequence.
+[2025-05-24 21:55:25.313] INFO    logger.py:143 (_log_wrapper): MainWindow: Close event received. Shutting down application.
+[2025-05-24 21:55:25.314] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-24 21:55:25.314] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: None
+[2025-05-24 21:55:25.315] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-24 21:55:25.315] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-24 21:55:25.316] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
+[2025-05-24 21:55:25.317] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame Joystick system quit.
+[2025-05-24 21:55:25.347] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame system quit.
+[2025-05-24 21:55:25.348] INFO    logger.py:143 (_log_wrapper): MainWindow: Application shutdown sequence complete.
+[2025-05-24 21:55:25.375] INFO    logger.py:143 (_log_wrapper): QApplication event loop finished. Exit code: 0
+[2025-05-24 21:55:25.376] INFO    logger.py:143 (_log_wrapper): Application fully terminated.
