@@ -1,3 +1,5 @@
+#################### START OF FILE: editor\editor_config.py ####################
+
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
@@ -15,11 +17,11 @@ project_root_dir = os.path.dirname(current_script_dir)
 
 if project_root_dir not in sys.path:
     sys.path.insert(0, project_root_dir)
-    print(f"DEBUG editor_config: Added '{project_root_dir}' to sys.path for constants import.")
+    # print(f"DEBUG editor_config: Added '{project_root_dir}' to sys.path for constants import.") # Removed
 
 try:
     import constants as C 
-    print(f"DEBUG editor_config: Successfully imported 'constants' module. TILE_SIZE from C: {getattr(C, 'TILE_SIZE', 'Not Found')}")
+    # print(f"DEBUG editor_config: Successfully imported 'constants' module. TILE_SIZE from C: {getattr(C, 'TILE_SIZE', 'Not Found')}") # Removed
 except ImportError as e:
     print(f"CRITICAL CONFIG ERROR: Failed to import 'constants as C' from '{project_root_dir}'. Error: {e}")
     print(f"Current sys.path: {sys.path}")
@@ -159,17 +161,17 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"}, 
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"} 
     },
-    "player2_spawn": { # Assuming P2 has same editable props as P1 by default
+    "player2_spawn": { 
         "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"},
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"}
     },
-    "player3_spawn": { # NEW: P3 spawn properties
+    "player3_spawn": { 
         "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health (P3)"},
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (P3)"},
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (P3)"}
     },
-    "player4_spawn": { # NEW: P4 spawn properties
+    "player4_spawn": { 
         "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health (P4)"},
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (P4)"},
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (P4)"}
@@ -249,6 +251,6 @@ COLOR_PICKER_PRESETS: Dict[str, Tuple[int,int,int]] = {
 STATUS_BAR_MESSAGE_TIMEOUT = 3000 
 
 # Logging configuration
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "DEBUG" # Changed from "INFO" to "DEBUG" for more detailed logging if needed
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log"

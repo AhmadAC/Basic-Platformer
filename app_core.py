@@ -1,3 +1,5 @@
+#################### START OF FILE: app_core.py ####################
+
 # app_core.py
 import sys
 import os
@@ -48,26 +50,26 @@ from app_input_manager import (
 try:
     from server_logic import ServerState
 except ImportError:
-    print("MERGE_DEBUG: ServerState stub used.")
+    # print("MERGE_DEBUG: ServerState stub used.") # Removed
     class ServerState:
         def __init__(self): self.app_running = True; self.client_ready = False; self.current_map_name = None
 try:
     from client_logic import ClientState
 except ImportError:
-    print("MERGE_DEBUG: ClientState stub used.")
+    # print("MERGE_DEBUG: ClientState stub used.") # Removed
     class ClientState:
          def __init__(self): self.app_running = True; self.map_download_status = "unknown"
 try:
     from couch_play_logic import run_couch_play_mode
 except ImportError:
     error("CRITICAL: couch_play_logic.run_couch_play_mode not found! Stubbing.")
-    print("MERGE_DEBUG: run_couch_play_mode stub used.")
+    # print("MERGE_DEBUG: run_couch_play_mode stub used.") # Removed
     def run_couch_play_mode(*args: Any, **kwargs: Any) -> bool: return False
 try:
     from game_state_manager import reset_game_state
 except ImportError:
     error("CRITICAL: game_state_manager.reset_game_state not found! Stubbing.")
-    print("MERGE_DEBUG: reset_game_state stub used.")
+    # print("MERGE_DEBUG: reset_game_state stub used.") # Removed
     def reset_game_state(*args: Any, **kwargs: Any): pass
 
 
@@ -112,7 +114,9 @@ class NetworkThread(QThread):
         self.server_state = server_state_ref
         self.client_state = client_state_ref
         self.target_ip_port = target_ip_port
-        print(f"MERGE_DEBUG: NetworkThread initialized for mode: {mode}")
+        # print(f"MERGE_DEBUG: NetworkThread initialized for mode: {mode}") # Removed
+        debug(f"NetworkThread initialized for mode: {mode}")
+
 
     def _ui_status_update_callback(self, title: str, message: str, progress: float):
         self.status_update_signal.emit(title, message, progress)
@@ -133,14 +137,16 @@ class NetworkThread(QThread):
         try:
             main_window_instance = MainWindow._instance
             if self.mode == "host" and self.server_state and main_window_instance:
-                print("MERGE_DEBUG: NetworkThread running host mode.")
+                # print("MERGE_DEBUG: NetworkThread running host mode.") # Removed
+                debug("NetworkThread running host mode.")
                 run_server_mode(self.server_state, self.game_elements, self._ui_status_update_callback,
                                 self._get_p1_input_snapshot_main_thread_passthrough,
                                 lambda: QApplication.processEvents(),
                                 lambda: self.client_fully_synced_signal.emit())
                 self.operation_finished_signal.emit("host_ended")
             elif self.mode == "join" and self.client_state and main_window_instance:
-                print("MERGE_DEBUG: NetworkThread running join mode.")
+                # print("MERGE_DEBUG: NetworkThread running join mode.") # Removed
+                debug("NetworkThread running join mode.")
                 run_client_mode(self.client_state, self.game_elements, self._ui_status_update_callback,
                                 self.target_ip_port, self._get_p2_input_snapshot_main_thread_passthrough,
                                 lambda: QApplication.processEvents())
@@ -173,7 +179,7 @@ class MainWindow(QMainWindow):
     _p1_ui_focus_color_str: str = "yellow"
     _p2_ui_focus_color_str: str = "red"
     _p3_ui_focus_color_str: str = "lime"
-    _p4_ui_focus_color_str: str = "#8A2BE2"
+    _p4_ui_focus_color_str: str = "#8A2BE2" # BlueViolet
 
     _map_selection_selected_button_idx: int
     _lan_search_list_selected_idx: int
@@ -208,7 +214,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         MainWindow._instance = self
         self.setWindowTitle(f"Platformer Adventure LAN")
-        print("MERGE_DEBUG: MainWindow.__init__ started.")
+        # print("MERGE_DEBUG: MainWindow.__init__ started.") # Removed
+        debug("MainWindow.__init__ started.")
 
         if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
             warning("AppCore Init: Pygame/Joystick system not globally initialized. Attempting init via config.")
@@ -279,26 +286,30 @@ class MainWindow(QMainWindow):
         try:
             from game_ui import IPInputDialog
             self.ip_input_dialog_class_ref = IPInputDialog
-            print("MERGE_DEBUG: IPInputDialog imported successfully.")
+            # print("MERGE_DEBUG: IPInputDialog imported successfully.") # Removed
+            debug("IPInputDialog imported successfully.")
         except ImportError:
-            warning("MERGE_DEBUG: FAILED to import IPInputDialog from game_ui. IP Input dialog will not work.")
+            warning("AppCore: FAILED to import IPInputDialog from game_ui. IP Input dialog will not work.") # Changed MERGE_DEBUG to AppCore
             self.ip_input_dialog_class_ref = None
         
         self.game_update_timer = QTimer(self)
         self.game_update_timer.timeout.connect(self.update_game_loop)
         self.game_update_timer.start(1000 // C.FPS)
         info("MainWindow initialization complete.")
-        print("MERGE_DEBUG: MainWindow.__init__ finished.")
+        # print("MERGE_DEBUG: MainWindow.__init__ finished.") # Removed
+        debug("MainWindow.__init__ finished.")
 
 
     def _refresh_appcore_joystick_list(self):
-        print("MERGE_DEBUG: _refresh_appcore_joystick_list called.")
+        # print("MERGE_DEBUG: _refresh_appcore_joystick_list called.") # Removed
+        debug("_refresh_appcore_joystick_list called.")
         self._pygame_joysticks.clear() 
 
         if game_config._joystick_initialized_globally:
             all_detected_joysticks_from_config = game_config.get_joystick_objects()
             num_total_joysticks = len(all_detected_joysticks_from_config)
-            print(f"MERGE_DEBUG: Total joysticks detected by config: {num_total_joysticks}")
+            # print(f"MERGE_DEBUG: Total joysticks detected by config: {num_total_joysticks}") # Removed
+            debug(f"Total joysticks detected by config: {num_total_joysticks}")
 
             if len(self._pygame_joy_button_prev_state) < num_total_joysticks:
                 self._pygame_joy_button_prev_state.extend([{}] * (num_total_joysticks - len(self._pygame_joy_button_prev_state)))
@@ -308,13 +319,15 @@ class MainWindow(QMainWindow):
             ui_joy_count = 0
             for joy_obj in all_detected_joysticks_from_config:
                 if ui_joy_count >= 4:
-                    print("MERGE_DEBUG: Max UI joysticks (4) reached.")
+                    # print("MERGE_DEBUG: Max UI joysticks (4) reached.") # Removed
+                    debug("Max UI joysticks (4) reached.")
                     break
                 if joy_obj is not None:
                     try:
                         if not joy_obj.get_init(): joy_obj.init()
                         self._pygame_joysticks.append(joy_obj)
-                        print(f"MERGE_DEBUG: Added joystick '{getattr(joy_obj, 'name', 'N/A')}' (Instance ID: {joy_obj.get_instance_id()}) to UI joysticks list.")
+                        # print(f"MERGE_DEBUG: Added joystick '{getattr(joy_obj, 'name', 'N/A')}' (Instance ID: {joy_obj.get_instance_id()}) to UI joysticks list.") # Removed
+                        debug(f"Added joystick '{getattr(joy_obj, 'name', 'N/A')}' (Instance ID: {joy_obj.get_instance_id()}) to UI joysticks list.")
                         ui_joy_count += 1
                     except pygame.error as e_init:
                         warning(f"AppCore Refresh: Failed to init joystick '{getattr(joy_obj, 'name', 'N/A')}' for UI. Error: {e_init}")
@@ -354,7 +367,8 @@ class MainWindow(QMainWindow):
 
     @Slot(str, object)
     def on_lan_server_search_status_update_slot(self, status_key: str, data_obj: Optional[object] = None):
-        print(f"MERGE_DEBUG: on_lan_server_search_status_update_slot received: key='{status_key}', data='{data_obj}'")
+        # print(f"MERGE_DEBUG: on_lan_server_search_status_update_slot received: key='{status_key}', data='{data_obj}'") # Removed
+        debug(f"on_lan_server_search_status_update_slot received: key='{status_key}', data='{str(data_obj)[:100]}...'")
         app_game_modes.on_lan_server_search_status_update_logic(self, (status_key, data_obj))
 
     def _start_lan_server_search_thread(self): app_game_modes.start_lan_server_search_thread_logic(self)
@@ -365,7 +379,8 @@ class MainWindow(QMainWindow):
 
     def on_return_to_menu_from_sub_view(self):
         source_view = self.current_view_name; info(f"Returning to menu from: {source_view}"); should_return = True
-        print(f"MERGE_DEBUG: on_return_to_menu_from_sub_view from {source_view}")
+        # print(f"MERGE_DEBUG: on_return_to_menu_from_sub_view from {source_view}") # Removed
+        debug(f"on_return_to_menu_from_sub_view from {source_view}")
         if source_view == "editor" and self.actual_editor_module_instance:
             if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and callable(self.actual_editor_module_instance.confirm_unsaved_changes):
                 if not self.actual_editor_module_instance.confirm_unsaved_changes("return to menu"): should_return = False
@@ -376,7 +391,8 @@ class MainWindow(QMainWindow):
                 self.actual_controls_settings_instance.save_all_settings()
             
             if hasattr(self.actual_controls_settings_instance, 'deactivate_controller_monitoring'):
-                print("MERGE_DEBUG: Deactivating controller monitoring from settings.")
+                # print("MERGE_DEBUG: Deactivating controller monitoring from settings.") # Removed
+                debug("Deactivating controller monitoring from settings.")
                 self.actual_controls_settings_instance.deactivate_controller_monitoring()
             
             game_config.load_config() 
@@ -391,7 +407,8 @@ class MainWindow(QMainWindow):
 
     def show_view(self, view_name: str):
         info(f"Switching UI view to: {view_name}")
-        print(f"MERGE_DEBUG: show_view called for: {view_name}")
+        # print(f"MERGE_DEBUG: show_view called for: {view_name}") # Removed
+        debug(f"show_view called for: {view_name}")
         if self.current_view_name == "game_scene" and view_name != "game_scene" and self.current_game_mode:
             self.stop_current_game_mode(show_menu=False)
         
@@ -399,7 +416,8 @@ class MainWindow(QMainWindow):
         window_title = "Platformer Adventure LAN"; self.current_modal_dialog = None
         
         if view_name in ["menu", "map_select"]:
-            print(f"MERGE_DEBUG: Resetting UI nav state for view: {view_name}")
+            # print(f"MERGE_DEBUG: Resetting UI nav state for view: {view_name}") # Removed
+            debug(f"Resetting UI nav state for view: {view_name}")
             self._last_active_input_source = "keyboard"
             self._ui_nav_focus_controller_index = -1 
             self._keyboard_selected_button_idx = 0
@@ -423,7 +441,8 @@ class MainWindow(QMainWindow):
                 _ensure_controls_settings_instance(self)
                 if self.actual_controls_settings_instance and \
                    hasattr(self.actual_controls_settings_instance, 'activate_controller_monitoring'):
-                    print("MERGE_DEBUG: Activating controller monitoring for settings view.")
+                    # print("MERGE_DEBUG: Activating controller monitoring for settings view.") # Removed
+                    debug("Activating controller monitoring for settings view.")
                     self.actual_controls_settings_instance.activate_controller_monitoring()
         else:
             warning(f"show_view: Unknown view '{view_name}'. Defaulting to menu.")
@@ -643,7 +662,8 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent):
         info("MAIN PySide6: Close event. Shutting down.")
-        print("MERGE_DEBUG: closeEvent called.")
+        # print("MERGE_DEBUG: closeEvent called.") # Removed
+        debug("closeEvent called.")
         if self.actual_editor_module_instance:
             can_close_editor = True
             if isinstance(self.actual_editor_module_instance, QMainWindow):
@@ -660,12 +680,13 @@ class MainWindow(QMainWindow):
                self.actual_controls_settings_instance.controller_thread is not None and \
                hasattr(self.actual_controls_settings_instance.controller_thread, 'isRunning') and \
                self.actual_controls_settings_instance.controller_thread.isRunning():
-                print("MERGE_DEBUG: Stopping ControllerSettingsWindow's PygameControllerThread on app close...")
+                # print("MERGE_DEBUG: Stopping ControllerSettingsWindow's PygameControllerThread on app close...") # Removed
+                debug("Stopping ControllerSettingsWindow's PygameControllerThread on app close...")
                 if hasattr(self.actual_controls_settings_instance.controller_thread, 'stop'):
                     self.actual_controls_settings_instance.controller_thread.stop()
                 if hasattr(self.actual_controls_settings_instance.controller_thread, 'wait') and \
                    not self.actual_controls_settings_instance.controller_thread.wait(500):
-                    warning("MERGE_DEBUG: ControllerSettingsWindow's thread did not finish in 500ms during app close.")
+                    warning("AppCore Close: ControllerSettingsWindow's thread did not finish in 500ms during app close.") # Changed MERGE_DEBUG
 
             if hasattr(self.actual_controls_settings_instance, 'save_all_settings') and callable(self.actual_controls_settings_instance.save_all_settings):
                  self.actual_controls_settings_instance.save_all_settings()
@@ -696,7 +717,8 @@ def main():
     app = QApplication.instance();
     if app is None: app = QApplication(sys.argv)
     info("MAIN PySide6: Application starting...")
-    print("MERGE_DEBUG: Application main() started.")
+    # print("MERGE_DEBUG: Application main() started.") # Removed
+    debug("Application main() started.")
     main_window = MainWindow(); main_window.showMaximized()
     exit_code = app.exec()
     info(f"MAIN PySide6: QApplication event loop finished. Exit code: {exit_code}")
@@ -708,7 +730,8 @@ if __name__ == "__main__":
     except Exception as e_main_outer:
         log_func = critical if 'critical' in globals() and callable(critical) and globals().get('_project_root') else print
         log_func(f"MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}", exc_info=True) 
-        print(f"MERGE_DEBUG_FATAL: MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}\n{traceback.format_exc()}")
+        # print(f"MERGE_DEBUG_FATAL: MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}\n{traceback.format_exc()}") # Removed
+        # Logged already by log_func if critical is available
         try:
             error_app = QApplication.instance(); 
             if error_app is None: error_app = QApplication(sys.argv)
