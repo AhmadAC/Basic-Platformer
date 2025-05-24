@@ -21,7 +21,7 @@ from items import Chest
 if TYPE_CHECKING:
     from player import Player as PlayerClass_TYPE
 
-_SCRIPT_LOGGING_ENABLED = True
+_SCRIPT_LOGGING_ENABLED = False
 
 try:
     from logger import ENABLE_DETAILED_PHYSICS_LOGS, log_player_physics, debug, info, warning
