@@ -3,7 +3,7 @@
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.11 (Controller Navigation Foundations)
+## version 2.0.12 (Circular import fix for editor_ui_panels)
 Level Editor for the Platformer Game (PySide6 Version).
 Allows creating, loading, and saving game levels visually.
 Adds foundational support for Nintendo Switch controller navigation.
@@ -35,9 +35,7 @@ from PySide6.QtWidgets import (
     QDockWidget, QMenuBar, QStatusBar, QMessageBox, QFileDialog,
     QColorDialog, QInputDialog, QLabel, QSizePolicy
 )
-# MODIFIED: Removed QPoint from QtGui import
 from PySide6.QtGui import QAction, QKeySequence, QColor, QPalette, QScreen, QKeyEvent, QImage, QPainter, QFont
-# MODIFIED: Added QPoint to QtCore import
 from PySide6.QtCore import Qt, Slot, QSettings, QTimer, QRectF,Signal, QPoint
 # --- Game Controller Support (Pygame) ---
 try:
@@ -64,6 +62,8 @@ try:
     from . import editor_history
     from .map_view_widget import MapViewWidget, MapObjectItem
     from .editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
+    from .editor_actions import * # Import action constants
+
 
     if ED_CONFIG.MINIMAP_ENABLED: # type: ignore
         from .minimap_widget import MinimapWidget
@@ -87,6 +87,8 @@ except ImportError as e_relative_import:
         from editor import editor_history # type: ignore
         from editor.map_view_widget import MapViewWidget, MapObjectItem # type: ignore
         from editor.editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget # type: ignore
+        from editor.editor_actions import * # type: ignore
+
         if ED_CONFIG.MINIMAP_ENABLED: # type: ignore
             from editor.minimap_widget import MinimapWidget # type: ignore
         if _PYGAME_AVAILABLE:
@@ -138,14 +140,6 @@ except Exception as e_log_setup:
     logger.error(f"CRITICAL ERROR DURING FILE LOGGING SETUP (editor.py): {e_log_setup}. Using console.", exc_info=True)
     logger.info(f"Imports were attempted via: {_IMPORTS_SUCCESSFUL_METHOD}")
 # --- End Logger Setup ---
-
-# --- Editor Controller Action Constants ---
-ACTION_UI_UP = "UI_UP"; ACTION_UI_DOWN = "UI_DOWN"; ACTION_UI_LEFT = "UI_LEFT"; ACTION_UI_RIGHT = "UI_RIGHT"
-ACTION_UI_ACCEPT = "UI_ACCEPT"; ACTION_UI_CANCEL = "UI_CANCEL"; ACTION_UI_MENU = "UI_MENU"
-ACTION_UI_FOCUS_NEXT = "UI_FOCUS_NEXT"; ACTION_UI_FOCUS_PREV = "UI_FOCUS_PREV"
-ACTION_UI_TAB_NEXT = "UI_TAB_NEXT"; ACTION_UI_TAB_PREV = "UI_TAB_PREV"
-ACTION_MAP_ZOOM_IN = "MAP_ZOOM_IN"; ACTION_MAP_ZOOM_OUT = "MAP_ZOOM_OUT"
-ACTION_MAP_TOOL_PRIMARY = "MAP_TOOL_PRIMARY"; ACTION_MAP_TOOL_SECONDARY = "MAP_TOOL_SECONDARY"
 
 # Nintendo Switch Pro Controller (Common Pygame Button/Axis/Hat IDs) - Simplified
 # Buttons (Indices for joy.get_button())
@@ -396,12 +390,14 @@ class EditorMainWindow(QMainWindow):
                 elif hat_value == (1, 0): self.controller_action_dispatched.emit(ACTION_UI_RIGHT, None)
                 self._last_dpad_value = hat_value
         
-        # --- Analog Sticks (Left Stick for UI navigation) ---
+        # --- Analog Sticks (Left Stick for UI navigation, Right Stick for Camera) ---
         axis_map = {
             SWITCH_L_STICK_X_AXIS: (ACTION_UI_LEFT, ACTION_UI_RIGHT),
             SWITCH_L_STICK_Y_AXIS: (ACTION_UI_UP, ACTION_UI_DOWN), 
+            SWITCH_R_STICK_Y_AXIS: (ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN), # Added right stick Y
+            # SWITCH_R_STICK_X_AXIS: (ACTION_CAMERA_PAN_LEFT, ACTION_CAMERA_PAN_RIGHT), # For horizontal camera pan
         }
-        for axis_id, (neg_action, pos_action) in axis_map.items():
+        for axis_id, actions in axis_map.items():
             if axis_id >= joy.get_numaxes(): continue
             
             axis_val = joy.get_axis(axis_id)
@@ -410,28 +406,33 @@ class EditorMainWindow(QMainWindow):
             elif axis_val > self._controller_axis_deadzone: direction_sign = 1
             
             key = (joy.get_id(), axis_id, direction_sign)
+            
+            action_to_emit: Optional[str] = None
+            if direction_sign == -1: action_to_emit = actions[0]
+            elif direction_sign == 1: action_to_emit = actions[1]
 
-            if direction_sign != 0:
-                action_to_emit = neg_action if direction_sign == -1 else pos_action
-                last_event_time_for_key_dir = self._controller_axis_last_event_time.get(key, 0)
-                
-                can_emit = False
-                if current_time - last_event_time_for_key_dir > self._controller_axis_repeat_delay: 
-                    can_emit = True
-                elif current_time - last_event_time_for_key_dir > self._controller_axis_repeat_interval: 
-                    can_emit = True
-                
-                if can_emit:
+            if action_to_emit:
+                # For camera pan actions, we might want to emit the continuous value.
+                # For UI navigation, we use the repeat delay/interval.
+                if action_to_emit.startswith("CAMERA_PAN_"):
                     self.controller_action_dispatched.emit(action_to_emit, axis_val)
-                    self._controller_axis_last_event_time[key] = current_time
+                else: # UI Navigation actions
+                    last_event_time_for_key_dir = self._controller_axis_last_event_time.get(key, 0)
+                    can_emit = False
+                    if current_time - last_event_time_for_key_dir > self._controller_axis_repeat_delay: 
+                        can_emit = True
+                    elif current_time - last_event_time_for_key_dir > self._controller_axis_repeat_interval: 
+                        can_emit = True
+                    if can_emit:
+                        self.controller_action_dispatched.emit(action_to_emit, axis_val)
+                        self._controller_axis_last_event_time[key] = current_time
             else: # Axis back in deadzone for this direction
-                 # Reset timing for both directions of this axis if it returns to center
-                key_neg = (joy.get_id(), axis_id, -1)
-                key_pos = (joy.get_id(), axis_id, 1)
-                if key_neg in self._controller_axis_last_event_time:
-                    self._controller_axis_last_event_time[key_neg] = 0
-                if key_pos in self._controller_axis_last_event_time:
-                    self._controller_axis_last_event_time[key_pos] = 0
+                 key_neg = (joy.get_id(), axis_id, -1)
+                 key_pos = (joy.get_id(), axis_id, 1)
+                 if key_neg in self._controller_axis_last_event_time:
+                     self._controller_axis_last_event_time[key_neg] = 0
+                 if key_pos in self._controller_axis_last_event_time:
+                     self._controller_axis_last_event_time[key_pos] = 0
 
 
     @Slot(str, object)
@@ -448,8 +449,17 @@ class EditorMainWindow(QMainWindow):
             if self.menu_bar and self.menu_bar.actions():
                 first_menu = self.menu_bar.actions()[0].menu()
                 if first_menu:
-                    # Menu navigation itself is not controller-driven with this update
                     first_menu.popup(self.mapToGlobal(self.menu_bar.pos() + QPoint(0, self.menu_bar.height())))
+            return
+        # MODIFIED: Handle camera pan actions specifically targeting MapViewWidget
+        elif action.startswith("CAMERA_PAN_"):
+            if hasattr(self.map_view_widget, "handle_controller_camera_pan"):
+                try:
+                    self.map_view_widget.handle_controller_camera_pan(action, value)
+                except Exception as e:
+                    logger.error(f"Error in MapViewWidget.handle_controller_camera_pan for '{action}': {e}", exc_info=True)
+            else:
+                logger.warning(f"MapViewWidget has no handle_controller_camera_pan method for action '{action}'.")
             return
 
         if self._focusable_panels and 0 <= self._current_focused_panel_index < len(self._focusable_panels):
@@ -471,24 +481,22 @@ class EditorMainWindow(QMainWindow):
             return
 
         old_index = self._current_focused_panel_index
-        # Don't check _controller_has_focus here, as we want to ensure on_focus_gained/lost are called
         
         if 0 <= old_index < len(self._focusable_panels) and old_index != new_index :
             old_panel = self._focusable_panels[old_index]
             if hasattr(old_panel, "on_controller_focus_lost"):
                 try: old_panel.on_controller_focus_lost() # type: ignore
                 except Exception as e: logger.error(f"Error in {type(old_panel).__name__}.on_controller_focus_lost: {e}", exc_info=True)
-            # Reset old panel's dock title style
             parent_dock_old = old_panel.parent()
             while parent_dock_old and not isinstance(parent_dock_old, QDockWidget):
                 parent_dock_old = parent_dock_old.parent()
             if isinstance(parent_dock_old, QDockWidget):
-                 parent_dock_old.setStyleSheet("") # Reset
+                 parent_dock_old.setStyleSheet("") 
 
 
         self._current_focused_panel_index = new_index
         new_panel = self._focusable_panels[new_index]
-        new_panel.setFocus(Qt.FocusReason.OtherFocusReason) # Give Qt focus
+        new_panel.setFocus(Qt.FocusReason.OtherFocusReason) 
 
         if hasattr(new_panel, "on_controller_focus_gained"):
             try: new_panel.on_controller_focus_gained() # type: ignore
@@ -500,8 +508,21 @@ class EditorMainWindow(QMainWindow):
             parent_dock_new = parent_dock_new.parent()
         if isinstance(parent_dock_new, QDockWidget):
             panel_name_for_status = parent_dock_new.windowTitle()
-            parent_dock_new.setStyleSheet(f"QDockWidget::title {{ background-color: {ED_CONFIG.PROPERTIES_EDITOR_CONTROLLER_FOCUS_BORDER.split(' ')[-1] if ED_CONFIG.PROPERTIES_EDITOR_CONTROLLER_FOCUS_BORDER else 'lightblue'}; color: black; border: 1px solid black; padding: 2px; }}") # type: ignore
-        elif isinstance(new_panel, MapViewWidget): panel_name_for_status = "Map View"
+            focus_border_color = getattr(ED_CONFIG, "PROPERTIES_EDITOR_CONTROLLER_FOCUS_BORDER", "2px solid orange").split(' ')[-1] if isinstance(new_panel, PropertiesEditorDockWidget) \
+                            else getattr(ED_CONFIG, "ASSET_PALETTE_CONTROLLER_SUBFOCUS_BORDER", "2px solid lightgreen").split(' ')[-1] if isinstance(new_panel, AssetPaletteWidget) \
+                            else getattr(ED_CONFIG, "MAP_VIEW_CONTROLLER_CURSOR_COLOR_TUPLE", (0,200,255,180)) # Fallback or MapView
+            
+            if isinstance(focus_border_color, tuple): # Convert QColor tuple to hex string
+                focus_border_color = QColor(*focus_border_color[:3]).name()
+
+
+            parent_dock_new.setStyleSheet(f"QDockWidget::title {{ background-color: {focus_border_color}; color: black; border: 1px solid black; padding: 2px; }}")
+        elif isinstance(new_panel, MapViewWidget): 
+            panel_name_for_status = "Map View"
+            # MapView can have its own focus indicator, e.g., border on the QGraphicsView itself if desired
+            # new_panel.setStyleSheet(f"QGraphicsView {{ border: 2px solid {QColor(*getattr(ED_CONFIG, 'MAP_VIEW_CONTROLLER_CURSOR_COLOR_TUPLE', (0,0,0,0))[:3]).name()}; }}")
+
+
         
         self.show_status_message(f"Controller Focus: {panel_name_for_status}", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT) # type: ignore
         logger.info(f"Controller focus set to: {panel_name_for_status} (Index: {new_index})")

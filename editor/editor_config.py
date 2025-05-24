@@ -3,7 +3,7 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.5 (Added Player 3 and Player 4 spawn assets and editable variables)
+## version 2.0.6 (Added CONTROLLER_CAMERA_PAN_SPEED_PIXELS)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 """
 import sys
@@ -59,9 +59,10 @@ ASSET_PALETTE_PREFERRED_WIDTH = 300
 BASE_GRID_SIZE = getattr(C, 'TILE_SIZE', 40) 
 
 # --- Camera Control & Zoom ---
-KEY_PAN_SPEED_UNITS_PER_SECOND = 400
+KEY_PAN_SPEED_UNITS_PER_SECOND = 800
 EDGE_SCROLL_ZONE_THICKNESS = 25
 EDGE_SCROLL_SPEED_UNITS_PER_SECOND = 300
+CONTROLLER_CAMERA_PAN_SPEED_PIXELS = 30 # Speed for joystick camera panning
 MIN_ZOOM_LEVEL = 0.1
 MAX_ZOOM_LEVEL = 8.0
 ZOOM_FACTOR_INCREMENT = 1.2
@@ -72,6 +73,13 @@ MAP_VIEW_GRID_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'GRAY', (128,128,128)
 MAP_VIEW_SELECTION_RECT_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'YELLOW', (255,255,0))
 MAP_VIEW_HOVER_RECT_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'LIGHT_BLUE', (173,216,230))
 CURSOR_ASSET_ALPHA = 100
+MAP_VIEW_CONTROLLER_CURSOR_COLOR_TUPLE: Tuple[int,int,int,int] = (0, 200, 255, 180) # Light blue, semi-transparent
+
+# --- Controller Focus Styling ---
+PROPERTIES_EDITOR_CONTROLLER_FOCUS_BORDER = "2px solid orange"
+ASSET_PALETTE_CONTROLLER_SUBFOCUS_BORDER = "2px solid lightgreen"
+CONTROLLER_POLL_INTERVAL_MS = 16 # Approx 60 FPS polling
+
 
 # --- Minimap Configuration ---
 MINIMAP_ENABLED = True
@@ -103,8 +111,8 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Spawns
     "player1_spawn": {"source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn", "category": "spawn", "name_in_palette": "Player 1 Spawn"},
     "player2_spawn": {"source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn", "category": "spawn", "name_in_palette": "Player 2 Spawn"},
-    "player3_spawn": {"source_file": "characters/player3/__Idle.gif", "game_type_id": "player3_spawn", "category": "spawn", "name_in_palette": "Player 3 Spawn"}, # NEW
-    "player4_spawn": {"source_file": "characters/player4/__Idle.gif", "game_type_id": "player4_spawn", "category": "spawn", "name_in_palette": "Player 4 Spawn"}, # NEW
+    "player3_spawn": {"source_file": "characters/player3/__Idle.gif", "game_type_id": "player3_spawn", "category": "spawn", "name_in_palette": "Player 3 Spawn"}, 
+    "player4_spawn": {"source_file": "characters/player4/__Idle.gif", "game_type_id": "player4_spawn", "category": "spawn", "name_in_palette": "Player 4 Spawn"}, 
     # Enemies
     "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_gray", "category": "enemy", "name_in_palette": "Enemy Gray"},
     "enemy_green": { "source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "category": "enemy", "name_in_palette": "Enemy Green"},
@@ -251,6 +259,7 @@ COLOR_PICKER_PRESETS: Dict[str, Tuple[int,int,int]] = {
 STATUS_BAR_MESSAGE_TIMEOUT = 3000 
 
 # Logging configuration
-LOG_LEVEL = "DEBUG" # Changed from "INFO" to "DEBUG" for more detailed logging if needed
+LOG_LEVEL = "DEBUG" 
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log"
+#################### END OF FILE: editor\editor_config.py ####################
