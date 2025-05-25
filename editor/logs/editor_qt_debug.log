@@ -1,252 +1,151 @@
-2025-05-26 00:56:50,899 - INFO - editor_main_window.py:115 - <module> - Editor session started. Logging initialized. Imports via: Relative
-2025-05-26 00:56:50,900 - INFO - editor_main_window.py:902 - editor_main - editor_main() called. Embed mode: True, Standalone context: False
-2025-05-26 00:56:50,900 - INFO - editor_main_window.py:135 - __init__ - Initializing EditorMainWindow... Embedded: True
-2025-05-26 00:56:50,900 - DEBUG - editor_state.py:20 - __init__ - Initializing EditorState for PySide6...
-2025-05-26 00:56:50,900 - DEBUG - editor_state.py:69 - __init__ - EditorState initialized.
-2025-05-26 00:56:50,900 - DEBUG - editor_main_window.py:214 - init_ui - Initializing UI components...
-2025-05-26 00:56:50,901 - DEBUG - map_view_widget.py:215 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-26 00:56:50,901 - DEBUG - map_view_widget.py:197 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-26 00:56:50,901 - DEBUG - map_view_widget.py:212 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-26 00:56:50,908 - DEBUG - map_view_widget.py:111 - __init__ - MapViewWidget initialized.
-2025-05-26 00:56:50,915 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:56:50,916 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
-2025-05-26 00:56:50,916 - INFO - minimap_widget.py:51 - __init__ - MinimapWidget initialized. Update interval: 50ms.
-2025-05-26 00:56:50,916 - DEBUG - editor_main_window.py:282 - init_ui - UI components initialized.
-2025-05-26 00:56:50,916 - DEBUG - editor_main_window.py:584 - create_actions - Creating actions...
-2025-05-26 00:56:50,917 - DEBUG - editor_main_window.py:609 - create_actions - Actions created.
-2025-05-26 00:56:50,917 - DEBUG - editor_main_window.py:612 - create_menus - Creating menus...
-2025-05-26 00:56:50,918 - DEBUG - editor_main_window.py:638 - create_menus - Menus created.
-2025-05-26 00:56:50,918 - DEBUG - editor_main_window.py:641 - create_status_bar - Creating status bar...
-2025-05-26 00:56:50,918 - DEBUG - editor_main_window.py:648 - create_status_bar - Status bar created.
-2025-05-26 00:56:50,919 - INFO - editor_assets.py:334 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-26 00:56:50,930 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-26 00:56:50,930 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-26 00:56:50,931 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-26 00:56:50,931 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-26 00:56:50,931 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-26 00:56:50,931 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-26 00:56:50,931 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-26 00:56:50,931 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-26 00:56:50,931 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-26 00:56:50,931 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-26 00:56:50,931 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-26 00:56:50,931 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-26 00:56:50,938 - INFO - editor_assets.py:465 - load_editor_palette_assets - Palette asset loading complete. Success: 29, Failed/Fallback: 0.
-2025-05-26 00:56:50,940 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-26 00:56:50,940 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-26 00:56:50,941 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-26 00:56:50,942 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-26 00:56:50,944 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:56:50,944 - INFO - editor_main_window.py:364 - _init_controller_system - Initializing controller system...
-2025-05-26 00:56:50,944 - INFO - editor_main_window.py:370 - _init_controller_system - No joysticks detected.
-2025-05-26 00:56:50,945 - INFO - editor_main_window.py:192 - __init__ - Embedded mode: EditorMainWindow will not show itself. Parent is responsible.
-2025-05-26 00:56:50,952 - DEBUG - editor_main_window.py:878 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
-2025-05-26 00:56:50,952 - INFO - editor_main_window.py:202 - __init__ - EditorMainWindow initialized.
-2025-05-26 00:56:50,952 - INFO - editor_main_window.py:654 - show_status_message - Status: Editor started. Welcome!
-2025-05-26 00:56:50,952 - INFO - editor_main_window.py:930 - editor_main - EditorMainWindow instance created for embedding. Returning instance to caller.
-2025-05-26 00:56:50,986 - INFO - minimap_widget.py:303 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(100, 161). Scheduling content redraw.
-2025-05-26 00:56:50,986 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:56:50,986 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 49.2, 6.1, 1.8)
-2025-05-26 00:56:50,990 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 49.2, 43.4, 29.1)
-2025-05-26 00:56:53,508 - INFO - editor_file_operations.py:95 - load_map_action - Load Map action triggered.
-2025-05-26 00:56:57,280 - INFO - editor_file_operations.py:105 - load_map_action - Attempting to load map from: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/8/8.json
-2025-05-26 00:56:57,284 - INFO - editor_history.py:149 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-26 00:56:57,284 - WARNING - editor_map_utils.py:365 - load_map_from_json - LoadMapJSON: Final JSON path ('c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\8\8.json') differs from the path it was loaded from ('C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/8/8.json'). This is unusual after migration logic. Please check map file consistency.
-2025-05-26 00:56:57,284 - INFO - editor_map_utils.py:370 - load_map_from_json - Map '8' loaded from: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\8\8.json
-2025-05-26 00:56:57,284 - DEBUG - map_view_widget.py:215 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-26 00:56:57,284 - DEBUG - map_view_widget.py:197 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-26 00:56:57,285 - DEBUG - map_view_widget.py:212 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-26 00:56:57,302 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 49.2, 52.1, 34.9)
-2025-05-26 00:56:57,306 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-26 00:56:57,306 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-26 00:56:57,307 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-26 00:56:57,308 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-26 00:56:57,313 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-26 00:56:57,313 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-26 00:56:57,314 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-26 00:56:57,314 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-26 00:56:57,317 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:56:57,432 - INFO - editor_main_window.py:654 - show_status_message - Status: Map '8' loaded.
-2025-05-26 00:56:57,433 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 1
-2025-05-26 00:56:57,993 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 54.4, 52.1, 34.9)
-2025-05-26 00:56:58,057 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 70.0, 52.1, 34.9)
-2025-05-26 00:56:58,373 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 76.8, 52.1, 34.9)
-2025-05-26 00:56:59,447 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
-2025-05-26 00:56:59,457 - DEBUG - editor_selection_pane.py:304 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-26 00:57:00,166 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 76.8, 52.1, 34.9)
-2025-05-26 00:57:02,947 - DEBUG - editor_main_window.py:286 - _handle_select_map_object_from_pane - MainWin: Request to select object from pane (obj_data_ref ID: 3016627205696).
-2025-05-26 00:57:02,948 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
-2025-05-26 00:57:02,961 - INFO - editor_main_window.py:339 - _handle_select_map_object_from_pane - MainWin: Selected item 'Trigger Square' from pane. Data ID in Scene: 3016626556032
-2025-05-26 00:57:02,962 - DEBUG - editor_selection_pane.py:299 - _on_list_item_clicked - SelectionPane: Item area clicked (not buttons), requesting map selection of: Trigger Sq. -> 8.json
-2025-05-26 00:57:03,941 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 2
-2025-05-26 00:57:03,941 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016627340096
-2025-05-26 00:57:03,942 - DEBUG - editor_main_window.py:664 - handle_map_content_changed - Map content changed, unsaved_changes: False -> True.
-2025-05-26 00:57:03,942 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:03,942 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:03,942 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:04,089 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:04,089 - DEBUG - properties_editor_widget.py:562 - _on_property_value_changed - Property 'rotation' changed to '180'.
-2025-05-26 00:57:04,105 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 3
-2025-05-26 00:57:04,105 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016626908096
-2025-05-26 00:57:04,106 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:04,106 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:04,106 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:04,229 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:04,229 - DEBUG - properties_editor_widget.py:562 - _on_property_value_changed - Property 'rotation' changed to '90'.
-2025-05-26 00:57:11,883 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 4
-2025-05-26 00:57:11,883 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016627720960
-2025-05-26 00:57:11,884 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:11,884 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:11,884 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:12,016 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:12,016 - DEBUG - properties_editor_widget.py:562 - _on_property_value_changed - Property 'linked_map_name' changed to '8'.
-2025-05-26 00:57:13,635 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 5
-2025-05-26 00:57:13,635 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016627839552
-2025-05-26 00:57:13,635 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:13,635 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:13,635 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:13,753 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:13,753 - DEBUG - properties_editor_widget.py:562 - _on_property_value_changed - Property 'trigger_event_type' changed to 'player_enter'.
-2025-05-26 00:57:14,479 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (1.3, 76.8, 52.1, 34.9)
-2025-05-26 00:57:19,012 - DEBUG - properties_editor_widget.py:182 - display_asset_properties - PropertiesEditor: display_asset_properties called with trigger_square
-2025-05-26 00:57:19,016 - DEBUG - map_view_widget.py:806 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'trigger_square', flipped: False, rotation: 0, wall_idx: 0
-2025-05-26 00:57:19,016 - INFO - editor_main_window.py:654 - show_status_message - Status: Asset for placement: Trigger Square (Default Orientation)
-2025-05-26 00:57:19,020 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-26 00:57:19,020 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-26 00:57:19,023 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-26 00:57:19,023 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-26 00:57:20,182 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 6
-2025-05-26 00:57:20,200 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:20,201 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:20,201 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:20,323 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:20,323 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:22,489 - DEBUG - properties_editor_widget.py:182 - display_asset_properties - PropertiesEditor: display_asset_properties called with tool_select
-2025-05-26 00:57:22,490 - DEBUG - map_view_widget.py:875 - on_tool_selected - MapView: on_tool_selected tool_key: 'tool_select'
-2025-05-26 00:57:22,490 - DEBUG - map_view_widget.py:905 - on_tool_selected - MapView: current_tool_mode set to 'select'
-2025-05-26 00:57:22,490 - INFO - editor_main_window.py:654 - show_status_message - Status: Tool selected: Select Tool
-2025-05-26 00:57:22,495 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-26 00:57:22,495 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-26 00:57:22,498 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-26 00:57:22,498 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-26 00:57:23,089 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
-2025-05-26 00:57:23,119 - DEBUG - editor_selection_pane.py:304 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-26 00:57:23,483 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (2.0, 76.8, 52.1, 34.9)
-2025-05-26 00:57:23,510 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (2.7, 76.8, 52.1, 34.9)
-2025-05-26 00:57:23,544 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (3.4, 76.8, 52.1, 34.9)
-2025-05-26 00:57:23,576 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (4.0, 76.8, 52.1, 34.9)
-2025-05-26 00:57:23,681 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 7
-2025-05-26 00:57:23,682 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016627729792
-2025-05-26 00:57:23,682 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:23,682 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:23,682 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:23,809 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:27,656 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 8
-2025-05-26 00:57:27,656 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016557458816
-2025-05-26 00:57:27,657 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:27,657 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:27,657 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:27,777 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:27,777 - DEBUG - properties_editor_widget.py:562 - _on_property_value_changed - Property 'trigger_event_type' changed to 'player_use'.
-2025-05-26 00:57:28,114 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
-2025-05-26 00:57:28,157 - DEBUG - editor_selection_pane.py:304 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-26 00:57:28,804 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 9
-2025-05-26 00:57:28,804 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016627845248
-2025-05-26 00:57:28,804 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:28,804 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:28,804 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:28,932 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:28,932 - DEBUG - properties_editor_widget.py:562 - _on_property_value_changed - Property 'rotation' changed to '0'.
-2025-05-26 00:57:32,063 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
-2025-05-26 00:57:32,097 - DEBUG - editor_selection_pane.py:304 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-26 00:57:32,575 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 10
-2025-05-26 00:57:32,576 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016628331008
-2025-05-26 00:57:32,576 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:32,576 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:32,576 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:32,722 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:32,744 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 11
-2025-05-26 00:57:32,745 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016626818432
-2025-05-26 00:57:32,745 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:32,745 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:32,745 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:32,884 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:45,195 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 12
-2025-05-26 00:57:45,195 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016628995712
-2025-05-26 00:57:45,196 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:45,196 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:45,196 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:45,332 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:45,332 - DEBUG - properties_editor_widget.py:562 - _on_property_value_changed - Property 'linked_map_name' changed to 'three'.
-2025-05-26 00:57:45,333 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
-2025-05-26 00:57:45,344 - DEBUG - editor_selection_pane.py:304 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-26 00:57:49,010 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (4.7, 76.8, 52.1, 34.9)
-2025-05-26 00:57:49,545 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 13
-2025-05-26 00:57:49,545 - WARNING - map_view_widget.py:314 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3016628831872
-2025-05-26 00:57:49,545 - DEBUG - editor_main_window.py:669 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-26 00:57:49,545 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-26 00:57:49,545 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:49,664 - DEBUG - editor_main_window.py:672 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-26 00:57:49,664 - DEBUG - properties_editor_widget.py:562 - _on_property_value_changed - Property 'linked_map_name' changed to 'three'.
-2025-05-26 00:57:49,665 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'NoneType'>
-2025-05-26 00:57:49,667 - DEBUG - editor_selection_pane.py:304 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-26 00:57:51,042 - INFO - editor_file_operations.py:124 - save_map_action - Save Map (Unified JSON & PY) action triggered.
-2025-05-26 00:57:51,043 - DEBUG - editor_file_operations.py:29 - _internal_save_map_json - Internal Save Map (JSON) called.
-2025-05-26 00:57:51,056 - INFO - editor_map_utils.py:298 - save_map_to_json - Map editor data saved to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\8\8.json
-2025-05-26 00:57:51,056 - INFO - editor_file_operations.py:31 - _internal_save_map_json - Editor data saved: 8.json.
-2025-05-26 00:57:51,056 - DEBUG - editor_file_operations.py:38 - _internal_export_map_py - Internal Export Map (PY) called.
-2025-05-26 00:57:51,056 - INFO - editor_map_utils.py:473 - export_map_to_game_python_script - Exporting map data. Map name: '8'
-2025-05-26 00:57:51,061 - INFO - editor_map_utils.py:662 - export_map_to_game_python_script - Map data exported to game script: 8.py
-2025-05-26 00:57:51,061 - INFO - editor_file_operations.py:43 - _internal_export_map_py - Map exported for game: 8.py.
-2025-05-26 00:57:51,061 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
-2025-05-26 00:57:51,185 - INFO - editor_main_window.py:654 - show_status_message - Status: Map '8' saved (JSON & PY).
-2025-05-26 00:57:52,087 - DEBUG - editor_main_window.py:870 - save_geometry_and_state - Window geometry and dock state explicitly saved.
-2025-05-26 00:57:55,255 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
-2025-05-26 00:57:55,255 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
-2025-05-26 00:57:55,255 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
-2025-05-26 00:57:55,255 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
-2025-05-26 00:57:55,255 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
-2025-05-26 00:57:55,255 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 2031
-2025-05-26 00:57:55,256 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
-2025-05-26 00:57:55,257 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
-2025-05-26 00:57:55,257 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
-2025-05-26 00:57:55,257 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
-2025-05-26 00:57:55,257 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
-2025-05-26 00:57:55,257 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 1952
-2025-05-26 00:57:55,362 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
-2025-05-26 00:57:55,362 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
-2025-05-26 00:57:55,362 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
-2025-05-26 00:57:55,363 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
-2025-05-26 00:57:55,363 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
-2025-05-26 00:57:55,363 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 2031
-2025-05-26 00:57:55,364 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
-2025-05-26 00:57:55,364 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
-2025-05-26 00:57:55,364 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
-2025-05-26 00:57:55,364 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
-2025-05-26 00:57:55,364 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
-2025-05-26 00:57:55,364 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 1952
-2025-05-26 00:57:55,468 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
-2025-05-26 00:57:55,468 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
-2025-05-26 00:57:55,468 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
-2025-05-26 00:57:55,468 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
-2025-05-26 00:57:55,468 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
-2025-05-26 00:57:55,468 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 2031
-2025-05-26 00:57:55,469 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
-2025-05-26 00:57:55,469 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
-2025-05-26 00:57:55,469 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
-2025-05-26 00:57:55,470 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
-2025-05-26 00:57:55,470 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
-2025-05-26 00:57:55,470 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 1952
-2025-05-26 00:57:55,576 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
-2025-05-26 00:57:55,576 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
-2025-05-26 00:57:55,576 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
-2025-05-26 00:57:55,576 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
-2025-05-26 00:57:55,576 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
-2025-05-26 00:57:55,576 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 2031
-2025-05-26 00:57:55,577 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
-2025-05-26 00:57:55,578 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
-2025-05-26 00:57:55,578 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
-2025-05-26 00:57:55,578 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
-2025-05-26 00:57:55,578 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
-2025-05-26 00:57:55,578 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 1952
-2025-05-26 00:58:17,687 - DEBUG - editor_main_window.py:870 - save_geometry_and_state - Window geometry and dock state explicitly saved.
+2025-05-26 01:17:40,672 - INFO - editor_main_window.py:115 - <module> - Editor session started. Logging initialized. Imports via: Relative
+2025-05-26 01:17:40,674 - INFO - editor_main_window.py:902 - editor_main - editor_main() called. Embed mode: True, Standalone context: False
+2025-05-26 01:17:40,674 - INFO - editor_main_window.py:135 - __init__ - Initializing EditorMainWindow... Embedded: True
+2025-05-26 01:17:40,674 - DEBUG - editor_state.py:20 - __init__ - Initializing EditorState for PySide6...
+2025-05-26 01:17:40,674 - DEBUG - editor_state.py:69 - __init__ - EditorState initialized.
+2025-05-26 01:17:40,676 - DEBUG - editor_main_window.py:214 - init_ui - Initializing UI components...
+2025-05-26 01:17:40,683 - DEBUG - map_view_widget.py:215 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-26 01:17:40,683 - DEBUG - map_view_widget.py:197 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-26 01:17:40,684 - DEBUG - map_view_widget.py:212 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-26 01:17:40,711 - DEBUG - map_view_widget.py:111 - __init__ - MapViewWidget initialized.
+2025-05-26 01:17:40,754 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-26 01:17:40,755 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
+2025-05-26 01:17:40,755 - INFO - minimap_widget.py:51 - __init__ - MinimapWidget initialized. Update interval: 50ms.
+2025-05-26 01:17:40,757 - DEBUG - editor_main_window.py:282 - init_ui - UI components initialized.
+2025-05-26 01:17:40,757 - DEBUG - editor_main_window.py:584 - create_actions - Creating actions...
+2025-05-26 01:17:40,759 - DEBUG - editor_main_window.py:609 - create_actions - Actions created.
+2025-05-26 01:17:40,759 - DEBUG - editor_main_window.py:612 - create_menus - Creating menus...
+2025-05-26 01:17:40,763 - DEBUG - editor_main_window.py:638 - create_menus - Menus created.
+2025-05-26 01:17:40,763 - DEBUG - editor_main_window.py:641 - create_status_bar - Creating status bar...
+2025-05-26 01:17:40,764 - DEBUG - editor_main_window.py:648 - create_status_bar - Status bar created.
+2025-05-26 01:17:40,764 - INFO - editor_assets.py:334 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-26 01:17:40,789 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-26 01:17:40,789 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-26 01:17:40,789 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-26 01:17:40,789 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-26 01:17:40,789 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-26 01:17:40,789 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-26 01:17:40,790 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-26 01:17:40,790 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-26 01:17:40,790 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-26 01:17:40,790 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-26 01:17:40,790 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-26 01:17:40,790 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-26 01:17:40,805 - INFO - editor_assets.py:465 - load_editor_palette_assets - Palette asset loading complete. Success: 29, Failed/Fallback: 0.
+2025-05-26 01:17:40,811 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-26 01:17:40,811 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-26 01:17:40,813 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-26 01:17:40,813 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-26 01:17:40,816 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
+2025-05-26 01:17:40,817 - INFO - editor_main_window.py:364 - _init_controller_system - Initializing controller system...
+2025-05-26 01:17:40,817 - INFO - editor_main_window.py:370 - _init_controller_system - No joysticks detected.
+2025-05-26 01:17:40,817 - INFO - editor_main_window.py:192 - __init__ - Embedded mode: EditorMainWindow will not show itself. Parent is responsible.
+2025-05-26 01:17:40,825 - DEBUG - editor_main_window.py:878 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
+2025-05-26 01:17:40,826 - INFO - editor_main_window.py:202 - __init__ - EditorMainWindow initialized.
+2025-05-26 01:17:40,826 - INFO - editor_main_window.py:654 - show_status_message - Status: Editor started. Welcome!
+2025-05-26 01:17:40,826 - INFO - editor_main_window.py:930 - editor_main - EditorMainWindow instance created for embedding. Returning instance to caller.
+2025-05-26 01:17:40,851 - INFO - minimap_widget.py:303 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(100, 161). Scheduling content redraw.
+2025-05-26 01:17:40,852 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-26 01:17:40,852 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 49.2, 6.1, 1.8)
+2025-05-26 01:17:40,860 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 49.2, 43.4, 29.1)
+2025-05-26 01:17:42,835 - INFO - editor_file_operations.py:95 - load_map_action - Load Map action triggered.
+2025-05-26 01:17:57,830 - INFO - editor_file_operations.py:105 - load_map_action - Attempting to load map from: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/8/8.json
+2025-05-26 01:17:57,834 - INFO - editor_history.py:149 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-26 01:17:57,834 - WARNING - editor_map_utils.py:365 - load_map_from_json - LoadMapJSON: Final JSON path ('c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\8\8.json') differs from the path it was loaded from ('C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/8/8.json'). This is unusual after migration logic. Please check map file consistency.
+2025-05-26 01:17:57,835 - INFO - editor_map_utils.py:370 - load_map_from_json - Map '8' loaded from: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\8\8.json
+2025-05-26 01:17:57,835 - DEBUG - map_view_widget.py:215 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-26 01:17:57,835 - DEBUG - map_view_widget.py:197 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-26 01:17:57,836 - DEBUG - map_view_widget.py:212 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-26 01:17:57,872 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 49.2, 52.1, 34.9)
+2025-05-26 01:17:57,881 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-26 01:17:57,881 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-26 01:17:57,882 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-26 01:17:57,883 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-26 01:17:57,889 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-26 01:17:57,889 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-26 01:17:57,891 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-26 01:17:57,891 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-26 01:17:57,895 - DEBUG - editor_selection_pane.py:199 - populate_items - SelectionPane: Populating items.
+2025-05-26 01:17:58,151 - INFO - editor_main_window.py:654 - show_status_message - Status: Map '8' loaded.
+2025-05-26 01:17:58,152 - DEBUG - editor_history.py:170 - push_undo_state - Pushed state to undo stack. Size: 1
+2025-05-26 01:17:59,061 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 64.8, 52.1, 34.9)
+2025-05-26 01:17:59,125 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 76.8, 52.1, 34.9)
+2025-05-26 01:18:00,213 - DEBUG - editor_main_window.py:286 - _handle_select_map_object_from_pane - MainWin: Request to select object from pane (obj_data_ref ID: 1956837533440).
+2025-05-26 01:18:00,213 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
+2025-05-26 01:18:00,220 - INFO - editor_main_window.py:339 - _handle_select_map_object_from_pane - MainWin: Selected item 'Player 2 Spawn' from pane. Data ID in Scene: 1956837904832
+2025-05-26 01:18:00,220 - DEBUG - editor_selection_pane.py:299 - _on_list_item_clicked - SelectionPane: Item area clicked (not buttons), requesting map selection of: Player 2 Spawn
+2025-05-26 01:18:00,934 - DEBUG - editor_main_window.py:286 - _handle_select_map_object_from_pane - MainWin: Request to select object from pane (obj_data_ref ID: 1956787046400).
+2025-05-26 01:18:00,934 - DEBUG - properties_editor_widget.py:91 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
+2025-05-26 01:18:00,936 - INFO - editor_main_window.py:339 - _handle_select_map_object_from_pane - MainWin: Selected item 'Player 3 Spawn' from pane. Data ID in Scene: 1956837904960
+2025-05-26 01:18:00,936 - DEBUG - editor_selection_pane.py:299 - _on_list_item_clicked - SelectionPane: Item area clicked (not buttons), requesting map selection of: Player 3 Spawn
+2025-05-26 01:18:01,371 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 76.8, 52.1, 34.9)
+2025-05-26 01:18:06,730 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 76.2, 52.1, 34.9)
+2025-05-26 01:18:06,761 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 75.5, 52.1, 34.9)
+2025-05-26 01:18:06,792 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 74.8, 52.1, 34.9)
+2025-05-26 01:18:11,713 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 74.2, 52.1, 34.9)
+2025-05-26 01:18:11,744 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 73.5, 52.1, 34.9)
+2025-05-26 01:18:11,774 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 72.8, 52.1, 34.9)
+2025-05-26 01:18:11,808 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 72.1, 52.1, 34.9)
+2025-05-26 01:18:11,838 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 71.4, 52.1, 34.9)
+2025-05-26 01:18:11,872 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 70.8, 52.1, 34.9)
+2025-05-26 01:18:11,904 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 70.1, 52.1, 34.9)
+2025-05-26 01:18:11,934 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 69.4, 52.1, 34.9)
+2025-05-26 01:18:11,968 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 68.8, 52.1, 34.9)
+2025-05-26 01:18:11,996 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 68.1, 52.1, 34.9)
+2025-05-26 01:18:12,032 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 67.4, 52.1, 34.9)
+2025-05-26 01:18:12,058 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 66.7, 52.1, 34.9)
+2025-05-26 01:18:12,096 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 66.0, 52.1, 34.9)
+2025-05-26 01:18:12,120 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 65.4, 52.1, 34.9)
+2025-05-26 01:18:12,159 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 64.7, 52.1, 34.9)
+2025-05-26 01:18:12,180 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 64.0, 52.1, 34.9)
+2025-05-26 01:18:12,212 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 63.3, 52.1, 34.9)
+2025-05-26 01:18:12,980 - DEBUG - editor_main_window.py:870 - save_geometry_and_state - Window geometry and dock state explicitly saved.
+2025-05-26 01:18:16,804 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
+2025-05-26 01:18:16,804 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
+2025-05-26 01:18:16,804 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
+2025-05-26 01:18:16,804 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
+2025-05-26 01:18:16,804 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
+2025-05-26 01:18:16,804 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 2031
+2025-05-26 01:18:16,806 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
+2025-05-26 01:18:16,806 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
+2025-05-26 01:18:16,806 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
+2025-05-26 01:18:16,806 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
+2025-05-26 01:18:16,806 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
+2025-05-26 01:18:16,806 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 1952
+2025-05-26 01:18:16,918 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
+2025-05-26 01:18:16,918 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
+2025-05-26 01:18:16,918 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
+2025-05-26 01:18:16,918 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
+2025-05-26 01:18:16,918 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
+2025-05-26 01:18:16,918 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 2031
+2025-05-26 01:18:16,919 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
+2025-05-26 01:18:16,919 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
+2025-05-26 01:18:16,919 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
+2025-05-26 01:18:16,919 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
+2025-05-26 01:18:16,919 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
+2025-05-26 01:18:16,919 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 1952
+2025-05-26 01:18:17,025 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
+2025-05-26 01:18:17,025 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
+2025-05-26 01:18:17,025 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
+2025-05-26 01:18:17,025 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
+2025-05-26 01:18:17,025 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
+2025-05-26 01:18:17,025 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 2031
+2025-05-26 01:18:17,027 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
+2025-05-26 01:18:17,027 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
+2025-05-26 01:18:17,027 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
+2025-05-26 01:18:17,027 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
+2025-05-26 01:18:17,027 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
+2025-05-26 01:18:17,027 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 1952
+2025-05-26 01:18:17,134 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
+2025-05-26 01:18:17,134 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
+2025-05-26 01:18:17,134 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
+2025-05-26 01:18:17,134 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
+2025-05-26 01:18:17,134 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
+2025-05-26 01:18:17,134 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 2031
+2025-05-26 01:18:17,135 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IHDR' 16 13
+2025-05-26 01:18:17,135 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'sRGB' 41 1
+2025-05-26 01:18:17,135 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'gAMA' 54 4
+2025-05-26 01:18:17,135 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'pHYs' 70 9
+2025-05-26 01:18:17,135 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'iTXt' 91 391
+2025-05-26 01:18:17,135 - DEBUG - PngImagePlugin.py:190 - call - STREAM b'IDAT' 494 1952
+2025-05-26 01:18:58,414 - DEBUG - editor_main_window.py:870 - save_geometry_and_state - Window geometry and dock state explicitly saved.
