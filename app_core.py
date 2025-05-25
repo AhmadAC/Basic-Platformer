@@ -1,13 +1,12 @@
-#################### START OF FILE: app_core.py ####################
-
 # app_core.py
 # -*- coding: utf-8 -*-
 """
 Main application core for the PySide6 platformer game.
 Handles window creation, UI views, game loop, input management,
 and game mode orchestration.
+Map loading now uses map_name_folder/map_name_file.py structure.
 """
-# version 2.1.1 (Added Couch Co-op player selection dialog logic)
+# version 2.1.2 (Map name handling updated for folder structure)
 
 import sys
 import os
@@ -37,9 +36,9 @@ try:
     from logger import info, debug, warning, critical, error, LOGGING_ENABLED, LOG_FILE_PATH
     from utils import PrintLimiter
     import constants as C
-    from game_ui import GameSceneWidget, IPInputDialog # GameSceneWidget is crucial
+    from game_ui import GameSceneWidget, IPInputDialog 
     import config as game_config
-    from player import Player # For type hinting and potentially direct use
+    from player import Player 
 
     from app_ui_creator import (
         _create_main_menu_widget, _create_map_select_widget,
@@ -51,13 +50,12 @@ try:
         _poll_pygame_joysticks_for_ui_navigation,
         _navigate_current_menu_pygame_joy, _activate_current_menu_selected_button_pygame_joy,
         _update_current_menu_button_focus, _reset_all_prev_press_flags, _activate_ip_dialog_button,
-        # NEW IMPORT for Couch Co-op Player Select Dialog
         _create_couch_coop_player_select_dialog,
-        _navigate_couch_coop_player_select_dialog, # This will be used in app_ui_creator.py
-        _activate_couch_coop_player_select_dialog_button, # This will be used in app_ui_creator.py
-        _update_couch_coop_player_select_dialog_focus # This will be used in app_ui_creator.py
+        _navigate_couch_coop_player_select_dialog, 
+        _activate_couch_coop_player_select_dialog_button, 
+        _update_couch_coop_player_select_dialog_focus 
     )
-    import app_game_modes # Handles game mode logic
+    import app_game_modes 
 
     from app_input_manager import (
         get_input_snapshot, update_qt_key_press, update_qt_key_release,
@@ -165,6 +163,8 @@ class NetworkThread(QThread):
             main_window_instance = MainWindow._instance 
             if self.mode == "host" and self.server_state and main_window_instance:
                 debug("NetworkThread running host mode.")
+                # Ensure current_map_name (folder/stem) is set in server_state before run_server_mode
+                # This is usually done when server_state is created or before this thread starts.
                 run_server_mode(self.server_state, self.game_elements, 
                                 self._ui_status_update_callback,
                                 self._get_p1_input_snapshot_main_thread_passthrough,
@@ -209,11 +209,10 @@ class MainWindow(QMainWindow):
     _lan_search_list_selected_idx: int
     _ip_dialog_selected_button_idx: int
     
-    # NEW: For Couch Co-op Player Select Dialog
     _couch_coop_player_select_dialog: Optional[QDialog] = None
     _couch_coop_player_select_dialog_buttons_ref: List[QPushButton] = []
-    _couch_coop_player_select_dialog_selected_idx: int = 1 # Default to "2 Players" (index 1 for 0-indexed list of buttons)
-    selected_couch_coop_players: int = 2 # Default number of players for couch co-op
+    _couch_coop_player_select_dialog_selected_idx: int = 1 
+    selected_couch_coop_players: int = 2 
 
     _last_pygame_joy_nav_time: float
     _pygame_joy_axis_was_active_neg: Dict[str, bool]; _pygame_joy_axis_was_active_pos: Dict[str, bool]
@@ -226,7 +225,7 @@ class MainWindow(QMainWindow):
     lan_servers_list_widget: Optional[QListWidget];
     ip_input_dialog: Optional[IPInputDialog] 
     ip_input_dialog_class_ref: Optional[type] = IPInputDialog 
-    current_modal_dialog: Optional[str] = None # "lan_search", "ip_input", "status", "couch_coop_player_select"
+    current_modal_dialog: Optional[str] = None 
 
     editor_content_container: QWidget; settings_content_container: QWidget
     editor_view_page: QWidget; settings_view_page: QWidget
@@ -264,10 +263,9 @@ class MainWindow(QMainWindow):
         self._ui_nav_focus_controller_index = -1
         self._map_selection_selected_button_idx = 0
         self._lan_search_list_selected_idx = -1; self._ip_dialog_selected_button_idx = 0
-        # Couch co-op dialog specific inits
         self._couch_coop_player_select_dialog = None
         self._couch_coop_player_select_dialog_buttons_ref = []
-        self._couch_coop_player_select_dialog_selected_idx = 1 # Default to "2 Players" (0-indexed buttons list)
+        self._couch_coop_player_select_dialog_selected_idx = 1 
         self.selected_couch_coop_players = 2
         
         self._last_pygame_joy_nav_time = 0.0
@@ -408,6 +406,7 @@ class MainWindow(QMainWindow):
 
 
     # --- Game Mode Launchers (delegated to app_game_modes) ---
+    # map_name here is the folder/stem name
     def _on_map_selected_for_couch_coop(self, map_name: str): app_game_modes.start_couch_play_logic(self, map_name)
     def _on_map_selected_for_host_game(self, map_name: str): app_game_modes.start_host_game_logic(self, map_name)
     
@@ -421,10 +420,9 @@ class MainWindow(QMainWindow):
                 setattr(self, 'current_modal_dialog', None)
             ))
         
-        # Update button enable states based on current controller count
         num_controllers = len(self._pygame_joysticks)
         for i, btn in enumerate(self._couch_coop_player_select_dialog_buttons_ref):
-            players_option = i + 1 # Button text implies 1-Player, 2-Player, etc.
+            players_option = i + 1 
             if players_option <= 2:
                 btn.setEnabled(True)
             elif players_option == 3:
@@ -433,7 +431,7 @@ class MainWindow(QMainWindow):
                 btn.setEnabled(num_controllers >= 2)
         
         self.current_modal_dialog = "couch_coop_player_select"
-        self._couch_coop_player_select_dialog_selected_idx = 1 # Default highlight "2 Players" (0-indexed for list of buttons)
+        self._couch_coop_player_select_dialog_selected_idx = 1 
         _update_couch_coop_player_select_dialog_focus(self)
         self._couch_coop_player_select_dialog.show()
 
@@ -441,12 +439,11 @@ class MainWindow(QMainWindow):
         if self._couch_coop_player_select_dialog and hasattr(self._couch_coop_player_select_dialog, 'selected_players'):
             self.selected_couch_coop_players = self._couch_coop_player_select_dialog.selected_players # type: ignore
             info(f"Couch Co-op: {self.selected_couch_coop_players} players selected.")
-            self.current_modal_dialog = None # Clear modal dialog context
-            # Now that players are selected, proceed to map selection for couch co-op
+            self.current_modal_dialog = None 
             app_game_modes.initiate_couch_play_map_selection(self)
         else:
             error("Couch Co-op player selection dialog did not return selected_players.")
-            self.show_view("menu") # Fallback to main menu
+            self.show_view("menu") 
 
     def on_start_host_game(self): app_game_modes.initiate_host_game_map_selection(self)
     def on_start_join_lan(self): app_game_modes.initiate_join_lan_dialog(self)
@@ -524,7 +521,7 @@ class MainWindow(QMainWindow):
         self.current_view_name = view_name
         target_page: Optional[QWidget] = None
         window_title_suffix = ""
-        if self.current_modal_dialog != "couch_coop_player_select": # Don't clear if player select is active
+        if self.current_modal_dialog != "couch_coop_player_select": 
             self.current_modal_dialog = None 
 
         if view_name in ["menu", "map_select"]:
@@ -636,10 +633,10 @@ class MainWindow(QMainWindow):
             elif key_pressed == Qt.Key.Key_Down or key_pressed == Qt.Key.Key_S: nav_dir_couch = 1
             
             if nav_dir_couch != 0:
-                _navigate_couch_coop_player_select_dialog(self, nav_dir_couch, "keyboard") # Calls dialog specific nav
+                _navigate_couch_coop_player_select_dialog(self, nav_dir_couch, "keyboard") 
                 navigated_by_keyboard_this_event = True
             elif key_pressed in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]:
-                _activate_couch_coop_player_select_dialog_button(self, "keyboard") # Calls dialog specific activate
+                _activate_couch_coop_player_select_dialog_button(self, "keyboard") 
                 navigated_by_keyboard_this_event = True
 
 
@@ -649,7 +646,7 @@ class MainWindow(QMainWindow):
             if active_ui_element in ["menu", "map_select"]:
                  _update_current_menu_button_focus(self) 
             elif active_ui_element == "couch_coop_player_select":
-                 _update_couch_coop_player_select_dialog_focus(self) # Specific focus update for this dialog
+                 _update_couch_coop_player_select_dialog_focus(self) 
             event.accept(); return
 
         if event.key() == Qt.Key.Key_Escape and not event.isAutoRepeat():
@@ -659,7 +656,7 @@ class MainWindow(QMainWindow):
                 self.lan_search_dialog.reject(); self.current_modal_dialog = None; self.show_view("menu")
             elif active_ui_element == "ip_input" and self.ip_input_dialog:
                 self.ip_input_dialog.reject(); self.current_modal_dialog = None; self.show_view("menu")
-            elif active_ui_element == "couch_coop_player_select" and self._couch_coop_player_select_dialog: # NEW
+            elif active_ui_element == "couch_coop_player_select" and self._couch_coop_player_select_dialog: 
                 self._couch_coop_player_select_dialog.reject(); self.current_modal_dialog = None; self.show_view("menu")
             elif self.current_view_name == "game_scene" and self.current_game_mode:
                 self.stop_current_game_mode(show_menu=True)
@@ -744,13 +741,14 @@ class MainWindow(QMainWindow):
                         info("AppCore (host_waiting): Player 1 initiated game reset.")
                         screen_w = self.game_scene_widget.width() if self.game_scene_widget.width() > 1 else self.width()
                         screen_h = self.game_scene_widget.height() if self.game_scene_widget.height() > 1 else self.height()
+                        # map_name_to_reload is now the folder/stem name
                         map_name_to_reload = self.game_elements.get("map_name", self.game_elements.get("loaded_map_name"))
                         if map_name_to_reload:
                             reset_ok = initialize_game_elements(
                                 current_width=screen_w, current_height=screen_h,
                                 game_elements_ref=self.game_elements, 
                                 for_game_mode=self.current_game_mode, 
-                                map_module_name=map_name_to_reload
+                                map_module_name=map_name_to_reload # Pass folder/stem name
                             )
                             if reset_ok:
                                 info("AppCore (host_waiting): Game reset successful.")
@@ -942,6 +940,4 @@ if __name__ == "__main__":
             print(f"FATAL: Could not display Qt error dialog: {e_msgbox}")
             traceback.print_exc() 
         
-        sys.exit(1) 
-
-#################### END OF FILE: app_core.py ####################
+        sys.exit(1)

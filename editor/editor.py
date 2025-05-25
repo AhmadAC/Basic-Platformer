@@ -1,7 +1,9 @@
+#################### START OF FILE: editor.py ####################
+
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.1 (PEP8 Cleanup & Indentation Review)
+## version 2.2.2 (Initialize crop_rect for uploaded images)
 Level Editor for the Platformer Game (PySide6 Version).
 - Map files (.py, .json) now organized into named subfolders within /maps/.
 - Supports uploading images to the editor for use as map objects.
@@ -10,6 +12,7 @@ Level Editor for the Platformer Game (PySide6 Version).
 - "Save Map" (Ctrl+S) now saves both editor (.json) and game-ready (.py) files.
 - Uses custom QGraphicsItem classes for images and triggers.
 - Removed trailing semicolons and reviewed indentation.
+- Added crop_rect initialization for newly uploaded custom images.
 """
 import sys
 import os
@@ -57,11 +60,9 @@ try:
     from . import editor_assets
     from . import editor_map_utils
     from . import editor_history
-    from .map_view_widget import MapViewWidget # MapObjectItem base/standard is in map_view_widget now
+    from .map_view_widget import MapViewWidget
     from .editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
-    from .editor_actions import * # Import all action constants
-    # Custom items are used by MapViewWidget, not directly here for instantiation
-    # from .editor_custom_items import CustomImageMapItem, TriggerSquareMapItem
+    from .editor_actions import *
 
     if ED_CONFIG.MINIMAP_ENABLED: # type: ignore
         from .minimap_widget import MinimapWidget
@@ -262,7 +263,7 @@ class EditorMainWindow(QMainWindow):
         self.map_view_widget.context_menu_requested_for_item.connect(self.show_map_item_context_menu)
 
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
-        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed)
+        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed) # Ensure general content change signal
         self.properties_editor_widget.controller_focus_requested_elsewhere.connect(self._cycle_panel_focus_next)
         self.properties_editor_widget.upload_image_for_trigger_requested.connect(self.handle_upload_image_for_trigger)
 
@@ -346,17 +347,18 @@ class EditorMainWindow(QMainWindow):
                 if current_time - last_event_time_for_key_dir > self._controller_axis_repeat_delay:
                     can_emit = True
                 elif current_time - last_event_time_for_key_dir > self._controller_axis_repeat_interval:
-                    can_emit = True
+                    can_emit = True # Allow repeat after initial delay + interval
                 if can_emit:
                     self.controller_action_dispatched.emit(action_to_emit, axis_val)
                     self._controller_axis_last_event_time[key] = current_time
-            else:
+            else: # Reset timers if axis is centered
                 key_neg = (joy.get_id(), axis_id, -1)
                 key_pos = (joy.get_id(), axis_id, 1)
                 if key_neg in self._controller_axis_last_event_time:
-                    self._controller_axis_last_event_time[key_neg] = 0
+                    self._controller_axis_last_event_time[key_neg] = 0 # Reset to allow immediate response next time
                 if key_pos in self._controller_axis_last_event_time:
                     self._controller_axis_last_event_time[key_pos] = 0
+
 
     @Slot(str, object)
     def _dispatch_controller_action_to_panel(self, action: str, value: Any):
@@ -542,19 +544,15 @@ class EditorMainWindow(QMainWindow):
         map_is_named = bool(self.editor_state.map_name_for_function and self.editor_state.map_name_for_function != "untitled_map")
         map_has_file = bool(self.editor_state.current_json_filename)
         
-        # Corrected: Ensure map_is_properly_loaded_or_newly_named is always boolean
-        # Save is enabled if map has a file OR if it's named and has objects.
         can_save_due_to_named_with_objects = map_is_named and bool(self.editor_state.placed_objects)
         map_is_properly_loaded_or_newly_named = map_has_file or can_save_due_to_named_with_objects
         
         self.save_map_action.setEnabled(map_is_properly_loaded_or_newly_named)
-        self.rename_map_action.setEnabled(map_has_file) # map_has_file is already boolean
-        self.delete_map_folder_action.setEnabled(map_has_file) # map_has_file is already boolean
-        self.undo_action.setEnabled(len(self.editor_state.undo_stack) > 0) # len() > 0 is boolean
-        self.redo_action.setEnabled(len(self.editor_state.redo_stack) > 0) # len() > 0 is boolean
+        self.rename_map_action.setEnabled(map_has_file)
+        self.delete_map_folder_action.setEnabled(map_has_file)
+        self.undo_action.setEnabled(len(self.editor_state.undo_stack) > 0)
+        self.redo_action.setEnabled(len(self.editor_state.redo_stack) > 0)
         
-        # Corrected: Ensure map_active_for_view_edit is always boolean
-        # Active for view/edit if map is named OR has objects.
         map_active_for_view_edit = map_is_named or bool(self.editor_state.placed_objects)
         
         self.change_bg_color_action.setEnabled(map_active_for_view_edit)
@@ -563,12 +561,10 @@ class EditorMainWindow(QMainWindow):
         self.zoom_out_action.setEnabled(map_active_for_view_edit)
         self.zoom_reset_action.setEnabled(map_active_for_view_edit)
         
-        # Corrected: Ensure the argument for setEnabled is fully boolean
-        # Can export if active for view/edit AND (has objects OR has a file).
         can_export_image = map_active_for_view_edit and (bool(self.editor_state.placed_objects) or map_has_file)
         self.export_map_as_image_action.setEnabled(can_export_image)
         
-        self.upload_image_action.setEnabled(map_is_named) # map_is_named is already boolean
+        self.upload_image_action.setEnabled(map_is_named)
 
 
     def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool:
@@ -717,14 +713,14 @@ class EditorMainWindow(QMainWindow):
             self.update_edit_actions_enabled_state()
             self.show_status_message(f"Map '{self.editor_state.map_name_for_function}' saved (JSON & PY).")
             return True
-        elif json_saved_ok: # but PY failed
+        elif json_saved_ok:
             self.editor_state.unsaved_changes = True
             self.show_status_message(f"Map '{self.editor_state.map_name_for_function}' JSON saved, but PY export FAILED. Try saving again.", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2) # type: ignore
             if not self._is_embedded:
                 self.update_window_title()
             self.update_edit_actions_enabled_state()
             return False
-        else: # JSON save failed
+        else:
             self.show_status_message("Save Map FAILED. Check logs.")
             return False
 
@@ -762,7 +758,7 @@ class EditorMainWindow(QMainWindow):
                 self.editor_state.map_name_for_function = clean_new_name
                 editor_map_utils.init_new_map_state(self.editor_state, clean_new_name, self.editor_state.map_width_tiles, self.editor_state.map_height_tiles, preserve_objects=True) # type: ignore
                 
-                if not self.save_map(): # save_map now does both JSON and PY
+                if not self.save_map():
                      QMessageBox.warning(self, "Rename Warning", "Folder renamed, but failed to save files with new name. Please try saving manually.")
                 else:
                     self.show_status_message(f"Map renamed to '{clean_new_name}' and files updated.")
@@ -770,7 +766,7 @@ class EditorMainWindow(QMainWindow):
                 if not self._is_embedded:
                     self.update_window_title()
                 self.update_edit_actions_enabled_state()
-                self.asset_palette_widget.populate_assets() # Refresh custom assets
+                self.asset_palette_widget.populate_assets()
             except Exception as e_rename_map:
                 if logger: logger.error(f"Error during map rename process: {e_rename_map}", exc_info=True)
                 QMessageBox.critical(self, "Rename Error", f"An unexpected error occurred during map rename: {e_rename_map}")
@@ -822,7 +818,7 @@ class EditorMainWindow(QMainWindow):
             image_filename = os.path.basename(file_path)
             destination_image_path = os.path.join(custom_asset_folder, image_filename)
             try:
-                if os.path.normpath(file_path) != os.path.normpath(destination_image_path): # Only copy if not already in destination
+                if os.path.normpath(file_path) != os.path.normpath(destination_image_path):
                     if os.path.exists(destination_image_path):
                         reply = QMessageBox.question(self, "File Exists",
                                                      f"Image '{image_filename}' already exists in this map's Custom assets. Overwrite?",
@@ -841,16 +837,21 @@ class EditorMainWindow(QMainWindow):
                 view_rect = self.map_view_widget.viewport().rect()
                 center_scene_pos = self.map_view_widget.mapToScene(view_rect.center())
                 
+                # Default to full image size, no cropping initially
+                img_original_width = q_image.width()
+                img_original_height = q_image.height()
+
                 new_image_obj_data = {
                     "asset_editor_key": ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, # type: ignore
                     "game_type_id": ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, # type: ignore
-                    "world_x": int(center_scene_pos.x() - q_image.width() / 2),
-                    "world_y": int(center_scene_pos.y() - q_image.height() / 2),
+                    "world_x": int(center_scene_pos.x() - img_original_width / 2),
+                    "world_y": int(center_scene_pos.y() - img_original_height / 2),
                     "source_file_path": f"Custom/{image_filename}",
-                    "original_width": q_image.width(),
-                    "original_height": q_image.height(),
-                    "current_width": q_image.width(),
-                    "current_height": q_image.height(),
+                    "original_width": img_original_width,
+                    "original_height": img_original_height,
+                    "current_width": img_original_width,    # Initially, display full image
+                    "current_height": img_original_height,  # Initially, display full image
+                    "crop_rect": None,                      # No crop by default
                     "layer_order": 0,
                     "properties": ED_CONFIG.get_default_properties_for_asset(ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY) # type: ignore
                 }
@@ -873,6 +874,7 @@ class EditorMainWindow(QMainWindow):
         if not map_object_data_ref:
             return
         asset_key = map_object_data_ref.get("asset_editor_key")
+        # Context menu for layering applies to both custom images and triggers
         if asset_key not in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY]: # type: ignore
             return
         context_menu = QMenu(self)
@@ -899,9 +901,9 @@ class EditorMainWindow(QMainWindow):
                 new_z = all_z_orders[min(len(all_z_orders) - 1, current_idx + 1)]
                 if new_z == current_z and len(all_z_orders) > current_idx + 1:
                      new_z = all_z_orders[current_idx + 1]
-                elif new_z == current_z:
-                    new_z += 1
-            except ValueError:
+                elif new_z == current_z: # If it's already the top or only one at this Z
+                    new_z += 1 # Increment to ensure it's visibly "more forward"
+            except ValueError: # Current Z not in existing distinct Z orders (e.g. newly added item)
                  new_z = (all_z_orders[-1] + 1) if all_z_orders else current_z + 1
         elif direction == "backward":
             try:
@@ -909,14 +911,14 @@ class EditorMainWindow(QMainWindow):
                 new_z = all_z_orders[max(0, current_idx - 1)]
                 if new_z == current_z and current_idx > 0:
                     new_z = all_z_orders[current_idx -1]
-                elif new_z == current_z:
-                    new_z -=1
+                elif new_z == current_z: # If it's already the bottom or only one at this Z
+                    new_z -=1 # Decrement
             except ValueError:
                  new_z = (all_z_orders[0] -1) if all_z_orders else current_z -1
         
         map_object_data_ref["layer_order"] = new_z
-        self.map_view_widget.draw_placed_objects()
-        self.handle_map_content_changed()
+        self.map_view_widget.draw_placed_objects() # Redraw to apply new Z order
+        self.handle_map_content_changed() # Mark as unsaved
         self.show_status_message(f"Object layer order changed.")
 
     @Slot(dict)
@@ -986,8 +988,8 @@ class EditorMainWindow(QMainWindow):
             image = QImage(img_w, img_h, QImage.Format.Format_ARGB32_Premultiplied)
             image.fill(Qt.GlobalColor.transparent)
             painter = QPainter(image)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing, False) # Keep false for pixel art style
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False) # Keep false
             bg_color = QColor(*self.editor_state.background_color)
             if bg_color.alpha() == 255: painter.fillRect(image.rect(), bg_color)
             scene.render(painter, QRectF(image.rect()), target_rect)
@@ -1004,8 +1006,9 @@ class EditorMainWindow(QMainWindow):
     def undo(self):
         if logger: logger.info("Undo action triggered.")
         if editor_history.undo(self.editor_state): # type: ignore
-            self.map_view_widget.load_map_from_state()
+            self.map_view_widget.load_map_from_state() # Reloads visuals based on restored state
             self.update_edit_actions_enabled_state()
+            # Update properties panel if an item is selected after undo
             selected_map_items = self.map_view_widget.map_scene.selectedItems()
             if len(selected_map_items) == 1 and hasattr(selected_map_items[0], 'map_object_data_ref'):
                 self.properties_editor_widget.display_map_object_properties(selected_map_items[0].map_object_data_ref) # type: ignore
@@ -1014,7 +1017,7 @@ class EditorMainWindow(QMainWindow):
             self.show_status_message("Undo successful.")
             if not self._is_embedded:
                 self.update_window_title()
-            self.asset_palette_widget.populate_assets()
+            self.asset_palette_widget.populate_assets() # In case custom assets changed
         else:
             self.show_status_message("Nothing to undo or undo failed.")
 
@@ -1198,3 +1201,5 @@ if __name__ == "__main__":
     return_code_standalone = editor_main(embed_mode=False)
     print(f"--- editor.py standalone execution finished (exit code: {return_code_standalone}) ---")
     sys.exit(return_code_standalone)
+
+#################### END OF FILE: editor.py ####################

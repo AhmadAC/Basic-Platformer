@@ -571,34 +571,6 @@
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 800,
-            "world_y": 0,
-            "game_type_id": "platform_wall_gray",
-            "override_color": [
-                128,
-                128,
-                128
-            ],
-            "properties": {
-                "is_boundary": true
-            }
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 800,
-            "world_y": 40,
-            "game_type_id": "platform_wall_gray",
-            "override_color": [
-                128,
-                128,
-                128
-            ],
-            "properties": {
-                "is_boundary": true
-            }
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
             "world_x": 840,
             "world_y": 0,
             "game_type_id": "platform_wall_gray",
@@ -3480,8 +3452,8 @@
             "world_y": 880,
             "game_type_id": "player1_spawn",
             "properties": {
-                "max_health": 100,
-                "move_speed": 350.0,
+                "max_health": 300,
+                "move_speed": 348.0,
                 "jump_strength": -900.0
             }
         },
@@ -3588,7 +3560,7 @@
         },
         {
             "asset_editor_key": "enemy_gray",
-            "world_x": 640,
+            "world_x": 1320,
             "world_y": 880,
             "game_type_id": "enemy_gray",
             "properties": {
@@ -3699,27 +3671,537 @@
             }
         },
         {
-            "asset_editor_key": "custom_image_object",
-            "game_type_id": "custom_image_object",
-            "world_x": 8,
-            "world_y": 22,
-            "source_file_path": "Custom/R-C.jpg",
-            "original_width": 1920,
-            "original_height": 1080,
-            "current_width": 1733,
-            "current_height": 975,
-            "layer_order": -2,
-            "properties": {
-                "is_background": true,
-                "is_obstacle": false,
-                "destructible": false,
-                "health": 99
-            }
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 440,
+            "world_y": 720,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                170,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 480,
+            "world_y": 720,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                170,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 720,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                170,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 680,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 600,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 560,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 600,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 600,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 640,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 680,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 680,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 720,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 760,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 800,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 800,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 840,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 880,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 920,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 960,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1120,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 480,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 440,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 400,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 320,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 280,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 240,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1120,
+            "world_y": 240,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 480,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 440,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 400,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 520,
+            "world_y": 520,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 480,
+            "world_y": 600,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "layer_order": 0,
+            "properties": {},
+            "override_color": [
+                255,
+                255,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 80,
+            "world_y": 640,
+            "game_type_id": "object_stone_idle",
+            "layer_order": 0,
+            "properties": {}
         }
     ],
     "camera_offset_x": 0.0,
-    "camera_offset_y": 0.0,
-    "zoom_level": 0.3348979766803842,
+    "camera_offset_y": 735.0,
+    "zoom_level": 1.2,
     "show_grid": true,
     "asset_specific_variables": {}
 }

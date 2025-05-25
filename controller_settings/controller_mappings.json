@@ -6,7 +6,7 @@
         "controller_enabled": true
     },
     "player2_settings": {
-        "input_device": "keyboard_p2",
+        "input_device": "keyboard_p1",
         "keyboard_enabled": true,
         "controller_enabled": false
     },
@@ -60,7 +60,7 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 1: 0.83"
+                "raw_str": "Joy0 Axis 1: 0.93"
             },
             "attack2": {
                 "event_type": "button",
@@ -240,7 +240,7 @@
                     "threshold": 0.7,
                     "type": "axis"
                 },
-                "raw_str": "Joy0 Axis 1: -0.91"
+                "raw_str": "Joy0 Axis 1: -0.98"
             },
             "gui_nav_up": {
                 "event_type": "axis",

@@ -1,11 +1,15 @@
+#################### START OF FILE: editor_config.py ####################
+
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.1.1 (Corrected Asset Paths)
+## version 2.1.2 (No changes for crop feature config)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added config for custom image objects and trigger squares.
 - Defined MINIMAP_CATEGORY_COLORS for better minimap visuals.
 - Updated asset paths to reflect actual project structure.
+- Cropping data for custom images is handled directly in object data,
+  not via EDITABLE_ASSET_VARIABLES for this iteration.
 """
 import sys
 import os
@@ -127,21 +131,19 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "player3_spawn": {"source_file": "characters/player3/__Idle.gif", "game_type_id": "player3_spawn", "category": "spawn", "name_in_palette": "Player 3 Spawn"},
     "player4_spawn": {"source_file": "characters/player4/__Idle.gif", "game_type_id": "player4_spawn", "category": "spawn", "name_in_palette": "Player 4 Spawn"},
     
-    # Enemies - Using your actual paths
+    # Enemies
     "enemy_green": {"source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "category": "enemy", "name_in_palette": "Enemy Green"},
     "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_gray", "category": "enemy", "name_in_palette": "Enemy Gray"},
     "enemy_pink": {"source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "category": "enemy", "name_in_palette": "Enemy Pink"},
     "enemy_purple": {"source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "category": "enemy", "name_in_palette": "Enemy Purple"},
-    "enemy_orange": {"source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_orange", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"}, # Assuming orange is your red variant
+    "enemy_orange": {"source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_orange", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"},
     "enemy_yellow": {"source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
-    "enemy_cactus": {"source_file": "characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"}, # Example, adjust filename if needed
-    "enemy_truck": {"source_file": "characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"}, # Example, adjust filename
+    "enemy_cactus": {"source_file": "characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"},
+    "enemy_truck": {"source_file": "characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"},
 
 
     # Items
     "item_chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "category": "item", "name_in_palette": "Chest"},
-    # Add other items like coin if you have them, e.g.:
-    # "item_coin": {"source_file": "characters/items/coin.png", "game_type_id": "coin", "category": "item", "name_in_palette": "Coin"},
 
     # Objects
     "object_stone_idle": {"source_file": "characters/Stone/__Stone.png", "game_type_id": "object_stone_idle", "category": "object", "name_in_palette": "Stone Block"},
@@ -150,7 +152,6 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Tiles
     "platform_wall_gray": {"surface_params": (TS, TS, getattr(C, 'GRAY', (128,128,128))), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
     "platform_ledge_green_full": {"surface_params": (TS, TS, getattr(C, 'DARK_GREEN', (0,100,0))), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
-    # (You can add more tile definitions here from your previous version if needed)
     "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, getattr(C, 'DARK_GREEN', (0,100,0))), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
     
     # Hazards
@@ -182,20 +183,12 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"}, 
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"} 
     },
-    # Add for other players if needed...
-    "enemy_green": { # Properties for the Green Enemy
+    "enemy_green": {
         "max_health": {"type": "int", "default": getattr(C, 'ENEMY_MAX_HEALTH', 80), "min": 1, "max": 500, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 3.0) * 50, "min": 10.0, "max": 500.0, "label": "Move Speed (units/s)"},
         "attack_damage": {"type": "int", "default": getattr(C, 'ENEMY_ATTACK_DAMAGE', 10), "min": 0, "max": 100, "label": "Attack Damage"},
         "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"}
     },
-    # Define properties for other enemies (enemy_gray, enemy_pink, etc.) by copying the structure above
-    # and adjusting default values and labels. Make sure the key here matches their 'game_type_id'.
-    # Example for enemy_gray:
-    # "enemy_gray": {
-    # "max_health": {"type": "int", "default": 60, "min": 1, "max": 400, "label": "Gray Health"},
-    # ... other properties ...
-    # },
 
     CUSTOM_IMAGE_ASSET_KEY: { 
         "is_background": {"type": "bool", "default": False, "label": "Is Background Image"},
@@ -240,3 +233,5 @@ STATUS_BAR_MESSAGE_TIMEOUT = 3000
 LOG_LEVEL = "DEBUG" 
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log" 
+
+#################### END OF FILE: editor_config.py ####################

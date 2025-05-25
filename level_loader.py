@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Loads map data for the game.
-Now specifically loads .py modules which define a map-loading function.
+Now loads .py modules from named subfolders: maps_base_dir/map_name_folder/map_name_file.py.
 Employs aggressive cache busting for reloading maps.
 """
-# version 2.0.2 (Aggressive cache busting)
+# version 2.1.0 (Support for named map folders and aggressive cache busting)
 import time
 import os
 import sys # For sys.path manipulation
@@ -14,15 +14,12 @@ import importlib # For reload and invalidate_caches
 import traceback # For more detailed error printing if logger fails
 
 # --- Logger Setup ---
-# Attempt to use the project's main logger first
 try:
-    from logger import info, error, debug, critical # Added critical
+    from logger import info, error, debug, critical
 except ImportError:
-    # Fallback basic console logging if the main logger isn't available
-    # This is crucial for standalone testing or if logger.py has issues
     import logging
     logging.basicConfig(level=logging.DEBUG, format='LEVEL_LOADER (FallbackConsole): %(levelname)s - %(message)s')
-    _fallback_logger_ll = logging.getLogger(__name__ + "_fallback_ll") # Unique name for fallback
+    _fallback_logger_ll = logging.getLogger(__name__ + "_fallback_ll")
 
     def info(msg, *args, **kwargs): _fallback_logger_ll.info(msg, *args, **kwargs)
     def error(msg, *args, **kwargs): _fallback_logger_ll.error(msg, *args, **kwargs)
@@ -34,152 +31,158 @@ except ImportError:
 
 class LevelLoader:
     def __init__(self):
-        info("LevelLoader initialized (for .py map modules with cache busting).")
+        info("LevelLoader initialized (for .py map modules within named folders, with cache busting).")
 
     def load_map(self, map_name: str, maps_base_dir: str) -> dict | None:
         """
-        Loads map data from a .py module file, ensuring a fresh load from disk.
+        Loads map data from a .py module file located in a subdirectory named after the map,
+        ensuring a fresh load from disk.
 
         Args:
-            map_name (str): The base name of the map (e.g., "one", "original"),
-                            without the .py extension.
-            maps_base_dir (str): The absolute path to the directory containing
-                                 the map modules (e.g., ".../project_root/maps").
+            map_name (str): The base name of the map, used for both the subdirectory
+                            and the Python file stem (e.g., "one", "original").
+            maps_base_dir (str): The absolute path to the base 'maps' directory
+                                 (e.g., ".../project_root/maps").
 
         Returns:
             dict | None: A dictionary containing the map data if successful,
                          None otherwise.
         """
-        map_module_file_name = f"{map_name}.py"
-        map_file_path = os.path.join(maps_base_dir, map_module_file_name)
+        map_folder_name = map_name # e.g., "my_level"
+        map_file_stem = map_name   # e.g., "my_level"
+        map_module_file_name = f"{map_file_stem}.py" # e.g., "my_level.py"
+
+        map_folder_path_abs = os.path.join(maps_base_dir, map_folder_name)
+        map_file_path_abs = os.path.join(map_folder_path_abs, map_module_file_name)
         
-        # The module name for importlib needs to be in Python's dot-separated format.
-        # e.g., "maps.map_name" if 'maps' is a package.
-        module_import_name = f"maps.{map_name}"
+        # Module import name for importlib, assuming 'maps' is a package and 'map_folder_name' is a sub-package.
+        # e.g., "maps.my_level.my_level"
+        module_import_name = f"maps.{map_folder_name}.{map_file_stem}"
 
-        info(f"LevelLoader: Attempting to load map module '{module_import_name}' from file: {map_file_path}")
+        info(f"LevelLoader: Attempting to load map module '{module_import_name}'")
+        debug(f"  Map Folder Path (abs): {map_folder_path_abs}")
+        debug(f"  Map File Path (abs):   {map_file_path_abs}")
 
-        if not os.path.exists(map_file_path):
-            error(f"LevelLoader: Map module file not found: {map_file_path}")
+        if not os.path.exists(map_file_path_abs):
+            error(f"LevelLoader: Map module file not found: {map_file_path_abs}")
             return None
 
         try:
-            # Ensure the 'maps' directory is treated as a package.
-            # This usually requires an __init__.py file in the 'maps' directory.
+            # Check for __init__.py in base 'maps' directory (for 'maps' to be a package)
             maps_package_init_path = os.path.join(maps_base_dir, "__init__.py")
             if not os.path.exists(maps_package_init_path):
                 debug(f"LevelLoader: Note: '{maps_package_init_path}' not found. "
-                      "For robust module loading, the 'maps' directory should ideally be a package. "
-                      "Attempting load anyway.")
-                # Depending on Python version and sys.path, this might still work,
-                # but it's best practice for 'maps' to be a package.
+                      "The 'maps' directory should ideally be a package (contain __init__.py) "
+                      "for reliable relative imports by the game.")
+
+            # Check for __init__.py in the map-specific folder (for it to be a sub-package)
+            map_specific_package_init_path = os.path.join(map_folder_path_abs, "__init__.py")
+            if not os.path.exists(map_specific_package_init_path):
+                debug(f"LevelLoader: Note: '{map_specific_package_init_path}' not found in map folder '{map_folder_name}'. "
+                      "This folder should ideally be a sub-package for reliable imports.")
 
             # --- AGGRESSIVE CACHE BUSTING ---
-            # 1. Remove the module from sys.modules if it's already there.
-            #    This forces Python to find and load it again.
             if module_import_name in sys.modules:
-                debug(f"LevelLoader: Removing existing map module '{module_import_name}' from sys.modules to force full reload.")
+                debug(f"LevelLoader: Removing existing module '{module_import_name}' from sys.modules.")
                 del sys.modules[module_import_name]
             
-            # 2. Invalidate Python's import caches.
-            #    This tells Python to re-check the filesystem for modules rather than using cached info.
             importlib.invalidate_caches()
-            debug(f"LevelLoader: Invalidated import caches.")
+            debug("LevelLoader: Invalidated import caches.")
             # --- END AGGRESSIVE CACHE BUSTING ---
 
-            # 3. Import the module.
-            #    Because of the steps above, this should load it fresh from the .py file.
-            debug(f"LevelLoader: Attempting to import fresh module: {module_import_name}")
+            # Import the module. This relies on the parent of 'maps_base_dir' being in sys.path
+            # so Python can find the 'maps' package.
+            debug(f"LevelLoader: Attempting import: importlib.import_module('{module_import_name}')")
             map_module = importlib.import_module(module_import_name)
-            debug(f"LevelLoader: Successfully imported module: {module_import_name}")
+            debug(f"LevelLoader: Successfully imported module: {module_import_name} (Path: {getattr(map_module, '__file__', 'N/A')})")
 
-
-            # Construct the expected function name, e.g., load_map_one, load_map_original
-            safe_map_name_for_func = map_name.replace('-', '_').replace(' ', '_')
-            function_name = f"load_map_{safe_map_name_for_func}"
+            safe_map_file_stem_for_func = map_file_stem.replace('-', '_').replace(' ', '_')
+            function_name = f"load_map_{safe_map_file_stem_for_func}"
             
             if hasattr(map_module, function_name):
                 load_func = getattr(map_module, function_name)
-                data = load_func() # Call the function in the freshly loaded module
+                data = load_func()
                 if not isinstance(data, dict):
                     error(f"LevelLoader: Map function '{function_name}' in '{map_module_file_name}' did not return a dictionary. Returned type: {type(data)}")
                     return None
-                info(f"LevelLoader: Map data for '{map_name}' loaded successfully via function '{function_name}'.")
+                info(f"LevelLoader: Map data for '{map_name}' (from folder '{map_folder_name}') loaded successfully via function '{function_name}'.")
                 return data
             else:
-                error(f"LevelLoader: Map module '{map_module_file_name}' (path: {getattr(map_module, '__file__', 'Unknown')}) does not have the expected function '{function_name}'. Available attributes: {dir(map_module)}")
+                error(f"LevelLoader: Map module '{map_module_file_name}' (path: {getattr(map_module, '__file__', 'N/A')}) "
+                      f"does not have the expected function '{function_name}'. Available attributes: {dir(map_module)}")
                 return None
 
         except ImportError as e_imp:
-            error(f"LevelLoader: ImportError loading map module '{module_import_name}' (from file '{map_file_path}'): {e_imp}", exc_info=True)
-            error(f"  Sys.path includes: {sys.path}")
-            error(f"  Ensure the 'maps' directory is a Python package (contains an __init__.py file) "
-                  f"and its parent directory (your project root) is correctly added to sys.path.")
+            error(f"LevelLoader: ImportError loading map module '{module_import_name}' (from file '{map_file_path_abs}'): {e_imp}", exc_info=True)
+            error(f"  Current sys.path: {sys.path}")
+            error(f"  Ensure the parent directory of '{maps_base_dir}' is in sys.path, and that "
+                  f"'{maps_base_dir}/__init__.py' and '{map_folder_path_abs}/__init__.py' exist to define them as packages.")
             return None
         except AttributeError as e_attr:
             error(f"LevelLoader: AttributeError (likely missing function or data issue) in map module '{map_name}': {e_attr}", exc_info=True)
             return None
         except Exception as e:
-            error(f"LevelLoader: An unexpected error occurred while loading map module {map_file_path}: {e}", exc_info=True)
+            error(f"LevelLoader: An unexpected error occurred while loading map module {map_file_path_abs}: {e}", exc_info=True)
             return None
 
 if __name__ == '__main__':
-    # This test block requires:
-    # 1. A 'maps' subdirectory in the same directory as this level_loader.py (or project root if level_loader.py is there).
-    # 2. The 'maps' directory to contain an __init__.py file.
-    # 3. A 'maps/test_map_loader_level.py' file with content like:
-    #
-    #    # maps/test_map_loader_level.py
-    #    print("DEBUG: test_map_loader_level.py is being executed/reloaded!") # Add this to see reloads
-    #    import time
-    #    _load_time = time.time()
-    #    def load_map_test_map_loader_level():
-    #        return {
-    #            "level_name": "Test Map for Loader (from PY)",
-    #            "load_timestamp": _load_time, # To check if it's truly reloading
-    #            "platforms_list": [{"rect": (0, 500, 800, 50), "color": (100,100,100), "type": "ground"}]
-    #        }
-    #
-    print("--- Testing LevelLoader (with aggressive reload) ---")
+    print("--- Testing LevelLoader (with named folders and aggressive reload) ---")
     
-    current_script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Adjust project_root_for_test based on where level_loader.py is relative to the project root
-    # If level_loader.py is in the project root:
-    project_root_for_test = current_script_dir
-    # If level_loader.py is in a subdirectory (e.g., 'utils'):
-    # project_root_for_test = os.path.dirname(current_script_dir)
+    # Determine project_root_for_test assuming level_loader.py is in the project root or a subfolder.
+    # If level_loader.py is directly in project root:
+    # project_root_for_test = os.path.dirname(os.path.abspath(__file__))
+    # If level_loader.py is in a subfolder like 'utils/' or 'game_logic/':
+    project_root_for_test = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Adjust if needed
 
     if project_root_for_test not in sys.path:
         sys.path.insert(0, project_root_for_test)
         print(f"Test: Added '{project_root_for_test}' to sys.path.")
 
-    test_maps_dir_abs = os.path.join(project_root_for_test, "maps")
+    # This maps_dir_abs is the 'maps' folder itself.
+    test_maps_base_dir_abs = os.path.join(project_root_for_test, "maps")
+    print(f"Test: Using maps_base_dir: '{test_maps_base_dir_abs}'")
 
-    if not os.path.exists(test_maps_dir_abs):
-        os.makedirs(test_maps_dir_abs)
-        print(f"Test: Created directory '{test_maps_dir_abs}'")
+    if not os.path.exists(test_maps_base_dir_abs):
+        os.makedirs(test_maps_base_dir_abs)
+        print(f"Test: Created base maps directory '{test_maps_base_dir_abs}'")
     
-    init_py_path = os.path.join(test_maps_dir_abs, "__init__.py")
-    if not os.path.exists(init_py_path):
-        with open(init_py_path, "w") as f_init_test:
-            f_init_test.write("# Test __init__.py for maps package\n")
-        print(f"Test: Created '{init_py_path}'")
+    # Create __init__.py in the base 'maps' directory to make it a package
+    base_maps_init_py_path = os.path.join(test_maps_base_dir_abs, "__init__.py")
+    if not os.path.exists(base_maps_init_py_path):
+        with open(base_maps_init_py_path, "w") as f_init_base:
+            f_init_base.write("# Base maps package __init__.py\n")
+        print(f"Test: Created '{base_maps_init_py_path}'")
 
-    test_map_name = "test_map_loader_level"
+    test_map_name_stem = "test_map_loader_folder_level" # This will be the folder and file stem
+
+    # Create the map-specific folder
+    test_map_specific_folder_abs = os.path.join(test_maps_base_dir_abs, test_map_name_stem)
+    if not os.path.exists(test_map_specific_folder_abs):
+        os.makedirs(test_map_specific_folder_abs)
+        print(f"Test: Created map-specific folder '{test_map_specific_folder_abs}'")
+
+    # Create __init__.py in the map-specific folder to make it a sub-package
+    map_specific_init_py_path = os.path.join(test_map_specific_folder_abs, "__init__.py")
+    if not os.path.exists(map_specific_init_py_path):
+        with open(map_specific_init_py_path, "w") as f_init_map:
+            f_init_map.write(f"# Map-specific __init__.py for {test_map_name_stem}\n")
+        print(f"Test: Created '{map_specific_init_py_path}'")
+
+    # Create the dummy map .py file
     dummy_map_py_content = f"""
-# maps/{test_map_name}.py
-print("DEBUG: {test_map_name}.py is being executed/reloaded!") 
+# maps/{test_map_name_stem}/{test_map_name_stem}.py
+print(f"DEBUG: maps/{test_map_name_stem}/{test_map_name_stem}.py is being executed/reloaded!") 
 import time
-_load_time_{test_map_name} = time.time()
-def load_map_{test_map_name}():
-    print(f"DEBUG: load_map_{test_map_name}() called at timestamp {{_load_time_{test_map_name}}}")
+_load_time_{test_map_name_stem.replace('-', '_')} = time.time() # Python var names can't have hyphens
+def load_map_{test_map_name_stem.replace('-', '_')}():
+    print(f"DEBUG: load_map_{test_map_name_stem.replace('-', '_')}() called at timestamp {{_load_time_{test_map_name_stem.replace('-', '_')}}}")
     return {{
-        "level_name": "{test_map_name}",
-        "load_timestamp": _load_time_{test_map_name},
+        "level_name": "{test_map_name_stem}",
+        "load_timestamp": _load_time_{test_map_name_stem.replace('-', '_')},
         "platforms_list": [{{"rect": (0, 500, 800, 50), "color": (100,100,100), "type": "ground"}}]
     }}
 """
-    dummy_map_file_path_abs = os.path.join(test_maps_dir_abs, f"{test_map_name}.py")
+    dummy_map_file_path_abs = os.path.join(test_map_specific_folder_abs, f"{test_map_name_stem}.py")
     with open(dummy_map_file_path_abs, "w") as f_map_test:
         f_map_test.write(dummy_map_py_content)
     print(f"Test: Created/Updated dummy map file '{dummy_map_file_path_abs}'")
@@ -187,31 +190,38 @@ def load_map_{test_map_name}():
     loader = LevelLoader()
     
     print("\n--- First Load ---")
-    map_data1 = loader.load_map(test_map_name, test_maps_dir_abs)
+    # Pass the name of the map (which is the folder and file stem)
+    # And the path to the 'maps' directory
+    map_data1 = loader.load_map(test_map_name_stem, test_maps_base_dir_abs)
     if map_data1:
-        print(f"Map '{test_map_name}' loaded successfully (1st time). Timestamp: {map_data1.get('load_timestamp')}")
+        ts1 = map_data1.get('load_timestamp', 0)
+        print(f"Map '{test_map_name_stem}' loaded successfully (1st time). Timestamp: {ts1}")
     else:
-        print(f"Map '{test_map_name}' FAILED to load (1st time).")
+        print(f"Map '{test_map_name_stem}' FAILED to load (1st time). Check paths and __init__.py files.")
+        ts1 = 0
 
     print(f"\nSimulating a short delay...")
-    time.sleep(0.1) # Small delay to ensure timestamp difference if reload works
+    time.sleep(0.1) 
 
     print("\n--- Second Load (should be reloaded from disk) ---")
-    map_data2 = loader.load_map(test_map_name, test_maps_dir_abs)
+    map_data2 = loader.load_map(test_map_name_stem, test_maps_base_dir_abs)
     if map_data2:
-        print(f"Map '{test_map_name}' loaded successfully (2nd time). Timestamp: {map_data2.get('load_timestamp')}")
-        if map_data1 and map_data2.get('load_timestamp') != map_data1.get('load_timestamp'):
+        ts2 = map_data2.get('load_timestamp', 0)
+        print(f"Map '{test_map_name_stem}' loaded successfully (2nd time). Timestamp: {ts2}")
+        if ts1 > 0 and abs(ts2 - ts1) > 1e-5 : # Compare with a small tolerance for float comparison
             print("SUCCESS: Timestamps are different, indicating a true reload from disk!")
-        elif map_data1:
-            print("WARNING: Timestamps are the same. Reload might not have been fully fresh or module execution side effects are minimal.")
+        elif ts1 > 0:
+            print("WARNING: Timestamps are the same or very close. Reload might not have been fully fresh, or module execution time is too short for timestamp difference.")
         else:
-            print("INFO: Second load successful, but first load failed, so cannot compare timestamps.")
+            print("INFO: Second load successful, but first load failed or had no timestamp, so cannot compare timestamps effectively.")
     else:
-        print(f"Map '{test_map_name}' FAILED to load (2nd time).")
+        print(f"Map '{test_map_name_stem}' FAILED to load (2nd time).")
     
-    # Clean up test files (optional)
+    # Clean up test files (optional, uncomment if desired)
     # os.remove(dummy_map_file_path_abs)
-    # os.remove(init_py_path)
-    # if not os.listdir(test_maps_dir_abs): os.rmdir(test_maps_dir_abs)
+    # os.remove(map_specific_init_py_path)
+    # if not os.listdir(test_map_specific_folder_abs): os.rmdir(test_map_specific_folder_abs)
+    # os.remove(base_maps_init_py_path)
+    # if not os.listdir(test_maps_base_dir_abs): os.rmdir(test_maps_base_dir_abs)
 
     print("\n--- LevelLoader Test Finished ---")

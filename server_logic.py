@@ -3,8 +3,9 @@
 """
 Handles server-side game logic, connection management, and broadcasting for PySide6.
 UI updates are handled by emitting signals or using callbacks.
+Map paths now use map_name_folder/map_name_file.py structure.
 """
-# version 2.0.5 (Fixed QRectF import, refined chest physics, uses get_current_ticks_monotonic)
+# version 2.0.6 (Map paths updated for named folders, refined chest physics)
 
 import os
 import socket
@@ -13,9 +14,7 @@ import time
 import traceback
 from typing import Optional, Dict, Any, List
 
-from tiles import Platform, Ladder, Lava, BackgroundTile
-# PySide6 imports
-from PySide6.QtCore import QRectF, QPointF # Import QRectF for type checking
+from PySide6.QtCore import QRectF, QPointF # For type checking
 
 # Game imports
 import constants as C
@@ -24,7 +23,7 @@ from game_state_manager import get_network_game_state, reset_game_state
 from enemy import Enemy
 from items import Chest
 from statue import Statue
-from tiles import Platform # For type hinting platforms_list passed to chest update
+from tiles import Platform, Ladder, Lava, BackgroundTile # Import for type hinting
 import config as game_config
 
 try:
@@ -37,12 +36,9 @@ except ImportError:
     def error(msg): print(f"ERROR: {msg}")
     def critical(msg): print(f"CRITICAL: {msg}")
 
-# --- Monotonic Timer ---
 _start_time_server_logic_monotonic = time.monotonic()
 def get_current_ticks_monotonic() -> int:
-    """Returns monotonic time in milliseconds since module load or a fixed point."""
     return int((time.monotonic() - _start_time_server_logic_monotonic) * 1000)
-# --- End Monotonic Timer ---
 
 client_lock = threading.Lock()
 
@@ -63,7 +59,7 @@ class ServerState:
         self.buffer_size = int(getattr(C, "BUFFER_SIZE", 8192))
         self.broadcast_interval_s = float(getattr(C, "BROADCAST_INTERVAL_S", 1.0))
         
-        self.current_map_name: Optional[str] = None
+        self.current_map_name: Optional[str] = None # This should be the map folder/stem name
         self.client_map_status: str = "unknown"
         self.client_download_progress: float = 0.0
         self.game_start_signaled_to_client: bool = False
@@ -76,7 +72,7 @@ def broadcast_presence_thread(server_state_obj: ServerState):
         "service": server_state_obj.service_name,
         "tcp_ip": current_lan_ip,
         "tcp_port": server_state_obj.server_port_tcp,
-        "map_name": server_state_obj.current_map_name or "Unknown Map"
+        "map_name": server_state_obj.current_map_name or "Unknown Map" # map_name is folder/stem
     }
     broadcast_message_bytes = encode_data(broadcast_message_dict)
     if not broadcast_message_bytes:
@@ -127,10 +123,18 @@ def handle_client_connection_thread(conn: socket.socket, addr: Any, server_state
     conn.settimeout(1.0)
     partial_data_from_client = b""
 
-    if server_state_obj.current_map_name:
+    # Determine absolute path to the base "maps" directory
+    maps_base_dir_abs = str(getattr(C, "MAPS_DIR", "maps"))
+    if not os.path.isabs(maps_base_dir_abs):
+        project_root_from_constants = getattr(C, 'PROJECT_ROOT', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        maps_base_dir_abs = os.path.join(project_root_from_constants, maps_base_dir_abs)
+    debug(f"ServerLogic Handler: Using maps base directory: {maps_base_dir_abs}")
+
+
+    if server_state_obj.current_map_name: # current_map_name is the folder/stem name
         try:
             conn.sendall(encode_data({"command": "set_map", "name": server_state_obj.current_map_name}))
-            debug(f"Server Handler ({addr}): Sent initial map info: {server_state_obj.current_map_name}")
+            debug(f"Server Handler ({addr}): Sent initial map info (folder/stem): {server_state_obj.current_map_name}")
         except socket.error as e: debug(f"Server Handler ({addr}): Error sending map info: {e}.")
     else: critical(f"Server Handler ({addr}): CRITICAL - current_map_name is None.")
 
@@ -147,8 +151,9 @@ def handle_client_connection_thread(conn: socket.socket, addr: Any, server_state
             for msg in decoded_inputs:
                 command = msg.get("command")
                 if command == "report_map_status":
-                    map_name_client = msg.get("name"); status_client = msg.get("status")
-                    debug(f"Server Handler ({addr}): Client map '{map_name_client}': {status_client}")
+                    map_name_client_folder_stem = msg.get("name") # This is the folder/stem name
+                    status_client = msg.get("status")
+                    debug(f"Server Handler ({addr}): Client map '{map_name_client_folder_stem}': {status_client}")
                     with client_lock:
                         server_state_obj.client_map_status = status_client
                         if status_client == "present":
@@ -160,28 +165,28 @@ def handle_client_connection_thread(conn: socket.socket, addr: Any, server_state
                                 if client_fully_synced_callback: client_fully_synced_callback()
                                 debug(f"Server Handler ({addr}): Client has map. Sent start_game_now. Client marked as ready.")
                 elif command == "request_map_file":
-                    map_name_req = msg.get("name")
-                    debug(f"Server Handler ({addr}): Client requested map: '{map_name_req}'")
-                    maps_dir_abs = str(getattr(C, "MAPS_DIR", "maps"))
-                    if not os.path.isabs(maps_dir_abs):
-                        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
-                        maps_dir_abs = os.path.join(project_root, maps_dir_abs)
-
-                    map_file_path = os.path.join(maps_dir_abs, (map_name_req or "") + ".py") 
-                    if os.path.exists(map_file_path):
-                        with open(map_file_path, "r", encoding="utf-8") as f_map: map_content_str = f_map.read()
+                    map_name_req_folder_stem = msg.get("name") # This is the folder/stem name
+                    debug(f"Server Handler ({addr}): Client requested map: '{map_name_req_folder_stem}'")
+                    
+                    # MODIFIED PATH CONSTRUCTION
+                    map_py_file_path_to_send = os.path.join(maps_base_dir_abs, 
+                                                            map_name_req_folder_stem, 
+                                                            f"{map_name_req_folder_stem}.py")
+                    
+                    if os.path.exists(map_py_file_path_to_send):
+                        with open(map_py_file_path_to_send, "r", encoding="utf-8") as f_map: map_content_str = f_map.read()
                         map_bytes_utf8 = map_content_str.encode('utf-8')
-                        conn.sendall(encode_data({"command": "map_file_info", "name": map_name_req, "size": len(map_bytes_utf8)}))
+                        conn.sendall(encode_data({"command": "map_file_info", "name": map_name_req_folder_stem, "size": len(map_bytes_utf8)}))
                         offset = 0
                         while offset < len(map_bytes_utf8):
                             chunk_to_send_bytes = map_bytes_utf8[offset : offset + C.MAP_DOWNLOAD_CHUNK_SIZE]
                             conn.sendall(encode_data({"command": "map_data_chunk", "data": chunk_to_send_bytes.decode('utf-8', 'replace'), "seq": offset}))
                             offset += len(chunk_to_send_bytes)
-                        conn.sendall(encode_data({"command": "map_transfer_end", "name": map_name_req}))
-                        debug(f"Server Handler ({addr}): Map '{map_name_req}' transfer complete.")
+                        conn.sendall(encode_data({"command": "map_transfer_end", "name": map_name_req_folder_stem}))
+                        debug(f"Server Handler ({addr}): Map '{map_name_req_folder_stem}' transfer complete from '{map_py_file_path_to_send}'.")
                     else:
-                        error(f"Server: Client map request '{map_name_req}' not found at '{map_file_path}'.")
-                        conn.sendall(encode_data({"command": "map_file_error", "name": map_name_req, "reason": "not_found_on_server"}))
+                        error(f"Server: Client map request '{map_name_req_folder_stem}' not found at '{map_py_file_path_to_send}'.")
+                        conn.sendall(encode_data({"command": "map_file_error", "name": map_name_req_folder_stem, "reason": "not_found_on_server"}))
                 elif command == "report_download_progress": 
                     with client_lock: server_state_obj.client_download_progress = msg.get("progress", 0.0)
                 elif "input" in msg: 
@@ -221,6 +226,7 @@ def run_server_mode(server_state_obj: ServerState,
     server_state_obj.app_running = True 
     
     if server_state_obj.current_map_name is None:
+        # map_name from game_elements is the folder/stem name
         map_name_from_ge = game_elements_ref.get('map_name', game_elements_ref.get('loaded_map_name'))
         if map_name_from_ge:
             server_state_obj.current_map_name = map_name_from_ge
@@ -245,11 +251,12 @@ def run_server_mode(server_state_obj: ServerState,
         debug(f"ServerLogic: TCP socket listening on {C.SERVER_IP_BIND}:{server_state_obj.server_port_tcp}")
     except socket.error as e_bind:
         critical(f"FATAL SERVER ERROR: Failed to bind/listen TCP socket: {e_bind}")
-        _temp_app_running_state = server_state_obj.app_running
-        server_state_obj.app_running = False 
+        # Ensure broadcast thread is stopped if bind fails
+        _temp_app_running_state = server_state_obj.app_running # Store current intention
+        server_state_obj.app_running = False # Signal threads to stop
         if server_state_obj.broadcast_thread and server_state_obj.broadcast_thread.is_alive():
             server_state_obj.broadcast_thread.join(timeout=0.5)
-        server_state_obj.app_running = _temp_app_running_state 
+        server_state_obj.app_running = _temp_app_running_state # Restore for outer logic
         return
 
     debug("ServerLogic: Waiting for Player 2 connection and map synchronization...")
@@ -291,19 +298,20 @@ def run_server_mode(server_state_obj: ServerState,
             except Exception as e_accept:
                 error(f"ServerLogic: Error accepting client connection: {e_accept}", exc_info=True)
         
+        # UI update logic for map sync (remains the same)
         if ui_status_update_callback and (time.monotonic() - last_ui_cb_time > 0.2):
             title, msg, prog = "Server Hosting", "Waiting for Player 2...", -1.0
             with client_lock: 
                 if server_state_obj.client_connection:
                     client_ip_str = str(server_state_obj.client_address[0]) if server_state_obj.client_address else 'Connecting...'
                     current_status = server_state_obj.client_map_status
-                    current_map = server_state_obj.current_map_name or "selected map"
+                    current_map_folder_stem = server_state_obj.current_map_name or "selected map"
                     current_progress = server_state_obj.client_download_progress
 
                     if current_status == "waiting_client_report": msg = f"Player 2 ({client_ip_str}) connected. Syncing map info..."
-                    elif current_status == "missing": msg = f"Player 2 needs '{current_map}'. Sending file..."; prog = max(0.0, current_progress)
-                    elif current_status == "downloading_ack" or current_status == "downloading": msg = f"Player 2 downloading '{current_map}' ({current_progress:.0f}%)..."; prog = max(0.0, current_progress)
-                    elif current_status == "present": msg = f"Player 2 has '{current_map}'. Ready for game start."; prog = 100.0
+                    elif current_status == "missing": msg = f"Player 2 needs '{current_map_folder_stem}'. Sending file..."; prog = max(0.0, current_progress)
+                    elif current_status == "downloading_ack" or current_status == "downloading": msg = f"Player 2 downloading '{current_map_folder_stem}' ({current_progress:.0f}%)..."; prog = max(0.0, current_progress)
+                    elif current_status == "present": msg = f"Player 2 has '{current_map_folder_stem}'. Ready for game start."; prog = 100.0
                     
                     if server_state_obj.client_ready: 
                         client_sync_wait_active = False 
@@ -325,7 +333,7 @@ def run_server_mode(server_state_obj: ServerState,
         if server_state_obj.server_tcp_socket: server_state_obj.server_tcp_socket.close(); server_state_obj.server_tcp_socket = None
         return 
 
-    debug(f"ServerLogic: Client synced successfully. Starting main game loop...")
+    debug(f"ServerLogic: Client synced successfully. Starting main game loop for map '{server_state_obj.current_map_name}'...")
     p1 = game_elements_ref.get("player1")
     p2 = game_elements_ref.get("player2")
     server_game_active = True
@@ -340,11 +348,10 @@ def run_server_mode(server_state_obj: ServerState,
 
         dt_sec = frame_duration 
 
-        # --- Fetch platforms_list for this frame ---
-        platforms_list_this_frame: List[Any] = game_elements_ref.get("platforms_list", []) # Ensure this is fetched
-        ladders_list_this_frame: List[Any] = game_elements_ref.get("ladders_list", [])
-        hazards_list_this_frame: List[Any] = game_elements_ref.get("hazards_list", [])
-        current_enemies_list_ref: List[Enemy] = game_elements_ref.get("enemy_list", []) # Use ref for modification
+        platforms_list_this_frame: List[Platform] = game_elements_ref.get("platforms_list", [])
+        ladders_list_this_frame: List[Ladder] = game_elements_ref.get("ladders_list", [])
+        hazards_list_this_frame: List[Lava] = game_elements_ref.get("hazards_list", [])
+        current_enemies_list_ref: List[Enemy] = game_elements_ref.get("enemy_list", [])
         statue_list_ref: List[Statue] = game_elements_ref.get("statue_objects", [])
         projectiles_list_ref: List[Any] = game_elements_ref.get("projectiles_list", [])
         collectible_items_list_ref: List[Any] = game_elements_ref.get("collectible_list", [])
@@ -352,19 +359,21 @@ def run_server_mode(server_state_obj: ServerState,
 
         p1_action_events_current_frame: Dict[str, bool] = {}
         if p1 and hasattr(p1, '_valid_init') and p1._valid_init and get_p1_input_snapshot_callback:
-            p1_action_events_current_frame = get_p1_input_snapshot_callback(p1, platforms_list_this_frame)
+            p1_action_events_current_frame = get_p1_input_snapshot_callback(p1) # Pass player instance
             if p1_action_events_current_frame.get("pause"):
                 server_game_active = False; info("Server: P1 (host) pressed Pause. Ending game mode.")
             if p1_action_events_current_frame.get("reset"):
-                 info("Server: P1 (host) requested Reset action."); game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
-                 # Re-fetch lists that might have been repopulated by reset_game_state
+                 info("Server: P1 (host) requested Reset action."); 
+                 reset_game_state(game_elements_ref) # This will re-init everything
+                 # Re-fetch references that might have been reset
+                 p1 = game_elements_ref.get("player1"); p2 = game_elements_ref.get("player2")
                  current_enemies_list_ref = game_elements_ref.get("enemy_list", []) 
                  statue_list_ref = game_elements_ref.get("statue_objects", [])
                  projectiles_list_ref = game_elements_ref.get("projectiles_list", [])
                  collectible_items_list_ref = game_elements_ref.get("collectible_list", [])
-
-                 if p1 and p1._valid_init and not p1.alive() and p1 not in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).append(p1)
-                 if p2 and p2._valid_init and not p2.alive() and p2 not in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).append(p2)
+                 # Ensure players are in renderables if they were re-created
+                 if p1 and p1._valid_init and p1 not in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).append(p1)
+                 if p2 and p2._valid_init and p2 not in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).append(p2)
         if not server_game_active: break 
 
         p2_network_input_data: Optional[Dict[str, Any]] = None
@@ -381,13 +390,14 @@ def run_server_mode(server_state_obj: ServerState,
                     is_p1_truly_dead = (p1 and p1._valid_init and p1.is_dead and (not p1.alive() or p1.death_animation_finished)) or (not p1 or not p1._valid_init)
                     if is_p1_truly_dead: 
                         info("Server: Client P2 reset action received and P1 is game over. Resetting state.")
-                        game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
+                        reset_game_state(game_elements_ref)
+                        p1 = game_elements_ref.get("player1"); p2 = game_elements_ref.get("player2")
                         current_enemies_list_ref = game_elements_ref.get("enemy_list", []) 
                         statue_list_ref = game_elements_ref.get("statue_objects", [])
                         projectiles_list_ref = game_elements_ref.get("projectiles_list", [])
                         collectible_items_list_ref = game_elements_ref.get("collectible_list", [])
-                        if p1 and p1._valid_init and not p1.alive(): game_elements_ref.get("all_renderable_objects",[]).append(p1)
-                        if p2 and p2._valid_init and not p2.alive(): game_elements_ref.get("all_renderable_objects",[]).append(p2)
+                        if p1 and p1._valid_init and p1 not in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).append(p1)
+                        if p2 and p2._valid_init and p2 not in game_elements_ref.get("all_renderable_objects",[]): game_elements_ref.get("all_renderable_objects",[]).append(p2)
         if not server_game_active: break
 
         if p2 and hasattr(p2, '_valid_init') and p2._valid_init and p2_network_input_data and hasattr(p2, 'handle_network_input'):
@@ -395,56 +405,44 @@ def run_server_mode(server_state_obj: ServerState,
         
         current_game_ticks_val = get_current_ticks_monotonic()
 
+        # Player updates
         if p1 and hasattr(p1, '_valid_init') and p1._valid_init:
             other_players_for_p1 = [char for char in [p2] if char and hasattr(char, '_valid_init') and char._valid_init and hasattr(char, 'alive') and char.alive() and char is not p1]
             p1.game_elements_ref_for_projectiles = game_elements_ref 
-            p1.update(dt_sec, platforms_list_this_frame, 
-                      ladders_list_this_frame, 
-                      hazards_list_this_frame, 
-                      other_players_for_p1, 
-                      current_enemies_list_ref)
+            p1.update(dt_sec, platforms_list_this_frame, ladders_list_this_frame, hazards_list_this_frame, other_players_for_p1, current_enemies_list_ref)
 
         if p2 and hasattr(p2, '_valid_init') and p2._valid_init:
             other_players_for_p2 = [char for char in [p1] if char and hasattr(char, '_valid_init') and char._valid_init and hasattr(char, 'alive') and char.alive() and char is not p2]
             p2.game_elements_ref_for_projectiles = game_elements_ref
-            p2.update(dt_sec, platforms_list_this_frame, 
-                      ladders_list_this_frame, 
-                      hazards_list_this_frame, 
-                      other_players_for_p2, 
-                      current_enemies_list_ref)
+            p2.update(dt_sec, platforms_list_this_frame, ladders_list_this_frame, hazards_list_this_frame, other_players_for_p2, current_enemies_list_ref)
         
+        # Enemy updates
         active_players_for_ai = [char for char in [p1,p2] if char and hasattr(char,'_valid_init') and char._valid_init and not getattr(char,'is_dead',True) and hasattr(char,'alive') and char.alive()]
         for enemy_instance in list(current_enemies_list_ref): 
             if hasattr(enemy_instance, '_valid_init') and enemy_instance._valid_init:
-                if hasattr(enemy_instance, 'is_petrified') and enemy_instance.is_petrified: 
-                    if hasattr(enemy_instance, 'update_enemy_status_effects'): 
-                        enemy_instance.update_enemy_status_effects(current_game_ticks_val, platforms_list_this_frame)
-                    if hasattr(enemy_instance, 'animate'): enemy_instance.animate()
-                    if getattr(enemy_instance, 'is_dead', False) and getattr(enemy_instance, 'death_animation_finished', False) and enemy_instance.alive():
-                        enemy_instance.kill()
-                    continue 
-                
-                enemy_instance.update(dt_sec, active_players_for_ai, 
-                                      platforms_list_this_frame, 
-                                      hazards_list_this_frame, 
-                                      current_enemies_list_ref) 
-                if getattr(enemy_instance, 'is_dead', False) and hasattr(enemy_instance, 'death_animation_finished') and enemy_instance.death_animation_finished and enemy_instance.alive():
+                enemy_instance.update(dt_sec, active_players_for_ai, platforms_list_this_frame, hazards_list_this_frame, current_enemies_list_ref) 
+                if getattr(enemy_instance, 'is_dead', False) and hasattr(enemy_instance, 'death_animation_finished') and enemy_instance.death_animation_finished and \
+                   hasattr(enemy_instance, 'alive') and enemy_instance.alive() and hasattr(enemy_instance, 'kill'):
                     enemy_instance.kill()
-        
         game_elements_ref["enemy_list"][:] = [e for e in current_enemies_list_ref if hasattr(e, 'alive') and e.alive()]
 
+        # Statue updates
         for statue_obj in list(statue_list_ref):
             if hasattr(statue_obj, 'update'): statue_obj.update(dt_sec)
             if not (hasattr(statue_obj, 'alive') and statue_obj.alive()):
                 if statue_obj in statue_list_ref: statue_list_ref.remove(statue_obj)
             
+        # Projectile updates
         hittable_targets_on_server = []
-        if p1 and p1.alive() and p1._valid_init and not getattr(p1,'is_petrified',False): hittable_targets_on_server.append(p1)
-        if p2 and p2.alive() and p2._valid_init and not getattr(p2,'is_petrified',False): hittable_targets_on_server.append(p2)
+        for p_target in [p1,p2]:
+            if p_target and hasattr(p_target, 'alive') and p_target.alive() and hasattr(p_target, '_valid_init') and p_target._valid_init and not getattr(p_target,'is_petrified',False):
+                hittable_targets_on_server.append(p_target)
         for en_target in game_elements_ref.get("enemy_list",[]):
-            if en_target.alive() and en_target._valid_init and not getattr(en_target,'is_petrified',False): hittable_targets_on_server.append(en_target)
+            if hasattr(en_target, 'alive') and en_target.alive() and hasattr(en_target, '_valid_init') and en_target._valid_init and not getattr(en_target,'is_petrified',False):
+                hittable_targets_on_server.append(en_target)
         for st_target in game_elements_ref.get("statue_objects",[]):
-            if st_target.alive() and not getattr(st_target,'is_smashed',False) : hittable_targets_on_server.append(st_target)
+            if hasattr(st_target, 'alive') and st_target.alive() and not getattr(st_target,'is_smashed',False) :
+                hittable_targets_on_server.append(st_target)
         
         for proj_obj in list(projectiles_list_ref): 
             if hasattr(proj_obj, 'update'):
@@ -452,19 +450,17 @@ def run_server_mode(server_state_obj: ServerState,
             if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
                 if proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj)
         
-        # Chest Physics (Server-side)
+        # Chest physics and interaction
         current_chest_on_server = game_elements_ref.get("current_chest")
         if current_chest_on_server and isinstance(current_chest_on_server, Chest) and \
            current_chest_on_server.alive() and not current_chest_on_server.is_collected_flag_internal and \
            current_chest_on_server.state == 'closed':
             if hasattr(current_chest_on_server, 'apply_physics_step'):
                 current_chest_on_server.apply_physics_step(dt_sec)
-
+            # Simplified platform collision for chest (as in AppCore)
             current_chest_on_server.on_ground = False
             if hasattr(current_chest_on_server, 'rect') and isinstance(current_chest_on_server.rect, QRectF):
-                # Estimate previous bottom based on current velocity (which is per-frame at this point)
-                old_chest_bottom = current_chest_on_server.rect.bottom() - current_chest_on_server.vel_y 
-
+                old_chest_bottom = current_chest_on_server.rect.bottom() - (current_chest_on_server.vel_y * dt_sec * C.FPS if current_chest_on_server.vel_y > 0 else 0)
                 for platform_coll in platforms_list_this_frame: 
                     if hasattr(platform_coll, 'rect') and isinstance(platform_coll.rect, QRectF) and \
                        current_chest_on_server.rect.intersects(platform_coll.rect):
@@ -491,7 +487,8 @@ def run_server_mode(server_state_obj: ServerState,
                  if game_elements_ref.get("current_chest") is collectible_obj: game_elements_ref["current_chest"] = None
 
         if current_chest_on_server and isinstance(current_chest_on_server, Chest) and \
-           current_chest_on_server.alive() and not current_chest_on_server.is_collected_flag_internal:
+           current_chest_on_server.alive() and not current_chest_on_server.is_collected_flag_internal and \
+           current_chest_on_server.state == 'closed':
             interacting_player_server = None
             if p1 and p1.alive() and p1._valid_init and not p1.is_dead and not getattr(p1,'is_petrified',False) and \
                hasattr(p1, 'rect') and p1.rect.intersects(current_chest_on_server.rect) and p1_action_events_current_frame.get("interact", False):
@@ -502,24 +499,30 @@ def run_server_mode(server_state_obj: ServerState,
                 interacting_player_server = p2
             if interacting_player_server: current_chest_on_server.collect(interacting_player_server)
         
+        # Camera update
         camera_on_server = game_elements_ref.get("camera")
         if camera_on_server:
-            server_focus_target = p1 if (p1 and p1.alive() and p1._valid_init and not p1.is_dead and not getattr(p1,'is_petrified',False)) else \
-                                  (p2 if (p2 and p2.alive() and p2._valid_init and not p2.is_dead and not getattr(p2,'is_petrified',False)) else \
-                                  (p1 if p1 and p1.alive() else p2)) 
+            server_focus_target = None
+            if p1 and hasattr(p1, '_valid_init') and p1._valid_init and hasattr(p1, 'alive') and p1.alive() and not getattr(p1, 'is_dead', True) and not getattr(p1,'is_petrified',False): server_focus_target = p1
+            elif p2 and hasattr(p2, '_valid_init') and p2._valid_init and hasattr(p2, 'alive') and p2.alive() and not getattr(p2, 'is_dead', True) and not getattr(p2,'is_petrified',False): server_focus_target = p2
+            elif p1 and hasattr(p1, '_valid_init') and p1._valid_init and hasattr(p1, 'alive') and p1.alive(): server_focus_target = p1
+            elif p2 and hasattr(p2, '_valid_init') and p2._valid_init and hasattr(p2, 'alive') and p2.alive(): server_focus_target = p2
+            
             if server_focus_target: camera_on_server.update(server_focus_target)
             else: camera_on_server.static_update()
             
+        # Update all_renderable_objects list
         current_all_renderables_server = game_elements_ref.get("all_renderable_objects", [])
         new_all_renderables_server = []
         for obj_server in current_all_renderables_server:
-            if isinstance(obj_server, (Platform, Ladder, Lava, BackgroundTile)): # Keep static tiles
+            if isinstance(obj_server, (Platform, Ladder, Lava, BackgroundTile)): 
                 new_all_renderables_server.append(obj_server)
-            elif hasattr(obj_server, 'alive') and obj_server.alive(): # Keep dynamic if alive
+            elif hasattr(obj_server, 'alive') and obj_server.alive(): 
                 new_all_renderables_server.append(obj_server)
         game_elements_ref["all_renderable_objects"] = new_all_renderables_server
 
 
+        # Send game state to client
         if server_state_obj.client_connection:
             network_game_state_to_send = get_network_game_state(game_elements_ref)
             encoded_state = encode_data(network_game_state_to_send)
@@ -530,6 +533,7 @@ def run_server_mode(server_state_obj: ServerState,
                     debug(f"Server: Send game state failed: {e_send}. Client likely disconnected.");
                     server_game_active = False; server_state_obj.client_connection = None; break 
         
+        # Frame timing
         time_spent_this_frame = time.monotonic() - frame_start_time
         sleep_duration = frame_duration - time_spent_this_frame
         if sleep_duration > 0:

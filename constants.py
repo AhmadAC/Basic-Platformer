@@ -1,11 +1,11 @@
-#################### START OF FILE: constants.py ####################
 # constants.py
 # -*- coding: utf-8 -*-
 """
 Stores constant values used throughout the game.
 Dynamically sets MAPS_DIR based on execution environment (development vs. PyInstaller bundle).
+Map paths now refer to map_name_folder/map_name_file.py structure.
 """
-# version 2.1.0 (Added Editor specific constants, removed semicolons)
+# version 2.1.1 (Clarified MAPS_DIR and its usage)
 import os
 import sys
 import math
@@ -16,16 +16,23 @@ _SCRIPT_LOGGING_ENABLED = True
 
 # --- Project Root ---
 try:
+    # This assumes constants.py is in the project root or a directory directly under it.
+    # If constants.py is nested deeper (e.g., in a 'utils' folder), adjust accordingly.
+    # For the common structure where scripts like app_core.py are in the root,
+    # and constants.py is also there, this is usually correct.
     PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-except NameError:
-    PROJECT_ROOT = os.getcwd()
+    # If constants.py is in a subdirectory, and your main scripts are in the root,
+    # you might prefer:
+    # PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # If constants.py is in 'utils/'
+except NameError: # __file__ not defined (e.g. interactive interpreter, some frozen environments)
+    PROJECT_ROOT = os.getcwd() # Fallback to current working directory
     if _SCRIPT_LOGGING_ENABLED:
         print(f"CONSTANTS.PY WARNING: __file__ not defined, PROJECT_ROOT defaulted to CWD: {PROJECT_ROOT}")
 
 # --- Gameplay / Physics / Screen Dimensions ---
 GAME_WIDTH = 960
 GAME_HEIGHT = 600
-TILE_SIZE = 40.0 # Changed to float for consistency
+TILE_SIZE = 40.0 
 FPS = 60
 
 PLAYER_ROLL_CONTROL_ACCEL_FACTOR = 0.4
@@ -53,14 +60,14 @@ GROUND_SNAP_THRESHOLD = 5.0
 CEILING_SNAP_THRESHOLD = 2.0
 MIN_SIGNIFICANT_FALL_VEL = 1.5
 
-ANIM_FRAME_DURATION = 80 # milliseconds
+ANIM_FRAME_DURATION = 80 
 
 PLAYER_ATTACK1_DAMAGE = 10
 PLAYER_ATTACK2_DAMAGE = 5
 PLAYER_COMBO_ATTACK_DAMAGE = 20
 PLAYER_CROUCH_ATTACK_DAMAGE = 5
 PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER = 1.5
-CHARACTER_ATTACK_STATE_DURATION = 480 # milliseconds
+CHARACTER_ATTACK_STATE_DURATION = 480 
 
 CHEST_CLOSED_SPRITE_PATH = "characters/items/chest.gif"
 CHEST_OPEN_DISPLAY_DURATION_MS = 5000
@@ -73,51 +80,51 @@ CHEST_MASS = 5.0
 
 FIREBALL_DAMAGE = 50
 FIREBALL_SPEED = 9.0
-FIREBALL_COOLDOWN = 750 # milliseconds
-FIREBALL_LIFESPAN = 2500 # milliseconds
+FIREBALL_COOLDOWN = 750 
+FIREBALL_LIFESPAN = 2500 
 FIREBALL_SPRITE_PATH = "characters/weapons/fire.gif"
 FIREBALL_DIMENSIONS = (61.0, 58.0)
 
 POISON_DAMAGE = 20
 POISON_SPEED = 6.0
-POISON_COOLDOWN = 1000 # milliseconds
-POISON_LIFESPAN = 3000 # milliseconds
+POISON_COOLDOWN = 1000 
+POISON_LIFESPAN = 3000 
 POISON_SPRITE_PATH = "characters/weapons/poison.gif"
 POISON_DIMENSIONS = (40.0, 40.0)
 
 BOLT_DAMAGE = 35
 BOLT_SPEED = 5.0
-BOLT_COOLDOWN = 600 # milliseconds
-BOLT_LIFESPAN = 1500 # milliseconds
+BOLT_COOLDOWN = 600 
+BOLT_LIFESPAN = 1500 
 BOLT_SPRITE_PATH = "characters/weapons/bolt1_resized_11x29.gif"
 BOLT_DIMENSIONS = (11.0, 29.0)
 
 BLOOD_DAMAGE = 30
 BLOOD_SPEED = 8.0
-BLOOD_COOLDOWN = 800 # milliseconds
-BLOOD_LIFESPAN = 2000 # milliseconds
+BLOOD_COOLDOWN = 800 
+BLOOD_LIFESPAN = 2000 
 BLOOD_SPRITE_PATH = "characters/weapons/blood.gif"
 BLOOD_DIMENSIONS = (40.0, 40.0)
 
 ICE_DAMAGE = 10
 ICE_SPEED = 5.0
-ICE_COOLDOWN = 900 # milliseconds
-ICE_LIFESPAN = 2200 # milliseconds
+ICE_COOLDOWN = 900 
+ICE_LIFESPAN = 2200 
 ICE_SPRITE_PATH = "characters/weapons/ice.gif"
 ICE_DIMENSIONS = (40.0, 40.0)
 
 SHADOW_PROJECTILE_DAMAGE = 45
 SHADOW_PROJECTILE_SPEED = 11.0
-SHADOW_PROJECTILE_COOLDOWN = 800 # milliseconds
-SHADOW_PROJECTILE_LIFESPAN = 1700 # milliseconds
+SHADOW_PROJECTILE_COOLDOWN = 800 
+SHADOW_PROJECTILE_LIFESPAN = 1700 
 SHADOW_PROJECTILE_SPRITE_PATH = "characters/weapons/shadow095.gif"
 SHADOW_PROJECTILE_DIMENSIONS = (40.0, 40.0)
 
-GREY_PROJECTILE_DAMAGE = 0 # Example utility projectile
+GREY_PROJECTILE_DAMAGE = 0 
 GREY_PROJECTILE_SPEED = 5.0
-GREY_PROJECTILE_COOLDOWN = 750 # milliseconds
-GREY_PROJECTILE_LIFESPAN = 1500 # milliseconds
-GREY_PROJECTILE_SPRITE_PATH = "characters/weapons/grey.gif" # Placeholder
+GREY_PROJECTILE_COOLDOWN = 750 
+GREY_PROJECTILE_LIFESPAN = 1500 
+GREY_PROJECTILE_SPRITE_PATH = "characters/weapons/grey.gif" 
 GREY_PROJECTILE_DIMENSIONS = (40.0, 40.0)
 
 ENEMY_MAX_HEALTH = 80
@@ -127,16 +134,16 @@ ENEMY_FRICTION = -0.12
 ENEMY_DETECTION_RANGE = 250.0
 ENEMY_ATTACK_RANGE = 70.0
 ENEMY_ATTACK_DAMAGE = 10
-ENEMY_ATTACK_COOLDOWN = 1500 # milliseconds
+ENEMY_ATTACK_COOLDOWN = 1500 
 ENEMY_PATROL_DIST = 150.0
-ENEMY_HIT_STUN_DURATION = 300 # milliseconds
-ENEMY_HIT_COOLDOWN = 500 # milliseconds
+ENEMY_HIT_STUN_DURATION = 300 
+ENEMY_HIT_COOLDOWN = 500 
 ENEMY_HIT_BOUNCE_Y = PLAYER_JUMP_STRENGTH * 0.3
-ENEMY_STOMP_DEATH_DURATION = 300 # milliseconds
-ENEMY_POST_ATTACK_PAUSE_DURATION = 200 # milliseconds
+ENEMY_STOMP_DEATH_DURATION = 300 
+ENEMY_POST_ATTACK_PAUSE_DURATION = 200 
 ENEMY_AFLAME_SPEED_MULTIPLIER = 1.3
 ENEMY_DEFLAME_SPEED_MULTIPLIER = 1.2
-ENEMY_STOMP_SQUASH_DURATION_MS = 400 # milliseconds
+ENEMY_STOMP_SQUASH_DURATION_MS = 400 
 
 ENEMY_AFLAME_DURATION_MS = 3000
 ENEMY_DEFLAME_DURATION_MS = 2000
@@ -145,6 +152,10 @@ ENEMY_AFLAME_DAMAGE_INTERVAL_MS = 500
 ENEMY_FROZEN_DURATION_MS = 3000
 ENEMY_DEFROST_DURATION_MS = 1000
 STONE_SMASHED_DURATION_MS = 5000
+# New Enemy Status Effect Durations
+ENEMY_ZAPPED_DURATION_MS = 2500
+ENEMY_ZAPPED_DAMAGE_PER_TICK = 2
+ENEMY_ZAPPED_DAMAGE_INTERVAL_MS = 300
 
 PLAYER_AFLAME_DURATION_MS = 3000
 PLAYER_DEFLAME_DURATION_MS = 3000
@@ -152,6 +163,10 @@ PLAYER_AFLAME_DAMAGE_PER_TICK = 5
 PLAYER_AFLAME_DAMAGE_INTERVAL_MS = 1000
 PLAYER_FROZEN_DURATION_MS = 2800
 PLAYER_DEFROST_DURATION_MS = 1200
+# New Player Status Effect Durations
+PLAYER_ZAPPED_DURATION_MS = 2000 # Example, could be different from enemy
+PLAYER_ZAPPED_DAMAGE_PER_TICK = 1 # Example
+PLAYER_ZAPPED_DAMAGE_INTERVAL_MS = 500 # Example
 
 PLAYER_AFLAME_ACCEL_MULTIPLIER = 1.15
 PLAYER_AFLAME_SPEED_MULTIPLIER = 1.1
@@ -166,7 +181,7 @@ DARK_RED = (139, 0, 0)
 GREEN = (0, 255, 0)
 DARK_GREEN = (0, 100, 0)
 BLUE = (0, 0, 255)
-LIGHT_BLUE = (173, 216, 230) # Often used as default background
+LIGHT_BLUE = (173, 216, 230) 
 YELLOW = (255, 255, 0)
 GRAY = (128, 128, 128)
 DARK_GRAY = (50, 50, 50)
@@ -174,7 +189,7 @@ LIGHT_GRAY = (200, 200, 200)
 ORANGE_RED = (255, 69, 0)
 MAGENTA = (255, 0, 255)
 PURPLE_BACKGROUND = (75, 0, 130)
-SAND = (244,164,96) # Added from editor_config for consistency
+SAND = (244,164,96) 
 
 # --- UI / HUD ---
 HEALTH_BAR_WIDTH = 50.0
@@ -184,139 +199,110 @@ HUD_HEALTH_BAR_WIDTH = HEALTH_BAR_WIDTH * 2.0
 HUD_HEALTH_BAR_HEIGHT = HEALTH_BAR_HEIGHT + 4.0
 
 # --- Hazards ---
-LAVA_PATCH_HEIGHT = 20.0 # Example, can be overridden by placed object size
+LAVA_PATCH_HEIGHT = 20.0 
 LAVA_DAMAGE = 25
-LAVA_SPRITE_PATH = "characters/assets/lava.gif" # Used by editor for default lava tile
+LAVA_SPRITE_PATH = "characters/assets/lava.gif" 
 
 # --- File System ---
 def get_maps_directory():
-    """Determines the maps directory path."""
+    """
+    Determines the absolute path to the base 'maps' directory.
+    This 'maps' directory will contain subfolders for each individual map.
+    """
+    maps_dir_name = "maps" # The name of the base maps folder
+    
     # If running as a PyInstaller bundle
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        # _MEIPASS is the temporary folder where bundled files are extracted
         bundle_dir_meipass = sys._MEIPASS # type: ignore
-        bundled_maps_path = os.path.join(bundle_dir_meipass, 'maps')
+        # Check if 'maps' is bundled directly within _MEIPASS
+        bundled_maps_path = os.path.join(bundle_dir_meipass, maps_dir_name)
         if os.path.isdir(bundled_maps_path):
-            return bundled_maps_path
+            return os.path.normpath(bundled_maps_path)
+        
         # Fallback: check next to executable if not found in _MEIPASS/maps
         exe_dir = os.path.dirname(sys.executable)
-        maps_next_to_exe = os.path.join(exe_dir, 'maps')
+        maps_next_to_exe = os.path.join(exe_dir, maps_dir_name)
         if os.path.isdir(maps_next_to_exe):
-            return maps_next_to_exe
+            return os.path.normpath(maps_next_to_exe)
+        
         # If still not found, default to the _MEIPASS path (might be an issue with bundle structure)
-        return bundled_maps_path
+        # This allows LevelLoader to still attempt loading relative to a bundled location.
+        return os.path.normpath(bundled_maps_path) 
     else:
         # Development mode: 'maps' directory in the project root
+        # PROJECT_ROOT is defined at the top of this file
         if PROJECT_ROOT:
-            return os.path.join(PROJECT_ROOT, 'maps')
+            return os.path.normpath(os.path.join(PROJECT_ROOT, maps_dir_name))
         else:
             # Absolute fallback if PROJECT_ROOT failed (should be rare)
             if _SCRIPT_LOGGING_ENABLED:
                 print("CONSTANTS.PY ERROR: PROJECT_ROOT not determined. MAPS_DIR defaulting to './maps' relative to CWD.")
-            return 'maps'
-MAPS_DIR = get_maps_directory()
+            return os.path.normpath(maps_dir_name) 
 
-# --- Networking (if applicable) ---
+MAPS_DIR = get_maps_directory() # This is the path to the base "maps" folder
+
+# --- Networking ---
 SERVER_IP_BIND = '0.0.0.0'
 SERVER_PORT_TCP = 5555
-SERVICE_NAME = "platformer_adventure_lan_v1" # For service discovery
+SERVICE_NAME = "platformer_adventure_lan_v1" 
 DISCOVERY_PORT_UDP = 5556
-BUFFER_SIZE = 8192 # bytes
-BROADCAST_INTERVAL_S = 1.0 # seconds
-CLIENT_SEARCH_TIMEOUT_S = 5.0 # seconds
-MAP_DOWNLOAD_CHUNK_SIZE = 4096 # bytes
+BUFFER_SIZE = 8192 
+BROADCAST_INTERVAL_S = 1.0 
+CLIENT_SEARCH_TIMEOUT_S = 5.0 
+MAP_DOWNLOAD_CHUNK_SIZE = 4096 
 
-# --- Editor Specific (can be overridden or augmented by editor_config.py) ---
-# These are game-related defaults that the editor might use or expose.
+# --- Editor Specific ---
 EDITOR_SCREEN_INITIAL_WIDTH = 1380
 EDITOR_SCREEN_INITIAL_HEIGHT = 820
-LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json" # Editor's own save format
-GAME_LEVEL_FILE_EXTENSION = ".py"          # Format the game loads
+LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json" 
+GAME_LEVEL_FILE_EXTENSION = ".py"          
 
 # --- Gameplay Modifiers / Toggles ---
-PLAYER_SELF_DAMAGE = 10 # Example for testing friendly fire
+PLAYER_SELF_DAMAGE = 10 
 ALLOW_SELF_FIREBALL_DAMAGE = False
-ENABLE_RANDOM_CHEST_SPAWN_IF_NONE_IN_MAP = False # If true, game might auto-add a chest
+ENABLE_RANDOM_CHEST_SPAWN_IF_NONE_IN_MAP = False 
 
 # --- Player State Durations (milliseconds) ---
 PLAYER_DASH_DURATION = 150
 PLAYER_ROLL_DURATION = 1000
 PLAYER_SLIDE_DURATION = 400
 PLAYER_WALL_CLIMB_DURATION = 500
-PLAYER_COMBO_WINDOW = 250 # Time window to chain combo attacks
-PLAYER_HIT_STUN_DURATION = 300 # How long player is stunned when hit
-PLAYER_HIT_COOLDOWN = 600 # Invulnerability after being hit
+PLAYER_COMBO_WINDOW = 250 
+PLAYER_HIT_STUN_DURATION = 300 
+PLAYER_HIT_COOLDOWN = 600 
 
 # --- Player Projectile Keys (Defaults for display/reference) ---
-# Actual input mapping is handled by input_manager and config.py
-P1_FIREBALL_KEY = "1"
-P1_POISON_KEY = "2"
-P1_BOLT_KEY = "3"
-P1_BLOOD_KEY = "4"
-P1_ICE_KEY = "5"
-P1_SHADOW_PROJECTILE_KEY = "6"
-P1_GREY_PROJECTILE_KEY = "7"
+P1_FIREBALL_KEY = "1"; P1_POISON_KEY = "2"; P1_BOLT_KEY = "3"; P1_BLOOD_KEY = "4"; P1_ICE_KEY = "5"; P1_SHADOW_PROJECTILE_KEY = "6"; P1_GREY_PROJECTILE_KEY = "7"
+P2_FIREBALL_KEY = "Numpad8"; P2_POISON_KEY = "Numpad9"; P2_BOLT_KEY = "Numpad0"; P2_BLOOD_KEY = "NumpadDecimal"; P2_ICE_KEY = "NumpadSubtract"; P2_SHADOW_PROJECTILE_KEY = "NumpadAdd"; P2_GREY_PROJECTILE_KEY = "NumpadEnter"
+P3_FIREBALL_KEY = "F1"; P3_POISON_KEY = "F2"; P3_BOLT_KEY = "F3"; P3_BLOOD_KEY = "F4"; P3_ICE_KEY = "F5"; P3_SHADOW_PROJECTILE_KEY = "F6"; P3_GREY_PROJECTILE_KEY = "F7"
+P4_FIREBALL_KEY = "F8"; P4_POISON_KEY = "F9"; P4_BOLT_KEY = "F10"; P4_BLOOD_KEY = "F11"; P4_ICE_KEY = "F12"; P4_SHADOW_PROJECTILE_KEY = "Insert"; P4_GREY_PROJECTILE_KEY = "Delete"
 
-P2_FIREBALL_KEY = "Numpad8"
-P2_POISON_KEY = "Numpad9"
-P2_BOLT_KEY = "Numpad0"
-P2_BLOOD_KEY = "NumpadDecimal"
-P2_ICE_KEY = "NumpadSubtract"
-P2_SHADOW_PROJECTILE_KEY = "NumpadAdd"
-P2_GREY_PROJECTILE_KEY = "NumpadEnter"
-
-P3_FIREBALL_KEY = "F1"
-P3_POISON_KEY = "F2"
-P3_BOLT_KEY = "F3"
-P3_BLOOD_KEY = "F4"
-P3_ICE_KEY = "F5"
-P3_SHADOW_PROJECTILE_KEY = "F6"
-P3_GREY_PROJECTILE_KEY = "F7"
-
-P4_FIREBALL_KEY = "F8"
-P4_POISON_KEY = "F9"
-P4_BOLT_KEY = "F10"
-P4_BLOOD_KEY = "F11"
-P4_ICE_KEY = "F12"
-P4_SHADOW_PROJECTILE_KEY = "Insert"
-P4_GREY_PROJECTILE_KEY = "Delete"
-
-# --- Input Handling Constants (used by input_manager) ---
-# Lists of actions that might be triggered by joystick axes or hats beyond simple movement
+# --- Input Handling Constants ---
 JOYSTICK_AXIS_EVENT_ACTIONS = [
     "jump", "crouch", "attack1", "attack2", "dash", "roll", "interact",
     "projectile1", "projectile2", "projectile3", "projectile4",
     "projectile5", "projectile6", "projectile7",
     "pause", "reset", "menu_confirm", "menu_cancel",
-    "up", "down" # For UI navigation or aiming
+    "up", "down" 
 ]
 JOYSTICK_HAT_EVENT_ACTIONS = [
-    "jump", "crouch", # Example: D-Pad Up/Down for Jump/Crouch
+    "jump", "crouch", 
     "projectile1", "projectile2", "projectile3", "projectile4",
-    "projectile5", "projectile6", "projectile7", # Example: D-Pad directions for projectiles
+    "projectile5", "projectile6", "projectile7", 
     "menu_up", "menu_down", "menu_left", "menu_right",
     "menu_confirm", "menu_cancel", "pause", "reset",
-    "up", "down", "left", "right" # General D-Pad directions
+    "up", "down", "left", "right" 
 ]
+MAX_JOYSTICK_INSTANCE_IDS_FOR_PREV_STATE = 16 
 
-MAX_JOYSTICK_INSTANCE_IDS_FOR_PREV_STATE = 16 # For tracking previous states of multiple joysticks
+# --- Asset Paths ---
+ASSETS_SPRITES_DIR = "assets/sprites" 
+ASSETS_SOUNDS_DIR = "assets/sounds"   
 
-# --- Asset Paths (examples, game should manage its own comprehensive asset loading) ---
-# This file primarily defines gameplay constants. Specific asset paths are better managed
-# by an asset loading system or defined directly where used if simple.
-# However, some default paths used by editor for palette items can be here.
-ASSETS_SPRITES_DIR = "assets/sprites" # Example, if you centralize sprites
-ASSETS_SOUNDS_DIR = "assets/sounds"   # Example
-
-# --- Game States (example enum-like constants) ---
-STATE_MENU = "MENU"
-STATE_PLAYING = "PLAYING"
-STATE_GAME_OVER = "GAME_OVER"
-STATE_PAUSED = "PAUSED"
-STATE_LEVEL_EDITOR = "LEVEL_EDITOR" # If editor is launched from game
+# --- Game States ---
+STATE_MENU = "MENU"; STATE_PLAYING = "PLAYING"; STATE_GAME_OVER = "GAME_OVER"
+STATE_PAUSED = "PAUSED"; STATE_LEVEL_EDITOR = "LEVEL_EDITOR" 
 
 if _SCRIPT_LOGGING_ENABLED:
     print(f"CONSTANTS.PY: PROJECT_ROOT determined as: {PROJECT_ROOT}")
-    print(f"CONSTANTS.PY: MAPS_DIR determined as: {MAPS_DIR}")
-
-#################### END OF FILE: constants.py ####################
+    print(f"CONSTANTS.PY: MAPS_DIR (base maps folder) determined as: {MAPS_DIR}")
