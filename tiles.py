@@ -1,3 +1,5 @@
+#################### START OF FILE: tiles.py ####################
+
 # tiles.py
 # -*- coding: utf-8 -*-
 """
@@ -10,7 +12,7 @@ Lava class now uses animated GIF. BackgroundTile added.
 import sys # For logger fallback
 from typing import Optional, Any, Tuple, Dict, List 
 
-from PySide6.QtGui import QPixmap, QColor, QPainter, QPen, QImage # Added QImage
+from PySide6.QtGui import QPixmap, QColor, QPainter, QPen, QBrush, QImage # Added QImage
 from PySide6.QtCore import QRectF, QPointF, Qt, QSize 
 import logging
 import time # For monotonic timer
@@ -365,3 +367,5 @@ class BackgroundTile:
 
     def alive(self) -> bool:
         return True
+
+#################### END OF FILE: tiles.py ####################

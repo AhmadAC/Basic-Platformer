@@ -1,5 +1,3 @@
-#################### START OF FILE: app_core.py ####################
-
 # app_core.py
 # -*- coding: utf-8 -*-
 """
@@ -8,13 +6,15 @@ Handles window creation, UI views, game loop, input management,
 and game mode orchestration.
 Map loading now uses map_name_folder/map_name_file.py structure.
 MODIFIED: Statue physics and lifecycle management in game loop.
+MODIFIED: Chest insta-kill logic for P1 in host_waiting mode.
 """
-# version 2.1.3 (Statue Physics and Lifecycle in Game Loop)
+# version 2.1.4 (Chest Insta-Kill in host_waiting)
 
 import sys
 import os
 import traceback
 import time
+import math # Added for chest crush logic
 from typing import Dict, Optional, Any, List, Tuple, cast
 
 from PySide6.QtWidgets import (
@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QScrollArea
 )
 from PySide6.QtGui import (QFont, QKeyEvent, QMouseEvent, QCloseEvent, QScreen, QKeySequence)
-from PySide6.QtCore import Qt, Signal, Slot, QThread, QSize, QTimer
+from PySide6.QtCore import Qt, Signal, Slot, QThread, QSize, QTimer, QRectF # Added QRectF for type hinting
 
 import pygame # For joystick input and event pump
 
@@ -42,7 +42,8 @@ try:
     from game_ui import GameSceneWidget, IPInputDialog
     import config as game_config
     from player import Player
-    from statue import Statue # Import Statue
+    from statue import Statue
+    from items import Chest # Import Chest
 
     from app_ui_creator import (
         _create_main_menu_widget, _create_map_select_widget,
@@ -267,7 +268,7 @@ class MainWindow(QMainWindow):
         self._lan_search_list_selected_idx = -1; self._ip_dialog_selected_button_idx = 0
         self._couch_coop_player_select_dialog = None
         self._couch_coop_player_select_dialog_buttons_ref = []
-        self._couch_coop_player_select_dialog_selected_idx = 1
+        self._couch_coop_player_select_dialog_selected_idx = 1 # Default to "2 Players" button (index 1)
         self.selected_couch_coop_players = 2
 
         self._last_pygame_joy_nav_time = 0.0
@@ -288,7 +289,7 @@ class MainWindow(QMainWindow):
 
         self.fonts = {
             "small": QFont("Arial", 10),
-            "medium": QFont("Arial", 20), # MODIFIED FONT SIZE
+            "medium": QFont("Arial", 20),
             "large": QFont("Arial", 24, QFont.Weight.Bold),
             "debug": QFont("Monospace", 9)
         }
@@ -424,12 +425,12 @@ class MainWindow(QMainWindow):
         num_controllers = len(self._pygame_joysticks)
         for i, btn in enumerate(self._couch_coop_player_select_dialog_buttons_ref):
             players_option = i + 1
-            if players_option <= 2: # 1 and 2 player options are always enabled
+            if players_option <= 2:
                 btn.setEnabled(True)
-            elif players_option == 3: # 3 players
-                btn.setEnabled(num_controllers >= 1) # Needs at least 1 controller (besides keyboard if P1/P2 use it)
-            elif players_option == 4: # 4 players
-                btn.setEnabled(num_controllers >= 2) # Needs at least 2 controllers
+            elif players_option == 3:
+                btn.setEnabled(num_controllers >= 1)
+            elif players_option == 4:
+                btn.setEnabled(num_controllers >= 2)
 
         self.current_modal_dialog = "couch_coop_player_select"
         self._couch_coop_player_select_dialog_selected_idx = 1 # Default to "2 Players" button
@@ -728,30 +729,15 @@ class MainWindow(QMainWindow):
 
         elif self.current_game_mode == "host_active" and self.app_status.app_running and \
              self.server_state and self.server_state.client_ready:
-             # Server-side game logic is now primarily handled in server_logic.py within the NetworkThread
-             # AppCore (main thread) is responsible for P1 input and rendering.
-             # For host_active, if P1 is locally controlled, their update logic similar to host_waiting.
              if game_is_ready_for_logic and not init_is_in_progress:
-                # P1 (Host's player) local update
-                p1_host = self.game_elements.get("player1")
-                if p1_host and isinstance(p1_host, Player):
-                    p1_host_actions = self.get_p1_input_snapshot_for_logic(p1_host)
-                    # Pause/Reset handled by server_logic if it uses this snapshot
-
-                    # Local update for P1 if server logic doesn't fully simulate it
-                    # Typically, server_logic would simulate all players based on received/local input.
-                    # This section might be redundant if server_logic handles P1's full update.
-                    # However, if server_logic only processes P1's input for network state,
-                    # then P1's local simulation needs to happen here.
-                    # For now, assume server_logic.py in NetworkThread handles P1's game logic.
-                    pass # P1's game logic update is now in server_logic.py
-
-                # Update local enemies, statues, projectiles if server_logic doesn't handle them directly
-                # for this "active" game state (often, server_logic would do this)
+                # Logic for host_active is primarily in server_logic.py (NetworkThread)
+                # AppCore handles local P1 input snapshot which is passed to server_logic.
+                pass
 
         elif self.current_game_mode == "host_waiting" and self.app_status.app_running and self.server_state:
             if game_is_ready_for_logic and not init_is_in_progress:
-                p1 = self.game_elements.get("player1")
+                p1: Optional[Player] = self.game_elements.get("player1")
+                p1_actions: Dict[str, bool] = {}
                 if p1 and isinstance(p1, Player):
                     p1_actions = self.get_p1_input_snapshot_for_logic(p1)
                     if p1_actions.get("pause"): self.stop_current_game_mode(show_menu=True); return
@@ -770,32 +756,34 @@ class MainWindow(QMainWindow):
                             )
                             if reset_ok:
                                 info("AppCore (host_waiting): Game reset successful.")
-                                p1_after_reset = self.game_elements.get("player1")
+                                p1_after_reset = self.game_elements.get("player1") # Re-fetch p1
                                 camera_after_reset = self.game_elements.get("camera")
                                 if p1_after_reset and camera_after_reset: camera_after_reset.update(p1_after_reset)
                                 elif camera_after_reset: camera_after_reset.static_update()
                                 if self.server_state: self.server_state.current_map_name = map_name_to_reload
                             else: error("AppCore (host_waiting): Game reset FAILED.")
                         else: error("AppCore (host_waiting) Reset: Cannot determine map to reload.")
+                    
+                    # Re-fetch p1 after potential reset
+                    p1 = self.game_elements.get("player1")
+                    if p1 and isinstance(p1, Player): # Check again
+                        other_players_for_p1_local: List[Player] = []
+                        p1.update(dt_sec,
+                                  self.game_elements.get("platforms_list", []),
+                                  self.game_elements.get("ladders_list", []),
+                                  self.game_elements.get("hazards_list", []),
+                                  other_players_for_p1_local,
+                                  self.game_elements.get("enemy_list", [])
+                                  )
 
-                    other_players_for_p1_local: List[Player] = []
-                    p1.update(dt_sec,
-                              self.game_elements.get("platforms_list", []),
-                              self.game_elements.get("ladders_list", []),
-                              self.game_elements.get("hazards_list", []),
-                              other_players_for_p1_local,
-                              self.game_elements.get("enemy_list", [])
-                              )
-
-                    active_players_for_ai = [p1] if p1 and p1.alive() else []
+                    active_players_for_ai_host_wait = [p1] if p1 and p1.alive() else []
                     for enemy in list(self.game_elements.get("enemy_list",[])):
                         if hasattr(enemy, 'update'):
-                            enemy.update(dt_sec, active_players_for_ai,
+                            enemy.update(dt_sec, active_players_for_ai_host_wait,
                                          self.game_elements.get("platforms_list",[]),
                                          self.game_elements.get("hazards_list",[]),
                                          self.game_elements.get("enemy_list",[]))
 
-                    # --- MODIFIED: Statue Physics and Update Logic ---
                     current_statues_list_appcore = list(self.game_elements.get("statue_objects", []))
                     platforms_list_appcore = self.game_elements.get("platforms_list", [])
                     statues_to_keep_appcore = []
@@ -805,74 +793,141 @@ class MainWindow(QMainWindow):
                         if hasattr(statue_instance_ac, 'alive') and statue_instance_ac.alive():
                             if hasattr(statue_instance_ac, 'apply_physics_step') and not statue_instance_ac.is_smashed:
                                 statue_instance_ac.apply_physics_step(dt_sec, platforms_list_appcore)
-
-                            if hasattr(statue_instance_ac, 'update'): # Handles animation
+                            if hasattr(statue_instance_ac, 'update'):
                                 statue_instance_ac.update(dt_sec)
-
-                            if statue_instance_ac.alive(): # Re-check after update
+                            if statue_instance_ac.alive():
                                 statues_to_keep_appcore.append(statue_instance_ac)
-                            else: # Statue called kill() this frame
+                            else:
                                 statues_killed_this_frame_appcore.append(statue_instance_ac)
                                 debug(f"AppCore (host_waiting): Statue {statue_instance_ac.statue_id} no longer alive.")
-                        # else: statue was already not alive
-
                     self.game_elements["statue_objects"] = statues_to_keep_appcore
-
                     if statues_killed_this_frame_appcore:
                         current_platforms = self.game_elements.get("platforms_list", [])
-                        # Remove killed statues from platforms list if they were in it
                         new_platforms_list_ac = [
-                            p for p in current_platforms
-                            if not (isinstance(p, Statue) and p in statues_killed_this_frame_appcore)
+                            p_plat for p_plat in current_platforms
+                            if not (isinstance(p_plat, Statue) and p_plat in statues_killed_this_frame_appcore)
                         ]
                         if len(new_platforms_list_ac) != len(current_platforms):
                             self.game_elements["platforms_list"] = new_platforms_list_ac
                             debug(f"AppCore (host_waiting): Updated platforms_list after statue removal.")
-                    # --- END MODIFIED Statue Logic ---
 
                     projectiles_current_list = self.game_elements.get("projectiles_list", [])
                     for proj_obj in list(projectiles_current_list):
                         if hasattr(proj_obj, 'update'):
                             proj_targets = [e for e in self.game_elements.get("enemy_list",[]) if hasattr(e, 'alive') and e.alive()]
-                            # Include non-smashed statues as projectile targets
                             proj_targets.extend([s for s in self.game_elements.get("statue_objects", []) if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
                             if p1 and p1.alive(): proj_targets.insert(0,p1)
                             proj_obj.update(dt_sec, self.game_elements.get("platforms_list",[]), proj_targets)
                         if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
                             projectiles_list_ref = self.game_elements.get("projectiles_list");
                             if proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj)
+                    
+                    # --- CHEST LOGIC FOR host_waiting (MODIFIED) ---
+                    current_chest_server: Optional[Chest] = self.game_elements.get("current_chest")
+                    if current_chest_server and isinstance(current_chest_server, Chest) and hasattr(current_chest_server, 'alive') and current_chest_server.alive():
+                        current_chest_server.apply_physics_step(dt_sec) # Physics updated
 
-                    current_chest_server = self.game_elements.get("current_chest")
-                    if current_chest_server and hasattr(current_chest_server, 'update'):
-                        if hasattr(current_chest_server, 'apply_physics_step'):
-                            current_chest_server.apply_physics_step(dt_sec)
-                            # Simplified platform collision for chest (as in server_logic)
-                            current_chest_on_ground_server = False
+                        chest_landed_on_p1_and_killed = False
+                        if not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed' and \
+                           p1 and hasattr(p1, '_valid_init') and p1._valid_init and \
+                           hasattr(p1, 'alive') and p1.alive() and \
+                           not getattr(p1, 'is_dead', True) and not getattr(p1, 'is_petrified', False):
+                            
+                            if current_chest_server.rect.intersects(p1.rect):
+                                is_chest_falling_meaningfully_server = hasattr(current_chest_server, 'vel_y') and current_chest_server.vel_y > 1.0
+                                vertical_overlap_landing_server = current_chest_server.rect.bottom() >= p1.rect.top() and \
+                                                                  current_chest_server.rect.top() < p1.rect.bottom()
+                                is_landing_on_head_area_server = vertical_overlap_landing_server and \
+                                                              current_chest_server.rect.bottom() <= p1.rect.top() + (p1.rect.height() * 0.6)
+                                min_h_overlap_crush_server = current_chest_server.rect.width() * 0.3
+                                actual_h_overlap_crush_server = min(current_chest_server.rect.right(), p1.rect.right()) - \
+                                                                max(current_chest_server.rect.left(), p1.rect.left())
+                                has_sufficient_h_overlap_server = actual_h_overlap_crush_server >= min_h_overlap_crush_server
+
+                                if is_chest_falling_meaningfully_server and is_landing_on_head_area_server and has_sufficient_h_overlap_server:
+                                    player_height_for_calc_server = getattr(p1, 'standing_collision_height', float(C.TILE_SIZE) * 1.5)
+                                    if player_height_for_calc_server <= 0: player_height_for_calc_server = 60.0
+                                    required_fall_distance_server = 2.0 * player_height_for_calc_server
+                                    
+                                    try:
+                                        gravity_val_server = float(C.PLAYER_GRAVITY)
+                                        if gravity_val_server <= 0: gravity_val_server = 0.7
+                                        if required_fall_distance_server <=0: required_fall_distance_server = 1.0
+                                        min_vel_y_for_kill_sq_server = 2 * gravity_val_server * required_fall_distance_server
+                                        vel_y_kill_thresh_server = math.sqrt(min_vel_y_for_kill_sq_server) if min_vel_y_for_kill_sq_server > 0 else 0.0
+                                    except ValueError:
+                                        vel_y_kill_thresh_server = 10.0
+                                        error(f"AppCore(host_waiting) Math error calc vel_y_kill_thresh. Grav: {C.PLAYER_GRAVITY}, ReqDist: {required_fall_distance_server}")
+
+                                    has_fallen_with_kill_velocity_server = current_chest_server.vel_y >= vel_y_kill_thresh_server
+                                    
+                                    if has_fallen_with_kill_velocity_server:
+                                        if hasattr(p1, 'insta_kill'):
+                                            info(f"CRUSH AppCore(host_waiting): Chest landed on P1 with kill velocity. Insta-killing.")
+                                            p1.insta_kill()
+                                        else:
+                                            warning(f"CRUSH_FAIL AppCore(host_waiting): P1 missing insta_kill(). Overkilling.")
+                                            p1.take_damage(p1.max_health * 10) # Overkill
+                                        
+                                        current_chest_server.rect.moveBottom(p1.rect.top())
+                                        if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
+                                        current_chest_server.vel_y = 0.0
+                                        current_chest_server.on_ground = True
+                                        chest_landed_on_p1_and_killed = True
+                                        if hasattr(current_chest_server, '_update_rect_from_image_and_pos'):
+                                            current_chest_server._update_rect_from_image_and_pos()
+                        
+                        current_chest_server.on_ground = False # Reset before platform check
+                        if chest_landed_on_p1_and_killed:
+                            current_chest_server.on_ground = True # It landed on player
+                        
+                        # Platform collision for chest (if not landed on player)
+                        if not chest_landed_on_p1_and_killed and \
+                           not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed':
                             for plat_chest in self.game_elements.get("platforms_list", []):
-                                if isinstance(plat_chest, Statue) and plat_chest.is_smashed: continue # Ignore smashed statues
+                                if isinstance(plat_chest, Statue) and plat_chest.is_smashed: continue
                                 if hasattr(plat_chest, 'rect') and current_chest_server.rect.intersects(plat_chest.rect):
-                                     # Simple landing logic
+                                     # For vel units/frame: scaled_vel_y_chest = current_chest_server.vel_y
+                                     # For vel units/sec: scaled_vel_y_chest = current_chest_server.vel_y * dt_sec
+                                     # Current usage: vel * dt_sec * C.FPS suggests vel is units/ref_tick
                                      scaled_vel_y_chest = current_chest_server.vel_y * dt_sec * C.FPS
                                      previous_chest_bottom_y_estimate = current_chest_server.rect.bottom() - scaled_vel_y_chest
-                                     if current_chest_server.vel_y >=0 and current_chest_server.rect.bottom() > plat_chest.rect.top() and \
-                                        previous_chest_bottom_y_estimate <= plat_chest.rect.top() + 1:
-                                         current_chest_server.rect.moveBottom(plat_chest.rect.top())
-                                         if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
-                                         current_chest_server.vel_y = 0.0
-                                         current_chest_on_ground_server = True; break
-                            current_chest_server.on_ground = current_chest_on_ground_server
-                        current_chest_server.update(dt_sec)
-                        if current_chest_server.state == 'closed' and p1_actions.get("interact", False) and \
+                                     
+                                     if current_chest_server.vel_y >=0 and current_chest_server.rect.bottom() >= plat_chest.rect.top() and \
+                                        previous_chest_bottom_y_estimate <= plat_chest.rect.top() + C.GROUND_SNAP_THRESHOLD :
+                                         min_overlap_ratio_chest = 0.1
+                                         min_horizontal_overlap_chest = current_chest_server.rect.width() * min_overlap_ratio_chest
+                                         actual_overlap_width_chest = min(current_chest_server.rect.right(), plat_chest.rect.right()) - \
+                                                                      max(current_chest_server.rect.left(), plat_chest.rect.left())
+                                         if actual_overlap_width_chest >= min_horizontal_overlap_chest:
+                                             current_chest_server.rect.moveBottom(plat_chest.rect.top())
+                                             if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
+                                             current_chest_server.vel_y = 0.0
+                                             current_chest_server.on_ground = True; break
+                            if hasattr(current_chest_server, '_update_rect_from_image_and_pos'): # Sync rect after all potential moves
+                                current_chest_server._update_rect_from_image_and_pos()
+                        
+                        current_chest_server.update(dt_sec) # Animation/state logic
+
+                        if current_chest_server.state == 'closed' and not current_chest_server.is_collected_flag_internal and \
+                           p1 and p1.alive() and not p1.is_dead and not getattr(p1, 'is_petrified', False) and \
+                           p1_actions.get("interact", False) and \
                            hasattr(p1,'rect') and p1.rect.colliderect(current_chest_server.rect):
                            current_chest_server.collect(p1)
+                           info(f"AppCore(host_waiting): P1 collected chest.")
+                    # --- END CHEST LOGIC FOR host_waiting ---
 
                     camera = self.game_elements.get("camera")
-                    if camera and p1 and p1.alive(): camera.update(p1)
+                    if camera:
+                        p1_for_cam_host_wait = self.game_elements.get("player1") # Re-fetch in case of reset or other changes
+                        if p1_for_cam_host_wait and p1_for_cam_host_wait.alive():
+                            camera.update(p1_for_cam_host_wait)
+                        else:
+                            camera.static_update()
+
 
         elif self.current_game_mode == "join_active" and self.app_status.app_running and \
              self.client_state and self.client_state.map_download_status == "present":
-            # Client-side logic (rendering and input sending) is handled by client_logic.py
-            # AppCore only needs to ensure the game scene widget updates if it's visible.
             pass
 
         if self.current_view_name == "game_scene":
@@ -998,5 +1053,3 @@ if __name__ == "__main__":
             traceback.print_exc()
 
         sys.exit(1)
-
-#################### END OF FILE: app_core.py ####################

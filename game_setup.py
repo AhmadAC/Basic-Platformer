@@ -6,9 +6,9 @@
 Handles initialization and FULL RE-INITIALIZATION (reset) of game elements,
 levels, and entities. Employs aggressive cache busting for map reloading.
 Map paths now use map_name_folder/map_name_file.py structure.
-MODIFIED: Adds map-defined Statues to platforms_list.
+MODIFIED: Adds map-defined Statues to platforms_list (only if not smashed).
 """
-# version 2.0.7 (Statues added to platforms_list)
+# version 2.0.8 (Statues added to platforms_list conditionally)
 import sys
 import os
 import importlib # For importlib.invalidate_caches()
@@ -242,20 +242,23 @@ def initialize_game_elements(
             except Exception as e_enemy_create: error(f"GameSetup: Error creating enemy {i_enemy} during reset: {e_enemy_create}", exc_info=True)
         info(f"GameSetup: Enemies re-created: {len(game_elements_ref['enemy_list'])}")
 
-        # MODIFIED: Add map-defined statues to platforms_list
+        # Create Statues and add to platforms_list if not smashed
         for i_statue, statue_data in enumerate(game_elements_ref["statue_spawns_data_cache"]):
             try:
                 s_id = statue_data.get('id', f"map_statue_rs_{i_statue}") 
-                s_pos = tuple(map(float, statue_data.get('pos', (200.0, 200.0))))
+                s_pos_tuple = tuple(map(float, statue_data.get('pos', (200.0, 200.0)))) # pos is center
                 s_props = statue_data.get('properties', {})
-                # Pass center_x, center_y to Statue constructor
-                new_statue = Statue(s_pos[0], s_pos[1], statue_id=s_id, properties=s_props)
+                
+                new_statue = Statue(center_x=s_pos_tuple[0], center_y=s_pos_tuple[1], 
+                                    statue_id=s_id, properties=s_props)
                 if new_statue._valid_init:
                     game_elements_ref["statue_objects"].append(new_statue)
                     add_to_renderables_if_new(new_statue, game_elements_ref["all_renderable_objects"])
-                    if not new_statue.is_smashed: # Map-defined statues are not initially smashed
+                    # Statues are solid platforms by default unless their properties indicate otherwise
+                    # or they are smashed. Newly created map statues are not smashed initially.
+                    if not new_statue.is_smashed: 
                         game_elements_ref["platforms_list"].append(new_statue)
-                        debug(f"GameSetup: Map-defined Statue ID {s_id} added to platforms_list.")
+                        debug(f"GameSetup: Map-defined Statue ID {s_id} added to platforms_list (initially not smashed).")
                 else: warning(f"GameSetup: Failed to initialize statue {i_statue} (id: {s_id}) during reset.")
             except Exception as e_statue_create: error(f"GameSetup: Error creating statue {i_statue} during reset: {e_statue_create}", exc_info=True)
         info(f"GameSetup: Statues re-created: {len(game_elements_ref['statue_objects'])}")
@@ -265,8 +268,9 @@ def initialize_game_elements(
         for item_data_fresh in items_from_fresh_map_data:
             if item_data_fresh.get('type', '').lower() == 'chest':
                 try:
+                    # Chest pos is midbottom from editor, ensure Statue also uses consistent anchoring if different
                     chest_pos_fresh = tuple(map(float, item_data_fresh.get('pos', (300.0, 300.0))))
-                    new_chest_instance = Chest(x=chest_pos_fresh[0], y=chest_pos_fresh[1])
+                    new_chest_instance = Chest(x=chest_pos_fresh[0], y=chest_pos_fresh[1]) # Chest takes midbottom
                     
                     if new_chest_instance._valid_init:
                         game_elements_ref["collectible_list"].append(new_chest_instance)
@@ -316,3 +320,5 @@ def add_to_renderables_if_new(obj_to_add: Any, renderables_list_ref: List[Any]):
     """Helper to prevent duplicates in all_renderable_objects list."""
     if obj_to_add is not None and obj_to_add not in renderables_list_ref:
         renderables_list_ref.append(obj_to_add)
+
+#################### END OF FILE: game_setup.py ####################

@@ -5,10 +5,9 @@
 Utility functions for map operations in the Level Editor (PySide6 version).
 Handles saving/loading editor JSON and exporting game-compatible Python data scripts.
 Manages map-specific folders.
-VERSION 2.4.7 (Simplified Logging and Guaranteed EditorState Type Hint)
-- Removed local logger setup; assumes logger is configured externally.
-- Ensures EditorState is defined for type hinting even in import error scenarios.
-- Ensures `is_flipped_h` is included in the exported map data.
+VERSION 2.4.8 (Rotation and Flip Persistence)
+- Ensures `rotation` and `is_flipped_h` are saved/loaded in JSON.
+- Includes `rotation` and `is_flipped_h` in the exported game map data.
 """
 import sys
 import os
@@ -17,12 +16,10 @@ import traceback
 import re
 import shutil 
 from typing import Optional, Dict, List, Tuple, Any
-import logging # Keep the import for logging.getLogger
+import logging 
 
-# --- Get a logger instance. It's assumed to be configured by the main application. ---
 logger = logging.getLogger(__name__)
 
-# --- Forward Declaration/Type Stub for EditorState ---
 if 'EditorState' not in globals(): 
     class EditorState: 
         map_name_for_function: str
@@ -44,19 +41,19 @@ if 'EditorState' not in globals():
         assets_palette: Dict[str, Dict[str, Any]]
         palette_current_asset_key: Optional[str]
         palette_asset_is_flipped_h: bool
+        palette_asset_rotation: int
         palette_wall_variant_index: int
         current_selected_asset_paint_color: Optional[Tuple[int,int,int]]
         current_tool_mode: str
         def get_map_pixel_width(self) -> int: return self.map_width_tiles * self.grid_size
         def get_map_pixel_height(self) -> int: return self.map_height_tiles * self.grid_size
         def reset_map_context(self): pass
-        def get_current_placing_asset_effective_key(self) -> Optional[str]: return None
+        def get_current_placement_info(self) -> Tuple[Optional[str], bool, int, int]: return (None, False, 0,0)
 
-# --- Actual Module Imports ---
+
 _IS_STANDALONE_EXECUTION_MAP_UTILS = (__name__ == "__main__")
-_CURRENT_FILE_DIR_MAP_UTILS = os.path.dirname(os.path.abspath(__file__))
+_CURRENT_FILE_DIR_MAP_UTILS = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
 
-# Initialize with fallbacks for ED_CONFIG, C, and editor_history
 class _ED_CONFIG_FALLBACK_MU:
     GAME_LEVEL_FILE_EXTENSION = ".py"; LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"
     BASE_GRID_SIZE = 40; DEFAULT_MAP_WIDTH_TILES = 30; DEFAULT_MAP_HEIGHT_TILES = 20
@@ -65,17 +62,18 @@ class _ED_CONFIG_FALLBACK_MU:
                              "player1_spawn": {"game_type_id": "player1_spawn"}}
     CUSTOM_IMAGE_ASSET_KEY="custom_image_object"; TRIGGER_SQUARE_ASSET_KEY="trigger_square"
     WALL_BASE_KEY = "platform_wall_gray"; WALL_VARIANTS_CYCLE = ["platform_wall_gray"]
+    EDITABLE_ASSET_VARIABLES: Dict[str,Dict[str,Any]] = {}
     def get_default_properties_for_asset(self, game_type_id: str) -> Dict[str, Any]: return {}
 class _C_FALLBACK_MU:
     TILE_SIZE = 40; GRAY = (128,128,128); MAPS_DIR = "maps"; LIGHT_BLUE = (173,216,230)
     DARK_GRAY = (50,50,50); MAGENTA = (255,0,255); PROJECT_ROOT = ""
 class _editor_history_FALLBACK_MU:
     @staticmethod
-    def get_map_snapshot(state): return {}
+    def get_map_snapshot(state:'EditorState') -> Dict[str,Any]: return {}
     @staticmethod
-    def restore_map_from_snapshot(state, snapshot): pass
+    def restore_map_from_snapshot(state:'EditorState', snapshot: Dict[str,Any]): pass
     @staticmethod
-    def push_undo_state(state): pass
+    def push_undo_state(state:'EditorState'): pass
     @staticmethod
     def _deep_copy_object_data(obj_data: Dict[str, Any]) -> Dict[str, Any]: return obj_data.copy() 
 
@@ -89,10 +87,10 @@ try:
         if _PROJECT_ROOT_MAP_UTILS not in sys.path:
             sys.path.insert(0, _PROJECT_ROOT_MAP_UTILS)
         
-        import editor_config as ED_CONFIG_actual
-        from editor_state import EditorState as EditorState_actual 
-        import editor_history as editor_history_actual
-        import constants as C_actual
+        import editor_config as ED_CONFIG_actual # type: ignore
+        from editor_state import EditorState as EditorState_actual  # type: ignore
+        import editor_history as editor_history_actual # type: ignore
+        import constants as C_actual # type: ignore
         logger.info("editor_map_utils: Standalone execution - imports successful.")
     else: 
         from . import editor_config as ED_CONFIG_actual
@@ -101,10 +99,10 @@ try:
         import constants as C_actual 
         logger.info("editor_map_utils: Package execution - imports successful.")
 
-    ED_CONFIG = ED_CONFIG_actual
-    EditorState = EditorState_actual # Override the stub with the actual class
+    ED_CONFIG = ED_CONFIG_actual # type: ignore
+    EditorState = EditorState_actual # type: ignore
     editor_history = editor_history_actual # type: ignore
-    C = C_actual
+    C = C_actual # type: ignore
 
 except ImportError as e:
     logger.error(f"editor_map_utils: Import failed using {'standalone' if _IS_STANDALONE_EXECUTION_MAP_UTILS else 'package'} path: {e}")
@@ -127,7 +125,7 @@ def get_maps_base_directory() -> str:
     project_root_const = getattr(C, 'PROJECT_ROOT', None)
 
     if project_root_const is None or project_root_const == "": 
-        project_root_for_maps = os.path.dirname(_CURRENT_FILE_DIR_MAP_UTILS)
+        project_root_for_maps = os.path.dirname(os.path.dirname(_CURRENT_FILE_DIR_MAP_UTILS)) # Go up one more level from editor/
     else:
         project_root_for_maps = project_root_const
         
@@ -187,7 +185,7 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     editor_state.map_width_tiles = map_width_tiles
     editor_state.map_height_tiles = map_height_tiles
     editor_state.grid_size = ED_CONFIG.BASE_GRID_SIZE # type: ignore
-    editor_state.background_color = existing_bg_color
+    editor_state.background_color = existing_bg_color # type: ignore
     editor_state.camera_offset_x = 0.0
     editor_state.camera_offset_y = 0.0
     editor_state.zoom_level = 1.0
@@ -217,11 +215,11 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
             border_props = ED_CONFIG.get_default_properties_for_asset(border_game_type_id) # type: ignore
             border_props["is_boundary"] = True 
             for i in range(map_width_tiles): 
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": 0, "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False})
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int((map_height_tiles - 1) * gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": 0, "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int((map_height_tiles - 1) * gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0})
             for i in range(1, map_height_tiles - 1):
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": 0, "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False})
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int((map_width_tiles - 1)*gs), "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": 0, "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int((map_width_tiles - 1)*gs), "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0})
 
         spawn_y = int((map_height_tiles - 3) * gs)
         for player_num in range(1, 5):
@@ -238,13 +236,15 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
                     "game_type_id": spawn_game_type_id, 
                     "properties": default_props, 
                     "layer_order": 10,
-                    "is_flipped_h": False 
+                    "is_flipped_h": False,
+                    "rotation": 0
                 })
 
     editor_state.undo_stack.clear()
     editor_state.redo_stack.clear()
     editor_state.palette_current_asset_key = None
     editor_state.palette_asset_is_flipped_h = False
+    editor_state.palette_asset_rotation = 0
     editor_state.palette_wall_variant_index = 0
 
 
@@ -313,7 +313,7 @@ def load_map_from_json(editor_state: EditorState, chosen_json_filepath: str) -> 
 
     if os.path.normpath(actual_json_folder) == os.path.normpath(base_maps_dir):
         logger.info(f"LoadMapJSON: Detected old-style map '{map_name_from_file_stem}' in base maps directory.")
-        new_map_folder_path = get_map_specific_folder_path(map_name_from_file_stem, ensure_exists=True) 
+        new_map_folder_path = get_map_specific_folder_path(map_name_from_file_stem, ensure_exists=True) # type: ignore
         if not new_map_folder_path:
              logger.error(f"LoadMapJSON: Migration error - could not create target folder for '{map_name_from_file_stem}'.")
              return False
@@ -350,7 +350,7 @@ def load_map_from_json(editor_state: EditorState, chosen_json_filepath: str) -> 
                            f"Using filename stem for pathing. Consider renaming the map in editor to match.")
             editor_state.map_name_for_function = final_map_folder_stem_for_paths
         
-        final_map_folder_path = get_map_specific_folder_path(final_map_folder_stem_for_paths, ensure_exists=False) 
+        final_map_folder_path = get_map_specific_folder_path(final_map_folder_stem_for_paths, ensure_exists=False) # type: ignore
 
         if not final_map_folder_path or not os.path.isdir(final_map_folder_path): 
             logger.error(f"LoadMapJSON: Critical error - map folder for '{final_map_folder_stem_for_paths}' not found at '{final_map_folder_path}' after loading JSON.")
@@ -383,16 +383,17 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
         obj.setdefault('w', float(ED_CONFIG.BASE_GRID_SIZE)); obj.setdefault('h', float(ED_CONFIG.BASE_GRID_SIZE)) # type: ignore
         color_val = obj.get('color', getattr(C, 'MAGENTA', (255,0,255)))
         if isinstance(color_val, list) and len(color_val) == 3: obj['color'] = tuple(color_val)
-        elif not (isinstance(color_val, tuple) and len(color_val) == 3): obj['color'] = getattr(C, 'MAGENTA', (255,0,255))
+        elif not (isinstance(color_val, tuple) and len(color_val) == 3): obj['color'] = getattr(C, 'MAGENTA', (255,0,255)) # type: ignore
         obj.setdefault('type', f'generic_{object_category_name}')
         if 'image_path' in obj_orig: obj['image_path'] = obj_orig['image_path']
         if 'crop_rect' in obj_orig: obj['crop_rect'] = obj_orig['crop_rect']
         obj.setdefault('is_flipped_h', False) 
+        obj.setdefault('rotation', 0) # Added rotation
         working_objects.append(obj)
 
     horizontal_strips: List[Dict[str, Any]] = []
     key_func_h = lambda p: (str(p.get('type')), str(p.get('color')), p.get('y'), p.get('h'), 
-                            str(p.get('image_path', '')), str(p.get('crop_rect')), p.get('is_flipped_h'), p.get('x'))
+                            str(p.get('image_path', '')), str(p.get('crop_rect')), p.get('is_flipped_h'), p.get('rotation'), p.get('x'))
     sorted_h = sorted(working_objects, key=key_func_h)
 
     for i, p_base in enumerate(sorted_h):
@@ -408,7 +409,8 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
                abs(p_next.get('x', 0.0) - (current_strip.get('x', 0.0) + current_strip.get('w', 0.0))) < 1e-3 and \
                str(p_next.get('image_path', '')) == str(current_strip.get('image_path', '')) and \
                str(p_next.get('crop_rect')) == str(current_strip.get('crop_rect')) and \
-               p_next.get('is_flipped_h') == current_strip.get('is_flipped_h'):
+               p_next.get('is_flipped_h') == current_strip.get('is_flipped_h') and \
+               p_next.get('rotation') == current_strip.get('rotation'):
                 current_strip['w'] += p_next.get('w', 0.0); p_next['merged'] = True
             elif abs(p_next.get('y', 0.0) - current_strip.get('y', 0.0)) >= 1e-3 or \
                  abs(p_next.get('h', 0.0) - current_strip.get('h', 0.0)) >= 1e-3 or \
@@ -416,7 +418,8 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
                  str(p_next.get('color')) != str(current_strip.get('color')) or \
                  str(p_next.get('image_path', '')) != str(current_strip.get('image_path', '')) or \
                  str(p_next.get('crop_rect')) != str(current_strip.get('crop_rect')) or \
-                 p_next.get('is_flipped_h') != current_strip.get('is_flipped_h'):
+                 p_next.get('is_flipped_h') != current_strip.get('is_flipped_h') or \
+                 p_next.get('rotation') != current_strip.get('rotation'):
                 break
         horizontal_strips.append(current_strip)
 
@@ -424,7 +427,7 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
     strips_to_merge = [strip.copy() for strip in horizontal_strips]
     for strip in strips_to_merge: strip['merged'] = False
     key_func_v = lambda s: (str(s.get('type')), str(s.get('color')), s.get('x'), s.get('w'), 
-                            str(s.get('image_path', '')), str(s.get('crop_rect')), s.get('is_flipped_h'), s.get('y'))
+                            str(s.get('image_path', '')), str(s.get('crop_rect')), s.get('is_flipped_h'), s.get('rotation'), s.get('y'))
     sorted_v = sorted(strips_to_merge, key=key_func_v)
 
     for i, s_base in enumerate(sorted_v):
@@ -440,7 +443,8 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
                abs(s_next.get('y', 0.0) - (current_block.get('y', 0.0) + current_block.get('h', 0.0))) < 1e-3 and \
                str(s_next.get('image_path', '')) == str(current_block.get('image_path', '')) and \
                str(s_next.get('crop_rect')) == str(current_block.get('crop_rect')) and \
-               s_next.get('is_flipped_h') == current_block.get('is_flipped_h'):
+               s_next.get('is_flipped_h') == current_block.get('is_flipped_h') and \
+               s_next.get('rotation') == current_block.get('rotation'):
                 current_block['h'] += s_next.get('h', 0.0); s_next['merged'] = True
             elif abs(s_next.get('x', 0.0) - current_block.get('x', 0.0)) >= 1e-3 or \
                  abs(s_next.get('w', 0.0) - current_block.get('w', 0.0)) >= 1e-3 or \
@@ -448,13 +452,15 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
                  str(s_next.get('color')) != str(current_block.get('color')) or \
                  str(s_next.get('image_path', '')) != str(current_strip.get('image_path', '')) or \
                  str(s_next.get('crop_rect')) != str(current_block.get('crop_rect')) or \
-                 s_next.get('is_flipped_h') != current_block.get('is_flipped_h'):
+                 s_next.get('is_flipped_h') != current_block.get('is_flipped_h') or \
+                 s_next.get('rotation') != current_block.get('rotation'):
                 break
         current_block.pop('merged', None)
         final_entry = {'rect': (current_block.get('x'), current_block.get('y'), current_block.get('w'), current_block.get('h')),
                        'type': current_block.get('type'), 'color': current_block.get('color'),
                        'properties': current_block.get('properties', {}),
-                       'is_flipped_h': current_block.get('is_flipped_h', False)} 
+                       'is_flipped_h': current_block.get('is_flipped_h', False),
+                       'rotation': current_block.get('rotation', 0)} # Added rotation
         if 'image_path' in current_block: final_entry['image_path'] = current_block['image_path']
         if 'crop_rect' in current_block and current_block['crop_rect'] is not None: 
             final_entry['crop_rect'] = current_block['crop_rect'] 
@@ -500,6 +506,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         wx, wy = obj_data.get("world_x"), obj_data.get("world_y")
         obj_props = obj_data.get("properties", {})
         is_flipped_h = obj_data.get("is_flipped_h", False)
+        rotation = obj_data.get("rotation", 0) # Get rotation
         
         if wx is None or wy is None or not asset_key: continue
 
@@ -532,7 +539,18 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                     if isinstance(sp, tuple) and len(sp) == 3: final_color_for_export = sp[2]
             final_color_for_export = final_color_for_export or getattr(C, 'GRAY', (128,128,128))
 
-        all_placed_objects_rect_data_for_bounds.append({'x': export_x, 'y': export_y, 'width': obj_w, 'height': obj_h})
+        # For bounding box, consider rotation for width/height if non-square
+        effective_w_for_bounds, effective_h_for_bounds = obj_w, obj_h
+        if rotation % 180 != 0: # 90 or 270 degrees
+            effective_w_for_bounds, effective_h_for_bounds = obj_h, obj_w
+        all_placed_objects_rect_data_for_bounds.append({'x': export_x, 'y': export_y, 'width': effective_w_for_bounds, 'height': effective_h_for_bounds})
+
+
+        common_export_props = {
+            "properties": obj_props,
+            "is_flipped_h": is_flipped_h,
+            "rotation": rotation
+        }
 
         if is_custom_image_type:
             image_export_data = {
@@ -542,8 +560,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                 'original_height': obj_data.get("original_height"),
                 'crop_rect': obj_data.get("crop_rect"), 
                 'layer_order': obj_data.get("layer_order", 0),
-                'properties': obj_props,
-                'is_flipped_h': is_flipped_h
+                **common_export_props
             }
             if image_export_data['original_width'] is None: del image_export_data['original_width']
             if image_export_data['original_height'] is None: del image_export_data['original_height']
@@ -553,12 +570,11 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             trigger_squares_export.append({
                 'rect': (export_x, export_y, obj_w, obj_h),
                 'layer_order': obj_data.get("layer_order", 0),
-                'properties': obj_props,
-                'is_flipped_h': is_flipped_h 
+                **common_export_props
             })
         elif category == "spawn":
-            spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h)
-            spawn_props_to_export = {**obj_props, "is_flipped_h": is_flipped_h}
+            spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h) # Assuming origin is top-left
+            spawn_props_to_export = {**common_export_props} # common_export_props already includes properties
             for p_num in range(1,5):
                 p_spawn_def_key = f"player{p_num}_spawn"
                 p_spawn_def_data = ED_CONFIG.EDITOR_PALETTE_ASSETS.get(p_spawn_def_key,{}) # type: ignore
@@ -569,27 +585,26 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                     elif p_num == 4: player_start_pos_p4 = spawn_pos; player4_spawn_props = spawn_props_to_export.copy()
                     break 
         elif category == "tile" or "platform" in game_type_id.lower():
-             platforms_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, 'properties': obj_props, 'is_flipped_h': is_flipped_h})
+             platforms_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props})
         elif category == "enemy":
-             enemies_list_export.append({'start_pos': (export_x + obj_w / 2.0, export_y + obj_h), 'type': game_type_id, 'properties': obj_props, 'is_flipped_h': is_flipped_h})
-        elif "ladder" in game_type_id.lower(): ladders_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': 'ladder', 'properties': obj_props, 'is_flipped_h': is_flipped_h})
-        elif "hazard" in game_type_id.lower(): hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, 'properties': obj_props, 'is_flipped_h': is_flipped_h})
-        elif category == "item": items_list_export.append({'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), 'type': game_type_id, 'properties': obj_props, 'is_flipped_h': is_flipped_h})
-        elif "object_stone" in game_type_id.lower(): statue_list_export.append({'id': obj_data.get("unique_id", f"statue_{len(statue_list_export)}"), 'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), 'properties': obj_props, 'is_flipped_h': is_flipped_h})
+             enemies_list_export.append({'start_pos': (export_x + obj_w / 2.0, export_y + obj_h), 'type': game_type_id, **common_export_props})
+        elif "ladder" in game_type_id.lower(): ladders_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': 'ladder', **common_export_props})
+        elif "hazard" in game_type_id.lower(): hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props})
+        elif category == "item": items_list_export.append({'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), 'type': game_type_id, **common_export_props})
+        elif "object_stone" in game_type_id.lower(): statue_list_export.append({'id': obj_data.get("unique_id", f"statue_{len(statue_list_export)}"), 'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), **common_export_props})
         elif category == "background_tile": 
             bg_tile_export_data = {'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 
                                    'color': final_color_for_export, 'type': game_type_id, 
                                    'image_path': asset_entry_from_palette.get("source_file") if asset_entry_from_palette else None,
                                    'crop_rect': obj_data.get("crop_rect"), 
-                                   'properties': obj_props,
-                                   'is_flipped_h': is_flipped_h} 
+                                   **common_export_props} 
             if bg_tile_export_data['crop_rect'] is None: del bg_tile_export_data['crop_rect']
             background_tiles_data_raw.append(bg_tile_export_data)
 
     if not player_start_pos_p1:
         p1_spawn_def = ED_CONFIG.EDITOR_PALETTE_ASSETS.get("player1_spawn",{}) # type: ignore
         p1_game_id = p1_spawn_def.get("game_type_id")
-        if p1_game_id: player1_spawn_props = {**ED_CONFIG.get_default_properties_for_asset(p1_game_id), "is_flipped_h": False} # type: ignore
+        if p1_game_id: player1_spawn_props = {**ED_CONFIG.get_default_properties_for_asset(p1_game_id), "is_flipped_h": False, "rotation":0} # type: ignore
         player_start_pos_p1 = (ts * 2.5, editor_state.map_height_tiles * ts - ts * 3)
 
     platforms_list_export = _merge_rect_objects_to_data(platforms_data_raw, "platform")
