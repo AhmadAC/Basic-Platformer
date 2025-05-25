@@ -156,7 +156,7 @@ def get_asset_pixmap(asset_editor_key: str,
                      override_color: Optional[Tuple[int,int,int]] = None,
                      get_native_size_only: bool = False,
                      is_flipped_h: bool = False,
-                     rotation: int = 0) -> Optional[QPixmap]: # Added rotation
+                     rotation: int = 0) -> Optional[QPixmap]: 
     native_pixmap: Optional[QPixmap] = None
     ts = ED_CONFIG.BASE_GRID_SIZE
 
@@ -211,24 +211,24 @@ def get_asset_pixmap(asset_editor_key: str,
             native_pixmap = _create_colored_pixmap(w, h, color_to_use_tuple or default_color_tuple) # type: ignore
     elif "render_mode" in asset_data_entry and asset_data_entry["render_mode"] == "half_tile":
         half_type = asset_data_entry.get("half_type", "left")
-        default_color_proc = asset_data_entry.get("base_color_tuple", getattr(ED_CONFIG.C, 'MAGENTA', (255,0,255)))
+        default_color_proc = asset_data_entry.get("base_color_tuple", getattr(ED_CONFIG.C, 'MAGENTA', (255,0,255))) # type: ignore
         native_pixmap = _create_half_tile_pixmap(ts, half_type, color_to_use_tuple or default_color_proc) # type: ignore
     elif "icon_type" in asset_data_entry:
         icon_type_str = asset_data_entry["icon_type"]
-        default_color_icon = asset_data_entry.get("base_color_tuple", getattr(ED_CONFIG.C, 'YELLOW', (255,255,0)))
+        default_color_icon = asset_data_entry.get("base_color_tuple", getattr(ED_CONFIG.C, 'YELLOW', (255,255,0))) # type: ignore
         native_pixmap = _create_icon_pixmap(ts, icon_type_str, color_to_use_tuple or default_color_icon) # type: ignore
 
     if not native_pixmap or native_pixmap.isNull():
         logger.warning(f"Native pixmap for '{asset_editor_key}' failed or is null. Creating RED fallback.")
-        fb_w = requested_target_size.width() if requested_target_size.width() > 0 else ED_CONFIG.ASSET_THUMBNAIL_SIZE
-        fb_h = requested_target_size.height() if requested_target_size.height() > 0 else ED_CONFIG.ASSET_THUMBNAIL_SIZE
+        fb_w = requested_target_size.width() if requested_target_size.width() > 0 else ED_CONFIG.ASSET_THUMBNAIL_SIZE # type: ignore
+        fb_h = requested_target_size.height() if requested_target_size.height() > 0 else ED_CONFIG.ASSET_THUMBNAIL_SIZE # type: ignore
         
         fallback_pixmap = QPixmap(max(1, fb_w), max(1, fb_h))
         if fallback_pixmap.isNull():
             logger.error(f"Fallback pixmap for '{asset_editor_key}' is ALSO NULL. Size: {fb_w}x{fb_h}")
             return QPixmap()
 
-        fallback_pixmap.fill(QColor(*getattr(ED_CONFIG.C, 'RED', (255,0,0))))
+        fallback_pixmap.fill(QColor(*getattr(ED_CONFIG.C, 'RED', (255,0,0)))) # type: ignore
         
         painter = QPainter()
         if painter.begin(fallback_pixmap):
@@ -297,16 +297,26 @@ def get_asset_pixmap(asset_editor_key: str,
         orig_size_data = asset_data_entry.get("original_size_pixels")
         if orig_size_data and isinstance(orig_size_data, tuple) and len(orig_size_data) == 2 and native_pixmap:
             target_native_w, target_native_h = orig_size_data
-            # Note: After rotation, width and height might have swapped.
-            # If we must strictly return the original_size_pixels, scaling might be needed again.
-            # For now, assume rotation changes effective dimensions for 'native' size if rotated by 90/270.
+            
             current_w, current_h = native_pixmap.width(), native_pixmap.height()
-            if rotation % 180 != 0: # 90 or 270 degrees rotation
-                 current_w, current_h = current_h, current_w # Swap effective dimensions
+            # If rotated by 90/270, the target native w/h might conceptually swap if the original asset definition
+            # implies a specific orientation for those original_size_pixels.
+            # However, get_asset_pixmap should return a pixmap whose dimensions match the visual content after rotation.
+            # So, if target_native_w/h are from unrotated asset, scaling after rotation needs care.
+            # For simplicity, we scale to requested_target_size later if not native.
+            # If native_size_only, and rotated by 90/270, the actual pixmap might have swapped w/h.
+            # The `original_size_pixels` usually refers to the asset's base orientation.
+            
+            # If the pixmap was rotated by 90 or 270, its visual width/height are swapped relative to its original.
+            # So, to match `original_size_pixels` which refers to unrotated, we might need to scale to swapped target dimensions.
+            effective_target_w, effective_target_h = target_native_w, target_native_h
+            if rotation % 180 != 0: # 90 or 270
+                effective_target_w, effective_target_h = target_native_h, target_native_w
 
-            if current_w != target_native_w or current_h != target_native_h:
-                 if target_native_w > 0 and target_native_h > 0:
-                    return native_pixmap.scaled(target_native_w, target_native_h, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation) # This might distort if aspect changed due to rotation
+            if native_pixmap.width() != effective_target_w or native_pixmap.height() != effective_target_h:
+                 if effective_target_w > 0 and effective_target_h > 0:
+                    # Scale to maintain the aspect ratio of the *current* (possibly rotated) pixmap, fitting it within effective_target_w/h
+                    return native_pixmap.scaled(effective_target_w, effective_target_h, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         return native_pixmap 
     
     if native_pixmap and native_pixmap.size() != requested_target_size and requested_target_size.isValid() and requested_target_size.width() > 0 and requested_target_size.height() > 0 :
@@ -358,7 +368,6 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
                 original_w, original_h = params[0], params[1]
         asset_data_entry["original_size_pixels"] = (original_w, original_h)
         
-        # Palette icons are always default orientation
         pixmap_for_palette = get_asset_pixmap(asset_key, asset_data_entry, target_thumb_size, get_native_size_only=False, is_flipped_h=False, rotation=0)
         
         intended_pixmap_created_successfully = False
@@ -396,7 +405,6 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
         
         asset_data_entry["q_pixmap"] = pixmap_for_palette
 
-        # Cursor pixmap is also initially unflipped/unrotated; MapViewWidget handles dynamic cursor visuals
         cursor_base_pixmap_native = get_asset_pixmap(asset_key, asset_data_entry, 
                                                      QSize(max(1,original_w), max(1,original_h)), 
                                                      override_color=None, 

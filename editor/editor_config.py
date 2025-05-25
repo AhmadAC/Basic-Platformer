@@ -3,12 +3,13 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.3 (Corner Rounding Properties and Slider Prep)
+## version 2.2.4 (Added is_crouched_variant property for Statues)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added "Select Tool".
 - Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
 - Added WALL_VARIANTS_CYCLE list.
 - Uncommented wall corner rounding properties for slider implementation.
+- Added "is_crouched_variant" to stone object properties.
 """
 import sys
 import os
@@ -196,7 +197,7 @@ WALL_VARIANTS_CYCLE: List[str] = [
 # --- Asset Orientation Rules (New) ---
 # Asset keys that support 90-degree rotation (typically walls and their variants)
 ROTATABLE_ASSET_KEYS: List[str] = [
-    key for key in EDITOR_PALETTE_ASSETS 
+    key for key in EDITOR_PALETTE_ASSETS
     if ("wall" in key.lower() or "ledge" in key.lower()) and EDITOR_PALETTE_ASSETS[key].get("category") == "tile"
 ]
 # Categories/keys that support horizontal flipping (most other placeable items)
@@ -220,7 +221,7 @@ _BASE_WALL_PROPERTIES = {
     "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health (if Dest.)"},
     "material_type": {"type": "str", "default": "stone", "label": "Material", "options": ["stone", "wood", "metal", "ice"]},
     "corner_radius": {"type": "slider", "default": 0, "min": 0, "max": TS // 2, "label": "Corner Radius"}, # Changed type to "slider"
-    "round_top_left": {"type": "bool", "default": True, "label": "Round Top-Left"}, 
+    "round_top_left": {"type": "bool", "default": True, "label": "Round Top-Left"},
     "round_top_right": {"type": "bool", "default": True, "label": "Round Top-Right"},
     "round_bottom_left": {"type": "bool", "default": True, "label": "Round Bottom-Left"},
     "round_bottom_right": {"type": "bool", "default": True, "label": "Round Bottom-Right"},
@@ -278,13 +279,15 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "health": {"type": "int", "default": 150, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
         "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"},
         "push_resistance": {"type": "float", "default": 1.0, "min":0.1, "max": 10.0, "label": "Push Resistance"},
-        "drops_item_on_destroy": {"type": "str", "default": "", "label": "Drops Item (ID or empty)"}
+        "drops_item_on_destroy": {"type": "str", "default": "", "label": "Drops Item (ID or empty)"},
+        "is_crouched_variant": {"type": "bool", "default": False, "label": "Is Crouched Stone Visual"} # ADDED
     },
     "object_stone_crouch": {
         "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
         "health": {"type": "int", "default": 200, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
         "can_be_pushed": {"type": "bool", "default": False, "label": "Can Be Pushed"},
-        "is_heavy": {"type": "bool", "default": True, "label": "Is Heavy"}
+        "is_heavy": {"type": "bool", "default": True, "label": "Is Heavy"},
+        "is_crouched_variant": {"type": "bool", "default": True, "label": "Is Crouched Stone Visual"} # ADDED
     },
 
     # Items

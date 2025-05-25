@@ -2992,8 +2992,8 @@
         },
         {
             "asset_editor_key": "object_stone_crouch",
-            "world_x": 360,
-            "world_y": 920,
+            "world_x": 280,
+            "world_y": 520,
             "game_type_id": "object_stone_crouch",
             "layer_order": 0,
             "properties": {
@@ -3007,8 +3007,8 @@
         },
         {
             "asset_editor_key": "object_stone_crouch",
-            "world_x": 400,
-            "world_y": 920,
+            "world_x": 240,
+            "world_y": 520,
             "game_type_id": "object_stone_crouch",
             "layer_order": 0,
             "properties": {
@@ -3016,20 +3016,6 @@
                 "health": 5,
                 "can_be_pushed": true,
                 "is_heavy": true
-            },
-            "is_flipped_h": false,
-            "rotation": 0
-        },
-        {
-            "asset_editor_key": "item_chest",
-            "world_x": 160,
-            "world_y": 920,
-            "game_type_id": "chest",
-            "layer_order": 0,
-            "properties": {
-                "item_type": "health_potion",
-                "item_quantity": 1,
-                "requires_key_id": ""
             },
             "is_flipped_h": false,
             "rotation": 0
@@ -3256,10 +3242,24 @@
             },
             "is_flipped_h": false,
             "rotation": 0
+        },
+        {
+            "asset_editor_key": "item_chest",
+            "world_x": 520,
+            "world_y": 320,
+            "game_type_id": "chest",
+            "layer_order": 0,
+            "properties": {
+                "item_type": "health_potion",
+                "item_quantity": 1,
+                "requires_key_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0
         }
     ],
-    "camera_offset_x": 268.0,
-    "camera_offset_y": 329.0,
+    "camera_offset_x": 331.0,
+    "camera_offset_y": -124.0,
     "zoom_level": 1.0,
     "show_grid": true,
     "asset_specific_variables": {}
