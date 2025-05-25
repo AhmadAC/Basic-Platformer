@@ -1,2 +1,82 @@
-[2025-05-25 17:53:22.432] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-25 17:53:22.432] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-25 18:06:19.201] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-25 18:06:19.201] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-25 18:06:20.714] DEBUG   logger.py:143 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
+[2025-05-25 18:06:20.754] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
+[2025-05-25 18:06:20.757] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 0.
+[2025-05-25 18:06:20.757] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
+[2025-05-25 18:06:20.771] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-25 18:06:20.771] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
+[2025-05-25 18:06:21.572] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating Player Selection for Couch Co-op.
+[2025-05-25 18:06:22.437] INFO    logger.py:143 (_log_wrapper): Couch Co-op: 2 players selected.
+[2025-05-25 18:06:22.437] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op (2 players).
+[2025-05-25 18:06:22.438] DEBUG   logger.py:143 (_log_wrapper): Populating map list from base directory: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps
+[2025-05-25 18:06:22.441] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-25 18:06:22.442] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three.three'
+[2025-05-25 18:06:22.459] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' (from folder 'three') loaded successfully via function 'load_map_three'.
+[2025-05-25 18:06:22.460] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.two_2.two_2'
+[2025-05-25 18:06:22.471] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'two_2' (from folder 'two_2') loaded successfully via function 'load_map_two_2'.
+[2025-05-25 18:06:22.472] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: map_select
+[2025-05-25 18:06:23.443] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'three' for 2 players.
+[2025-05-25 18:06:23.444] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: three, Target: None, CouchPlayers: 2
+[2025-05-25 18:06:23.473] INFO    logger.py:143 (_log_wrapper): GAME_MODES (_initialize_game_entities): Delegating to game_setup.initialize_game_elements for map 'three', mode 'couch_play', couch_players: 2.
+[2025-05-25 18:06:23.474] INFO    logger.py:143 (_log_wrapper): GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---
+[2025-05-25 18:06:23.474] INFO    logger.py:143 (_log_wrapper): GameSetup: Mode: 'couch_play', Screen: 100x30, Target Map Folder/Stem: 'three'
+[2025-05-25 18:06:23.475] DEBUG   logger.py:143 (_log_wrapper): GameSetup: Clearing all existing game elements from game_elements_ref...
+[2025-05-25 18:06:23.495] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-25 18:06:23.495] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three.three'
+[2025-05-25 18:06:23.497] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' (from folder 'three') loaded successfully via function 'load_map_three'.
+[2025-05-25 18:06:23.498] INFO    logger.py:143 (_log_wrapper): GameSetup: Successfully reloaded pristine map data for 'three'.
+[2025-05-25 18:06:23.498] INFO    logger.py:143 (_log_wrapper): GameSetup: Static map elements re-created. Platforms: 28
+[2025-05-25 18:06:23.670] INFO    logger.py:143 (_log_wrapper): GameSetup: player1 RE-CREATED. Pos: (210.5,918.0), Control: keyboard_p1
+[2025-05-25 18:06:23.799] INFO    logger.py:143 (_log_wrapper): GameSetup: player2 RE-CREATED. Pos: (130.5,918.0), Control: keyboard_p1
+[2025-05-25 18:06:23.799] INFO    logger.py:143 (_log_wrapper): GameSetup: Total active players RE-CREATED: 2
+[2025-05-25 18:06:24.058] INFO    logger.py:143 (_log_wrapper): GameSetup: Enemies re-created: 5
+[2025-05-25 18:06:24.061] INFO    logger.py:143 (_log_wrapper): GameSetup: Statues re-created: 1
+[2025-05-25 18:06:24.079] INFO    logger.py:143 (_log_wrapper): GameSetup (Reset): Chest RE-CREATED at (181.0, 625.0) from fresh map data.
+[2025-05-25 18:06:24.079] INFO    logger.py:143 (_log_wrapper): Camera initialized: Viewport(100.0x30.0), WorldBounds(X: 0.0 to 1677.0, Y: -40.0 to 1000.0)
+[2025-05-25 18:06:24.079] INFO    logger.py:143 (_log_wrapper): GameSetup: Camera re-initialized and focused.
+[2025-05-25 18:06:24.080] INFO    logger.py:143 (_log_wrapper): GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map 'three' ---
+[2025-05-25 18:06:24.080] INFO    logger.py:143 (_log_wrapper): GAME_MODES: game_setup.initialize_game_elements SUCCEEDED for map 'three', mode 'couch_play'.
+[2025-05-25 18:06:24.087] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: game_scene
+[2025-05-25 18:06:24.089] INFO    logger.py:143 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
+[2025-05-25 18:06:24.089] INFO    logger.py:143 (_log_wrapper): Camera Screen Dims Set: 1280.0x649.0
+[2025-05-25 18:06:24.126] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Couch play ready.
+[2025-05-25 18:06:24.522] DEBUG   logger.py:143 (_log_wrapper): Enemy 3 hit wall while patrolling. Turning around.
+[2025-05-25 18:06:25.606] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P2): State changing from 'turn' to 'idle' (original request was 'idle')
+[2025-05-25 18:06:26.695] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P2): State changing from 'run' to 'idle' (original request was 'idle')
+[2025-05-25 18:06:27.957] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P2): State changing from 'jump' to 'jump_fall_trans' (original request was 'jump_fall_trans')
+[2025-05-25 18:06:29.013] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P2): State changing from 'fall' to 'idle' (original request was 'idle')
+[2025-05-25 18:06:30.085] DEBUG   logger.py:143 (_log_wrapper): P2 Kbd Intent: L=True, R=False, U=False, D=False
+[2025-05-25 18:06:31.076] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(210.50,920.00) Vel:( 0.00, 0.00) Acc:(0.00,0.00) State:idle OnG:True WallT:0
+[2025-05-25 18:06:31.317] INFO    logger.py:143 (_log_wrapper): Statue statue_0 at (96.5, 658.0) is being smashed.
+[2025-05-25 18:06:32.089] DEBUG   logger.py:143 (_log_wrapper): PaintEvent GSW: CameraOffset=(-0.0, -351.0), Screen=(1280x649), World(X:0 to 1677, Y:-40 to 1000)
+[2025-05-25 18:06:33.092] DEBUG   logger.py:143 (_log_wrapper): P2 Kbd Intent: L=False, R=True, U=True, D=False
+[2025-05-25 18:06:34.092] DEBUG   logger.py:143 (_log_wrapper): PaintEvent GSW: CameraOffset=(-0.0, -351.0), Screen=(1280x649), World(X:0 to 1677, Y:-40 to 1000)
+[2025-05-25 18:06:35.141] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P2): State changing from 'jump' to 'jump_fall_trans' (original request was 'jump_fall_trans')
+[2025-05-25 18:06:36.149] DEBUG   logger.py:143 (_log_wrapper): P2 Kbd Intent: L=False, R=False, U=False, D=False
+[2025-05-25 18:06:36.326] INFO    logger.py:143 (_log_wrapper): Statue statue_0 smashed duration ended. Killing.
+[2025-05-25 18:06:37.416] DEBUG   logger.py:143 (_log_wrapper): Enemy 3 hit wall while patrolling. Turning around.
+[2025-05-25 18:06:38.727] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P2): State changing from 'idle' to 'jump' (original request was 'jump')
+[2025-05-25 18:06:39.813] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P2): State changing from 'jump' to 'jump_fall_trans' (original request was 'jump_fall_trans')
+[2025-05-25 18:06:41.094] DEBUG   logger.py:143 (_log_wrapper): Enemy 3 hit wall while patrolling. Turning around.
+[2025-05-25 18:06:42.094] DEBUG   logger.py:143 (_log_wrapper): PaintEvent GSW: CameraOffset=(-0.0, -351.0), Screen=(1280x649), World(X:0 to 1677, Y:-40 to 1000)
+[2025-05-25 18:06:43.428] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P2): State change to 'burning' not allowed or no actual change needed (current state already 'burning').
+[2025-05-25 18:06:44.438] DEBUG   logger.py:143 (_log_wrapper): EnemyBase (ID: 2): kill() called. Setting _alive to False.
+[2025-05-25 18:06:44.833] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-25 18:06:44.847] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-25 18:06:44.848] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-25 18:06:44.849] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-25 18:06:44.855] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'couch_play' stopped and resources cleaned up.
+[2025-05-25 18:06:46.012] INFO    logger.py:143 (_log_wrapper): MainWindow: request_close_app called. Initiating close sequence.
+[2025-05-25 18:06:46.013] INFO    logger.py:143 (_log_wrapper): MainWindow: Close event received. Shutting down application.
+[2025-05-25 18:06:46.014] DEBUG   logger.py:143 (_log_wrapper): closeEvent called.
+[2025-05-25 18:06:46.014] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-25 18:06:46.015] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: None
+[2025-05-25 18:06:46.016] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-25 18:06:46.017] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-25 18:06:46.017] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
+[2025-05-25 18:06:46.022] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame Joystick system quit.
+[2025-05-25 18:06:46.065] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame system quit.
+[2025-05-25 18:06:46.067] INFO    logger.py:143 (_log_wrapper): MainWindow: Application shutdown sequence complete.
+[2025-05-25 18:06:46.135] INFO    logger.py:143 (_log_wrapper): QApplication event loop finished. Exit code: 0
+[2025-05-25 18:06:46.136] INFO    logger.py:143 (_log_wrapper): Application fully terminated.

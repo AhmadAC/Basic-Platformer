@@ -3,7 +3,7 @@
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.2 (Initialize crop_rect for uploaded images)
+## version 2.2.3 (Zoom shortcut fixes and event handling refined)
 Level Editor for the Platformer Game (PySide6 Version).
 - Map files (.py, .json) now organized into named subfolders within /maps/.
 - Supports uploading images to the editor for use as map objects.
@@ -13,6 +13,7 @@ Level Editor for the Platformer Game (PySide6 Version).
 - Uses custom QGraphicsItem classes for images and triggers.
 - Removed trailing semicolons and reviewed indentation.
 - Added crop_rect initialization for newly uploaded custom images.
+- Refined keyPressEvent handling for zoom shortcuts.
 """
 import sys
 import os
@@ -149,7 +150,7 @@ class EditorMainWindow(QMainWindow):
         self.editor_state = EditorState()
         self.settings = QSettings("MyPlatformerGame", "LevelEditor_Qt")
         
-        self.init_ui()
+        self.init_ui()      # init_ui must be called before create_actions if actions use widgets
         self.create_actions()
         self.create_menus()
         self.create_status_bar()
@@ -164,8 +165,7 @@ class EditorMainWindow(QMainWindow):
 
         if not self._is_embedded:
             self.update_window_title()
-        self.update_edit_actions_enabled_state()
-        self.update_delete_selection_action_enabled_state() # Update for delete action
+        self.update_edit_actions_enabled_state() # This also calls update_delete_selection_action_enabled_state
 
         self._current_focused_panel_index: int = 0
         self._controller_input_timer: Optional[QTimer] = None
@@ -228,6 +228,8 @@ class EditorMainWindow(QMainWindow):
         self._focusable_panels.append(self.map_view_widget)
 
         # Connect scene selection changed to update delete action enabled state
+        # This needs to be done after map_view_widget is created and before actions are fully utilized
+        # Best placed here, or ensure create_actions is called after this.
         self.map_view_widget.map_scene.selectionChanged.connect(self.update_delete_selection_action_enabled_state)
 
 
@@ -352,15 +354,15 @@ class EditorMainWindow(QMainWindow):
                 if current_time - last_event_time_for_key_dir > self._controller_axis_repeat_delay:
                     can_emit = True
                 elif current_time - last_event_time_for_key_dir > self._controller_axis_repeat_interval:
-                    can_emit = True # Allow repeat after initial delay + interval
+                    can_emit = True
                 if can_emit:
                     self.controller_action_dispatched.emit(action_to_emit, axis_val)
                     self._controller_axis_last_event_time[key] = current_time
-            else: # Reset timers if axis is centered
+            else: 
                 key_neg = (joy.get_id(), axis_id, -1)
                 key_pos = (joy.get_id(), axis_id, 1)
                 if key_neg in self._controller_axis_last_event_time:
-                    self._controller_axis_last_event_time[key_neg] = 0 # Reset to allow immediate response next time
+                    self._controller_axis_last_event_time[key_neg] = 0
                 if key_pos in self._controller_axis_last_event_time:
                     self._controller_axis_last_event_time[key_pos] = 0
 
@@ -456,16 +458,19 @@ class EditorMainWindow(QMainWindow):
         self.undo_action = QAction("&Undo", self, shortcut=QKeySequence.StandardKey.Undo, statusTip="Undo last action", triggered=self.undo)
         self.redo_action = QAction("&Redo", self, shortcut=QKeySequence.StandardKey.Redo, statusTip="Redo last undone action", triggered=self.redo)
         
-        # ADDED: Delete Selection Action
+        # Delete Selection Action (already connected to map_view_widget method)
         self.delete_selection_action = QAction("Delete Selection", self, shortcut=QKeySequence.StandardKey.Delete, statusTip="Delete selected map objects", triggered=self.map_view_widget.delete_selected_map_objects)
         self.delete_selection_action.setEnabled(False) 
 
         self.toggle_grid_action = QAction("Toggle &Grid", self, shortcut="Ctrl+G", statusTip="Show/Hide grid", triggered=self.toggle_grid, checkable=True)
         self.toggle_grid_action.setChecked(self.editor_state.show_grid)
         self.change_bg_color_action = QAction("Change &Background Color...", self, statusTip="Change map background color", triggered=self.change_background_color)
+        
+        # Zoom actions (shortcuts handled by QMainWindow unless MapViewWidget has focus and handles them first)
         self.zoom_in_action = QAction("Zoom &In", self, shortcut=QKeySequence.StandardKey.ZoomIn, statusTip="Zoom in", triggered=self.map_view_widget.zoom_in)
         self.zoom_out_action = QAction("Zoom &Out", self, shortcut=QKeySequence.StandardKey.ZoomOut, statusTip="Zoom out", triggered=self.map_view_widget.zoom_out)
         self.zoom_reset_action = QAction("Reset &Zoom", self, shortcut="Ctrl+0", statusTip="Reset zoom", triggered=self.map_view_widget.reset_zoom)
+        
         self.upload_image_action = QAction("&Upload Image to Map...", self, statusTip="Upload image as custom object", triggered=self.upload_image_to_map)
         self.upload_image_action.setEnabled(False)
         if logger: logger.debug("Actions created.")
@@ -489,7 +494,7 @@ class EditorMainWindow(QMainWindow):
         edit_menu.addAction(self.undo_action)
         edit_menu.addAction(self.redo_action)
         edit_menu.addSeparator()
-        edit_menu.addAction(self.delete_selection_action) # ADDED
+        edit_menu.addAction(self.delete_selection_action)
         edit_menu.addSeparator()
         edit_menu.addAction(self.change_bg_color_action)
         edit_menu.addSeparator()
@@ -540,7 +545,6 @@ class EditorMainWindow(QMainWindow):
         if not self._is_embedded:
             self.update_window_title()
         self.update_edit_actions_enabled_state()
-        # self.update_delete_selection_action_enabled_state() # Selection state might not have changed
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_widget') and self.minimap_widget: # type: ignore
             if logger: logger.debug("Notifying minimap to redraw content due to map change.")
             self.minimap_widget.schedule_map_content_redraw()
@@ -557,12 +561,13 @@ class EditorMainWindow(QMainWindow):
             title += "*"
         self.setWindowTitle(title)
 
-    @Slot() # ADDED: Slot to update delete selection action state
+    @Slot()
     def update_delete_selection_action_enabled_state(self):
         if hasattr(self, 'map_view_widget') and hasattr(self.map_view_widget, 'map_scene'):
             can_delete = bool(self.map_view_widget.map_scene.selectedItems())
-            self.delete_selection_action.setEnabled(can_delete)
-        else:
+            if hasattr(self, 'delete_selection_action'): # Check if action exists
+                self.delete_selection_action.setEnabled(can_delete)
+        elif hasattr(self, 'delete_selection_action'):
             self.delete_selection_action.setEnabled(False)
 
 
@@ -592,7 +597,7 @@ class EditorMainWindow(QMainWindow):
         
         self.upload_image_action.setEnabled(map_is_named)
 
-        self.update_delete_selection_action_enabled_state() # Also update delete action here
+        self.update_delete_selection_action_enabled_state()
 
 
     def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool:
@@ -865,7 +870,6 @@ class EditorMainWindow(QMainWindow):
                 view_rect = self.map_view_widget.viewport().rect()
                 center_scene_pos = self.map_view_widget.mapToScene(view_rect.center())
                 
-                # Default to full image size, no cropping initially
                 img_original_width = q_image.width()
                 img_original_height = q_image.height()
 
@@ -877,9 +881,9 @@ class EditorMainWindow(QMainWindow):
                     "source_file_path": f"Custom/{image_filename}",
                     "original_width": img_original_width,
                     "original_height": img_original_height,
-                    "current_width": img_original_width,    # Initially, display full image
-                    "current_height": img_original_height,  # Initially, display full image
-                    "crop_rect": None,                      # No crop by default
+                    "current_width": img_original_width,
+                    "current_height": img_original_height,
+                    "crop_rect": None, 
                     "layer_order": 0,
                     "properties": ED_CONFIG.get_default_properties_for_asset(ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY) # type: ignore
                 }
@@ -902,7 +906,6 @@ class EditorMainWindow(QMainWindow):
         if not map_object_data_ref:
             return
         asset_key = map_object_data_ref.get("asset_editor_key")
-        # Context menu for layering applies to both custom images and triggers
         if asset_key not in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY]: # type: ignore
             return
         context_menu = QMenu(self)
@@ -929,9 +932,9 @@ class EditorMainWindow(QMainWindow):
                 new_z = all_z_orders[min(len(all_z_orders) - 1, current_idx + 1)]
                 if new_z == current_z and len(all_z_orders) > current_idx + 1:
                      new_z = all_z_orders[current_idx + 1]
-                elif new_z == current_z: # If it's already the top or only one at this Z
-                    new_z += 1 # Increment to ensure it's visibly "more forward"
-            except ValueError: # Current Z not in existing distinct Z orders (e.g. newly added item)
+                elif new_z == current_z: 
+                    new_z += 1
+            except ValueError:
                  new_z = (all_z_orders[-1] + 1) if all_z_orders else current_z + 1
         elif direction == "backward":
             try:
@@ -939,14 +942,14 @@ class EditorMainWindow(QMainWindow):
                 new_z = all_z_orders[max(0, current_idx - 1)]
                 if new_z == current_z and current_idx > 0:
                     new_z = all_z_orders[current_idx -1]
-                elif new_z == current_z: # If it's already the bottom or only one at this Z
-                    new_z -=1 # Decrement
+                elif new_z == current_z:
+                    new_z -=1
             except ValueError:
                  new_z = (all_z_orders[0] -1) if all_z_orders else current_z -1
         
         map_object_data_ref["layer_order"] = new_z
-        self.map_view_widget.draw_placed_objects() # Redraw to apply new Z order
-        self.handle_map_content_changed() # Mark as unsaved
+        self.map_view_widget.draw_placed_objects()
+        self.handle_map_content_changed()
         self.show_status_message(f"Object layer order changed.")
 
     @Slot(dict)
@@ -1016,8 +1019,8 @@ class EditorMainWindow(QMainWindow):
             image = QImage(img_w, img_h, QImage.Format.Format_ARGB32_Premultiplied)
             image.fill(Qt.GlobalColor.transparent)
             painter = QPainter(image)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing, False) # Keep false for pixel art style
-            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False) # Keep false
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
             bg_color = QColor(*self.editor_state.background_color)
             if bg_color.alpha() == 255: painter.fillRect(image.rect(), bg_color)
             scene.render(painter, QRectF(image.rect()), target_rect)
@@ -1034,9 +1037,8 @@ class EditorMainWindow(QMainWindow):
     def undo(self):
         if logger: logger.info("Undo action triggered.")
         if editor_history.undo(self.editor_state): # type: ignore
-            self.map_view_widget.load_map_from_state() # Reloads visuals based on restored state
+            self.map_view_widget.load_map_from_state()
             self.update_edit_actions_enabled_state()
-            # Update properties panel if an item is selected after undo
             selected_map_items = self.map_view_widget.map_scene.selectedItems()
             if len(selected_map_items) == 1 and hasattr(selected_map_items[0], 'map_object_data_ref'):
                 self.properties_editor_widget.display_map_object_properties(selected_map_items[0].map_object_data_ref) # type: ignore
@@ -1045,7 +1047,7 @@ class EditorMainWindow(QMainWindow):
             self.show_status_message("Undo successful.")
             if not self._is_embedded:
                 self.update_window_title()
-            self.asset_palette_widget.populate_assets() # In case custom assets changed
+            self.asset_palette_widget.populate_assets()
         else:
             self.show_status_message("Nothing to undo or undo failed.")
 
@@ -1092,6 +1094,8 @@ class EditorMainWindow(QMainWindow):
 
     def keyPressEvent(self, event: QKeyEvent):
         key = event.key()
+        modifiers = event.modifiers()
+
         active_panel: Optional[QWidget] = None
         if self._focusable_panels and 0 <= self._current_focused_panel_index < len(self._focusable_panels):
              active_panel = self._focusable_panels[self._current_focused_panel_index]
@@ -1100,9 +1104,8 @@ class EditorMainWindow(QMainWindow):
              event.accept()
              return
 
-        # Pass to MapViewWidget first if it has focus, for its own key handling (like Shift+C)
         if self.map_view_widget.hasFocus() and hasattr(self.map_view_widget, 'keyPressEvent'):
-             self.map_view_widget.keyPressEvent(event) # type: ignore
+             self.map_view_widget.keyPressEvent(event)
              if event.isAccepted():
                  return
         
@@ -1110,7 +1113,8 @@ class EditorMainWindow(QMainWindow):
             if logger: logger.info("Escape key pressed in standalone mode, attempting to close window.")
             self.close()
             event.accept()
-        
+            return
+
         super().keyPressEvent(event)
 
 
