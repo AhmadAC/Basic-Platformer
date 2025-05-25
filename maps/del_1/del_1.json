@@ -30,7 +30,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -53,7 +56,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -76,7 +82,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -99,7 +108,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -122,7 +134,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -145,7 +160,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -168,7 +186,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -191,7 +212,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -214,7 +238,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -237,7 +264,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -260,7 +290,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -283,7 +316,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -306,7 +342,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -329,7 +368,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -352,7 +394,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -375,7 +420,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -398,7 +446,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -421,7 +472,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -444,7 +498,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -467,7 +524,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -490,7 +550,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -513,7 +576,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -536,7 +602,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -559,7 +628,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -582,7 +654,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -605,7 +680,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -628,7 +706,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -651,7 +732,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -674,7 +758,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -697,7 +784,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -720,7 +810,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -743,7 +836,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -766,7 +862,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -789,7 +888,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -812,7 +914,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -835,7 +940,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -858,7 +966,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -881,7 +992,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -904,7 +1018,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -927,7 +1044,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -950,7 +1070,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -973,7 +1096,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -996,7 +1122,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1019,7 +1148,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1042,7 +1174,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1065,7 +1200,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1088,7 +1226,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1111,7 +1252,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1134,7 +1278,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1157,7 +1304,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1180,7 +1330,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1203,7 +1356,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1226,7 +1382,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1249,7 +1408,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1272,7 +1434,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1295,7 +1460,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1318,7 +1486,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1341,7 +1512,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1364,7 +1538,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1387,7 +1564,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1410,7 +1590,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1433,7 +1616,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1456,7 +1642,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1479,7 +1668,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1502,7 +1694,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1525,7 +1720,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1548,7 +1746,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1571,7 +1772,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1594,7 +1798,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1617,7 +1824,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1640,7 +1850,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1663,7 +1876,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1686,7 +1902,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1709,7 +1928,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1732,7 +1954,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1755,7 +1980,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1778,7 +2006,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1801,7 +2032,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1824,7 +2058,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1847,7 +2084,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1870,7 +2110,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1893,7 +2136,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1916,7 +2162,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1939,7 +2188,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1962,7 +2214,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1985,7 +2240,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2008,7 +2266,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2031,7 +2292,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2054,7 +2318,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2077,7 +2344,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2100,7 +2370,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2123,7 +2396,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2146,7 +2422,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2169,7 +2448,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2192,7 +2474,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2215,7 +2500,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2238,7 +2526,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2261,7 +2552,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2284,7 +2578,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2307,7 +2604,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2330,7 +2630,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2353,7 +2656,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2376,7 +2682,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2399,7 +2708,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2422,7 +2734,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2445,7 +2760,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2468,7 +2786,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2491,7 +2812,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2514,7 +2838,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2537,7 +2864,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2560,7 +2890,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2583,7 +2916,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2606,7 +2942,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2629,7 +2968,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2652,7 +2994,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2675,7 +3020,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2698,7 +3046,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2721,7 +3072,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2744,7 +3098,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2767,7 +3124,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2790,7 +3150,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2813,7 +3176,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2836,7 +3202,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2859,7 +3228,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2882,7 +3254,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2905,7 +3280,10 @@
                 "round_bottom_right": true,
                 "is_boundary": true
             },
-            "is_flipped_h": false
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "object_stone_idle",
@@ -2921,7 +3299,9 @@
                 "drops_item_on_destroy": ""
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2940,39 +3320,45 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "object_stone_idle",
             "world_x": 600,
             "world_y": 920,
             "game_type_id": "object_stone_idle",
-            "layer_order": 0,
+            "layer_order": -9,
             "properties": {
                 "destructible": true,
-                "health": 5,
+                "health": 1,
                 "can_be_pushed": true,
                 "push_resistance": 1.0,
                 "drops_item_on_destroy": ""
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "object_stone_idle",
             "world_x": 760,
             "world_y": 920,
             "game_type_id": "object_stone_idle",
-            "layer_order": 0,
+            "layer_order": -4,
             "properties": {
                 "destructible": true,
-                "health": 5,
+                "health": 1,
                 "can_be_pushed": true,
-                "push_resistance": 1.0,
+                "push_resistance": 3.0,
                 "drops_item_on_destroy": ""
             },
             "is_flipped_h": true,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "object_stone_idle",
@@ -2982,13 +3368,15 @@
             "layer_order": 0,
             "properties": {
                 "destructible": true,
-                "health": 5,
+                "health": 1,
                 "can_be_pushed": true,
                 "push_resistance": 1.0,
                 "drops_item_on_destroy": ""
             },
             "is_flipped_h": true,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "object_stone_crouch",
@@ -2998,27 +3386,31 @@
             "layer_order": 0,
             "properties": {
                 "destructible": true,
-                "health": 5,
+                "health": 1,
                 "can_be_pushed": true,
                 "is_heavy": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "object_stone_crouch",
             "world_x": 240,
             "world_y": 520,
             "game_type_id": "object_stone_crouch",
-            "layer_order": 0,
+            "layer_order": -3,
             "properties": {
                 "destructible": true,
-                "health": 5,
+                "health": 1,
                 "can_be_pushed": true,
                 "is_heavy": true
             },
-            "is_flipped_h": false,
-            "rotation": 0
+            "is_flipped_h": true,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3037,7 +3429,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3056,7 +3450,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3075,7 +3471,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3094,7 +3492,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3113,7 +3513,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3132,7 +3534,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3151,7 +3555,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3170,7 +3576,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3189,7 +3597,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3208,7 +3618,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3227,7 +3639,9 @@
                 "round_bottom_right": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "player1_spawn",
@@ -3241,7 +3655,9 @@
                 "jump_strength": -1000.0
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "item_chest",
@@ -3255,12 +3671,66 @@
                 "requires_key_id": ""
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "trigger_square",
+            "world_x": 1480,
+            "world_y": 920,
+            "game_type_id": "trigger_square_link",
+            "layer_order": 0,
+            "properties": {
+                "visible": true,
+                "fill_color_rgba": [
+                    100,
+                    100,
+                    255,
+                    100
+                ],
+                "image_in_square": "",
+                "linked_map_name": "",
+                "trigger_event_type": "player_enter",
+                "one_time_trigger": true,
+                "activation_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "current_width": 80.0,
+            "current_height": 80.0
+        },
+        {
+            "asset_editor_key": "custom_image_object",
+            "game_type_id": "custom_image_object",
+            "world_x": 1320,
+            "world_y": 840,
+            "source_file_path": "Custom/1del.png",
+            "original_width": 1061,
+            "original_height": 1837,
+            "current_width": 87,
+            "current_height": 89,
+            "crop_rect": null,
+            "layer_order": 0,
+            "rotation": 0,
+            "is_flipped_h": false,
+            "properties": {
+                "is_background": true,
+                "is_obstacle": false,
+                "destructible": false,
+                "health": 98,
+                "scroll_factor_x": 1.0,
+                "scroll_factor_y": 1.0
+            },
+            "editor_hidden": false,
+            "editor_locked": false
         }
     ],
-    "camera_offset_x": 331.0,
-    "camera_offset_y": -124.0,
-    "zoom_level": 1.0,
+    "camera_offset_x": 0.0,
+    "camera_offset_y": 0.0,
+    "zoom_level": 0.2325680393613779,
     "show_grid": true,
     "asset_specific_variables": {}
 }
