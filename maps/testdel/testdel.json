@@ -1,0 +1,49 @@
+{
+    "map_name_for_function": "testdel",
+    "map_width_tiles": 40,
+    "map_height_tiles": 25,
+    "grid_size": 40.0,
+    "background_color": [
+        173,
+        216,
+        230
+    ],
+    "placed_objects": [
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 160,
+            "world_y": 200,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 20,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true
+            },
+            "is_flipped_h": false
+        },
+        {
+            "asset_editor_key": "player1_spawn",
+            "world_x": 160,
+            "world_y": 160,
+            "game_type_id": "player1_spawn",
+            "layer_order": 0,
+            "properties": {
+                "max_health": 100,
+                "move_speed": 350.0,
+                "jump_strength": -900.0
+            },
+            "is_flipped_h": false
+        }
+    ],
+    "camera_offset_x": 0.0,
+    "camera_offset_y": 0.0,
+    "zoom_level": 1.0,
+    "show_grid": true,
+    "asset_specific_variables": {}
+}
