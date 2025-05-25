@@ -1,5 +1,3 @@
-#################### START OF FILE: editor\editor_config.py ####################
-
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
@@ -122,18 +120,46 @@ CUSTOM_ASSET_PALETTE_PREFIX = "custom:" # Prefix for custom assets listed in pal
 TS = BASE_GRID_SIZE 
 
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
-    # Spawns, Enemies, Items, Objects, Tiles (existing definitions)
+    # Spawns
     "player1_spawn": {"source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn", "category": "spawn", "name_in_palette": "Player 1 Spawn"},
-    # ... other existing assets ...
+    
+    # Tiles
     "platform_wall_gray": {"surface_params": (TS, TS, getattr(C, 'GRAY', (128,128,128))), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
+    
+    # Hazards
     "hazard_lava_tile": {"source_file": "characters/assets/lava.gif", "game_type_id": "hazard_lava", "category": "hazard", "name_in_palette": "Lava Tile"},
+    
+    # Background Tiles
     "background_dark_fill": {"surface_params": (TS * 5, TS * 5, getattr(C, 'DARK_GRAY', (50, 50, 50))), "colorable": True, "game_type_id": "background_dark_fill", "category": "background_tile", "name_in_palette": "BG Dark Fill (5x5)"},
 
-    # NEW: Trigger Square for Palette
-    TRIGGER_SQUARE_ASSET_KEY: { # e.g., "trigger_square"
-        "icon_type": "generic_square_icon", # Needs a visual representation in editor_assets._create_icon_pixmap
-        "base_color_tuple": (100, 100, 255, 150), # Editor palette icon color
-        "game_type_id": TRIGGER_SQUARE_GAME_TYPE_ID, # For linking to EDITABLE_ASSET_VARIABLES
+    # NEW: Sample Enemy Asset (adjust 'source_file' to your actual image)
+    "enemy_basic_grunt": {
+        "source_file": "characters/enemies/grunt_idle_placeholder.png", # Replace with actual path
+        "game_type_id": "enemy_grunt", # Unique ID for game logic
+        "category": "enemy",
+        "name_in_palette": "Grunt Enemy"
+    },
+    # Add more enemy definitions here, e.g.:
+    # "enemy_flyer": {
+    #     "source_file": "characters/enemies/flyer.png",
+    #     "game_type_id": "enemy_flyer",
+    #     "category": "enemy",
+    #     "name_in_palette": "Flying Enemy"
+    # },
+
+    # Items (Example)
+    # "item_coin": {
+    #     "source_file": "items/coin.png", 
+    #     "game_type_id": "coin",
+    #     "category": "item",
+    #     "name_in_palette": "Coin"
+    # },
+
+    # Logic
+    TRIGGER_SQUARE_ASSET_KEY: { 
+        "icon_type": "generic_square_icon", 
+        "base_color_tuple": (100, 100, 255, 150), 
+        "game_type_id": TRIGGER_SQUARE_GAME_TYPE_ID, 
         "category": "logic", 
         "name_in_palette": "Trigger Square"
     },
@@ -147,30 +173,31 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
 EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER = ["tool", "tile", "background_tile", "hazard", "item", "object", "enemy", "spawn", "logic", "Custom", "unknown"]
 
 EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
-    # ... existing player, enemy, item, object properties ...
     "player1_spawn": {
         "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"}, 
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"} 
     },
-    # ...
+    # Properties for the sample enemy
+    "enemy_grunt": {
+        "max_health": {"type": "int", "default": getattr(C, 'ENEMY_MAX_HEALTH', 80), "min": 1, "max": 500, "label": "Max Health"},
+        "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 3.0) * 50, "min": 10.0, "max": 500.0, "label": "Move Speed (units/s)"},
+        "attack_damage": {"type": "int", "default": getattr(C, 'ENEMY_ATTACK_DAMAGE', 10), "min": 0, "max": 100, "label": "Attack Damage"},
+        "patrol_range": {"type": "int", "default": 200, "min": 0, "max": 1000, "label": "Patrol Range (px)"}
+    },
+    # Add more enemy property definitions here, matching their game_type_id
 
-    # NEW: Properties for Custom Image Objects
-    CUSTOM_IMAGE_ASSET_KEY: { # e.g., "custom_image_object"
+    CUSTOM_IMAGE_ASSET_KEY: { 
         "is_background": {"type": "bool", "default": False, "label": "Is Background Image"},
         "is_obstacle": {"type": "bool", "default": True, "label": "Is Obstacle"},
         "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
         "health": {"type": "int", "default": 100, "min": 0, "max": 1000, "label": "Health (if Destructible)"},
-        # width, height, layer_order are handled directly by object_data, not in "properties" sub-dict for these.
     },
-
-    # NEW: Properties for Trigger Squares
-    TRIGGER_SQUARE_GAME_TYPE_ID: { # e.g., "trigger_square_link"
+    TRIGGER_SQUARE_GAME_TYPE_ID: { 
         "visible": {"type": "bool", "default": True, "label": "Visible in Game"},
         "fill_color_rgba": {"type": "tuple_color_rgba", "default": (100, 100, 255, 100), "label": "Fill Color (RGBA)"},
         "image_in_square": {"type": "image_path_custom", "default": "", "label": "Image in Square"},
         "linked_map_name": {"type": "str", "default": "", "label": "Linked Map Name"},
-        # width, height, layer_order are handled directly.
     },
 }
 
@@ -196,7 +223,6 @@ FONT_CATEGORY_TITLE_SIZE = 11; FONT_CATEGORY_TITLE_BOLD = True
 # --- Color Presets ---
 COLOR_PICKER_PRESETS: Dict[str, Tuple[int,int,int]] = {
     "Light Blue": getattr(C, 'LIGHT_BLUE', (173,216,230)), "White": getattr(C, 'WHITE', (255,255,255)),
-    # ... (other colors) ...
     "Magenta": getattr(C, 'MAGENTA', (255, 0, 255))
 }
 
@@ -205,6 +231,4 @@ STATUS_BAR_MESSAGE_TIMEOUT = 3000
 # Logging configuration
 LOG_LEVEL = "DEBUG" 
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
-LOG_FILE_NAME = "editor_qt_debug.log" # Will be placed in 'logs' subfolder of editor package
-
-#################### END OF FILE: editor\editor_config.py ####################
+LOG_FILE_NAME = "editor_qt_debug.log" 

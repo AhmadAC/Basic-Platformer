@@ -1,42 +1,44 @@
-2025-05-25 14:10:00,975 - INFO - editor.py:114 - <module> - Editor session started. Logging initialized. Imports via: Absolute (from editor.*)
-2025-05-25 14:10:00,977 - INFO - editor.py:1141 - editor_main - Standalone mode: CWD set to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor
-2025-05-25 14:10:00,978 - INFO - editor.py:1145 - editor_main - editor_main() called. Embed mode: False, Standalone context: True
-2025-05-25 14:10:01,010 - INFO - editor.py:146 - __init__ - Initializing EditorMainWindow... Embedded: False
-2025-05-25 14:10:01,010 - DEBUG - editor_state.py:20 - __init__ - Initializing EditorState for PySide6...
-2025-05-25 14:10:01,010 - DEBUG - editor_state.py:90 - __init__ - EditorState initialized.
-2025-05-25 14:10:01,010 - DEBUG - editor.py:221 - init_ui - Initializing UI components...
-2025-05-25 14:10:01,011 - DEBUG - map_view_widget.py:236 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-25 14:10:01,012 - DEBUG - map_view_widget.py:218 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-25 14:10:01,012 - DEBUG - map_view_widget.py:233 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-25 14:10:01,020 - DEBUG - map_view_widget.py:162 - __init__ - MapViewWidget initialized.
-2025-05-25 14:10:01,045 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 14:10:01,046 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
-2025-05-25 14:10:01,046 - INFO - minimap_widget.py:54 - __init__ - MinimapWidget initialized. Update interval: 50ms.
-2025-05-25 14:10:01,046 - DEBUG - editor.py:273 - init_ui - UI components initialized.
-2025-05-25 14:10:01,046 - DEBUG - editor.py:440 - create_actions - Creating actions...
-2025-05-25 14:10:01,048 - DEBUG - editor.py:458 - create_actions - Actions created.
-2025-05-25 14:10:01,048 - DEBUG - editor.py:461 - create_menus - Creating menus...
-2025-05-25 14:10:01,048 - DEBUG - editor.py:494 - create_menus - Menus created.
-2025-05-25 14:10:01,048 - DEBUG - editor.py:497 - create_status_bar - Creating status bar...
-2025-05-25 14:10:01,049 - DEBUG - editor.py:504 - create_status_bar - Status bar created.
-2025-05-25 14:10:01,049 - INFO - editor_assets.py:261 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-25 14:10:01,068 - INFO - editor_assets.py:391 - load_editor_palette_assets - Palette asset loading complete. Success: 8, Failed/Fallback: 0.
-2025-05-25 14:10:01,071 - INFO - editor.py:276 - _init_controller_system - Initializing controller system...
-2025-05-25 14:10:01,071 - INFO - editor.py:282 - _init_controller_system - No joysticks detected.
-2025-05-25 14:10:01,109 - DEBUG - editor.py:1119 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
-2025-05-25 14:10:01,114 - INFO - minimap_widget.py:303 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(283, 161). Scheduling content redraw.
-2025-05-25 14:10:01,114 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 14:10:01,114 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 114.8, 84.7)
-2025-05-25 14:10:01,189 - INFO - editor.py:211 - __init__ - EditorMainWindow initialized.
-2025-05-25 14:10:01,189 - INFO - editor.py:510 - show_status_message - Status: Editor started. Welcome!
-2025-05-25 14:10:01,223 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 14:10:01,224 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 14:10:01,230 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 115.1, 93.5)
-2025-05-25 14:10:16,793 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (14.1, 0.0, 115.1, 93.5)
-2025-05-25 14:10:16,824 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (15.6, 0.0, 115.1, 93.5)
-2025-05-25 14:10:16,854 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (17.0, 0.0, 115.1, 93.5)
-2025-05-25 14:10:17,838 - INFO - editor.py:1073 - keyPressEvent - Escape key pressed in standalone mode, attempting to close window.
-2025-05-25 14:10:17,839 - INFO - editor.py:1083 - closeEvent - Close event triggered. Embedded: False
-2025-05-25 14:10:17,840 - DEBUG - editor.py:1105 - save_geometry_and_state - Window geometry and dock state explicitly saved.
-2025-05-25 14:10:17,880 - INFO - editor.py:1167 - editor_main - Editor session (standalone) ended.
-2025-05-25 14:10:17,917 - INFO - editor.py:1170 - editor_main - Pygame quit globally at end of editor_main (standalone).
+2025-05-25 14:13:08,108 - INFO - editor.py:114 - <module> - Editor session started. Logging initialized. Imports via: Absolute (from editor.*)
+2025-05-25 14:13:08,109 - INFO - editor.py:1141 - editor_main - Standalone mode: CWD set to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor
+2025-05-25 14:13:08,109 - INFO - editor.py:1145 - editor_main - editor_main() called. Embed mode: False, Standalone context: True
+2025-05-25 14:13:08,136 - INFO - editor.py:146 - __init__ - Initializing EditorMainWindow... Embedded: False
+2025-05-25 14:13:08,136 - DEBUG - editor_state.py:20 - __init__ - Initializing EditorState for PySide6...
+2025-05-25 14:13:08,136 - DEBUG - editor_state.py:90 - __init__ - EditorState initialized.
+2025-05-25 14:13:08,136 - DEBUG - editor.py:221 - init_ui - Initializing UI components...
+2025-05-25 14:13:08,138 - DEBUG - map_view_widget.py:236 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-25 14:13:08,138 - DEBUG - map_view_widget.py:218 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-25 14:13:08,138 - DEBUG - map_view_widget.py:233 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-25 14:13:08,149 - DEBUG - map_view_widget.py:162 - __init__ - MapViewWidget initialized.
+2025-05-25 14:13:08,181 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 14:13:08,181 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
+2025-05-25 14:13:08,181 - INFO - minimap_widget.py:54 - __init__ - MinimapWidget initialized. Update interval: 50ms.
+2025-05-25 14:13:08,182 - DEBUG - editor.py:273 - init_ui - UI components initialized.
+2025-05-25 14:13:08,182 - DEBUG - editor.py:440 - create_actions - Creating actions...
+2025-05-25 14:13:08,183 - DEBUG - editor.py:458 - create_actions - Actions created.
+2025-05-25 14:13:08,183 - DEBUG - editor.py:461 - create_menus - Creating menus...
+2025-05-25 14:13:08,184 - DEBUG - editor.py:494 - create_menus - Menus created.
+2025-05-25 14:13:08,184 - DEBUG - editor.py:497 - create_status_bar - Creating status bar...
+2025-05-25 14:13:08,184 - DEBUG - editor.py:504 - create_status_bar - Status bar created.
+2025-05-25 14:13:08,184 - INFO - editor_assets.py:261 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-25 14:13:08,190 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\enemies\grunt_idle_placeholder.png' for asset 'enemy_basic_grunt'
+2025-05-25 14:13:08,190 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_basic_grunt' failed or is null. Creating RED fallback.
+2025-05-25 14:13:08,191 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\enemies\grunt_idle_placeholder.png' for asset 'enemy_basic_grunt'
+2025-05-25 14:13:08,191 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_basic_grunt' failed or is null. Creating RED fallback.
+2025-05-25 14:13:08,191 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\enemies\grunt_idle_placeholder.png' for asset 'enemy_basic_grunt'
+2025-05-25 14:13:08,191 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_basic_grunt' failed or is null. Creating RED fallback.
+2025-05-25 14:13:08,197 - INFO - editor_assets.py:391 - load_editor_palette_assets - Palette asset loading complete. Success: 9, Failed/Fallback: 0.
+2025-05-25 14:13:08,200 - INFO - editor.py:276 - _init_controller_system - Initializing controller system...
+2025-05-25 14:13:08,200 - INFO - editor.py:282 - _init_controller_system - No joysticks detected.
+2025-05-25 14:13:08,237 - DEBUG - editor.py:1119 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
+2025-05-25 14:13:08,242 - INFO - minimap_widget.py:303 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(283, 161). Scheduling content redraw.
+2025-05-25 14:13:08,242 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 14:13:08,242 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 114.8, 84.7)
+2025-05-25 14:13:08,325 - INFO - editor.py:211 - __init__ - EditorMainWindow initialized.
+2025-05-25 14:13:08,326 - INFO - editor.py:510 - show_status_message - Status: Editor started. Welcome!
+2025-05-25 14:13:08,352 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 14:13:08,352 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 14:13:08,359 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 115.1, 93.5)
+2025-05-25 14:13:10,562 - INFO - editor.py:1083 - closeEvent - Close event triggered. Embedded: False
+2025-05-25 14:13:10,563 - DEBUG - editor.py:1105 - save_geometry_and_state - Window geometry and dock state explicitly saved.
+2025-05-25 14:13:10,583 - INFO - editor.py:1167 - editor_main - Editor session (standalone) ended.
+2025-05-25 14:13:10,621 - INFO - editor.py:1170 - editor_main - Pygame quit globally at end of editor_main (standalone).
