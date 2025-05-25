@@ -1805,7 +1805,7 @@
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 1360,
+            "world_x": 1000,
             "world_y": 960,
             "game_type_id": "platform_wall_gray",
             "override_color": [
@@ -3291,7 +3291,7 @@
             "world_y": 880,
             "game_type_id": "player1_spawn",
             "properties": {
-                "max_health": 100,
+                "max_health": 500,
                 "move_speed": 350.0,
                 "jump_strength": -900.0
             },
@@ -3335,8 +3335,8 @@
         },
         {
             "asset_editor_key": "player4_spawn",
-            "world_x": 320,
-            "world_y": 880,
+            "world_x": 400,
+            "world_y": 800,
             "game_type_id": "player4_spawn",
             "properties": {
                 "max_health": 100,
@@ -3364,21 +3364,97 @@
             "rotation": 0,
             "is_flipped_h": false,
             "editor_hidden": false,
-            "editor_locked": false,
+            "editor_locked": true,
             "properties": {
                 "is_background": false,
                 "is_obstacle": true,
                 "destructible": true,
-                "health": 1,
+                "health": 0,
                 "scroll_factor_x": 1.0,
                 "scroll_factor_y": 1.0,
                 "apply_gravity": true
             }
+        },
+        {
+            "asset_editor_key": "trigger_square",
+            "world_x": 520,
+            "world_y": 840,
+            "game_type_id": "trigger_square_link",
+            "layer_order": 0,
+            "properties": {
+                "visible": true,
+                "fill_color_rgba": [
+                    255,
+                    17,
+                    152,
+                    100
+                ],
+                "image_in_square": "",
+                "linked_map_name": "three",
+                "trigger_event_type": "player_enter",
+                "one_time_trigger": true,
+                "activation_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "current_width": 150,
+            "current_height": 134
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 320,
+            "world_y": 920,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 1,
+                "material_type": "stone",
+                "corner_radius": 19,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "trigger_square",
+            "world_x": 360,
+            "world_y": 880,
+            "game_type_id": "trigger_square_link",
+            "layer_order": 0,
+            "properties": {
+                "visible": true,
+                "fill_color_rgba": [
+                    100,
+                    100,
+                    255,
+                    100
+                ],
+                "image_in_square": "",
+                "linked_map_name": "three",
+                "trigger_event_type": "player_use",
+                "one_time_trigger": true,
+                "activation_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "current_width": 74,
+            "current_height": 80.0
         }
     ],
-    "camera_offset_x": 0.0,
-    "camera_offset_y": 0.0,
-    "zoom_level": 0.401877572016461,
+    "camera_offset_x": 82.0,
+    "camera_offset_y": 484.0,
+    "zoom_level": 0.8333333333333334,
     "show_grid": true,
     "asset_specific_variables": {}
 }
