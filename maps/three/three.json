@@ -3567,7 +3567,7 @@
             "properties": {}
         },
         {
-            "asset_editor_key": "chest",
+            "asset_editor_key": "item_chest",
             "world_x": 160,
             "world_y": 600,
             "game_type_id": "chest",
@@ -3697,11 +3697,29 @@
                 "health": 4,
                 "can_fly": false
             }
+        },
+        {
+            "asset_editor_key": "custom_image_object",
+            "game_type_id": "custom_image_object",
+            "world_x": 8,
+            "world_y": 22,
+            "source_file_path": "Custom/R-C.jpg",
+            "original_width": 1920,
+            "original_height": 1080,
+            "current_width": 1733,
+            "current_height": 975,
+            "layer_order": -2,
+            "properties": {
+                "is_background": true,
+                "is_obstacle": false,
+                "destructible": false,
+                "health": 99
+            }
         }
     ],
     "camera_offset_x": 0.0,
-    "camera_offset_y": 535.0,
-    "zoom_level": 1.0,
+    "camera_offset_y": 0.0,
+    "zoom_level": 0.3348979766803842,
     "show_grid": true,
     "asset_specific_variables": {}
 }
