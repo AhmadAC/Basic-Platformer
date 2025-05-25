@@ -1,20 +1,35 @@
+#################### START OF FILE: editor_history.py ####################
+
 # editor/editor_history.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.0 (PySide6 Conversion)
+## version 2.1.1 (Refined Snapshot and Restore)
 Manages undo/redo functionality for the Level Editor.
-Core logic remains largely UI-agnostic.
+Ensures custom object properties like dimensions and layer order are included.
+Refined deep copying for placed_objects.
 """
 import json
 import logging
-from typing import List, Dict, Any, Optional, cast
+from typing import List, Dict, Any, Optional, cast, Union # Added Union
 
-from .editor_state import EditorState # Use relative import
-from . import editor_config as ED_CONFIG # Use relative import
+from .editor_state import EditorState 
+from . import editor_config as ED_CONFIG 
 
 logger = logging.getLogger(__name__)
 
 MAX_HISTORY_STATES = 50
+
+def _deep_copy_object_data(obj_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Performs a deeper copy of an object's data dictionary."""
+    copied_obj = {}
+    for k, v in obj_data.items():
+        if isinstance(v, dict):
+            copied_obj[k] = v.copy() # Shallow copy for sub-dictionaries like 'properties'
+        elif isinstance(v, list):
+            copied_obj[k] = v[:]   # Shallow copy for lists
+        else:
+            copied_obj[k] = v      # Direct assignment for other types
+    return copied_obj
 
 def get_map_snapshot(editor_state: EditorState) -> Dict[str, Any]:
     """Captures the current serializable state of the map."""
@@ -24,17 +39,21 @@ def get_map_snapshot(editor_state: EditorState) -> Dict[str, Any]:
         "map_height_tiles": editor_state.map_height_tiles,
         "grid_size": editor_state.grid_size,
         "background_color": list(editor_state.background_color),
-        "placed_objects": [obj.copy() for obj in editor_state.placed_objects],
-        "camera_offset_x": editor_state.camera_offset_x, # Still relevant for QGraphicsView scene coords
-        "camera_offset_y": editor_state.camera_offset_y, # Still relevant for QGraphicsView scene coords
-        "zoom_level": editor_state.zoom_level, # NEW: Store zoom level for Qt MapView
+        "placed_objects": [_deep_copy_object_data(obj) for obj in editor_state.placed_objects],
+        "camera_offset_x": editor_state.camera_offset_x, 
+        "camera_offset_y": editor_state.camera_offset_y, 
+        "zoom_level": editor_state.zoom_level, 
         "show_grid": editor_state.show_grid,
         "asset_specific_variables": {k: v.copy() for k, v in editor_state.asset_specific_variables.items()}
     }
-    # Convert  color tuples in placed_objects to lists for JSON consistency
+    # Convert color tuples in placed_objects to lists for JSON consistency
     for obj in snapshot["placed_objects"]:
         if "override_color" in obj and isinstance(obj["override_color"], tuple):
             obj["override_color"] = list(obj["override_color"])
+        if "properties" in obj and isinstance(obj["properties"], dict):
+            props = obj["properties"]
+            if "fill_color_rgba" in props and isinstance(props["fill_color_rgba"], tuple):
+                props["fill_color_rgba"] = list(props["fill_color_rgba"])
     return snapshot
 
 def restore_map_from_snapshot(editor_state: EditorState, snapshot: Dict[str, Any]):
@@ -45,157 +64,142 @@ def restore_map_from_snapshot(editor_state: EditorState, snapshot: Dict[str, Any
     editor_state.grid_size = snapshot.get("grid_size", ED_CONFIG.BASE_GRID_SIZE)
 
     bg_color_data = snapshot.get("background_color", list(ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE))
-    editor_state.background_color = tuple(cast(List[int], bg_color_data))
+    editor_state.background_color = tuple(cast(List[int], bg_color_data)) # type: ignore
 
-    loaded_objects = snapshot.get("placed_objects", [])
-    restored_objects = []
+    loaded_objects_raw = snapshot.get("placed_objects", [])
+    restored_objects: List[Dict[str,Any]] = []
 
-    # Pre-build a lookup map from game_type_id to the editor_palette_key
-    game_id_to_palette_key_map = {}
-    # Ensure ED_CONFIG.EDITOR_PALETTE_ASSETS is available and populated correctly
-    # It's assumed editor_config (ED_CONFIG) is imported and EDITOR_PALETTE_ASSETS is accessible
+    game_id_to_palette_key_map: Dict[str, str] = {}
     if hasattr(ED_CONFIG, 'EDITOR_PALETTE_ASSETS'):
         for pk, p_data in ED_CONFIG.EDITOR_PALETTE_ASSETS.items():
             gid = p_data.get("game_type_id")
-            if gid:
-                game_id_to_palette_key_map[gid] = pk
+            if gid: game_id_to_palette_key_map[gid] = pk
     else:
-        logger.error("ED_CONFIG.EDITOR_PALETTE_ASSETS not found. Asset key remapping will not work.")
+        logger.error("ED_CONFIG.EDITOR_PALETTE_ASSETS not found. Asset key remapping may fail.")
 
+    for obj_data_raw in loaded_objects_raw:
+        new_obj = _deep_copy_object_data(obj_data_raw) # Use deep copy helper
 
-    for obj_data in loaded_objects:
-        new_obj = obj_data.copy()
         if "override_color" in new_obj and isinstance(new_obj["override_color"], list):
             new_obj["override_color"] = tuple(new_obj["override_color"])
+        
+        if "properties" in new_obj and isinstance(new_obj["properties"], dict):
+            props = new_obj["properties"]
+            if "fill_color_rgba" in props and isinstance(props["fill_color_rgba"], list):
+                props["fill_color_rgba"] = tuple(props["fill_color_rgba"])
 
-        # Reconcile asset_editor_key
         current_asset_editor_key = new_obj.get("asset_editor_key")
-        game_id = new_obj.get("game_type_id")
+        game_id: Optional[str] = new_obj.get("game_type_id") # type: ignore
 
-        if current_asset_editor_key not in ED_CONFIG.EDITOR_PALETTE_ASSETS and game_id:
-            canonical_palette_key = game_id_to_palette_key_map.get(game_id)
-            if canonical_palette_key:
-                logger.info(f"Remapping loaded object's asset_editor_key from '{current_asset_editor_key}' to '{canonical_palette_key}' based on game_type_id '{game_id}'.")
-                new_obj["asset_editor_key"] = canonical_palette_key
-            # If still not found, it will be handled by draw_placed_objects warning
-            elif current_asset_editor_key: # Only warn if it was trying to use a key
-                 logger.warning(f"Could not find a canonical palette key for loaded object with asset_editor_key '{current_asset_editor_key}' and game_type_id '{game_id}'. Display may be affected.")
+        is_custom_image = current_asset_editor_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY
+        is_trigger_square = current_asset_editor_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY # type: ignore
 
-
-        if game_id and game_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES and "properties" not in new_obj:
+        if not is_custom_image and not is_trigger_square:
+            # For standard assets from palette
+            if current_asset_editor_key not in ED_CONFIG.EDITOR_PALETTE_ASSETS and game_id: # type: ignore
+                canonical_palette_key = game_id_to_palette_key_map.get(game_id)
+                if canonical_palette_key:
+                    logger.info(f"Remapping standard asset from '{current_asset_editor_key}' to '{canonical_palette_key}' (GameID: '{game_id}').")
+                    new_obj["asset_editor_key"] = canonical_palette_key
+                elif current_asset_editor_key: 
+                     logger.warning(f"Cannot find palette key for standard asset '{current_asset_editor_key}' (GameID: '{game_id}').")
+        
+        # Ensure 'properties' dict exists if needed
+        needs_props_dict = False
+        if game_id and game_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES: # type: ignore
+            needs_props_dict = True
+        elif is_custom_image or is_trigger_square: # Custom types also use 'properties'
+            needs_props_dict = True
+        
+        if needs_props_dict and ("properties" not in new_obj or not isinstance(new_obj.get("properties"), dict)):
             new_obj["properties"] = {}
+            # Optionally populate with defaults if completely missing, though snapshot should have them
+            if game_id:
+                 default_props = ED_CONFIG.get_default_properties_for_asset(game_id) # type: ignore
+                 if default_props:
+                     new_obj["properties"].update(default_props) # Add missing defaults
+        
+        # Ensure dimensional and layer keys for custom items, providing defaults if missing from older saves
+        if is_custom_image or is_trigger_square:
+            default_w = ED_CONFIG.BASE_GRID_SIZE * 2 if is_trigger_square else ED_CONFIG.BASE_GRID_SIZE
+            default_h = ED_CONFIG.BASE_GRID_SIZE * 2 if is_trigger_square else ED_CONFIG.BASE_GRID_SIZE
+            
+            new_obj.setdefault("current_width", default_w)
+            new_obj.setdefault("current_height", default_h)
+            new_obj.setdefault("layer_order", 0)
+            if is_custom_image:
+                new_obj.setdefault("original_width", new_obj["current_width"])
+                new_obj.setdefault("original_height", new_obj["current_height"])
+
         restored_objects.append(new_obj)
     editor_state.placed_objects = restored_objects
 
-    # Temporarily override camera offset to ensure visibility after loading
-    # This helps if a map was saved with an unusual offset.
-    # Remove or adjust this override for production if saved offsets are desired.
-    editor_state.camera_offset_x = 0.0
-    editor_state.camera_offset_y = 0.0
-    logger.warning("Camera offset from loaded map snapshot is temporarily overridden to (0,0) for visibility testing.")
-    # Original lines:
-    # editor_state.camera_offset_x = snapshot.get("camera_offset_x", 0)
-    # editor_state.camera_offset_y = snapshot.get("camera_offset_y", 0)
-
-
+    editor_state.camera_offset_x = snapshot.get("camera_offset_x", 0.0)
+    editor_state.camera_offset_y = snapshot.get("camera_offset_y", 0.0)
     editor_state.zoom_level = snapshot.get("zoom_level", 1.0)
     editor_state.show_grid = snapshot.get("show_grid", True)
-
     editor_state.asset_specific_variables = {k: v.copy() for k, v in snapshot.get("asset_specific_variables", {}).items()}
-
-    # UI updates are now triggered by the caller of undo/redo (e.g., EditorMainWindow)
-    # This includes refreshing the MapViewWidget, minimap, and window title.
-    # editor_state.minimap_needs_regeneration = True # Minimap refresh signal would be handled by Qt minimap widget
-    editor_state.unsaved_changes = True # Restoring state implies a change from current
-
+    editor_state.unsaved_changes = True 
     logger.info(f"Map state restored from snapshot. Unsaved changes: {editor_state.unsaved_changes}")
 
 
 def push_undo_state(editor_state: EditorState):
-    """Saves the current map state to the undo stack."""
-    if not hasattr(editor_state, 'undo_stack'): # Should be initialized in EditorState.__init__
-        editor_state.undo_stack = []
-    if not hasattr(editor_state, 'redo_stack'): # Should be initialized in EditorState.__init__
-        editor_state.redo_stack = []
+    if not hasattr(editor_state, 'undo_stack'): editor_state.undo_stack = []
+    if not hasattr(editor_state, 'redo_stack'): editor_state.redo_stack = []
 
     snapshot = get_map_snapshot(editor_state)
     try:
-        # Test serialization (optional, but good for catching issues early)
-        # json.dumps(snapshot)
-        # Store the Python dict directly; serialization to string is only for file saving.
-        # Storing dicts avoids repeated dumps/loads for undo/redo.
-        editor_state.undo_stack.append(snapshot) # Store the dict, not JSON string
+        editor_state.undo_stack.append(snapshot) 
     except TypeError as e:
-        logger.error(f"Failed to create map state snapshot for undo: {e}. Snapshot: {snapshot}", exc_info=True)
-        # editor_state.set_status_message("Error: Could not save undo state (snapshot failed).", 3) # Handled by MainWindow
+        logger.error(f"Failed to create snapshot for undo: {e}. Snapshot details problematic.", exc_info=True)
         return
 
     if len(editor_state.undo_stack) > MAX_HISTORY_STATES:
         editor_state.undo_stack.pop(0)
-
-    if editor_state.redo_stack:
+    if editor_state.redo_stack: 
         editor_state.redo_stack.clear()
-        logger.debug("Cleared redo stack due to new action.")
     logger.debug(f"Pushed state to undo stack. Size: {len(editor_state.undo_stack)}")
 
 def undo(editor_state: EditorState) -> bool:
-    """
-    Restores the previous map state from the undo stack.
-    Returns True if undo was performed, False otherwise.
-    """
-    if not hasattr(editor_state, 'undo_stack') or not editor_state.undo_stack:
-        logger.debug("Undo called, but undo stack is empty.")
-        return False
+    if not hasattr(editor_state, 'undo_stack') or not editor_state.undo_stack: return False
 
     current_snapshot_for_redo = get_map_snapshot(editor_state)
     try:
-        # json.dumps(current_snapshot_for_redo) # Test serialization (optional)
         if not hasattr(editor_state, 'redo_stack'): editor_state.redo_stack = []
-        editor_state.redo_stack.append(current_snapshot_for_redo) # Store dict
-        if len(editor_state.redo_stack) > MAX_HISTORY_STATES:
-            editor_state.redo_stack.pop(0)
+        editor_state.redo_stack.append(current_snapshot_for_redo) 
+        if len(editor_state.redo_stack) > MAX_HISTORY_STATES: editor_state.redo_stack.pop(0)
     except TypeError as e:
-        logger.error(f"Failed to create current map state snapshot for redo: {e}", exc_info=True)
-        return False # Cannot proceed if current state can't be saved for redo
+        logger.error(f"Failed to create snapshot for redo: {e}", exc_info=True)
+        return False 
 
-    snapshot_to_restore = editor_state.undo_stack.pop() # This is a dict
+    snapshot_to_restore = editor_state.undo_stack.pop() 
     try:
         restore_map_from_snapshot(editor_state, snapshot_to_restore)
-        logger.info(f"Undo successful. Undo stack size: {len(editor_state.undo_stack)}, Redo stack size: {len(editor_state.redo_stack)}")
+        logger.info(f"Undo successful. Undo: {len(editor_state.undo_stack)}, Redo: {len(editor_state.redo_stack)}")
         return True
     except Exception as e:
-        logger.error(f"Unexpected error during undo restore: {e}", exc_info=True)
-        # Attempt to put the problematic state back onto undo stack if restore failed mid-way?
-        # Or just log and lose it. For simplicity, we'll consider it popped.
-        # The redo stack still has the state *before* this failed undo.
+        logger.error(f"Error during undo restore: {e}", exc_info=True)
         return False
-
 
 def redo(editor_state: EditorState) -> bool:
-    """
-    Restores the next map state from the redo stack.
-    Returns True if redo was performed, False otherwise.
-    """
-    if not hasattr(editor_state, 'redo_stack') or not editor_state.redo_stack:
-        logger.debug("Redo called, but redo stack is empty.")
-        return False
+    if not hasattr(editor_state, 'redo_stack') or not editor_state.redo_stack: return False
 
     current_snapshot_for_undo = get_map_snapshot(editor_state)
     try:
-        # json.dumps(current_snapshot_for_undo) # Test serialization (optional)
         if not hasattr(editor_state, 'undo_stack'): editor_state.undo_stack = []
-        editor_state.undo_stack.append(current_snapshot_for_undo) # Store dict
-        if len(editor_state.undo_stack) > MAX_HISTORY_STATES:
-            editor_state.undo_stack.pop(0)
+        editor_state.undo_stack.append(current_snapshot_for_undo) 
+        if len(editor_state.undo_stack) > MAX_HISTORY_STATES: editor_state.undo_stack.pop(0)
     except TypeError as e:
-        logger.error(f"Failed to create current map state for undo (during redo): {e}", exc_info=True)
+        logger.error(f"Failed to create snapshot for undo (during redo): {e}", exc_info=True)
         return False
 
-    snapshot_to_restore = editor_state.redo_stack.pop() # This is a dict
+    snapshot_to_restore = editor_state.redo_stack.pop() 
     try:
         restore_map_from_snapshot(editor_state, snapshot_to_restore)
-        logger.info(f"Redo successful. Undo stack size: {len(editor_state.undo_stack)}, Redo stack size: {len(editor_state.redo_stack)}")
+        logger.info(f"Redo successful. Undo: {len(editor_state.undo_stack)}, Redo: {len(editor_state.redo_stack)}")
         return True
     except Exception as e:
-        logger.error(f"Unexpected error during redo restore: {e}", exc_info=True)
+        logger.error(f"Error during redo restore: {e}", exc_info=True)
         return False
+
+#################### END OF FILE: editor\editor_history.py ####################
