@@ -1,4 +1,5 @@
 #################### START OF FILE: editor_selection_pane.py ####################
+
 # editor/editor_selection_pane.py
 # -*- coding: utf-8 -*-
 """
@@ -211,16 +212,22 @@ class SelectionPaneWidget(QWidget):
         self.item_list_widget.clear()
         search_text = self.search_box.text().lower()
 
-        # Sort objects (e.g., by layer, then by creation if needed)
-        # For now, using original list order.
-        # sorted_objects = sorted(self.editor_state.placed_objects, key=lambda x: x.get("layer_order", 0))
+        # Sort objects by layer_order (descending so higher Z is at top), then by internal name or index
+        sorted_objects = sorted(
+            self.editor_state.placed_objects, 
+            key=lambda obj: (-obj.get("layer_order", 0), self._get_display_name(obj, self.editor_state.placed_objects.index(obj)).lower())
+        )
 
-        for i, obj_data in enumerate(self.editor_state.placed_objects):
+
+        for i, obj_data in enumerate(sorted_objects): # Use sorted_objects
             asset_key_filter = obj_data.get("asset_editor_key")
+            
+            # *** MODIFICATION START: Filter out WALL_BASE_KEY from Selection Pane ***
             if asset_key_filter == ED_CONFIG.WALL_BASE_KEY: # type: ignore
-                continue # Filter out "Wall (Gray)" base type
+                continue 
+            # *** MODIFICATION END ***
 
-            display_name = self._get_display_name(obj_data, i)
+            display_name = self._get_display_name(obj_data, i) # i here is just for fallback unknown name
 
             if search_text and search_text not in display_name.lower():
                 game_type = obj_data.get("game_type_id", "").lower()

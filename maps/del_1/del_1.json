@@ -3712,7 +3712,12 @@
             "original_height": 1837,
             "current_width": 87,
             "current_height": 89,
-            "crop_rect": null,
+            "crop_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1061,
+                "height": 1835
+            },
             "layer_order": 0,
             "rotation": 0,
             "is_flipped_h": false,
@@ -3721,16 +3726,36 @@
                 "is_obstacle": false,
                 "destructible": false,
                 "health": 98,
-                "scroll_factor_x": 1.0,
-                "scroll_factor_y": 1.0
+                "scroll_factor_x": 0.0,
+                "scroll_factor_y": 0.0,
+                "apply_gravity": true
             },
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "enemy_purple",
+            "world_x": 920,
+            "world_y": 920,
+            "game_type_id": "enemy_purple",
+            "layer_order": 0,
+            "properties": {
+                "max_health": 80,
+                "move_speed": 250.0,
+                "attack_damage": 10,
+                "patrol_range_tiles": 5,
+                "patrol_behavior": "turn_on_edge",
+                "teleport_range_tiles": 0
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
             "editor_hidden": false,
             "editor_locked": false
         }
     ],
-    "camera_offset_x": 0.0,
-    "camera_offset_y": 0.0,
-    "zoom_level": 0.2325680393613779,
+    "camera_offset_x": -45.0,
+    "camera_offset_y": 9.0,
+    "zoom_level": 0.4822530864197532,
     "show_grid": true,
     "asset_specific_variables": {}
 }

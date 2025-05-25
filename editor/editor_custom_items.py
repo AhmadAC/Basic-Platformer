@@ -1,3 +1,5 @@
+#################### START OF FILE: editor_custom_items.py ####################
+
 # editor/editor_custom_items.py
 # -*- coding: utf-8 -*-
 """
@@ -10,7 +12,7 @@ import os
 import logging
 from typing import Optional, List, Dict, Any
 
-from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsItem, QApplication, QStyleOptionGraphicsItem, QWidget #QGraphicsSceneHoverEvent removed as it's part of QWidget
+from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsItem, QApplication, QStyleOptionGraphicsItem, QWidget, QStyle #QGraphicsSceneHoverEvent removed as it's part of QWidget
 from PySide6.QtGui import QPixmap, QImage, QPainter, QColor, QPen, QBrush, QCursor, QHoverEvent # QHoverEvent for type hinting
 from PySide6.QtCore import Qt, QRectF, QPointF, QSize, QRect
 
@@ -407,7 +409,7 @@ class TriggerSquareMapItem(BaseResizableMapItem):
                 painter.drawRect(rect)
                 painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "Trigger")
 
-        if option.state & QStyleOptionGraphicsItem.StyleState.State_Selected: # type: ignore
+        if option.state & QStyle.StateFlag.State_Selected: # type: ignore
             pen = QPen(QColor(Qt.GlobalColor.yellow), 2, Qt.PenStyle.DashLine)
             painter.setPen(pen)
             painter.setBrush(Qt.BrushStyle.NoBrush)
@@ -435,3 +437,5 @@ class TriggerSquareMapItem(BaseResizableMapItem):
             # logger.debug(f"TriggerSquareMapItem does not support '{mode}' mode. Forcing 'resize'.")
             if self.current_interaction_mode != "resize":
                 super().set_interaction_mode("resize")
+
+#################### END OF FILE: editor_custom_items.py ####################

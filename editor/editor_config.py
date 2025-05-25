@@ -277,17 +277,17 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
 
     # Objects
     "object_stone_idle": {
-        "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 150, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
+        "destructible": {"type": "bool", "default": True, "label": "Is Destructible"},
+        "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
         "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"},
         "push_resistance": {"type": "float", "default": 1.0, "min":0.1, "max": 10.0, "label": "Push Resistance"},
         "drops_item_on_destroy": {"type": "str", "default": "", "label": "Drops Item (ID or empty)"},
         "is_crouched_variant": {"type": "bool", "default": False, "label": "Is Crouched Stone Visual"}
     },
     "object_stone_crouch": {
-        "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 200, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
-        "can_be_pushed": {"type": "bool", "default": False, "label": "Can Be Pushed"},
+        "destructible": {"type": "bool", "default": True, "label": "Is Destructible"},
+        "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
+        "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"},
         "is_heavy": {"type": "bool", "default": True, "label": "Is Heavy"},
         "is_crouched_variant": {"type": "bool", "default": True, "label": "Is Crouched Stone Visual"}
     },
@@ -307,8 +307,8 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
 
     # Custom Image Object
     CUSTOM_IMAGE_ASSET_KEY: {
-        "is_background": {"type": "bool", "default": False, "label": "Is Background Image"},
-        "is_obstacle": {"type": "bool", "default": True, "label": "Is Obstacle"},
+        "is_background": {"type": "bool", "default": True, "label": "Is Background Image"},
+        "is_obstacle": {"type": "bool", "default": False, "label": "Is Obstacle"},
         "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
         "health": {"type": "int", "default": 100, "min": 0, "max": 1000, "label": "Health (if Destructible)"},
         "scroll_factor_x": {"type": "float", "default": 1.0, "min": 0.0, "max": 2.0, "label": "Scroll Factor X (Parallax)"},
