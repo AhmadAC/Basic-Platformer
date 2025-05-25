@@ -4,13 +4,11 @@
 # -*- coding: utf-8 -*-
 """
 Custom Qt Widget for the Map View in the PySide6 Level Editor.
-Version 2.2.5 (Selection Pane Hide/Lock Integration)
-- Map items now respect "editor_hidden" and "editor_locked" flags from object data.
-- Locked items are not movable or resizable/croppable.
+Handles display, interaction, and dispatches actions to map_view_actions.
 """
 import logging
 import os
-import math # For rotation
+import math 
 from typing import Optional, Dict, Any, List, Tuple, cast
 
 from PySide6.QtWidgets import (
@@ -29,10 +27,16 @@ from .editor_state import EditorState
 from . import editor_history
 from .editor_assets import get_asset_pixmap
 from . import editor_map_utils
+
+# Import item classes
+from .map_object_items import StandardMapObjectItem # MOVED
 from .editor_custom_items import BaseResizableMapItem, CustomImageMapItem, TriggerSquareMapItem, \
                                  HANDLE_TOP_LEFT, HANDLE_TOP_MIDDLE, HANDLE_TOP_RIGHT, \
                                  HANDLE_MIDDLE_LEFT, HANDLE_MIDDLE_RIGHT, \
                                  HANDLE_BOTTOM_LEFT, HANDLE_BOTTOM_MIDDLE, HANDLE_BOTTOM_RIGHT
+
+# Import action functions
+from . import map_view_actions as MVActions
 
 from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTION_UI_RIGHT,
                              ACTION_UI_ACCEPT, ACTION_MAP_ZOOM_IN, ACTION_MAP_ZOOM_OUT,
@@ -41,239 +45,7 @@ from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTIO
 
 logger = logging.getLogger(__name__)
 
-class StandardMapObjectItem(QGraphicsPixmapItem):
-    def __init__(self, editor_key: str, game_type_id: str,
-                 world_x: int, world_y: int, map_object_data_ref: Dict[str, Any],
-                 editor_state_ref: EditorState,
-                 parent: Optional[QGraphicsItem] = None):
-        
-        self.editor_key = editor_key
-        self.game_type_id = game_type_id
-        self.map_object_data_ref = map_object_data_ref
-        self.editor_state_ref = editor_state_ref 
-
-        self.is_procedural_tile = False
-        self.procedural_color_tuple: Optional[Tuple[int,int,int]] = None 
-        self.procedural_width: float = float(ED_CONFIG.TS) # type: ignore
-        self.procedural_height: float = float(ED_CONFIG.TS) # type: ignore
-
-        asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
-        initial_pixmap = QPixmap() 
-
-        if asset_info and asset_info.get("surface_params") and \
-           asset_info.get("category") == "tile" and not asset_info.get("source_file"):
-            self.is_procedural_tile = True
-            params = asset_info["surface_params"]
-            self.procedural_width = float(params[0])
-            self.procedural_height = float(params[1])
-            if "override_color" not in self.map_object_data_ref:
-                self.procedural_color_tuple = params[2]
-            else:
-                self.procedural_color_tuple = self.map_object_data_ref["override_color"]
-            super().__init__(parent) 
-        else:
-            self.is_procedural_tile = False
-            if asset_info:
-                original_w, original_h = asset_info.get("original_size_pixels", (ED_CONFIG.BASE_GRID_SIZE, ED_CONFIG.BASE_GRID_SIZE)) # type: ignore
-                pixmap = get_asset_pixmap(self.editor_key, asset_info, QSizeF(int(original_w), int(original_h)),
-                                          self.map_object_data_ref.get("override_color"), 
-                                          get_native_size_only=True,
-                                          is_flipped_h=False, rotation=0) 
-                if pixmap and not pixmap.isNull():
-                    initial_pixmap = pixmap
-                else:
-                    logger.warning(f"StandardMapObjectItem: Null pixmap for {self.editor_key}")
-                    initial_pixmap = QPixmap(int(original_w), int(original_h))
-                    initial_pixmap.fill(Qt.GlobalColor.magenta)
-            else: 
-                initial_pixmap = QPixmap(ED_CONFIG.TS, ED_CONFIG.TS) # type: ignore
-                initial_pixmap.fill(Qt.GlobalColor.cyan)
-            super().__init__(initial_pixmap, parent)
-        
-        self.setPos(QPointF(float(world_x), float(world_y)))
-        
-        is_locked = self.map_object_data_ref.get("editor_locked", False)
-        current_flags = QGraphicsItem.GraphicsItemFlag.ItemIsSelectable | QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
-        if not is_locked:
-            current_flags |= QGraphicsItem.GraphicsItemFlag.ItemIsMovable
-        self.setFlags(current_flags)
-        
-        self.setZValue(map_object_data_ref.get("layer_order", 0))
-        self.setVisible(not map_object_data_ref.get("editor_hidden", False))
-        
-        self._apply_orientation_transform()
-
-
-    def boundingRect(self) -> QRectF:
-        if self.is_procedural_tile:
-            return QRectF(0, 0, self.procedural_width, self.procedural_height)
-        else:
-            if self.pixmap() and not self.pixmap().isNull():
-                return super().boundingRect()
-            return QRectF(0,0, ED_CONFIG.TS, ED_CONFIG.TS) # type: ignore
-
-    def _apply_orientation_transform(self):
-        item_should_be_flipped = self.map_object_data_ref.get("is_flipped_h", False)
-        rotation_angle = float(self.map_object_data_ref.get("rotation", 0))
-
-        current_transform = QTransform() 
-        
-        rect = self.boundingRect() 
-        center_x = rect.width() / 2.0
-        center_y = rect.height() / 2.0
-
-        current_transform.translate(center_x, center_y)
-        if item_should_be_flipped:
-            current_transform.scale(-1, 1)
-        if rotation_angle != 0:
-            current_transform.rotate(rotation_angle)
-        current_transform.translate(-center_x, -center_y)
-        
-        self.setTransform(current_transform)
-
-
-    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
-        if self.is_procedural_tile:
-            painter.save()
-
-            color_to_use = self.map_object_data_ref.get("override_color", self.procedural_color_tuple)
-            if not color_to_use: 
-                 asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
-                 if asset_info and asset_info.get("surface_params"):
-                     color_to_use = asset_info["surface_params"][2]
-                 else:
-                     color_to_use = ED_CONFIG.C.MAGENTA # type: ignore
-            
-            brush_color = QColor(*color_to_use) # type: ignore
-            painter.setBrush(brush_color)
-            
-            pen_color = brush_color.darker(130) if brush_color.alpha() == 255 else Qt.GlobalColor.transparent
-            painter.setPen(QPen(pen_color, 0.5)) 
-
-            props = self.map_object_data_ref.get("properties", {})
-            radius = float(props.get("corner_radius", 0))
-            rect = self.boundingRect()
-
-            if radius > 1: 
-                path = QPainterPath()
-                if props.get("round_top_left", False): 
-                    path.moveTo(rect.topLeft() + QPointF(radius, 0))
-                    path.arcTo(QRectF(rect.topLeft(), QSizeF(radius * 2, radius * 2)), 180, -90)
-                else:
-                    path.moveTo(rect.topLeft())
-                
-                path.lineTo(rect.topRight() - QPointF(radius if props.get("round_top_right", False) else 0, 0))
-                if props.get("round_top_right", False):
-                    path.arcTo(QRectF(rect.topRight() - QPointF(radius*2,0), QSizeF(radius * 2, radius * 2)), 90, -90)
-                else:
-                    path.lineTo(rect.topRight())
-
-                path.lineTo(rect.bottomRight() - QPointF(0, radius if props.get("round_bottom_right", False) else 0))
-                if props.get("round_bottom_right", False):
-                    path.arcTo(QRectF(rect.bottomRight() - QPointF(radius*2,radius*2), QSizeF(radius * 2, radius * 2)), 0, -90)
-                else:
-                    path.lineTo(rect.bottomRight())
-
-                path.lineTo(rect.bottomLeft() + QPointF(radius if props.get("round_bottom_left", False) else 0, 0))
-                if props.get("round_bottom_left", False):
-                     path.arcTo(QRectF(rect.bottomLeft() - QPointF(0,radius*2) , QSizeF(radius * 2, radius * 2)), -90, -90)
-                else:
-                    path.lineTo(rect.bottomLeft())
-                path.closeSubpath()
-                painter.drawPath(path)
-            else:
-                painter.drawRect(rect)
-            
-            painter.restore() 
-        else:
-            super().paint(painter, option, widget)
-
-
-    def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
-        is_locked = self.map_object_data_ref.get("editor_locked", False)
-        
-        if is_locked and change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
-            return self.pos() # Prevent movement if locked
-        
-        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged and self.scene() and self.isSelected():
-            if self.scene().property("is_actively_transforming_item") is True: 
-                 return super().itemChange(change, value)
-
-            new_pos: QPointF = value 
-            grid_size = self.scene().property("grid_size") 
-            grid_size = grid_size if isinstance(grid_size, (int, float)) and grid_size > 0 else ED_CONFIG.BASE_GRID_SIZE # type: ignore
-
-            snapped_x = round(new_pos.x() / grid_size) * grid_size
-            snapped_y = round(new_pos.y() / grid_size) * grid_size
-
-            if int(snapped_x) != self.map_object_data_ref.get('world_x') or \
-               int(snapped_y) != self.map_object_data_ref.get('world_y'):
-                self.map_object_data_ref['world_x'] = int(snapped_x)
-                self.map_object_data_ref['world_y'] = int(snapped_y)
-                map_view = self.scene().parent() 
-                if hasattr(map_view, 'object_graphically_moved_signal'):
-                    map_view.object_graphically_moved_signal.emit(self.map_object_data_ref) 
-
-            if abs(new_pos.x() - snapped_x) > 1e-3 or abs(new_pos.y() - snapped_y) > 1e-3:
-                return QPointF(float(snapped_x), float(snapped_y))
-            return new_pos
-        return super().itemChange(change, value)
-
-    def update_visuals_from_data(self, editor_state: EditorState): 
-        asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
-        if not asset_info: return
-
-        self.setVisible(not self.map_object_data_ref.get("editor_hidden", False))
-        is_locked = self.map_object_data_ref.get("editor_locked", False)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not is_locked)
-
-        if not self.is_procedural_tile:
-            original_w, original_h = asset_info.get("original_size_pixels", (self.pixmap().width(), self.pixmap().height()))
-            new_pixmap = get_asset_pixmap(self.editor_key, asset_info,
-                                          QSizeF(int(original_w), int(original_h)),
-                                          self.map_object_data_ref.get("override_color"),
-                                          get_native_size_only=True,
-                                          is_flipped_h=False, rotation=0) 
-            if new_pixmap and not new_pixmap.isNull():
-                if self.pixmap().cacheKey() != new_pixmap.cacheKey(): 
-                    self.prepareGeometryChange() 
-                    self.setPixmap(new_pixmap)
-            else: 
-                fallback_pm = QPixmap(int(original_w), int(original_h))
-                fallback_pm.fill(Qt.GlobalColor.magenta)
-                self.prepareGeometryChange()
-                self.setPixmap(fallback_pm)
-        else:
-            new_color = self.map_object_data_ref.get("override_color")
-            if not new_color and asset_info.get("surface_params"):
-                new_color = asset_info["surface_params"][2]
-            
-            needs_geom_change = False
-            if asset_info.get("surface_params"):
-                params = asset_info["surface_params"]
-                new_pw = float(params[0])
-                new_ph = float(params[1])
-                if abs(self.procedural_width - new_pw) > 1e-3 or abs(self.procedural_height - new_ph) > 1e-3:
-                    self.procedural_width = new_pw
-                    self.procedural_height = new_ph
-                    needs_geom_change = True
-            
-            if self.procedural_color_tuple != new_color or needs_geom_change:
-                self.procedural_color_tuple = new_color
-                if needs_geom_change: self.prepareGeometryChange()
-                self.update() 
-
-        self._apply_orientation_transform() 
-
-        new_z = self.map_object_data_ref.get("layer_order", 0)
-        if self.zValue() != new_z:
-            self.setZValue(new_z)
-
-        new_pos_x = float(self.map_object_data_ref.get("world_x", 0))
-        new_pos_y = float(self.map_object_data_ref.get("world_y", 0))
-        if self.pos() != QPointF(new_pos_x, new_pos_y):
-            self.setPos(new_pos_x, new_pos_y)
-
+# StandardMapObjectItem class has been moved to map_object_items.py
 
 class MapViewWidget(QGraphicsView):
     mouse_moved_on_map = Signal(tuple)
@@ -338,6 +110,46 @@ class MapViewWidget(QGraphicsView):
         self.load_map_from_state()
         logger.debug("MapViewWidget initialized.")
 
+    # --- Action methods delegated to MVActions ---
+    def _perform_place_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
+        MVActions.perform_place_action(self, grid_x, grid_y, continuous, is_first_action)
+
+    def _place_single_object_on_map(self, asset_key_for_data: str, asset_definition: Dict, grid_x: int, grid_y: int, is_flipped_h: bool, rotation: int) -> bool:
+        # This method is called by _perform_place_action, so it's part of MVActions now
+        return MVActions.place_single_object_on_map(self, asset_key_for_data, asset_definition, grid_x, grid_y, is_flipped_h, rotation)
+
+    def _perform_erase_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
+        MVActions.perform_erase_action(self, grid_x, grid_y, continuous, is_first_action)
+
+    def _perform_color_tile_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
+        MVActions.perform_color_tile_action(self, grid_x, grid_y, continuous, is_first_action)
+
+    def delete_selected_map_objects(self):
+        MVActions.delete_selected_map_objects_action(self)
+        
+    def _select_object_at_controller_cursor(self): # Kept here as it's controller specific to this view
+        if not self._controller_cursor_pos: return
+        grid_x, grid_y = self._controller_cursor_pos
+        world_x = grid_x * self.editor_state.grid_size
+        world_y = grid_y * self.editor_state.grid_size
+        cursor_rect_scene = QRectF(world_x, world_y, float(self.editor_state.grid_size), float(self.editor_state.grid_size))
+        items_at_cursor = self.map_scene.items(cursor_rect_scene, Qt.ItemSelectionMode.IntersectsItemShape)
+
+        found_item_to_select: Optional[QGraphicsItem] = None
+        for item in items_at_cursor:
+            if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)): # Check against imported classes
+                if not item.map_object_data_ref.get("editor_locked", False): 
+                    found_item_to_select = item
+                    break
+
+        self.map_scene.clearSelection()
+        if found_item_to_select:
+            found_item_to_select.setSelected(True)
+        else:
+            self.map_object_selected_for_properties.emit(None)
+    # --- End of delegated action methods ---
+
+
     def _update_controller_cursor_visuals(self):
         if not self._controller_has_focus or self._controller_cursor_pos is None:
             if self._controller_cursor_item: self._controller_cursor_item.setVisible(False)
@@ -376,25 +188,6 @@ class MapViewWidget(QGraphicsView):
             else:
                 self._perform_place_action(grid_x, grid_y, is_first_action=True)
         if moved: self._controller_cursor_pos = (grid_x, grid_y); self._update_controller_cursor_visuals()
-
-    def _select_object_at_controller_cursor(self):
-        if not self._controller_cursor_pos: return
-        grid_x, grid_y = self._controller_cursor_pos; world_x = grid_x * self.editor_state.grid_size; world_y = grid_y * self.editor_state.grid_size
-        cursor_rect_scene = QRectF(world_x, world_y, float(self.editor_state.grid_size), float(self.editor_state.grid_size))
-        items_at_cursor = self.map_scene.items(cursor_rect_scene, Qt.ItemSelectionMode.IntersectsItemShape)
-
-        found_item_to_select: Optional[QGraphicsItem] = None
-        for item in items_at_cursor:
-            if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)):
-                if not item.map_object_data_ref.get("editor_locked", False): 
-                    found_item_to_select = item
-                    break
-
-        self.map_scene.clearSelection()
-        if found_item_to_select:
-            found_item_to_select.setSelected(True)
-        else:
-            self.map_object_selected_for_properties.emit(None)
 
     @Slot(dict)
     def _handle_internal_object_move_for_unsaved_changes(self, moved_object_data_ref: dict):
@@ -754,9 +547,8 @@ class MapViewWidget(QGraphicsView):
                     if not item_under_mouse.isSelected():
                         self.map_scene.clearSelection()
                         item_under_mouse.setSelected(True)
-                    event.accept() # Accept the event to prevent rubber band drag from starting on a locked item
+                    event.accept() 
                     return
-                # If not a locked item or no item, proceed with super call for selection/rubber band
                 super().mousePressEvent(event)
             elif self.editor_state.current_tool_mode == "place":
                 if self.editor_state.palette_current_asset_key:
@@ -764,7 +556,6 @@ class MapViewWidget(QGraphicsView):
             elif self.editor_state.current_tool_mode == "color_pick":
                 if self.editor_state.current_tile_paint_color:
                      self._perform_color_tile_action(grid_tx, grid_ty, is_first_action=True)
-            # If item is under mouse and not select tool, it might be draggable.
             elif item_under_mouse and isinstance(item_under_mouse, (StandardMapObjectItem, BaseResizableMapItem)):
                 if hasattr(item_under_mouse, 'map_object_data_ref') and not item_under_mouse.map_object_data_ref.get("editor_locked", False): # type: ignore
                     self._is_dragging_map_object = True 
@@ -773,7 +564,7 @@ class MapViewWidget(QGraphicsView):
                 else: 
                     event.accept() 
                     return
-            else: # No specific tool action, allow rubber band if select tool was implied or no item under mouse
+            else: 
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
                 super().mousePressEvent(event)
         
@@ -1009,213 +800,6 @@ class MapViewWidget(QGraphicsView):
         if self._edge_scroll_dx != 0 or self._edge_scroll_dy != 0:
             amount_pixels = ED_CONFIG.EDGE_SCROLL_SPEED_UNITS_PER_SECOND * (self.edge_scroll_timer.interval() / 1000.0) # type: ignore
             self.pan_view_by_scrollbars(int(self._edge_scroll_dx * amount_pixels), int(self._edge_scroll_dy * amount_pixels))
-
-    def _perform_place_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
-        if self.editor_state.current_tool_mode != "place": return 
-        if continuous and (grid_x, grid_y) == self.editor_state.last_painted_tile_coords: return
-        
-        effective_asset_key, is_flipped, rotation, _ = self.editor_state.get_current_placement_info()
-        if not effective_asset_key: return
-        
-        asset_definition_for_placement = self.editor_state.assets_palette.get(effective_asset_key)
-        if not asset_definition_for_placement:
-            if effective_asset_key.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX): # type: ignore
-                 filename = effective_asset_key.split(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX,1)[1] # type: ignore
-                 asset_definition_for_placement = {
-                    "game_type_id": ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, # type: ignore
-                    "asset_editor_key": effective_asset_key, 
-                    "source_file_path": f"Custom/{filename}", 
-                    "colorable": False, "category": "custom"
-                 }
-            else:
-                logger.error(f"Palette data for effective asset '{effective_asset_key}' not found for placement.")
-                return
-
-        made_change_in_stroke = False
-        if is_first_action: editor_history.push_undo_state(self.editor_state) # type: ignore
-
-        is_placer_tool = False
-        if self.editor_state.palette_current_asset_key: 
-            original_palette_asset_data = self.editor_state.assets_palette.get(self.editor_state.palette_current_asset_key)
-            if original_palette_asset_data and \
-               original_palette_asset_data.get("places_asset_key") and \
-               original_palette_asset_data.get("icon_type") == "2x2_placer":
-                is_placer_tool = True
-        
-        if is_placer_tool:
-            for r_off in range(2):
-                for c_off in range(2):
-                    if self._place_single_object_on_map(effective_asset_key, asset_definition_for_placement, grid_x + c_off, grid_y + r_off, is_flipped, rotation):
-                        made_change_in_stroke = True
-        else:
-            if self._place_single_object_on_map(effective_asset_key, asset_definition_for_placement, grid_x, grid_y, is_flipped, rotation):
-                made_change_in_stroke = True
-
-        if made_change_in_stroke: self.map_content_changed.emit()
-        self.editor_state.last_painted_tile_coords = (grid_x, grid_y)
-
-    def _place_single_object_on_map(self, asset_key_for_data: str, asset_definition: Dict, grid_x: int, grid_y: int, is_flipped_h: bool, rotation: int) -> bool:
-        world_x = int(float(grid_x * self.editor_state.grid_size))
-        world_y = int(float(grid_y * self.editor_state.grid_size))
-
-        game_id = asset_definition.get("game_type_id", "unknown")
-        category = asset_definition.get("category", "unknown")
-        is_spawn_type = category == "spawn"
-        
-        is_custom_image_type = (asset_key_for_data == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY or # type: ignore
-                               (asset_key_for_data.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX) and game_id == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY) ) # type: ignore
-        is_trigger_type = asset_key_for_data == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY # type: ignore
-
-        if not is_spawn_type and not is_custom_image_type and not is_trigger_type:
-            for obj in self.editor_state.placed_objects:
-                if obj.get("world_x") == world_x and obj.get("world_y") == world_y and \
-                   obj.get("asset_editor_key") == asset_key_for_data and \
-                   obj.get("is_flipped_h", False) == is_flipped_h and \
-                   obj.get("rotation", 0) == rotation: 
-                    if asset_definition.get("colorable") and self.editor_state.current_selected_asset_paint_color and obj.get("override_color") != self.editor_state.current_selected_asset_paint_color:
-                        obj["override_color"] = self.editor_state.current_selected_asset_paint_color
-                        self.update_specific_object_visuals(obj); return True
-                    return False
-
-        new_obj_data: Dict[str, Any] = {
-            "asset_editor_key": asset_key_for_data, 
-            "world_x": world_x, "world_y": world_y,
-            "game_type_id": game_id,
-            "layer_order": 0,
-            "properties": ED_CONFIG.get_default_properties_for_asset(game_id), # type: ignore
-            "is_flipped_h": is_flipped_h,
-            "rotation": rotation,
-            "editor_hidden": False, 
-            "editor_locked": False  
-        }
-
-        if is_custom_image_type:
-            if asset_key_for_data.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX): # type: ignore
-                 filename_from_key = asset_key_for_data.split(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX, 1)[1] # type: ignore
-                 new_obj_data["source_file_path"] = f"Custom/{filename_from_key}"
-            else:
-                 new_obj_data["source_file_path"] = asset_definition.get("source_file_path", "")
-
-            map_folder = editor_map_utils.get_map_specific_folder_path(self.editor_state, self.editor_state.map_name_for_function)
-            full_path = ""
-            if map_folder and new_obj_data["source_file_path"]:
-                 full_path = os.path.join(map_folder, new_obj_data["source_file_path"])
-            
-            if full_path and os.path.exists(full_path):
-                q_img = QImage(full_path)
-                if not q_img.isNull():
-                    new_obj_data["original_width"] = q_img.width(); new_obj_data["original_height"] = q_img.height()
-                    new_obj_data["current_width"] = q_img.width(); new_obj_data["current_height"] = q_img.height()
-                else:
-                    new_obj_data["original_width"]=new_obj_data["current_width"]=ED_CONFIG.BASE_GRID_SIZE*2 # type: ignore
-                    new_obj_data["original_height"]=new_obj_data["current_height"]=ED_CONFIG.BASE_GRID_SIZE*2 # type: ignore
-            else: 
-                new_obj_data["original_width"]=new_obj_data["current_width"]=ED_CONFIG.BASE_GRID_SIZE*2 # type: ignore
-                new_obj_data["original_height"]=new_obj_data["current_height"]=ED_CONFIG.BASE_GRID_SIZE*2 # type: ignore
-            new_obj_data["crop_rect"] = None 
-
-        elif is_trigger_type:
-            new_obj_data["current_width"] = ED_CONFIG.BASE_GRID_SIZE * 2 # type: ignore
-            new_obj_data["current_height"] = ED_CONFIG.BASE_GRID_SIZE * 2 # type: ignore
-
-        elif asset_definition.get("colorable") and self.editor_state.current_selected_asset_paint_color:
-            new_obj_data["override_color"] = self.editor_state.current_selected_asset_paint_color
-
-        if is_spawn_type: 
-            self.editor_state.placed_objects = [obj for obj in self.editor_state.placed_objects if obj.get("game_type_id") != game_id]
-
-        self.editor_state.placed_objects.append(new_obj_data)
-        self.draw_placed_objects()
-        return True
-
-    def _perform_erase_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
-        if self.editor_state.current_tool_mode != "tool_eraser": return
-        if continuous and (grid_x, grid_y) == self.editor_state.last_erased_tile_coords: return
-        world_x_snapped = float(grid_x * self.editor_state.grid_size); world_y_snapped = float(grid_y * self.editor_state.grid_size)
-        target_point_scene = QPointF(world_x_snapped + self.editor_state.grid_size / 2.0, world_y_snapped + self.editor_state.grid_size / 2.0)
-        item_to_remove_data: Optional[Dict[str, Any]] = None; highest_z = -float('inf')
-        for obj_data in self.editor_state.placed_objects:
-            obj_x = obj_data.get("world_x", 0); obj_y = obj_data.get("world_y", 0)
-            obj_w = obj_data.get("current_width", self.editor_state.grid_size if obj_data.get("asset_editor_key") not in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY] else ED_CONFIG.BASE_GRID_SIZE)  # type: ignore
-            obj_h = obj_data.get("current_height", self.editor_state.grid_size if obj_data.get("asset_editor_key") not in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY] else ED_CONFIG.BASE_GRID_SIZE)  # type: ignore
-            obj_rect = QRectF(float(obj_x), float(obj_y), float(obj_w), float(obj_h))
-            if obj_rect.contains(target_point_scene):
-                current_obj_z = obj_data.get("layer_order", 0)
-                if current_obj_z >= highest_z:
-                    highest_z = current_obj_z; item_to_remove_data = obj_data
-        if item_to_remove_data:
-            if is_first_action: editor_history.push_undo_state(self.editor_state) # type: ignore
-            self.editor_state.placed_objects.remove(item_to_remove_data)
-            item_id = id(item_to_remove_data)
-            if item_id in self._map_object_items:
-                map_obj_item = self._map_object_items.pop(item_id)
-                if isinstance(map_obj_item, BaseResizableMapItem):
-                    map_obj_item.show_interaction_handles(False)
-                    for handle in map_obj_item.interaction_handles:
-                        if handle.scene(): self.map_scene.removeItem(handle)
-                    map_obj_item.interaction_handles.clear()
-                if map_obj_item.scene(): self.map_scene.removeItem(map_obj_item)
-            self.map_content_changed.emit(); self.editor_state.last_erased_tile_coords = (grid_x, grid_y)
-
-    def _perform_color_tile_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
-        if self.editor_state.current_tool_mode != "color_pick": return
-        if not self.editor_state.current_tile_paint_color: return
-        if continuous and (grid_x, grid_y) == self.editor_state.last_colored_tile_coords: return
-        world_x_snapped = float(grid_x * self.editor_state.grid_size); world_y_snapped = float(grid_y * self.editor_state.grid_size)
-        colored_something = False; target_point_scene = QPointF(world_x_snapped + self.editor_state.grid_size / 2.0, world_y_snapped + self.editor_state.grid_size / 2.0)
-        item_to_color_data: Optional[Dict[str, Any]] = None; highest_z = -float('inf')
-        for obj_data in self.editor_state.placed_objects:
-            if obj_data.get("asset_editor_key") in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY]: continue  # type: ignore
-            asset_info = self.editor_state.assets_palette.get(str(obj_data.get("asset_editor_key")))
-            if not asset_info or not asset_info.get("colorable"): continue
-            obj_x = obj_data.get("world_x", 0); obj_y = obj_data.get("world_y", 0)
-            obj_w_tuple, obj_h_tuple = asset_info.get("original_size_pixels", (self.editor_state.grid_size, self.editor_state.grid_size)) 
-            obj_w, obj_h = float(obj_w_tuple), float(obj_h_tuple) 
-            obj_rect = QRectF(float(obj_x), float(obj_y), float(obj_w), float(obj_h))
-            if obj_rect.contains(target_point_scene):
-                current_obj_z = obj_data.get("layer_order", 0)
-                if current_obj_z >= highest_z: highest_z = current_obj_z; item_to_color_data = obj_data
-        if item_to_color_data:
-            new_color = self.editor_state.current_tile_paint_color
-            if item_to_color_data.get("override_color") != new_color:
-                if is_first_action: editor_history.push_undo_state(self.editor_state) # type: ignore
-                item_to_color_data["override_color"] = new_color
-                self.update_specific_object_visuals(item_to_color_data); colored_something = True
-        if colored_something: self.map_content_changed.emit(); self.editor_state.last_colored_tile_coords = (grid_x, grid_y)
-
-    def delete_selected_map_objects(self):
-        selected_qt_items = self.map_scene.selectedItems()
-        if not selected_qt_items: return
-
-        items_to_process = [item for item in selected_qt_items if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem))]
-        if not items_to_process: return
-
-        editor_history.push_undo_state(self.editor_state) # type: ignore
-
-        data_refs_to_remove = [item.map_object_data_ref for item in items_to_process if hasattr(item, 'map_object_data_ref')] # type: ignore
-
-        self.editor_state.placed_objects = [
-            obj for obj in self.editor_state.placed_objects if obj not in data_refs_to_remove
-        ]
-
-        for item_map_obj in items_to_process:
-            item_data_ref = getattr(item_map_obj, 'map_object_data_ref', None)
-            if item_data_ref:
-                item_id = id(item_data_ref)
-                if item_id in self._map_object_items:
-                    del self._map_object_items[item_id]
-
-            if isinstance(item_map_obj, BaseResizableMapItem):
-                item_map_obj.show_interaction_handles(False)
-                for handle in item_map_obj.interaction_handles:
-                    if handle.scene(): self.map_scene.removeItem(handle)
-                item_map_obj.interaction_handles.clear()
-
-            if item_map_obj.scene():
-                self.map_scene.removeItem(item_map_obj)
-
-        self.map_scene.clearSelection(); self.map_content_changed.emit(); self.map_object_selected_for_properties.emit(None)
-        self.show_status_message(f"Deleted {len(data_refs_to_remove)} object(s).")
 
     @Slot(str, bool, int, int) 
     def on_asset_selected_for_placement(self, asset_key: Optional[str], is_flipped: bool, wall_variant_idx: int, rotation: int):

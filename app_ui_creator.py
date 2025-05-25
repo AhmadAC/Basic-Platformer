@@ -285,7 +285,7 @@ def _ensure_editor_instance(main_window: 'MainWindow'):
        not isinstance(main_window.actual_editor_module_instance, EditorMainWindowType):
         info("UI_VIEWS: Creating editor instance.")
         try:
-            from editor.editor import editor_main # type: ignore
+            from editor.editor_main_window import editor_main # type: ignore
             instance = editor_main(parent_app_instance=QApplication.instance(), embed_mode=True)
             if not instance or not isinstance(instance, EditorMainWindowType):
                 error("Failed to get QMainWindow editor instance."); _add_placeholder_to_content_area(main_window, main_window.editor_content_container, "Error: Editor load failed."); return

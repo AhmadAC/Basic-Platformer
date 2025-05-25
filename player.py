@@ -10,8 +10,9 @@ Collision rect is now tighter than visual sprite.
 can_stand_up logic improved.
 Corrected camera.apply usage in draw_pyside.
 MODIFIED: Added insta_kill method for chest crush.
+MODIFIED: Ensure timer consistency for status effects by passing current_time_ms to set_player_state.
 """
-# version 2.1.9 (Added insta_kill method)
+# version 2.1.10 (Timer consistency for status effects)
 
 import os
 import sys
@@ -62,7 +63,7 @@ except ImportError as e:
     def critical(msg, *args, **kwargs): print(f"CRITICAL: {msg}")
     # Dummy for set_player_state if its import failed
     if 'set_player_state' not in globals():
-        def set_player_state(player, new_state):
+        def set_player_state(player, new_state, current_game_time_ms_param=None): # Add param for consistency
             if hasattr(player, 'state'): player.state = new_state
             warning("Fallback set_player_state used.")
 
@@ -152,7 +153,7 @@ class Player:
         self.is_holding_crouch_ability_key: bool = False
 
         current_time_for_init_cooldown = get_current_ticks_monotonic()
-        self.fireball_cooldown_timer: int = current_time_for_init_cooldown - C.FIREBALL_COOLDOWN # Ready to fire
+        self.fireball_cooldown_timer: int = current_time_for_init_cooldown - C.FIREBALL_COOLDOWN
         self.poison_cooldown_timer: int = current_time_for_init_cooldown - C.POISON_COOLDOWN
         self.bolt_cooldown_timer: int = current_time_for_init_cooldown - C.BOLT_COOLDOWN
         self.blood_cooldown_timer: int = current_time_for_init_cooldown - C.BLOOD_COOLDOWN
@@ -213,13 +214,10 @@ class Player:
             debug(f"Player {self.player_id} initialized. Valid: {self._valid_init}. CollisionRect: W{self.rect.width():.1f} H{self.rect.height():.1f}")
 
     def reset_for_new_game_or_round(self):
-        """Resets flags related to input priming and cooldowns for a new game/map session."""
         debug(f"Player {self.player_id}: Resetting input priming and cooldowns for new game/round.")
         self._first_joystick_input_poll_done = False
         self._prev_discrete_axis_hat_state.clear()
-
         current_time_reset = get_current_ticks_monotonic()
-        # Reset cooldowns to allow immediate action.
         self.fireball_cooldown_timer = current_time_reset - C.FIREBALL_COOLDOWN
         self.poison_cooldown_timer = current_time_reset - C.POISON_COOLDOWN
         self.bolt_cooldown_timer = current_time_reset - C.BOLT_COOLDOWN
@@ -228,7 +226,6 @@ class Player:
         self.shadow_cooldown_timer = current_time_reset - C.SHADOW_PROJECTILE_COOLDOWN
         self.grey_cooldown_timer = current_time_reset - C.GREY_PROJECTILE_COOLDOWN
         debug(f"Player {self.player_id}: Projectile cooldowns reset for immediate use.")
-
 
     def _init_stone_assets(self):
         stone_common_folder = os.path.join('characters', 'Stone')
@@ -332,14 +329,16 @@ class Player:
             if hasattr(platform_obj, 'rect') and isinstance(platform_obj.rect, QRectF):
                 if potential_standing_rect.intersects(platform_obj.rect):
                     if platform_obj.rect.bottom() > potential_standing_rect.top() and \
-                       platform_obj.rect.top() < current_crouch_rect.top():
+                       platform_obj.rect.top() < current_crouch_rect.top(): # Platform is above the crouched head
                         debug(f"Player {self.player_id} cannot stand: Blocked by platform {platform_obj.rect} "
                               f"(Pot. Stand Rect: {potential_standing_rect}, Crouch Top: {current_crouch_rect.top()})")
                         return False
         debug(f"Player {self.player_id} can stand up. (Pot. Stand Rect: {potential_standing_rect})")
         return True
 
-    def set_state(self, new_state: str): set_player_state(self, new_state)
+    def set_state(self, new_state: str, current_game_time_ms_param: Optional[int] = None): # MODIFIED
+        set_player_state(self, new_state, current_game_time_ms_param) # MODIFIED
+
     def animate(self): update_player_animation(self)
 
     def process_input(self, qt_keys_held_snapshot: Dict[Qt.Key, bool],
@@ -399,7 +398,7 @@ class Player:
 
             if projectile_config_name == 'blood' and self.current_health > 0:
                 self.current_health -= self.current_health * 0.05
-                if self.current_health <= 0 and not self.is_dead: set_player_state(self, 'death')
+                if self.current_health <= 0 and not self.is_dead: set_player_state(self, 'death', get_current_ticks_monotonic()) # MODIFIED
 
     def fire_fireball(self): self._generic_fire_projectile(Fireball, 'fireball_cooldown_timer', C.FIREBALL_COOLDOWN, 'fireball')
     def fire_poison(self): self._generic_fire_projectile(PoisonShot, 'poison_cooldown_timer', C.POISON_COOLDOWN, 'poison')
@@ -418,31 +417,18 @@ class Player:
     def check_character_collisions(self, direction: str, characters_list: List[Any]) -> bool: return check_player_character_collisions(self, direction, characters_list)
     def check_hazard_collisions(self, hazards_list: List[Any]): check_player_hazard_collisions(self, hazards_list)
 
-    # +++ ADDED insta_kill METHOD +++
     def insta_kill(self):
-        """Instantly kills the player, bypassing normal damage mechanics."""
-        if not self._valid_init or self.is_dead or not self._alive: # Don't kill if already dead/invalid
-            return
-
+        if not self._valid_init or self.is_dead or not self._alive: return
         player_id_log = f"P{self.player_id}"
         info(f"Player {player_id_log}: insta_kill() called.")
-
-        self.current_health = 0
-        self.is_dead = True # Mark as logically dead
-        # self.death_animation_finished = False # set_player_state('death') will handle this
-
-        # Call set_state to trigger death animation and other necessary state changes.
-        # The 'death' state handler in player_state_handler.py should also ensure
-        # is_dead is true and death_animation_finished is false.
-        self.set_state('death')
-        # For immediate visual feedback, ensure the animation is triggered if possible
-        if hasattr(self, 'animate'):
-            self.animate()
+        self.current_health = 0; self.is_dead = True
+        set_player_state(self, 'death', get_current_ticks_monotonic()) # MODIFIED
+        if hasattr(self, 'animate'): self.animate()
 
     def update(self, dt_sec: float, platforms_list: List[Any], ladders_list: List[Any],
                hazards_list: List[Any], other_players_list: List[Any], enemies_list: List[Any]):
         if not self._valid_init or not self._alive: return
-        current_time_ms = get_current_ticks_monotonic(); self.update_status_effects(current_time_ms)
+        current_time_ms = get_current_ticks_monotonic(); self.update_status_effects(current_time_ms) # update_status_effects calls set_player_state with current_time_ms
 
         if self.is_stone_smashed:
             if current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS: self.kill(); return
@@ -456,87 +442,72 @@ class Player:
 
     def draw_pyside(self, painter: QPainter, camera: 'CameraClass_TYPE'):
         if not self._valid_init or not self.image or self.image.isNull() or not self.rect.isValid(): return
-
         should_draw = self.alive() or \
                       (self.is_dead and not self.death_animation_finished and not self.is_petrified) or \
                       self.is_petrified
-
         if not should_draw: return
-
         collision_rect_on_screen: QRectF = camera.apply(self.rect)
-
-        if not painter.window().intersects(collision_rect_on_screen.toRect()):
-            return
-
+        if not painter.window().intersects(collision_rect_on_screen.toRect()): return
         visual_sprite_width = float(self.image.width())
         visual_sprite_height = float(self.image.height())
-
         draw_x_visual = collision_rect_on_screen.center().x() - (visual_sprite_width / 2.0)
         draw_y_visual = collision_rect_on_screen.bottom() - visual_sprite_height
-
         draw_pos_visual = QPointF(draw_x_visual, draw_y_visual)
-
         painter.drawPixmap(draw_pos_visual, self.image)
 
-    def update_status_effects(self, current_time_ms: int):
+    def update_status_effects(self, current_time_ms: int): # MODIFIED - current_time_ms passed in
         if self.is_aflame:
             if current_time_ms - self.aflame_timer_start > C.PLAYER_AFLAME_DURATION_MS:
-                set_player_state(self, 'deflame_crouch' if self.is_crouching else 'deflame')
+                set_player_state(self, 'deflame_crouch' if self.is_crouching else 'deflame', current_time_ms) # MODIFIED
             elif C.PLAYER_AFLAME_DAMAGE_PER_TICK > 0 and \
                  current_time_ms - self.aflame_damage_last_tick > C.PLAYER_AFLAME_DAMAGE_INTERVAL_MS:
                 self.take_damage(C.PLAYER_AFLAME_DAMAGE_PER_TICK)
                 self.aflame_damage_last_tick = current_time_ms
         elif self.is_deflaming:
             if current_time_ms - self.deflame_timer_start > C.PLAYER_DEFLAME_DURATION_MS:
-                set_player_state(self, 'crouch' if self.is_crouching else ('idle' if self.on_ground else 'fall'))
+                player_state_on_deflame_end = 'crouch' if self.is_crouching else ('idle' if self.on_ground else 'fall')
+                set_player_state(self, player_state_on_deflame_end, current_time_ms) # MODIFIED
 
         if self.is_frozen:
             if current_time_ms - self.frozen_effect_timer > C.PLAYER_FROZEN_DURATION_MS:
-                set_player_state(self, 'defrost')
+                set_player_state(self, 'defrost', current_time_ms) # MODIFIED
         elif self.is_defrosting:
             if current_time_ms - self.frozen_effect_timer > (C.PLAYER_FROZEN_DURATION_MS + C.PLAYER_DEFROST_DURATION_MS):
                 self.is_defrosting = False
-                set_player_state(self, 'idle' if self.on_ground else 'fall')
+                set_player_state(self, 'idle' if self.on_ground else 'fall', current_time_ms) # MODIFIED
 
         if self.is_stone_smashed:
             if current_time_ms - self.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS:
-                if not self.death_animation_finished:
-                    self.death_animation_finished = True
+                if not self.death_animation_finished: self.death_animation_finished = True
                 self.kill()
 
     def apply_aflame_effect(self):
         if self.is_aflame or self.is_deflaming or self.is_dead or self.is_petrified or self.is_frozen or self.is_defrosting: return
         debug(f"Player {self.player_id} Log: Applying aflame effect.")
-        self.is_aflame = True; self.is_deflaming = False; self.aflame_timer_start = get_current_ticks_monotonic(); self.aflame_damage_last_tick = self.aflame_timer_start
-        set_player_state(self, 'aflame_crouch' if self.is_crouching else 'aflame'); self.is_attacking = False; self.attack_type = 0
+        # Timers (aflame_timer_start, aflame_damage_last_tick) will be set by set_player_state
+        set_player_state(self, 'aflame_crouch' if self.is_crouching else 'aflame', get_current_ticks_monotonic()) # MODIFIED
+        self.is_attacking = False; self.attack_type = 0
 
     def apply_freeze_effect(self):
         if self.is_frozen or self.is_defrosting or self.is_dead or self.is_petrified or self.is_aflame or self.is_deflaming: return
         debug(f"Player {self.player_id} Log: Applying freeze effect.")
-        set_player_state(self, 'frozen'); self.is_attacking = False; self.attack_type = 0; self.vel = QPointF(0,0); self.acc.setX(0)
+        # frozen_effect_timer will be set by set_player_state
+        set_player_state(self, 'frozen', get_current_ticks_monotonic()) # MODIFIED
+        self.is_attacking = False; self.attack_type = 0; self.vel = QPointF(0,0); self.acc.setX(0)
 
     def petrify(self):
         if self.is_petrified or (self.is_dead and not self.is_petrified): return
         debug(f"Player {self.player_id}: Petrifying.");
         self.facing_at_petrification = self.facing_right
         self.was_crouching_when_petrified = self.is_crouching
-        self.is_petrified = True; self.is_stone_smashed = False
-        self.is_dead = True; self.current_health = 0
-        self.vel = QPointF(0,0); self.acc = QPointF(0,0)
-        self.is_attacking = False; self.is_dashing = False; self.is_rolling = False
-        self.is_sliding = False; self.on_ladder = False; self.is_taking_hit = False
-        self.is_aflame = False; self.is_deflaming = False
-        self.is_frozen = False; self.is_defrosting = False
-        self.death_animation_finished = True
-        set_player_state(self, 'petrified')
+        # Other flags are set by set_player_state
+        set_player_state(self, 'petrified', get_current_ticks_monotonic()) # MODIFIED
 
     def smash_petrification(self):
         if self.is_petrified and not self.is_stone_smashed:
             debug(f"Player {self.player_id}: Smashing petrification.");
-            self.is_stone_smashed = True
-            self.stone_smashed_timer_start = get_current_ticks_monotonic()
-            self.death_animation_finished = False
-            set_player_state(self, 'smashed')
+            # Flags set by set_player_state
+            set_player_state(self, 'smashed', get_current_ticks_monotonic()) # MODIFIED
 
     def set_projectile_group_references(self, projectile_list: List[Any], all_elements_list: List[Any], platforms_list_ref: List[Any]):
         if self.game_elements_ref_for_projectiles is None: self.game_elements_ref_for_projectiles = {}
