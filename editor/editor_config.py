@@ -1,10 +1,11 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.1.0 (Feature Rich Update Config)
+## version 2.1.1 (Corrected Asset Paths)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added config for custom image objects and trigger squares.
 - Defined MINIMAP_CATEGORY_COLORS for better minimap visuals.
+- Updated asset paths to reflect actual project structure.
 """
 import sys
 import os
@@ -46,7 +47,7 @@ EDITOR_SCREEN_INITIAL_WIDTH = getattr(C, 'EDITOR_SCREEN_INITIAL_WIDTH', 1380)
 EDITOR_SCREEN_INITIAL_HEIGHT = getattr(C, 'EDITOR_SCREEN_INITIAL_HEIGHT', 820)
 
 # --- Section Preferred Sizes ---
-MENU_SECTION_PREFERRED_WIDTH = 250 # Not currently used explicitly by provided code
+MENU_SECTION_PREFERRED_WIDTH = 250 
 ASSET_PALETTE_PREFERRED_WIDTH = 300
 
 # --- Grid and Tile Size ---
@@ -82,20 +83,20 @@ MINIMAP_BACKGROUND_COLOR_TUPLE: Tuple[int,int,int,int] = (40, 40, 50, 230)
 MINIMAP_BORDER_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'GRAY', (128,128,128))
 MINIMAP_VIEW_RECT_FILL_COLOR_TUPLE: Tuple[int,int,int,int] = (255, 255, 0, 70) 
 MINIMAP_VIEW_RECT_BORDER_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'YELLOW', (255,255,0))
-MINIMAP_OBJECT_REPRESENTATION_SIZE_PX = 2.0 # For small objects like characters/items
+MINIMAP_OBJECT_REPRESENTATION_SIZE_PX = 2.0 
 MINIMAP_UPDATE_INTERVAL_MS = 50
 MINIMAP_CATEGORY_COLORS: Dict[str, QColor] = {
-    "spawn": QColor(0, 255, 0, 180),    # Green
-    "enemy": QColor(255, 0, 0, 180),    # Red
-    "item": QColor(255, 255, 0, 180),   # Yellow
-    "object": QColor(0, 0, 255, 180),   # Blue (e.g., stones)
-    "hazard": QColor(255, 100, 0, 200), # Orange/Red (e.g., lava)
-    "tile": QColor(150, 150, 150, 200), # Default for tiles
-    "background_tile": QColor(100, 100, 120, 150), # Specific for background tiles
-    "custom_image": QColor(0, 150, 150, 180), # Teal for custom images
-    "trigger": QColor(200, 0, 200, 150),      # Purple for triggers
-    "trigger_image": QColor(180, 50, 180, 170), # Slightly different for triggers with images
-    "unknown": QColor(255, 0, 255, 150) # Magenta for unknown
+    "spawn": QColor(0, 255, 0, 180),    
+    "enemy": QColor(255, 0, 0, 180),    
+    "item": QColor(255, 255, 0, 180),   
+    "object": QColor(0, 0, 255, 180),   
+    "hazard": QColor(255, 100, 0, 200), 
+    "tile": QColor(150, 150, 150, 200), 
+    "background_tile": QColor(100, 100, 120, 150), 
+    "custom_image": QColor(0, 150, 150, 180), 
+    "trigger": QColor(200, 0, 200, 150),      
+    "trigger_image": QColor(180, 50, 180, 170), 
+    "unknown": QColor(255, 0, 255, 150) 
 }
 
 
@@ -106,15 +107,15 @@ ASSET_PALETTE_ICON_SIZE_H = ASSET_THUMBNAIL_SIZE
 ASSET_ITEM_BACKGROUND_SELECTED_COLOR_TUPLE: Tuple[int,int,int] = (70, 100, 150)
 
 # --- File Paths and Extensions ---
-MAPS_DIRECTORY = getattr(C, 'MAPS_DIR', "maps") # Relative to project root
+MAPS_DIRECTORY = getattr(C, 'MAPS_DIR', "maps") 
 LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = getattr(C, "LEVEL_EDITOR_SAVE_FORMAT_EXTENSION", ".json")
 GAME_LEVEL_FILE_EXTENSION = getattr(C, "GAME_LEVEL_FILE_EXTENSION", ".py")
 
 # --- Custom Asset Identifiers ---
-CUSTOM_IMAGE_ASSET_KEY = "custom_image_object" # Used as asset_editor_key and game_type_id for these
-TRIGGER_SQUARE_ASSET_KEY = "trigger_square"     # Used as asset_editor_key for palette
-TRIGGER_SQUARE_GAME_TYPE_ID = "trigger_square_link" # Used as game_type_id for properties
-CUSTOM_ASSET_PALETTE_PREFIX = "custom:" # Prefix for custom assets listed in palette
+CUSTOM_IMAGE_ASSET_KEY = "custom_image_object" 
+TRIGGER_SQUARE_ASSET_KEY = "trigger_square"     
+TRIGGER_SQUARE_GAME_TYPE_ID = "trigger_square_link" 
+CUSTOM_ASSET_PALETTE_PREFIX = "custom:" 
 
 
 TS = BASE_GRID_SIZE 
@@ -122,38 +123,41 @@ TS = BASE_GRID_SIZE
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Spawns
     "player1_spawn": {"source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn", "category": "spawn", "name_in_palette": "Player 1 Spawn"},
+    "player2_spawn": {"source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn", "category": "spawn", "name_in_palette": "Player 2 Spawn"},
+    "player3_spawn": {"source_file": "characters/player3/__Idle.gif", "game_type_id": "player3_spawn", "category": "spawn", "name_in_palette": "Player 3 Spawn"},
+    "player4_spawn": {"source_file": "characters/player4/__Idle.gif", "game_type_id": "player4_spawn", "category": "spawn", "name_in_palette": "Player 4 Spawn"},
     
+    # Enemies - Using your actual paths
+    "enemy_green": {"source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "category": "enemy", "name_in_palette": "Enemy Green"},
+    "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_gray", "category": "enemy", "name_in_palette": "Enemy Gray"},
+    "enemy_pink": {"source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "category": "enemy", "name_in_palette": "Enemy Pink"},
+    "enemy_purple": {"source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "category": "enemy", "name_in_palette": "Enemy Purple"},
+    "enemy_orange": {"source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_orange", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"}, # Assuming orange is your red variant
+    "enemy_yellow": {"source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
+    "enemy_cactus": {"source_file": "characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"}, # Example, adjust filename if needed
+    "enemy_truck": {"source_file": "characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"}, # Example, adjust filename
+
+
+    # Items
+    "item_chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "category": "item", "name_in_palette": "Chest"},
+    # Add other items like coin if you have them, e.g.:
+    # "item_coin": {"source_file": "characters/items/coin.png", "game_type_id": "coin", "category": "item", "name_in_palette": "Coin"},
+
+    # Objects
+    "object_stone_idle": {"source_file": "characters/Stone/__Stone.png", "game_type_id": "object_stone_idle", "category": "object", "name_in_palette": "Stone Block"},
+    "object_stone_crouch": {"source_file": "characters/Stone/__StoneCrouch.png", "game_type_id": "object_stone_crouch", "category": "object", "name_in_palette": "Stone Crouch"},
+
     # Tiles
     "platform_wall_gray": {"surface_params": (TS, TS, getattr(C, 'GRAY', (128,128,128))), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
+    "platform_ledge_green_full": {"surface_params": (TS, TS, getattr(C, 'DARK_GREEN', (0,100,0))), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
+    # (You can add more tile definitions here from your previous version if needed)
+    "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, getattr(C, 'DARK_GREEN', (0,100,0))), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
     
     # Hazards
     "hazard_lava_tile": {"source_file": "characters/assets/lava.gif", "game_type_id": "hazard_lava", "category": "hazard", "name_in_palette": "Lava Tile"},
     
     # Background Tiles
     "background_dark_fill": {"surface_params": (TS * 5, TS * 5, getattr(C, 'DARK_GRAY', (50, 50, 50))), "colorable": True, "game_type_id": "background_dark_fill", "category": "background_tile", "name_in_palette": "BG Dark Fill (5x5)"},
-
-    # NEW: Sample Enemy Asset (adjust 'source_file' to your actual image)
-    "enemy_basic_grunt": {
-        "source_file": "characters/enemies/grunt_idle_placeholder.png", # Replace with actual path
-        "game_type_id": "enemy_grunt", # Unique ID for game logic
-        "category": "enemy",
-        "name_in_palette": "Grunt Enemy"
-    },
-    # Add more enemy definitions here, e.g.:
-    # "enemy_flyer": {
-    #     "source_file": "characters/enemies/flyer.png",
-    #     "game_type_id": "enemy_flyer",
-    #     "category": "enemy",
-    #     "name_in_palette": "Flying Enemy"
-    # },
-
-    # Items (Example)
-    # "item_coin": {
-    #     "source_file": "items/coin.png", 
-    #     "game_type_id": "coin",
-    #     "category": "item",
-    #     "name_in_palette": "Coin"
-    # },
 
     # Logic
     TRIGGER_SQUARE_ASSET_KEY: { 
@@ -178,14 +182,20 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "move_speed": {"type": "float", "default": getattr(C, 'PLAYER_RUN_SPEED_LIMIT', 7.0) * 50, "min": 50.0, "max": 1000.0, "label": "Move Speed (units/s)"}, 
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 60, "min": -1500.0, "max": -300.0, "label": "Jump Strength (units/s)"} 
     },
-    # Properties for the sample enemy
-    "enemy_grunt": {
+    # Add for other players if needed...
+    "enemy_green": { # Properties for the Green Enemy
         "max_health": {"type": "int", "default": getattr(C, 'ENEMY_MAX_HEALTH', 80), "min": 1, "max": 500, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 3.0) * 50, "min": 10.0, "max": 500.0, "label": "Move Speed (units/s)"},
         "attack_damage": {"type": "int", "default": getattr(C, 'ENEMY_ATTACK_DAMAGE', 10), "min": 0, "max": 100, "label": "Attack Damage"},
-        "patrol_range": {"type": "int", "default": 200, "min": 0, "max": 1000, "label": "Patrol Range (px)"}
+        "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"}
     },
-    # Add more enemy property definitions here, matching their game_type_id
+    # Define properties for other enemies (enemy_gray, enemy_pink, etc.) by copying the structure above
+    # and adjusting default values and labels. Make sure the key here matches their 'game_type_id'.
+    # Example for enemy_gray:
+    # "enemy_gray": {
+    # "max_health": {"type": "int", "default": 60, "min": 1, "max": 400, "label": "Gray Health"},
+    # ... other properties ...
+    # },
 
     CUSTOM_IMAGE_ASSET_KEY: { 
         "is_background": {"type": "bool", "default": False, "label": "Is Background Image"},
@@ -202,13 +212,11 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
 }
 
 def get_default_properties_for_asset(game_type_id: str) -> Dict[str, Any]:
-    """Helper to get default properties for a given game_type_id."""
     defaults = {}
     if game_type_id in EDITABLE_ASSET_VARIABLES:
         for prop_name, definition in EDITABLE_ASSET_VARIABLES[game_type_id].items():
             defaults[prop_name] = definition["default"]
     return defaults
-
 
 # --- Map Defaults ---
 DEFAULT_MAP_WIDTH_TILES = 40
