@@ -1,5 +1,3 @@
-#################### START OF FILE: game_setup.py ####################
-
 # game_setup.py
 # -*- coding: utf-8 -*-
 """
@@ -7,29 +5,33 @@ Handles initialization and FULL RE-INITIALIZATION (reset) of game elements,
 levels, and entities. Employs aggressive cache busting for map reloading.
 Map paths now use map_name_folder/map_name_file.py structure.
 MODIFIED: Adds map-defined Statues to platforms_list (only if not smashed).
+MODIFIED: Processes custom_images_list from map data for rendering.
+MODIFIED: Sorts all_renderable_objects by layer_order.
 """
-# version 2.0.8 (Statues added to platforms_list conditionally)
+# version 2.0.9 (Custom Image Loading and Layer Sorting)
 import sys
 import os
 import importlib # For importlib.invalidate_caches()
 import gc # Garbage Collector
 from typing import Dict, Optional, Any, Tuple, List
 
-from PySide6.QtCore import QRectF
+# PySide6 imports for custom image processing
+from PySide6.QtGui import QImage, QPixmap, QTransform, QColor
+from PySide6.QtCore import Qt, QRectF
 
 # Game-specific imports
 import constants as C
 from player import Player
 from enemy import Enemy
 from items import Chest
-from statue import Statue # Ensure Statue is imported
+from statue import Statue
 from camera import Camera
 from level_loader import LevelLoader
 import config as game_config
 
 from tiles import Platform, Ladder, Lava, BackgroundTile
 
-DEFAULT_LEVEL_MODULE_NAME = "original"
+DEFAULT_LEVEL_MODULE_NAME = "original" # Or your preferred default map name
 
 try:
     from logger import info, debug, warning, critical, error
@@ -43,6 +45,47 @@ except ImportError:
     def critical(msg, *args, **kwargs): _fallback_logger_gs.critical(msg, *args, **kwargs)
     def error(msg, *args, **kwargs): _fallback_logger_gs.error(msg, *args, **kwargs)
     critical("GameSetup: Failed to import project's logger. Using isolated fallback.")
+
+def add_to_renderables_if_new(obj_to_add: Any, renderables_list_ref: List[Any]):
+    """Helper to prevent duplicates in all_renderable_objects list."""
+    if obj_to_add is not None and obj_to_add not in renderables_list_ref:
+        renderables_list_ref.append(obj_to_add)
+
+def get_layer_order_key(item: Any) -> int:
+    """
+    Key function for sorting renderable objects by layer_order.
+    Higher values are drawn on top.
+    """
+    # Handle processed custom image dicts first
+    if isinstance(item, dict) and 'layer_order' in item:
+        return item['layer_order']
+    
+    # Handle Player instances
+    if isinstance(item, Player):
+        return 100 # Players are typically drawn on top of most game elements
+
+    # Handle game objects that might have a direct layer_order attribute
+    # or layer_order within a 'properties' dictionary.
+    direct_layer_order = getattr(item, 'layer_order', None)
+    if direct_layer_order is not None:
+        return int(direct_layer_order)
+        
+    properties_dict = getattr(item, 'properties', None)
+    if isinstance(properties_dict, dict):
+        return int(properties_dict.get('layer_order', 0))
+
+    # Specific types with default layering if no explicit order found
+    if hasattr(item, 'projectile_id'): return 90 # Projectiles
+    if isinstance(item, Enemy): return 10 # Enemies
+    if isinstance(item, Statue): return 9 # Statues slightly below enemies
+    if isinstance(item, Chest): return 8 # Chests
+    
+    if isinstance(item, Platform): return -5 # Platforms
+    if isinstance(item, Ladder): return -6   # Ladders behind platforms
+    if isinstance(item, Lava): return -7     # Lava behind ladders
+    if isinstance(item, BackgroundTile): return -10 # Background tiles lowest
+
+    return 0 # Default for anything else
 
 
 def initialize_game_elements(
@@ -67,7 +110,7 @@ def initialize_game_elements(
         player_key = f"player{i}"
         if player_key in game_elements_ref:
             if isinstance(game_elements_ref[player_key], Player) and hasattr(game_elements_ref[player_key], 'reset_for_new_game_or_round'):
-                game_elements_ref[player_key].reset_for_new_game_or_round() # Call reset for input priming
+                game_elements_ref[player_key].reset_for_new_game_or_round()
             game_elements_ref[player_key] = None
     game_elements_ref["camera"] = None
     game_elements_ref["current_chest"] = None
@@ -75,7 +118,8 @@ def initialize_game_elements(
     list_keys_to_reinitialize = [
         "enemy_list", "statue_objects", "collectible_list", "projectiles_list",
         "platforms_list", "ladders_list", "hazards_list", "background_tiles_list",
-        "all_renderable_objects", "enemy_spawns_data_cache", "statue_spawns_data_cache"
+        "all_renderable_objects", "enemy_spawns_data_cache", "statue_spawns_data_cache",
+        "processed_custom_images_for_render" # Add new list here
     ]
     for key in list_keys_to_reinitialize:
         game_elements_ref[key] = []
@@ -94,7 +138,7 @@ def initialize_game_elements(
         maps_base_dir_abs = os.path.join(project_root_from_constants, maps_base_dir_abs)
     
     debug(f"GameSetup: Attempting to load map '{current_map_to_load}' using base maps directory '{maps_base_dir_abs}'.")
-    level_data = loader.load_map(current_map_to_load, maps_base_dir_abs) 
+    level_data = loader.load_map(str(current_map_to_load), maps_base_dir_abs) # Ensure current_map_to_load is str
 
     if not level_data or not isinstance(level_data, dict):
         critical(f"GameSetup FATAL: Failed to load/reload map data for '{current_map_to_load}' from base '{maps_base_dir_abs}'. Initialization aborted.")
@@ -116,7 +160,7 @@ def initialize_game_elements(
     game_elements_ref["ground_platform_height_ref"] = float(level_data.get('ground_platform_height_ref', float(getattr(C, 'TILE_SIZE', 40.0))))
     
     game_elements_ref["enemy_spawns_data_cache"] = list(level_data.get('enemies_list', []))
-    game_elements_ref["statue_spawns_data_cache"] = list(level_data.get('statues_list', [])) # This comes from editor map data
+    game_elements_ref["statue_spawns_data_cache"] = list(level_data.get('statues_list', []))
 
     # Create NEW Static Tile Instances
     for p_data in level_data.get('platforms_list', []):
@@ -130,7 +174,6 @@ def initialize_game_elements(
                     platform_type=str(p_data.get('type', 'generic_platform')),
                     properties=p_data.get('properties', {}) ))
         except Exception as e_plat: error(f"GameSetup: Error creating platform: {e_plat}", exc_info=True)
-    game_elements_ref["all_renderable_objects"].extend(game_elements_ref["platforms_list"])
     
     for l_data in level_data.get('ladders_list', []):
         try:
@@ -140,7 +183,6 @@ def initialize_game_elements(
                     x=float(rect_tuple[0]), y=float(rect_tuple[1]),
                     width=float(rect_tuple[2]), height=float(rect_tuple[3]) ))
         except Exception as e_lad: error(f"GameSetup: Error creating ladder: {e_lad}", exc_info=True)
-    game_elements_ref["all_renderable_objects"].extend(game_elements_ref["ladders_list"])
 
     for h_data in level_data.get('hazards_list', []):
         try:
@@ -152,7 +194,6 @@ def initialize_game_elements(
                     width=float(rect_tuple[2]), height=float(rect_tuple[3]),
                     color_tuple=tuple(h_data.get('color', getattr(C, 'ORANGE_RED', (255,69,0)))) ))
         except Exception as e_haz: error(f"GameSetup: Error creating hazard: {e_haz}", exc_info=True)
-    game_elements_ref["all_renderable_objects"].extend(game_elements_ref["hazards_list"])
 
     for bg_data in level_data.get('background_tiles_list', []):
         try:
@@ -163,11 +204,84 @@ def initialize_game_elements(
                     width=float(rect_tuple[2]), height=float(rect_tuple[3]),
                     color_tuple=tuple(bg_data.get('color', getattr(C, 'DARK_GRAY', (50,50,50)))),
                     tile_type=str(bg_data.get('type', 'generic_background')),
-                    image_path=bg_data.get('image_path'), # This path is relative to map's Custom folder if applicable
+                    image_path=bg_data.get('image_path'), 
                     properties=bg_data.get('properties', {}) ))
         except Exception as e_bg: error(f"GameSetup: Error creating background tile: {e_bg}", exc_info=True)
-    game_elements_ref["all_renderable_objects"].extend(game_elements_ref["background_tiles_list"])
-    info(f"GameSetup: Static map elements re-created. Platforms: {len(game_elements_ref['platforms_list'])}")
+    info(f"GameSetup: Static tile-based elements re-created. Platforms: {len(game_elements_ref['platforms_list'])}")
+
+    # --- Custom Image Processing ---
+    game_elements_ref["processed_custom_images_for_render"] = []
+    if level_data and 'custom_images_list' in level_data:
+        # current_map_to_load is the folder/stem name from the top of the function
+        current_map_folder_path = os.path.join(maps_base_dir_abs, str(current_map_to_load))
+
+        for img_data_raw in level_data.get('custom_images_list', []):
+            try:
+                rect_tuple = img_data_raw.get('rect')
+                rel_path = img_data_raw.get('source_file_path')
+                layer_order = img_data_raw.get('layer_order', 0)
+                is_flipped_h = img_data_raw.get('is_flipped_h', False)
+                rotation_angle = float(img_data_raw.get('rotation', 0))
+
+                if not rect_tuple or not rel_path:
+                    warning(f"GameSetup: Custom image data missing rect or source_file_path: {img_data_raw}")
+                    continue
+                
+                # rel_path from editor is "Custom/image.jpg" which is relative to the map's specific folder.
+                # The os.path.join will correctly form current_map_folder_path/Custom/image.jpg
+                full_image_path = os.path.join(current_map_folder_path, rel_path)
+                
+                if not os.path.exists(full_image_path):
+                    error(f"GameSetup: Custom image file not found: {full_image_path}")
+                    continue
+
+                q_image_original = QImage(full_image_path)
+                if q_image_original.isNull():
+                    error(f"GameSetup: Failed to load custom image (QImage isNull): {full_image_path}")
+                    continue
+
+                target_w = float(rect_tuple[2]) # width from map data's rect
+                target_h = float(rect_tuple[3]) # height from map data's rect
+
+                if target_w <= 0 or target_h <= 0:
+                    warning(f"GameSetup: Invalid target dimensions ({target_w}x{target_h}) for custom image {rel_path}. Using original size.")
+                    target_w = float(q_image_original.width())
+                    target_h = float(q_image_original.height())
+
+                processed_image = q_image_original.scaled(int(target_w), int(target_h), 
+                                                          Qt.AspectRatioMode.IgnoreAspectRatio, 
+                                                          Qt.TransformationMode.SmoothTransformation)
+                
+                if is_flipped_h:
+                    processed_image = processed_image.mirrored(True, False)
+
+                if rotation_angle != 0:
+                    transform = QTransform()
+                    img_center_x = processed_image.width() / 2.0
+                    img_center_y = processed_image.height() / 2.0
+                    transform.translate(img_center_x, img_center_y)
+                    transform.rotate(rotation_angle)
+                    transform.translate(-img_center_x, -img_center_y)
+                    processed_image = processed_image.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+
+                final_pixmap = QPixmap.fromImage(processed_image)
+                if final_pixmap.isNull():
+                    error(f"GameSetup: Failed to create QPixmap from processed image for {full_image_path}")
+                    continue
+                    
+                renderable_custom_image = {
+                    'rect': QRectF(float(rect_tuple[0]), float(rect_tuple[1]), target_w, target_h),
+                    'image': final_pixmap,
+                    'layer_order': layer_order,
+                    'source_file_path_debug': rel_path 
+                }
+                game_elements_ref["processed_custom_images_for_render"].append(renderable_custom_image)
+                debug(f"GameSetup: Processed custom image '{rel_path}' for rendering. Layer: {layer_order}")
+
+            except Exception as e_custom_img:
+                error(f"GameSetup: Error processing custom image data {img_data_raw}: {e_custom_img}", exc_info=True)
+    info(f"GameSetup: Custom images processed: {len(game_elements_ref['processed_custom_images_for_render'])}")
+    # --- End Custom Image Processing ---
 
     # Create NEW Player Instances
     active_player_count = 0
@@ -208,11 +322,10 @@ def initialize_game_elements(
             except (IndexError, ValueError): player_instance.joystick_id_idx = None
         
         game_elements_ref[player_key] = player_instance
-        add_to_renderables_if_new(player_instance, game_elements_ref["all_renderable_objects"])
         player_instance.set_projectile_group_references(
             game_elements_ref["projectiles_list"], 
             game_elements_ref["all_renderable_objects"], 
-            game_elements_ref["platforms_list"] # Pass the main platforms list
+            game_elements_ref["platforms_list"]
         )
         active_player_count +=1
         info(f"GameSetup: {player_key} RE-CREATED. Pos: ({final_spawn_x:.1f},{final_spawn_y:.1f}), Control: {player_instance.control_scheme}")
@@ -237,28 +350,22 @@ def initialize_game_elements(
                                   color_name=enemy_color_name, properties=enemy_props)
                 if new_enemy._valid_init:
                     game_elements_ref["enemy_list"].append(new_enemy)
-                    add_to_renderables_if_new(new_enemy, game_elements_ref["all_renderable_objects"])
                 else: warning(f"GameSetup: Failed to initialize enemy {i_enemy} (type: {enemy_color_name}) during reset.")
             except Exception as e_enemy_create: error(f"GameSetup: Error creating enemy {i_enemy} during reset: {e_enemy_create}", exc_info=True)
         info(f"GameSetup: Enemies re-created: {len(game_elements_ref['enemy_list'])}")
 
-        # Create Statues and add to platforms_list if not smashed
         for i_statue, statue_data in enumerate(game_elements_ref["statue_spawns_data_cache"]):
             try:
                 s_id = statue_data.get('id', f"map_statue_rs_{i_statue}") 
-                s_pos_tuple = tuple(map(float, statue_data.get('pos', (200.0, 200.0)))) # pos is center
+                s_pos_tuple = tuple(map(float, statue_data.get('pos', (200.0, 200.0))))
                 s_props = statue_data.get('properties', {})
                 
                 new_statue = Statue(center_x=s_pos_tuple[0], center_y=s_pos_tuple[1], 
                                     statue_id=s_id, properties=s_props)
                 if new_statue._valid_init:
                     game_elements_ref["statue_objects"].append(new_statue)
-                    add_to_renderables_if_new(new_statue, game_elements_ref["all_renderable_objects"])
-                    # Statues are solid platforms by default unless their properties indicate otherwise
-                    # or they are smashed. Newly created map statues are not smashed initially.
                     if not new_statue.is_smashed: 
                         game_elements_ref["platforms_list"].append(new_statue)
-                        debug(f"GameSetup: Map-defined Statue ID {s_id} added to platforms_list (initially not smashed).")
                 else: warning(f"GameSetup: Failed to initialize statue {i_statue} (id: {s_id}) during reset.")
             except Exception as e_statue_create: error(f"GameSetup: Error creating statue {i_statue} during reset: {e_statue_create}", exc_info=True)
         info(f"GameSetup: Statues re-created: {len(game_elements_ref['statue_objects'])}")
@@ -268,22 +375,17 @@ def initialize_game_elements(
         for item_data_fresh in items_from_fresh_map_data:
             if item_data_fresh.get('type', '').lower() == 'chest':
                 try:
-                    # Chest pos is midbottom from editor, ensure Statue also uses consistent anchoring if different
                     chest_pos_fresh = tuple(map(float, item_data_fresh.get('pos', (300.0, 300.0))))
-                    new_chest_instance = Chest(x=chest_pos_fresh[0], y=chest_pos_fresh[1]) # Chest takes midbottom
-                    
+                    new_chest_instance = Chest(x=chest_pos_fresh[0], y=chest_pos_fresh[1])
                     if new_chest_instance._valid_init:
                         game_elements_ref["collectible_list"].append(new_chest_instance)
-                        add_to_renderables_if_new(new_chest_instance, game_elements_ref["all_renderable_objects"])
                         info(f"GameSetup (Reset): Chest RE-CREATED at {chest_pos_fresh} from fresh map data.")
-                    else:
-                        warning("GameSetup (Reset): NEW Chest instance from map data failed to initialize.")
+                    else: warning("GameSetup (Reset): NEW Chest instance from map data failed to initialize.")
                     break 
-                except Exception as e_chest_create:
-                    error(f"GameSetup: Error creating NEW Chest instance during reset: {e_chest_create}", exc_info=True)
+                except Exception as e_chest_create: error(f"GameSetup: Error creating NEW Chest instance during reset: {e_chest_create}", exc_info=True)
         game_elements_ref["current_chest"] = new_chest_instance 
     else: 
-        debug(f"GameSetup: Dynamic entities (enemies, statues, chest) not re-spawned by client for mode '{for_game_mode}'. Server state will dictate.")
+        debug(f"GameSetup: Dynamic entities not re-spawned by client for mode '{for_game_mode}'. Server state will dictate.")
         game_elements_ref["current_chest"] = None 
 
     camera_instance = Camera(
@@ -310,15 +412,36 @@ def initialize_game_elements(
         else: camera_instance.static_update()
     info("GameSetup: Camera re-initialized and focused.")
 
+    # --- Assemble and Sort all_renderable_objects ---
+    new_all_renderables_setup_temp: List[Any] = []
+    
+    # Static elements (these typically have low layer_order or default to background)
+    for static_key in ["background_tiles_list", "ladders_list", "hazards_list", "platforms_list"]:
+        for item in game_elements_ref.get(static_key, []):
+            add_to_renderables_if_new(item, new_all_renderables_setup_temp)
+            
+    # Processed Custom Images (their layer_order is from map data)
+    for custom_img_dict in game_elements_ref.get("processed_custom_images_for_render", []):
+        add_to_renderables_if_new(custom_img_dict, new_all_renderables_setup_temp)
+
+    # Dynamic Game Entities (enemies, statues, items, projectiles)
+    for dynamic_key in ["enemy_list", "statue_objects", "collectible_list", "projectiles_list"]:
+        for item_dyn in game_elements_ref.get(dynamic_key, []):
+            add_to_renderables_if_new(item_dyn, new_all_renderables_setup_temp)
+    
+    # Players (drawn on top or based on their own logic if they have layer_order)
+    for i_p_render in range(1, 5):
+        p_to_render = game_elements_ref.get(f"player{i_p_render}")
+        if p_to_render: # Draw if exists, even if dead (for death animation)
+            add_to_renderables_if_new(p_to_render, new_all_renderables_setup_temp)
+
+    new_all_renderables_setup_temp.sort(key=get_layer_order_key)
+    game_elements_ref["all_renderable_objects"] = new_all_renderables_setup_temp
+    debug(f"GameSetup: Assembled and sorted all_renderable_objects. Count: {len(game_elements_ref['all_renderable_objects'])}")
+    # --- End Assembly and Sort ---
+
     game_elements_ref["game_ready_for_logic"] = True
     game_elements_ref["initialization_in_progress"] = False
     
     info(f"GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map '{current_map_to_load}' ---")
     return True
-
-def add_to_renderables_if_new(obj_to_add: Any, renderables_list_ref: List[Any]):
-    """Helper to prevent duplicates in all_renderable_objects list."""
-    if obj_to_add is not None and obj_to_add not in renderables_list_ref:
-        renderables_list_ref.append(obj_to_add)
-
-#################### END OF FILE: game_setup.py ####################

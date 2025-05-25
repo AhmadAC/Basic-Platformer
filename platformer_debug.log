@@ -1,2 +1,174 @@
-[2025-05-25 21:30:22.818] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-25 21:30:22.818] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-25 21:48:02.707] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-25 21:48:02.707] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-25 21:48:04.197] DEBUG   logger.py:143 (_log_wrapper): CouchPlayLogic: Successfully aliased project's logger functions.
+[2025-05-25 21:48:04.246] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
+[2025-05-25 21:48:04.251] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 0.
+[2025-05-25 21:48:04.251] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
+[2025-05-25 21:48:04.270] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-25 21:48:04.272] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
+[2025-05-25 21:48:05.000] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating Player Selection for Couch Co-op.
+[2025-05-25 21:48:05.906] INFO    logger.py:143 (_log_wrapper): Couch Co-op: 1 players selected.
+[2025-05-25 21:48:05.906] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op (1 players).
+[2025-05-25 21:48:05.907] DEBUG   logger.py:143 (_log_wrapper): Populating map list from base directory: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps
+[2025-05-25 21:48:05.910] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-25 21:48:05.910] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.back.back'
+[2025-05-25 21:48:05.917] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'back' (from folder 'back') loaded successfully via function 'load_map_back'.
+[2025-05-25 21:48:05.918] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.del_1.del_1'
+[2025-05-25 21:48:05.922] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'del_1' (from folder 'del_1') loaded successfully via function 'load_map_del_1'.
+[2025-05-25 21:48:05.922] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.testdel.testdel'
+[2025-05-25 21:48:05.926] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'testdel' (from folder 'testdel') loaded successfully via function 'load_map_testdel'.
+[2025-05-25 21:48:05.926] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three.three'
+[2025-05-25 21:48:05.930] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' (from folder 'three') loaded successfully via function 'load_map_three'.
+[2025-05-25 21:48:05.932] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.two_2.two_2'
+[2025-05-25 21:48:05.935] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'two_2' (from folder 'two_2') loaded successfully via function 'load_map_two_2'.
+[2025-05-25 21:48:05.936] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: map_select
+[2025-05-25 21:48:06.900] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'back' for 1 players.
+[2025-05-25 21:48:06.901] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: back, Target: None, CouchPlayers: 1
+[2025-05-25 21:48:06.923] INFO    logger.py:143 (_log_wrapper): GAME_MODES (_initialize_game_entities): Delegating to game_setup.initialize_game_elements for map 'back', mode 'couch_play', couch_players: 1.
+[2025-05-25 21:48:06.923] INFO    logger.py:143 (_log_wrapper): GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---
+[2025-05-25 21:48:06.923] INFO    logger.py:143 (_log_wrapper): GameSetup: Mode: 'couch_play', Screen: 100x30, Target Map Folder/Stem: 'back'
+[2025-05-25 21:48:06.923] DEBUG   logger.py:143 (_log_wrapper): GameSetup: Clearing all existing game elements from game_elements_ref...
+[2025-05-25 21:48:06.940] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-25 21:48:06.940] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.back.back'
+[2025-05-25 21:48:06.943] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'back' (from folder 'back') loaded successfully via function 'load_map_back'.
+[2025-05-25 21:48:06.943] INFO    logger.py:143 (_log_wrapper): GameSetup: Successfully reloaded pristine map data for 'back'.
+[2025-05-25 21:48:06.944] INFO    logger.py:143 (_log_wrapper): GameSetup: Static map elements re-created. Platforms: 4
+[2025-05-25 21:48:07.108] INFO    logger.py:143 (_log_wrapper): GameSetup: player1 RE-CREATED. Pos: (690.5,678.0), Control: keyboard_p1
+[2025-05-25 21:48:07.108] INFO    logger.py:143 (_log_wrapper): GameSetup: Total active players RE-CREATED: 1
+[2025-05-25 21:48:07.109] INFO    logger.py:143 (_log_wrapper): GameSetup: Enemies re-created: 0
+[2025-05-25 21:48:07.109] INFO    logger.py:143 (_log_wrapper): GameSetup: Statues re-created: 0
+[2025-05-25 21:48:07.109] INFO    logger.py:143 (_log_wrapper): Camera initialized: Viewport(100.0x30.0), WorldBounds(X: 0.0 to 1600.0, Y: 0.0 to 1000.0)
+[2025-05-25 21:48:07.109] INFO    logger.py:143 (_log_wrapper): GameSetup: Camera re-initialized and focused.
+[2025-05-25 21:48:07.109] INFO    logger.py:143 (_log_wrapper): GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map 'back' ---
+[2025-05-25 21:48:07.110] INFO    logger.py:143 (_log_wrapper): GAME_MODES: game_setup.initialize_game_elements SUCCEEDED for map 'back', mode 'couch_play'.
+[2025-05-25 21:48:07.113] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: game_scene
+[2025-05-25 21:48:07.114] INFO    logger.py:143 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
+[2025-05-25 21:48:07.114] INFO    logger.py:143 (_log_wrapper): Camera Screen Dims Set: 1280.0x649.0
+[2025-05-25 21:48:07.125] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Couch play ready.
+[2025-05-25 21:48:07.920] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(690.50,960.70) Vel:( 0.00, 0.70) Acc:(0.00,0.70) State:idle OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(685.250000, 928.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(0.000000, 960.000000, 1600.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:08.928] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_Y_LANDED | Pos:(690.50,960.70) Vel:( 0.00, 0.00) Acc:(0.00,0.00) State:idle OnG:True WallT:0 | Extra: WasAbove:True, CanSnap:True
+[2025-05-25 21:48:09.587] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-25 21:48:09.589] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-25 21:48:09.590] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-25 21:48:09.590] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-25 21:48:09.591] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'couch_play' stopped and resources cleaned up.
+[2025-05-25 21:48:11.186] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating Player Selection for Couch Co-op.
+[2025-05-25 21:48:12.042] INFO    logger.py:143 (_log_wrapper): Couch Co-op: 1 players selected.
+[2025-05-25 21:48:12.042] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op (1 players).
+[2025-05-25 21:48:12.048] DEBUG   logger.py:143 (_log_wrapper): Populating map list from base directory: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps
+[2025-05-25 21:48:12.049] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-25 21:48:12.050] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.back.back'
+[2025-05-25 21:48:12.052] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'back' (from folder 'back') loaded successfully via function 'load_map_back'.
+[2025-05-25 21:48:12.052] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.del_1.del_1'
+[2025-05-25 21:48:12.054] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'del_1' (from folder 'del_1') loaded successfully via function 'load_map_del_1'.
+[2025-05-25 21:48:12.054] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.testdel.testdel'
+[2025-05-25 21:48:12.056] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'testdel' (from folder 'testdel') loaded successfully via function 'load_map_testdel'.
+[2025-05-25 21:48:12.057] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three.three'
+[2025-05-25 21:48:12.058] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' (from folder 'three') loaded successfully via function 'load_map_three'.
+[2025-05-25 21:48:12.058] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.two_2.two_2'
+[2025-05-25 21:48:12.060] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'two_2' (from folder 'two_2') loaded successfully via function 'load_map_two_2'.
+[2025-05-25 21:48:12.062] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: map_select
+[2025-05-25 21:48:13.031] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'del_1' for 1 players.
+[2025-05-25 21:48:13.032] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: del_1, Target: None, CouchPlayers: 1
+[2025-05-25 21:48:13.045] INFO    logger.py:143 (_log_wrapper): GAME_MODES (_initialize_game_entities): Delegating to game_setup.initialize_game_elements for map 'del_1', mode 'couch_play', couch_players: 1.
+[2025-05-25 21:48:13.046] INFO    logger.py:143 (_log_wrapper): GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---
+[2025-05-25 21:48:13.046] INFO    logger.py:143 (_log_wrapper): GameSetup: Mode: 'couch_play', Screen: 1280x649, Target Map Folder/Stem: 'del_1'
+[2025-05-25 21:48:13.046] DEBUG   logger.py:143 (_log_wrapper): GameSetup: Clearing all existing game elements from game_elements_ref...
+[2025-05-25 21:48:13.061] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-25 21:48:13.061] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.del_1.del_1'
+[2025-05-25 21:48:13.064] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'del_1' (from folder 'del_1') loaded successfully via function 'load_map_del_1'.
+[2025-05-25 21:48:13.064] INFO    logger.py:143 (_log_wrapper): GameSetup: Successfully reloaded pristine map data for 'del_1'.
+[2025-05-25 21:48:13.065] INFO    logger.py:143 (_log_wrapper): GameSetup: Static map elements re-created. Platforms: 7
+[2025-05-25 21:48:13.176] INFO    logger.py:143 (_log_wrapper): GameSetup: player1 RE-CREATED. Pos: (530.5,638.0), Control: keyboard_p1
+[2025-05-25 21:48:13.177] INFO    logger.py:143 (_log_wrapper): GameSetup: Total active players RE-CREATED: 1
+[2025-05-25 21:48:13.177] INFO    logger.py:143 (_log_wrapper): GameSetup: Enemies re-created: 0
+[2025-05-25 21:48:13.187] INFO    logger.py:143 (_log_wrapper): GameSetup: Statues re-created: 6
+[2025-05-25 21:48:13.203] INFO    logger.py:143 (_log_wrapper): GameSetup (Reset): Chest RE-CREATED at (541.0, 345.0) from fresh map data.
+[2025-05-25 21:48:13.204] INFO    logger.py:143 (_log_wrapper): Camera initialized: Viewport(1280.0x649.0), WorldBounds(X: 0.0 to 1600.0, Y: 0.0 to 1000.0)
+[2025-05-25 21:48:13.204] INFO    logger.py:143 (_log_wrapper): GameSetup: Camera re-initialized and focused.
+[2025-05-25 21:48:13.204] INFO    logger.py:143 (_log_wrapper): GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map 'del_1' ---
+[2025-05-25 21:48:13.204] INFO    logger.py:143 (_log_wrapper): GAME_MODES: game_setup.initialize_game_elements SUCCEEDED for map 'del_1', mode 'couch_play'.
+[2025-05-25 21:48:13.209] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: game_scene
+[2025-05-25 21:48:13.218] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Couch play ready.
+[2025-05-25 21:48:14.049] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(530.50,680.70) Vel:( 0.00, 0.70) Acc:(0.00,0.70) State:idle OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(525.250000, 648.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(400.000000, 680.000000, 400.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:15.041] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(533.66,680.70) Vel:( 0.50, 0.70) Acc:(0.50,0.70) State:run OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(528.409839, 648.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(400.000000, 680.000000, 400.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:16.049] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(592.59,680.70) Vel:( 0.00, 0.70) Acc:(0.50,0.70) State:run OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(587.339856, 648.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(400.000000, 680.000000, 400.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:17.041] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(649.93,680.70) Vel:( 0.90, 0.70) Acc:(0.50,0.70) State:run OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(644.678029, 648.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(400.000000, 680.000000, 400.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:18.050] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(709.15,680.70) Vel:( 0.00, 0.70) Acc:(0.50,0.70) State:run OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(703.900091, 648.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(400.000000, 680.000000, 400.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:19.040] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(765.96,680.70) Vel:( 0.90, 0.70) Acc:(0.50,0.70) State:run OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(760.714170, 648.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(400.000000, 680.000000, 400.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:20.049] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(779.44,680.70) Vel:( 0.00, 0.70) Acc:(0.00,0.70) State:idle OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(774.187167, 648.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(400.000000, 680.000000, 400.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:21.041] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(802.49,680.70) Vel:( 2.36, 0.70) Acc:(0.50,0.70) State:run OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(797.236922, 648.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(400.000000, 680.000000, 400.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:22.049] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(763.49,924.70) Vel:( 0.00, 0.70) Acc:(0.00,0.70) State:idle OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(758.236772, 892.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(760.000000, 924.000000, 33.000000, 36.000000), stone_obstacle)
+[2025-05-25 21:48:23.040] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(774.54,924.70) Vel:( 0.00, 0.70) Acc:(0.00,0.70) State:idle OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(769.293791, 892.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(760.000000, 924.000000, 33.000000, 36.000000), stone_obstacle)
+[2025-05-25 21:48:24.048] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_Y_LANDED | Pos:(774.54,924.70) Vel:( 0.00, 0.00) Acc:(0.00,0.00) State:idle OnG:True WallT:0 | Extra: WasAbove:True, CanSnap:True
+[2025-05-25 21:48:24.336] INFO    logger.py:143 (_log_wrapper): Statue statue_2 stomped by Player 1. Smashing.
+[2025-05-25 21:48:24.336] INFO    logger.py:143 (_log_wrapper): Statue statue_2 is being smashed.
+[2025-05-25 21:48:25.040] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(791.18,960.00) Vel:( 0.00, 0.70) Acc:(0.00,0.70) State:attack OnG:False WallT:0 | Extra: StatueID: statue_2
+[2025-05-25 21:48:26.048] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: INTERSECT DIR:y    | Pos:(791.18,960.70) Vel:( 0.00, 0.70) Acc:(0.00,0.70) State:attack OnG:False WallT:0 | Extra: (PySide6.QtCore.QRectF(785.932192, 928.400000, 10.500000, 32.300000), PySide6.QtCore.QRectF(0.000000, 960.000000, 1600.000000, 40.000000), platform_wall_gray)
+[2025-05-25 21:48:27.040] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(605.65,829.50) Vel:(-3.38, 6.00) Acc:(0.00,0.70) State:jump_fall_trans OnG:False WallT:0 | Extra: StatueID: statue_2
+[2025-05-25 21:48:28.048] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(647.17,846.20) Vel:( 1.56,10.90) Acc:(0.00,0.70) State:fall OnG:False WallT:0 | Extra: StatueID: statue_2
+[2025-05-25 21:48:29.041] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(612.52,924.00) Vel:(-0.34, 0.70) Acc:(0.00,0.70) State:idle OnG:False WallT:0 | Extra: StatueID: statue_2
+[2025-05-25 21:48:29.361] INFO    logger.py:143 (_log_wrapper): Statue statue_2 smashed animation/duration ended.
+[2025-05-25 21:48:29.361] INFO    logger.py:143 (_log_wrapper): Statue statue_2 kill() called. Setting _alive = False.
+[2025-05-25 21:48:29.905] INFO    logger.py:143 (_log_wrapper): Statue statue_1 stomped by Player 1. Smashing.
+[2025-05-25 21:48:29.906] INFO    logger.py:143 (_log_wrapper): Statue statue_1 is being smashed.
+[2025-05-25 21:48:30.048] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(642.78,887.20) Vel:( 0.55,-1.70) Acc:(0.00,0.70) State:jump OnG:False WallT:0 | Extra: StatueID: statue_1
+[2025-05-25 21:48:31.040] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(580.04,806.70) Vel:(-6.82, 0.40) Acc:(-0.50,0.70) State:jump_fall_trans OnG:False WallT:0 | Extra: StatueID: statue_1
+[2025-05-25 21:48:32.048] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(286.48,924.00) Vel:( 0.38, 0.70) Acc:(0.00,0.70) State:idle OnG:False WallT:0 | Extra: StatueID: statue_1
+[2025-05-25 21:48:32.914] INFO    logger.py:143 (_log_wrapper): Statue statue_4 stomped by Player 1. Smashing.
+[2025-05-25 21:48:32.915] INFO    logger.py:143 (_log_wrapper): Statue statue_4 is being smashed.
+[2025-05-25 21:48:33.040] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(320.81,889.60) Vel:( 0.40,-2.40) Acc:(0.00,0.70) State:jump OnG:False WallT:0 | Extra: StatueID: statue_1
+[2025-05-25 21:48:34.048] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(284.65,866.50) Vel:(-1.20, 9.50) Acc:(0.00,0.70) State:fall OnG:False WallT:0 | Extra: StatueID: statue_1
+[2025-05-25 21:48:34.929] INFO    logger.py:143 (_log_wrapper): Statue statue_1 smashed animation/duration ended.
+[2025-05-25 21:48:34.929] INFO    logger.py:143 (_log_wrapper): Statue statue_1 kill() called. Setting _alive = False.
+[2025-05-25 21:48:35.040] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(254.44,829.50) Vel:(-2.75, 6.00) Acc:(0.00,0.70) State:jump_fall_trans OnG:False WallT:0 | Extra: StatueID: statue_4
+[2025-05-25 21:48:36.048] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(257.36,857.70) Vel:( 0.95, 8.80) Acc:(0.00,0.70) State:fall OnG:False WallT:0 | Extra: StatueID: statue_4
+[2025-05-25 21:48:37.040] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: PLAT_COLL_IGNORE_SMASHED_STATUE | Pos:(263.92,885.00) Vel:( 0.00,13.00) Acc:(0.00,0.70) State:fall OnG:False WallT:0 | Extra: StatueID: statue_4
+[2025-05-25 21:48:37.920] INFO    logger.py:143 (_log_wrapper): Statue statue_4 smashed animation/duration ended.
+[2025-05-25 21:48:37.921] INFO    logger.py:143 (_log_wrapper): Statue statue_4 kill() called. Setting _alive = False.
+[2025-05-25 21:48:38.080] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (original request was 'fall')
+[2025-05-25 21:48:39.072] DEBUG   logger.py:143 (_log_wrapper): PlayerStateHandler (P1): State changing from 'jump_fall_trans' to 'fall' (original request was 'fall')
+[2025-05-25 21:48:40.208] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=False, R=False, U=False, D=False
+[2025-05-25 21:48:41.200] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(256.75,807.10) Vel:(-4.40, 0.40) Acc:(0.00,0.70) State:jump_fall_trans OnG:False WallT:0
+[2025-05-25 21:48:42.209] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(257.85,799.50) Vel:( 0.00, 6.00) Acc:(0.00,0.70) State:jump_fall_trans OnG:False WallT:0
+[2025-05-25 21:48:43.200] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=False, R=False, U=False, D=False
+[2025-05-25 21:48:44.208] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(268.17,924.00) Vel:( 0.73, 0.00) Acc:(0.00,0.00) State:idle OnG:True WallT:0
+[2025-05-25 21:48:45.201] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(366.51,960.00) Vel:(-1.54, 0.00) Acc:(-0.50,0.00) State:run OnG:True WallT:0
+[2025-05-25 21:48:46.209] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=True, R=False, U=False, D=False
+[2025-05-25 21:48:47.200] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(403.00,819.00) Vel:( 7.00,-4.50) Acc:(0.50,0.70) State:jump OnG:False WallT:0
+[2025-05-25 21:48:48.208] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(803.85,817.70) Vel:( 5.66, 8.10) Acc:(0.00,0.70) State:fall OnG:False WallT:0
+[2025-05-25 21:48:49.200] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=True, R=False, U=False, D=False
+[2025-05-25 21:48:50.209] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(799.47,876.00) Vel:(-1.08, 9.50) Acc:(0.50,0.70) State:fall OnG:False WallT:0
+[2025-05-25 21:48:51.200] DEBUG   logger.py:143 (_log_wrapper): APP_INPUT_MANAGER (P1) KBD Events from process_player_input_logic: {'left': True}
+[2025-05-25 21:48:52.209] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=True, R=False, U=False, D=False
+[2025-05-25 21:48:53.201] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(840.10,960.00) Vel:(-1.34, 0.00) Acc:(-0.50,0.00) State:run OnG:True WallT:0
+[2025-05-25 21:48:54.208] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(812.85,812.50) Vel:(-1.58, 2.50) Acc:(0.50,0.70) State:jump_fall_trans OnG:False WallT:0
+[2025-05-25 21:48:55.200] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=False, R=False, U=False, D=False
+[2025-05-25 21:48:56.208] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(836.81,895.50) Vel:(-0.96,-11.50) Acc:(-0.50,0.70) State:jump OnG:False WallT:0
+[2025-05-25 21:48:57.200] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(829.08,924.00) Vel:( 0.00, 0.00) Acc:(0.00,0.00) State:idle OnG:True WallT:0
+[2025-05-25 21:48:58.208] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=False, R=False, U=False, D=False
+[2025-05-25 21:48:59.200] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(825.17,821.70) Vel:( 0.70, 8.10) Acc:(0.00,0.70) State:fall OnG:False WallT:0
+[2025-05-25 21:49:00.208] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(831.53,924.00) Vel:( 0.00, 0.00) Acc:(0.00,0.00) State:idle OnG:True WallT:0
+[2025-05-25 21:49:01.137] INFO    logger.py:143 (_log_wrapper): Statue statue_3 stomped by Player 1. Smashing.
+[2025-05-25 21:49:01.137] INFO    logger.py:143 (_log_wrapper): Statue statue_3 is being smashed.
+[2025-05-25 21:49:01.200] DEBUG   logger.py:143 (_log_wrapper): P1 Kbd Intent: L=False, R=True, U=False, D=False
+[2025-05-25 21:49:02.208] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(918.59,895.50) Vel:(-3.55,-11.50) Acc:(-0.50,0.70) State:jump OnG:False WallT:0
+[2025-05-25 21:49:03.200] DEBUG   logger.py:233 (log_player_physics): P1 PHYS-CHG: UPDATE_START       | Pos:(711.12,960.00) Vel:( 0.00, 0.00) Acc:(0.00,0.00) State:idle OnG:True WallT:0
+[2025-05-25 21:49:03.524] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-25 21:49:03.527] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-25 21:49:03.527] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-25 21:49:03.528] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-25 21:49:03.529] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'couch_play' stopped and resources cleaned up.
+[2025-05-25 21:49:04.653] INFO    logger.py:143 (_log_wrapper): MainWindow: request_close_app called. Initiating close sequence.
+[2025-05-25 21:49:04.654] INFO    logger.py:143 (_log_wrapper): MainWindow: Close event received. Shutting down application.
+[2025-05-25 21:49:04.654] DEBUG   logger.py:143 (_log_wrapper): closeEvent called.
+[2025-05-25 21:49:04.654] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-25 21:49:04.655] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: None
+[2025-05-25 21:49:04.656] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-25 21:49:04.656] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-25 21:49:04.656] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
+[2025-05-25 21:49:04.658] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame Joystick system quit.
+[2025-05-25 21:49:04.910] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame system quit.
+[2025-05-25 21:49:04.911] INFO    logger.py:143 (_log_wrapper): MainWindow: Application shutdown sequence complete.
+[2025-05-25 21:49:04.957] INFO    logger.py:143 (_log_wrapper): QApplication event loop finished. Exit code: 0
+[2025-05-25 21:49:04.957] INFO    logger.py:143 (_log_wrapper): Application fully terminated.

@@ -5,23 +5,22 @@
 Utility functions for map operations in the Level Editor (PySide6 version).
 Handles saving/loading editor JSON and exporting game-compatible Python data scripts.
 Manages map-specific folders.
-VERSION 2.4.8 (Rotation and Flip Persistence)
-- Ensures `rotation` and `is_flipped_h` are saved/loaded in JSON.
-- Includes `rotation` and `is_flipped_h` in the exported game map data.
+VERSION 2.4.9 (Selection Pane Hide/Lock State Persistence in Map Utils)
+- Ensures `editor_hidden` and `editor_locked` are initialized for new objects.
 """
 import sys
 import os
 import json
 import traceback
 import re
-import shutil 
+import shutil
 from typing import Optional, Dict, List, Tuple, Any
-import logging 
+import logging
 
 logger = logging.getLogger(__name__)
 
-if 'EditorState' not in globals(): 
-    class EditorState: 
+if 'EditorState' not in globals():
+    class EditorState:
         map_name_for_function: str
         placed_objects: List[Dict[str, Any]]
         background_color: Tuple[int,int,int]
@@ -75,7 +74,7 @@ class _editor_history_FALLBACK_MU:
     @staticmethod
     def push_undo_state(state:'EditorState'): pass
     @staticmethod
-    def _deep_copy_object_data(obj_data: Dict[str, Any]) -> Dict[str, Any]: return obj_data.copy() 
+    def _deep_copy_object_data(obj_data: Dict[str, Any]) -> Dict[str, Any]: return obj_data.copy()
 
 ED_CONFIG = _ED_CONFIG_FALLBACK_MU()
 C = _C_FALLBACK_MU()
@@ -86,17 +85,17 @@ try:
         _PROJECT_ROOT_MAP_UTILS = os.path.dirname(_CURRENT_FILE_DIR_MAP_UTILS)
         if _PROJECT_ROOT_MAP_UTILS not in sys.path:
             sys.path.insert(0, _PROJECT_ROOT_MAP_UTILS)
-        
+
         import editor_config as ED_CONFIG_actual # type: ignore
         from editor_state import EditorState as EditorState_actual  # type: ignore
         import editor_history as editor_history_actual # type: ignore
         import constants as C_actual # type: ignore
         logger.info("editor_map_utils: Standalone execution - imports successful.")
-    else: 
+    else:
         from . import editor_config as ED_CONFIG_actual
-        from .editor_state import EditorState as EditorState_actual 
+        from .editor_state import EditorState as EditorState_actual
         from . import editor_history as editor_history_actual
-        import constants as C_actual 
+        import constants as C_actual
         logger.info("editor_map_utils: Package execution - imports successful.")
 
     ED_CONFIG = ED_CONFIG_actual # type: ignore
@@ -107,7 +106,7 @@ try:
 except ImportError as e:
     logger.error(f"editor_map_utils: Import failed using {'standalone' if _IS_STANDALONE_EXECUTION_MAP_UTILS else 'package'} path: {e}")
     logger.warning("editor_map_utils: Using fallback definitions for ED_CONFIG, C, editor_history. EditorState type hint stub will be used.")
-    if not hasattr(ED_CONFIG, 'BASE_GRID_SIZE'): 
+    if not hasattr(ED_CONFIG, 'BASE_GRID_SIZE'):
         logger.critical("editor_map_utils: Fallback ED_CONFIG is missing essential attributes.")
 
 
@@ -121,14 +120,14 @@ def sanitize_map_name(map_name: str) -> str:
     return name
 
 def get_maps_base_directory() -> str:
-    maps_dir_const = getattr(C, 'MAPS_DIR', 'maps') 
+    maps_dir_const = getattr(C, 'MAPS_DIR', 'maps')
     project_root_const = getattr(C, 'PROJECT_ROOT', None)
 
-    if project_root_const is None or project_root_const == "": 
+    if project_root_const is None or project_root_const == "":
         project_root_for_maps = os.path.dirname(os.path.dirname(_CURRENT_FILE_DIR_MAP_UTILS)) # Go up one more level from editor/
     else:
         project_root_for_maps = project_root_const
-        
+
     if not os.path.isabs(maps_dir_const):
         return os.path.normpath(os.path.join(project_root_for_maps, maps_dir_const))
     return os.path.normpath(maps_dir_const)
@@ -136,12 +135,12 @@ def get_maps_base_directory() -> str:
 
 def get_map_specific_folder_path(editor_state_or_map_name: Any, map_name_override: Optional[str] = None, subfolder: Optional[str] = None, ensure_exists: bool = False) -> Optional[str]:
     actual_map_name = ""
-    if isinstance(editor_state_or_map_name, EditorState): 
+    if isinstance(editor_state_or_map_name, EditorState):
         actual_map_name = editor_state_or_map_name.map_name_for_function
     elif isinstance(editor_state_or_map_name, str):
         actual_map_name = editor_state_or_map_name
-    
-    if map_name_override: 
+
+    if map_name_override:
         actual_map_name = map_name_override
 
     actual_map_name = sanitize_map_name(actual_map_name)
@@ -158,7 +157,7 @@ def get_map_specific_folder_path(editor_state_or_map_name: Any, map_name_overrid
     if ensure_exists:
         try:
             os.makedirs(map_folder_path, exist_ok=True)
-            
+
             map_specific_init_py = os.path.join(os.path.join(base_maps_dir, actual_map_name), "__init__.py")
             if not os.path.exists(map_specific_init_py):
                 with open(map_specific_init_py, "w") as f_init:
@@ -176,8 +175,8 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     logger.info(f"Initializing new map state. Name: '{map_name_for_function}', Size: {map_width_tiles}x{map_height_tiles}")
     clean_map_name = sanitize_map_name(map_name_for_function)
     if not clean_map_name:
-        clean_map_name = "untitled_map" 
-    
+        clean_map_name = "untitled_map"
+
     existing_objects = list(editor_state.placed_objects) if preserve_objects else []
     existing_bg_color = editor_state.background_color if preserve_objects else ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE # type: ignore
 
@@ -189,37 +188,38 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     editor_state.camera_offset_x = 0.0
     editor_state.camera_offset_y = 0.0
     editor_state.zoom_level = 1.0
-    editor_state.unsaved_changes = True 
+    editor_state.unsaved_changes = True
 
-    map_folder = get_map_specific_folder_path(editor_state, ensure_exists=True) 
+    map_folder = get_map_specific_folder_path(editor_state, ensure_exists=True)
     if map_folder:
         py_filename = clean_map_name + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION # type: ignore
         json_filename = clean_map_name + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION # type: ignore
         editor_state.current_map_filename = os.path.join(map_folder, py_filename)
         editor_state.current_json_filename = os.path.join(map_folder, json_filename)
-    else: 
+    else:
         editor_state.current_map_filename = None
         editor_state.current_json_filename = None
         logger.error(f"Could not determine or create map folder for '{clean_map_name}' during init_new_map_state.")
 
     if preserve_objects:
         editor_state.placed_objects = [editor_history._deep_copy_object_data(obj) for obj in existing_objects] # type: ignore
-    else: 
+    else:
         editor_state.placed_objects = []
         gs = float(editor_state.grid_size)
         border_asset_key = "platform_wall_gray"
         border_asset_data = ED_CONFIG.EDITOR_PALETTE_ASSETS.get(border_asset_key) # type: ignore
+        default_editor_flags = {"editor_hidden": False, "editor_locked": False}
         if border_asset_data:
             border_game_type_id = border_asset_data.get("game_type_id", border_asset_key)
             border_color_tuple = border_asset_data.get("base_color_tuple", getattr(C, 'GRAY', (128,128,128)))
             border_props = ED_CONFIG.get_default_properties_for_asset(border_game_type_id) # type: ignore
-            border_props["is_boundary"] = True 
-            for i in range(map_width_tiles): 
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": 0, "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0})
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int((map_height_tiles - 1) * gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0})
+            border_props["is_boundary"] = True
+            for i in range(map_width_tiles):
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": 0, "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int((map_height_tiles - 1) * gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
             for i in range(1, map_height_tiles - 1):
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": 0, "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0})
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int((map_width_tiles - 1)*gs), "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": 0, "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int((map_width_tiles - 1)*gs), "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
 
         spawn_y = int((map_height_tiles - 3) * gs)
         for player_num in range(1, 5):
@@ -230,14 +230,15 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
                 default_props = ED_CONFIG.get_default_properties_for_asset(spawn_game_type_id) # type: ignore
                 spawn_x_offset = (2 + (player_num - 1) * 2) * gs
                 editor_state.placed_objects.append({
-                    "asset_editor_key": p_spawn_key, 
-                    "world_x": int(spawn_x_offset), 
+                    "asset_editor_key": p_spawn_key,
+                    "world_x": int(spawn_x_offset),
                     "world_y": spawn_y,
-                    "game_type_id": spawn_game_type_id, 
-                    "properties": default_props, 
+                    "game_type_id": spawn_game_type_id,
+                    "properties": default_props,
                     "layer_order": 10,
                     "is_flipped_h": False,
-                    "rotation": 0
+                    "rotation": 0,
+                    **default_editor_flags
                 })
 
     editor_state.undo_stack.clear()
@@ -263,7 +264,7 @@ def ensure_maps_directory_exists() -> bool:
         except OSError as e:
             logger.error(f"Error creating base maps directory {maps_base_dir}: {e}", exc_info=True)
             return False
-    
+
     base_init_py_check = os.path.join(maps_base_dir, "__init__.py")
     if not os.path.exists(base_init_py_check):
         try:
@@ -272,7 +273,7 @@ def ensure_maps_directory_exists() -> bool:
             logger.info(f"Created missing __init__.py in existing base maps directory: {base_init_py_check}")
         except OSError as e_init_check:
             logger.error(f"Error creating __init__.py in existing base maps directory {maps_base_dir}: {e_init_check}")
-            
+
     return os.path.isdir(maps_base_dir)
 
 
@@ -280,7 +281,7 @@ def save_map_to_json(editor_state: EditorState) -> bool:
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
         logger.error("SaveMapJSON: Map is untitled. Cannot save.")
         return False
-    
+
     map_folder = get_map_specific_folder_path(editor_state, ensure_exists=True)
     if not map_folder:
         logger.error(f"SaveMapJSON: Could not get/create map folder for '{editor_state.map_name_for_function}'.")
@@ -288,7 +289,7 @@ def save_map_to_json(editor_state: EditorState) -> bool:
 
     json_filename = editor_state.map_name_for_function + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION # type: ignore
     json_filepath = os.path.join(map_folder, json_filename)
-    editor_state.current_json_filename = json_filepath 
+    editor_state.current_json_filename = json_filepath
 
     data_to_save = editor_history.get_map_snapshot(editor_state) # type: ignore
     try:
@@ -306,8 +307,8 @@ def load_map_from_json(editor_state: EditorState, chosen_json_filepath: str) -> 
         return False
 
     map_name_from_file_stem = sanitize_map_name(os.path.splitext(os.path.basename(chosen_json_filepath))[0])
-    base_maps_dir = get_maps_base_directory() 
-    
+    base_maps_dir = get_maps_base_directory()
+
     actual_json_folder = os.path.dirname(chosen_json_filepath)
     actual_json_filepath_to_load = chosen_json_filepath
 
@@ -317,7 +318,7 @@ def load_map_from_json(editor_state: EditorState, chosen_json_filepath: str) -> 
         if not new_map_folder_path:
              logger.error(f"LoadMapJSON: Migration error - could not create target folder for '{map_name_from_file_stem}'.")
              return False
-        
+
         logger.info(f"LoadMapJSON: Migrating old-style map '{map_name_from_file_stem}' to folder '{new_map_folder_path}'.")
         try:
             new_json_path = os.path.join(new_map_folder_path, os.path.basename(chosen_json_filepath))
@@ -335,24 +336,24 @@ def load_map_from_json(editor_state: EditorState, chosen_json_filepath: str) -> 
                     logger.info(f"Moved PY '{old_py_path}' to '{new_py_path}'")
         except Exception as e_migrate:
             logger.error(f"Error migrating map files for '{map_name_from_file_stem}': {e_migrate}", exc_info=True)
-            actual_json_filepath_to_load = chosen_json_filepath 
+            actual_json_filepath_to_load = chosen_json_filepath
 
     try:
         with open(actual_json_filepath_to_load, 'r', encoding='utf-8') as f:
             data_snapshot = json.load(f)
-        
+
         editor_history.restore_map_from_snapshot(editor_state, data_snapshot) # type: ignore
-        
+
         map_name_from_json_content = sanitize_map_name(editor_state.map_name_for_function)
-        final_map_folder_stem_for_paths = map_name_from_file_stem 
+        final_map_folder_stem_for_paths = map_name_from_file_stem
         if map_name_from_json_content != map_name_from_file_stem:
             logger.warning(f"LoadMapJSON: Map name in JSON ('{map_name_from_json_content}') differs from filename stem ('{map_name_from_file_stem}'). "
                            f"Using filename stem for pathing. Consider renaming the map in editor to match.")
             editor_state.map_name_for_function = final_map_folder_stem_for_paths
-        
+
         final_map_folder_path = get_map_specific_folder_path(final_map_folder_stem_for_paths, ensure_exists=False) # type: ignore
 
-        if not final_map_folder_path or not os.path.isdir(final_map_folder_path): 
+        if not final_map_folder_path or not os.path.isdir(final_map_folder_path):
             logger.error(f"LoadMapJSON: Critical error - map folder for '{final_map_folder_stem_for_paths}' not found at '{final_map_folder_path}' after loading JSON.")
             editor_state.reset_map_context()
             return False
@@ -387,12 +388,12 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
         obj.setdefault('type', f'generic_{object_category_name}')
         if 'image_path' in obj_orig: obj['image_path'] = obj_orig['image_path']
         if 'crop_rect' in obj_orig: obj['crop_rect'] = obj_orig['crop_rect']
-        obj.setdefault('is_flipped_h', False) 
-        obj.setdefault('rotation', 0) # Added rotation
+        obj.setdefault('is_flipped_h', False)
+        obj.setdefault('rotation', 0)
         working_objects.append(obj)
 
     horizontal_strips: List[Dict[str, Any]] = []
-    key_func_h = lambda p: (str(p.get('type')), str(p.get('color')), p.get('y'), p.get('h'), 
+    key_func_h = lambda p: (str(p.get('type')), str(p.get('color')), p.get('y'), p.get('h'),
                             str(p.get('image_path', '')), str(p.get('crop_rect')), p.get('is_flipped_h'), p.get('rotation'), p.get('x'))
     sorted_h = sorted(working_objects, key=key_func_h)
 
@@ -426,7 +427,7 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
     final_blocks_data: List[Dict[str, Any]] = []
     strips_to_merge = [strip.copy() for strip in horizontal_strips]
     for strip in strips_to_merge: strip['merged'] = False
-    key_func_v = lambda s: (str(s.get('type')), str(s.get('color')), s.get('x'), s.get('w'), 
+    key_func_v = lambda s: (str(s.get('type')), str(s.get('color')), s.get('x'), s.get('w'),
                             str(s.get('image_path', '')), str(s.get('crop_rect')), s.get('is_flipped_h'), s.get('rotation'), s.get('y'))
     sorted_v = sorted(strips_to_merge, key=key_func_v)
 
@@ -460,10 +461,10 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
                        'type': current_block.get('type'), 'color': current_block.get('color'),
                        'properties': current_block.get('properties', {}),
                        'is_flipped_h': current_block.get('is_flipped_h', False),
-                       'rotation': current_block.get('rotation', 0)} # Added rotation
+                       'rotation': current_block.get('rotation', 0)} 
         if 'image_path' in current_block: final_entry['image_path'] = current_block['image_path']
-        if 'crop_rect' in current_block and current_block['crop_rect'] is not None: 
-            final_entry['crop_rect'] = current_block['crop_rect'] 
+        if 'crop_rect' in current_block and current_block['crop_rect'] is not None:
+            final_entry['crop_rect'] = current_block['crop_rect']
         final_blocks_data.append(final_entry)
     return final_blocks_data
 
@@ -475,14 +476,14 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         logger.error("Map name not set. Cannot export .py data file.")
         return False
 
-    map_folder = get_map_specific_folder_path(editor_state, ensure_exists=True) 
+    map_folder = get_map_specific_folder_path(editor_state, ensure_exists=True)
     if not map_folder:
         logger.error(f"Export PY: Could not get/create map folder for '{editor_state.map_name_for_function}'.")
         return False
 
     py_filename = editor_state.map_name_for_function + ED_CONFIG.GAME_LEVEL_FILE_EXTENSION # type: ignore
     py_filepath_to_use = os.path.join(map_folder, py_filename)
-    editor_state.current_map_filename = py_filepath_to_use 
+    editor_state.current_map_filename = py_filepath_to_use
 
     game_function_name = f"load_map_{editor_state.map_name_for_function}"
 
@@ -490,8 +491,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     hazards_data_raw: List[Dict[str, Any]] = []; background_tiles_data_raw: List[Dict[str, Any]] = []
     enemies_list_export: List[Dict[str, Any]] = []; items_list_export: List[Dict[str, Any]] = []
     statue_list_export: List[Dict[str, Any]] = []
-    custom_images_export: List[Dict[str, Any]] = [] 
-    trigger_squares_export: List[Dict[str, Any]] = [] 
+    custom_images_export: List[Dict[str, Any]] = []
+    trigger_squares_export: List[Dict[str, Any]] = []
 
     player_start_pos_p1: Optional[Tuple[float, float]] = None; player1_spawn_props: Dict[str, Any] = {}
     player_start_pos_p2: Optional[Tuple[float, float]] = None; player2_spawn_props: Dict[str, Any] = {}
@@ -501,23 +502,27 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     all_placed_objects_rect_data_for_bounds: List[Dict[str, float]] = []
 
     for obj_data in editor_state.placed_objects:
+        # Skip exporting editor-hidden objects
+        if obj_data.get("editor_hidden", False):
+            continue
+
         asset_key = str(obj_data.get("asset_editor_key", ""))
         game_type_id = str(obj_data.get("game_type_id", "unknown"))
         wx, wy = obj_data.get("world_x"), obj_data.get("world_y")
         obj_props = obj_data.get("properties", {})
         is_flipped_h = obj_data.get("is_flipped_h", False)
-        rotation = obj_data.get("rotation", 0) # Get rotation
+        rotation = obj_data.get("rotation", 0) 
         
         if wx is None or wy is None or not asset_key: continue
 
         export_x, export_y = float(wx), float(wy)
-        obj_w = float(obj_data.get("current_width", ts)) 
+        obj_w = float(obj_data.get("current_width", ts))
         obj_h = float(obj_data.get("current_height", ts))
-        
-        final_color_for_export = obj_data.get("override_color") 
-        
-        asset_entry_from_palette = editor_state.assets_palette.get(asset_key) 
-        category = asset_entry_from_palette.get("category", "unknown") if asset_entry_from_palette else "custom" 
+
+        final_color_for_export = obj_data.get("override_color")
+
+        asset_entry_from_palette = editor_state.assets_palette.get(asset_key)
+        category = asset_entry_from_palette.get("category", "unknown") if asset_entry_from_palette else "custom"
 
         is_custom_image_type = (asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY) # type: ignore
         is_trigger_square_type = (asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY) # type: ignore
@@ -529,19 +534,18 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             elif asset_entry_from_palette and asset_entry_from_palette.get("surface_params"):
                 sp = asset_entry_from_palette["surface_params"]
                 if isinstance(sp, tuple) and len(sp) >=2: obj_w, obj_h = float(sp[0]), float(sp[1])
-            else: 
-                obj_w, obj_h = float(ts), float(ts) 
-            
-            if not final_color_for_export and asset_entry_from_palette: 
+            else:
+                obj_w, obj_h = float(ts), float(ts)
+
+            if not final_color_for_export and asset_entry_from_palette:
                 final_color_for_export = asset_entry_from_palette.get("base_color_tuple")
                 if not final_color_for_export and asset_entry_from_palette.get("surface_params"):
                     sp = asset_entry_from_palette["surface_params"]
                     if isinstance(sp, tuple) and len(sp) == 3: final_color_for_export = sp[2]
             final_color_for_export = final_color_for_export or getattr(C, 'GRAY', (128,128,128))
 
-        # For bounding box, consider rotation for width/height if non-square
         effective_w_for_bounds, effective_h_for_bounds = obj_w, obj_h
-        if rotation % 180 != 0: # 90 or 270 degrees
+        if rotation % 180 != 0: 
             effective_w_for_bounds, effective_h_for_bounds = obj_h, obj_w
         all_placed_objects_rect_data_for_bounds.append({'x': export_x, 'y': export_y, 'width': effective_w_for_bounds, 'height': effective_h_for_bounds})
 
@@ -555,10 +559,10 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         if is_custom_image_type:
             image_export_data = {
                 'rect': (export_x, export_y, obj_w, obj_h),
-                'source_file_path': obj_data.get("source_file_path", ""), 
+                'source_file_path': obj_data.get("source_file_path", ""),
                 'original_width': obj_data.get("original_width"),
                 'original_height': obj_data.get("original_height"),
-                'crop_rect': obj_data.get("crop_rect"), 
+                'crop_rect': obj_data.get("crop_rect"),
                 'layer_order': obj_data.get("layer_order", 0),
                 **common_export_props
             }
@@ -573,8 +577,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                 **common_export_props
             })
         elif category == "spawn":
-            spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h) # Assuming origin is top-left
-            spawn_props_to_export = {**common_export_props} # common_export_props already includes properties
+            spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h) 
+            spawn_props_to_export = {**common_export_props} 
             for p_num in range(1,5):
                 p_spawn_def_key = f"player{p_num}_spawn"
                 p_spawn_def_data = ED_CONFIG.EDITOR_PALETTE_ASSETS.get(p_spawn_def_key,{}) # type: ignore
@@ -583,7 +587,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                     elif p_num == 2: player_start_pos_p2 = spawn_pos; player2_spawn_props = spawn_props_to_export.copy()
                     elif p_num == 3: player_start_pos_p3 = spawn_pos; player3_spawn_props = spawn_props_to_export.copy()
                     elif p_num == 4: player_start_pos_p4 = spawn_pos; player4_spawn_props = spawn_props_to_export.copy()
-                    break 
+                    break
         elif category == "tile" or "platform" in game_type_id.lower():
              platforms_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props})
         elif category == "enemy":
@@ -592,12 +596,12 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         elif "hazard" in game_type_id.lower(): hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props})
         elif category == "item": items_list_export.append({'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), 'type': game_type_id, **common_export_props})
         elif "object_stone" in game_type_id.lower(): statue_list_export.append({'id': obj_data.get("unique_id", f"statue_{len(statue_list_export)}"), 'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), **common_export_props})
-        elif category == "background_tile": 
-            bg_tile_export_data = {'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 
-                                   'color': final_color_for_export, 'type': game_type_id, 
+        elif category == "background_tile":
+            bg_tile_export_data = {'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h,
+                                   'color': final_color_for_export, 'type': game_type_id,
                                    'image_path': asset_entry_from_palette.get("source_file") if asset_entry_from_palette else None,
-                                   'crop_rect': obj_data.get("crop_rect"), 
-                                   **common_export_props} 
+                                   'crop_rect': obj_data.get("crop_rect"),
+                                   **common_export_props}
             if bg_tile_export_data['crop_rect'] is None: del bg_tile_export_data['crop_rect']
             background_tiles_data_raw.append(bg_tile_export_data)
 
@@ -628,13 +632,13 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         "platforms_list": platforms_list_export, "ladders_list": ladders_list_export,
         "hazards_list": hazards_list_export, "background_tiles_list": background_tiles_list_export,
         "enemies_list": enemies_list_export, "items_list": items_list_export,
-        "statues_list": statue_list_export, 
-        "custom_images_list": custom_images_export, 
-        "trigger_squares_list": trigger_squares_export, 
+        "statues_list": statue_list_export,
+        "custom_images_list": custom_images_export,
+        "trigger_squares_list": trigger_squares_export,
         "level_pixel_width": level_pixel_width_for_camera,
-        "level_min_x_absolute": level_min_x_abs_for_camera, 
+        "level_min_x_absolute": level_min_x_abs_for_camera,
         "level_min_y_absolute": level_min_y_abs_for_camera,
-        "level_max_y_absolute": level_max_y_abs_for_camera, 
+        "level_max_y_absolute": level_max_y_abs_for_camera,
         "ground_level_y_ref": main_ground_y_ref,
         "ground_platform_height_ref": ground_platform_height_ref,
     }
@@ -645,12 +649,12 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     if player_start_pos_p4: final_game_data_for_script["player_start_pos_p4"] = player_start_pos_p4
     if player4_spawn_props: final_game_data_for_script["player4_spawn_props"] = player4_spawn_props
 
-    for key_default_list in ["platforms_list", "ladders_list", "hazards_list", "background_tiles_list", 
+    for key_default_list in ["platforms_list", "ladders_list", "hazards_list", "background_tiles_list",
                              "enemies_list", "items_list", "statues_list", "custom_images_list", "trigger_squares_list"]:
         final_game_data_for_script.setdefault(key_default_list, [])
 
     script_content_parts = [f"# Level Data: {editor_state.map_name_for_function}", "# Generated by Platformer Level Editor", "", f"def {game_function_name}():", "    game_data = {"]
-    for data_key, data_value in final_game_data_for_script.items(): script_content_parts.append(f"        '{data_key}': {repr(data_value)},") 
+    for data_key, data_value in final_game_data_for_script.items(): script_content_parts.append(f"        '{data_key}': {repr(data_value)},")
     script_content_parts.extend(["    }", "    return game_data", "", "if __name__ == '__main__':", f"    data = {game_function_name}()", "    import json", "    print(json.dumps(data, indent=4))"])
     script_content = "\n".join(script_content_parts)
     try:
@@ -680,7 +684,7 @@ if __name__ == "__main__":
         print(f"ED_CONFIG.BASE_GRID_SIZE: {ED_CONFIG.BASE_GRID_SIZE}") # type: ignore
     else:
         print("ED_CONFIG.BASE_GRID_SIZE not found or ED_CONFIG is fallback.")
-    
+
     if C and hasattr(C, 'TILE_SIZE'):
         print(f"C.TILE_SIZE: {C.TILE_SIZE}") # type: ignore
     else:

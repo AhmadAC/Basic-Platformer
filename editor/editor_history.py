@@ -3,11 +3,10 @@
 # editor/editor_history.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.1 (Rotation and Flip Aware Snapshot/Restore)
+## version 2.2.2 (Selection Pane Hide/Lock State Persistence)
 Manages undo/redo functionality for the Level Editor.
 Ensures custom object properties like dimensions, layer order, crop_rect,
-rotation, and flip state are included.
-Refined deep copying for placed_objects.
+rotation, flip state, and editor-specific hide/lock states are included.
 """
 import json
 import logging
@@ -25,11 +24,11 @@ def _deep_copy_object_data(obj_data: Dict[str, Any]) -> Dict[str, Any]:
     copied_obj = {}
     for k, v in obj_data.items():
         if isinstance(v, dict):
-            copied_obj[k] = v.copy() # Shallow copy for sub-dictionaries like 'properties', 'crop_rect'
+            copied_obj[k] = v.copy() 
         elif isinstance(v, list):
-            copied_obj[k] = v[:]    # Shallow copy for lists
+            copied_obj[k] = v[:]    
         else:
-            copied_obj[k] = v       # Direct assignment for simple types
+            copied_obj[k] = v       
     return copied_obj
 
 def get_map_snapshot(editor_state: EditorState) -> Dict[str, Any]:
@@ -51,6 +50,8 @@ def get_map_snapshot(editor_state: EditorState) -> Dict[str, Any]:
     for obj in snapshot["placed_objects"]:
         obj.setdefault("rotation", 0)
         obj.setdefault("is_flipped_h", False)
+        obj.setdefault("editor_hidden", False) # Added for snapshot
+        obj.setdefault("editor_locked", False) # Added for snapshot
         if "override_color" in obj and isinstance(obj["override_color"], tuple):
             obj["override_color"] = list(obj["override_color"])
         if "properties" in obj and isinstance(obj["properties"], dict):
@@ -83,9 +84,11 @@ def restore_map_from_snapshot(editor_state: EditorState, snapshot: Dict[str, Any
     for obj_data_raw in loaded_objects_raw:
         new_obj = _deep_copy_object_data(obj_data_raw)
 
-        # Ensure orientation fields exist, defaulting if from older save
+        # Ensure orientation and editor-specific fields exist, defaulting if from older save
         new_obj.setdefault("rotation", 0)
         new_obj.setdefault("is_flipped_h", False)
+        new_obj.setdefault("editor_hidden", False) # Added for restore
+        new_obj.setdefault("editor_locked", False) # Added for restore
 
         if "override_color" in new_obj and isinstance(new_obj["override_color"], list):
             new_obj["override_color"] = tuple(new_obj["override_color"])
@@ -142,7 +145,7 @@ def restore_map_from_snapshot(editor_state: EditorState, snapshot: Dict[str, Any
     editor_state.zoom_level = snapshot.get("zoom_level", 1.0)
     editor_state.show_grid = snapshot.get("show_grid", True)
     editor_state.asset_specific_variables = {k: v.copy() for k, v in snapshot.get("asset_specific_variables", {}).items()}
-    editor_state.unsaved_changes = True # Restoring a snapshot implies it's a change from current file state
+    editor_state.unsaved_changes = True 
     logger.info(f"Map state restored from snapshot. Unsaved changes: {editor_state.unsaved_changes}")
 
 
@@ -152,7 +155,6 @@ def push_undo_state(editor_state: EditorState):
 
     snapshot = get_map_snapshot(editor_state)
     try:
-        # Avoid pushing identical consecutive states
         if editor_state.undo_stack and json.dumps(editor_state.undo_stack[-1], sort_keys=True) == json.dumps(snapshot, sort_keys=True):
             logger.debug("Skipped pushing identical state to undo stack.")
             return
@@ -164,7 +166,7 @@ def push_undo_state(editor_state: EditorState):
     if len(editor_state.undo_stack) > MAX_HISTORY_STATES:
         editor_state.undo_stack.pop(0)
     if editor_state.redo_stack:
-        editor_state.redo_stack.clear() # Clear redo stack on new action
+        editor_state.redo_stack.clear() 
     logger.debug(f"Pushed state to undo stack. Size: {len(editor_state.undo_stack)}")
 
 def undo(editor_state: EditorState) -> bool:
@@ -188,9 +190,6 @@ def undo(editor_state: EditorState) -> bool:
         return True
     except Exception as e:
         logger.error(f"Error during undo restore: {e}", exc_info=True)
-        # If restore fails, try to put the state back onto the redo stack if it was valid
-        # This is tricky, as the current state is now polluted.
-        # Best to signal failure and let user save/reload if needed.
         return False
 
 def redo(editor_state: EditorState) -> bool:
