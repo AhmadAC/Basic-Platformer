@@ -4,8 +4,9 @@
 # -*- coding: utf-8 -*-
 """
 Handles all player-related collision detection and resolution for PySide6.
+MODIFIED: Player stomp destroys statues. Smashed statues are not solid.
 """
-# version 2.0.11 (Refined landing logic for glitch jump fix)
+# version 2.0.12 (Statue Stomp & Solidity Fix)
 
 from typing import List, Any, Optional, TYPE_CHECKING
 import time
@@ -15,13 +16,13 @@ from PySide6.QtCore import QRectF, QPointF
 import constants as C
 from tiles import Lava # For type hinting
 from enemy import Enemy
-from statue import Statue
+from statue import Statue # Ensure Statue is imported
 from items import Chest
 
 if TYPE_CHECKING:
     from player import Player as PlayerClass_TYPE
 
-_SCRIPT_LOGGING_ENABLED = False
+_SCRIPT_LOGGING_ENABLED = True # Control logging for this file
 
 try:
     from logger import ENABLE_DETAILED_PHYSICS_LOGS, log_player_physics, debug, info, warning
@@ -50,13 +51,20 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
         if _SCRIPT_LOGGING_ENABLED: warning(f"Player {player.player_id}: Missing pos attribute. Skipping platform collision.")
         return
 
-    collided_with_wall_on_side_this_frame = 0 # 0: no, 1: right wall, -1: left wall
+    collided_with_wall_on_side_this_frame = 0
 
     for platform_obj in platforms_list:
         if not hasattr(platform_obj, 'rect') or not isinstance(platform_obj.rect, QRectF) or not platform_obj.rect.isValid():
              if _SCRIPT_LOGGING_ENABLED: warning(f"Player Collision: Platform object {platform_obj} missing valid rect. Skipping.")
              continue
         
+        # --- MODIFIED: Ignore smashed statues as platforms ---
+        if isinstance(platform_obj, Statue) and platform_obj.is_smashed:
+            if _SCRIPT_LOGGING_ENABLED and ENABLE_DETAILED_PHYSICS_LOGS:
+                log_player_physics(player, "PLAT_COLL_IGNORE_SMASHED_STATUE", f"StatueID: {platform_obj.statue_id}")
+            continue
+        # --- END MODIFICATION ---
+
         if not player.rect.intersects(platform_obj.rect):
             continue
 
@@ -65,9 +73,9 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                                (QRectF(player.rect), QRectF(platform_obj.rect), getattr(platform_obj, 'platform_type', 'unknown')))
 
         if direction == 'x':
-            if player.vel.x() > 0: # Moving right
+            if player.vel.x() > 0:
                 overlap_x = player.rect.right() - platform_obj.rect.left()
-                if overlap_x > 0: # Collided with platform's left edge
+                if overlap_x > 0:
                     player.rect.translate(-overlap_x, 0)
                     player.vel.setX(0.0)
                     if not player.on_ground and not player.on_ladder:
@@ -75,9 +83,9 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                         actual_v_overlap = min(player.rect.bottom(), platform_obj.rect.bottom()) - max(player.rect.top(), platform_obj.rect.top())
                         if actual_v_overlap > min_v_overlap_for_wall:
                             collided_with_wall_on_side_this_frame = 1 
-            elif player.vel.x() < 0: # Moving left
+            elif player.vel.x() < 0:
                 overlap_x = platform_obj.rect.right() - player.rect.left()
-                if overlap_x > 0: # Collided with platform's right edge
+                if overlap_x > 0:
                     player.rect.translate(overlap_x, 0)
                     player.vel.setX(0.0)
                     if not player.on_ground and not player.on_ladder:
@@ -93,7 +101,7 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                  log_player_physics(player, f"PLAT_COLL_RESOLVED_X", f"Rect: {player.rect.x():.1f},{player.rect.y():.1f} {player.rect.width():.0f}x{player.rect.height():.0f}, VelX: {player.vel.x():.1f}")
 
         elif direction == 'y':
-            if player.vel.y() >= 0: # Moving down or stationary and intersecting
+            if player.vel.y() >= 0:
                 overlap_y = player.rect.bottom() - platform_obj.rect.top()
                 if overlap_y > 0: 
                     min_h_overlap_ratio = getattr(C, 'MIN_PLATFORM_OVERLAP_RATIO_FOR_LANDING', 0.1)
@@ -109,7 +117,6 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                         can_snap_down_from_current = player.rect.bottom() > platform_obj.rect.top() and \
                                                      player.rect.bottom() <= platform_obj.rect.top() + getattr(C, 'GROUND_SNAP_THRESHOLD', 5.0)
 
-                        # Land if player was truly above OR if already considered on_ground and within snap distance
                         if was_truly_above_or_at_surface or (player.on_ground and can_snap_down_from_current):
                             just_landed = not player.on_ground
                             player.rect.moveBottom(platform_obj.rect.top()) 
@@ -124,7 +131,7 @@ def check_player_platform_collisions(player: 'PlayerClass_TYPE', direction: str,
                             if ENABLE_DETAILED_PHYSICS_LOGS and _SCRIPT_LOGGING_ENABLED:
                                  log_player_physics(player, f"PLAT_COLL_Y_LANDED", f"WasAbove:{was_truly_above_or_at_surface}, CanSnap:{can_snap_down_from_current}")
             
-            elif player.vel.y() < 0: # Moving up, collided with platform's bottom edge (ceiling)
+            elif player.vel.y() < 0:
                 overlap_y = platform_obj.rect.bottom() - player.rect.top()
                 if overlap_y > 0:
                     min_h_overlap_ratio_ceil = getattr(C, 'MIN_PLATFORM_OVERLAP_RATIO_FOR_CEILING', 0.1)
@@ -182,18 +189,21 @@ def check_player_character_collisions(player: 'PlayerClass_TYPE', direction: str
     for other_char in characters_list:
         if other_char is player or \
            not hasattr(other_char, 'rect') or not isinstance(other_char.rect, QRectF) or \
-           not (hasattr(other_char, 'alive') and other_char.alive()):
+           not (hasattr(other_char, 'alive') and other_char.alive()): # Check general aliveness for all
             continue
 
         is_chest = isinstance(other_char, Chest)
         is_enemy = isinstance(other_char, Enemy)
         is_statue = isinstance(other_char, Statue)
 
-        if not is_chest and \
-           not (hasattr(other_char, '_valid_init') and other_char._valid_init and
-                hasattr(other_char, 'is_dead') and
-                (not other_char.is_dead or (getattr(other_char, 'is_petrified', False) and not getattr(other_char, 'is_stone_smashed', False)) ) ):
-            continue
+        # Specific checks for non-chest targets
+        if not is_chest:
+            is_other_valid_target = (hasattr(other_char, '_valid_init') and other_char._valid_init and
+                                     hasattr(other_char, 'is_dead') and
+                                     (not other_char.is_dead or (getattr(other_char, 'is_petrified', False) and not getattr(other_char, 'is_stone_smashed', False)) )
+                                    )
+            if not is_other_valid_target:
+                continue
 
         if player.rect.intersects(other_char.rect):
             collision_occurred_this_axis = True
@@ -209,27 +219,35 @@ def check_player_character_collisions(player: 'PlayerClass_TYPE', direction: str
                         elif player.vel.x() < 0 and player.rect.left() < chest_obj.rect.right() and player.rect.center().x() > chest_obj.rect.center().x():
                             overlap_x_chest = chest_obj.rect.right() - player.rect.left()
                             if overlap_x_chest > 0: player.rect.translate(overlap_x_chest, 0); push_force_dir = -1
-                        if push_force_dir != 0:
+                        
+                        if push_force_dir != 0 and hasattr(chest_obj, 'acc_x') and hasattr(player, 'vel') and hasattr(player.vel, 'x'):
                             chest_obj.acc_x = C.CHEST_PUSH_ACCEL_BASE * push_force_dir * (abs(player.vel.x()) / C.PLAYER_RUN_SPEED_LIMIT if C.PLAYER_RUN_SPEED_LIMIT > 0 else 1.0)
-                            player.vel.setX(0)
+                            player.vel.setX(0) # Player stops against chest if pushing
                         if hasattr(player, 'pos'): player.pos.setX(player.rect.center().x())
-                    elif direction == 'y':
+                    elif direction == 'y': # Player landing on a closed chest
                         if player.vel.y() > 0 and player.rect.bottom() > chest_obj.rect.top() and rect_before_char_coll_resolve.bottom() <= chest_obj.rect.top() + 1:
                             player.rect.moveBottom(chest_obj.rect.top()); player.on_ground = True; player.vel.setY(0)
                         elif player.vel.y() < 0 and player.rect.top() < chest_obj.rect.bottom() and rect_before_char_coll_resolve.top() >= chest_obj.rect.bottom() -1 :
                             player.rect.moveTop(chest_obj.rect.bottom()); player.vel.setY(0)
                         if hasattr(player, 'pos'): player.pos.setY(player.rect.bottom())
-                continue
+                continue # Processed chest, move to next char
             
+            # Petrified targets (solid, but can be smashed by stomp)
             is_other_petrified_solid = getattr(other_char, 'is_petrified', False) and not getattr(other_char, 'is_stone_smashed', False)
 
-            if is_enemy and getattr(player, 'is_aflame', False) and hasattr(other_char, 'apply_aflame_effect') and callable(other_char.apply_aflame_effect) and not getattr(other_char, 'is_aflame', False) and not getattr(other_char, 'is_deflaming', False) and not getattr(other_char, 'is_frozen', False) and not getattr(other_char, 'is_defrosting', False) and not getattr(other_char, 'is_petrified', False) :
-                other_char.apply_aflame_effect(); continue 
+            # Aflame interaction (player igniting enemy)
+            if is_enemy and getattr(player, 'is_aflame', False) and hasattr(other_char, 'apply_aflame_effect') and callable(other_char.apply_aflame_effect) and \
+               not getattr(other_char, 'is_aflame', False) and not getattr(other_char, 'is_deflaming', False) and \
+               not getattr(other_char, 'is_frozen', False) and not getattr(other_char, 'is_defrosting', False) and \
+               not getattr(other_char, 'is_petrified', False) :
+                other_char.apply_aflame_effect(); # No immediate return, pushback might still occur
 
+            # Stomp Logic
             is_enemy_stompable = is_enemy and not other_char.is_dead and not getattr(other_char, 'is_stomp_dying', False) and \
                                  not getattr(other_char, 'is_aflame', False) and not getattr(other_char, 'is_frozen', False) and \
-                                 not getattr(other_char, 'is_petrified', False) 
-            is_statue_stompable = is_statue and not getattr(other_char, 'is_smashed', False)
+                                 not is_other_petrified_solid # Cannot stomp already petrified enemy, attack it to smash
+            
+            is_statue_stompable = is_statue and not getattr(other_char, 'is_smashed', False) # Can stomp any non-smashed statue
 
             if (is_enemy_stompable or is_statue_stompable) and direction == 'y' and player.vel.y() > 0.5: 
                 stomp_head_grace = C.PLAYER_STOMP_LAND_ON_ENEMY_GRACE_PX
@@ -238,13 +256,13 @@ def check_player_character_collisions(player: 'PlayerClass_TYPE', direction: str
 
                 if previous_player_bottom_y_for_stomp_calc <= target_stomp_effective_top_y + 1.0 and \
                    player.rect.bottom() >= other_char.rect.top() and \
-                   player.rect.bottom() <= other_char.rect.top() + (other_char.rect.height() * 0.50):
+                   player.rect.bottom() <= other_char.rect.top() + (other_char.rect.height() * 0.50): # Player's feet are within top half of target
                     
                     stomp_processed = False
                     if is_enemy_stompable and hasattr(other_char, 'stomp_kill'):
                         other_char.stomp_kill(); stomp_processed = True
-                    elif is_statue_stompable and hasattr(other_char, 'take_damage'): 
-                        other_char.take_damage(999); stomp_processed = True 
+                    elif is_statue_stompable and hasattr(other_char, 'get_stomped'):
+                        other_char.get_stomped(player); stomp_processed = True
                     
                     if stomp_processed:
                         player.vel.setY(C.PLAYER_STOMP_BOUNCE_STRENGTH)
@@ -252,14 +270,17 @@ def check_player_character_collisions(player: 'PlayerClass_TYPE', direction: str
                         if hasattr(player, 'set_state'): player.set_state('jump') 
                         player.rect.moveBottom(other_char.rect.top() - 1.0) 
                         if hasattr(player, 'pos'): player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
-                    return True 
+                        # Since stomp was processed and player bounced, this specific collision is resolved.
+                        # For other types of character collisions (pushback), continue below.
+                        return True # Indicate collision was handled (stomp)
             
+            # Standard Character Pushback (if not a stomp on enemy/statue)
             if direction == 'x':
-                if getattr(player, 'is_attacking', False) and not is_other_petrified_solid: 
+                if getattr(player, 'is_attacking', False) and not is_other_petrified_solid:
                     if hasattr(other_char, 'vel') and hasattr(other_char.vel, 'setX'):
                         push_dir_other = 1 if player.rect.center().x() < other_char.rect.center().x() else -1
-                        other_char.vel.setX(push_dir_other * C.CHARACTER_BOUNCE_VELOCITY * 0.5) 
-                else: 
+                        other_char.vel.setX(push_dir_other * C.CHARACTER_BOUNCE_VELOCITY * 0.5)
+                else: # Player not attacking, or target is solid petrified: mutual pushback
                     bounce_vel = C.CHARACTER_BOUNCE_VELOCITY; push_dir_self = 0; overlap_x_char = 0.0
                     if player.rect.center().x() < other_char.rect.center().x(): 
                         overlap_x_char = player.rect.right() - other_char.rect.left()
@@ -279,21 +300,23 @@ def check_player_character_collisions(player: 'PlayerClass_TYPE', direction: str
                         other_char.vel.setX(-push_dir_self * bounce_vel)
                 if hasattr(player, 'pos'): player.pos.setX(player.rect.center().x())
 
-            elif direction == 'y': 
+            elif direction == 'y': # Vertical pushback (e.g. two players landing on same spot, or one pushing other down)
+                                    # This typically only matters if one is on ground and other lands on them,
+                                    # or if one is trying to jump through another.
                 overlap_y_char = 0.0
                 if player.vel.y() > 0 and player.rect.bottom() > other_char.rect.top() and \
                    player.rect.center().y() < other_char.rect.center().y(): 
                     overlap_y_char = player.rect.bottom() - other_char.rect.top()
                     if overlap_y_char > 0:
                         player.rect.translate(0, -overlap_y_char)
-                        player.on_ground = True 
+                        player.on_ground = True # Landed on another character
                         player.vel.setY(0.0)
                 elif player.vel.y() < 0 and player.rect.top() < other_char.rect.bottom() and \
                      player.rect.center().y() > other_char.rect.center().y(): 
                     overlap_y_char = other_char.rect.bottom() - player.rect.top()
                     if overlap_y_char > 0:
                         player.rect.translate(0, overlap_y_char)
-                        player.vel.setY(0.0) 
+                        player.vel.setY(0.0) # Hit head on another character
                 if hasattr(player, 'pos'): player.pos.setY(player.rect.bottom())
     
     return collision_occurred_this_axis
@@ -341,5 +364,3 @@ def check_player_hazard_collisions(player: 'PlayerClass_TYPE', hazards_list: Lis
         
         if damaged_this_frame_by_hazard:
             break 
-
-#################### END OF FILE: player_collision_handler.py ####################

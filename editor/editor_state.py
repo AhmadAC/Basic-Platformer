@@ -3,11 +3,10 @@
 # editor_state.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.0 (Added Crop Rectangle Support)
+## version 2.2.1 (Asset Flip/Cycle State)
 Defines the EditorState class, which holds all the dynamic state
 and data for the level editor, adapted for PySide6.
-- Added support for custom image paths and trigger square properties.
-- Added 'crop_rect' to custom image object data for cropping.
+- Added state for palette asset orientation (flip) and wall variant cycling.
 """
 import logging
 from typing import Optional, Dict, List, Tuple, Any, Callable
@@ -20,50 +19,29 @@ class EditorState:
     def __init__(self):
         logger.debug("Initializing EditorState for PySide6...")
         # --- Map Data ---
-        self.current_map_filename: Optional[str] = None # Full path to .py file in map_name/
-        self.current_json_filename: Optional[str] = None # Full path to .json file in map_name/
-        self.map_name_for_function: str = "untitled_map" # This is the 'map_name' part of the folder/file
+        self.current_map_filename: Optional[str] = None 
+        self.current_json_filename: Optional[str] = None 
+        self.map_name_for_function: str = "untitled_map" 
         self.map_width_tiles: int = ED_CONFIG.DEFAULT_MAP_WIDTH_TILES
         self.map_height_tiles: int = ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES
         self.grid_size: int = ED_CONFIG.BASE_GRID_SIZE
         self.background_color: Tuple[int, int, int] = ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE
 
         # --- Placed Objects and Properties ---
-        # Each object in placed_objects is a Dict. Example for a custom image:
-        # {
-        #   "asset_editor_key": "custom_image_object", (or ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY)
-        #   "game_type_id": "custom_image_object",
-        #   "world_x": 100, "world_y": 150,
-        #   "source_file_path": "Custom/my_image.png", # Relative to map's folder
-        #   "original_width": 128, "original_height": 128, # Native *full* image size
-        #   "current_width": 64, "current_height": 64,     # Current display size on map (of the cropped portion)
-        #   "layer_order": 0,
-        #   "crop_rect": {"x": 10, "y": 10, "width": 50, "height": 50}, # Optional: crop coords relative to original_width/height
-        #                                                               # If None or absent, full image is used.
-        #   "properties": {
-        #       "is_background": False, "is_obstacle": True,
-        #       "destructible": False, "health": 100
-        #   }
-        # }
-        # Example for a trigger square:
-        # {
-        #   "asset_editor_key": "trigger_square", (or ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY)
-        #   "game_type_id": "trigger_square_link",
-        #   "world_x": 200, "world_y": 250,
-        #   "current_width": 80, "current_height": 80,
-        #   "layer_order": 1,
-        #   "properties": {
-        #       "visible": True, "fill_color_rgba": (100,100,255,100),
-        #       "image_in_square": "", "linked_map_name": "next_level"
-        #   }
-        # }
+        # Each object includes "is_flipped_h": bool for standard assets.
         self.placed_objects: List[Dict[str, Any]] = []
-        self.asset_specific_variables: Dict[str, Dict[str, Any]] = {} # For game-defined variables per asset type (less used now with "properties")
+        self.asset_specific_variables: Dict[str, Dict[str, Any]] = {} 
 
         # --- Asset Palette State ---
         self.assets_palette: Dict[str, Dict[str, Any]] = {}
-        self._selected_asset_editor_key: Optional[str] = None # Can be standard key or "custom:filename.ext"
+        self._selected_asset_editor_key: Optional[str] = None 
         self.current_selected_asset_paint_color: Optional[Tuple[int,int,int]] = None
+        
+        # New state for asset orientation/variant in palette
+        self.palette_current_asset_key: Optional[str] = None # The asset key currently active in the palette for placement
+        self.palette_asset_is_flipped_h: bool = False # If the palette_current_asset_key should be placed flipped
+        self.palette_wall_variant_index: int = 0 # Index into ED_CONFIG.WALL_VARIANTS_CYCLE for current wall
+        self.current_tool_mode: str = "place" # Default to "place" on startup, "select" will be a mode
 
         # --- Camera, View, and Tool State ---
         self.camera_offset_x: float = 0.0
@@ -71,7 +49,7 @@ class EditorState:
         self.zoom_level: float = 1.0
         self.show_grid: bool = True
 
-        self.current_tool_mode: str = "place"
+        # self.current_tool_mode: str = "place" # Now handled above with palette state
         self.current_tile_paint_color: Optional[Tuple[int,int,int]] = None
 
         self.last_painted_tile_coords: Optional[Tuple[int, int]] = None
@@ -84,9 +62,7 @@ class EditorState:
         self.undo_stack: List[Dict[str, Any]] = []
         self.redo_stack: List[Dict[str, Any]] = []
 
-        # NEW: For controller navigation on MapViewWidget to know if it has focus
         self.controller_mode_active: bool = False
-        # NEW: For indicating if the game is in a "preview" mode where editor-only things hide
         self.is_game_preview_mode: bool = False
 
 
@@ -104,13 +80,48 @@ class EditorState:
 
     @property
     def selected_asset_editor_key(self) -> Optional[str]:
+        """
+        DEPRECATED: Use palette_current_asset_key, palette_asset_is_flipped_h,
+        and palette_wall_variant_index for placement context.
+        This property might still be used by PropertiesEditor to know what type's defaults to show.
+        """
         return self._selected_asset_editor_key
 
     @selected_asset_editor_key.setter
     def selected_asset_editor_key(self, value: Optional[str]):
+        """
+        DEPRECATED for placement context. Set palette_current_asset_key instead.
+        This primarily signals the PropertiesEditor.
+        """
         if self._selected_asset_editor_key != value:
             self._selected_asset_editor_key = value
-            logger.info(f"selected_asset_editor_key changed to: '{value}'")
+            logger.info(f"DEPRECATED selected_asset_editor_key changed to: '{value}' (for properties panel, not placement)")
+            # When a new asset is selected FOR THE PALETTE to show its details (not for placement intent)
+            # reset the placement-specific states
+            if value is not None: # If selecting a new asset type for info
+                 self.palette_current_asset_key = value # It becomes the current base for potential placement
+                 self.palette_asset_is_flipped_h = False
+                 if value == ED_CONFIG.WALL_BASE_KEY:
+                     self.palette_wall_variant_index = 0 # Reset to base wall
+                 else: # For non-wall assets, the variant index is not used in the same way
+                     self.palette_wall_variant_index = 0 # Or -1 to indicate not applicable for wall cycle
+
+
+    def get_current_placing_asset_effective_key(self) -> Optional[str]:
+        """
+        Determines the actual asset key to be placed, considering wall variants.
+        """
+        if self.current_tool_mode != "place" or not self.palette_current_asset_key:
+            return None
+        
+        if self.palette_current_asset_key == ED_CONFIG.WALL_BASE_KEY:
+            if 0 <= self.palette_wall_variant_index < len(ED_CONFIG.WALL_VARIANTS_CYCLE):
+                return ED_CONFIG.WALL_VARIANTS_CYCLE[self.palette_wall_variant_index]
+            else: # Fallback if index is out of bounds
+                logger.warning(f"palette_wall_variant_index {self.palette_wall_variant_index} out of bounds. Defaulting to base wall.")
+                return ED_CONFIG.WALL_BASE_KEY
+        return self.palette_current_asset_key
+
 
     def get_map_pixel_width(self) -> int:
         return self.map_width_tiles * self.grid_size
@@ -127,7 +138,7 @@ class EditorState:
         self.map_name_for_function = "untitled_map"
         self.current_map_filename = None
         self.current_json_filename = None
-        self.placed_objects = [] # This clears all objects, including any crop_rect data they had.
+        self.placed_objects = [] 
         self.asset_specific_variables.clear()
         self.map_width_tiles = ED_CONFIG.DEFAULT_MAP_WIDTH_TILES
         self.map_height_tiles = ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES
@@ -136,11 +147,15 @@ class EditorState:
         self.camera_offset_x, self.camera_offset_y = 0.0, 0.0
         self.zoom_level = 1.0
         self.unsaved_changes = False
-        self.selected_asset_editor_key = None
-        self.current_tool_mode = "place"
-        self.current_tile_paint_color = None
-        # current_selected_asset_paint_color remains as it's a palette-level setting.
+        
+        self._selected_asset_editor_key = None # Info selection
+        self.palette_current_asset_key = None # Placement selection
+        self.palette_asset_is_flipped_h = False
+        self.palette_wall_variant_index = 0
 
+        self.current_tool_mode = "place" # Reset tool mode
+        self.current_tile_paint_color = None
+        
         self.last_painted_tile_coords = None
         self.last_erased_tile_coords = None
         self.last_colored_tile_coords = None

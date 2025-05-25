@@ -1,3 +1,5 @@
+#################### START OF FILE: app_core.py ####################
+
 # app_core.py
 # -*- coding: utf-8 -*-
 """
@@ -5,8 +7,9 @@ Main application core for the PySide6 platformer game.
 Handles window creation, UI views, game loop, input management,
 and game mode orchestration.
 Map loading now uses map_name_folder/map_name_file.py structure.
+MODIFIED: Statue physics and lifecycle management in game loop.
 """
-# version 2.1.2 (Map name handling updated for folder structure)
+# version 2.1.3 (Statue Physics and Lifecycle in Game Loop)
 
 import sys
 import os
@@ -39,6 +42,7 @@ try:
     from game_ui import GameSceneWidget, IPInputDialog 
     import config as game_config
     from player import Player 
+    from statue import Statue # Import Statue
 
     from app_ui_creator import (
         _create_main_menu_widget, _create_map_select_widget,
@@ -163,8 +167,6 @@ class NetworkThread(QThread):
             main_window_instance = MainWindow._instance 
             if self.mode == "host" and self.server_state and main_window_instance:
                 debug("NetworkThread running host mode.")
-                # Ensure current_map_name (folder/stem) is set in server_state before run_server_mode
-                # This is usually done when server_state is created or before this thread starts.
                 run_server_mode(self.server_state, self.game_elements, 
                                 self._ui_status_update_callback,
                                 self._get_p1_input_snapshot_main_thread_passthrough,
@@ -406,7 +408,6 @@ class MainWindow(QMainWindow):
 
 
     # --- Game Mode Launchers (delegated to app_game_modes) ---
-    # map_name here is the folder/stem name
     def _on_map_selected_for_couch_coop(self, map_name: str): app_game_modes.start_couch_play_logic(self, map_name)
     def _on_map_selected_for_host_game(self, map_name: str): app_game_modes.start_host_game_logic(self, map_name)
     
@@ -423,15 +424,15 @@ class MainWindow(QMainWindow):
         num_controllers = len(self._pygame_joysticks)
         for i, btn in enumerate(self._couch_coop_player_select_dialog_buttons_ref):
             players_option = i + 1 
-            if players_option <= 2:
+            if players_option <= 2: # 1 and 2 player options are always enabled
                 btn.setEnabled(True)
-            elif players_option == 3:
-                btn.setEnabled(num_controllers >= 1)
-            elif players_option == 4:
-                btn.setEnabled(num_controllers >= 2)
+            elif players_option == 3: # 3 players
+                btn.setEnabled(num_controllers >= 1) # Needs at least 1 controller (besides keyboard if P1/P2 use it)
+            elif players_option == 4: # 4 players
+                btn.setEnabled(num_controllers >= 2) # Needs at least 2 controllers
         
         self.current_modal_dialog = "couch_coop_player_select"
-        self._couch_coop_player_select_dialog_selected_idx = 1 
+        self._couch_coop_player_select_dialog_selected_idx = 1 # Default to "2 Players" button
         _update_couch_coop_player_select_dialog_focus(self)
         self._couch_coop_player_select_dialog.show()
 
@@ -727,8 +728,26 @@ class MainWindow(QMainWindow):
 
         elif self.current_game_mode == "host_active" and self.app_status.app_running and \
              self.server_state and self.server_state.client_ready:
+             # Server-side game logic is now primarily handled in server_logic.py within the NetworkThread
+             # AppCore (main thread) is responsible for P1 input and rendering.
+             # For host_active, if P1 is locally controlled, their update logic similar to host_waiting.
              if game_is_ready_for_logic and not init_is_in_progress:
-                 pass 
+                # P1 (Host's player) local update
+                p1_host = self.game_elements.get("player1")
+                if p1_host and isinstance(p1_host, Player):
+                    p1_host_actions = self.get_p1_input_snapshot_for_logic(p1_host)
+                    # Pause/Reset handled by server_logic if it uses this snapshot
+                    
+                    # Local update for P1 if server logic doesn't fully simulate it
+                    # Typically, server_logic would simulate all players based on received/local input.
+                    # This section might be redundant if server_logic handles P1's full update.
+                    # However, if server_logic only processes P1's input for network state,
+                    # then P1's local simulation needs to happen here.
+                    # For now, assume server_logic.py in NetworkThread handles P1's game logic.
+                    pass # P1's game logic update is now in server_logic.py
+
+                # Update local enemies, statues, projectiles if server_logic doesn't handle them directly
+                # for this "active" game state (often, server_logic would do this)
 
         elif self.current_game_mode == "host_waiting" and self.app_status.app_running and self.server_state:
             if game_is_ready_for_logic and not init_is_in_progress:
@@ -741,14 +760,13 @@ class MainWindow(QMainWindow):
                         info("AppCore (host_waiting): Player 1 initiated game reset.")
                         screen_w = self.game_scene_widget.width() if self.game_scene_widget.width() > 1 else self.width()
                         screen_h = self.game_scene_widget.height() if self.game_scene_widget.height() > 1 else self.height()
-                        # map_name_to_reload is now the folder/stem name
                         map_name_to_reload = self.game_elements.get("map_name", self.game_elements.get("loaded_map_name"))
                         if map_name_to_reload:
                             reset_ok = initialize_game_elements(
                                 current_width=screen_w, current_height=screen_h,
                                 game_elements_ref=self.game_elements, 
                                 for_game_mode=self.current_game_mode, 
-                                map_module_name=map_name_to_reload # Pass folder/stem name
+                                map_module_name=map_name_to_reload
                             )
                             if reset_ok:
                                 info("AppCore (host_waiting): Game reset successful.")
@@ -777,32 +795,69 @@ class MainWindow(QMainWindow):
                                          self.game_elements.get("hazards_list",[]),
                                          self.game_elements.get("enemy_list",[]))
                     
-                    for statue in list(self.game_elements.get("statue_objects", [])):
-                        if hasattr(statue, 'update'): statue.update(dt_sec)
+                    # --- MODIFIED: Statue Physics and Update Logic ---
+                    current_statues_list_appcore = list(self.game_elements.get("statue_objects", []))
+                    platforms_list_appcore = self.game_elements.get("platforms_list", [])
+                    statues_to_keep_appcore = []
+                    statues_killed_this_frame_appcore = []
+
+                    for statue_instance_ac in current_statues_list_appcore:
+                        if hasattr(statue_instance_ac, 'alive') and statue_instance_ac.alive():
+                            if hasattr(statue_instance_ac, 'apply_physics_step') and not statue_instance_ac.is_smashed:
+                                statue_instance_ac.apply_physics_step(dt_sec, platforms_list_appcore)
+                            
+                            if hasattr(statue_instance_ac, 'update'): # Handles animation
+                                statue_instance_ac.update(dt_sec)
+                            
+                            if statue_instance_ac.alive(): # Re-check after update
+                                statues_to_keep_appcore.append(statue_instance_ac)
+                            else: # Statue called kill() this frame
+                                statues_killed_this_frame_appcore.append(statue_instance_ac)
+                                debug(f"AppCore (host_waiting): Statue {statue_instance_ac.statue_id} no longer alive.")
+                        # else: statue was already not alive
+
+                    self.game_elements["statue_objects"] = statues_to_keep_appcore
+                    
+                    if statues_killed_this_frame_appcore:
+                        current_platforms = self.game_elements.get("platforms_list", [])
+                        # Remove killed statues from platforms list if they were in it
+                        new_platforms_list_ac = [
+                            p for p in current_platforms 
+                            if not (isinstance(p, Statue) and p in statues_killed_this_frame_appcore)
+                        ]
+                        if len(new_platforms_list_ac) != len(current_platforms):
+                            self.game_elements["platforms_list"] = new_platforms_list_ac
+                            debug(f"AppCore (host_waiting): Updated platforms_list after statue removal.")
+                    # --- END MODIFIED Statue Logic ---
                     
                     projectiles_current_list = self.game_elements.get("projectiles_list", [])
                     for proj_obj in list(projectiles_current_list):
                         if hasattr(proj_obj, 'update'):
                             proj_targets = [e for e in self.game_elements.get("enemy_list",[]) if hasattr(e, 'alive') and e.alive()]
+                            # Include non-smashed statues as projectile targets
                             proj_targets.extend([s for s in self.game_elements.get("statue_objects", []) if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
                             if p1 and p1.alive(): proj_targets.insert(0,p1)
                             proj_obj.update(dt_sec, self.game_elements.get("platforms_list",[]), proj_targets)
                         if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
                             projectiles_list_ref = self.game_elements.get("projectiles_list"); 
-                            all_renderables_ref = self.game_elements.get("all_renderable_objects") 
                             if proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj) 
 
                     current_chest_server = self.game_elements.get("current_chest")
                     if current_chest_server and hasattr(current_chest_server, 'update'):
                         if hasattr(current_chest_server, 'apply_physics_step'):
                             current_chest_server.apply_physics_step(dt_sec)
+                            # Simplified platform collision for chest (as in server_logic)
                             current_chest_on_ground_server = False
                             for plat_chest in self.game_elements.get("platforms_list", []):
+                                if isinstance(plat_chest, Statue) and plat_chest.is_smashed: continue # Ignore smashed statues
                                 if hasattr(plat_chest, 'rect') and current_chest_server.rect.intersects(plat_chest.rect):
+                                     # Simple landing logic
+                                     scaled_vel_y_chest = current_chest_server.vel_y * dt_sec * C.FPS
+                                     previous_chest_bottom_y_estimate = current_chest_server.rect.bottom() - scaled_vel_y_chest
                                      if current_chest_server.vel_y >=0 and current_chest_server.rect.bottom() > plat_chest.rect.top() and \
-                                        (current_chest_server.rect.bottom() - current_chest_server.vel_y * dt_sec * C.FPS) <= plat_chest.rect.top() +1:
+                                        previous_chest_bottom_y_estimate <= plat_chest.rect.top() + 1:
                                          current_chest_server.rect.moveBottom(plat_chest.rect.top())
-                                         current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
+                                         if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
                                          current_chest_server.vel_y = 0.0
                                          current_chest_on_ground_server = True; break
                             current_chest_server.on_ground = current_chest_on_ground_server
@@ -816,6 +871,8 @@ class MainWindow(QMainWindow):
 
         elif self.current_game_mode == "join_active" and self.app_status.app_running and \
              self.client_state and self.client_state.map_download_status == "present":
+            # Client-side logic (rendering and input sending) is handled by client_logic.py
+            # AppCore only needs to ensure the game scene widget updates if it's visible.
             pass 
 
         if self.current_view_name == "game_scene":

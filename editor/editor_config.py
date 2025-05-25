@@ -3,15 +3,16 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.1 (Full Editable Properties and Path Fix Review)
+## version 2.2.2 (Selection Tool and Wall Variants)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
-- Added editable properties for P2, P3, P4, all listed enemies, walls, and stones.
-- Ensuring custom image path export is relative to the map's "Custom" subfolder.
+- Added "Select Tool".
+- Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
+- Added WALL_VARIANTS_CYCLE list.
 """
 import sys
 import os
 import traceback
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any, List
 
 from PySide6.QtGui import QColor # For MINIMAP_CATEGORY_COLORS
 
@@ -53,6 +54,7 @@ ASSET_PALETTE_PREFERRED_WIDTH = 300
 
 # --- Grid and Tile Size ---
 BASE_GRID_SIZE = getattr(C, 'TILE_SIZE', 40)
+TS = BASE_GRID_SIZE # Shortcut for TILE_SIZE
 
 # --- Camera Control & Zoom ---
 KEY_PAN_SPEED_UNITS_PER_SECOND = 800
@@ -118,10 +120,16 @@ TRIGGER_SQUARE_ASSET_KEY = "trigger_square"
 TRIGGER_SQUARE_GAME_TYPE_ID = "trigger_square_link"
 CUSTOM_ASSET_PALETTE_PREFIX = "custom:"
 
-
-TS = BASE_GRID_SIZE
+GRAY_COLOR = getattr(C, 'GRAY', (128,128,128))
+DARK_GREEN_COLOR = getattr(C, 'DARK_GREEN', (0,100,0))
 
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
+    # Tools
+    "tool_select": {"icon_type": "select_cursor_icon", "base_color_tuple": getattr(C, 'BLUE', (0,0,255)), "game_type_id": "tool_select", "category": "tool", "name_in_palette": "Select Tool"},
+    "tool_eraser": {"icon_type": "eraser", "base_color_tuple": getattr(C, 'RED', (255,0,0)), "game_type_id": "tool_eraser", "category": "tool", "name_in_palette": "Eraser Tool"},
+    "platform_wall_gray_2x2_placer": {"icon_type": "2x2_placer", "base_color_tuple": GRAY_COLOR, "places_asset_key": "platform_wall_gray", "game_type_id": "tool_wall_2x2_placer", "category": "tool", "name_in_palette": "2x2 Wall Placer"},
+    "tool_color_picker": {"icon_type": "color_swatch", "base_color_tuple": getattr(C, 'BLUE', (0,0,255)), "game_type_id": "tool_tile_color_picker", "category": "tool", "name_in_palette": "Color Picker Tool"},
+
     # Spawns
     "player1_spawn": {"source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn", "category": "spawn", "name_in_palette": "Player 1 Spawn"},
     "player2_spawn": {"source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn", "category": "spawn", "name_in_palette": "Player 2 Spawn"},
@@ -147,11 +155,18 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "object_stone_crouch": {"source_file": "characters/Stone/__StoneCrouch.png", "game_type_id": "object_stone_crouch", "category": "object", "name_in_palette": "Stone Crouch"},
 
     # Tiles
-    "platform_wall_gray": {"surface_params": (TS, TS, getattr(C, 'GRAY', (128,128,128))), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
-    "platform_ledge_green_full": {"surface_params": (TS, TS, getattr(C, 'DARK_GREEN', (0,100,0))), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
-    "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, getattr(C, 'DARK_GREEN', (0,100,0))), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
-    # Assuming platform_ledge_green_one_third was a typo and meant one_fourth or full
-    # If "platform_ledge_green_one_third" is a distinct asset, add its definition here and in EDITABLE_ASSET_VARIABLES if needed.
+    "platform_wall_gray": {"surface_params": (TS, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
+    "platform_wall_gray_1_3_top": {"surface_params": (TS, TS // 3, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_top", "category": "tile", "name_in_palette": "Wall 1/3 Top"},
+    "platform_wall_gray_1_3_right": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_right", "category": "tile", "name_in_palette": "Wall 1/3 Right"},
+    "platform_wall_gray_1_3_bottom": {"surface_params": (TS, TS // 3, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_bottom", "category": "tile", "name_in_palette": "Wall 1/3 Bottom"},
+    "platform_wall_gray_1_3_left": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_left", "category": "tile", "name_in_palette": "Wall 1/3 Left"},
+    "platform_wall_gray_1_4_top_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_left", "category": "tile", "name_in_palette": "Wall 1/4 TL"},
+    "platform_wall_gray_1_4_top_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_right", "category": "tile", "name_in_palette": "Wall 1/4 TR"},
+    "platform_wall_gray_1_4_bottom_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_right", "category": "tile", "name_in_palette": "Wall 1/4 BR"},
+    "platform_wall_gray_1_4_bottom_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_left", "category": "tile", "name_in_palette": "Wall 1/4 BL"},
+
+    "platform_ledge_green_full": {"surface_params": (TS, TS, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
+    "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
 
     # Hazards
     "hazard_lava_tile": {"source_file": "characters/assets/lava.gif", "game_type_id": "hazard_lava", "category": "hazard", "name_in_palette": "Lava Tile"},
@@ -167,14 +182,24 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
         "category": "logic",
         "name_in_palette": "Trigger Square"
     },
-
-    # Tools
-    "tool_eraser": {"icon_type": "eraser", "base_color_tuple": getattr(C, 'RED', (255,0,0)), "game_type_id": "tool_eraser", "category": "tool", "name_in_palette": "Eraser Tool"},
-    "platform_wall_gray_2x2_placer": {"icon_type": "2x2_placer", "base_color_tuple": getattr(C, 'GRAY', (128,128,128)), "places_asset_key": "platform_wall_gray", "game_type_id": "tool_wall_2x2_placer", "category": "tool", "name_in_palette": "2x2 Wall Placer"},
-    "tool_color_picker": {"icon_type": "color_swatch", "base_color_tuple": getattr(C, 'BLUE', (0,0,255)), "game_type_id": "tool_tile_color_picker", "category": "tool", "name_in_palette": "Color Picker Tool"},
 }
 
 EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER = ["tool", "tile", "background_tile", "hazard", "item", "object", "enemy", "spawn", "logic", "Custom", "unknown"]
+
+# --- Wall Variant Cycling ---
+WALL_BASE_KEY = "platform_wall_gray"
+WALL_VARIANTS_CYCLE: List[str] = [
+    "platform_wall_gray",
+    "platform_wall_gray_1_3_top",
+    "platform_wall_gray_1_3_right",
+    "platform_wall_gray_1_3_bottom",
+    "platform_wall_gray_1_3_left",
+    "platform_wall_gray_1_4_top_left",
+    "platform_wall_gray_1_4_top_right",
+    "platform_wall_gray_1_4_bottom_right",
+    "platform_wall_gray_1_4_bottom_left",
+]
+
 
 _PLAYER_DEFAULT_PROPS_TEMPLATE = {
     "max_health": {"type": "int", "default": getattr(C, 'PLAYER_MAX_HEALTH', 100), "min": 1, "max": 999, "label": "Max Health"},
@@ -188,6 +213,18 @@ _ENEMY_DEFAULT_PROPS_TEMPLATE = {
     "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"},
     "patrol_behavior": {"type": "str", "default": "turn_on_edge", "label": "Patrol Behavior", "options": ["turn_on_edge", "turn_at_range_limit", "stationary", "follow_player"]}
 }
+_BASE_WALL_PROPERTIES = {
+    "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
+    "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health (if Dest.)"},
+    "material_type": {"type": "str", "default": "stone", "label": "Material", "options": ["stone", "wood", "metal", "ice"]}
+    # Add corner rounding properties here when ready
+    # "corner_radius": {"type": "int", "default": 0, "min": 0, "max": TS // 2, "label": "Corner Radius"},
+    # "round_top_left": {"type": "bool", "default": True, "label": "Round Top-Left"},
+    # "round_top_right": {"type": "bool", "default": True, "label": "Round Top-Right"},
+    # "round_bottom_left": {"type": "bool", "default": True, "label": "Round Bottom-Left"},
+    # "round_bottom_right": {"type": "bool", "default": True, "label": "Round Bottom-Right"},
+}
+
 
 EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "player1_spawn": _PLAYER_DEFAULT_PROPS_TEMPLATE.copy(),
@@ -213,11 +250,16 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     },
 
     # Tiles
-    "platform_wall_gray": {
-        "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health (if Dest.)"},
-        "material_type": {"type": "str", "default": "stone", "label": "Material", "options": ["stone", "wood", "metal", "ice"]}
-    },
+    "platform_wall_gray": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_3_top": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_3_right": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_3_bottom": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_3_left": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_4_top_left": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_4_top_right": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_4_bottom_right": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_4_bottom_left": _BASE_WALL_PROPERTIES.copy(),
+
     "platform_ledge_green": { # game_type_id for platform_ledge_green_full
         "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
         "health": {"type": "int", "default": 80, "min": 0, "max": 400, "label": "Health (if Dest.)"},

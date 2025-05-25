@@ -4098,30 +4098,6 @@
             "properties": {}
         },
         {
-            "asset_editor_key": "custom_image_object",
-            "world_x": 80,
-            "world_y": -40,
-            "game_type_id": "custom_image_object",
-            "layer_order": -4,
-            "properties": {
-                "is_background": true,
-                "is_obstacle": false,
-                "destructible": false,
-                "health": 100
-            },
-            "source_file_path": "Custom/R-C.jpg",
-            "original_width": 1920,
-            "original_height": 1080,
-            "current_width": 1597,
-            "current_height": 995,
-            "crop_rect": {
-                "x": 0,
-                "y": 0,
-                "width": 1712,
-                "height": 1067
-            }
-        },
-        {
             "asset_editor_key": "platform_wall_gray",
             "world_x": 560,
             "world_y": 600,
@@ -4276,10 +4252,91 @@
                 "health": 20,
                 "is_breakable_by_heavy": true
             }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 560,
+            "world_y": 480,
+            "game_type_id": "object_stone_idle",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 150,
+                "can_be_pushed": true,
+                "push_resistance": 1.0,
+                "drops_item_on_destroy": ""
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 600,
+            "world_y": 480,
+            "game_type_id": "object_stone_idle",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 150,
+                "can_be_pushed": true,
+                "push_resistance": 1.0,
+                "drops_item_on_destroy": ""
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 640,
+            "world_y": 480,
+            "game_type_id": "object_stone_idle",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 150,
+                "can_be_pushed": true,
+                "push_resistance": 1.0,
+                "drops_item_on_destroy": ""
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_crouch",
+            "world_x": 840,
+            "world_y": 480,
+            "game_type_id": "object_stone_crouch",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 200,
+                "can_be_pushed": true,
+                "is_heavy": true
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_crouch",
+            "world_x": 880,
+            "world_y": 480,
+            "game_type_id": "object_stone_crouch",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 200,
+                "can_be_pushed": true,
+                "is_heavy": true
+            }
+        },
+        {
+            "asset_editor_key": "object_stone_crouch",
+            "world_x": 1000,
+            "world_y": 480,
+            "game_type_id": "object_stone_crouch",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 200,
+                "can_be_pushed": true,
+                "is_heavy": true
+            }
         }
     ],
-    "camera_offset_x": 265.0,
-    "camera_offset_y": -27.0,
+    "camera_offset_x": 213.0,
+    "camera_offset_y": 72.0,
     "zoom_level": 0.8333333333333334,
     "show_grid": true,
     "asset_specific_variables": {}
