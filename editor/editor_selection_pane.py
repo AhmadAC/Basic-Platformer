@@ -222,10 +222,10 @@ class SelectionPaneWidget(QWidget):
         for i, obj_data in enumerate(sorted_objects): # Use sorted_objects
             asset_key_filter = obj_data.get("asset_editor_key")
             
-            # *** MODIFICATION START: Filter out WALL_BASE_KEY from Selection Pane ***
-            if asset_key_filter == ED_CONFIG.WALL_BASE_KEY: # type: ignore
-                continue 
-            # *** MODIFICATION END ***
+            # *** MODIFICATION: Removed filter for ED_CONFIG.WALL_BASE_KEY ***
+            # if asset_key_filter == ED_CONFIG.WALL_BASE_KEY: # type: ignore
+            #     continue 
+            # ***************************************************************
 
             display_name = self._get_display_name(obj_data, i) # i here is just for fallback unknown name
 
@@ -256,7 +256,6 @@ class SelectionPaneWidget(QWidget):
 
             if current_selected_obj_data_ref is obj_data:
                 list_item.setSelected(True)
-                # self.item_list_widget.scrollToItem(list_item, QAbstractItemView.ScrollHint.EnsureVisible)
 
         self.item_list_widget.blockSignals(False)
         if self.item_list_widget.selectedItems(): 

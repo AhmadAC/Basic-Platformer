@@ -1,3 +1,5 @@
+#################### START OF FILE: editor.py ####################
+
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
@@ -304,25 +306,21 @@ class EditorMainWindow(QMainWindow):
                     break
         
         if item_to_select:
-            # Block scene signals to prevent immediate property panel clearing by clearSelection()
-            # before the new selection is processed by MapViewWidget's on_scene_selection_changed.
             self.map_view_widget.map_scene.blockSignals(True)
-            self.map_view_widget.map_scene.clearSelection() # This ensures only one item is selected
+            self.map_view_widget.map_scene.clearSelection() 
             item_to_select.setSelected(True)
             self.map_view_widget.map_scene.blockSignals(False)
             
-            # Explicitly call the map view's handler for selection changes.
-            # This ensures consistent behavior (e.g., properties panel update via map_view's signal)
-            # whether selection comes from map click or pane click.
             self.map_view_widget.on_scene_selection_changed() 
 
-            item_to_select.setVisible(not obj_data_ref.get("editor_hidden", False)) # Ensure visible if selected
+            item_to_select.setVisible(not obj_data_ref.get("editor_hidden", False)) 
             self.map_view_widget.ensureVisible(item_to_select, 50, 50)
+            self.map_view_widget.setFocus(Qt.FocusReason.OtherFocusReason) # Ensure map view gets focus
             logger.info(f"MainWin: Selected item '{type(item_to_select).__name__}' from pane. Data ID: {id(obj_data_ref)}")
         else:
             logger.warning(f"MainWin: Could not find QGraphicsItem for object data ID {id(obj_data_ref)} to select from pane (even after content check).")
-            self.map_view_widget.map_scene.clearSelection() # Ensure map selection is cleared if no item found
-            self.properties_editor_widget.clear_display() # Clear properties if item not found
+            self.map_view_widget.map_scene.clearSelection() 
+            self.properties_editor_widget.clear_display() 
 
 
     @Slot(object, bool)
@@ -332,7 +330,7 @@ class EditorMainWindow(QMainWindow):
             editor_history.push_undo_state(self.editor_state) # type: ignore
             obj_data_ref["editor_hidden"] = not new_visible_state 
             self.map_view_widget.update_specific_object_visuals(obj_data_ref)
-            self.handle_map_content_changed() # This also updates selection pane and minimap
+            self.handle_map_content_changed() 
 
     @Slot(object, bool)
     def _toggle_item_lock(self, obj_data_ref: Dict[str, Any], new_lock_state: bool):
@@ -615,7 +613,7 @@ class EditorMainWindow(QMainWindow):
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_widget') and self.minimap_widget: # type: ignore
             if logger: logger.debug("Notifying minimap to redraw content due to map change.")
             self.minimap_widget.schedule_map_content_redraw()
-        self.selection_pane_widget.populate_items() # Ensure selection pane updates on any content change
+        self.selection_pane_widget.populate_items() 
         if logger: logger.debug(f"handle_map_content_changed done. Unsaved: {self.editor_state.unsaved_changes}")
 
     def update_window_title(self):
@@ -960,8 +958,8 @@ class EditorMainWindow(QMainWindow):
                     "layer_order": 0,
                     "rotation": 0, 
                     "is_flipped_h": False, 
-                    "editor_hidden": False, # New field
-                    "editor_locked": False, # New field
+                    "editor_hidden": False, 
+                    "editor_locked": False, 
                     "properties": ED_CONFIG.get_default_properties_for_asset(ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY) # type: ignore
                 }
                 editor_history.push_undo_state(self.editor_state) # type: ignore
@@ -1088,7 +1086,6 @@ class EditorMainWindow(QMainWindow):
             scene = self.map_view_widget.scene()
             if not scene: QMessageBox.critical(self, "Export Error", "Cannot access map scene."); return
             
-            # Create a temporary scene with only visible items for export
             temp_scene_for_export = QGraphicsScene()
             temp_scene_for_export.setBackgroundBrush(QColor(*self.editor_state.background_color))
             
@@ -1098,19 +1095,12 @@ class EditorMainWindow(QMainWindow):
                     item_id = id(obj_data)
                     original_item = self.map_view_widget._map_object_items.get(item_id)
                     if original_item:
-                        # Recreate a similar item for the temp scene to ensure proper rendering
-                        # This is a simplified way; a more robust way would be to clone QGraphicsItems
-                        # or ensure the original items can be rendered correctly off-screen.
-                        # For now, let's assume original_item properties are enough for bounding rect.
                         visible_objects_for_export.append(original_item)
-                        # temp_scene_for_export.addItem(original_item) # This might not work as item can only be in one scene.
-                        # Instead, we'll calculate bounds from original items and render from main scene.
 
             if not visible_objects_for_export:
                  QMessageBox.information(self, "Export Error", "No visible map content to export.")
                  return
 
-            # Calculate bounding rect based on visible items in the original scene
             target_rect = QRectF()
             for item in visible_objects_for_export:
                 target_rect = target_rect.united(item.sceneBoundingRect())
@@ -1123,19 +1113,16 @@ class EditorMainWindow(QMainWindow):
             if img_w <= 0 or img_h <= 0: QMessageBox.critical(self, "Export Error", f"Invalid image dims: {img_w}x{img_h}"); return
             
             image = QImage(img_w, img_h, QImage.Format.Format_ARGB32_Premultiplied)
-            image.fill(Qt.GlobalColor.transparent) # Default to transparent background
+            image.fill(Qt.GlobalColor.transparent) 
             
             painter = QPainter(image)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
             
             bg_color = QColor(*self.editor_state.background_color)
-            if bg_color.alpha() == 255: # Only fill if fully opaque, otherwise rely on item rendering
+            if bg_color.alpha() == 255: 
                 painter.fillRect(image.rect(), bg_color)
             
-            # Render from the original scene, but only the visible items' area
-            # We need to filter what gets rendered.
-            # Temporarily hide non-export items in the main scene for rendering
             hidden_items_backup = []
             for item_id, item_view in self.map_view_widget._map_object_items.items():
                 obj_data_item = getattr(item_view, 'map_object_data_ref', None)
@@ -1146,7 +1133,6 @@ class EditorMainWindow(QMainWindow):
             
             scene.render(painter, QRectF(image.rect()), target_rect)
             
-            # Restore visibility of items
             for item_view_bkp in hidden_items_backup:
                 item_view_bkp.setVisible(True)
 
@@ -1160,7 +1146,6 @@ class EditorMainWindow(QMainWindow):
             if logger: logger.error(f"Error exporting map as image: {e}", exc_info=True)
             QMessageBox.critical(self, "Export Error", f"Unexpected error during image export:\n{e}")
         finally:
-            # Ensure visibility is restored even if an error occurs
             if 'hidden_items_backup' in locals():
                 for item_view_bkp_finally in hidden_items_backup: # type: ignore
                     item_view_bkp_finally.setVisible(True)
@@ -1373,3 +1358,5 @@ if __name__ == "__main__":
     return_code_standalone = editor_main(embed_mode=False)
     print(f"--- editor.py standalone execution finished (exit code: {return_code_standalone}) ---")
     sys.exit(return_code_standalone)
+
+#################### END OF FILE: editor.py ####################

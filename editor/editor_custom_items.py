@@ -12,13 +12,13 @@ import os
 import logging
 from typing import Optional, List, Dict, Any
 
-from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsItem, QApplication, QStyleOptionGraphicsItem, QWidget, QStyle #QGraphicsSceneHoverEvent removed as it's part of QWidget
-from PySide6.QtGui import QPixmap, QImage, QPainter, QColor, QPen, QBrush, QCursor, QHoverEvent # QHoverEvent for type hinting
+from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsItem, QApplication, QStyleOptionGraphicsItem, QWidget, QStyle 
+from PySide6.QtGui import QPixmap, QImage, QPainter, QColor, QPen, QBrush, QCursor, QHoverEvent, QPainterPath # Added QPainterPath
 from PySide6.QtCore import Qt, QRectF, QPointF, QSize, QRect
 
 from . import editor_config as ED_CONFIG
-from . import editor_map_utils # For paths to custom assets
-# from .editor_state import EditorState # Might need for context if not passed directly
+from . import editor_map_utils 
+# from .editor_state import EditorState 
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ HANDLE_TOP_LEFT = 0; HANDLE_TOP_MIDDLE = 1; HANDLE_TOP_RIGHT = 2
 HANDLE_MIDDLE_LEFT = 3; HANDLE_MIDDLE_RIGHT = 4
 HANDLE_BOTTOM_LEFT = 5; HANDLE_BOTTOM_MIDDLE = 6; HANDLE_BOTTOM_RIGHT = 7
 HANDLE_SIZE = 8.0 # Pixels
-ALL_HANDLES_COUNT = 8 # Using 8 standard handles for both resize and crop interaction
+ALL_HANDLES_COUNT = 8 
 
 
 class BaseResizableMapItem(QGraphicsPixmapItem):
@@ -40,7 +40,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         self.map_object_data_ref = map_object_data_ref
         
         self.display_aspect_ratio: Optional[float] = None
-        self._update_display_aspect_ratio() # Calculate based on current crop/original
+        self._update_display_aspect_ratio() 
 
         self.setPos(QPointF(float(self.map_object_data_ref.get("world_x", 0)),
                             float(self.map_object_data_ref.get("world_y", 0))))
@@ -58,9 +58,9 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
 
         self.interaction_handles: List[QGraphicsRectItem] = []
-        self.current_interaction_mode: str = "resize" # "resize" or "crop" (for CustomImageMapItem)
+        self.current_interaction_mode: str = "resize" 
         self._create_interaction_handles()
-        self.show_interaction_handles(False) # Initially hidden
+        self.show_interaction_handles(False) 
 
     def _update_display_aspect_ratio(self):
         ow_data = self.map_object_data_ref.get("original_width")
@@ -99,11 +99,10 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
         for i in range(ALL_HANDLES_COUNT):
             handle = QGraphicsRectItem(-HANDLE_SIZE / 2, -HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE, self)
-            handle.setZValue(self.zValue() + 10) # Ensure handles are on top
-            handle.setVisible(False) # Initially hidden
-            handle.setData(0, i) # Store handle index (0-7)
+            handle.setZValue(self.zValue() + 10) 
+            handle.setVisible(False) 
+            handle.setData(0, i) 
             self.interaction_handles.append(handle)
-        # Initial styling and positioning will be done by update_handle_positions when shown
 
     def update_handle_positions(self):
         if not self.interaction_handles: return
@@ -121,7 +120,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         self.interaction_handles[HANDLE_BOTTOM_MIDDLE].setPos(br.center().x(), br.bottom())
         self.interaction_handles[HANDLE_BOTTOM_RIGHT].setPos(br.right(), br.bottom())
         
-        self.set_handle_style_and_visibility() # Apply style based on current mode and selection
+        self.set_handle_style_and_visibility() 
 
     def set_handle_style_and_visibility(self):
         is_selected_and_item_visible = self.isSelected() and self.isVisible()
@@ -129,7 +128,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
 
         for i, handle in enumerate(self.interaction_handles):
-            if not is_selected_and_item_visible or is_locked: # Hide handles if item is locked
+            if not is_selected_and_item_visible or is_locked: 
                 handle.setVisible(False)
                 continue
 
@@ -137,7 +136,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
             if self.current_interaction_mode == "crop":
                 handle.setBrush(QColor(50, 50, 50)) 
                 handle.setPen(QPen(QColor(Qt.GlobalColor.white), 1.2))
-            else: # Resize mode
+            else: 
                 handle.setBrush(QColor(Qt.GlobalColor.white))
                 handle.setPen(QPen(QColor(Qt.GlobalColor.black), 1))
 
@@ -147,7 +146,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         if not self.interaction_handles: return
 
         is_locked = self.map_object_data_ref.get("editor_locked", False)
-        effective_show = show and not is_locked # Handles are not shown if locked
+        effective_show = show and not is_locked 
 
         for handle in self.interaction_handles:
             handle.setVisible(effective_show) 
@@ -164,7 +163,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
         is_locked = self.map_object_data_ref.get("editor_locked", False)
         if is_locked and change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
-            return self.pos() # Prevent movement if locked
+            return self.pos() 
 
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged and self.scene() and self.isSelected():
             if self.scene().property("is_actively_transforming_item") is True: 
@@ -192,7 +191,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         
         return super().itemChange(change, value)
 
-    def update_visuals_from_data(self, editor_state: Any): # editor_state: EditorState
+    def update_visuals_from_data(self, editor_state: Any): 
         new_z = self.map_object_data_ref.get("layer_order", 0)
         if self.zValue() != new_z:
             self.setZValue(new_z)
@@ -200,9 +199,9 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         self.setVisible(not self.map_object_data_ref.get("editor_hidden", False))
         is_locked = self.map_object_data_ref.get("editor_locked", False)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not is_locked)
-        if is_locked: # Also ensure handles are hidden if locked
+        if is_locked: 
              self.show_interaction_handles(False)
-        elif self.isSelected(): # If not locked and selected, ensure handles are appropriately shown/styled
+        elif self.isSelected(): 
              self.show_interaction_handles(True)
 
 
@@ -216,8 +215,8 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         self.prepareGeometryChange() 
         self.update_handle_positions() 
 
-    def hoverMoveEvent(self, event: QHoverEvent): # type: ignore Changed to QHoverEvent
-        if self.isSelected() and not self.map_object_data_ref.get("editor_locked", False): # Check lock
+    def hoverMoveEvent(self, event: QHoverEvent): 
+        if self.isSelected() and not self.map_object_data_ref.get("editor_locked", False): 
             for i in range(len(self.interaction_handles)):
                 handle = self.interaction_handles[i]
                 if handle.isVisible() and handle.sceneBoundingRect().contains(event.scenePos()): # type: ignore
@@ -230,7 +229,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         QApplication.restoreOverrideCursor()
         super().hoverMoveEvent(event)
 
-    def hoverLeaveEvent(self, event: QHoverEvent): # type: ignore Changed to QHoverEvent
+    def hoverLeaveEvent(self, event: QHoverEvent): 
         QApplication.restoreOverrideCursor()
         super().hoverLeaveEvent(event)
 
@@ -254,7 +253,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
 
 class CustomImageMapItem(BaseResizableMapItem):
-    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: Any, parent: Optional[QGraphicsItem] = None): # editor_state: EditorState
+    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: Any, parent: Optional[QGraphicsItem] = None): 
         self.editor_state_ref = editor_state
         initial_pixmap = self._load_pixmap_from_data(map_object_data_ref, editor_state)
         super().__init__(map_object_data_ref, initial_pixmap, parent)
@@ -326,7 +325,7 @@ class CustomImageMapItem(BaseResizableMapItem):
             pixmap.fill(QColor(255, 255, 0, 120))
         return pixmap
 
-    def update_visuals_from_data(self, editor_state: Any): # editor_state: EditorState
+    def update_visuals_from_data(self, editor_state: Any): 
         new_pixmap = self._load_pixmap_from_data(self.map_object_data_ref, editor_state)
         
         current_pixmap_ref = self.pixmap()
@@ -337,11 +336,11 @@ class CustomImageMapItem(BaseResizableMapItem):
         if pixmap_changed:
             self.setPixmap(new_pixmap)
         
-        super().update_visuals_from_data(editor_state) # Handles Z, pos, aspect ratio, and calls prepareGeometryChange & update_handle_positions
+        super().update_visuals_from_data(editor_state) 
 
 
 class TriggerSquareMapItem(BaseResizableMapItem):
-    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: Any, parent: Optional[QGraphicsItem] = None): # editor_state: EditorState
+    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: Any, parent: Optional[QGraphicsItem] = None): 
         current_w = map_object_data_ref.get("current_width", ED_CONFIG.BASE_GRID_SIZE * 2)
         current_h = map_object_data_ref.get("current_height", ED_CONFIG.BASE_GRID_SIZE * 2)
         display_w = int(max(1, current_w))
@@ -353,13 +352,18 @@ class TriggerSquareMapItem(BaseResizableMapItem):
         self.editor_state_ref = editor_state
         self.map_object_data_ref["current_width"] = current_w
         self.map_object_data_ref["current_height"] = current_h
-        self.update_visuals_from_data(editor_state) # Ensures base class setup
+        self.update_visuals_from_data(editor_state) 
 
 
     def boundingRect(self) -> QRectF:
         w = self.map_object_data_ref.get("current_width", 0.0)
         h = self.map_object_data_ref.get("current_height", 0.0)
         return QRectF(0, 0, float(w), float(h))
+
+    def shape(self) -> QPainterPath: # **** ADDED THIS METHOD ****
+        path = QPainterPath()
+        path.addRect(self.boundingRect())
+        return path
 
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
         props = self.map_object_data_ref.get("properties", {})
@@ -368,7 +372,7 @@ class TriggerSquareMapItem(BaseResizableMapItem):
         is_editor_preview = False
         if self.scene() and self.scene().parent() and hasattr(self.scene().parent(), 'editor_state'):
             parent_widget = self.scene().parent()
-            if hasattr(parent_widget, 'editor_state'): # Check specific attribute
+            if hasattr(parent_widget, 'editor_state'): 
                  is_editor_preview = parent_widget.editor_state.is_game_preview_mode # type: ignore
 
         if not props.get("visible", True) and is_editor_preview:
@@ -416,7 +420,7 @@ class TriggerSquareMapItem(BaseResizableMapItem):
             painter.drawRect(rect)
 
 
-    def update_visuals_from_data(self, editor_state: Any): # editor_state: EditorState
+    def update_visuals_from_data(self, editor_state: Any): 
         current_w = self.map_object_data_ref.get("current_width", ED_CONFIG.BASE_GRID_SIZE * 2)
         current_h = self.map_object_data_ref.get("current_height", ED_CONFIG.BASE_GRID_SIZE * 2)
         display_w = int(max(1, current_w))
@@ -428,13 +432,12 @@ class TriggerSquareMapItem(BaseResizableMapItem):
             self.setPixmap(new_pixmap)
         
         super().update_visuals_from_data(editor_state)
-        self.update() # Schedule a repaint for custom painting changes
+        self.update() 
 
-    def set_interaction_mode(self, mode: str): # Override to ensure TriggerSquare is always "resize"
+    def set_interaction_mode(self, mode: str): 
         if mode == "resize":
             super().set_interaction_mode(mode)
         else:
-            # logger.debug(f"TriggerSquareMapItem does not support '{mode}' mode. Forcing 'resize'.")
             if self.current_interaction_mode != "resize":
                 super().set_interaction_mode("resize")
 

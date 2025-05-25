@@ -386,7 +386,7 @@ class MapViewWidget(QGraphicsView):
         found_item_to_select: Optional[QGraphicsItem] = None
         for item in items_at_cursor:
             if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)):
-                if not item.map_object_data_ref.get("editor_locked", False): # Check if not locked
+                if not item.map_object_data_ref.get("editor_locked", False): 
                     found_item_to_select = item
                     break
 
@@ -501,7 +501,7 @@ class MapViewWidget(QGraphicsView):
                     self.map_scene.addItem(map_scene_item)
                     self._map_object_items[item_data_id] = map_scene_item
             
-            if map_scene_item: # Ensure visibility after creation/update
+            if map_scene_item: 
                 map_scene_item.setVisible(not obj_data.get("editor_hidden", False))
 
 
@@ -594,6 +594,15 @@ class MapViewWidget(QGraphicsView):
                 event.accept()
                 return
         
+        if key == Qt.Key.Key_A and modifiers == Qt.KeyboardModifier.ControlModifier:
+            self.map_scene.clearSelection()
+            for item_id, map_item in self._map_object_items.items():
+                if map_item.isVisible() and not map_item.map_object_data_ref.get("editor_locked", False): # type: ignore
+                    map_item.setSelected(True)
+            self.show_status_message("Selected all visible, unlocked objects.")
+            event.accept()
+            return
+
         if key == Qt.Key.Key_Delete and not (modifiers & (Qt.KeyboardModifier.ShiftModifier | Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier)):
             if self.map_scene.selectedItems():
                 self.delete_selected_map_objects()
@@ -697,8 +706,8 @@ class MapViewWidget(QGraphicsView):
                isinstance(item_candidate.parentItem(), BaseResizableMapItem):
                 
                 parent_map_item = cast(BaseResizableMapItem, item_candidate.parentItem())
-                if parent_map_item.map_object_data_ref.get("editor_locked", False): # Check if locked
-                    event.accept() # Consume event for locked item's handles
+                if parent_map_item.map_object_data_ref.get("editor_locked", False): 
+                    event.accept() 
                     return
 
                 if parent_map_item.isSelected() and item_candidate in parent_map_item.interaction_handles:
@@ -742,29 +751,29 @@ class MapViewWidget(QGraphicsView):
             if self.editor_state.current_tool_mode == "select":
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag) 
                 if item_under_mouse and hasattr(item_under_mouse, 'map_object_data_ref') and item_under_mouse.map_object_data_ref.get("editor_locked", False): # type: ignore
-                    # If locked, select it but don't allow drag mode to start from it
                     if not item_under_mouse.isSelected():
                         self.map_scene.clearSelection()
                         item_under_mouse.setSelected(True)
-                    event.accept()
+                    event.accept() # Accept the event to prevent rubber band drag from starting on a locked item
                     return
-                elif item_under_mouse: 
-                    super().mousePressEvent(event)
+                # If not a locked item or no item, proceed with super call for selection/rubber band
+                super().mousePressEvent(event)
             elif self.editor_state.current_tool_mode == "place":
                 if self.editor_state.palette_current_asset_key:
                     self._perform_place_action(grid_tx, grid_ty, is_first_action=True)
             elif self.editor_state.current_tool_mode == "color_pick":
                 if self.editor_state.current_tile_paint_color:
                      self._perform_color_tile_action(grid_tx, grid_ty, is_first_action=True)
+            # If item is under mouse and not select tool, it might be draggable.
             elif item_under_mouse and isinstance(item_under_mouse, (StandardMapObjectItem, BaseResizableMapItem)):
                 if hasattr(item_under_mouse, 'map_object_data_ref') and not item_under_mouse.map_object_data_ref.get("editor_locked", False): # type: ignore
                     self._is_dragging_map_object = True 
                     self._drag_start_data_coords = (item_under_mouse.map_object_data_ref['world_x'], item_under_mouse.map_object_data_ref['world_y']) # type: ignore
                     super().mousePressEvent(event) 
-                else: # Item is locked or no data ref
+                else: 
                     event.accept() 
                     return
-            else: 
+            else: # No specific tool action, allow rubber band if select tool was implied or no item under mouse
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
                 super().mousePressEvent(event)
         
@@ -776,7 +785,6 @@ class MapViewWidget(QGraphicsView):
                 if data_ref:
                     self.context_menu_requested_for_item.emit(data_ref, event.globalPosition())
                     event.accept()
-            # No super call if right-click is for tool or item context, to avoid default scene menu
 
         elif event.button() == Qt.MouseButton.MiddleButton:
             self.middle_mouse_panning = True; self.last_pan_point = event.globalPosition();
@@ -1077,8 +1085,8 @@ class MapViewWidget(QGraphicsView):
             "properties": ED_CONFIG.get_default_properties_for_asset(game_id), # type: ignore
             "is_flipped_h": is_flipped_h,
             "rotation": rotation,
-            "editor_hidden": False, # Default new objects to visible
-            "editor_locked": False  # Default new objects to unlocked
+            "editor_hidden": False, 
+            "editor_locked": False  
         }
 
         if is_custom_image_type:
