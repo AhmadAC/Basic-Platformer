@@ -3448,7 +3448,7 @@
         {
             "asset_editor_key": "trigger_square",
             "world_x": 600,
-            "world_y": 640,
+            "world_y": 920,
             "game_type_id": "trigger_square_link",
             "layer_order": 0,
             "properties": {
@@ -3460,7 +3460,7 @@
                     100
                 ],
                 "image_in_square": "",
-                "linked_map_name": "",
+                "linked_map_name": "three",
                 "trigger_event_type": "player_enter",
                 "one_time_trigger": true,
                 "activation_id": ""
@@ -3473,8 +3473,8 @@
             "current_height": 80.0
         }
     ],
-    "camera_offset_x": -169.0,
-    "camera_offset_y": -9.0,
+    "camera_offset_x": 178.0,
+    "camera_offset_y": 428.0,
     "zoom_level": 1.0,
     "show_grid": true,
     "asset_specific_variables": {}

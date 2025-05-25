@@ -17,9 +17,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon, QPalette, QColor, QPixmap, QPainter, QImage, QMouseEvent
 from PySide6.QtCore import Qt, Signal, Slot, QSize, QPoint
 
-from .. import editor_config as ED_CONFIG
+# Corrected relative imports for Option 1
+from . import editor_config as ED_CONFIG
 from .editor_state import EditorState
-from .. import editor_map_utils 
+from . import editor_map_utils 
 from .editor_assets import get_asset_pixmap 
 from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTION_UI_RIGHT,
                              ACTION_UI_ACCEPT, ACTION_UI_CANCEL, ACTION_UI_TAB_NEXT, ACTION_UI_TAB_PREV)
