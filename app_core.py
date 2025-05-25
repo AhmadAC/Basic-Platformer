@@ -6,9 +6,9 @@ Handles window creation, UI views, game loop, input management,
 and game mode orchestration.
 Map loading now uses map_name_folder/map_name_file.py structure.
 MODIFIED: Statue physics and lifecycle management in game loop.
-MODIFIED: Chest insta-kill logic for P1 in host_waiting mode.
+MODIFIED: Chest insta-kill logic for P1 in host_waiting mode. (Updated to remove velocity check)
 """
-# version 2.1.4 (Chest Insta-Kill in host_waiting)
+# version 2.1.5 (Chest Insta-Kill in host_waiting - velocity check removed for insta-kill)
 
 import sys
 import os
@@ -433,7 +433,7 @@ class MainWindow(QMainWindow):
                 btn.setEnabled(num_controllers >= 2)
 
         self.current_modal_dialog = "couch_coop_player_select"
-        self._couch_coop_player_select_dialog_selected_idx = 1 # Default to "2 Players" button
+        self._couch_coop_player_select_dialog_selected_idx = 1 # Default to "2 Players" button (index 1)
         _update_couch_coop_player_select_dialog_focus(self)
         self._couch_coop_player_select_dialog.show()
 
@@ -822,10 +822,10 @@ class MainWindow(QMainWindow):
                             projectiles_list_ref = self.game_elements.get("projectiles_list");
                             if proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj)
                     
-                    # --- CHEST LOGIC FOR host_waiting (MODIFIED) ---
+                    # --- CHEST LOGIC FOR host_waiting (MODIFIED - Velocity check for insta-kill removed) ---
                     current_chest_server: Optional[Chest] = self.game_elements.get("current_chest")
                     if current_chest_server and isinstance(current_chest_server, Chest) and hasattr(current_chest_server, 'alive') and current_chest_server.alive():
-                        current_chest_server.apply_physics_step(dt_sec) # Physics updated
+                        current_chest_server.apply_physics_step(dt_sec) 
 
                         chest_landed_on_p1_and_killed = False
                         if not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed' and \
@@ -844,52 +844,32 @@ class MainWindow(QMainWindow):
                                                                 max(current_chest_server.rect.left(), p1.rect.left())
                                 has_sufficient_h_overlap_server = actual_h_overlap_crush_server >= min_h_overlap_crush_server
 
+                                # MODIFIED: Insta-kill if falling and lands on head area with overlap, velocity threshold check removed
                                 if is_chest_falling_meaningfully_server and is_landing_on_head_area_server and has_sufficient_h_overlap_server:
-                                    player_height_for_calc_server = getattr(p1, 'standing_collision_height', float(C.TILE_SIZE) * 1.5)
-                                    if player_height_for_calc_server <= 0: player_height_for_calc_server = 60.0
-                                    required_fall_distance_server = 2.0 * player_height_for_calc_server
+                                    if hasattr(p1, 'insta_kill'):
+                                        info(f"CRUSH AppCore(host_waiting): Chest landed on P1. Conditions met. Insta-killing.")
+                                        p1.insta_kill()
+                                    else:
+                                        warning(f"CRUSH_FAIL AppCore(host_waiting): P1 missing insta_kill(). Overkilling.")
+                                        p1.take_damage(p1.max_health * 10) 
                                     
-                                    try:
-                                        gravity_val_server = float(C.PLAYER_GRAVITY)
-                                        if gravity_val_server <= 0: gravity_val_server = 0.7
-                                        if required_fall_distance_server <=0: required_fall_distance_server = 1.0
-                                        min_vel_y_for_kill_sq_server = 2 * gravity_val_server * required_fall_distance_server
-                                        vel_y_kill_thresh_server = math.sqrt(min_vel_y_for_kill_sq_server) if min_vel_y_for_kill_sq_server > 0 else 0.0
-                                    except ValueError:
-                                        vel_y_kill_thresh_server = 10.0
-                                        error(f"AppCore(host_waiting) Math error calc vel_y_kill_thresh. Grav: {C.PLAYER_GRAVITY}, ReqDist: {required_fall_distance_server}")
-
-                                    has_fallen_with_kill_velocity_server = current_chest_server.vel_y >= vel_y_kill_thresh_server
-                                    
-                                    if has_fallen_with_kill_velocity_server:
-                                        if hasattr(p1, 'insta_kill'):
-                                            info(f"CRUSH AppCore(host_waiting): Chest landed on P1 with kill velocity. Insta-killing.")
-                                            p1.insta_kill()
-                                        else:
-                                            warning(f"CRUSH_FAIL AppCore(host_waiting): P1 missing insta_kill(). Overkilling.")
-                                            p1.take_damage(p1.max_health * 10) # Overkill
-                                        
-                                        current_chest_server.rect.moveBottom(p1.rect.top())
-                                        if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
-                                        current_chest_server.vel_y = 0.0
-                                        current_chest_server.on_ground = True
-                                        chest_landed_on_p1_and_killed = True
-                                        if hasattr(current_chest_server, '_update_rect_from_image_and_pos'):
-                                            current_chest_server._update_rect_from_image_and_pos()
+                                    current_chest_server.rect.moveBottom(p1.rect.top())
+                                    if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
+                                    current_chest_server.vel_y = 0.0
+                                    current_chest_server.on_ground = True
+                                    chest_landed_on_p1_and_killed = True
+                                    if hasattr(current_chest_server, '_update_rect_from_image_and_pos'):
+                                        current_chest_server._update_rect_from_image_and_pos()
                         
-                        current_chest_server.on_ground = False # Reset before platform check
+                        current_chest_server.on_ground = False 
                         if chest_landed_on_p1_and_killed:
-                            current_chest_server.on_ground = True # It landed on player
+                            current_chest_server.on_ground = True 
                         
-                        # Platform collision for chest (if not landed on player)
                         if not chest_landed_on_p1_and_killed and \
                            not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed':
                             for plat_chest in self.game_elements.get("platforms_list", []):
                                 if isinstance(plat_chest, Statue) and plat_chest.is_smashed: continue
                                 if hasattr(plat_chest, 'rect') and current_chest_server.rect.intersects(plat_chest.rect):
-                                     # For vel units/frame: scaled_vel_y_chest = current_chest_server.vel_y
-                                     # For vel units/sec: scaled_vel_y_chest = current_chest_server.vel_y * dt_sec
-                                     # Current usage: vel * dt_sec * C.FPS suggests vel is units/ref_tick
                                      scaled_vel_y_chest = current_chest_server.vel_y * dt_sec * C.FPS
                                      previous_chest_bottom_y_estimate = current_chest_server.rect.bottom() - scaled_vel_y_chest
                                      
@@ -904,10 +884,10 @@ class MainWindow(QMainWindow):
                                              if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
                                              current_chest_server.vel_y = 0.0
                                              current_chest_server.on_ground = True; break
-                            if hasattr(current_chest_server, '_update_rect_from_image_and_pos'): # Sync rect after all potential moves
+                            if hasattr(current_chest_server, '_update_rect_from_image_and_pos'):
                                 current_chest_server._update_rect_from_image_and_pos()
                         
-                        current_chest_server.update(dt_sec) # Animation/state logic
+                        current_chest_server.update(dt_sec)
 
                         if current_chest_server.state == 'closed' and not current_chest_server.is_collected_flag_internal and \
                            p1 and p1.alive() and not p1.is_dead and not getattr(p1, 'is_petrified', False) and \
@@ -919,7 +899,7 @@ class MainWindow(QMainWindow):
 
                     camera = self.game_elements.get("camera")
                     if camera:
-                        p1_for_cam_host_wait = self.game_elements.get("player1") # Re-fetch in case of reset or other changes
+                        p1_for_cam_host_wait = self.game_elements.get("player1")
                         if p1_for_cam_host_wait and p1_for_cam_host_wait.alive():
                             camera.update(p1_for_cam_host_wait)
                         else:

@@ -10,14 +10,15 @@ import os
 from typing import Optional, Dict, Any, List, Tuple
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QMessageBox,
+    QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QCheckBox, QComboBox, QPushButton, QScrollArea,
-    QFormLayout, QSpinBox, QDoubleSpinBox, QColorDialog,
+    QFormLayout, QSpinBox, QDoubleSpinBox, QColorDialog, QMessageBox, # Added QMessageBox
     QGroupBox, QSizePolicy, QFileDialog, QSlider
 )
 from PySide6.QtGui import QIcon, QPalette, QColor, QPixmap, QPainter, QImage
 from PySide6.QtCore import Qt, Signal, Slot, QSize
 
+# Corrected relative imports
 from . import editor_config as ED_CONFIG
 from .editor_state import EditorState
 from . import editor_history
@@ -28,7 +29,7 @@ from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTIO
 logger = logging.getLogger(__name__)
 
 
-class PropertiesEditorDockWidget(QWidget): # Renamed to match typical usage if it's the main widget in a dock
+class PropertiesEditorDockWidget(QWidget):
     properties_changed = Signal(dict) 
     controller_focus_requested_elsewhere = Signal()
     upload_image_for_trigger_requested = Signal(dict) 
@@ -104,6 +105,7 @@ class PropertiesEditorDockWidget(QWidget): # Renamed to match typical usage if i
 
     @Slot(object)
     def display_map_object_properties(self, map_object_data_ref: Optional[Dict[str, Any]]):
+        logger.debug(f"PropertiesEditor: display_map_object_properties called with {type(map_object_data_ref)}")
         self._clear_dynamic_widgets_from_form()
         self.current_object_data_ref = None
         self.current_asset_type_for_defaults = None 
@@ -216,6 +218,7 @@ class PropertiesEditorDockWidget(QWidget): # Renamed to match typical usage if i
 
     @Slot(str)
     def display_asset_properties(self, asset_key_or_custom_id: Optional[str]):
+        logger.debug(f"PropertiesEditor: display_asset_properties called with {asset_key_or_custom_id}")
         self._clear_dynamic_widgets_from_form()
         self.current_object_data_ref = None 
         self.current_asset_type_for_defaults = asset_key_or_custom_id
@@ -396,20 +399,23 @@ class PropertiesEditorDockWidget(QWidget): # Renamed to match typical usage if i
             double_spinner.setDecimals(definition.get("decimals", 2))
             double_spinner.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
         elif prop_type == "str":
-            if var_name == "linked_map_name": # Specific handling for linked_map_name
+            if var_name == "linked_map_name":
                 hbox = QHBoxLayout()
                 line_edit = QLineEdit(str(current_value))
                 line_edit.setPlaceholderText("None (or map folder name)")
                 line_edit.editingFinished.connect(lambda le=line_edit, vn=var_name: self._on_property_value_changed(vn, le.text()))
+                
                 browse_button = QPushButton("...")
                 browse_button.setToolTip("Browse for map folder")
+                browse_button.setFixedWidth(browse_button.fontMetrics().horizontalAdvance(" ... ") + 10) # Adjust width
                 browse_button.clicked.connect(lambda _ch, vn=var_name, le=line_edit: self._browse_for_linked_map(vn, le))
+                
                 hbox.addWidget(line_edit, 1)
                 hbox.addWidget(browse_button)
                 container_widget = QWidget()
                 container_widget.setLayout(hbox)
                 widget = container_widget
-                self.input_widgets[f"{var_name}_lineedit"] = line_edit # Store specifically if needed elsewhere
+                self.input_widgets[f"{var_name}_lineedit"] = line_edit
             elif "options" in definition and isinstance(definition["options"], list):
                 combo = QComboBox()
                 widget = combo
@@ -467,40 +473,50 @@ class PropertiesEditorDockWidget(QWidget): # Renamed to match typical usage if i
                  self.input_widgets[var_name] = widget 
         else:
             layout.addRow(property_name_label, QLabel(f"Unsupported type: {prop_type}"))
-
+    
     def _browse_for_linked_map(self, var_name: str, line_edit_ref: QLineEdit):
         if not self.current_object_data_ref:
             return
         
         maps_base_dir = editor_map_utils.get_maps_base_directory()
         if not os.path.exists(maps_base_dir):
-            QMessageBox.warning(self, "Browse Error", f"Maps directory not found: {maps_base_dir}")
-            return
+            if not editor_map_utils.ensure_maps_directory_exists():
+                QMessageBox.warning(self, "Browse Error", f"Maps directory not found and could not be created: {maps_base_dir}")
+                return
+            else:
+                logger.info(f"Maps directory was created at {maps_base_dir} during browse for linked map.")
 
-        # Start browsing from the 'maps' directory itself
+        current_linked_map = line_edit_ref.text()
+        initial_browse_dir = maps_base_dir
+        if current_linked_map and os.path.isdir(os.path.join(maps_base_dir, current_linked_map)):
+            initial_browse_dir = os.path.join(maps_base_dir, current_linked_map)
+
+
         selected_dir = QFileDialog.getExistingDirectory(
             self,
             "Select Linked Map Folder",
-            maps_base_dir,
+            initial_browse_dir,
             QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks
         )
 
         if selected_dir:
-            # We only want the name of the map folder relative to the maps_base_dir
-            if os.path.normpath(selected_dir).startswith(os.path.normpath(maps_base_dir)):
-                map_folder_name = os.path.basename(selected_dir)
-                if editor_map_utils.sanitize_map_name(map_folder_name) == map_folder_name: # Check if it's a valid map name
+            norm_selected_dir = os.path.normpath(selected_dir)
+            norm_maps_base_dir = os.path.normpath(maps_base_dir)
+
+            if norm_selected_dir.startswith(norm_maps_base_dir):
+                # Get the relative path from maps_base_dir
+                relative_path = os.path.relpath(norm_selected_dir, norm_maps_base_dir)
+                # The map folder name is the first component of this relative path
+                map_folder_name = relative_path.split(os.path.sep)[0]
+
+                if editor_map_utils.sanitize_map_name(map_folder_name) == map_folder_name and map_folder_name != ".":
                     line_edit_ref.setText(map_folder_name)
                     self._on_property_value_changed(var_name, map_folder_name)
                 else:
-                    QMessageBox.warning(self, "Invalid Map Name", f"The selected folder '{map_folder_name}' is not a valid map name.")
+                    QMessageBox.warning(self, "Invalid Map Name", 
+                                        f"The selected folder '{map_folder_name}' is not a valid map name. Please select a direct subfolder of '{maps_base_dir}'.")
             else:
-                QMessageBox.warning(self, "Invalid Directory", "Please select a map folder within the project's maps directory.")
-        else: # User cancelled
-            # If they cancel, we don't change the existing value.
-            # If they want to clear it, they can manually delete text or use a clear button (if added)
-            pass
-
+                QMessageBox.warning(self, "Invalid Directory", f"Please select a map folder within '{maps_base_dir}'.")
 
     def _create_dimension_fields(self, obj_data_ref: Dict[str, Any], layout: QFormLayout):
         width_label = QLabel("Width:")
@@ -999,9 +1015,13 @@ class PropertiesEditorDockWidget(QWidget): # Renamed to match typical usage if i
             elif isinstance(widget_container, QComboBox):
                 widget_container.showPopup()
             elif isinstance(widget_container, QWidget) and widget_container.layout() is not None: 
-                 # Check if it's the container for linked_map_name or image_path_custom
                  if var_name == "linked_map_name" or (prop_def and prop_def.get("type") == "image_path_custom"):
-                     browse_button = widget_container.findChild(QPushButton, "Browse...") # Assuming browse button is default or only button
+                     browse_button = None
+                     # Iterate through children to find the specific browse button if there are multiple buttons
+                     for child_widget in widget_container.findChildren(QPushButton):
+                         if child_widget.text() == "..." or child_widget.text() == "Browse...": # Adapt to actual button text
+                             browse_button = child_widget
+                             break
                      if browse_button: browse_button.click()
                  else:
                     children_buttons = widget_container.findChildren(QPushButton)
