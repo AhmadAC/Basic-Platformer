@@ -259,8 +259,8 @@ class EditorMainWindow(QMainWindow):
             self.minimap_dock = None # type: ignore
             self.minimap_widget = None # type: ignore
 
-        self.asset_palette_widget.asset_selected.connect(self.map_view_widget.on_asset_selected)
-        self.asset_palette_widget.asset_selected.connect(self.properties_editor_widget.display_asset_properties)
+        self.asset_palette_widget.asset_selected_for_placement.connect(self.map_view_widget.on_asset_selected_for_placement)
+        self.asset_palette_widget.asset_info_selected.connect(self.properties_editor_widget.display_asset_properties)
         self.asset_palette_widget.tool_selected.connect(self.map_view_widget.on_tool_selected)
         self.asset_palette_widget.paint_color_changed_for_status.connect(self.show_status_message)
         self.asset_palette_widget.controller_focus_requested_elsewhere.connect(self._cycle_panel_focus_next)

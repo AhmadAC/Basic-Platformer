@@ -1608,20 +1608,6 @@
         {
             "asset_editor_key": "platform_wall_gray",
             "world_x": 720,
-            "world_y": 960,
-            "game_type_id": "platform_wall_gray",
-            "override_color": [
-                128,
-                128,
-                128
-            ],
-            "properties": {
-                "is_boundary": true
-            }
-        },
-        {
-            "asset_editor_key": "platform_wall_gray",
-            "world_x": 720,
             "world_y": 920,
             "game_type_id": "platform_wall_gray",
             "override_color": [
@@ -4090,14 +4076,6 @@
             ]
         },
         {
-            "asset_editor_key": "object_stone_idle",
-            "world_x": 80,
-            "world_y": 640,
-            "game_type_id": "object_stone_idle",
-            "layer_order": 0,
-            "properties": {}
-        },
-        {
             "asset_editor_key": "platform_wall_gray",
             "world_x": 560,
             "world_y": 600,
@@ -4305,7 +4283,8 @@
                 "destructible": true,
                 "health": 200,
                 "can_be_pushed": true,
-                "is_heavy": true
+                "is_heavy": true,
+                "is_flipped_h": true
             }
         },
         {
@@ -4318,7 +4297,8 @@
                 "destructible": true,
                 "health": 200,
                 "can_be_pushed": true,
-                "is_heavy": true
+                "is_heavy": true,
+                "is_flipped_h": true
             }
         },
         {
@@ -4331,12 +4311,59 @@
                 "destructible": true,
                 "health": 200,
                 "can_be_pushed": true,
-                "is_heavy": true
+                "is_heavy": true,
+                "is_flipped_h": true
             }
+        },
+        {
+            "asset_editor_key": "object_stone_idle",
+            "world_x": 80,
+            "world_y": 640,
+            "game_type_id": "object_stone_idle",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 150,
+                "can_be_pushed": true,
+                "push_resistance": 1.0,
+                "drops_item_on_destroy": ""
+            },
+            "is_flipped_h": true
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 720,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone"
+            },
+            "is_flipped_h": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "layer_order": 0,
+            "properties": {
+                "destructible": true,
+                "health": 100,
+                "material_type": "stone"
+            },
+            "is_flipped_h": false,
+            "override_color": [
+                85,
+                170,
+                127
+            ]
         }
     ],
-    "camera_offset_x": 213.0,
-    "camera_offset_y": 72.0,
+    "camera_offset_x": 295.0,
+    "camera_offset_y": 180.0,
     "zoom_level": 0.8333333333333334,
     "show_grid": true,
     "asset_specific_variables": {}

@@ -1,314 +1,380 @@
-2025-05-25 18:12:11,727 - INFO - editor.py:116 - <module> - Editor session started. Logging initialized. Imports via: Absolute (from editor.*)
-2025-05-25 18:12:11,728 - INFO - editor.py:1180 - editor_main - Standalone mode: CWD set to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor
-2025-05-25 18:12:11,728 - INFO - editor.py:1184 - editor_main - editor_main() called. Embed mode: False, Standalone context: True
-2025-05-25 18:12:11,761 - INFO - editor.py:148 - __init__ - Initializing EditorMainWindow... Embedded: False
-2025-05-25 18:12:11,761 - DEBUG - editor_state.py:21 - __init__ - Initializing EditorState for PySide6...
-2025-05-25 18:12:11,761 - DEBUG - editor_state.py:93 - __init__ - EditorState initialized.
-2025-05-25 18:12:11,761 - DEBUG - editor.py:223 - init_ui - Initializing UI components...
-2025-05-25 18:12:11,763 - DEBUG - map_view_widget.py:244 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-25 18:12:11,763 - DEBUG - map_view_widget.py:226 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-25 18:12:11,764 - DEBUG - map_view_widget.py:241 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-25 18:12:11,780 - DEBUG - map_view_widget.py:169 - __init__ - MapViewWidget initialized.
-2025-05-25 18:12:11,817 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:11,817 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
-2025-05-25 18:12:11,817 - INFO - minimap_widget.py:54 - __init__ - MinimapWidget initialized. Update interval: 50ms.
-2025-05-25 18:12:11,818 - DEBUG - editor.py:281 - init_ui - UI components initialized.
-2025-05-25 18:12:11,818 - DEBUG - editor.py:449 - create_actions - Creating actions...
-2025-05-25 18:12:11,819 - DEBUG - editor.py:476 - create_actions - Actions created.
-2025-05-25 18:12:11,819 - DEBUG - editor.py:479 - create_menus - Creating menus...
-2025-05-25 18:12:11,820 - DEBUG - editor.py:517 - create_menus - Menus created.
-2025-05-25 18:12:11,821 - DEBUG - editor.py:520 - create_status_bar - Creating status bar...
-2025-05-25 18:12:11,821 - DEBUG - editor.py:527 - create_status_bar - Status bar created.
-2025-05-25 18:12:11,821 - INFO - editor_assets.py:261 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-25 18:12:11,833 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-25 18:12:11,833 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-25 18:12:11,833 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-25 18:12:11,833 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-25 18:12:11,833 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-25 18:12:11,833 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-25 18:12:11,833 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-25 18:12:11,834 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-25 18:12:11,834 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-25 18:12:11,834 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-25 18:12:11,834 - ERROR - editor_assets.py:174 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-25 18:12:11,834 - WARNING - editor_assets.py:218 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-25 18:12:11,845 - INFO - editor_assets.py:391 - load_editor_palette_assets - Palette asset loading complete. Success: 24, Failed/Fallback: 0.
-2025-05-25 18:12:11,847 - INFO - editor.py:284 - _init_controller_system - Initializing controller system...
-2025-05-25 18:12:11,848 - INFO - editor.py:290 - _init_controller_system - No joysticks detected.
-2025-05-25 18:12:11,916 - DEBUG - editor.py:1158 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
-2025-05-25 18:12:11,923 - INFO - minimap_widget.py:303 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(283, 161). Scheduling content redraw.
-2025-05-25 18:12:11,923 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:11,923 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 114.8, 84.7)
-2025-05-25 18:12:12,059 - INFO - editor.py:213 - __init__ - EditorMainWindow initialized.
-2025-05-25 18:12:12,059 - INFO - editor.py:533 - show_status_message - Status: Editor started. Welcome!
-2025-05-25 18:12:12,100 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:12,100 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:12,106 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 115.1, 93.5)
-2025-05-25 18:12:14,064 - INFO - editor.py:655 - load_map - Load Map action triggered.
-2025-05-25 18:12:18,262 - INFO - editor.py:665 - load_map - Attempting to load map from: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/three/three.json
-2025-05-25 18:12:18,264 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
-2025-05-25 18:12:18,265 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
-2025-05-25 18:12:18,265 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
-2025-05-25 18:12:18,265 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
-2025-05-25 18:12:18,265 - INFO - editor_history.py:151 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-25 18:12:18,265 - WARNING - editor_map_utils.py:359 - load_map_from_json - LoadMapJSON: Final JSON path ('c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three\three.json') differs from the path it was loaded from ('C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/three/three.json'). This is unusual after migration logic. Please check map file consistency.
-2025-05-25 18:12:18,265 - INFO - editor_map_utils.py:364 - load_map_from_json - Map 'three' loaded from: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three\three.json
-2025-05-25 18:12:18,265 - DEBUG - map_view_widget.py:244 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-25 18:12:18,265 - DEBUG - map_view_widget.py:226 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-25 18:12:18,266 - DEBUG - map_view_widget.py:241 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-25 18:12:18,333 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:18,333 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:18,333 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:18,333 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:18,339 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 138.1, 112.2)
-2025-05-25 18:12:18,344 - INFO - editor.py:533 - show_status_message - Status: Map 'three' loaded.
-2025-05-25 18:12:18,344 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 1
-2025-05-25 18:12:19,726 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 2
-2025-05-25 18:12:19,729 - DEBUG - editor.py:543 - handle_map_content_changed - Map content changed, unsaved_changes: False -> True.
-2025-05-25 18:12:19,729 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:19,729 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:19,729 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:19,730 - INFO - editor.py:533 - show_status_message - Status: Deleted 1 object(s).
-2025-05-25 18:12:19,736 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:19,739 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:21,920 - INFO - editor.py:704 - save_map - Save Map (Unified JSON & PY) action triggered.
-2025-05-25 18:12:21,924 - DEBUG - editor_map_utils.py:156 - get_map_specific_folder_path - Ensured directory exists: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three
-2025-05-25 18:12:21,924 - DEBUG - editor.py:682 - _internal_save_map_json - Internal Save Map (JSON) called.
-2025-05-25 18:12:21,925 - DEBUG - editor_map_utils.py:156 - get_map_specific_folder_path - Ensured directory exists: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three
-2025-05-25 18:12:21,962 - INFO - editor_map_utils.py:284 - save_map_to_json - Map editor data saved to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three\three.json
-2025-05-25 18:12:21,963 - INFO - editor.py:684 - _internal_save_map_json - Editor data saved: three.json.
-2025-05-25 18:12:21,964 - DEBUG - editor.py:691 - _internal_export_map_py - Internal Export Map (PY) called.
-2025-05-25 18:12:21,964 - INFO - editor_map_utils.py:459 - export_map_to_game_python_script - Exporting map data. Map name: 'three'
-2025-05-25 18:12:21,966 - DEBUG - editor_map_utils.py:156 - get_map_specific_folder_path - Ensured directory exists: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three
-2025-05-25 18:12:21,997 - INFO - editor_map_utils.py:639 - export_map_to_game_python_script - Map data exported to game script: three.py
-2025-05-25 18:12:21,997 - INFO - editor.py:696 - _internal_export_map_py - Map exported for game: three.py.
-2025-05-25 18:12:21,998 - INFO - editor.py:533 - show_status_message - Status: Map 'three' saved (JSON & PY).
-2025-05-25 18:12:25,022 - DEBUG - map_view_widget.py:960 - on_asset_selected - MapView: on_asset_selected key: 'object_stone_idle'
-2025-05-25 18:12:25,022 - INFO - editor_state.py:113 - selected_asset_editor_key - selected_asset_editor_key changed to: 'object_stone_idle'
-2025-05-25 18:12:25,023 - INFO - editor.py:533 - show_status_message - Status: Asset selected: Stone Block
-2025-05-25 18:12:26,023 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 3
-2025-05-25 18:12:26,059 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:26,059 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:26,059 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:26,059 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:26,069 - DEBUG - editor.py:543 - handle_map_content_changed - Map content changed, unsaved_changes: False -> True.
-2025-05-25 18:12:26,070 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:26,070 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:26,070 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:26,084 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:26,086 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:26,825 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 4
-2025-05-25 18:12:26,841 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:26,842 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:26,842 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:26,842 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:26,850 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:26,850 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:26,850 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:26,855 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:26,858 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:27,237 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 5
-2025-05-25 18:12:27,254 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:27,254 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:27,254 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:27,254 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:27,264 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:27,264 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:27,264 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:27,268 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:27,270 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:29,742 - DEBUG - map_view_widget.py:960 - on_asset_selected - MapView: on_asset_selected key: 'object_stone_crouch'
-2025-05-25 18:12:29,742 - INFO - editor_state.py:113 - selected_asset_editor_key - selected_asset_editor_key changed to: 'object_stone_crouch'
-2025-05-25 18:12:29,743 - INFO - editor.py:533 - show_status_message - Status: Asset selected: Stone Crouch
-2025-05-25 18:12:29,981 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 1.7, 138.1, 112.2)
-2025-05-25 18:12:30,012 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 3.5, 138.1, 112.2)
-2025-05-25 18:12:30,040 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 5.2, 138.1, 112.2)
-2025-05-25 18:12:30,893 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (15.2, 5.2, 138.1, 112.2)
-2025-05-25 18:12:30,948 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (29.5, 5.2, 138.1, 112.2)
-2025-05-25 18:12:31,010 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (76.6, 5.2, 138.1, 112.2)
-2025-05-25 18:12:31,077 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (85.9, 5.2, 138.1, 112.2)
-2025-05-25 18:12:31,339 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (85.9, 7.0, 138.1, 112.2)
-2025-05-25 18:12:32,323 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 6
-2025-05-25 18:12:32,340 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:32,340 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:32,340 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:32,340 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:32,349 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:32,350 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:32,350 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:32,355 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:32,357 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:32,759 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 7
-2025-05-25 18:12:32,803 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:32,803 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:32,803 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:32,803 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:32,814 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:32,814 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:32,815 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:32,820 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:32,824 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:33,146 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 8
-2025-05-25 18:12:33,189 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:33,189 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:33,189 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:33,190 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:12:33,205 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:33,205 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:33,206 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:33,211 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:33,214 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:41,171 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 9
-2025-05-25 18:12:41,172 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155258187200
-2025-05-25 18:12:41,172 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:41,172 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:41,172 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:41,172 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'can_be_pushed' changed to 'True'.
-2025-05-25 18:12:41,175 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:41,178 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:43,603 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 10
-2025-05-25 18:12:43,603 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155259735040
-2025-05-25 18:12:43,603 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:43,603 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:43,603 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:43,603 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'destructible' changed to 'True'.
-2025-05-25 18:12:43,607 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:43,610 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:48,048 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (87.7, 7.0, 138.1, 112.2)
-2025-05-25 18:12:48,074 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (89.4, 7.0, 138.1, 112.2)
-2025-05-25 18:12:48,103 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (91.1, 7.0, 138.1, 112.2)
-2025-05-25 18:12:48,135 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (92.9, 7.0, 138.1, 112.2)
-2025-05-25 18:12:48,170 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (94.6, 7.0, 138.1, 112.2)
-2025-05-25 18:12:48,202 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (96.4, 7.0, 138.1, 112.2)
-2025-05-25 18:12:48,234 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (98.1, 7.0, 138.1, 112.2)
-2025-05-25 18:12:48,265 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (99.8, 7.0, 138.1, 112.2)
-2025-05-25 18:12:48,954 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 11
-2025-05-25 18:12:48,954 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155259912832
-2025-05-25 18:12:48,955 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:48,955 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:48,955 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:48,955 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'can_be_pushed' changed to 'True'.
-2025-05-25 18:12:48,957 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:48,961 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:49,709 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 12
-2025-05-25 18:12:49,709 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155260071168
-2025-05-25 18:12:49,709 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:49,709 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:49,709 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:49,709 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'destructible' changed to 'True'.
-2025-05-25 18:12:49,712 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:49,715 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:51,785 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 13
-2025-05-25 18:12:51,785 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155260248256
-2025-05-25 18:12:51,785 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:51,785 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:51,785 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:51,785 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'can_be_pushed' changed to 'True'.
-2025-05-25 18:12:51,787 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:51,789 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:12:52,221 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 14
-2025-05-25 18:12:52,221 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155260423104
-2025-05-25 18:12:52,221 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:12:52,221 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:12:52,221 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:12:52,222 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'destructible' changed to 'True'.
-2025-05-25 18:12:52,224 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:12:52,226 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:05,408 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 15
-2025-05-25 18:13:05,408 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155260599616
-2025-05-25 18:13:05,409 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:13:05,409 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:13:05,409 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:13:05,409 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'destructible' changed to 'True'.
-2025-05-25 18:13:05,412 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:13:05,415 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:12,246 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (101.6, 7.0, 138.1, 112.2)
-2025-05-25 18:13:12,278 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (103.3, 7.0, 138.1, 112.2)
-2025-05-25 18:13:12,310 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (105.0, 7.0, 138.1, 112.2)
-2025-05-25 18:13:12,350 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (106.8, 7.0, 138.1, 112.2)
-2025-05-25 18:13:16,463 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 16
-2025-05-25 18:13:16,510 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:13:16,510 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:13:16,510 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:13:16,510 - WARNING - map_view_widget.py:326 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
-2025-05-25 18:13:16,527 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:13:16,527 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:13:16,527 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:13:16,541 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:13:16,546 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:19,288 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:13:19,289 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:13:19,289 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:13:19,297 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:13:19,303 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:19,307 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:13:19,308 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:13:19,308 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:13:19,313 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:13:19,317 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:19,469 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 17
-2025-05-25 18:13:19,469 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:13:19,469 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:13:19,469 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:13:19,471 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:13:19,475 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:20,277 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 18
-2025-05-25 18:13:20,280 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:13:20,281 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:13:20,281 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:13:20,282 - INFO - editor.py:533 - show_status_message - Status: Deleted 1 object(s).
-2025-05-25 18:13:20,291 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:13:20,299 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:24,337 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 19
-2025-05-25 18:13:24,337 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155278050688
-2025-05-25 18:13:24,337 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:13:24,337 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:13:24,337 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:13:24,337 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'destructible' changed to 'True'.
-2025-05-25 18:13:24,340 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:13:24,343 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:26,483 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (106.0, 7.0, 138.1, 112.2)
-2025-05-25 18:13:26,545 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (100.0, 7.0, 138.1, 112.2)
-2025-05-25 18:13:26,609 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (91.1, 7.0, 138.1, 112.2)
-2025-05-25 18:13:26,669 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (83.8, 7.0, 138.1, 112.2)
-2025-05-25 18:13:26,734 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (81.5, 7.0, 138.1, 112.2)
-2025-05-25 18:13:26,796 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (80.7, 7.0, 138.1, 112.2)
-2025-05-25 18:13:26,838 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (80.7, 8.7, 138.1, 112.2)
-2025-05-25 18:13:27,981 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (82.4, 8.7, 138.1, 112.2)
-2025-05-25 18:13:28,013 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (84.2, 8.7, 138.1, 112.2)
-2025-05-25 18:13:28,568 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 20
-2025-05-25 18:13:28,568 - WARNING - map_view_widget.py:351 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 3155278244928
-2025-05-25 18:13:28,568 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-25 18:13:28,568 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-25 18:13:28,569 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-25 18:13:28,569 - DEBUG - editor_ui_panels.py:1149 - _on_property_value_changed - Property 'destructible' changed to 'True'.
-2025-05-25 18:13:28,571 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
-2025-05-25 18:13:28,574 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-25 18:13:29,533 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (85.9, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,295 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (87.7, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,326 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (89.4, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,361 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (91.1, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,387 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (92.9, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,421 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (94.6, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,449 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (96.4, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,492 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (98.1, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,524 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (99.8, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,558 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (101.6, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,603 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (103.3, 8.7, 138.1, 112.2)
-2025-05-25 18:13:30,636 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (105.0, 8.7, 138.1, 112.2)
-2025-05-25 18:13:32,188 - INFO - editor.py:704 - save_map - Save Map (Unified JSON & PY) action triggered.
-2025-05-25 18:13:32,190 - DEBUG - editor_map_utils.py:156 - get_map_specific_folder_path - Ensured directory exists: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three
-2025-05-25 18:13:32,191 - DEBUG - editor.py:682 - _internal_save_map_json - Internal Save Map (JSON) called.
-2025-05-25 18:13:32,192 - DEBUG - editor_map_utils.py:156 - get_map_specific_folder_path - Ensured directory exists: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three
-2025-05-25 18:13:32,227 - INFO - editor_map_utils.py:284 - save_map_to_json - Map editor data saved to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three\three.json
-2025-05-25 18:13:32,228 - INFO - editor.py:684 - _internal_save_map_json - Editor data saved: three.json.
-2025-05-25 18:13:32,228 - DEBUG - editor.py:691 - _internal_export_map_py - Internal Export Map (PY) called.
-2025-05-25 18:13:32,228 - INFO - editor_map_utils.py:459 - export_map_to_game_python_script - Exporting map data. Map name: 'three'
-2025-05-25 18:13:32,229 - DEBUG - editor_map_utils.py:156 - get_map_specific_folder_path - Ensured directory exists: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three
-2025-05-25 18:13:32,238 - INFO - editor_map_utils.py:639 - export_map_to_game_python_script - Map data exported to game script: three.py
-2025-05-25 18:13:32,238 - INFO - editor.py:696 - _internal_export_map_py - Map exported for game: three.py.
-2025-05-25 18:13:32,239 - INFO - editor.py:533 - show_status_message - Status: Map 'three' saved (JSON & PY).
-2025-05-25 18:13:34,611 - INFO - editor.py:1122 - closeEvent - Close event triggered. Embedded: False
-2025-05-25 18:13:34,612 - DEBUG - editor.py:1144 - save_geometry_and_state - Window geometry and dock state explicitly saved.
-2025-05-25 18:13:34,649 - INFO - editor.py:1206 - editor_main - Editor session (standalone) ended.
-2025-05-25 18:13:34,692 - INFO - editor.py:1209 - editor_main - Pygame quit globally at end of editor_main (standalone).
+2025-05-25 19:22:08,754 - INFO - editor.py:116 - <module> - Editor session started. Logging initialized. Imports via: Absolute (from editor.*)
+2025-05-25 19:22:08,756 - INFO - editor.py:1180 - editor_main - Standalone mode: CWD set to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor
+2025-05-25 19:22:08,757 - INFO - editor.py:1184 - editor_main - editor_main() called. Embed mode: False, Standalone context: True
+2025-05-25 19:22:08,880 - INFO - editor.py:148 - __init__ - Initializing EditorMainWindow... Embedded: False
+2025-05-25 19:22:08,880 - DEBUG - editor_state.py:20 - __init__ - Initializing EditorState for PySide6...
+2025-05-25 19:22:08,880 - DEBUG - editor_state.py:69 - __init__ - EditorState initialized.
+2025-05-25 19:22:08,881 - DEBUG - editor.py:223 - init_ui - Initializing UI components...
+2025-05-25 19:22:08,896 - DEBUG - map_view_widget.py:285 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-25 19:22:08,896 - DEBUG - map_view_widget.py:267 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-25 19:22:08,898 - DEBUG - map_view_widget.py:282 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-25 19:22:08,928 - DEBUG - map_view_widget.py:202 - __init__ - MapViewWidget initialized.
+2025-05-25 19:22:09,094 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:22:09,097 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
+2025-05-25 19:22:09,097 - INFO - minimap_widget.py:54 - __init__ - MinimapWidget initialized. Update interval: 50ms.
+2025-05-25 19:22:09,100 - DEBUG - editor.py:281 - init_ui - UI components initialized.
+2025-05-25 19:22:09,100 - DEBUG - editor.py:449 - create_actions - Creating actions...
+2025-05-25 19:22:09,104 - DEBUG - editor.py:476 - create_actions - Actions created.
+2025-05-25 19:22:09,104 - DEBUG - editor.py:479 - create_menus - Creating menus...
+2025-05-25 19:22:09,116 - DEBUG - editor.py:517 - create_menus - Menus created.
+2025-05-25 19:22:09,116 - DEBUG - editor.py:520 - create_status_bar - Creating status bar...
+2025-05-25 19:22:09,117 - DEBUG - editor.py:527 - create_status_bar - Status bar created.
+2025-05-25 19:22:09,118 - INFO - editor_assets.py:289 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-25 19:22:09,146 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:22:09,146 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:22:09,147 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:22:09,147 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:22:09,147 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:22:09,147 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:22:09,147 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:22:09,147 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:22:09,147 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:22:09,147 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:22:09,147 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:22:09,147 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:22:09,167 - INFO - editor_assets.py:421 - load_editor_palette_assets - Palette asset loading complete. Success: 33, Failed/Fallback: 0.
+2025-05-25 19:22:09,177 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:22:09,177 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:22:09,179 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:22:09,179 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:22:09,182 - INFO - editor.py:284 - _init_controller_system - Initializing controller system...
+2025-05-25 19:22:09,182 - INFO - editor.py:290 - _init_controller_system - No joysticks detected.
+2025-05-25 19:22:09,256 - DEBUG - editor.py:1158 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
+2025-05-25 19:22:09,263 - INFO - minimap_widget.py:303 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(283, 161). Scheduling content redraw.
+2025-05-25 19:22:09,263 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:22:09,263 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 114.8, 84.7)
+2025-05-25 19:22:09,317 - INFO - editor.py:213 - __init__ - EditorMainWindow initialized.
+2025-05-25 19:22:09,319 - INFO - editor.py:533 - show_status_message - Status: Editor started. Welcome!
+2025-05-25 19:22:09,349 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:22:09,349 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:22:09,354 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 115.1, 93.5)
+2025-05-25 19:22:17,736 - INFO - editor.py:655 - load_map - Load Map action triggered.
+2025-05-25 19:22:22,328 - INFO - editor.py:665 - load_map - Attempting to load map from: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/three/three.json
+2025-05-25 19:22:22,331 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:22:22,331 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:22:22,331 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:22:22,331 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:22:22,331 - INFO - editor_history.py:151 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-25 19:22:22,331 - WARNING - editor_map_utils.py:364 - load_map_from_json - LoadMapJSON: Final JSON path ('c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three\three.json') differs from the path it was loaded from ('C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/three/three.json'). This is unusual after migration logic. Please check map file consistency.
+2025-05-25 19:22:22,331 - INFO - editor_map_utils.py:369 - load_map_from_json - Map 'three' loaded from: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three\three.json
+2025-05-25 19:22:22,331 - DEBUG - map_view_widget.py:285 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-25 19:22:22,331 - DEBUG - map_view_widget.py:267 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-25 19:22:22,332 - DEBUG - map_view_widget.py:282 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-25 19:22:22,356 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:22:22,356 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:22:22,356 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:22:22,356 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:22:22,365 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 0.0, 138.1, 112.2)
+2025-05-25 19:22:22,371 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:22:22,372 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:22:22,373 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:22:22,373 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:22:22,379 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:22:22,379 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:22:22,381 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:22:22,381 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:22:22,384 - INFO - editor.py:533 - show_status_message - Status: Map 'three' loaded.
+2025-05-25 19:22:22,385 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 1
+2025-05-25 19:22:35,794 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 48.7, 138.1, 112.2)
+2025-05-25 19:22:43,519 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 2
+2025-05-25 19:22:43,521 - DEBUG - editor.py:543 - handle_map_content_changed - Map content changed, unsaved_changes: False -> True.
+2025-05-25 19:22:43,521 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:22:43,521 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:22:43,523 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:22:43,523 - INFO - editor.py:533 - show_status_message - Status: Deleted 1 object(s).
+2025-05-25 19:22:43,530 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:22:43,534 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:22:44,299 - DEBUG - map_view_widget.py:1024 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'object_stone_idle', flipped: False, wall_idx: 0
+2025-05-25 19:22:44,299 - INFO - editor.py:533 - show_status_message - Status: Asset for placement: Stone Block
+2025-05-25 19:22:44,305 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:22:44,305 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:22:44,308 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:22:44,308 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:22:50,022 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 3
+2025-05-25 19:22:50,037 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:22:50,037 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:22:50,037 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:22:50,037 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:22:50,042 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:22:50,042 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:22:50,042 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:22:50,047 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:22:50,048 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:22:52,264 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 4
+2025-05-25 19:22:52,808 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 5
+2025-05-25 19:22:53,634 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (14.4, 48.7, 138.1, 112.2)
+2025-05-25 19:22:54,577 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 6
+2025-05-25 19:22:54,584 - WARNING - map_view_widget.py:397 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 2601042131008
+2025-05-25 19:22:54,584 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:22:54,584 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:22:54,584 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:22:54,585 - DEBUG - editor_ui_panels.py:1298 - _on_property_value_changed - Property 'is_flipped_h' changed to 'True'.
+2025-05-25 19:22:54,587 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:22:54,590 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:22:59,654 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 7
+2025-05-25 19:22:59,655 - WARNING - map_view_widget.py:397 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 2601042305728
+2025-05-25 19:22:59,655 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:22:59,655 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:22:59,655 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:22:59,655 - DEBUG - editor_ui_panels.py:1298 - _on_property_value_changed - Property 'destructible' changed to 'True'.
+2025-05-25 19:22:59,657 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:22:59,660 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:00,200 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (16.2, 48.7, 138.1, 112.2)
+2025-05-25 19:23:01,778 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (17.9, 48.7, 138.1, 112.2)
+2025-05-25 19:23:01,818 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (19.7, 48.7, 138.1, 112.2)
+2025-05-25 19:23:01,848 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (21.4, 48.7, 138.1, 112.2)
+2025-05-25 19:23:01,870 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (23.1, 48.7, 138.1, 112.2)
+2025-05-25 19:23:01,902 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (24.9, 48.7, 138.1, 112.2)
+2025-05-25 19:23:01,934 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (26.6, 48.7, 138.1, 112.2)
+2025-05-25 19:23:01,973 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (28.3, 48.7, 138.1, 112.2)
+2025-05-25 19:23:02,004 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (30.1, 48.7, 138.1, 112.2)
+2025-05-25 19:23:02,035 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (31.8, 48.7, 138.1, 112.2)
+2025-05-25 19:23:02,058 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (33.6, 48.7, 138.1, 112.2)
+2025-05-25 19:23:03,394 - DEBUG - map_view_widget.py:1082 - on_tool_selected - MapView: on_tool_selected tool_key: 'tool_select'
+2025-05-25 19:23:03,394 - DEBUG - map_view_widget.py:1111 - on_tool_selected - MapView: current_tool_mode set to 'select'
+2025-05-25 19:23:03,395 - INFO - editor.py:533 - show_status_message - Status: Tool selected: Select Tool
+2025-05-25 19:23:03,398 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:23:03,398 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:23:03,399 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:23:03,400 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:23:07,553 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 8
+2025-05-25 19:23:07,553 - WARNING - map_view_widget.py:397 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 2601042474752
+2025-05-25 19:23:07,554 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:07,554 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:07,554 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:07,554 - DEBUG - editor_ui_panels.py:1298 - _on_property_value_changed - Property 'is_flipped_h' changed to 'True'.
+2025-05-25 19:23:07,558 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:07,561 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:08,215 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (35.3, 48.7, 138.1, 112.2)
+2025-05-25 19:23:08,900 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (37.0, 48.7, 138.1, 112.2)
+2025-05-25 19:23:09,645 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 9
+2025-05-25 19:23:09,645 - WARNING - map_view_widget.py:397 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 2601041969344
+2025-05-25 19:23:09,645 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:09,645 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:09,646 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:09,646 - DEBUG - editor_ui_panels.py:1298 - _on_property_value_changed - Property 'is_flipped_h' changed to 'True'.
+2025-05-25 19:23:09,648 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:09,651 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:11,871 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (38.8, 48.7, 138.1, 112.2)
+2025-05-25 19:23:12,104 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (40.5, 48.7, 138.1, 112.2)
+2025-05-25 19:23:12,146 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (42.3, 48.7, 138.1, 112.2)
+2025-05-25 19:23:12,167 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (44.0, 48.7, 138.1, 112.2)
+2025-05-25 19:23:12,684 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (45.7, 48.7, 138.1, 112.2)
+2025-05-25 19:23:12,714 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (47.5, 48.7, 138.1, 112.2)
+2025-05-25 19:23:13,655 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (49.2, 48.7, 138.1, 112.2)
+2025-05-25 19:23:13,684 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (51.0, 48.7, 138.1, 112.2)
+2025-05-25 19:23:15,867 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 10
+2025-05-25 19:23:15,867 - WARNING - map_view_widget.py:397 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 2601044582912
+2025-05-25 19:23:15,867 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:15,867 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:15,867 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:15,867 - DEBUG - editor_ui_panels.py:1298 - _on_property_value_changed - Property 'is_flipped_h' changed to 'True'.
+2025-05-25 19:23:15,870 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:15,873 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:16,295 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (52.7, 48.7, 138.1, 112.2)
+2025-05-25 19:23:18,815 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:18,815 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:18,815 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:18,819 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:18,822 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:18,912 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:18,912 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:18,912 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:18,913 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:18,915 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:19,016 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:19,016 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:19,016 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:19,017 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:19,019 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:19,831 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (52.9, 48.7, 138.1, 112.2)
+2025-05-25 19:23:19,917 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (48.1, 48.7, 138.1, 112.2)
+2025-05-25 19:23:19,948 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (33.6, 48.7, 138.1, 112.2)
+2025-05-25 19:23:19,981 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (25.1, 48.7, 138.1, 112.2)
+2025-05-25 19:23:20,013 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (23.1, 48.7, 138.1, 112.2)
+2025-05-25 19:23:21,207 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:21,207 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:21,207 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:21,209 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:21,210 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:21,278 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:21,278 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:21,278 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:21,279 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:21,281 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:21,551 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:21,551 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:21,551 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:21,551 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:21,554 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:23,124 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (24.9, 48.7, 138.1, 112.2)
+2025-05-25 19:23:23,154 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (26.6, 48.7, 138.1, 112.2)
+2025-05-25 19:23:23,183 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (28.3, 48.7, 138.1, 112.2)
+2025-05-25 19:23:23,724 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 11
+2025-05-25 19:23:23,731 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:23,731 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:23,731 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:23,731 - INFO - editor.py:533 - show_status_message - Status: Deleted 1 object(s).
+2025-05-25 19:23:23,735 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:23,737 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:24,058 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (26.6, 48.7, 138.1, 112.2)
+2025-05-25 19:23:25,754 - DEBUG - map_view_widget.py:1024 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'platform_wall_gray', flipped: False, wall_idx: 0
+2025-05-25 19:23:25,754 - INFO - editor.py:533 - show_status_message - Status: Asset for placement: Wall (Gray) (Wall (Gray))
+2025-05-25 19:23:25,758 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:23:25,758 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:23:25,761 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:23:25,761 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:23:26,549 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 12
+2025-05-25 19:23:26,571 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:23:26,571 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:23:26,571 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:23:26,571 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:23:26,587 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:26,587 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:26,587 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:26,596 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:26,597 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:27,498 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (28.3, 48.7, 138.1, 112.2)
+2025-05-25 19:23:37,011 - INFO - editor.py:533 - show_status_message - Status: Asset paint color set to: (85, 170, 127)
+2025-05-25 19:23:37,991 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 13
+2025-05-25 19:23:38,031 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:23:38,031 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:23:38,031 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:23:38,031 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:23:38,038 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:38,039 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:38,039 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:38,046 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:38,047 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:38,648 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 14
+2025-05-25 19:23:39,960 - DEBUG - map_view_widget.py:1082 - on_tool_selected - MapView: on_tool_selected tool_key: 'tool_color_picker'
+2025-05-25 19:23:39,960 - WARNING - map_view_widget.py:1109 - on_tool_selected - MapView: Unknown tool_key 'tool_color_picker', defaulting to select mode.
+2025-05-25 19:23:39,960 - DEBUG - map_view_widget.py:1111 - on_tool_selected - MapView: current_tool_mode set to 'select'
+2025-05-25 19:23:39,960 - INFO - editor.py:533 - show_status_message - Status: Tool selected: Color Picker Tool
+2025-05-25 19:23:39,964 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:23:39,964 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:23:39,966 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:23:39,966 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:23:42,702 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 15
+2025-05-25 19:23:42,702 - WARNING - map_view_widget.py:397 - update_specific_object_visuals - Attempted to update visuals for non-tracked object data ID: 2601045457792
+2025-05-25 19:23:42,702 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:23:42,703 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:23:42,703 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:23:42,703 - DEBUG - editor_ui_panels.py:1298 - _on_property_value_changed - Property 'destructible' changed to 'True'.
+2025-05-25 19:23:42,705 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:23:42,708 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:23:53,616 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (30.1, 48.7, 138.1, 112.2)
+2025-05-25 19:23:56,291 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (28.3, 48.7, 138.1, 112.2)
+2025-05-25 19:24:05,016 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (28.0, 48.7, 138.1, 112.2)
+2025-05-25 19:24:05,028 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (27.2, 48.7, 138.1, 112.2)
+2025-05-25 19:24:05,041 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (25.1, 48.7, 138.1, 112.2)
+2025-05-25 19:24:05,077 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (20.2, 48.7, 138.1, 112.2)
+2025-05-25 19:24:05,093 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (17.9, 48.7, 138.1, 112.2)
+2025-05-25 19:24:05,108 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (12.7, 48.7, 138.1, 112.2)
+2025-05-25 19:24:10,279 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (27.6, 48.7, 138.1, 112.2)
+2025-05-25 19:24:10,337 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (61.4, 48.7, 138.1, 112.2)
+2025-05-25 19:24:10,402 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (75.9, 48.7, 138.1, 112.2)
+2025-05-25 19:24:10,463 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (85.9, 48.7, 138.1, 112.2)
+2025-05-25 19:24:10,524 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (106.8, 48.7, 138.1, 112.2)
+2025-05-25 19:24:10,595 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (110.5, 48.7, 138.1, 112.2)
+2025-05-25 19:24:10,714 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (110.8, 48.7, 138.1, 112.2)
+2025-05-25 19:24:12,730 - DEBUG - map_view_widget.py:1024 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'trigger_square', flipped: False, wall_idx: 0
+2025-05-25 19:24:12,730 - INFO - editor.py:533 - show_status_message - Status: Asset for placement: Trigger Square
+2025-05-25 19:24:13,763 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 16
+2025-05-25 19:24:13,796 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:13,796 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:13,796 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:13,796 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:13,812 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:24:13,813 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:24:13,813 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:24:13,831 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:24:13,832 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:24:22,376 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:24:22,376 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:24:22,379 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:24:22,379 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:24:22,688 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (109.1, 48.7, 138.1, 112.2)
+2025-05-25 19:24:22,714 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (107.4, 48.7, 138.1, 112.2)
+2025-05-25 19:24:22,748 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (105.6, 48.7, 138.1, 112.2)
+2025-05-25 19:24:24,358 - DEBUG - map_view_widget.py:1082 - on_tool_selected - MapView: on_tool_selected tool_key: 'tool_select'
+2025-05-25 19:24:24,358 - DEBUG - map_view_widget.py:1111 - on_tool_selected - MapView: current_tool_mode set to 'select'
+2025-05-25 19:24:24,358 - INFO - editor.py:533 - show_status_message - Status: Tool selected: Select Tool
+2025-05-25 19:24:24,362 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:24:24,362 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:24:24,366 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:24:24,366 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:24:39,562 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:24:39,563 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:24:39,566 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:24:39,566 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:24:42,065 - INFO - editor.py:1038 - undo - Undo action triggered.
+2025-05-25 19:24:42,069 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:24:42,069 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:24:42,069 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:24:42,069 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:24:42,069 - INFO - editor_history.py:151 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-25 19:24:42,069 - INFO - editor_history.py:186 - undo - Undo successful. Undo: 15, Redo: 1
+2025-05-25 19:24:42,071 - DEBUG - map_view_widget.py:285 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-25 19:24:42,071 - DEBUG - map_view_widget.py:267 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-25 19:24:42,080 - DEBUG - map_view_widget.py:282 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-25 19:24:42,118 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:42,118 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:42,118 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:42,118 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:42,126 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (129.2, 39.6, 138.1, 112.2)
+2025-05-25 19:24:42,127 - INFO - editor.py:533 - show_status_message - Status: Undo successful.
+2025-05-25 19:24:42,131 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:24:42,131 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:24:42,132 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:24:42,132 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:24:43,938 - DEBUG - map_view_widget.py:1024 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'trigger_square', flipped: False, wall_idx: 0
+2025-05-25 19:24:43,938 - INFO - editor.py:533 - show_status_message - Status: Asset for placement: Trigger Square
+2025-05-25 19:24:43,943 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:24:43,943 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:24:43,944 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:24:43,945 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:24:45,179 - DEBUG - editor_history.py:169 - push_undo_state - Pushed state to undo stack. Size: 16
+2025-05-25 19:24:45,209 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:45,209 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:45,209 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:45,209 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:45,222 - DEBUG - editor.py:549 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-25 19:24:45,223 - DEBUG - minimap_widget.py:61 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-25 19:24:45,223 - DEBUG - editor.py:551 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-25 19:24:45,238 - DEBUG - minimap_widget.py:99 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(283, 161)
+2025-05-25 19:24:45,239 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
+2025-05-25 19:24:50,327 - INFO - editor.py:1038 - undo - Undo action triggered.
+2025-05-25 19:24:50,329 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:24:50,329 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:24:50,329 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:24:50,329 - WARNING - editor_history.py:107 - restore_map_from_snapshot - Cannot find palette key for standard asset 'platform_ledge_green_one_third' (GameID: 'platform_ledge_green_one_third').
+2025-05-25 19:24:50,330 - INFO - editor_history.py:151 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
+2025-05-25 19:24:50,330 - INFO - editor_history.py:186 - undo - Undo successful. Undo: 15, Redo: 1
+2025-05-25 19:24:50,331 - DEBUG - map_view_widget.py:285 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-25 19:24:50,331 - DEBUG - map_view_widget.py:267 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-25 19:24:50,335 - DEBUG - map_view_widget.py:282 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-25 19:24:50,353 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:50,354 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:50,354 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:50,354 - WARNING - map_view_widget.py:367 - draw_placed_objects - DrawPlaced: Asset info for key 'platform_ledge_green_one_third' not found. Skipping.
+2025-05-25 19:24:50,362 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (132.1, 19.9, 138.1, 112.2)
+2025-05-25 19:24:50,362 - INFO - editor.py:533 - show_status_message - Status: Undo successful.
+2025-05-25 19:24:50,366 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-25 19:24:50,366 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-25 19:24:50,368 - ERROR - editor_assets.py:177 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-25 19:24:50,368 - WARNING - editor_assets.py:221 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-25 19:24:52,458 - INFO - editor.py:704 - save_map - Save Map (Unified JSON & PY) action triggered.
+2025-05-25 19:24:52,460 - DEBUG - editor.py:682 - _internal_save_map_json - Internal Save Map (JSON) called.
+2025-05-25 19:24:52,468 - INFO - editor_map_utils.py:297 - save_map_to_json - Map editor data saved to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\three\three.json
+2025-05-25 19:24:52,468 - INFO - editor.py:684 - _internal_save_map_json - Editor data saved: three.json.
+2025-05-25 19:24:52,468 - DEBUG - editor.py:691 - _internal_export_map_py - Internal Export Map (PY) called.
+2025-05-25 19:24:52,468 - INFO - editor_map_utils.py:466 - export_map_to_game_python_script - Exporting map data. Map name: 'three'
+2025-05-25 19:24:52,472 - INFO - editor_map_utils.py:643 - export_map_to_game_python_script - Map data exported to game script: three.py
+2025-05-25 19:24:52,472 - INFO - editor.py:696 - _internal_export_map_py - Map exported for game: three.py.
+2025-05-25 19:24:52,472 - INFO - editor.py:533 - show_status_message - Status: Map 'three' saved (JSON & PY).
+2025-05-25 19:24:52,856 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (130.4, 19.9, 138.1, 112.2)
+2025-05-25 19:24:54,529 - INFO - editor.py:1122 - closeEvent - Close event triggered. Embedded: False
+2025-05-25 19:24:54,535 - DEBUG - editor.py:1144 - save_geometry_and_state - Window geometry and dock state explicitly saved.
+2025-05-25 19:24:54,578 - INFO - editor.py:1206 - editor_main - Editor session (standalone) ended.
+2025-05-25 19:24:54,633 - INFO - editor.py:1209 - editor_main - Pygame quit globally at end of editor_main (standalone).
