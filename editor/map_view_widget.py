@@ -4,16 +4,19 @@
 # -*- coding: utf-8 -*-
 """
 Custom Qt Widget for the Map View in the PySide6 Level Editor.
-Version 2.2.2 (Asset Flip/Cycle and Selection Tool Integration)
+Version 2.2.3 (Cursor Orientation, Procedural Wall Rendering, Corner Rounding)
 - Uses CustomImageMapItem and TriggerSquareMapItem from editor_custom_items.
 - Manages resize and visual crop operations for custom image items.
 - Implements Ctrl+Mouse Wheel for zooming.
 - Implements Delete key for selected object deletion.
-- Integrates asset flip/cycle state for placing objects.
+- Integrates asset flip/cycle/rotation state for placing objects.
 - Handles "select" tool mode.
+- Right-click on map (in place mode) changes cursor orientation.
+- StandardMapObjectItem handles procedural drawing for walls, including corner rounding.
 """
 import logging
 import os
+import math # For rotation
 from typing import Optional, Dict, Any, List, Tuple, cast
 
 from PySide6.QtWidgets import (
@@ -22,9 +25,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import (
     QPixmap, QPainter, QColor, QPen, QBrush, QTransform, QImage,
-    QWheelEvent, QMouseEvent, QKeyEvent, QFocusEvent, QCursor, QContextMenuEvent, QHoverEvent
+    QWheelEvent, QMouseEvent, QKeyEvent, QFocusEvent, QCursor, QContextMenuEvent, QHoverEvent,
+    QPainterPath # For rounded corners
 )
-from PySide6.QtCore import Qt, Signal, Slot, QRectF, QPointF, QSize, QTimer
+from PySide6.QtCore import Qt, Signal, Slot, QRectF, QPointF, QSizeF, QTimer
 
 from . import editor_config as ED_CONFIG
 from .editor_state import EditorState
@@ -44,27 +48,142 @@ from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTIO
 logger = logging.getLogger(__name__)
 
 class StandardMapObjectItem(QGraphicsPixmapItem):
-    def __init__(self, editor_key: str, game_type_id: str, pixmap: QPixmap,
-                 world_x: int, world_y: int, map_object_data_ref: Dict[str, Any], parent: Optional[QGraphicsItem] = None):
-        super().__init__(pixmap, parent) # Pixmap is expected to be unflipped
+    def __init__(self, editor_key: str, game_type_id: str,
+                 world_x: int, world_y: int, map_object_data_ref: Dict[str, Any],
+                 editor_state_ref: EditorState, # Pass editor_state for asset info
+                 parent: Optional[QGraphicsItem] = None):
+        
         self.editor_key = editor_key
         self.game_type_id = game_type_id
         self.map_object_data_ref = map_object_data_ref
+        self.editor_state_ref = editor_state_ref # Store reference
+
+        self.is_procedural_tile = False
+        self.procedural_color: Optional[Tuple[int,int,int]] = None
+        self.procedural_width: float = float(ED_CONFIG.TS)
+        self.procedural_height: float = float(ED_CONFIG.TS)
+
+        asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
+        initial_pixmap = QPixmap() # Default to empty
+
+        if asset_info and asset_info.get("surface_params") and asset_info.get("category") == "tile" and not asset_info.get("source_file"):
+            self.is_procedural_tile = True
+            params = asset_info["surface_params"]
+            self.procedural_width = float(params[0])
+            self.procedural_height = float(params[1])
+            # Color will be determined in paint method based on override or default
+        else:
+            # Image-based asset, load an unrotated, unflipped pixmap
+            if asset_info:
+                original_w, original_h = asset_info.get("original_size_pixels", (ED_CONFIG.BASE_GRID_SIZE, ED_CONFIG.BASE_GRID_SIZE))
+                pixmap = get_asset_pixmap(self.editor_key, asset_info, QSizeF(int(original_w), int(original_h)),
+                                          self.map_object_data_ref.get("override_color"), # Color is applied to pixmap here
+                                          get_native_size_only=True,
+                                          is_flipped_h=False, rotation=0) 
+                if pixmap and not pixmap.isNull():
+                    initial_pixmap = pixmap
+                else:
+                    logger.warning(f"StandardMapObjectItem: Null pixmap for {self.editor_key}")
+                    initial_pixmap = QPixmap(int(original_w), int(original_h))
+                    initial_pixmap.fill(Qt.GlobalColor.magenta)
+            else: # Fallback if asset_info is somehow missing
+                initial_pixmap = QPixmap(ED_CONFIG.TS, ED_CONFIG.TS)
+                initial_pixmap.fill(Qt.GlobalColor.cyan)
+
+
+        super().__init__(initial_pixmap, parent)
         self.setPos(QPointF(float(world_x), float(world_y)))
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable | QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.setZValue(map_object_data_ref.get("layer_order", 0))
+        
+        self._apply_orientation_transform()
 
-        # Apply initial flip if needed using item's transform
-        if self.map_object_data_ref.get("is_flipped_h", False):
-            transform = QTransform()
-            # Ensure boundingRect is valid before using its width
-            item_width = self.boundingRect().width()
-            if item_width <= 0 and self.pixmap() and not self.pixmap().isNull():
-                item_width = self.pixmap().width()
 
-            transform.translate(item_width, 0) 
-            transform.scale(-1, 1) 
-            self.setTransform(transform)
+    def boundingRect(self) -> QRectF:
+        if self.is_procedural_tile:
+            return QRectF(0, 0, self.procedural_width, self.procedural_height)
+        else:
+            return super().boundingRect()
+
+    def _apply_orientation_transform(self):
+        item_should_be_flipped = self.map_object_data_ref.get("is_flipped_h", False)
+        rotation_angle = float(self.map_object_data_ref.get("rotation", 0))
+
+        transform = QTransform()
+        
+        rect = self.boundingRect() # Use current item's bounding rect
+        center_x = rect.width() / 2.0
+        center_y = rect.height() / 2.0
+
+        transform.translate(center_x, center_y) # Move origin to center
+        if item_should_be_flipped:
+            transform.scale(-1, 1)
+        if rotation_angle != 0:
+            transform.rotate(rotation_angle)
+        transform.translate(-center_x, -center_y) # Move origin back
+        
+        self.setTransform(transform)
+
+
+    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
+        if self.is_procedural_tile:
+            painter.save() # Save painter state
+
+            color_tuple = self.map_object_data_ref.get("override_color")
+            if not color_tuple:
+                asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
+                if asset_info and asset_info.get("surface_params"):
+                    color_tuple = asset_info["surface_params"][2] # (w,h,color)
+                else:
+                    color_tuple = ED_CONFIG.C.MAGENTA # Fallback # type: ignore
+            
+            brush_color = QColor(*color_tuple)
+            painter.setBrush(brush_color)
+            
+            pen_color = brush_color.darker(130) if brush_color.alpha() == 255 else Qt.GlobalColor.transparent
+            painter.setPen(QPen(pen_color, 1))
+
+
+            props = self.map_object_data_ref.get("properties", {})
+            radius = float(props.get("corner_radius", 0))
+            rect = self.boundingRect()
+
+            if radius > 0:
+                # Simplified: if radius > 0, all corners get rounded for now as per video.
+                # The boolean flags (round_top_left etc.) determine if the corner *should* be rounded.
+                # For full QPainterPath implementation (selective rounding):
+                path = QPainterPath()
+                path.moveTo(rect.topLeft() + QPointF(radius if props.get("round_top_left", True) else 0, 0))
+                if props.get("round_top_left", True):
+                    path.arcTo(QRectF(rect.topLeft(), QSizeF(radius * 2, radius * 2)), 180, -90)
+                else:
+                    path.lineTo(rect.topLeft())
+                
+                path.lineTo(rect.topRight() - QPointF(radius if props.get("round_top_right", True) else 0, 0))
+                if props.get("round_top_right", True):
+                    path.arcTo(QRectF(rect.topRight() - QPointF(radius*2,0), QSizeF(radius * 2, radius * 2)), 90, -90)
+                else:
+                    path.lineTo(rect.topRight())
+
+                path.lineTo(rect.bottomRight() - QPointF(0, radius if props.get("round_bottom_right", True) else 0))
+                if props.get("round_bottom_right", True):
+                    path.arcTo(QRectF(rect.bottomRight() - QPointF(radius*2,radius*2), QSizeF(radius * 2, radius * 2)), 0, -90)
+                else:
+                    path.lineTo(rect.bottomRight())
+
+                path.lineTo(rect.bottomLeft() + QPointF(radius if props.get("round_bottom_left", True) else 0, 0) - QPointF(0, radius if props.get("round_bottom_left", True) else 0) ) # Adjusted for lineTo
+                if props.get("round_bottom_left", True):
+                     path.arcTo(QRectF(rect.bottomLeft() - QPointF(0,radius*2) , QSizeF(radius * 2, radius * 2)), -90, -90)
+                else:
+                    path.lineTo(rect.bottomLeft())
+                path.closeSubpath()
+                painter.drawPath(path)
+            else:
+                painter.drawRect(rect)
+            
+            painter.restore() 
+        else:
+            super().paint(painter, option, widget)
 
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
@@ -92,39 +211,36 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
             return new_pos
         return super().itemChange(change, value)
 
-    def update_visuals_from_data(self, editor_state: EditorState):
-        asset_info = editor_state.assets_palette.get(self.editor_key)
+    def update_visuals_from_data(self, editor_state: EditorState): # editor_state is now self.editor_state_ref
+        asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
         if not asset_info: return
 
-        original_w, original_h = asset_info.get("original_size_pixels", (self.pixmap().width(), self.pixmap().height()))
-        
-        # Request unflipped pixmap because the item's transform handles the visual flip
-        new_pixmap = get_asset_pixmap(self.editor_key, asset_info,
-                                      QSize(original_w, original_h),
-                                      self.map_object_data_ref.get("override_color"),
-                                      get_native_size_only=True,
-                                      is_flipped_h=False) 
-        if new_pixmap and not new_pixmap.isNull():
-            if self.pixmap().cacheKey() != new_pixmap.cacheKey(): 
-                self.setPixmap(new_pixmap)
-        else: 
-            fallback_pm = QPixmap(original_w, original_h)
-            fallback_pm.fill(Qt.GlobalColor.magenta)
-            self.setPixmap(fallback_pm)
+        if not self.is_procedural_tile:
+            original_w, original_h = asset_info.get("original_size_pixels", (self.pixmap().width(), self.pixmap().height()))
+            new_pixmap = get_asset_pixmap(self.editor_key, asset_info,
+                                          QSizeF(int(original_w), int(original_h)),
+                                          self.map_object_data_ref.get("override_color"),
+                                          get_native_size_only=True,
+                                          is_flipped_h=False, rotation=0) 
+            if new_pixmap and not new_pixmap.isNull():
+                if self.pixmap().cacheKey() != new_pixmap.cacheKey(): 
+                    self.setPixmap(new_pixmap)
+            else: 
+                fallback_pm = QPixmap(int(original_w), int(original_h))
+                fallback_pm.fill(Qt.GlobalColor.magenta)
+                self.setPixmap(fallback_pm)
+        else:
+            if asset_info.get("surface_params"):
+                params = asset_info["surface_params"]
+                new_pw = float(params[0])
+                new_ph = float(params[1])
+                if abs(self.procedural_width - new_pw) > 1e-3 or abs(self.procedural_height - new_ph) > 1e-3:
+                    self.prepareGeometryChange()
+                    self.procedural_width = new_pw
+                    self.procedural_height = new_ph
+            self.update() 
 
-        # Update transform based on object's data
-        item_should_be_flipped = self.map_object_data_ref.get("is_flipped_h", False)
-        current_transform_is_flipped = self.transform().m11() < 0
-
-        if item_should_be_flipped != current_transform_is_flipped:
-            new_transform = QTransform() 
-            if item_should_be_flipped:
-                item_width = self.boundingRect().width()
-                if item_width <= 0 and self.pixmap() and not self.pixmap().isNull():
-                     item_width = self.pixmap().width()
-                new_transform.translate(item_width, 0)
-                new_transform.scale(-1, 1)
-            self.setTransform(new_transform)
+        self._apply_orientation_transform() 
 
         new_z = self.map_object_data_ref.get("layer_order", 0)
         if self.zValue() != new_z:
@@ -138,11 +254,11 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
 
 class MapViewWidget(QGraphicsView):
     mouse_moved_on_map = Signal(tuple)
-    map_object_selected_for_properties = Signal(object) # Can be map_object_data_ref or None
+    map_object_selected_for_properties = Signal(object) 
     map_content_changed = Signal()
     object_graphically_moved_signal = Signal(dict)
     view_changed = Signal()
-    context_menu_requested_for_item = Signal(object, QPointF) # Changed to QPointF for globalPos type
+    context_menu_requested_for_item = Signal(object, QPointF) 
 
     def __init__(self, editor_state: EditorState, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -156,17 +272,16 @@ class MapViewWidget(QGraphicsView):
         self.setScene(self.map_scene)
         self.object_graphically_moved_signal.connect(self._handle_internal_object_move_for_unsaved_changes)
 
-        self.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-        self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False) # Usually false for pixel art
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, False) 
+        self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False) 
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
-        self.setDragMode(QGraphicsView.DragMode.NoDrag) # Will be changed dynamically
+        self.setDragMode(QGraphicsView.DragMode.NoDrag) 
 
         self._grid_lines: List[QGraphicsLineItem] = []
-        self._map_object_items: Dict[int, QGraphicsItem] = {} # Maps id(obj_data) to QGraphicsItem
+        self._map_object_items: Dict[int, QGraphicsItem] = {} 
         self._hover_preview_item: Optional[QGraphicsPixmapItem] = None
 
-        # current_tool is now managed by editor_state.current_tool_mode
         self.middle_mouse_panning = False
         self.last_pan_point = QPointF()
         self._is_dragging_map_object = False
@@ -195,9 +310,8 @@ class MapViewWidget(QGraphicsView):
 
         self._controller_has_focus = False
         self._controller_cursor_pos: Optional[Tuple[int, int]] = None
-        self._controller_cursor_item: Optional[QGraphicsRectItem] = None
-        # _controller_tool_mode removed, use editor_state.current_tool_mode
-
+        self._controller_cursor_item: Optional[QGraphicsRectItem] = None # Corrected: removed extra ']'
+        
         self.load_map_from_state()
         logger.debug("MapViewWidget initialized.")
 
@@ -226,14 +340,14 @@ class MapViewWidget(QGraphicsView):
         elif action == ACTION_UI_RIGHT: grid_x = min(self.editor_state.map_width_tiles - 1, grid_x + pan_speed_tiles); moved = True
         elif action == ACTION_MAP_ZOOM_IN: self.zoom_in()
         elif action == ACTION_MAP_ZOOM_OUT: self.zoom_out()
-        elif action == ACTION_MAP_TOOL_PRIMARY: # Main action (place/select)
+        elif action == ACTION_MAP_TOOL_PRIMARY: 
             if self.editor_state.current_tool_mode == "select":
                 self._select_object_at_controller_cursor()
-            else: # Place or Color Pick
+            else: 
                 self._perform_place_action(grid_x, grid_y, is_first_action=True)
-        elif action == ACTION_MAP_TOOL_SECONDARY: # Alt action (erase)
+        elif action == ACTION_MAP_TOOL_SECONDARY: 
              self._perform_erase_action(grid_x, grid_y, is_first_action=True)
-        elif action == ACTION_UI_ACCEPT: # Usually redundant with MAP_TOOL_PRIMARY for map view
+        elif action == ACTION_UI_ACCEPT: 
             if self.editor_state.current_tool_mode == "select":
                 self._select_object_at_controller_cursor()
             else:
@@ -255,7 +369,6 @@ class MapViewWidget(QGraphicsView):
         self.map_scene.clearSelection()
         if found_item_to_select:
             found_item_to_select.setSelected(True)
-            # on_scene_selection_changed will emit map_object_selected_for_properties
         else:
             self.map_object_selected_for_properties.emit(None)
 
@@ -322,6 +435,7 @@ class MapViewWidget(QGraphicsView):
         self.viewport().update();
         if emit_view_changed: self.view_changed.emit()
 
+
     def draw_placed_objects(self):
         current_data_ids = {id(obj_data) for obj_data in self.editor_state.placed_objects}
 
@@ -342,7 +456,6 @@ class MapViewWidget(QGraphicsView):
         for obj_data in sorted_placed_objects:
             item_data_id = id(obj_data)
             asset_key = str(obj_data.get("asset_editor_key",""))
-
             map_scene_item: Optional[QGraphicsItem] = None
 
             if item_data_id in self._map_object_items:
@@ -351,32 +464,16 @@ class MapViewWidget(QGraphicsView):
                     map_scene_item.map_object_data_ref = obj_data 
                 if hasattr(map_scene_item, 'update_visuals_from_data'):
                     map_scene_item.update_visuals_from_data(self.editor_state) 
-                map_scene_item.setPos(float(obj_data["world_x"]), float(obj_data["world_y"]))
-                map_scene_item.setZValue(obj_data.get("layer_order", 0))
-
+                # Position and Z-value are handled within update_visuals_from_data
             else:
                 world_x, world_y = float(obj_data["world_x"]), float(obj_data["world_y"])
-
-                if asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY:
+                if asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY: # type: ignore
                     map_scene_item = CustomImageMapItem(obj_data, self.editor_state)
-                elif asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY: 
+                elif asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY:  # type: ignore
                     map_scene_item = TriggerSquareMapItem(obj_data, self.editor_state)
                 else:
-                    asset_info = self.editor_state.assets_palette.get(asset_key)
-                    if not asset_info:
-                        logger.warning(f"DrawPlaced: Asset info for key '{asset_key}' not found. Skipping.")
-                        continue
-                    original_w, original_h = asset_info.get("original_size_pixels", (ED_CONFIG.BASE_GRID_SIZE, ED_CONFIG.BASE_GRID_SIZE)) 
-                    
-                    # Standard items always get unflipped pixmap; item transform handles flip
-                    pixmap = get_asset_pixmap(asset_key, asset_info, QSize(original_w, original_h), 
-                                              obj_data.get("override_color"), 
-                                              get_native_size_only=True,
-                                              is_flipped_h=False) 
-                    if not pixmap or pixmap.isNull():
-                        logger.warning(f"DrawPlaced: Pixmap for standard asset '{asset_key}' is null."); continue
-                    map_scene_item = StandardMapObjectItem(asset_key, str(obj_data.get("game_type_id")), pixmap, int(world_x), int(world_y), obj_data)
-
+                    map_scene_item = StandardMapObjectItem(asset_key, str(obj_data.get("game_type_id")),
+                                                           int(world_x), int(world_y), obj_data, self.editor_state)
                 if map_scene_item:
                     self.map_scene.addItem(map_scene_item)
                     self._map_object_items[item_data_id] = map_scene_item
@@ -490,7 +587,7 @@ class MapViewWidget(QGraphicsView):
                 event.accept()
                 return
         
-        pan_amount = ED_CONFIG.KEY_PAN_SPEED_UNITS_PER_SECOND * (1.0 / ED_CONFIG.C.FPS) / self.editor_state.zoom_level 
+        pan_amount = ED_CONFIG.KEY_PAN_SPEED_UNITS_PER_SECOND * (1.0 / ED_CONFIG.C.FPS) / self.editor_state.zoom_level # type: ignore
         pan_x, pan_y = 0, 0
         if key == Qt.Key.Key_Left: pan_x = -pan_amount
         elif key == Qt.Key.Key_Right: pan_x = pan_amount
@@ -563,13 +660,12 @@ class MapViewWidget(QGraphicsView):
                 item_under_mouse = itm; break
         
         if event.button() == Qt.MouseButton.LeftButton:
-            if self._is_resizing_item or self._is_cropping_item: return # Already handling transform
+            if self._is_resizing_item or self._is_cropping_item: return 
             
             if self.editor_state.current_tool_mode == "select":
-                self.setDragMode(QGraphicsView.DragMode.RubberBandDrag) # For area selection
-                if item_under_mouse: # If clicking directly on an item, let superclass handle single selection
+                self.setDragMode(QGraphicsView.DragMode.RubberBandDrag) 
+                if item_under_mouse: 
                     super().mousePressEvent(event)
-                # If clicking empty space, RubberBandDrag will take over
             elif self.editor_state.current_tool_mode == "place":
                 if self.editor_state.palette_current_asset_key:
                     self._perform_place_action(grid_tx, grid_ty, is_first_action=True)
@@ -577,24 +673,32 @@ class MapViewWidget(QGraphicsView):
                 if self.editor_state.current_tile_paint_color:
                      self._perform_color_tile_action(grid_tx, grid_ty, is_first_action=True)
             elif item_under_mouse and isinstance(item_under_mouse, (StandardMapObjectItem, BaseResizableMapItem)):
-                self._is_dragging_map_object = True # Should only happen if not in select mode and clicking an item
+                self._is_dragging_map_object = True 
                 self._drag_start_data_coords = (item_under_mouse.map_object_data_ref['world_x'], item_under_mouse.map_object_data_ref['world_y']) # type: ignore
-                super().mousePressEvent(event) # Allow base class to handle selection/move start
-            else: # Fallback to rubber band if no other tool action applies
+                super().mousePressEvent(event) 
+            else: 
                 self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
                 super().mousePressEvent(event)
         
         elif event.button() == Qt.MouseButton.RightButton:
-            # Right-click should NOT place asset, but handled by AssetPalette
-            # It can be used for context menus on existing items or erase if erase tool is active
-            if self.editor_state.current_tool_mode == "tool_eraser": # Explicit erase tool
+            # For right-click on map to change cursor orientation:
+            # We handle this in mouseReleaseEvent to distinguish clicks from drags.
+            # Here, we just accept the event if in place mode to prevent
+            # other default right-click behaviors (like scene context menu) if a
+            # short click is intended for orientation change.
+            if self.editor_state.current_tool_mode == "place" and self.editor_state.palette_current_asset_key:
+                event.accept() 
+                return # Action deferred to mouseReleaseEvent
+
+            # Existing right-click logic for erase or item context menu
+            if self.editor_state.current_tool_mode == "tool_eraser": 
                 self._perform_erase_action(grid_tx, grid_ty, is_first_action=True)
             elif item_under_mouse and isinstance(item_under_mouse, (BaseResizableMapItem, StandardMapObjectItem)):
                 data_ref = getattr(item_under_mouse, 'map_object_data_ref', None)
                 if data_ref:
-                    self.context_menu_requested_for_item.emit(data_ref, event.globalPosition()) # Use QPointF
+                    self.context_menu_requested_for_item.emit(data_ref, event.globalPosition())
                     event.accept()
-            else: # Default QGraphicsView right-click behavior (e.g., context menu if defined)
+            else: 
                 super().mousePressEvent(event)
 
         elif event.button() == Qt.MouseButton.MiddleButton:
@@ -737,7 +841,49 @@ class MapViewWidget(QGraphicsView):
         self._check_edge_scroll(event.position())
         if not event.isAccepted(): super().mouseMoveEvent(event)
 
+
     def mouseReleaseEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.RightButton and \
+           self.editor_state.current_tool_mode == "place" and \
+           self.editor_state.palette_current_asset_key and \
+           not self._is_resizing_item and not self._is_cropping_item and not self._is_dragging_map_object: # Only if not doing other actions
+            
+            current_base_asset_key = self.editor_state.palette_current_asset_key
+            effective_placement_info = self.editor_state.get_current_placement_info()
+            effective_asset_key_for_rules = effective_placement_info[0] 
+
+            status_msg_orientation = ""
+            asset_palette_data = self.editor_state.assets_palette.get(str(current_base_asset_key))
+            category = asset_palette_data.get("category", "unknown") if asset_palette_data else "unknown"
+            
+            # Determine if the *effective* asset (could be a wall variant) is rotatable
+            is_rotatable_type = effective_asset_key_for_rules in ED_CONFIG.ROTATABLE_ASSET_KEYS # type: ignore
+            is_flippable_type = category in ED_CONFIG.FLIPPABLE_ASSET_CATEGORIES or \
+                                (current_base_asset_key is not None and current_base_asset_key.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX)) or \
+                                current_base_asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY # type: ignore
+            
+            if is_rotatable_type:
+                self.editor_state.palette_asset_rotation = (self.editor_state.palette_asset_rotation + 90) % 360
+                self.editor_state.palette_asset_is_flipped_h = False 
+                status_msg_orientation = f"Rotated to {self.editor_state.palette_asset_rotation}°"
+            elif is_flippable_type:
+                self.editor_state.palette_asset_is_flipped_h = not self.editor_state.palette_asset_is_flipped_h
+                self.editor_state.palette_asset_rotation = 0 
+                status_msg_orientation = "Flipped" if self.editor_state.palette_asset_is_flipped_h else "Normal orientation"
+            
+            if status_msg_orientation:
+                asset_display_name = "Current Asset"
+                if current_base_asset_key and asset_palette_data:
+                    asset_display_name = asset_palette_data.get("name_in_palette", current_base_asset_key)
+                self.show_status_message(f"{asset_display_name} preview: {status_msg_orientation}")
+                
+                scene_pos = self.mapToScene(event.position().toPoint())
+                world_x_s, world_y_s = self.snap_to_grid(scene_pos.x(), scene_pos.y())
+                self._update_hover_preview(world_x_s, world_y_s)
+            
+            event.accept()
+            return 
+
         if self._is_resizing_item or self._is_cropping_item:
             self.map_scene.setProperty("is_actively_transforming_item", False)
             QApplication.restoreOverrideCursor()
@@ -775,6 +921,11 @@ class MapViewWidget(QGraphicsView):
         super().mouseReleaseEvent(event)
 
     def contextMenuEvent(self, event: QContextMenuEvent):
+        if self.editor_state.current_tool_mode == "place" and self.editor_state.palette_current_asset_key:
+            # If a right-click was for orientation, it should have been accepted in mouseRelease.
+            # If not accepted, then proceed to check for item context menu.
+             pass
+
         scene_pos = self.mapToScene(event.pos())
         item_under_mouse = self.itemAt(scene_pos.toPoint())
 
@@ -782,7 +933,7 @@ class MapViewWidget(QGraphicsView):
             data_ref = getattr(item_under_mouse, 'map_object_data_ref', None)
             if data_ref:
                 asset_key = data_ref.get("asset_editor_key")
-                if asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY or asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY: 
+                if asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY or asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY:  # type: ignore
                     self.context_menu_requested_for_item.emit(data_ref, event.globalPos())
                     event.accept()
                     return
@@ -815,26 +966,24 @@ class MapViewWidget(QGraphicsView):
             self.pan_view_by_scrollbars(int(self._edge_scroll_dx * amount_pixels), int(self._edge_scroll_dy * amount_pixels))
 
     def _perform_place_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
-        if self.editor_state.current_tool_mode != "place": return # Only place if in place mode
+        if self.editor_state.current_tool_mode != "place": return 
         if continuous and (grid_x, grid_y) == self.editor_state.last_painted_tile_coords: return
         
-        asset_key_for_data = self.editor_state.get_current_placing_asset_effective_key()
-        if not asset_key_for_data: return
+        effective_asset_key, is_flipped, rotation, _ = self.editor_state.get_current_placement_info()
+        if not effective_asset_key: return
         
-        is_flipped_h = self.editor_state.palette_asset_is_flipped_h
-        
-        asset_definition_for_placement = self.editor_state.assets_palette.get(asset_key_for_data)
+        asset_definition_for_placement = self.editor_state.assets_palette.get(effective_asset_key)
         if not asset_definition_for_placement:
-            if asset_key_for_data.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX):
-                 filename = asset_key_for_data.split(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX,1)[1]
+            if effective_asset_key.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX): # type: ignore
+                 filename = effective_asset_key.split(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX,1)[1] # type: ignore
                  asset_definition_for_placement = {
-                    "game_type_id": ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY,
-                    "asset_editor_key": asset_key_for_data, # Store the custom prefix key
+                    "game_type_id": ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, # type: ignore
+                    "asset_editor_key": effective_asset_key, 
                     "source_file_path": f"Custom/{filename}", 
                     "colorable": False, "category": "custom"
                  }
             else:
-                logger.error(f"Palette data for effective asset '{asset_key_for_data}' not found for placement.")
+                logger.error(f"Palette data for effective asset '{effective_asset_key}' not found for placement.")
                 return
 
         made_change_in_stroke = False
@@ -851,16 +1000,16 @@ class MapViewWidget(QGraphicsView):
         if is_placer_tool:
             for r_off in range(2):
                 for c_off in range(2):
-                    if self._place_single_object_on_map(asset_key_for_data, asset_definition_for_placement, grid_x + c_off, grid_y + r_off, is_flipped_h):
+                    if self._place_single_object_on_map(effective_asset_key, asset_definition_for_placement, grid_x + c_off, grid_y + r_off, is_flipped, rotation):
                         made_change_in_stroke = True
         else:
-            if self._place_single_object_on_map(asset_key_for_data, asset_definition_for_placement, grid_x, grid_y, is_flipped_h):
+            if self._place_single_object_on_map(effective_asset_key, asset_definition_for_placement, grid_x, grid_y, is_flipped, rotation):
                 made_change_in_stroke = True
 
         if made_change_in_stroke: self.map_content_changed.emit()
         self.editor_state.last_painted_tile_coords = (grid_x, grid_y)
 
-    def _place_single_object_on_map(self, asset_key_for_data: str, asset_definition: Dict, grid_x: int, grid_y: int, is_flipped_h: bool) -> bool:
+    def _place_single_object_on_map(self, asset_key_for_data: str, asset_definition: Dict, grid_x: int, grid_y: int, is_flipped_h: bool, rotation: int) -> bool:
         world_x = int(float(grid_x * self.editor_state.grid_size))
         world_y = int(float(grid_y * self.editor_state.grid_size))
 
@@ -868,15 +1017,16 @@ class MapViewWidget(QGraphicsView):
         category = asset_definition.get("category", "unknown")
         is_spawn_type = category == "spawn"
         
-        is_custom_image_type = (asset_key_for_data == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY or
-                               (asset_key_for_data.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX) and game_id == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY) )
-        is_trigger_type = asset_key_for_data == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY 
+        is_custom_image_type = (asset_key_for_data == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY or # type: ignore
+                               (asset_key_for_data.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX) and game_id == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY) ) # type: ignore
+        is_trigger_type = asset_key_for_data == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY # type: ignore
 
         if not is_spawn_type and not is_custom_image_type and not is_trigger_type:
             for obj in self.editor_state.placed_objects:
                 if obj.get("world_x") == world_x and obj.get("world_y") == world_y and \
                    obj.get("asset_editor_key") == asset_key_for_data and \
-                   obj.get("is_flipped_h", False) == is_flipped_h: 
+                   obj.get("is_flipped_h", False) == is_flipped_h and \
+                   obj.get("rotation", 0) == rotation: 
                     if asset_definition.get("colorable") and self.editor_state.current_selected_asset_paint_color and obj.get("override_color") != self.editor_state.current_selected_asset_paint_color:
                         obj["override_color"] = self.editor_state.current_selected_asset_paint_color
                         self.update_specific_object_visuals(obj); return True
@@ -887,13 +1037,14 @@ class MapViewWidget(QGraphicsView):
             "world_x": world_x, "world_y": world_y,
             "game_type_id": game_id,
             "layer_order": 0,
-            "properties": ED_CONFIG.get_default_properties_for_asset(game_id),
-            "is_flipped_h": is_flipped_h 
+            "properties": ED_CONFIG.get_default_properties_for_asset(game_id), # type: ignore
+            "is_flipped_h": is_flipped_h,
+            "rotation": rotation
         }
 
         if is_custom_image_type:
-            if asset_key_for_data.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX):
-                 filename_from_key = asset_key_for_data.split(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX, 1)[1]
+            if asset_key_for_data.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX): # type: ignore
+                 filename_from_key = asset_key_for_data.split(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX, 1)[1] # type: ignore
                  new_obj_data["source_file_path"] = f"Custom/{filename_from_key}"
             else:
                  new_obj_data["source_file_path"] = asset_definition.get("source_file_path", "")
@@ -967,7 +1118,7 @@ class MapViewWidget(QGraphicsView):
         colored_something = False; target_point_scene = QPointF(world_x_snapped + self.editor_state.grid_size / 2.0, world_y_snapped + self.editor_state.grid_size / 2.0)
         item_to_color_data: Optional[Dict[str, Any]] = None; highest_z = -float('inf')
         for obj_data in self.editor_state.placed_objects:
-            if obj_data.get("asset_editor_key") in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY]: continue 
+            if obj_data.get("asset_editor_key") in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY]: continue  # type: ignore
             asset_info = self.editor_state.assets_palette.get(str(obj_data.get("asset_editor_key")))
             if not asset_info or not asset_info.get("colorable"): continue
             obj_x = obj_data.get("world_x", 0); obj_y = obj_data.get("world_y", 0)
@@ -1019,11 +1170,15 @@ class MapViewWidget(QGraphicsView):
         self.map_scene.clearSelection(); self.map_content_changed.emit(); self.map_object_selected_for_properties.emit(None)
         self.show_status_message(f"Deleted {len(data_refs_to_remove)} object(s).")
 
-    @Slot(str, bool, int) # asset_key, is_flipped, wall_variant_idx (from AssetPalette)
-    def on_asset_selected_for_placement(self, asset_key: Optional[str], is_flipped: bool, wall_variant_idx: int):
-        logger.debug(f"MapView: on_asset_selected_for_placement key: '{asset_key}', flipped: {is_flipped}, wall_idx: {wall_variant_idx}")
+    @Slot(str, bool, int, int) 
+    def on_asset_selected_for_placement(self, asset_key: Optional[str], is_flipped: bool, wall_variant_idx: int, rotation: int):
+        logger.debug(f"MapView: on_asset_selected_for_placement key: '{asset_key}', flipped: {is_flipped}, rotation: {rotation}, wall_idx: {wall_variant_idx}")
         
-        # EditorState already updated by AssetPalette, this is just for hover preview trigger
+        self.editor_state.palette_current_asset_key = asset_key
+        self.editor_state.palette_asset_is_flipped_h = is_flipped
+        self.editor_state.palette_asset_rotation = rotation
+        self.editor_state.palette_wall_variant_index = wall_variant_idx
+        
         if self.editor_state.current_tool_mode == "place" and self.editor_state.palette_current_asset_key:
              if self.underMouse(): 
                 scene_pos = self.mapToScene(self.mapFromGlobal(QCursor.pos())); 
@@ -1033,33 +1188,39 @@ class MapViewWidget(QGraphicsView):
 
 
     def _update_hover_preview(self, world_x: float, world_y: float):
-        effective_asset_key = self.editor_state.get_current_placing_asset_effective_key()
-        is_flipped_for_hover = self.editor_state.palette_asset_is_flipped_h # Use state for hover preview
+        effective_asset_key, is_flipped_for_hover, rotation_for_hover, _ = self.editor_state.get_current_placement_info()
 
         if self.editor_state.current_tool_mode == "place" and effective_asset_key:
             pixmap: Optional[QPixmap] = None
             
-            if effective_asset_key.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX): 
-                filename = effective_asset_key.split(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX)[1]; map_folder = editor_map_utils.get_map_specific_folder_path(self.editor_state, self.editor_state.map_name_for_function) 
+            if effective_asset_key.startswith(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX): # type: ignore
+                filename = effective_asset_key.split(ED_CONFIG.CUSTOM_ASSET_PALETTE_PREFIX,1)[1]; map_folder = editor_map_utils.get_map_specific_folder_path(self.editor_state, self.editor_state.map_name_for_function)  # type: ignore
                 full_path = ""
                 if map_folder: full_path = os.path.join(map_folder, "Custom", filename)
                 if map_folder and os.path.exists(full_path): 
-                    img = QImage(full_path)
-                    if not img.isNull():
-                        if is_flipped_for_hover: # Apply flip for hover preview
-                            transform = QTransform().scale(-1, 1)
-                            img = img.transformed(transform, Qt.TransformationMode.SmoothTransformation)
-                        pixmap = QPixmap.fromImage(img)
+                    temp_asset_data = {
+                        "source_file": full_path, 
+                        "original_size_pixels": None 
+                    }
+                    img_obj = QImage(full_path)
+                    if not img_obj.isNull():
+                        orig_w, orig_h = img_obj.width(), img_obj.height()
+                        pixmap = get_asset_pixmap(effective_asset_key, temp_asset_data, 
+                                                  QSizeF(orig_w, orig_h),
+                                                  get_native_size_only=True,
+                                                  is_flipped_h=is_flipped_for_hover, 
+                                                  rotation=rotation_for_hover)
             else:
                 asset_data = self.editor_state.assets_palette.get(effective_asset_key) 
                 if asset_data: 
                     original_w_tuple, original_h_tuple = asset_data.get("original_size_pixels", (ED_CONFIG.BASE_GRID_SIZE, ED_CONFIG.BASE_GRID_SIZE)); 
                     original_w, original_h = int(original_w_tuple), int(original_h_tuple); 
                     pixmap = get_asset_pixmap(effective_asset_key, asset_data, 
-                                              QSize(original_w,original_h), 
+                                              QSizeF(original_w,original_h), 
                                               self.editor_state.current_selected_asset_paint_color, 
                                               get_native_size_only=True,
-                                              is_flipped_h=is_flipped_for_hover) # Pass flip state for hover
+                                              is_flipped_h=is_flipped_for_hover, 
+                                              rotation=rotation_for_hover) 
             
             if pixmap and not pixmap.isNull():
                 if not self._hover_preview_item: 
@@ -1071,17 +1232,35 @@ class MapViewWidget(QGraphicsView):
                 if self._hover_preview_item.pixmap().cacheKey() != pixmap.cacheKey(): 
                     self._hover_preview_item.setPixmap(pixmap)
                 
-                self._hover_preview_item.setPos(QPointF(world_x, world_y)); 
+                # For hover preview, offset is relative to top-left of the *final transformed* pixmap
+                # QPixmap.rect() gives dimensions of the (possibly rotated) pixmap.
+                # The transform origin for drawing the item itself is its center.
+                # For hover preview, we want its logical top-left to align with grid cursor.
+                # If rotated 90/270, the logical top-left of the *original unrotated* shape
+                # ends up at different corners of the *final rotated pixmap's bounding box*.
+                
+                final_pixmap_rect = pixmap.rect()
+                pos_x, pos_y = world_x, world_y
+
+                # No offset needed for rotation because get_asset_pixmap rotates around center
+                # and returns a pixmap whose bounding box contains the rotated image.
+                # The pixmap's top-left is (0,0) of this new bounding box.
+                # We place this top-left at the grid cell.
+                # The visual center of the original asset might not be at the center of the grid cell after rotation.
+                # This behavior matches most drawing tools (place top-left of brush).
+
+                self._hover_preview_item.setPos(QPointF(pos_x, pos_y)); 
                 self._hover_preview_item.setVisible(True); 
                 return
         
         if self._hover_preview_item: self._hover_preview_item.setVisible(False)
 
-    @Slot(str) # tool_key from AssetPalette
+    @Slot(str) 
     def on_tool_selected(self, tool_key: str):
         logger.debug(f"MapView: on_tool_selected tool_key: '{tool_key}'")
         self.editor_state.palette_current_asset_key = None 
         self.editor_state.palette_asset_is_flipped_h = False
+        self.editor_state.palette_asset_rotation = 0
         self.editor_state.palette_wall_variant_index = 0
         if self._hover_preview_item: self._hover_preview_item.setVisible(False)
 
@@ -1095,10 +1274,10 @@ class MapViewWidget(QGraphicsView):
             self.editor_state.current_tool_mode = "color_pick"
             self.setDragMode(QGraphicsView.DragMode.NoDrag)
             if self.parent_window:
-                initial_c = self.editor_state.current_selected_asset_paint_color or self.editor_state.current_tile_paint_color or ED_CONFIG.C.BLUE 
+                initial_c = self.editor_state.current_selected_asset_paint_color or self.editor_state.current_tile_paint_color or ED_CONFIG.C.BLUE # type: ignore
                 new_q_color = QColorDialog.getColor(QColor(*initial_c), cast(QWidget, self.parent_window), "Select Tile Paint Color") 
                 self.editor_state.current_tile_paint_color = new_q_color.getRgb()[:3] if new_q_color.isValid() else None 
-                if hasattr(self.parent_window, 'show_status_message'): self.parent_window.show_status_message(f"Color Picker: {self.editor_state.current_tile_paint_color or 'None'}") 
+                if hasattr(self.parent_window, 'show_status_message'): self.parent_window.show_status_message(f"Color Picker: {self.editor_state.current_tile_paint_color or 'None'}") # type: ignore
         elif tool_key == "platform_wall_gray_2x2_placer": 
             self.editor_state.current_tool_mode = "place"
             self.editor_state.palette_current_asset_key = tool_key 

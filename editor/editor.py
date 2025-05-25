@@ -3,17 +3,11 @@
 # editor/editor.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.3 (Zoom shortcut fixes and event handling refined)
+## version 2.2.4 (Mouse Wheel Orientation, Selection Pane Setup)
 Level Editor for the Platformer Game (PySide6 Version).
-- Map files (.py, .json) now organized into named subfolders within /maps/.
-- Supports uploading images to the editor for use as map objects.
-- Images can be resized (Shift-drag for aspect ratio), layered, and set as background/obstacle.
-- Added resizable Trigger Squares that can link to other maps, be colored, or display an image.
-- "Save Map" (Ctrl+S) now saves both editor (.json) and game-ready (.py) files.
-- Uses custom QGraphicsItem classes for images and triggers.
-- Removed trailing semicolons and reviewed indentation.
-- Added crop_rect initialization for newly uploaded custom images.
-- Refined keyPressEvent handling for zoom shortcuts.
+- Mouse wheel over map (in place mode) orients assets on cursor.
+- Basic setup for Selection Pane dock widget and tabification.
+- Corner rounding slider prep in Properties Editor.
 """
 import sys
 import os
@@ -63,6 +57,7 @@ try:
     from . import editor_history
     from .map_view_widget import MapViewWidget
     from .editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget
+    from .editor_selection_pane import SelectionPaneWidget # Added
     from .editor_actions import *
 
     if ED_CONFIG.MINIMAP_ENABLED: # type: ignore
@@ -81,6 +76,7 @@ except ImportError as e_relative_import:
         from editor import editor_history # type: ignore
         from editor.map_view_widget import MapViewWidget # type: ignore
         from editor.editor_ui_panels import AssetPaletteWidget, PropertiesEditorDockWidget # type: ignore
+        from editor.editor_selection_pane import SelectionPaneWidget # Added
         from editor.editor_actions import * # type: ignore
 
         if ED_CONFIG.MINIMAP_ENABLED: # type: ignore
@@ -150,22 +146,24 @@ class EditorMainWindow(QMainWindow):
         self.editor_state = EditorState()
         self.settings = QSettings("MyPlatformerGame", "LevelEditor_Qt")
         
-        self.init_ui()      # init_ui must be called before create_actions if actions use widgets
+        self.init_ui()      
         self.create_actions()
         self.create_menus()
         self.create_status_bar()
 
         self.asset_palette_dock.setObjectName("AssetPaletteDock")
         self.properties_editor_dock.setObjectName("PropertiesEditorDock")
+        self.selection_pane_dock.setObjectName("SelectionPaneDock") # Added
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock: # type: ignore
             self.minimap_dock.setObjectName("MinimapDock")
 
         editor_assets.load_editor_palette_assets(self.editor_state, self) # type: ignore
         self.asset_palette_widget.populate_assets()
+        self.selection_pane_widget.populate_items() # Added
 
         if not self._is_embedded:
             self.update_window_title()
-        self.update_edit_actions_enabled_state() # This also calls update_delete_selection_action_enabled_state
+        self.update_edit_actions_enabled_state() 
 
         self._current_focused_panel_index: int = 0
         self._controller_input_timer: Optional[QTimer] = None
@@ -226,12 +224,7 @@ class EditorMainWindow(QMainWindow):
         self.map_view_widget = MapViewWidget(self.editor_state, self)
         self.setCentralWidget(self.map_view_widget)
         self._focusable_panels.append(self.map_view_widget)
-
-        # Connect scene selection changed to update delete action enabled state
-        # This needs to be done after map_view_widget is created and before actions are fully utilized
-        # Best placed here, or ensure create_actions is called after this.
         self.map_view_widget.map_scene.selectionChanged.connect(self.update_delete_selection_action_enabled_state)
-
 
         self.asset_palette_dock = QDockWidget("Asset Palette", self)
         self.asset_palette_widget = AssetPaletteWidget(self.editor_state, self)
@@ -248,17 +241,39 @@ class EditorMainWindow(QMainWindow):
         self.properties_editor_dock.setMinimumWidth(280)
         self._focusable_panels.append(self.properties_editor_widget)
 
+        # --- Selection Pane Setup ---
+        self.selection_pane_dock = QDockWidget("Selection Pane", self)
+        self.selection_pane_widget = SelectionPaneWidget(self.editor_state, self)
+        self.selection_pane_dock.setWidget(self.selection_pane_widget)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.selection_pane_dock)
+        self._focusable_panels.append(self.selection_pane_widget) # Add to focus cycle
+
+        # Tabify Properties and Selection Pane
+        self.tabifyDockWidget(self.properties_editor_dock, self.selection_pane_dock)
+        self.properties_editor_dock.raise_() # Make properties active by default
+
         if ED_CONFIG.MINIMAP_ENABLED: # type: ignore
             self.minimap_dock = QDockWidget("Minimap", self)
             self.minimap_widget = MinimapWidget(self.editor_state, self.map_view_widget, self) # type: ignore
             self.minimap_dock.setWidget(self.minimap_widget)
+            # Add minimap to the same area as properties/selection, it will create a new group below or beside
             self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.minimap_dock)
-            self.splitDockWidget(self.minimap_dock, self.properties_editor_dock, Qt.Orientation.Vertical)
+            # Example of splitting: If you want minimap below the properties/selection tab group:
+            # self.splitDockWidget(self.properties_editor_dock, self.minimap_dock, Qt.Orientation.Vertical)
+            # This line ^ might need adjustment based on how tabify interacts.
+            # Often, adding to the same area after tabifying results in a split.
+            # For simplicity, let's assume it creates a reasonable layout or user can adjust.
+            # A common layout is Asset Palette (Left), Map (Center), Properties/Selection Tabs (Right Top), Minimap (Right Bottom)
+            # To achieve Right Top/Right Bottom, you might need to dock one first, then split it with the tab group.
+            # For now, let's place it below the properties_editor_dock (which now contains selection pane as a tab)
+            if self.properties_editor_dock.parentWidget() == self: # Check if it's directly docked to main window
+                 self.splitDockWidget(self.properties_editor_dock, self.minimap_dock, Qt.Orientation.Vertical)
             self.minimap_dock.setFixedHeight(ED_CONFIG.MINIMAP_DEFAULT_HEIGHT + 35) # type: ignore
         else:
             self.minimap_dock = None # type: ignore
             self.minimap_widget = None # type: ignore
 
+        # --- Signal Connections ---
         self.asset_palette_widget.asset_selected_for_placement.connect(self.map_view_widget.on_asset_selected_for_placement)
         self.asset_palette_widget.asset_info_selected.connect(self.properties_editor_widget.display_asset_properties)
         self.asset_palette_widget.tool_selected.connect(self.map_view_widget.on_tool_selected)
@@ -267,18 +282,38 @@ class EditorMainWindow(QMainWindow):
 
         self.map_view_widget.map_object_selected_for_properties.connect(self.properties_editor_widget.display_map_object_properties)
         self.map_view_widget.map_content_changed.connect(self.handle_map_content_changed)
+        self.map_view_widget.map_content_changed.connect(self.selection_pane_widget.populate_items) # Update selection pane list
+        self.map_view_widget.map_scene.selectionChanged.connect(self.selection_pane_widget.sync_selection_from_map) # Sync selection pane from map
         self.map_view_widget.context_menu_requested_for_item.connect(self.show_map_item_context_menu)
 
+
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
-        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed) # Ensure general content change signal
+        self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed) 
         self.properties_editor_widget.controller_focus_requested_elsewhere.connect(self._cycle_panel_focus_next)
         self.properties_editor_widget.upload_image_for_trigger_requested.connect(self.handle_upload_image_for_trigger)
+
+        self.selection_pane_widget.select_map_object_via_pane_requested.connect(self._handle_select_map_object_from_pane) # Added
 
         if self.minimap_widget:
             self.map_view_widget.view_changed.connect(self.minimap_widget.schedule_view_rect_update_and_repaint)
         
         self.setDockOptions(QMainWindow.DockOption.AnimatedDocks | QMainWindow.DockOption.AllowNestedDocks | QMainWindow.DockOption.AllowTabbedDocks | QMainWindow.DockOption.VerticalTabs) # type: ignore
         if logger: logger.debug("UI components initialized.")
+
+    @Slot(object)
+    def _handle_select_map_object_from_pane(self, obj_data_ref: Dict[str, Any]):
+        """Slot to handle selection requests from the SelectionPaneWidget."""
+        if logger: logger.debug(f"MainWin: Request to select object from pane: ID {id(obj_data_ref)}")
+        self.map_view_widget.map_scene.clearSelection() # Clear existing scene selection
+        
+        item_to_select = self.map_view_widget._map_object_items.get(id(obj_data_ref))
+        if item_to_select:
+            item_to_select.setSelected(True)
+            self.map_view_widget.ensureVisible(item_to_select, 50, 50) # Ensure item is visible
+            # Properties panel will update via map_scene.selectionChanged -> on_scene_selection_changed -> map_object_selected_for_properties
+        else:
+            logger.warning(f"MainWin: Could not find QGraphicsItem for object data ID {id(obj_data_ref)} to select from pane.")
+
 
     def _init_controller_system(self):
         if logger: logger.info("Initializing controller system...")
@@ -353,16 +388,22 @@ class EditorMainWindow(QMainWindow):
                 can_emit = False
                 if current_time - last_event_time_for_key_dir > self._controller_axis_repeat_delay:
                     can_emit = True
-                elif current_time - last_event_time_for_key_dir > self._controller_axis_repeat_interval:
-                    can_emit = True
+                elif current_time - last_event_time_for_key_dir > self._controller_axis_repeat_interval: # This was a bug, should be using interval after delay
+                    # Check if this is the first repeat or subsequent
+                    if self._controller_axis_last_event_time.get(key, 0) != 0 : # if not the very first press
+                         can_emit = True
+
                 if can_emit:
                     self.controller_action_dispatched.emit(action_to_emit, axis_val)
-                    self._controller_axis_last_event_time[key] = current_time
+                    if last_event_time_for_key_dir == 0 : # first press after deadzone
+                         self._controller_axis_last_event_time[key] = current_time # Set time for delay check
+                    else: # subsequent repeats
+                         self._controller_axis_last_event_time[key] = current_time # Set time for interval check
             else: 
                 key_neg = (joy.get_id(), axis_id, -1)
                 key_pos = (joy.get_id(), axis_id, 1)
                 if key_neg in self._controller_axis_last_event_time:
-                    self._controller_axis_last_event_time[key_neg] = 0
+                    self._controller_axis_last_event_time[key_neg] = 0 # Reset timer when axis returns to deadzone
                 if key_pos in self._controller_axis_last_event_time:
                     self._controller_axis_last_event_time[key_pos] = 0
 
@@ -458,7 +499,6 @@ class EditorMainWindow(QMainWindow):
         self.undo_action = QAction("&Undo", self, shortcut=QKeySequence.StandardKey.Undo, statusTip="Undo last action", triggered=self.undo)
         self.redo_action = QAction("&Redo", self, shortcut=QKeySequence.StandardKey.Redo, statusTip="Redo last undone action", triggered=self.redo)
         
-        # Delete Selection Action (already connected to map_view_widget method)
         self.delete_selection_action = QAction("Delete Selection", self, shortcut=QKeySequence.StandardKey.Delete, statusTip="Delete selected map objects", triggered=self.map_view_widget.delete_selected_map_objects)
         self.delete_selection_action.setEnabled(False) 
 
@@ -466,7 +506,6 @@ class EditorMainWindow(QMainWindow):
         self.toggle_grid_action.setChecked(self.editor_state.show_grid)
         self.change_bg_color_action = QAction("Change &Background Color...", self, statusTip="Change map background color", triggered=self.change_background_color)
         
-        # Zoom actions (shortcuts handled by QMainWindow unless MapViewWidget has focus and handles them first)
         self.zoom_in_action = QAction("Zoom &In", self, shortcut=QKeySequence.StandardKey.ZoomIn, statusTip="Zoom in", triggered=self.map_view_widget.zoom_in)
         self.zoom_out_action = QAction("Zoom &Out", self, shortcut=QKeySequence.StandardKey.ZoomOut, statusTip="Zoom out", triggered=self.map_view_widget.zoom_out)
         self.zoom_reset_action = QAction("Reset &Zoom", self, shortcut="Ctrl+0", statusTip="Reset zoom", triggered=self.map_view_widget.reset_zoom)
@@ -509,6 +548,7 @@ class EditorMainWindow(QMainWindow):
         view_menu.addSeparator()
         view_menu.addAction(self.asset_palette_dock.toggleViewAction())
         view_menu.addAction(self.properties_editor_dock.toggleViewAction())
+        view_menu.addAction(self.selection_pane_dock.toggleViewAction()) # Added
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock: # type: ignore
             view_menu.addAction(self.minimap_dock.toggleViewAction())
         
@@ -565,7 +605,7 @@ class EditorMainWindow(QMainWindow):
     def update_delete_selection_action_enabled_state(self):
         if hasattr(self, 'map_view_widget') and hasattr(self.map_view_widget, 'map_scene'):
             can_delete = bool(self.map_view_widget.map_scene.selectedItems())
-            if hasattr(self, 'delete_selection_action'): # Check if action exists
+            if hasattr(self, 'delete_selection_action'): 
                 self.delete_selection_action.setEnabled(can_delete)
         elif hasattr(self, 'delete_selection_action'):
             self.delete_selection_action.setEnabled(False)
@@ -637,6 +677,7 @@ class EditorMainWindow(QMainWindow):
                     self.asset_palette_widget.clear_selection()
                     self.asset_palette_widget.populate_assets()
                     self.properties_editor_widget.clear_display()
+                    self.selection_pane_widget.populate_items() # Added
                     if not self._is_embedded:
                         self.update_window_title()
                     self.show_status_message(f"New map '{clean_map_name}' created. Save to create files.", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2) # type: ignore
@@ -668,6 +709,7 @@ class EditorMainWindow(QMainWindow):
                 self.asset_palette_widget.clear_selection()
                 self.asset_palette_widget.populate_assets()
                 self.properties_editor_widget.clear_display()
+                self.selection_pane_widget.populate_items() # Added
                 if not self._is_embedded:
                     self.update_window_title()
                 self.show_status_message(f"Map '{self.editor_state.map_name_for_function}' loaded.")
@@ -744,6 +786,7 @@ class EditorMainWindow(QMainWindow):
             if not self._is_embedded:
                 self.update_window_title()
             self.update_edit_actions_enabled_state()
+            self.selection_pane_widget.populate_items() # Refresh list after save (name might formalize)
             self.show_status_message(f"Map '{self.editor_state.map_name_for_function}' saved (JSON & PY).")
             return True
         elif json_saved_ok:
@@ -800,6 +843,7 @@ class EditorMainWindow(QMainWindow):
                     self.update_window_title()
                 self.update_edit_actions_enabled_state()
                 self.asset_palette_widget.populate_assets()
+                self.selection_pane_widget.populate_items() # Added
             except Exception as e_rename_map:
                 if logger: logger.error(f"Error during map rename process: {e_rename_map}", exc_info=True)
                 QMessageBox.critical(self, "Rename Error", f"An unexpected error occurred during map rename: {e_rename_map}")
@@ -825,6 +869,7 @@ class EditorMainWindow(QMainWindow):
                 self.asset_palette_widget.clear_selection()
                 self.asset_palette_widget.populate_assets()
                 self.properties_editor_widget.clear_display()
+                self.selection_pane_widget.populate_items() # Added
                 if not self._is_embedded:
                     self.update_window_title()
                 self.update_edit_actions_enabled_state()
@@ -885,12 +930,14 @@ class EditorMainWindow(QMainWindow):
                     "current_height": img_original_height,
                     "crop_rect": None, 
                     "layer_order": 0,
+                    "rotation": 0, # Default
+                    "is_flipped_h": False, # Default
                     "properties": ED_CONFIG.get_default_properties_for_asset(ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY) # type: ignore
                 }
                 editor_history.push_undo_state(self.editor_state) # type: ignore
                 self.editor_state.placed_objects.append(new_image_obj_data)
-                self.map_view_widget.draw_placed_objects()
-                self.handle_map_content_changed()
+                self.map_view_widget.draw_placed_objects() # This will call selection_pane_widget.populate_items via map_content_changed
+                self.handle_map_content_changed() 
                 
                 if self.asset_palette_widget.category_filter_combo.currentText().lower() == "custom":
                     self.asset_palette_widget.populate_assets()
@@ -949,7 +996,7 @@ class EditorMainWindow(QMainWindow):
         
         map_object_data_ref["layer_order"] = new_z
         self.map_view_widget.draw_placed_objects()
-        self.handle_map_content_changed()
+        self.handle_map_content_changed() # This will also trigger selection_pane_widget.populate_items()
         self.show_status_message(f"Object layer order changed.")
 
     @Slot(dict)
@@ -981,7 +1028,7 @@ class EditorMainWindow(QMainWindow):
                 trigger_object_data_ref["properties"]["image_in_square"] = relative_path
                 self.properties_editor_widget.update_property_field_value(trigger_object_data_ref, "image_in_square", relative_path)
                 self.map_view_widget.update_specific_object_visuals(trigger_object_data_ref)
-                self.handle_map_content_changed()
+                self.handle_map_content_changed() # This will also trigger selection_pane_widget.populate_items()
                 self.show_status_message(f"Image '{image_filename}' set for trigger square.")
             except Exception as e_upload_trigger:
                 if logger: logger.error(f"Error setting image for trigger '{image_filename}': {e_upload_trigger}", exc_info=True)
@@ -1048,6 +1095,7 @@ class EditorMainWindow(QMainWindow):
             if not self._is_embedded:
                 self.update_window_title()
             self.asset_palette_widget.populate_assets()
+            self.selection_pane_widget.populate_items() # Added
         else:
             self.show_status_message("Nothing to undo or undo failed.")
 
@@ -1066,6 +1114,7 @@ class EditorMainWindow(QMainWindow):
             if not self._is_embedded:
                 self.update_window_title()
             self.asset_palette_widget.populate_assets()
+            self.selection_pane_widget.populate_items() # Added
         else:
             self.show_status_message("Nothing to redo or redo failed.")
 
@@ -1137,6 +1186,7 @@ class EditorMainWindow(QMainWindow):
     def save_geometry_and_state(self):
         if not self.asset_palette_dock.objectName(): self.asset_palette_dock.setObjectName("AssetPaletteDock")
         if not self.properties_editor_dock.objectName(): self.properties_editor_dock.setObjectName("PropertiesEditorDock")
+        if not self.selection_pane_dock.objectName(): self.selection_pane_dock.setObjectName("SelectionPaneDock") # Added
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock and not self.minimap_dock.objectName(): # type: ignore
             self.minimap_dock.setObjectName("MinimapDock")
         self.settings.setValue("geometry", self.saveGeometry())

@@ -3542,7 +3542,7 @@
             "properties": {
                 "health": 3,
                 "move_speed": 100.0,
-                "max_health": 100
+                "max_health": 104
             }
         },
         {
@@ -3553,18 +3553,6 @@
             "properties": {
                 "health": 3,
                 "move_speed": 150.0
-            }
-        },
-        {
-            "asset_editor_key": "enemy_gray",
-            "world_x": 680,
-            "world_y": 880,
-            "game_type_id": "enemy_gray",
-            "properties": {
-                "health": 3,
-                "move_speed": 150.0,
-                "max_health": 200,
-                "patrol_behavior": "stationary"
             }
         },
         {
@@ -3644,7 +3632,8 @@
             "properties": {
                 "health": 2,
                 "move_speed": 120.0,
-                "patrol_behavior": "turn_on_edge"
+                "patrol_behavior": "turn_on_edge",
+                "max_health": 200
             }
         },
         {
@@ -3656,7 +3645,8 @@
                 "patrol_range_tiles": 6,
                 "move_speed": 100.0,
                 "health": 4,
-                "can_fly": false
+                "can_fly": false,
+                "max_health": 500
             }
         },
         {
@@ -4247,8 +4237,8 @@
         },
         {
             "asset_editor_key": "object_stone_idle",
-            "world_x": 600,
-            "world_y": 480,
+            "world_x": 640,
+            "world_y": 360,
             "game_type_id": "object_stone_idle",
             "layer_order": 0,
             "properties": {
@@ -4261,15 +4251,15 @@
         },
         {
             "asset_editor_key": "object_stone_idle",
-            "world_x": 640,
+            "world_x": 680,
             "world_y": 480,
             "game_type_id": "object_stone_idle",
             "layer_order": 0,
             "properties": {
                 "destructible": true,
-                "health": 150,
+                "health": 2,
                 "can_be_pushed": true,
-                "push_resistance": 1.0,
+                "push_resistance": 0.1,
                 "drops_item_on_destroy": ""
             }
         },
@@ -4285,7 +4275,8 @@
                 "can_be_pushed": true,
                 "is_heavy": true,
                 "is_flipped_h": true
-            }
+            },
+            "is_flipped_h": true
         },
         {
             "asset_editor_key": "object_stone_crouch",
@@ -4299,7 +4290,8 @@
                 "can_be_pushed": true,
                 "is_heavy": true,
                 "is_flipped_h": true
-            }
+            },
+            "is_flipped_h": true
         },
         {
             "asset_editor_key": "object_stone_crouch",
@@ -4313,7 +4305,8 @@
                 "can_be_pushed": true,
                 "is_heavy": true,
                 "is_flipped_h": true
-            }
+            },
+            "is_flipped_h": true
         },
         {
             "asset_editor_key": "object_stone_idle",
@@ -4362,8 +4355,8 @@
             ]
         }
     ],
-    "camera_offset_x": 295.0,
-    "camera_offset_y": 180.0,
+    "camera_offset_x": -79.0,
+    "camera_offset_y": 72.0,
     "zoom_level": 0.8333333333333334,
     "show_grid": true,
     "asset_specific_variables": {}

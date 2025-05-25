@@ -7,6 +7,7 @@
 Handles loading and managing assets for the editor's palette using PySide6.
 - Includes placeholder icon generation for trigger squares.
 - get_asset_pixmap can now handle source_file paths being absolute for custom assets.
+- Added rotation and flip support to get_asset_pixmap.
 """
 import os
 import sys
@@ -154,7 +155,8 @@ def get_asset_pixmap(asset_editor_key: str,
                      requested_target_size: QSize, 
                      override_color: Optional[Tuple[int,int,int]] = None,
                      get_native_size_only: bool = False,
-                     is_flipped_h: bool = False) -> Optional[QPixmap]:
+                     is_flipped_h: bool = False,
+                     rotation: int = 0) -> Optional[QPixmap]: # Added rotation
     native_pixmap: Optional[QPixmap] = None
     ts = ED_CONFIG.BASE_GRID_SIZE
 
@@ -172,7 +174,6 @@ def get_asset_pixmap(asset_editor_key: str,
         full_path_abs = source_file_path if os.path.isabs(source_file_path) else resource_path(source_file_path)
         full_path_norm = os.path.normpath(full_path_abs)
         
-        # logger.debug(f"get_asset_pixmap: Loading '{asset_editor_key}' from '{full_path_norm}'") # Can be noisy
         if not os.path.exists(full_path_norm):
             logger.error(f"File NOT FOUND: '{full_path_norm}' for asset '{asset_editor_key}'")
         else:
@@ -240,38 +241,72 @@ def get_asset_pixmap(asset_editor_key: str,
         else:
             logger.error(f"Failed to begin painter on fallback pixmap for {asset_editor_key}")
         
-        if is_flipped_h and not fallback_pixmap.isNull(): # Flip fallback if needed
+        if is_flipped_h and not fallback_pixmap.isNull(): 
             try:
                 temp_img = fallback_pixmap.toImage()
                 if not temp_img.isNull():
-                    flipped_img = temp_img.mirrored(True, False) # Horizontal flip
+                    flipped_img = temp_img.mirrored(True, False) 
                     if not flipped_img.isNull():
                         fallback_pixmap = QPixmap.fromImage(flipped_img)
             except Exception as e_flip_fallback:
                 logger.error(f"Error flipping fallback pixmap for '{asset_editor_key}': {e_flip_fallback}")
+        
+        if rotation != 0 and not fallback_pixmap.isNull():
+            try:
+                temp_img = fallback_pixmap.toImage()
+                if not temp_img.isNull():
+                    img_center = temp_img.rect().center()
+                    transform = QTransform().translate(img_center.x(), img_center.y()).rotate(float(rotation)).translate(-img_center.x(), -img_center.y())
+                    rotated_img = temp_img.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+                    if not rotated_img.isNull():
+                        fallback_pixmap = QPixmap.fromImage(rotated_img)
+            except Exception as e_rotate_fallback:
+                logger.error(f"Error rotating fallback pixmap for '{asset_editor_key}': {e_rotate_fallback}")
         return fallback_pixmap
 
-    # Apply flip to the successfully loaded/created native_pixmap if requested
+    # Apply flip 
     if is_flipped_h and native_pixmap and not native_pixmap.isNull():
         try:
             temp_img = native_pixmap.toImage()
             if not temp_img.isNull():
-                flipped_img = temp_img.mirrored(True, False) # Horizontal flip
+                flipped_img = temp_img.mirrored(True, False) 
                 if not flipped_img.isNull():
                     native_pixmap = QPixmap.fromImage(flipped_img)
-                else:
-                    logger.error(f"Failed to mirror image for '{asset_editor_key}'")
-            else:
-                logger.error(f"Failed to convert pixmap to image for flipping for '{asset_editor_key}'")
+                else: logger.error(f"Failed to mirror image for '{asset_editor_key}'")
+            else: logger.error(f"Failed to convert pixmap to image for flipping for '{asset_editor_key}'")
         except Exception as e_flip:
             logger.error(f"Error flipping pixmap for '{asset_editor_key}': {e_flip}", exc_info=True)
     
+    # Apply rotation
+    if rotation != 0 and native_pixmap and not native_pixmap.isNull():
+        try:
+            temp_img = native_pixmap.toImage()
+            if not temp_img.isNull():
+                img_center = temp_img.rect().center()
+                transform = QTransform().translate(img_center.x(), img_center.y()).rotate(float(rotation)).translate(-img_center.x(), -img_center.y())
+                rotated_img = temp_img.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+                
+                if not rotated_img.isNull():
+                    native_pixmap = QPixmap.fromImage(rotated_img)
+                else: logger.error(f"Failed to rotate image for '{asset_editor_key}'")
+            else: logger.error(f"Failed to convert pixmap to image for rotation for '{asset_editor_key}'")
+        except Exception as e_rotate:
+            logger.error(f"Error rotating pixmap for '{asset_editor_key}': {e_rotate}", exc_info=True)
+
     if get_native_size_only:
         orig_size_data = asset_data_entry.get("original_size_pixels")
         if orig_size_data and isinstance(orig_size_data, tuple) and len(orig_size_data) == 2 and native_pixmap:
             target_native_w, target_native_h = orig_size_data
-            if native_pixmap.size() != QSize(target_native_w, target_native_h) and target_native_w > 0 and target_native_h > 0:
-                return native_pixmap.scaled(target_native_w, target_native_h, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            # Note: After rotation, width and height might have swapped.
+            # If we must strictly return the original_size_pixels, scaling might be needed again.
+            # For now, assume rotation changes effective dimensions for 'native' size if rotated by 90/270.
+            current_w, current_h = native_pixmap.width(), native_pixmap.height()
+            if rotation % 180 != 0: # 90 or 270 degrees rotation
+                 current_w, current_h = current_h, current_w # Swap effective dimensions
+
+            if current_w != target_native_w or current_h != target_native_h:
+                 if target_native_w > 0 and target_native_h > 0:
+                    return native_pixmap.scaled(target_native_w, target_native_h, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation) # This might distort if aspect changed due to rotation
         return native_pixmap 
     
     if native_pixmap and native_pixmap.size() != requested_target_size and requested_target_size.isValid() and requested_target_size.width() > 0 and requested_target_size.height() > 0 :
@@ -295,7 +330,6 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
     fallback_qcolor_blue = QColor(*getattr(ED_CONFIG.C, 'BLUE', (0,0,255))) # type: ignore
 
     for asset_key, asset_info_def in ED_CONFIG.EDITOR_PALETTE_ASSETS.items(): # type: ignore
-        # logger.debug(f"Processing palette asset: {asset_key}") # Can be noisy
         asset_data_entry: Dict[str, Any] = {
             "game_type_id": asset_info_def.get("game_type_id", asset_key),
             "category": asset_info_def.get("category", "unknown"),
@@ -315,7 +349,7 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
                                                                 QSize(1,1), 
                                                                 override_color=None, 
                                                                 get_native_size_only=True,
-                                                                is_flipped_h=False) # Base size determination is always unflipped
+                                                                is_flipped_h=False, rotation=0) 
         if native_pixmap_for_size_determination and not native_pixmap_for_size_determination.isNull():
             original_w, original_h = native_pixmap_for_size_determination.width(), native_pixmap_for_size_determination.height()
         elif "surface_params" in asset_info_def:
@@ -324,18 +358,19 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
                 original_w, original_h = params[0], params[1]
         asset_data_entry["original_size_pixels"] = (original_w, original_h)
         
-        pixmap_for_palette = get_asset_pixmap(asset_key, asset_data_entry, target_thumb_size, get_native_size_only=False, is_flipped_h=False) # Palette icon initially unflipped
+        # Palette icons are always default orientation
+        pixmap_for_palette = get_asset_pixmap(asset_key, asset_data_entry, target_thumb_size, get_native_size_only=False, is_flipped_h=False, rotation=0)
         
         intended_pixmap_created_successfully = False
         if pixmap_for_palette and not pixmap_for_palette.isNull():
             is_fallback_red_check_img = pixmap_for_palette.toImage()
-            if not is_fallback_red_check_img.isNull(): # Check if image conversion was successful
+            if not is_fallback_red_check_img.isNull(): 
                 is_fallback_red = (pixmap_for_palette.size() == target_thumb_size and
                                    is_fallback_red_check_img.pixelColor(0,0) == fallback_qcolor_red and
                                    is_fallback_red_check_img.pixelColor(target_thumb_size.width()-1, 0) == fallback_qcolor_red)
                 if not is_fallback_red:
                     intended_pixmap_created_successfully = True
-            else: # Image conversion failed, assume it's not the intended pixmap
+            else: 
                 logger.warning(f"Pixmap toImage() failed for palette asset '{asset_key}'")
         
         if not pixmap_for_palette or pixmap_for_palette.isNull():
@@ -361,11 +396,12 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
         
         asset_data_entry["q_pixmap"] = pixmap_for_palette
 
+        # Cursor pixmap is also initially unflipped/unrotated; MapViewWidget handles dynamic cursor visuals
         cursor_base_pixmap_native = get_asset_pixmap(asset_key, asset_data_entry, 
                                                      QSize(max(1,original_w), max(1,original_h)), 
                                                      override_color=None, 
                                                      get_native_size_only=True,
-                                                     is_flipped_h=False) # Cursor preview is also based on unflipped data; MapViewWidget handles flip via item transform or by requesting flipped if item is simple
+                                                     is_flipped_h=False, rotation=0) 
         pixmap_for_cursor: Optional[QPixmap] = None
         if cursor_base_pixmap_native and not cursor_base_pixmap_native.isNull():
             try:
@@ -419,3 +455,5 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
         else: failed_loads += 1
 
     logger.info(f"Palette asset loading complete. Success: {successful_loads}, Failed/Fallback: {failed_loads}.")
+
+#################### END OF FILE: editor_assets.py ####################
