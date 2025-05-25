@@ -1,13 +1,13 @@
 {
     "config_version": "2.3.7",
     "player1_settings": {
-        "input_device": "joystick_pygame_0",
-        "keyboard_enabled": false,
-        "controller_enabled": true
-    },
-    "player2_settings": {
         "input_device": "keyboard_p1",
         "keyboard_enabled": true,
+        "controller_enabled": false
+    },
+    "player2_settings": {
+        "input_device": "unassigned",
+        "keyboard_enabled": false,
         "controller_enabled": false
     },
     "player3_settings": {

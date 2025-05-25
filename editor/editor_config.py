@@ -3,11 +3,12 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.2 (Selection Tool and Wall Variants)
+## version 2.2.3 (Corner Rounding Properties and Slider Prep)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added "Select Tool".
 - Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
 - Added WALL_VARIANTS_CYCLE list.
+- Uncommented wall corner rounding properties for slider implementation.
 """
 import sys
 import os
@@ -160,10 +161,10 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "platform_wall_gray_1_3_right": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_right", "category": "tile", "name_in_palette": "Wall 1/3 Right"},
     "platform_wall_gray_1_3_bottom": {"surface_params": (TS, TS // 3, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_bottom", "category": "tile", "name_in_palette": "Wall 1/3 Bottom"},
     "platform_wall_gray_1_3_left": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_left", "category": "tile", "name_in_palette": "Wall 1/3 Left"},
-    # "platform_wall_gray_1_4_top_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_left", "category": "tile", "name_in_palette": "Wall 1/4 TL"},
-    # "platform_wall_gray_1_4_top_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_right", "category": "tile", "name_in_palette": "Wall 1/4 TR"},
-    # "platform_wall_gray_1_4_bottom_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_right", "category": "tile", "name_in_palette": "Wall 1/4 BR"},
-    # "platform_wall_gray_1_4_bottom_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_left", "category": "tile", "name_in_palette": "Wall 1/4 BL"},
+    "platform_wall_gray_1_4_top_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_left", "category": "tile", "name_in_palette": "Wall 1/4 TL"},
+    "platform_wall_gray_1_4_top_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_right", "category": "tile", "name_in_palette": "Wall 1/4 TR"},
+    "platform_wall_gray_1_4_bottom_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_right", "category": "tile", "name_in_palette": "Wall 1/4 BR"},
+    "platform_wall_gray_1_4_bottom_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_left", "category": "tile", "name_in_palette": "Wall 1/4 BL"},
 
     "platform_ledge_green_full": {"surface_params": (TS, TS, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
     "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
@@ -201,10 +202,13 @@ WALL_VARIANTS_CYCLE: List[str] = [
 ]
 
 # --- Asset Orientation Rules (New) ---
-# Categories/keys that support rotation (typically walls)
-ROTATABLE_ASSET_KEYS: List[str] = [key for key in EDITOR_PALETTE_ASSETS if "wall" in key.lower() and EDITOR_PALETTE_ASSETS[key].get("category") == "tile"]
-# Categories/keys that support flipping (most other placeable items)
-FLIPPABLE_ASSET_CATEGORIES: List[str] = ["object", "enemy", "spawn", "item"] # Custom images and triggers also support flip via their properties
+# Asset keys that support 90-degree rotation (typically walls and their variants)
+ROTATABLE_ASSET_KEYS: List[str] = [
+    key for key in EDITOR_PALETTE_ASSETS 
+    if ("wall" in key.lower() or "ledge" in key.lower()) and EDITOR_PALETTE_ASSETS[key].get("category") == "tile"
+]
+# Categories/keys that support horizontal flipping (most other placeable items)
+FLIPPABLE_ASSET_CATEGORIES: List[str] = ["object", "enemy", "spawn", "item", "hazard"] # Custom images and triggers also support flip via their properties
 
 
 _PLAYER_DEFAULT_PROPS_TEMPLATE = {
@@ -223,11 +227,11 @@ _BASE_WALL_PROPERTIES = {
     "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
     "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health (if Dest.)"},
     "material_type": {"type": "str", "default": "stone", "label": "Material", "options": ["stone", "wood", "metal", "ice"]},
-    "corner_radius": {"type": "int", "default": 0, "min": 0, "max": TS // 2, "label": "Corner Radius"},
-    "round_top_left": {"type": "bool", "default": False, "label": "Round Top-Left"}, # Default to False for square corners
-    "round_top_right": {"type": "bool", "default": False, "label": "Round Top-Right"},
-    "round_bottom_left": {"type": "bool", "default": False, "label": "Round Bottom-Left"},
-    "round_bottom_right": {"type": "bool", "default": False, "label": "Round Bottom-Right"},
+    "corner_radius": {"type": "slider", "default": 0, "min": 0, "max": TS // 2, "label": "Corner Radius"}, # Changed type to "slider"
+    "round_top_left": {"type": "bool", "default": True, "label": "Round Top-Left"}, 
+    "round_top_right": {"type": "bool", "default": True, "label": "Round Top-Right"},
+    "round_bottom_left": {"type": "bool", "default": True, "label": "Round Bottom-Left"},
+    "round_bottom_right": {"type": "bool", "default": True, "label": "Round Bottom-Right"},
 }
 
 

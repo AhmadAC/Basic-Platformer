@@ -3,10 +3,10 @@
 # editor_state.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.1 (Asset Flip/Cycle State)
+## version 2.2.2 (Asset Flip/Cycle State and Rotation)
 Defines the EditorState class, which holds all the dynamic state
 and data for the level editor, adapted for PySide6.
-- Added state for palette asset orientation (flip) and wall variant cycling.
+- Added state for palette asset orientation (flip, rotation) and wall variant cycling.
 """
 import logging
 from typing import Optional, Dict, List, Tuple, Any, Callable
@@ -28,20 +28,21 @@ class EditorState:
         self.background_color: Tuple[int, int, int] = ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE
 
         # --- Placed Objects and Properties ---
-        # Each object includes "is_flipped_h": bool for standard assets.
+        # Each object includes "is_flipped_h": bool and "rotation": int (0, 90, 180, 270)
         self.placed_objects: List[Dict[str, Any]] = []
         self.asset_specific_variables: Dict[str, Dict[str, Any]] = {} 
 
         # --- Asset Palette State ---
         self.assets_palette: Dict[str, Dict[str, Any]] = {}
-        self._selected_asset_editor_key: Optional[str] = None 
+        self._selected_asset_editor_key: Optional[str] = None # Asset key whose *properties* are shown (DEPRECATED for placement)
         self.current_selected_asset_paint_color: Optional[Tuple[int,int,int]] = None
         
-        # New state for asset orientation/variant in palette
-        self.palette_current_asset_key: Optional[str] = None # The asset key currently active in the palette for placement
-        self.palette_asset_is_flipped_h: bool = False # If the palette_current_asset_key should be placed flipped
-        self.palette_wall_variant_index: int = 0 # Index into ED_CONFIG.WALL_VARIANTS_CYCLE for current wall
-        self.current_tool_mode: str = "place" # Default to "place" on startup, "select" will be a mode
+        # State for the asset currently selected for placement from the palette
+        self.palette_current_asset_key: Optional[str] = None 
+        self.palette_asset_is_flipped_h: bool = False 
+        self.palette_asset_rotation: int = 0 # Degrees: 0, 90, 180, 270
+        self.palette_wall_variant_index: int = 0 # Index into ED_CONFIG.WALL_VARIANTS_CYCLE
+        self.current_tool_mode: str = "place" 
 
         # --- Camera, View, and Tool State ---
         self.camera_offset_x: float = 0.0
@@ -49,8 +50,7 @@ class EditorState:
         self.zoom_level: float = 1.0
         self.show_grid: bool = True
 
-        # self.current_tool_mode: str = "place" # Now handled above with palette state
-        self.current_tile_paint_color: Optional[Tuple[int,int,int]] = None
+        self.current_tile_paint_color: Optional[Tuple[int,int,int]] = None # For color picker tool
 
         self.last_painted_tile_coords: Optional[Tuple[int, int]] = None
         self.last_erased_tile_coords: Optional[Tuple[int, int]] = None
@@ -81,47 +81,56 @@ class EditorState:
     @property
     def selected_asset_editor_key(self) -> Optional[str]:
         """
-        DEPRECATED: Use palette_current_asset_key, palette_asset_is_flipped_h,
-        and palette_wall_variant_index for placement context.
-        This property might still be used by PropertiesEditor to know what type's defaults to show.
+        DEPRECATED for placement context.
+        This property indicates which asset's *default properties* are displayed in the PropertiesEditor
+        when an asset is selected from the palette (but not yet placed).
+        For actual placement context, use palette_current_asset_key, palette_asset_is_flipped_h,
+        palette_asset_rotation, and palette_wall_variant_index.
         """
         return self._selected_asset_editor_key
 
     @selected_asset_editor_key.setter
     def selected_asset_editor_key(self, value: Optional[str]):
         """
-        DEPRECATED for placement context. Set palette_current_asset_key instead.
-        This primarily signals the PropertiesEditor.
+        DEPRECATED for placement context. Sets the asset whose properties are shown.
+        When a new asset type is selected for *info display* from the palette,
+        it also becomes the *initial candidate* for placement, resetting its orientation.
         """
         if self._selected_asset_editor_key != value:
             self._selected_asset_editor_key = value
-            logger.info(f"DEPRECATED selected_asset_editor_key changed to: '{value}' (for properties panel, not placement)")
-            # When a new asset is selected FOR THE PALETTE to show its details (not for placement intent)
-            # reset the placement-specific states
-            if value is not None: # If selecting a new asset type for info
-                 self.palette_current_asset_key = value # It becomes the current base for potential placement
+            logger.info(f"EditorState: _selected_asset_editor_key (for properties panel) changed to: '{value}'")
+            
+            # If an asset type is selected in the palette (e.g., for viewing its default props),
+            # also make it the current candidate for placement and reset its orientation.
+            if value is not None:
+                 self.palette_current_asset_key = value 
                  self.palette_asset_is_flipped_h = False
-                 if value == ED_CONFIG.WALL_BASE_KEY:
-                     self.palette_wall_variant_index = 0 # Reset to base wall
-                 else: # For non-wall assets, the variant index is not used in the same way
-                     self.palette_wall_variant_index = 0 # Or -1 to indicate not applicable for wall cycle
+                 self.palette_asset_rotation = 0 
+                 if value == ED_CONFIG.WALL_BASE_KEY: # type: ignore
+                     self.palette_wall_variant_index = 0 
+                 else: 
+                     self.palette_wall_variant_index = 0 
 
 
-    def get_current_placing_asset_effective_key(self) -> Optional[str]:
+    def get_current_placement_info(self) -> Tuple[Optional[str], bool, int, int]:
         """
-        Determines the actual asset key to be placed, considering wall variants.
+        Returns the effective asset key for placement (considering wall variants),
+        its flip state, rotation, and wall variant index.
         """
-        if self.current_tool_mode != "place" or not self.palette_current_asset_key:
-            return None
+        effective_key = self.palette_current_asset_key
+        if self.palette_current_asset_key == ED_CONFIG.WALL_BASE_KEY: # type: ignore
+            if 0 <= self.palette_wall_variant_index < len(ED_CONFIG.WALL_VARIANTS_CYCLE): # type: ignore
+                effective_key = ED_CONFIG.WALL_VARIANTS_CYCLE[self.palette_wall_variant_index] # type: ignore
+            else:
+                logger.warning(f"palette_wall_variant_index {self.palette_wall_variant_index} out of bounds for WALL_VARIANTS_CYCLE. Using WALL_BASE_KEY.")
+                effective_key = ED_CONFIG.WALL_BASE_KEY # type: ignore
         
-        if self.palette_current_asset_key == ED_CONFIG.WALL_BASE_KEY:
-            if 0 <= self.palette_wall_variant_index < len(ED_CONFIG.WALL_VARIANTS_CYCLE):
-                return ED_CONFIG.WALL_VARIANTS_CYCLE[self.palette_wall_variant_index]
-            else: # Fallback if index is out of bounds
-                logger.warning(f"palette_wall_variant_index {self.palette_wall_variant_index} out of bounds. Defaulting to base wall.")
-                return ED_CONFIG.WALL_BASE_KEY
-        return self.palette_current_asset_key
-
+        return (
+            effective_key,
+            self.palette_asset_is_flipped_h,
+            self.palette_asset_rotation,
+            self.palette_wall_variant_index
+        )
 
     def get_map_pixel_width(self) -> int:
         return self.map_width_tiles * self.grid_size
@@ -148,9 +157,10 @@ class EditorState:
         self.zoom_level = 1.0
         self.unsaved_changes = False
         
-        self._selected_asset_editor_key = None # Info selection
-        self.palette_current_asset_key = None # Placement selection
+        self._selected_asset_editor_key = None # Info selection (for properties panel)
+        self.palette_current_asset_key = None # Actual placement selection
         self.palette_asset_is_flipped_h = False
+        self.palette_asset_rotation = 0
         self.palette_wall_variant_index = 0
 
         self.current_tool_mode = "place" # Reset tool mode
