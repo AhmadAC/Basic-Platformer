@@ -1,15 +1,14 @@
-#################### START OF FILE: editor_config.py ####################
-
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.4 (Added is_crouched_variant property for Statues)
+## version 2.2.5 (Added apply_gravity property for custom images)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added "Select Tool".
 - Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
 - Added WALL_VARIANTS_CYCLE list.
 - Uncommented wall corner rounding properties for slider implementation.
 - Added "is_crouched_variant" to stone object properties.
+- Added "apply_gravity" to custom image properties.
 """
 import sys
 import os
@@ -220,11 +219,12 @@ _BASE_WALL_PROPERTIES = {
     "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
     "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health (if Dest.)"},
     "material_type": {"type": "str", "default": "stone", "label": "Material", "options": ["stone", "wood", "metal", "ice"]},
-    "corner_radius": {"type": "slider", "default": 0, "min": 0, "max": TS // 2, "label": "Corner Radius"}, # Changed type to "slider"
+    "corner_radius": {"type": "slider", "default": 0, "min": 0, "max": TS // 2, "label": "Corner Radius"},
     "round_top_left": {"type": "bool", "default": True, "label": "Round Top-Left"},
     "round_top_right": {"type": "bool", "default": True, "label": "Round Top-Right"},
     "round_bottom_left": {"type": "bool", "default": True, "label": "Round Bottom-Left"},
     "round_bottom_right": {"type": "bool", "default": True, "label": "Round Bottom-Right"},
+    "is_boundary": {"type": "bool", "default": False, "label": "Is Map Boundary"}, # Added to base
 }
 
 
@@ -238,7 +238,7 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "enemy_gray":   _ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
     "enemy_pink":   _ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
     "enemy_purple": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "teleport_range_tiles": {"type": "int", "default": 0, "min":0, "max":20, "label": "Teleport Range (Tiles)"}},
-    "enemy_orange": _ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), # This is "Enemy Orange (Red)"
+    "enemy_orange": _ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
     "enemy_yellow": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "is_invincible_while_charging": {"type": "bool", "default": False, "label": "Invincible Charge"}},
     "enemy_cactus": {
         **_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
@@ -257,10 +257,12 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "platform_wall_gray_1_3_right": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_3_bottom": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_3_left": _BASE_WALL_PROPERTIES.copy(),
+    # These were missing in the previous prompt, adding them back for completeness if they exist in your setup
     "platform_wall_gray_1_4_top_left": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_4_top_right": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_4_bottom_right": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_4_bottom_left": _BASE_WALL_PROPERTIES.copy(),
+
 
     "platform_ledge_green": { # game_type_id for platform_ledge_green_full
         "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
@@ -275,19 +277,19 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
 
     # Objects
     "object_stone_idle": {
-        "destructible": {"type": "bool", "default": True, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
+        "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
+        "health": {"type": "int", "default": 150, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
         "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"},
         "push_resistance": {"type": "float", "default": 1.0, "min":0.1, "max": 10.0, "label": "Push Resistance"},
         "drops_item_on_destroy": {"type": "str", "default": "", "label": "Drops Item (ID or empty)"},
-        "is_crouched_variant": {"type": "bool", "default": False, "label": "Is Crouched Stone Visual"} # ADDED
+        "is_crouched_variant": {"type": "bool", "default": False, "label": "Is Crouched Stone Visual"}
     },
     "object_stone_crouch": {
-        "destructible": {"type": "bool", "default": True, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 1, "min": 1, "max": 1000, "label": "Health (if Dest.)"},
-        "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"},
+        "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
+        "health": {"type": "int", "default": 200, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
+        "can_be_pushed": {"type": "bool", "default": False, "label": "Can Be Pushed"},
         "is_heavy": {"type": "bool", "default": True, "label": "Is Heavy"},
-        "is_crouched_variant": {"type": "bool", "default": True, "label": "Is Crouched Stone Visual"} # ADDED
+        "is_crouched_variant": {"type": "bool", "default": True, "label": "Is Crouched Stone Visual"}
     },
 
     # Items
@@ -305,15 +307,16 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
 
     # Custom Image Object
     CUSTOM_IMAGE_ASSET_KEY: {
-        "is_background": {"type": "bool", "default": True, "label": "Is Background Image"},
-        "is_obstacle": {"type": "bool", "default": False, "label": "Is Obstacle"},
+        "is_background": {"type": "bool", "default": False, "label": "Is Background Image"},
+        "is_obstacle": {"type": "bool", "default": True, "label": "Is Obstacle"},
         "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
         "health": {"type": "int", "default": 100, "min": 0, "max": 1000, "label": "Health (if Destructible)"},
         "scroll_factor_x": {"type": "float", "default": 1.0, "min": 0.0, "max": 2.0, "label": "Scroll Factor X (Parallax)"},
         "scroll_factor_y": {"type": "float", "default": 1.0, "min": 0.0, "max": 2.0, "label": "Scroll Factor Y (Parallax)"},
+        "apply_gravity": {"type": "bool", "default": False, "label": "Apply Gravity"}, # ADDED
     },
     # Trigger Square
-    TRIGGER_SQUARE_GAME_TYPE_ID: {
+    TRIGGER_SQUARE_GAME_TYPE_ID: { # Keyed by game_type_id
         "visible": {"type": "bool", "default": True, "label": "Visible in Game"},
         "fill_color_rgba": {"type": "tuple_color_rgba", "default": (100, 100, 255, 100), "label": "Fill Color (RGBA)"},
         "image_in_square": {"type": "image_path_custom", "default": "", "label": "Image in Square"},
@@ -353,5 +356,3 @@ STATUS_BAR_MESSAGE_TIMEOUT = 3000
 LOG_LEVEL = "DEBUG"
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log"
-
-#################### END OF FILE: editor_config.py ####################

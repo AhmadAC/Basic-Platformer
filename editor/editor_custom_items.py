@@ -1,11 +1,10 @@
-#################### START OF FILE: editor_custom_items.py ####################
-
 # editor/editor_custom_items.py
 # -*- coding: utf-8 -*-
 """
 Custom QGraphicsItem classes for special map objects in the editor,
 such as uploaded images and trigger squares.
-Version 2.2.0 (Added Cropping Support for CustomImageMapItem)
+Version 2.2.5 (Selection Pane Hide/Lock Integration)
+- BaseResizableMapItem now correctly sets Movable flag and visibility on init and update.
 """
 import os
 import logging
@@ -44,11 +43,17 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         self.setPos(QPointF(float(self.map_object_data_ref.get("world_x", 0)),
                             float(self.map_object_data_ref.get("world_y", 0))))
         
-        self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
-                      QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
-                      QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        is_locked = self.map_object_data_ref.get("editor_locked", False)
+        current_flags = QGraphicsItem.GraphicsItemFlag.ItemIsSelectable | \
+                        QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
+        if not is_locked:
+            current_flags |= QGraphicsItem.GraphicsItemFlag.ItemIsMovable
+        self.setFlags(current_flags)
+        
         self.setAcceptHoverEvents(True)
         self.setZValue(self.map_object_data_ref.get("layer_order", 0))
+        self.setVisible(not self.map_object_data_ref.get("editor_hidden", False))
+
 
         self.interaction_handles: List[QGraphicsRectItem] = []
         self.current_interaction_mode: str = "resize" # "resize" or "crop" (for CustomImageMapItem)
@@ -118,17 +123,17 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
     def set_handle_style_and_visibility(self):
         is_selected_and_item_visible = self.isSelected() and self.isVisible()
+        is_locked = self.map_object_data_ref.get("editor_locked", False)
+
 
         for i, handle in enumerate(self.interaction_handles):
-            if not is_selected_and_item_visible:
+            if not is_selected_and_item_visible or is_locked: # Hide handles if item is locked
                 handle.setVisible(False)
                 continue
 
             handle.setVisible(True)
             if self.current_interaction_mode == "crop":
-                # Mimic PowerPoint's crop handle appearance (thicker, often black or distinct)
-                # For simplicity, using a distinct color. White circles are also common.
-                handle.setBrush(QColor(50, 50, 50)) # Dark gray for crop handles
+                handle.setBrush(QColor(50, 50, 50)) 
                 handle.setPen(QPen(QColor(Qt.GlobalColor.white), 1.2))
             else: # Resize mode
                 handle.setBrush(QColor(Qt.GlobalColor.white))
@@ -136,25 +141,31 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
     def show_interaction_handles(self, show: bool):
         if not self.interaction_handles and show:
-            self._create_interaction_handles() # Ensure handles exist
+            self._create_interaction_handles() 
         if not self.interaction_handles: return
 
+        is_locked = self.map_object_data_ref.get("editor_locked", False)
+        effective_show = show and not is_locked # Handles are not shown if locked
+
         for handle in self.interaction_handles:
-            handle.setVisible(show) # Set visibility based on 'show'
+            handle.setVisible(effective_show) 
         
-        if show:
-            self.update_handle_positions() # This positions and styles them
+        if effective_show:
+            self.update_handle_positions() 
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
         if change == QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged:
             is_selected = bool(value)
             self.show_interaction_handles(is_selected)
             if not is_selected and self.current_interaction_mode == "crop":
-                self.set_interaction_mode("resize") # Exit crop mode on deselect
+                self.set_interaction_mode("resize") 
+
+        is_locked = self.map_object_data_ref.get("editor_locked", False)
+        if is_locked and change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
+            return self.pos() # Prevent movement if locked
 
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged and self.scene() and self.isSelected():
-            # Use the scene property "is_actively_transforming_item" set by MapViewWidget
-            if self.scene().property("is_actively_transforming_item") is True: # type: ignore
+            if self.scene().property("is_actively_transforming_item") is True: 
                 return super().itemChange(change, value)
 
             new_pos: QPointF = value # type: ignore
@@ -184,6 +195,15 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         if self.zValue() != new_z:
             self.setZValue(new_z)
         
+        self.setVisible(not self.map_object_data_ref.get("editor_hidden", False))
+        is_locked = self.map_object_data_ref.get("editor_locked", False)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not is_locked)
+        if is_locked: # Also ensure handles are hidden if locked
+             self.show_interaction_handles(False)
+        elif self.isSelected(): # If not locked and selected, ensure handles are appropriately shown/styled
+             self.show_interaction_handles(True)
+
+
         new_pos_x = float(self.map_object_data_ref.get("world_x", 0))
         new_pos_y = float(self.map_object_data_ref.get("world_y", 0))
         if self.pos() != QPointF(new_pos_x, new_pos_y):
@@ -191,15 +211,15 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
         self._update_display_aspect_ratio()
         
-        self.prepareGeometryChange() # Important if current_width/height changed
-        self.update_handle_positions() # Recalculates positions and applies styles
+        self.prepareGeometryChange() 
+        self.update_handle_positions() 
 
     def hoverMoveEvent(self, event: QHoverEvent): # type: ignore Changed to QHoverEvent
-        if self.isSelected():
+        if self.isSelected() and not self.map_object_data_ref.get("editor_locked", False): # Check lock
             for i in range(len(self.interaction_handles)):
                 handle = self.interaction_handles[i]
                 if handle.isVisible() and handle.sceneBoundingRect().contains(event.scenePos()): # type: ignore
-                    if i < 8: # Standard 8 handles
+                    if i < 8: 
                         cursors = [Qt.CursorShape.SizeFDiagCursor, Qt.CursorShape.SizeVerCursor, Qt.CursorShape.SizeBDiagCursor,
                                    Qt.CursorShape.SizeHorCursor, Qt.CursorShape.SizeHorCursor,
                                    Qt.CursorShape.SizeBDiagCursor, Qt.CursorShape.SizeVerCursor, Qt.CursorShape.SizeFDiagCursor]
@@ -217,7 +237,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         
         if mode == "crop" and not is_custom_image:
             logger.debug(f"Crop mode not supported for {type(self).__name__}. Staying in resize.")
-            if self.current_interaction_mode != "resize": # Ensure it's resize
+            if self.current_interaction_mode != "resize": 
                 self.current_interaction_mode = "resize"
                 self.update_handle_positions()
             return
@@ -225,7 +245,7 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         if mode in ["resize", "crop"]:
             if self.current_interaction_mode != mode:
                 self.current_interaction_mode = mode
-                self.update_handle_positions() # This will re-style handles
+                self.update_handle_positions() 
                 if logger: logger.debug(f"Item {id(self.map_object_data_ref)} interaction mode set to {mode}")
         else:
             logger.warning(f"Unknown interaction mode: {mode}")
@@ -415,6 +435,3 @@ class TriggerSquareMapItem(BaseResizableMapItem):
             # logger.debug(f"TriggerSquareMapItem does not support '{mode}' mode. Forcing 'resize'.")
             if self.current_interaction_mode != "resize":
                 super().set_interaction_mode("resize")
-
-
-#################### END OF FILE: editor_custom_items.py ####################

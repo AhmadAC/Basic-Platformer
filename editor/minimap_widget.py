@@ -1,12 +1,9 @@
-#################### START OF FILE: minimap_widget.py ####################
-
 # editor/minimap_widget.py
 # -*- coding: utf-8 -*-
 """
-## version 2.1.1 (PEP8 Cleanup)
+## version 2.2.5 (Selection Pane Hide/Lock Integration - Minimap)
 Minimap Widget for the Platformer Level Editor.
-- Enhanced object rendering with category-specific colors and logic for custom images/triggers.
-- Removed trailing semicolons and reviewed indentation.
+- Hidden objects are no longer rendered on the minimap.
 """
 import logging
 import os # For path joining for custom images on minimap
@@ -127,6 +124,9 @@ class MinimapWidget(QWidget):
             sorted_objects_for_minimap = sorted(self.editor_state.placed_objects, key=lambda obj: obj.get("layer_order", 0))
 
             for obj_data in sorted_objects_for_minimap:
+                if obj_data.get("editor_hidden", False): # Skip hidden objects
+                    continue
+
                 world_x = float(obj_data.get("world_x", 0.0))
                 world_y = float(obj_data.get("world_y", 0.0))
                 asset_key = obj_data.get("asset_editor_key", "unknown_asset")
@@ -303,5 +303,3 @@ class MinimapWidget(QWidget):
         if logger: logger.info(f"Minimap: Resized to {self.size()}. Scheduling content redraw.")
         self.schedule_map_content_redraw()
         super().resizeEvent(event) # type: ignore
-
-#################### END OF FILE: editor\minimap_widget.py ####################
