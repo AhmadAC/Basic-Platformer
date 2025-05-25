@@ -4197,11 +4197,35 @@
             "game_type_id": "object_stone_idle",
             "layer_order": 0,
             "properties": {}
+        },
+        {
+            "asset_editor_key": "custom_image_object",
+            "world_x": 0,
+            "world_y": 0,
+            "game_type_id": "custom_image_object",
+            "layer_order": -4,
+            "properties": {
+                "is_background": true,
+                "is_obstacle": false,
+                "destructible": false,
+                "health": 100
+            },
+            "source_file_path": "Custom/R-C.jpg",
+            "original_width": 1920,
+            "original_height": 1080,
+            "current_width": 1597,
+            "current_height": 995,
+            "crop_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1712,
+                "height": 1067
+            }
         }
     ],
     "camera_offset_x": 0.0,
-    "camera_offset_y": 735.0,
-    "zoom_level": 1.2,
+    "camera_offset_y": 0.0,
+    "zoom_level": 0.3348979766803842,
     "show_grid": true,
     "asset_specific_variables": {}
 }

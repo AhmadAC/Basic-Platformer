@@ -14,7 +14,7 @@ def load_map_three():
         'enemies_list': [{'start_pos': (610.5, 918.0), 'type': 'enemy_gray', 'properties': {'health': 3, 'move_speed': 150.0}}, {'start_pos': (1330.5, 918.0), 'type': 'enemy_gray', 'properties': {'health': 3, 'move_speed': 150.0}}, {'start_pos': (690.5, 918.0), 'type': 'enemy_gray', 'properties': {'health': 3, 'move_speed': 150.0}}, {'start_pos': (850.5, 918.0), 'type': 'enemy_pink', 'properties': {'health': 2, 'move_speed': 120.0, 'patrol_behavior': 'turn_on_edge'}}, {'start_pos': (1050.5, 918.0), 'type': 'enemy_green', 'properties': {'patrol_range_tiles': 6, 'move_speed': 100.0, 'health': 4, 'can_fly': False}}],
         'items_list': [{'pos': (181.0, 625.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1}}],
         'statues_list': [{'id': 'statue_0', 'pos': (96.5, 658.0), 'properties': {}}],
-        'custom_images_list': [],
+        'custom_images_list': [{'rect': (0.0, 0.0, 1597.0, 995.0), 'source_file_path': 'Custom/R-C.jpg', 'original_width': 1920, 'original_height': 1080, 'crop_rect': {'x': 0, 'y': 0, 'width': 1712, 'height': 1067}, 'layer_order': -4, 'properties': {'is_background': True, 'is_obstacle': False, 'destructible': False, 'health': 100}}],
         'trigger_squares_list': [],
         'level_pixel_width': 1600.0,
         'level_min_x_absolute': 0.0,

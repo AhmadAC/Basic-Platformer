@@ -165,6 +165,7 @@ class EditorMainWindow(QMainWindow):
         if not self._is_embedded:
             self.update_window_title()
         self.update_edit_actions_enabled_state()
+        self.update_delete_selection_action_enabled_state() # Update for delete action
 
         self._current_focused_panel_index: int = 0
         self._controller_input_timer: Optional[QTimer] = None
@@ -225,6 +226,10 @@ class EditorMainWindow(QMainWindow):
         self.map_view_widget = MapViewWidget(self.editor_state, self)
         self.setCentralWidget(self.map_view_widget)
         self._focusable_panels.append(self.map_view_widget)
+
+        # Connect scene selection changed to update delete action enabled state
+        self.map_view_widget.map_scene.selectionChanged.connect(self.update_delete_selection_action_enabled_state)
+
 
         self.asset_palette_dock = QDockWidget("Asset Palette", self)
         self.asset_palette_widget = AssetPaletteWidget(self.editor_state, self)
@@ -447,8 +452,14 @@ class EditorMainWindow(QMainWindow):
         self.delete_map_folder_action = QAction("&Delete Map Folder...", self, statusTip="Delete the current map's folder and all its contents", triggered=self.delete_map_folder)
         self.export_map_as_image_action = QAction("Export Map as &Image...", self, shortcut="Ctrl+Shift+P", statusTip="Export map view as PNG", triggered=self.export_map_as_image)
         self.exit_action = QAction("E&xit", self, shortcut=QKeySequence.StandardKey.Quit, statusTip="Exit the editor", triggered=self.close)
+        
         self.undo_action = QAction("&Undo", self, shortcut=QKeySequence.StandardKey.Undo, statusTip="Undo last action", triggered=self.undo)
         self.redo_action = QAction("&Redo", self, shortcut=QKeySequence.StandardKey.Redo, statusTip="Redo last undone action", triggered=self.redo)
+        
+        # ADDED: Delete Selection Action
+        self.delete_selection_action = QAction("Delete Selection", self, shortcut=QKeySequence.StandardKey.Delete, statusTip="Delete selected map objects", triggered=self.map_view_widget.delete_selected_map_objects)
+        self.delete_selection_action.setEnabled(False) 
+
         self.toggle_grid_action = QAction("Toggle &Grid", self, shortcut="Ctrl+G", statusTip="Show/Hide grid", triggered=self.toggle_grid, checkable=True)
         self.toggle_grid_action.setChecked(self.editor_state.show_grid)
         self.change_bg_color_action = QAction("Change &Background Color...", self, statusTip="Change map background color", triggered=self.change_background_color)
@@ -473,13 +484,17 @@ class EditorMainWindow(QMainWindow):
         file_menu.addAction(self.export_map_as_image_action)
         file_menu.addSeparator()
         file_menu.addAction(self.exit_action)
+        
         edit_menu = self.menu_bar.addMenu("&Edit")
         edit_menu.addAction(self.undo_action)
         edit_menu.addAction(self.redo_action)
         edit_menu.addSeparator()
+        edit_menu.addAction(self.delete_selection_action) # ADDED
+        edit_menu.addSeparator()
         edit_menu.addAction(self.change_bg_color_action)
         edit_menu.addSeparator()
         edit_menu.addAction(self.upload_image_action)
+        
         view_menu = self.menu_bar.addMenu("&View")
         view_menu.addAction(self.toggle_grid_action)
         view_menu.addSeparator()
@@ -491,6 +506,7 @@ class EditorMainWindow(QMainWindow):
         view_menu.addAction(self.properties_editor_dock.toggleViewAction())
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_dock') and self.minimap_dock: # type: ignore
             view_menu.addAction(self.minimap_dock.toggleViewAction())
+        
         help_menu = self.menu_bar.addMenu("&Help")
         help_menu.addAction(QAction("&About", self, statusTip="Show editor information", triggered=self.about_dialog))
         if logger: logger.debug("Menus created.")
@@ -524,6 +540,7 @@ class EditorMainWindow(QMainWindow):
         if not self._is_embedded:
             self.update_window_title()
         self.update_edit_actions_enabled_state()
+        # self.update_delete_selection_action_enabled_state() # Selection state might not have changed
         if ED_CONFIG.MINIMAP_ENABLED and hasattr(self, 'minimap_widget') and self.minimap_widget: # type: ignore
             if logger: logger.debug("Notifying minimap to redraw content due to map change.")
             self.minimap_widget.schedule_map_content_redraw()
@@ -539,6 +556,15 @@ class EditorMainWindow(QMainWindow):
         if self.editor_state.unsaved_changes:
             title += "*"
         self.setWindowTitle(title)
+
+    @Slot() # ADDED: Slot to update delete selection action state
+    def update_delete_selection_action_enabled_state(self):
+        if hasattr(self, 'map_view_widget') and hasattr(self.map_view_widget, 'map_scene'):
+            can_delete = bool(self.map_view_widget.map_scene.selectedItems())
+            self.delete_selection_action.setEnabled(can_delete)
+        else:
+            self.delete_selection_action.setEnabled(False)
+
 
     def update_edit_actions_enabled_state(self):
         map_is_named = bool(self.editor_state.map_name_for_function and self.editor_state.map_name_for_function != "untitled_map")
@@ -565,6 +591,8 @@ class EditorMainWindow(QMainWindow):
         self.export_map_as_image_action.setEnabled(can_export_image)
         
         self.upload_image_action.setEnabled(map_is_named)
+
+        self.update_delete_selection_action_enabled_state() # Also update delete action here
 
 
     def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool:
@@ -1072,15 +1100,19 @@ class EditorMainWindow(QMainWindow):
              event.accept()
              return
 
+        # Pass to MapViewWidget first if it has focus, for its own key handling (like Shift+C)
+        if self.map_view_widget.hasFocus() and hasattr(self.map_view_widget, 'keyPressEvent'):
+             self.map_view_widget.keyPressEvent(event) # type: ignore
+             if event.isAccepted():
+                 return
+        
         if key == Qt.Key.Key_Escape and not self._is_embedded:
             if logger: logger.info("Escape key pressed in standalone mode, attempting to close window.")
             self.close()
             event.accept()
-        elif self.map_view_widget.hasFocus() and hasattr(self.map_view_widget, 'keyPressEvent'):
-             self.map_view_widget.keyPressEvent(event) # type: ignore
-             if event.isAccepted():
-                 return
+        
         super().keyPressEvent(event)
+
 
     def closeEvent(self, eventQCloseEvent): # type: ignore
         if logger: logger.info(f"Close event triggered. Embedded: {self._is_embedded}")
