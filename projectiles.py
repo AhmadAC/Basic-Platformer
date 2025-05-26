@@ -92,23 +92,19 @@ class BaseProjectile:
         spawn_initial_x = float(x)
         spawn_initial_y = float(y)
 
-        projectile_spawn_offset_x = -30.0
+
+        projectile_spawn_offset_x = 0.0
         projectile_spawn_offset_y = 0.0
 
-        if self.__class__.__name__ == "Fireball":
-            fireball_offset_magnitude = 30.0
-            if player_facing_right:
-                projectile_spawn_offset_x = -fireball_offset_magnitude
-            else: # Firing left
-                projectile_spawn_offset_x = fireball_offset_magnitude
-
-        elif self.__class__.__name__ == "BoltProjectile":
+        if self.__class__.__name__ == "BoltProjectile":
             bolt_x_offset_from_player_center = float(getattr(C,'TILE_SIZE', 40)/4)
+                    
             if player_facing_right:
                 spawn_initial_x += bolt_x_offset_from_player_center
+                projectile_spawn_offset_x = -10.0
             else: # Firing left
                 spawn_initial_x -= bolt_x_offset_from_player_center
-            projectile_spawn_offset_x = -10.0
+                projectile_spawn_offset_x = 10.0
 
             # Determine Y offset and store flight info for _post_init_hook
             self._bolt_flight_angle_deg = math.degrees(math.atan2(self.vel.y(), self.vel.x()))
@@ -119,7 +115,7 @@ class BaseProjectile:
                 if abs(self.vel.y()) > abs(self.vel.x()) * 1.5 or \
                    (-120 < self._bolt_flight_angle_deg < -60):
                     self._bolt_is_firing_predominantly_upwards = True
-                    projectile_spawn_offset_y = -10.0
+                    # projectile_spawn_offset_y = -20.0
             elif self.vel.y() > 0.01: # Moving downwards
                  if abs(self.vel.y()) > abs(self.vel.x()) * 1.5 or \
                    (60 < self._bolt_flight_angle_deg < 120): # Cone around +90 for DOWN
