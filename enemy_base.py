@@ -347,7 +347,7 @@ class EnemyBase:
             painter.drawPixmap(screen_rect_qrectf.topLeft(), self.image)
 
             # Optional: Draw health bar above enemy
-            if getattr(C, "DRAW_ENEMY_ABOVE_HEALTH_BAR", False) and \
+            if getattr(C, "DRAW_ENEMY_ABOVE_HEALTH_BAR", True) and \
                self.current_health < self.max_health and not self.is_dead and not self.is_petrified:
                 
                 hb_w = float(getattr(C, 'HEALTH_BAR_WIDTH', 50.0))

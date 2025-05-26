@@ -124,7 +124,7 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: P
     health_value_text = f"{int(player_instance.current_health)}/{int(player_instance.max_health)}"
     text_bounding_rect = font_metrics.boundingRect(health_value_text) 
     
-    health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 10.0 
+    health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 5.0 
     health_text_pos_y = health_bar_pos_y + (hud_health_bar_height / 2.0) + (float(text_bounding_rect.height()) / 4.0) 
     
     painter.drawText(QPointF(health_text_pos_x, health_text_pos_y), health_value_text)
