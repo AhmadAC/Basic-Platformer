@@ -1,3 +1,5 @@
+#################### START OF FILE: levels.py ####################
+
 # levels.py
 # -*- coding: utf-8 -*-
 """
@@ -5,8 +7,10 @@ levels.py
 Contains helper functions for creating map data structures.
 Actual map data is now defined in individual .py files within named map folders
 (e.g., maps/original/original.py).
+MODIFIED: _add_map_boundary_walls_data now extends the world downwards with walls
+          to fill the screen height if the map content is shorter.
 """
-# version 2.1.0 (Refactored to be a helper module)
+# version 2.1.1 (Refactored to be a helper module) # MODIFIED to 2.1.2
 import random
 from typing import List, Dict, Tuple, Any, Optional
 
@@ -37,8 +41,6 @@ def _calculate_content_extents(
                 all_tops.append(y)
                 all_bottoms.append(y + h)
             elif all(k in obj_data for k in ['x','y','w','h']): # Legacy check
-                # This warning can be removed if all map files are updated
-                # print(f"Levels.py Helper Warning: Object data {obj_data.get('type', 'Unknown type')} is using legacy x,y,w,h keys. Please migrate to 'rect'.")
                 y, h = float(obj_data['y']), float(obj_data['h'])
                 all_tops.append(y)
                 all_bottoms.append(y + h)
@@ -46,7 +48,6 @@ def _calculate_content_extents(
     if not all_tops: 
         min_y_content = 0.0 - C.TILE_SIZE * 5 
         max_y_content = initial_screen_height_fallback
-        # print(f"Warning: _calculate_content_extents found no measurable content. Using fallbacks: min_y={min_y_content}, max_y={max_y_content}")
     else:
         min_y_content = min(all_tops) if all_tops else 0.0
         max_y_content = max(all_bottoms) if all_bottoms else initial_screen_height_fallback
@@ -59,30 +60,57 @@ def _add_map_boundary_walls_data(
     map_total_width: float,
     ladders_data_list: List[Dict[str, Any]], 
     hazards_data_list: List[Dict[str, Any]],   
-    initial_screen_height_fallback: float,
+    initial_screen_height_fallback: float, # This is the actual screen height passed from game_setup
     extra_sky_clearance: float = 0.0
 ) -> Tuple[float, float]: 
     """
     Calculates content extents and adds boundary wall data.
-    Returns min_y_abs_for_camera, max_y_abs_for_camera.
+    Ensures the world is at least as tall as initial_screen_height_fallback,
+    padding the bottom with walls if necessary.
+    Returns min_y_abs_for_camera (world_top_y), max_y_abs_for_camera_return (top_of_final_bottom_wall).
     """
-    min_y_content, max_y_content_original = _calculate_content_extents(
+    min_y_content, max_y_content_actual_elements = _calculate_content_extents(
         platforms_data_list, ladders_data_list, hazards_data_list, initial_screen_height_fallback
     )
 
-    level_min_y_abs_for_camera = min_y_content - float(C.TILE_SIZE) - extra_sky_clearance
-    level_max_y_abs_for_camera = max_y_content_original
-    
-    overall_boundary_box_height_for_walls = (max_y_content_original + float(C.TILE_SIZE)) - level_min_y_abs_for_camera
+    # Determine the top of the world for camera and wall generation
+    world_top_y = min_y_content - float(C.TILE_SIZE) - extra_sky_clearance
 
+    # Tentative bottom of the world if we only consider content + 1 wall layer below content
+    world_bottom_based_on_content_elements = max_y_content_actual_elements + float(C.TILE_SIZE)
+    
+    # Calculate height of this content-defined world
+    height_of_content_world = world_bottom_based_on_content_elements - world_top_y
+
+    # Determine the final bottom edge of the world for wall generation.
+    # It should be at least as tall as the screen, anchored at world_top_y.
+    # This ensures the world fills the screen vertically if screen is taller than content.
+    final_world_bottom_y = world_top_y + max(height_of_content_world, initial_screen_height_fallback)
+
+    # The Y coordinate where the main horizontal bottom boundary wall should be *placed* (its top edge)
+    bottom_wall_placement_y = final_world_bottom_y - float(C.TILE_SIZE)
+
+    # Height for vertical side walls, spanning from world_top_y to final_world_bottom_y
+    side_walls_height = final_world_bottom_y - world_top_y
+    
     boundary_color = getattr(C, 'DARK_GRAY', (50,50,50))
 
-    platforms_data_list.append(_create_platform_data(0.0, level_min_y_abs_for_camera, map_total_width, float(C.TILE_SIZE), boundary_color, "boundary_wall_top", {"is_boundary": True}))
-    platforms_data_list.append(_create_platform_data(0.0, max_y_content_original, map_total_width, float(C.TILE_SIZE), boundary_color, "boundary_wall_bottom", {"is_boundary": True}))
-    platforms_data_list.append(_create_platform_data(0.0, level_min_y_abs_for_camera, float(C.TILE_SIZE), overall_boundary_box_height_for_walls, boundary_color, "boundary_wall_left", {"is_boundary": True}))
-    platforms_data_list.append(_create_platform_data(map_total_width - float(C.TILE_SIZE), level_min_y_abs_for_camera, float(C.TILE_SIZE), overall_boundary_box_height_for_walls, boundary_color, "boundary_wall_right", {"is_boundary": True}))
+    # Top boundary wall
+    platforms_data_list.append(_create_platform_data(0.0, world_top_y, map_total_width, float(C.TILE_SIZE), boundary_color, "boundary_wall_top", {"is_boundary": True}))
+    
+    # Bottom boundary wall (now placed considering screen height)
+    # Its top is at bottom_wall_placement_y, height is TILE_SIZE.
+    # Its bottom edge will be at final_world_bottom_y.
+    platforms_data_list.append(_create_platform_data(0.0, bottom_wall_placement_y, map_total_width, float(C.TILE_SIZE), boundary_color, "boundary_wall_bottom_extended", {"is_boundary": True}))
 
-    return level_min_y_abs_for_camera, level_max_y_abs_for_camera
+    # Side boundary walls (now extending to final_world_bottom_y)
+    platforms_data_list.append(_create_platform_data(0.0, world_top_y, float(C.TILE_SIZE), side_walls_height, boundary_color, "boundary_wall_left", {"is_boundary": True}))
+    platforms_data_list.append(_create_platform_data(map_total_width - float(C.TILE_SIZE), world_top_y, float(C.TILE_SIZE), side_walls_height, boundary_color, "boundary_wall_right", {"is_boundary": True}))
+
+    # Return world_top_y and the Y coordinate of the top of the *final* bottom wall.
+    # game_setup.py will add TILE_SIZE to the second returned value to get the absolute bottom of the world.
+    return world_top_y, bottom_wall_placement_y
+
 
 def _create_platform_data(x: float, y: float, w: float, h: float, color: Tuple[int,int,int], p_type: str, props: Optional[Dict[str,Any]]=None) -> Dict[str, Any]:
     return {'rect': (float(x), float(y), float(w), float(h)), 'color': color, 'type': p_type, 'properties': props or {}}
@@ -119,7 +147,9 @@ def load_map_level_default() -> Dict[str, Any]:
     
     player_spawn_pos = (float(C.TILE_SIZE) * 2.0, main_ground_y - 1.0)
     
-    level_min_y_abs, level_max_y_abs = _add_map_boundary_walls_data(platforms_data, map_total_width, [], [], initial_height)
+    level_min_y_abs, level_max_y_abs_top_of_bottom_wall = _add_map_boundary_walls_data(platforms_data, map_total_width, [], [], initial_height)
+    level_true_bottom_abs = level_max_y_abs_top_of_bottom_wall + float(C.TILE_SIZE)
+
 
     return {
         "level_name": "level_default",
@@ -134,7 +164,7 @@ def load_map_level_default() -> Dict[str, Any]:
         "level_pixel_width": map_total_width,
         "level_min_x_absolute": 0.0,
         "level_min_y_absolute": level_min_y_abs,
-        "level_max_y_absolute": level_max_y_abs,
+        "level_max_y_absolute": level_true_bottom_abs, # Use the true bottom
         "ground_level_y_ref": main_ground_y,
         "ground_platform_height_ref": float(C.TILE_SIZE),
         "background_color": C.LIGHT_BLUE
@@ -150,3 +180,5 @@ if __name__ == '__main__':
         print(f"  Number of platforms: {len(default_map_data.get('platforms_list', []))}")
     else:
         print("  Failed to load default map data.")
+
+#################### END OF FILE: levels.py ####################
