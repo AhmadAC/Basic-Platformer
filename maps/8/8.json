@@ -3352,27 +3352,32 @@
         {
             "asset_editor_key": "custom_image_object",
             "game_type_id": "custom_image_object",
-            "world_x": 520,
+            "world_x": 160,
             "world_y": 600,
             "source_file_path": "Custom/OIP-C.jpg",
             "original_width": 474,
             "original_height": 629,
             "current_width": 175,
             "current_height": 273,
-            "crop_rect": null,
-            "layer_order": 0,
+            "crop_rect": {
+                "x": 0,
+                "y": 0,
+                "width": 474,
+                "height": 629
+            },
+            "layer_order": 10,
             "rotation": 0,
             "is_flipped_h": false,
             "editor_hidden": false,
-            "editor_locked": true,
+            "editor_locked": false,
             "properties": {
                 "is_background": false,
                 "is_obstacle": true,
-                "destructible": true,
-                "health": 0,
+                "destructible": false,
+                "health": 100,
                 "scroll_factor_x": 1.0,
                 "scroll_factor_y": 1.0,
-                "apply_gravity": true
+                "apply_gravity": false
             }
         },
         {
@@ -3380,7 +3385,7 @@
             "world_x": 520,
             "world_y": 840,
             "game_type_id": "trigger_square_link",
-            "layer_order": 0,
+            "layer_order": 10,
             "properties": {
                 "visible": true,
                 "fill_color_rgba": [
@@ -3429,7 +3434,7 @@
             "world_x": 360,
             "world_y": 880,
             "game_type_id": "trigger_square_link",
-            "layer_order": 0,
+            "layer_order": 10,
             "properties": {
                 "visible": true,
                 "fill_color_rgba": [
@@ -3452,8 +3457,8 @@
             "current_height": 80.0
         }
     ],
-    "camera_offset_x": 82.0,
-    "camera_offset_y": 484.0,
+    "camera_offset_x": -1.0,
+    "camera_offset_y": -116.0,
     "zoom_level": 0.8333333333333334,
     "show_grid": true,
     "asset_specific_variables": {}
