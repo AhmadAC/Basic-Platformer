@@ -115,7 +115,11 @@ class Player:
         self.base_crouch_collision_width = float(getattr(C, 'TILE_SIZE', 40) * 0.7) # Base width for crouching
         self.standing_collision_height: float = 60.0 # Default, might be overridden
         self.crouching_collision_height: float = 30.0 # Default, might be overridden
-
+        # Add to Player.__init__ in player.py
+        self.is_tipping: bool = False
+        self.tipping_angle: float = 0.0  # Degrees
+        self.tipping_direction: int = 0  # -1 if tipping left (falling off left), 1 if tipping right
+        self.tipping_pivot_x_world: float = 0.0 # The world X-coordinate of the pivot point (ledge edge)
         # Core attributes
         self.image: Optional[QPixmap] = None
         self.rect = QRectF() # Collision rectangle

@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Handles AI logic for enemies using PySide6 types.
+MODIFIED: Passes current_time_ms to set_enemy_state.
+MODIFIED: Simplifies aflame/deflame AI state checks, relying more on enemy_status_effects for transitions.
 """
-# version 2.0.2 (Fix f-string format specifier in log_enemy_state)
+# version 2.0.3 (Pass time to set_enemy_state, simplified fire state handling)
 
 import random
 import math
 import time # For monotonic timer
-from typing import Optional
+from typing import Optional, Any # Added Any
 
 # PySide6 imports
 from PySide6.QtCore import QPointF, QRectF
@@ -21,11 +23,21 @@ try:
     from logger import info, debug, warning, error, critical
 except ImportError:
     print("CRITICAL ENEMY_AI_HANDLER: logger.py not found. Falling back to print statements for logging.")
-    def info(msg): print(f"INFO: {msg}")
-    def debug(msg): print(f"DEBUG: {msg}")
-    def warning(msg): print(f"WARNING: {msg}")
-    def error(msg): print(f"ERROR: {msg}")
-    def critical(msg): print(f"CRITICAL: {msg}")
+    def info(msg, *args, **kwargs): print(f"INFO: {msg}")
+    def debug(msg, *args, **kwargs): print(f"DEBUG: {msg}")
+    def warning(msg, *args, **kwargs): print(f"WARNING: {msg}")
+    def error(msg, *args, **kwargs): print(f"ERROR: {msg}")
+    def critical(msg, *args, **kwargs): print(f"CRITICAL: {msg}")
+
+# Ensure set_enemy_state is imported (it should be, from the corrected enemy_state_handler)
+try:
+    from enemy_state_handler import set_enemy_state
+except ImportError:
+    critical("ENEMY_AI_HANDLER: Failed to import set_enemy_state from enemy_state_handler.")
+    def set_enemy_state(enemy: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):
+        if hasattr(enemy, 'state'): enemy.state = new_state
+        warning(f"ENEMY_AI_HANDLER: Fallback set_enemy_state used for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')} to '{new_state}'")
+
 
 # --- Monotonic Timer ---
 _start_time_enemy_ai_monotonic = time.monotonic()
@@ -35,31 +47,28 @@ def get_current_ticks_monotonic() -> int:
 # --- End Monotonic Timer ---
 
 
-ENABLE_ENEMY_AI_DEBUG_PRINTS = False # Set to True for verbose AI state logging
+ENABLE_ENEMY_AI_DEBUG_PRINTS = False 
 
-def log_enemy_state(enemy, message: str, current_time_ms: int):
+def log_enemy_state(enemy: Any, message: str, current_time_ms: int):
     if ENABLE_ENEMY_AI_DEBUG_PRINTS:
         enemy_id_str = str(getattr(enemy, 'enemy_id', 'N/A'))
         pos_x_str = f"{enemy.pos.x():.2f}" if hasattr(enemy, 'pos') and hasattr(enemy.pos, 'x') else "N/A"
         pos_y_str = f"{enemy.pos.y():.2f}" if hasattr(enemy, 'pos') and hasattr(enemy.pos, 'y') else "N/A"
 
-        # MODIFIED: Fix f-string formatting for acc_x_str
         acc_x_val_for_log = getattr(getattr(enemy, 'acc', None), 'x', lambda: float('nan'))()
         acc_x_str = f"{acc_x_val_for_log:.2f}" if isinstance(acc_x_val_for_log, (int, float)) and not math.isnan(acc_x_val_for_log) else 'N/A'
 
         debug(f"[{current_time_ms/1000:.2f}s] Enemy AI (ID: {enemy_id_str}): {message} | "
               f"Flags: Aflame={getattr(enemy, 'is_aflame', 'N/A')}, "
               f"Frozen={getattr(enemy, 'is_frozen', 'N/A')}, "
+              f"Zapped={getattr(enemy, 'is_zapped', 'N/A')}, " # Added Zapped
               f"Attacking={getattr(enemy, 'is_attacking', 'N/A')} | "
               f"State: current='{getattr(enemy, 'state', 'N/A')}', "
               f"ai_state='{getattr(enemy, 'ai_state', 'N/A')}' | "
-              f"Pos:({pos_x_str}, {pos_y_str}) | Acc.X: {acc_x_str}") # Added Acc.X to log
+              f"Pos:({pos_x_str}, {pos_y_str}) | Acc.X: {acc_x_str}")
 
 
-def set_enemy_new_patrol_target(enemy):
-    """
-    Sets a new patrol target X-coordinate for the enemy instance using QRectF/QPointF.
-    """
+def set_enemy_new_patrol_target(enemy: Any):
     current_x = 0.0
     if hasattr(enemy, 'pos') and hasattr(enemy.pos, 'x'):
         current_x = enemy.pos.x()
@@ -80,15 +89,12 @@ def set_enemy_new_patrol_target(enemy):
         patrol_direction = 1 if random.random() > 0.5 else -1
         enemy.patrol_target_x = current_x + patrol_direction * float(getattr(C, 'ENEMY_PATROL_DIST', 150.0))
 
-    if not hasattr(enemy, 'patrol_target_x') or enemy.patrol_target_x is None: # Should be set by above
+    if not hasattr(enemy, 'patrol_target_x') or enemy.patrol_target_x is None:
         enemy.patrol_target_x = current_x
 
 
-def enemy_ai_update(enemy, players_list_for_ai: list):
-    """
-    Updates the enemy's AI state and behavior using QRectF/QPointF.
-    """
-    current_time_ms = get_current_ticks_monotonic() # Use monotonic timer
+def enemy_ai_update(enemy: Any, players_list_for_ai: list):
+    current_time_ms = get_current_ticks_monotonic()
     log_enemy_state(enemy, "Starting AI update.", current_time_ms)
 
     if not hasattr(enemy, '_valid_init') or not enemy._valid_init or \
@@ -96,11 +102,11 @@ def enemy_ai_update(enemy, players_list_for_ai: list):
         if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
         return
 
-    if (hasattr(enemy, 'is_frozen') and enemy.is_frozen) or \
-       (hasattr(enemy, 'is_defrosting') and enemy.is_defrosting):
-        if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
-        log_enemy_state(enemy, "Entity frozen/defrosting. No AI movement.", current_time_ms)
-        return
+    # --- MODIFIED: Simplified logic for frozen/defrosting/zapped/petrified ---
+    # These states are now primarily managed by enemy_status_effects and will override AI if they return True.
+    # This AI update assumes it's only called if those overriding states are NOT active.
+    # We still check hit stun here as it's a short-term combat effect.
+    # --- END MODIFICATION ---
 
     if hasattr(enemy, 'is_taking_hit') and enemy.is_taking_hit and \
        hasattr(enemy, 'hit_timer') and hasattr(enemy, 'hit_cooldown') and \
@@ -144,22 +150,22 @@ def enemy_ai_update(enemy, players_list_for_ai: list):
     if closest_target_player and hasattr(closest_target_player, 'rect') and hasattr(closest_target_player.rect, 'center'):
         vertical_distance_to_player = abs(closest_target_player.rect.center().y() - enemy.rect.center().y())
 
-    has_vertical_los = vertical_distance_to_player < enemy_rect_height * 1.0
+    has_vertical_los = vertical_distance_to_player < enemy_rect_height * 1.0 # Allow some vertical leeway
     is_player_in_attack_range = distance_to_target_player < enemy_attack_range and has_vertical_los
     is_player_in_detection_range = distance_to_target_player < enemy_detection_range and has_vertical_los
 
+    # --- MODIFIED: Aflame/Deflame movement logic. State transitions are handled by status_effects ---
     if hasattr(enemy, 'is_aflame') and enemy.is_aflame:
-        log_enemy_state(enemy, "AFLAME logic active.", current_time_ms)
-        if enemy.state != 'aflame' and hasattr(enemy, 'set_state'): enemy.set_state('aflame')
-
-        aflame_speed_mod = float(getattr(C, 'ENEMY_AFLAME_SPEED_MULTIPLIER', 1.0))
+        log_enemy_state(enemy, "AFLAME movement logic active.", current_time_ms)
+        # Enemy state handler ensures 'aflame' or 'burning' state is set. Here we just modify movement.
+        aflame_speed_mod = float(getattr(C, 'ENEMY_AFLAME_SPEED_MULTIPLIER', 1.3))
         current_accel_x = 0.0
         if closest_target_player and is_player_in_detection_range:
             enemy.ai_state = 'chasing_aflame'
             should_face_right = (closest_target_player.pos.x() > enemy.pos.x())
             current_accel_x = enemy_standard_acceleration * aflame_speed_mod * (1 if should_face_right else -1)
             if enemy.facing_right != should_face_right: enemy.facing_right = should_face_right
-        else:
+        else: # Patrol while aflame
             enemy.ai_state = 'patrolling_aflame'
             if not hasattr(enemy, 'patrol_target_x') or enemy.patrol_target_x is None or \
                abs(enemy.pos.x() - enemy.patrol_target_x) < 10:
@@ -168,19 +174,18 @@ def enemy_ai_update(enemy, players_list_for_ai: list):
             current_accel_x = enemy_standard_acceleration * 0.7 * aflame_speed_mod * (1 if should_face_right else -1)
             if enemy.facing_right != should_face_right: enemy.facing_right = should_face_right
         if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(current_accel_x)
-        return
+        return # AI for aflame state is done
+    
     elif hasattr(enemy, 'is_deflaming') and enemy.is_deflaming:
-        log_enemy_state(enemy, "DEFLAME logic active.", current_time_ms)
-        if enemy.state != 'deflame' and hasattr(enemy, 'set_state'): enemy.set_state('deflame')
-
-        deflame_speed_mod = float(getattr(C, 'ENEMY_DEFLAME_SPEED_MULTIPLIER', 1.0))
+        log_enemy_state(enemy, "DEFLAME movement logic active.", current_time_ms)
+        deflame_speed_mod = float(getattr(C, 'ENEMY_DEFLAME_SPEED_MULTIPLIER', 1.2))
         current_accel_x = 0.0
         if closest_target_player and is_player_in_detection_range:
             enemy.ai_state = 'chasing_deflaming'
             should_face_right = (closest_target_player.pos.x() > enemy.pos.x())
             current_accel_x = enemy_standard_acceleration * deflame_speed_mod * (1 if should_face_right else -1)
             if enemy.facing_right != should_face_right: enemy.facing_right = should_face_right
-        else:
+        else: # Patrol while deflaming
             enemy.ai_state = 'patrolling_deflaming'
             if not hasattr(enemy, 'patrol_target_x') or enemy.patrol_target_x is None or \
                abs(enemy.pos.x() - enemy.patrol_target_x) < 10:
@@ -189,12 +194,13 @@ def enemy_ai_update(enemy, players_list_for_ai: list):
             current_accel_x = enemy_standard_acceleration * 0.7 * deflame_speed_mod * (1 if should_face_right else -1)
             if enemy.facing_right != should_face_right: enemy.facing_right = should_face_right
         if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(current_accel_x)
-        return
+        return # AI for deflame state is done
+    # --- END MODIFICATION ---
 
     if hasattr(enemy, 'post_attack_pause_timer') and enemy.post_attack_pause_timer > 0 and \
        current_time_ms < enemy.post_attack_pause_timer:
         if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
-        if enemy.state != 'idle' and hasattr(enemy, 'set_state'): enemy.set_state('idle')
+        if enemy.state != 'idle': set_enemy_state(enemy, 'idle', current_time_ms) # MODIFIED: Pass time
         log_enemy_state(enemy, "Post-attack pause.", current_time_ms); return
 
     if hasattr(enemy, 'is_attacking') and enemy.is_attacking:
@@ -208,11 +214,11 @@ def enemy_ai_update(enemy, players_list_for_ai: list):
             if hasattr(enemy, 'attack_cooldown_timer'): enemy.attack_cooldown_timer = current_time_ms
             if hasattr(enemy, 'post_attack_pause_timer') and hasattr(enemy, 'post_attack_pause_duration'):
                 enemy.post_attack_pause_timer = current_time_ms + enemy.post_attack_pause_duration
-            if hasattr(enemy, 'set_state'): enemy.set_state('idle')
+            set_enemy_state(enemy, 'idle', current_time_ms) # MODIFIED: Pass time
             if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
             log_enemy_state(enemy, "ATTACKING: Finished. Transition to idle.", current_time_ms); return
         else:
-            if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
+            if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0) # No movement during attack animation
             log_enemy_state(enemy, "ATTACKING: In progress.", current_time_ms); return
 
     if not hasattr(enemy, 'patrol_target_x') or enemy.patrol_target_x is None: set_enemy_new_patrol_target(enemy)
@@ -224,15 +230,15 @@ def enemy_ai_update(enemy, players_list_for_ai: list):
     target_accel_x = 0.0
     target_facing_right = enemy.facing_right
 
-    if not closest_target_player:
+    if not closest_target_player: # No player in sight or range
         enemy.ai_state = 'patrolling'
-        if enemy.state not in ['run', 'idle'] and hasattr(enemy, 'set_state'): enemy.set_state('patrolling')
+        if enemy.state not in ['run', 'idle']: set_enemy_state(enemy, 'patrolling', current_time_ms) # MODIFIED
         if abs(enemy.pos.x() - enemy.patrol_target_x) < 10:
             set_enemy_new_patrol_target(enemy)
-            if enemy.state == 'run' and hasattr(enemy, 'set_state'): enemy.set_state('idle')
+            if enemy.state == 'run': set_enemy_state(enemy, 'idle', current_time_ms) # MODIFIED
         target_facing_right = (enemy.patrol_target_x > enemy.pos.x())
         target_accel_x = enemy_standard_acceleration * 0.7 * (1 if target_facing_right else -1)
-        if enemy.state == 'idle' and abs(target_accel_x) > 0.05 and hasattr(enemy, 'set_state'): enemy.set_state('run')
+        if enemy.state == 'idle' and abs(target_accel_x) > 0.05: set_enemy_state(enemy, 'run', current_time_ms) # MODIFIED
 
     elif is_player_in_attack_range and is_attack_off_cooldown:
         enemy.ai_state = 'attacking'
@@ -240,27 +246,27 @@ def enemy_ai_update(enemy, players_list_for_ai: list):
         anim_key_attack = 'attack_nm' if (hasattr(enemy, 'animations') and enemy.animations and enemy.animations.get('attack_nm') and \
                                          hasattr(enemy, 'vel') and hasattr(enemy.vel, 'x') and abs(enemy.vel.x()) < enemy_standard_acceleration * 1.5) \
                                       else 'attack'
-        if hasattr(enemy, 'set_state'): enemy.set_state(anim_key_attack)
+        set_enemy_state(enemy, anim_key_attack, current_time_ms) # MODIFIED
 
-    elif is_player_in_detection_range:
+    elif is_player_in_detection_range: # Chase player
         enemy.ai_state = 'chasing'
         target_facing_right = (closest_target_player.pos.x() > enemy.pos.x())
         target_accel_x = enemy_standard_acceleration * (1 if target_facing_right else -1)
-        if enemy.state not in ['run'] and hasattr(enemy, 'set_state'): enemy.set_state('run')
+        if enemy.state not in ['run']: set_enemy_state(enemy, 'run', current_time_ms) # MODIFIED
 
-    else:
+    else: # Player detected but not in attack range and not close enough for chase (or just lost LoS) -> patrol
         enemy.ai_state = 'patrolling'
-        if enemy.state not in ['run', 'idle'] and hasattr(enemy, 'set_state'): enemy.set_state('patrolling')
+        if enemy.state not in ['run', 'idle']: set_enemy_state(enemy, 'patrolling', current_time_ms) # MODIFIED
         if abs(enemy.pos.x() - enemy.patrol_target_x) < 10:
             set_enemy_new_patrol_target(enemy)
-            if enemy.state == 'run' and hasattr(enemy, 'set_state'): enemy.set_state('idle')
+            if enemy.state == 'run': set_enemy_state(enemy, 'idle', current_time_ms) # MODIFIED
         target_facing_right = (enemy.patrol_target_x > enemy.pos.x())
         target_accel_x = enemy_standard_acceleration * 0.7 * (1 if target_facing_right else -1)
-        if enemy.state == 'idle' and abs(target_accel_x) > 0.05 and hasattr(enemy, 'set_state'): enemy.set_state('run')
+        if enemy.state == 'idle' and abs(target_accel_x) > 0.05: set_enemy_state(enemy, 'run', current_time_ms) # MODIFIED
 
     if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(target_accel_x)
     if not (hasattr(enemy, 'is_attacking') and enemy.is_attacking) and \
        enemy.facing_right != target_facing_right:
          enemy.facing_right = target_facing_right
 
-    log_enemy_state(enemy, "End of AI.", current_time_ms) # Removed the complex f-string from here
+    log_enemy_state(enemy, "End of AI.", current_time_ms)
