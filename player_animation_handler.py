@@ -1,295 +1,417 @@
-#################### START OF FILE: player_animation_handler.py ####################
-
 # player_animation_handler.py
 # -*- coding: utf-8 -*-
 """
 Handles player animation selection and frame updates for PySide6.
 Correctly anchors the player's rect when height changes.
+MODIFIED: Corrected animation priority for frozen/aflame states.
 """
-# version 2.0.3 
+# version 2.0.4 (Frozen/Aflame animation priority fix)
 
-from typing import List, Optional
-import time # For get_current_ticks fallback
+from typing import List, Optional, Any # Added Any
+import time 
 
 # PySide6 imports
 from PySide6.QtGui import QPixmap, QImage, QTransform, QColor
-from PySide6.QtCore import QPointF, QRectF, Qt
+from PySide6.QtCore import QPointF, QRectF, Qt, QSize
 
 # Game imports
 import constants as C
 from utils import PrintLimiter
 
+# Logger
 try:
+    from logger import debug, warning, critical
     from player_state_handler import set_player_state
 except ImportError:
-    def set_player_state(player, new_state):
-        if hasattr(player, 'set_state'):
-            player.set_state(new_state)
-        else:
-            print(f"CRITICAL PLAYER_ANIM_HANDLER: player_state_handler.set_player_state not found for Player ID {getattr(player, 'player_id', 'N/A')}")
+    print("CRITICAL PLAYER_ANIM_HANDLER: Failed to import logger or player_state_handler.")
+    def debug(msg, *args, **kwargs): print(f"DEBUG_PANIM: {msg}")
+    def warning(msg, *args, **kwargs): print(f"WARNING_PANIM: {msg}")
+    def critical(msg, *args, **kwargs): print(f"CRITICAL_PANIM: {msg}")
+    def set_player_state(player, new_state, current_game_time_ms_param=None):
+        if hasattr(player, 'state'): player.state = new_state
+        warning(f"Fallback set_player_state used in player_animation_handler for P{getattr(player, 'player_id', '?')}")
 
 
-_start_time_player_anim = time.monotonic()
-def get_current_ticks():
-    """
-    Returns the number of milliseconds since this module was initialized.
- 
-    """
-    return int((time.monotonic() - _start_time_player_anim) * 1000)
+_start_time_player_anim_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    return int((time.monotonic() - _start_time_player_anim_monotonic) * 1000)
 
 
-def determine_animation_key(player) -> str:
-    animation_key = player.state
-    player_is_intending_to_move_lr = player.is_trying_to_move_left or player.is_trying_to_move_right
+def determine_animation_key(player: Any) -> str:
+    player_id_log = getattr(player, 'player_id', 'Unknown')
+    current_logical_state = getattr(player, 'state', 'idle') # The player's current logical state machine state
+    
+    # For easier access to player attributes, reducing multiple getattr calls
+    is_petrified = getattr(player, 'is_petrified', False)
+    is_stone_smashed = getattr(player, 'is_stone_smashed', False)
+    is_dead = getattr(player, 'is_dead', False)
+    is_frozen = getattr(player, 'is_frozen', False)
+    is_defrosting = getattr(player, 'is_defrosting', False)
+    is_aflame = getattr(player, 'is_aflame', False)
+    is_deflaming = getattr(player, 'is_deflaming', False)
+    is_attacking = getattr(player, 'is_attacking', False)
+    is_crouching = getattr(player, 'is_crouching', False)
+    on_ground = getattr(player, 'on_ground', False)
+    on_ladder = getattr(player, 'on_ladder', False)
+    touching_wall = getattr(player, 'touching_wall', 0)
+    
+    vel_x = getattr(getattr(player, 'vel', None), 'x', lambda: 0.0)()
+    vel_y = getattr(getattr(player, 'vel', None), 'y', lambda: 0.0)()
+    animations = getattr(player, 'animations', None)
 
-    if player.is_petrified:
-        return 'smashed' if player.is_stone_smashed else 'petrified'
-    if player.is_dead:
-        is_still_nm = abs(player.vel.x()) < 0.5 and abs(player.vel.y()) < 1.0
-        key_variant = 'death_nm' if is_still_nm else 'death'
-        return key_variant if player.animations and player.animations.get(key_variant) else \
-               ('death' if player.animations and player.animations.get('death') else 'idle')
+    # --- HIGHEST PRIORITY: Terminal Visual States ---
+    if is_petrified:
+        return 'smashed' if is_stone_smashed else 'petrified'
+    
+    if is_dead: # Includes normal death (not petrified)
+        is_still_nm = abs(vel_x) < 0.5 and abs(vel_y) < 1.0 # Check if mostly still for "No Movement" death anim
+        key_variant = 'death_nm' if is_still_nm and animations and animations.get('death_nm') else 'death'
+        return key_variant if animations and animations.get(key_variant) else \
+               ('death' if animations and animations.get('death') else 'idle') # Fallback to 'death' then 'idle'
 
-    if player.is_aflame:
-        if player.state in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch'] and \
-           player.animations and player.animations.get(player.state):
-            return player.state
-        if player.is_crouching:
-            return 'burning_crouch' if player.animations and player.animations.get('burning_crouch') else \
-                   ('aflame_crouch' if player.animations and player.animations.get('aflame_crouch') else 'aflame')
-        else:
-            return 'burning' if player.animations and player.animations.get('burning') else 'aflame'
-    if player.is_deflaming:
-        if player.state in ['deflame', 'deflame_crouch'] and \
-           player.animations and player.animations.get(player.state):
-            return player.state
-        return 'deflame_crouch' if player.is_crouching and player.animations and player.animations.get('deflame_crouch') else \
-               ('deflame' if player.animations and player.animations.get('deflame') else 'idle')
-    if player.is_frozen and player.animations and player.animations.get('frozen'): return 'frozen'
-    if player.is_defrosting and player.animations and player.animations.get('defrost'): return 'defrost'
+    # --- Next Priority: Overriding Status Effects (Frozen before Fire) ---
+    if is_frozen:
+        return 'frozen' if animations and animations.get('frozen') else 'idle' # Fallback if no frozen anim
+    if is_defrosting:
+        return 'defrost' if animations and animations.get('defrost') else \
+               ('frozen' if animations and animations.get('frozen') else 'idle') # Fallback
 
-    if player.is_attacking:
+    # --- Fire Status Effects ---
+    if is_aflame:
+        # Check if current logical state IS a specific fire animation (e.g., "aflame", "burning")
+        # The logical state should ideally drive this if different fire phases have different animations.
+        # For now, assuming 'aflame' and 'aflame_crouch' are the primary visual keys for being on fire.
+        if current_logical_state in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch'] and animations and animations.get(current_logical_state):
+            return current_logical_state
+        # Fallback based on crouch status if specific fire state animation isn't set/found
+        return 'aflame_crouch' if is_crouching and animations and animations.get('aflame_crouch') else \
+               ('aflame' if animations and animations.get('aflame') else 'idle') # Fallback to idle if no aflame anims
+
+    if is_deflaming:
+        if current_logical_state in ['deflame', 'deflame_crouch'] and animations and animations.get(current_logical_state):
+            return current_logical_state
+        return 'deflame_crouch' if is_crouching and animations and animations.get('deflame_crouch') else \
+               ('deflame' if animations and animations.get('deflame') else 'idle') # Fallback to idle
+
+
+    # --- Action States (Hit, Attack) ---
+    # 'hit' state should have high priority as it visually interrupts other actions.
+    if current_logical_state == 'hit':
+        return 'hit' if animations and animations.get('hit') else 'idle'
+
+    if is_attacking:
         base_key = ''
-        if player.attack_type == 1: base_key = 'attack'
-        elif player.attack_type == 2: base_key = 'attack2'
-        elif player.attack_type == 3: base_key = 'attack_combo'
-        elif player.attack_type == 4: base_key = 'crouch_attack'
+        attack_type = getattr(player, 'attack_type', 0)
+        if attack_type == 1: base_key = 'attack'
+        elif attack_type == 2: base_key = 'attack2'
+        elif attack_type == 3: base_key = 'attack_combo'
+        elif attack_type == 4: base_key = 'crouch_attack'
 
-        if base_key == 'crouch_attack' and player.animations and player.animations.get(base_key):
-            animation_key = base_key
+        if base_key == 'crouch_attack': # Crouch attack doesn't usually have NM variant
+            return base_key if animations and animations.get(base_key) else 'crouch'
         elif base_key:
-            nm_variant = f"{base_key}_nm"; moving_variant = base_key
-            if player_is_intending_to_move_lr and player.animations and player.animations.get(moving_variant):
-                animation_key = moving_variant
-            elif player.animations and player.animations.get(nm_variant): animation_key = nm_variant
-            elif player.animations and player.animations.get(moving_variant): animation_key = moving_variant
-    elif player.state == 'wall_climb':
-        is_actively_climbing = player.is_holding_climb_ability_key and \
-                               abs(player.vel.y() - C.PLAYER_WALL_CLIMB_SPEED) < 0.1
-        key_variant = 'wall_climb' if is_actively_climbing else 'wall_climb_nm'
-        if player.animations and player.animations.get(key_variant): animation_key = key_variant
-        elif player.animations and player.animations.get('wall_climb'): animation_key = 'wall_climb'
-    elif player.state == 'hit': animation_key = 'hit'
-    elif not player.on_ground and not player.on_ladder and player.touching_wall == 0 and \
-         player.state not in ['jump', 'jump_fall_trans'] and player.vel.y() > getattr(C, 'MIN_SIGNIFICANT_FALL_VEL', 1.0):
-        animation_key = 'fall'
-    elif player.on_ladder:
-        animation_key = 'ladder_climb' if abs(player.vel.y()) > 0.1 else 'ladder_idle'
-    elif player.is_dashing: animation_key = 'dash'
-    elif player.is_rolling: animation_key = 'roll'
-    elif player.is_sliding: animation_key = 'slide'
-    elif player.state == 'slide_trans_start': animation_key = 'slide_trans_start'
-    elif player.state == 'slide_trans_end': animation_key = 'slide_trans_end'
-    elif player.state == 'crouch_trans': animation_key = 'crouch_trans'
-    elif player.state == 'turn': animation_key = 'turn'
-    elif player.state == 'jump': animation_key = 'jump'
-    elif player.state == 'jump_fall_trans': animation_key = 'jump_fall_trans'
-    elif player.state == 'wall_slide': animation_key = 'wall_slide'
-    elif player.state == 'wall_hang': animation_key = 'wall_hang'
-    elif player.on_ground:
-        if player.is_crouching:
-            key_variant = 'crouch_walk' if player_is_intending_to_move_lr else 'crouch'
-            if player.animations and player.animations.get(key_variant): animation_key = key_variant
-            elif player.animations and player.animations.get('crouch'): animation_key = 'crouch'
-        elif player_is_intending_to_move_lr: animation_key = 'run'
-        else: animation_key = 'idle'
-    else:
-        if player.state not in ['jump','jump_fall_trans','fall', 'wall_slide', 'wall_hang', 'wall_climb', 'wall_climb_nm', 'hit', 'dash', 'roll']:
-             animation_key = 'fall' if player.animations and player.animations.get('fall') else 'idle'
+            # Determine if a "No Movement" (_nm) variant should be used
+            # Player might be "attacking" but visually should be "attack_nm" if not intending to move or velocity is low
+            is_intentionally_moving_lr_anim = getattr(player, 'is_trying_to_move_left', False) or getattr(player, 'is_trying_to_move_right', False)
+            is_actually_moving_slow_anim = abs(vel_x) < 0.5 # Threshold for considering "no movement"
 
-    if animation_key not in ['petrified', 'smashed']:
-        if not player.animations or not player.animations.get(animation_key):
-            if player.print_limiter.can_print(f"anim_key_final_fallback_{player.player_id}_{animation_key}_{player.state}"):
-                print(f"ANIM_HANDLER Warning (P{player.player_id}): Final animation key '{animation_key}' (State: '{player.state}') missing. Falling back to 'idle'.")
-            return 'idle'
-    return animation_key
+            nm_variant = f"{base_key}_nm"
+            moving_variant = base_key
+
+            if not is_intentionally_moving_lr_anim and is_actually_moving_slow_anim and animations and animations.get(nm_variant):
+                return nm_variant
+            elif animations and animations.get(moving_variant): # Fallback to moving variant if NM not available or conditions not met
+                return moving_variant
+            # If neither, one more fallback if nm variant was primary
+            elif animations and animations.get(nm_variant) and not animations.get(moving_variant):
+                return nm_variant
+            else: # Fallback to idle if attack anims are missing
+                return 'idle'
+    
+    # --- Other Action States (Dash, Roll, Slide, Turn) ---
+    # These are typically driven by the logical player.state
+    if current_logical_state in ['dash', 'roll', 'slide', 'slide_trans_start', 'slide_trans_end', 'turn', 'crouch_trans']:
+        return current_logical_state if animations and animations.get(current_logical_state) else 'idle' # Fallback to idle
+
+    # --- Contextual Movement (Ladder, Wall Interactions) ---
+    if on_ladder:
+        return 'ladder_climb' if abs(vel_y) > 0.1 else 'ladder_idle'
+    
+    if touching_wall != 0 and not on_ground: # Player is against a wall and airborne
+        if current_logical_state == 'wall_slide': # Specific state for sliding down
+            return 'wall_slide' if animations and animations.get('wall_slide') else 'fall'
+        # No 'wall_climb' logic as it was removed from player.py
+        # If player is just touching a wall airborne but not sliding, it's usually 'fall' or 'jump'
+    
+    # --- Basic Movement & Idle (Jump, Fall, Run, Crouch, Idle) ---
+    if not on_ground: # Airborne
+        if current_logical_state == 'jump': # Just jumped
+            return 'jump' if animations and animations.get('jump') else 'fall'
+        if current_logical_state == 'jump_fall_trans': # Transitioning from jump to fall
+            return 'jump_fall_trans' if animations and animations.get('jump_fall_trans') else 'fall'
+        # Default airborne state if not jumping or wall interacting
+        return 'fall' if animations and animations.get('fall') else 'idle' # Fallback to idle if no fall anim
+    
+    # On Ground
+    if is_crouching:
+        player_is_intending_to_move_lr_crouch = getattr(player, 'is_trying_to_move_left', False) or getattr(player, 'is_trying_to_move_right', False)
+        key_variant = 'crouch_walk' if player_is_intending_to_move_lr_crouch else 'crouch'
+        return key_variant if animations and animations.get(key_variant) else \
+               ('crouch' if animations and animations.get('crouch') else 'idle') # Fallback
+
+    player_is_intending_to_move_lr_stand = getattr(player, 'is_trying_to_move_left', False) or getattr(player, 'is_trying_to_move_right', False)
+    if player_is_intending_to_move_lr_stand:
+        return 'run' if animations and animations.get('run') else 'idle' # Fallback
+
+    # Default to idle if on ground and not moving/crouching/acting
+    return 'idle' if animations and animations.get('idle') else 'idle' # Ensure 'idle' is always a valid fallback.
 
 
-def advance_frame_and_handle_state_transitions(player, current_animation_frames_list: List[QPixmap], current_time_ms: int, current_animation_key: str):
+def advance_frame_and_handle_state_transitions(player: Any, current_animation_frames_list: List[QPixmap], current_time_ms: int, current_animation_key: str):
     if not current_animation_frames_list: return
 
     ms_per_frame = C.ANIM_FRAME_DURATION
     if player.is_attacking and player.attack_type == 2 and hasattr(C, 'PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER'):
         ms_per_frame = int(C.ANIM_FRAME_DURATION * C.PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER)
 
+    # --- Static Frame States (Petrified, Frozen, Smashed - end frame) ---
     if player.is_petrified and not player.is_stone_smashed:
-        player.current_frame = 0; return
+        player.current_frame = 0; return # Petrified holds frame 0
+    if player.is_frozen:
+        player.current_frame = 0 # Frozen holds frame 0 (or last frame if 'frozen' is an animation)
+        if len(current_animation_frames_list) > 1 and current_animation_key == 'frozen':
+            player.current_frame = len(current_animation_frames_list) -1
+        return
+    if player.is_stone_smashed and player.death_animation_finished: # Smashed and animation done
+        player.current_frame = len(current_animation_frames_list) - 1 if current_animation_frames_list else 0
+        return
 
-    non_looping_anim_keys_with_transitions = [
-        'attack', 'attack_nm', 'attack2', 'attack2_nm', 'attack_combo', 'attack_combo_nm',
-        'crouch_attack', 'dash', 'roll', 'slide', 'hit', 'turn', 'jump',
-        'jump_fall_trans', 'crouch_trans', 'slide_trans_start', 'slide_trans_end',
-        'aflame', 'aflame_crouch'
-    ]
-    non_looping_hold_last_frame_keys = ['deflame', 'deflame_crouch', 'defrost']
+    # --- Frame Advancement Logic ---
+    can_advance_frame = not (player.is_dead and player.death_animation_finished and not player.is_petrified)
 
-    can_advance = not (player.is_dead and player.death_animation_finished and not player.is_petrified) or player.is_stone_smashed
-    if can_advance and (current_time_ms - player.last_anim_update > ms_per_frame):
+    if can_advance_frame and (current_time_ms - player.last_anim_update > ms_per_frame):
         player.last_anim_update = current_time_ms
         player.current_frame += 1
 
         if player.current_frame >= len(current_animation_frames_list):
-            if player.is_dead and not player.is_petrified:
+            # Handle end of non-looping animations
+            if player.is_dead and not player.is_petrified: # Normal death animation ended
                 player.current_frame = len(current_animation_frames_list) - 1
                 player.death_animation_finished = True; return
-            elif player.is_stone_smashed:
-                player.current_frame = len(current_animation_frames_list) - 1; return
+            elif player.is_stone_smashed: # Smashed animation (might loop or hold last frame based on needs)
+                player.current_frame = len(current_animation_frames_list) - 1
+                # player.death_animation_finished might be set by update_status_effects based on timer
+                return
 
-            is_trans = current_animation_key in non_looping_anim_keys_with_transitions
-            is_hold = current_animation_key in non_looping_hold_last_frame_keys
+            # Non-looping animations that transition to other states
+            non_looping_anim_keys_with_transitions = [
+                'attack', 'attack_nm', 'attack2', 'attack2_nm', 'attack_combo', 'attack_combo_nm',
+                'crouch_attack', 'dash', 'roll', 'slide', 'hit', 'turn', 'jump',
+                'jump_fall_trans', 'crouch_trans', 'slide_trans_start', 'slide_trans_end'
+            ]
+            # Animations that hold their last frame after finishing once
+            non_looping_hold_last_frame_keys = ['deflame', 'deflame_crouch', 'defrost', 'aflame', 'aflame_crouch'] # Aflame transitions to burning, but initial anim might just play once
 
-            if is_trans:
-                next_state = player.state
-                player_is_moving = player.is_trying_to_move_left or player.is_trying_to_move_right
+            is_transitional_anim = current_animation_key in non_looping_anim_keys_with_transitions
+            is_hold_last_frame_anim = current_animation_key in non_looping_hold_last_frame_keys
 
-                if current_animation_key == 'aflame': next_state = 'burning_crouch' if player.is_crouching else 'burning'
-                elif current_animation_key == 'aflame_crouch': next_state = 'burning' if not player.is_crouching else 'burning_crouch'
-                elif current_animation_key == 'jump': next_state = 'jump_fall_trans' if player.animations and player.animations.get('jump_fall_trans') else 'fall'
-                elif current_animation_key == 'jump_fall_trans': next_state = 'fall'
+            if is_transitional_anim:
+                next_state = player.state # Default to current logical state if no specific transition
+                player_is_intending_to_move_lr = getattr(player, 'is_trying_to_move_left', False) or getattr(player, 'is_trying_to_move_right', False)
+
+                if current_animation_key == 'jump':
+                    next_state = 'jump_fall_trans' if player.animations and player.animations.get('jump_fall_trans') else 'fall'
+                elif current_animation_key == 'jump_fall_trans':
+                    next_state = 'fall'
                 elif current_animation_key == 'hit':
-                    player.is_taking_hit = False
-                    if player.is_aflame: next_state = 'burning_crouch' if player.is_crouching else 'burning'
+                    player.is_taking_hit = False # Hit stun duration might still be active, but animation ends
+                    if player.is_aflame: next_state = 'aflame_crouch' if player.is_crouching else 'aflame' # Or 'burning' if that's a distinct visual
                     elif player.is_deflaming: next_state = 'deflame_crouch' if player.is_crouching else 'deflame'
-                    else: next_state = 'fall' if not player.on_ground and not player.on_ladder else 'idle'
-                elif current_animation_key == 'turn': next_state = 'run' if player_is_moving else 'idle'
+                    else: next_state = 'idle' if player.on_ground and not player.on_ladder else 'fall'
+                elif current_animation_key == 'turn':
+                    next_state = 'run' if player_is_intending_to_move_lr else 'idle'
                 elif 'attack' in current_animation_key:
-                    player.is_attacking = False; player.attack_type = 0
+                    player.is_attacking = False; player.attack_type = 0; player.can_combo = False
                     if player.on_ladder: next_state = 'ladder_idle'
                     elif player.is_crouching: next_state = 'crouch'
                     elif not player.on_ground: next_state = 'fall'
-                    else: next_state = 'run' if player_is_moving else 'idle'
-                elif current_animation_key == 'crouch_trans': next_state = 'crouch_walk' if player_is_moving else 'crouch'
+                    else: next_state = 'run' if player_is_intending_to_move_lr else 'idle'
+                elif current_animation_key == 'crouch_trans':
+                    next_state = 'crouch_walk' if player_is_intending_to_move_lr else 'crouch'
                 elif current_animation_key == 'slide' or current_animation_key == 'slide_trans_end':
-                    player.is_sliding = False; next_state = 'crouch' if player.is_holding_crouch_ability_key else 'idle'
-                elif current_animation_key == 'slide_trans_start': next_state = 'slide'
+                    player.is_sliding = False
+                    next_state = 'crouch' if player.is_holding_crouch_ability_key or player.is_crouching else 'idle'
+                elif current_animation_key == 'slide_trans_start':
+                    next_state = 'slide'
                 elif current_animation_key == 'dash': player.is_dashing = False; next_state = 'idle' if player.on_ground else 'fall'
                 elif current_animation_key == 'roll': player.is_rolling = False; next_state = 'idle' if player.on_ground else 'fall'
 
+                # Only set state if the animation key matched the current logical state
+                # AND the determined next state is different.
+                # This avoids state flapping if, e.g., player.state was already 'fall' but 'jump' anim finished.
                 if player.state == current_animation_key and next_state != player.state:
-                    set_player_state(player, next_state); return
-                else: player.current_frame = 0
-            elif is_hold:
+                    # Pass current time to set_player_state
+                    set_player_state(player, next_state, get_current_ticks_monotonic())
+                    return # State changed, animation will be re-evaluated next frame
+                else: # If no state transition, loop or hold this animation's first frame
+                    player.current_frame = 0
+            
+            elif is_hold_last_frame_anim:
                 player.current_frame = len(current_animation_frames_list) - 1
-            else: player.current_frame = 0
-
-    if player.is_petrified and not player.is_stone_smashed: player.current_frame = 0
-    elif not current_animation_frames_list or player.current_frame < 0 or player.current_frame >= len(current_animation_frames_list):
+                # For 'aflame' type animations, the logical state might change to 'burning'
+                # which is handled by player_status_effects or set_player_state.
+                # Here, we just ensure the visual holds.
+                if current_animation_key == 'aflame' and not player.is_deflaming:
+                     # If 'aflame' animation finishes, and player is still logically aflame,
+                     # they might transition to a 'burning' (looping) visual state.
+                     # This assumes player_state_handler or status_effects handles this logic.
+                     # For now, just hold frame. If 'burning' is a different animation, this needs adjustment.
+                     pass
+            
+            else: # Default: Loop animation
+                player.current_frame = 0
+    
+    # Final safeguard for frame index
+    if not current_animation_frames_list or player.current_frame < 0 or \
+       player.current_frame >= len(current_animation_frames_list):
         player.current_frame = 0
 
 
-def update_player_animation(player):
+def update_player_animation(player: Any):
     qcolor_magenta = QColor(*(C.MAGENTA if hasattr(C, 'MAGENTA') else (255,0,255)))
     qcolor_red = QColor(*(C.RED if hasattr(C, 'RED') else (255,0,0)))
     qcolor_blue = QColor(*(C.BLUE if hasattr(C, 'BLUE') else (0,0,255)))
-    qcolor_yellow = QColor(*(C.YELLOW if hasattr(C, 'YELLOW') else (255,255,0)))
-
-    if not player._valid_init:
-        if not hasattr(player, 'animations') or not player.animations:
-             if hasattr(player, 'image') and player.image and not player.image.isNull(): player.image.fill(qcolor_magenta); return
-             return
-
-    if not player.alive() and not (player.is_dead and not player.death_animation_finished and not player.is_petrified):
+    
+    if not getattr(player, '_valid_init', False) or not hasattr(player, 'animations') or not player.animations:
+        if hasattr(player, 'image') and player.image and not player.image.isNull():
+            player.image.fill(qcolor_magenta)
         return
 
-    current_time_ms = get_current_ticks()
-    determined_animation_key = determine_animation_key(player)
+    # Determine if animation should proceed
+    can_animate_now = (hasattr(player, 'alive') and player.alive()) or \
+                      (getattr(player, 'is_dead', False) and not getattr(player, 'death_animation_finished', True) and not getattr(player, 'is_petrified', False)) or \
+                      getattr(player, 'is_petrified', False) # Petrified players (stone/smashed) animate
 
-    current_animation_frames: Optional[List[QPixmap]] = None
-    if determined_animation_key == 'petrified':
-        current_animation_frames = [player.stone_crouch_image_frame if player.was_crouching_when_petrified else player.stone_image_frame]
-    elif determined_animation_key == 'smashed':
-        current_animation_frames = player.stone_crouch_smashed_frames if player.was_crouching_when_petrified else player.stone_smashed_frames
-    elif player.animations:
-        current_animation_frames = player.animations.get(determined_animation_key)
+    if not can_animate_now: return
 
-    if not current_animation_frames or not current_animation_frames[0] or current_animation_frames[0].isNull():
-        if player.print_limiter.can_print(f"anim_frames_missing_update_{player.player_id}_{determined_animation_key}"):
-            print(f"CRITICAL ANIM_HANDLER (P{player.player_id}): Frames for key '{determined_animation_key}' (State: {player.state}) missing/null AT UPDATE. Using RED.")
-        if hasattr(player, 'image') and player.image and not player.image.isNull(): player.image.fill(qcolor_red); return
-        return
+    current_time_ms = get_current_ticks_monotonic()
+    determined_key_for_logic = determine_animation_key(player) # Key based on current logical state
 
-    advance_frame_and_handle_state_transitions(player, current_animation_frames, current_time_ms, determined_animation_key)
+    current_frames_list: Optional[List[QPixmap]] = None
+    # --- Get frames based on determined_key_for_logic ---
+    if determined_key_for_logic == 'petrified':
+        current_frames_list = [player.stone_crouch_image_frame if player.was_crouching_when_petrified else player.stone_image_frame]
+    elif determined_key_for_logic == 'smashed':
+        current_frames_list = player.stone_crouch_smashed_frames if player.was_crouching_when_petrified else player.stone_smashed_frames
+    elif player.animations: # Regular animations from player's sheet
+        current_frames_list = player.animations.get(determined_key_for_logic)
 
-    render_animation_key = determined_animation_key
-    if player.state != determined_animation_key:
-        new_key_for_render = determine_animation_key(player)
-        if new_key_for_render != determined_animation_key:
-            render_animation_key = new_key_for_render
-            if render_animation_key == 'petrified':
-                current_animation_frames = [player.stone_crouch_image_frame if player.was_crouching_when_petrified else player.stone_image_frame]
-            elif render_animation_key == 'smashed':
-                current_animation_frames = player.stone_crouch_smashed_frames if player.was_crouching_when_petrified else player.stone_smashed_frames
-            elif player.animations:
-                new_frames_for_render = player.animations.get(render_animation_key)
-                if new_frames_for_render and new_frames_for_render[0] and not new_frames_for_render[0].isNull():
-                    current_animation_frames = new_frames_for_render
-                elif not (current_animation_frames and current_animation_frames[0] and not current_animation_frames[0].isNull()):
-                    current_animation_frames = player.animations.get('idle', [player.image] if player.image and not player.image.isNull() else [])
+    # --- Validate frames, fallback to 'idle' if necessary ---
+    is_current_animation_valid = True
+    if not current_frames_list or not current_frames_list[0] or current_frames_list[0].isNull():
+        is_current_animation_valid = False
+    elif len(current_frames_list) == 1 and \
+         determined_key_for_logic not in ['petrified', 'idle', 'run', 'fall', 'frozen', 'crouch', 'ladder_idle', 'wall_hang']: # Static states can be 1 frame
+        frame_pixmap = current_frames_list[0]
+        if frame_pixmap.size() == QSize(30, 40): # Check for placeholder size
+            qimg = frame_pixmap.toImage()
+            if not qimg.isNull():
+                pixel_color = qimg.pixelColor(0,0)
+                if pixel_color == qcolor_red or pixel_color == qcolor_blue:
+                    is_current_animation_valid = False
 
+    if not is_current_animation_valid:
+        if determined_key_for_logic != 'idle':
+            if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"anim_frames_missing_final_{player.player_id}_{determined_key_for_logic}"):
+                warning(f"PlayerAnimHandler Warning (P{player.player_id}): Animation for key '{determined_key_for_logic}' (State: {player.state}) missing/placeholder. Switching to 'idle'.")
+        
+        determined_key_for_logic = 'idle' # Update the key being processed
+        current_frames_list = player.animations.get('idle') if player.animations else None
 
-    if not current_animation_frames or not current_animation_frames[0] or current_animation_frames[0].isNull():
+        is_idle_still_invalid = not current_frames_list or \
+                                not current_frames_list[0] or \
+                                current_frames_list[0].isNull() or \
+                                (len(current_frames_list) == 1 and \
+                                 current_frames_list[0].size() == QSize(30,40) and \
+                                 (current_frames_list[0].toImage().pixelColor(0,0) == qcolor_red or \
+                                  current_frames_list[0].toImage().pixelColor(0,0) == qcolor_blue))
+        if is_idle_still_invalid:
+            critical(f"PlayerAnimHandler CRITICAL (P{player.player_id}): Fallback 'idle' ALSO missing/placeholder! Visuals broken.")
+            if hasattr(player, 'image') and player.image and not player.image.isNull(): player.image.fill(qcolor_magenta)
+            return
+
+    if not current_frames_list: # Should be caught by above, but as a safeguard
         if hasattr(player, 'image') and player.image and not player.image.isNull(): player.image.fill(qcolor_blue); return
 
-    if player.current_frame < 0 or player.current_frame >= len(current_animation_frames):
-        player.current_frame = 0
-        if not current_animation_frames: # Should be caught by above
-            if hasattr(player, 'image') and player.image and not player.image.isNull(): player.image.fill(qcolor_yellow); return
+    # --- Advance frame and handle state transitions based on animation end ---
+    advance_frame_and_handle_state_transitions(player, current_frames_list, current_time_ms, determined_key_for_logic)
 
-    image_for_this_frame = current_animation_frames[player.current_frame]
-    if image_for_this_frame.isNull():
+    # --- Re-determine animation key if logical state changed during advance_frame ---
+    # This ensures the final image rendered matches the most up-to-date state.
+    render_key_for_final_image = determined_key_for_logic
+    current_player_logical_state_after_advance = getattr(player, 'state', 'idle')
+    
+    if current_player_logical_state_after_advance != determined_key_for_logic and \
+       not (getattr(player, 'is_petrified', False) and determined_key_for_logic in ['petrified', 'smashed']): # Don't re-eval if petrified
+
+        new_render_key_candidate = determine_animation_key(player) # Re-determine based on potentially new state
+        if new_render_key_candidate != determined_key_for_logic:
+            render_key_for_final_image = new_render_key_candidate
+            # Update current_frames_list based on the new render_key for the final image selection
+            if render_key_for_final_image == 'petrified':
+                current_frames_list = [player.stone_crouch_image_frame if player.was_crouching_when_petrified else player.stone_image_frame]
+            elif render_key_for_final_image == 'smashed':
+                current_frames_list = player.stone_crouch_smashed_frames if player.was_crouching_when_petrified else player.stone_smashed_frames
+            elif player.animations:
+                new_frames_for_render = player.animations.get(render_key_for_final_image)
+                if new_frames_for_render and new_frames_for_render[0] and not new_frames_for_render[0].isNull():
+                    current_frames_list = new_frames_for_render
+                # If new render key is also invalid, keep the current_frames_list from determined_key_for_logic (which was already validated or defaulted to idle)
+
+    # --- Final Safeguard and Image Assignment ---
+    if not current_frames_list or player.current_frame < 0 or player.current_frame >= len(current_frames_list):
+        player.current_frame = 0 # Reset frame index if out of bounds
+        if not current_frames_list: # Absolute fallback if list became empty (shouldn't happen with prior checks)
+            if hasattr(player, 'image') and player.image and not player.image.isNull():
+                player.image.fill(QColor(*(C.YELLOW if hasattr(C, 'YELLOW') else (255,255,0))))
+            return
+
+    image_for_this_frame = current_frames_list[player.current_frame]
+    if image_for_this_frame.isNull(): # Should be caught earlier
         if hasattr(player, 'image') and player.image and not player.image.isNull(): player.image.fill(qcolor_magenta); return
 
-    should_flip = not player.facing_right
-    if render_animation_key == 'petrified' or render_animation_key == 'smashed':
-        should_flip = not player.facing_at_petrification
+    # Determine facing for visual display (petrified state uses facing_at_petrification)
+    display_facing_right = player.facing_right
+    if render_key_for_final_image == 'petrified' or render_key_for_final_image == 'smashed':
+        display_facing_right = player.facing_at_petrification
 
     final_image_to_set = image_for_this_frame
-    if should_flip:
-        q_img = image_for_this_frame.toImage()
-        if not q_img.isNull():
-            final_image_to_set = QPixmap.fromImage(q_img.mirrored(True, False))
-        # else: final_image_to_set remains image_for_this_frame (original) if conversion fails
+    if not display_facing_right: # Flip if facing left
+        # Don't flip static stone images if they are pre-rendered for one direction
+        # (This check might be redundant if stone_image_frame itself is chosen based on facing_at_petrification)
+        if not (render_key_for_final_image == 'petrified' or render_key_for_final_image == 'smashed'):
+            q_img = image_for_this_frame.toImage()
+            if not q_img.isNull():
+                final_image_to_set = QPixmap.fromImage(q_img.mirrored(True, False))
+            # else: final_image_to_set remains image_for_this_frame (original) if conversion fails
 
-    image_content_changed = (player.image is None) or \
+    # Check if image content or facing direction actually changed before updating
+    # This avoids unnecessary QPixmap object creation and rect updates.
+    image_content_changed = (not hasattr(player, 'image') or player.image is None) or \
                             (hasattr(player.image, 'cacheKey') and hasattr(final_image_to_set, 'cacheKey') and \
                              player.image.cacheKey() != final_image_to_set.cacheKey()) or \
-                            (player.image is not final_image_to_set) # Fallback if cacheKey not reliable
+                            (player.image is not final_image_to_set) # Fallback direct QPixmap object comparison
 
-    facing_direction_for_flip_check = player.facing_at_petrification if (render_animation_key in ['petrified', 'smashed']) else player.facing_right
-
-    if image_content_changed or (player._last_facing_right != facing_direction_for_flip_check):
-        # Use QPointF methods for midbottom calculation
-        old_rect_midbottom_qpointf = QPointF(player.rect.center().x(), player.rect.bottom())
+    if image_content_changed or (getattr(player, '_last_facing_right_visual_for_anim', True) != display_facing_right):
+        # Store midbottom to re-anchor after image change if height differs
+        old_rect_midbottom_qpointf = QPointF(player.rect.center().x(), player.rect.bottom()) if hasattr(player, 'rect') and player.rect else player.pos
 
         player.image = final_image_to_set
         # _update_rect_from_image_and_pos must exist on player and handle QPointF
-        if hasattr(player, '_update_rect_from_image_and_pos'):
+        if hasattr(player, '_update_rect_from_image_and_pos') and callable(player._update_rect_from_image_and_pos):
             player._update_rect_from_image_and_pos(old_rect_midbottom_qpointf)
         else: # Fallback if method missing (should not happen if player.py is refactored)
-            player.rect = QRectF(old_rect_midbottom_qpointf - QPointF(player.image.width()/2, player.image.height()),
+            player.rect = QRectF(old_rect_midbottom_qpointf - QPointF(player.image.width()/2.0, float(player.image.height())),
                                  player.image.size())
 
-
-        player._last_facing_right = facing_direction_for_flip_check
-
-#################### END OF FILE: player_animation_handler.py ####################
+        player._last_facing_right_visual_for_anim = display_facing_right # Store the visual facing direction used for animation

@@ -4,39 +4,42 @@
 Handles player state transitions and state-specific initializations for PySide6.
 MODIFIED: Accepts current_game_time_ms_param to ensure timer consistency.
 MODIFIED: Manages overall_fire_effect_start_time for 5s fire cycle.
+MODIFIED: Ensures fire is extinguished when player becomes frozen.
 """
-# version 2.0.8 (5s fire cycle timer management)
+# version 2.0.9 (Corrected fire/freeze interaction and overall_fire_effect_start_time management)
 
-import time # For monotonic timer
-from typing import Optional, Any # Added Any
+import time 
+from typing import Optional, Any
 
-# PySide6 imports
 from PySide6.QtCore import QPointF
 
-# Game imports
 import constants as C
 from utils import PrintLimiter
 
-# Logger is now imported directly
-from logger import info, debug, warning, error, critical
+try:
+    from logger import info, debug, warning, error, critical
+except ImportError:
+    print("CRITICAL PLAYER_STATE_HANDLER: Failed to import logger.")
+    def info(msg, *args, **kwargs): print(f"INFO_PSTATE: {msg}")
+    def debug(msg, *args, **kwargs): print(f"DEBUG_PSTATE: {msg}")
+    def warning(msg, *args, **kwargs): print(f"WARNING_PSTATE: {msg}")
+    def error(msg, *args, **kwargs): print(f"ERROR_PSTATE: {msg}")
+    def critical(msg, *args, **kwargs): print(f"CRITICAL_PSTATE: {msg}")
 
 try:
-    from player_animation_handler import update_player_animation # Ensure this is PySide6 compatible
+    from player_animation_handler import update_player_animation
 except ImportError:
-    critical("PLAYER_STATE_HANDLER (AnimImportFail): player_animation_handler.update_player_animation not found.")
-    def update_player_animation(player: Any): # Added type hint
-        if hasattr(player, 'animate') and callable(player.animate):
-            player.animate()
+    critical("PLAYER_STATE_HANDLER: Failed to import update_player_animation from player_animation_handler.")
+    def update_player_animation(player_arg: Any): # Fallback dummy
+        if hasattr(player_arg, 'animate') and callable(player_arg.animate):
+            player_arg.animate()
         else:
-            critical(f"PLAYER_STATE_HANDLER (AnimImportFail-Fallback): Cannot call animate for Player ID {getattr(player, 'player_id', 'N/A')}")
+            critical(f"PLAYER_STATE_HANDLER (Fallback): Cannot call animate for Player ID {getattr(player_arg, 'player_id', 'N/A')}")
 
-
-_start_time_player_state_monotonic = time.monotonic() # This is player_state_handler's own start time
+_start_time_player_state_monotonic = time.monotonic()
 def get_current_ticks_monotonic() -> int:
-    """Returns monotonic time in milliseconds since this module was initialized."""
     return int((time.monotonic() - _start_time_player_state_monotonic) * 1000)
 
-# --- MODIFIED set_player_state signature ---
 def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):
     if not getattr(player, '_valid_init', False):
         if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"set_state_invalid_player_{getattr(player, 'player_id', 'unknown')}"):
@@ -51,41 +54,41 @@ def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Op
 
     # Guard Clauses for Overriding States (Petrified, Smashed)
     if getattr(player, 'is_petrified', False) and not getattr(player, 'is_stone_smashed', False) and \
-       new_state not in ['petrified', 'smashed', 'death', 'death_nm', 'idle']: # 'idle' allowed for forced reset
+       new_state not in ['petrified', 'smashed', 'death', 'death_nm', 'idle']:
         if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"set_state_block_petrified_{player.player_id}_{new_state}"):
             debug(f"PlayerStateHandler ({player_id_str}): Blocked state change from '{current_player_state}' to '{new_state}' due to being petrified (not smashed).")
         return
-    if getattr(player, 'is_stone_smashed', False) and new_state not in ['smashed', 'death', 'death_nm', 'idle']: # 'idle' allowed for forced reset
+    if getattr(player, 'is_stone_smashed', False) and new_state not in ['smashed', 'death', 'death_nm', 'idle']:
         if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"set_state_block_smashed_{player.player_id}_{new_state}"):
             debug(f"PlayerStateHandler ({player_id_str}): Blocked state change from '{current_player_state}' to '{new_state}' due to being stone_smashed.")
         return
     
-    # If petrified and not smashed, block transitions to other status effects
+    # Block transitions to other status effects if petrified and not smashed
     if getattr(player, 'is_petrified', False) and not getattr(player, 'is_stone_smashed', False):
         if new_state in ['frozen', 'defrost', 'aflame', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame', 'deflame_crouch', 'hit']:
             if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"set_state_block_petrified_status_{player.player_id}_{new_state}"):
                 debug(f"PlayerStateHandler ({player_id_str}): Blocked status effect state change to '{new_state}' due to petrification.")
             return
 
-    # Automatic state adjustments based on current conditions (e.g., if aflame, switch to burning if moving)
+    # Automatic state adjustments (e.g., if aflame, use burning variants)
+    # This is now more nuanced due to fire/freeze interaction
     is_crouching_flag = getattr(player, 'is_crouching', False)
-    if getattr(player, 'is_aflame', False): # If currently aflame
-        if new_state not in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame', 'deflame_crouch', 'death', 'death_nm', 'petrified', 'smashed', 'hit', 'idle']: # 'idle' added for forced reset
+
+    if getattr(player, 'is_aflame', False) and new_state not in ['frozen', 'defrost', 'petrified', 'smashed']: # If aflame, don't override freeze/petrify states
+        if new_state not in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch', 'deflame', 'deflame_crouch', 'death', 'death_nm', 'hit', 'idle']:
             new_state = 'burning_crouch' if is_crouching_flag else 'burning'
-    elif getattr(player, 'is_deflaming', False): # If currently deflaming
-        if new_state not in ['deflame', 'deflame_crouch', 'death', 'death_nm', 'petrified', 'smashed', 'hit', 'idle']: # 'idle' added for forced reset
+    elif getattr(player, 'is_deflaming', False) and new_state not in ['frozen', 'defrost', 'petrified', 'smashed']:
+        if new_state not in ['deflame', 'deflame_crouch', 'death', 'death_nm', 'hit', 'idle']:
             new_state = 'deflame_crouch' if is_crouching_flag else 'deflame'
     elif getattr(player, 'is_frozen', False):
         if new_state not in ['frozen', 'defrost', 'death', 'death_nm', 'petrified', 'smashed', 'hit', 'idle']: new_state = 'frozen'
     elif getattr(player, 'is_defrosting', False):
         if new_state not in ['frozen', 'defrost', 'death', 'death_nm', 'petrified', 'smashed', 'hit', 'idle']: new_state = 'defrost'
 
-
+    # Validate animation key for the (potentially adjusted) new_state
     animation_key_to_check = new_state
-    if new_state in ['chasing', 'patrolling']: animation_key_to_check = 'run' # Assuming Player doesn't have these states
-    
     player_animations = getattr(player, 'animations', None)
-    if animation_key_to_check not in ['petrified', 'smashed']: # Stone states have dedicated frames
+    if animation_key_to_check not in ['petrified', 'smashed']:
         if not player_animations or animation_key_to_check not in player_animations or \
            not player_animations.get(animation_key_to_check):
             fallback_state_key = 'fall' if not getattr(player, 'on_ground', False) else 'idle'
@@ -93,44 +96,44 @@ def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Op
                 if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"player_set_state_fallback_{player.player_id}_{original_new_state_request}_{new_state}"):
                     warning(f"Player Warning ({player_id_str}): State '{original_new_state_request}' (became '{new_state}') anim missing. Fallback to '{fallback_state_key}'.")
                 new_state = fallback_state_key
-            else: # More critical fallback
+            else:
                 first_available_anim_key = next((key for key, anim_list in player_animations.items() if anim_list), None) if player_animations else None
                 if not first_available_anim_key:
                     if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"player_set_state_no_anims_{player.player_id}"):
-                        critical(f"Player CRITICAL ({player_id_str}): No animations loaded AT ALL. Requested state: '{original_new_state_request}'. Player invalid.")
-                    player._valid_init = False; return # Cannot proceed without any animations
+                        critical(f"Player CRITICAL ({player_id_str}): No animations loaded. Requested state: '{original_new_state_request}'. Player invalid.")
+                    player._valid_init = False; return
                 new_state = first_available_anim_key
                 if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"player_set_state_critical_fallback_{player.player_id}_{original_new_state_request}"):
-                    critical(f"Player CRITICAL ({player_id_str}): State '{original_new_state_request}' & fallbacks missing. Using first available animation: '{new_state}'.")
+                    critical(f"Player CRITICAL ({player_id_str}): State '{original_new_state_request}' & fallbacks missing. Using first available: '{new_state}'.")
 
+    # Check if state change is allowed or needed
     can_change_state_now = (current_player_state != new_state) or \
                            (new_state == 'hit') or \
                            (new_state in ['aflame', 'aflame_crouch'] and current_player_state not in ['aflame', 'aflame_crouch', 'burning', 'burning_crouch'])
 
     if getattr(player, 'is_dead', False) and getattr(player, 'death_animation_finished', False) and not getattr(player, 'is_stone_smashed', False):
-         if new_state not in ['death', 'death_nm', 'petrified', 'smashed', 'idle']: # Allow idle if forced by 5s timer
+         if new_state not in ['death', 'death_nm', 'petrified', 'smashed', 'idle']:
             can_change_state_now = False
 
     if not can_change_state_now:
         if current_player_state == new_state and hasattr(player, 'print_limiter') and \
            player.print_limiter.can_log(f"set_state_no_change_{player_id_str}_{new_state}"):
-             debug(f"PlayerStateHandler ({player_id_str}): State change to '{new_state}' not allowed or no actual change needed (current state already '{current_player_state}').")
-        if current_player_state == new_state: # Still call animation if state hasn't changed but this function was called
+             debug(f"PlayerStateHandler ({player_id_str}): State change to '{new_state}' not allowed or no actual change needed.")
+        if current_player_state == new_state:
             update_player_animation(player)
         return
 
     state_is_actually_changing = (current_player_state != new_state)
     if state_is_actually_changing:
         if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"state_change_{player.player_id}_{current_player_state}_{new_state}"):
-             debug(f"PlayerStateHandler ({player_id_str}): State changing from '{current_player_state}' to '{new_state}' (original request was '{original_new_state_request}')")
+             debug(f"PlayerStateHandler ({player_id_str}): State changing from '{current_player_state}' to '{new_state}' (original request '{original_new_state_request}')")
     
-    setattr(player, '_last_state_for_debug', new_state) # For easier debugging
+    setattr(player, '_last_state_for_debug', new_state)
 
-    # Clear action flags that are terminated by a new state
+    # Clear action flags terminated by a new state
     if 'attack' not in new_state and getattr(player, 'is_attacking', False):
         player.is_attacking = False; setattr(player, 'attack_type', 0)
     if new_state != 'hit' and getattr(player, 'is_taking_hit', False):
-        # Only clear hit stun if cooldown has passed OR if new state is not 'hit'
         if effective_current_time_ms - getattr(player, 'hit_timer', 0) >= getattr(player, 'hit_cooldown', C.PLAYER_HIT_COOLDOWN):
             player.is_taking_hit = False
     if new_state != 'dash' and getattr(player, 'is_dashing', False): player.is_dashing = False
@@ -138,92 +141,111 @@ def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Op
     if new_state not in ['slide', 'slide_trans_start', 'slide_trans_end'] and getattr(player, 'is_sliding', False): player.is_sliding = False
 
     # --- Status Effects Flags and Timers (use effective_current_time_ms) ---
-    # This logic now focuses on INITIATING fire/freeze states and managing the overall_fire_effect_timer.
-    # Clearing these flags when transitioning *out* of them (e.g. to 'idle') is handled in the final `else` block.
-
+    # Handle initiation of fire effects
     if new_state in ['aflame', 'burning', 'aflame_crouch', 'burning_crouch']:
-        if not getattr(player, 'is_aflame', False): # Player is just now becoming aflame
+        if not getattr(player, 'is_aflame', False): # Just becoming aflame
             player.aflame_timer_start = effective_current_time_ms
             player.aflame_damage_last_tick = player.aflame_timer_start
-            # Start overall 5s timer only if not already in a fire sequence (e.g. deflame)
-            # and if the overall timer isn't already running from a previous aflame state in this cycle.
+            # Start overall 5s timer if not already in a fire sequence (e.g. deflame)
             if not getattr(player, 'is_deflaming', False) and \
                (not hasattr(player, 'overall_fire_effect_start_time') or player.overall_fire_effect_start_time == 0):
                 player.overall_fire_effect_start_time = effective_current_time_ms
                 if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"start_overall_fire_timer_{player.player_id}"):
                     debug(f"PlayerStateHandler ({player_id_str}): Starting 5s overall fire timer due to state '{new_state}'. Time: {effective_current_time_ms}")
         player.is_aflame = True
-        player.is_deflaming = False # Ensure deflaming is off if re-ignited
+        player.is_deflaming = False 
+        player.is_frozen = False # Fire thaws
+        player.is_defrosting = False
         
+    # Handle initiation of deflame
     elif new_state in ['deflame', 'deflame_crouch']:
-        if not getattr(player, 'is_deflaming', False): # Player is just now starting to deflame
+        if not getattr(player, 'is_deflaming', False):
             player.deflame_timer_start = effective_current_time_ms
         player.is_deflaming = True
-        player.is_aflame = False # Ensure aflame is off when deflaming starts
-        # Do NOT reset overall_fire_effect_start_time here; it continues from when aflame started.
-    
+        player.is_aflame = False
+        player.is_frozen = False # Fire thaws
+        player.is_defrosting = False
+        # overall_fire_effect_start_time continues from when aflame started.
+
+    # Handle initiation of frozen
     elif new_state == 'frozen':
-        if not getattr(player, 'is_frozen', False): player.frozen_effect_timer = effective_current_time_ms
-        player.is_frozen = True; player.is_defrosting = False
-        player.is_aflame = False; player.is_deflaming = False; player.overall_fire_effect_start_time = 0 # Extinguish fire
-    elif new_state == 'defrost':
-        # frozen_effect_timer (which marks start of frozen period) should already be set
-        player.is_defrosting = True; player.is_frozen = False
-        player.is_aflame = False; player.is_deflaming = False; player.overall_fire_effect_start_time = 0 # Extinguish fire
+        if not getattr(player, 'is_frozen', False):
+            player.frozen_effect_timer = effective_current_time_ms
+        player.is_frozen = True
+        player.is_defrosting = False
+        # --- EXTINGUISH FIRE WHEN FROZEN ---
+        if getattr(player, 'is_aflame', False) or getattr(player, 'is_deflaming', False):
+            if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"frozen_extinguishes_fire_P{player.player_id}"):
+                debug(f"PlayerStateHandler (P{player.player_id}): Transitioning to 'frozen'. Extinguishing fire.")
+        player.is_aflame = False
+        player.is_deflaming = False
+        if hasattr(player, 'overall_fire_effect_start_time'):
+            player.overall_fire_effect_start_time = 0
+        # --- ---
         
+    # Handle initiation of defrost
+    elif new_state == 'defrost':
+        player.is_defrosting = True
+        player.is_frozen = False
+        # Fire remains extinguished if it was, during defrost
+        if getattr(player, 'is_aflame', False) or getattr(player, 'is_deflaming', False): # Should have been cleared by 'frozen'
+            player.is_aflame = False; player.is_deflaming = False
+            if hasattr(player, 'overall_fire_effect_start_time'): player.overall_fire_effect_start_time = 0
+
+    # Handle petrification
     elif new_state == 'petrified':
         if not getattr(player, 'is_petrified', False): 
             player.facing_at_petrification = getattr(player, 'facing_right', True)
             player.was_crouching_when_petrified = getattr(player, 'is_crouching', False)
         player.is_petrified = True; player.is_stone_smashed = False
-        player.is_dead = True; player.death_animation_finished = True # Visually instant, no anim for petrify itself
-        player.is_aflame = False; player.is_deflaming = False; player.is_frozen = False; player.is_defrosting = False; player.overall_fire_effect_start_time = 0 # Extinguish
+        player.is_dead = True; player.death_animation_finished = True 
+        player.is_aflame = False; player.is_deflaming = False; player.is_frozen = False; player.is_defrosting = False; player.overall_fire_effect_start_time = 0
+    
+    # Handle smashed
     elif new_state == 'smashed':
         if not getattr(player, 'is_stone_smashed', False): 
             player.stone_smashed_timer_start = effective_current_time_ms
         player.is_stone_smashed = True; player.is_petrified = True 
-        player.is_dead = True; player.death_animation_finished = False # Smashed anim needs to play
-        player.is_aflame = False; player.is_deflaming = False; player.is_frozen = False; player.is_defrosting = False; player.overall_fire_effect_start_time = 0 # Extinguish
-
-    # This else block is for any other state (idle, run, fall, jump, hit, etc.)
-    # It's crucial for clearing flags when a status effect ends *naturally* or is *forced* (like by the 5s timer).
+        player.is_dead = True; player.death_animation_finished = False 
+        player.is_aflame = False; player.is_deflaming = False; player.is_frozen = False; player.is_defrosting = False; player.overall_fire_effect_start_time = 0
+    
+    # For any other state (e.g., idle, run, fall, jump, hit):
+    # Clear temporary status effect flags if they are no longer active due to this new state.
     else: 
-        flags_were_cleared_in_else = False
+        flags_were_cleared_in_final_else = False
         if getattr(player, 'is_aflame', False): 
-            player.is_aflame = False; flags_were_cleared_in_else = True
+            player.is_aflame = False; flags_were_cleared_in_final_else = True
         if getattr(player, 'is_deflaming', False): 
-            player.is_deflaming = False; flags_were_cleared_in_else = True
-        if flags_were_cleared_in_else and getattr(player, 'overall_fire_effect_start_time', 0) != 0 :
-            player.overall_fire_effect_start_time = 0 # Reset 5s timer if fire cycle naturally ends or is forced to non-fire state
-            if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"clear_overall_fire_timer_from_else_block_{player.player_id}_{new_state}"):
-                debug(f"PlayerStateHandler ({player_id_str}): Cleared 5s overall fire timer due to non-fire state '{new_state}'.")
+            player.is_deflaming = False; flags_were_cleared_in_final_else = True
+        if flags_were_cleared_in_final_else and hasattr(player, 'overall_fire_effect_start_time') and getattr(player, 'overall_fire_effect_start_time', 0) != 0 :
+            player.overall_fire_effect_start_time = 0
+            if hasattr(player, 'print_limiter') and player.print_limiter.can_log(f"clear_overall_fire_timer_final_else_{player.player_id}_{new_state}"):
+                debug(f"PlayerStateHandler ({player_id_str}): Cleared 5s overall fire timer from final else block due to non-fire state '{new_state}'.")
         
-        if new_state not in ['frozen', 'defrost']: # Only clear if not going into these
+        if new_state not in ['frozen', 'defrost']:
             if getattr(player, 'is_frozen', False): player.is_frozen = False
             if getattr(player, 'is_defrosting', False): player.is_defrosting = False
-        if new_state not in ['petrified', 'smashed']: # Only clear if not going into these
+        if new_state not in ['petrified', 'smashed']:
             if getattr(player, 'is_petrified', False): player.is_petrified = False
             if getattr(player, 'is_stone_smashed', False): player.is_stone_smashed = False
             if getattr(player, 'was_crouching_when_petrified', False): player.was_crouching_when_petrified = False
-    
     # -- End of Status Effect Flag Management --
 
     player.state = new_state # Final state assignment
 
-    # Reset animation frame and timers if state actually changed or if it's a re-triggerable action state
     if state_is_actually_changing or \
        new_state in ['hit', 'attack', 'attack_nm', 'attack_combo', 'attack_combo_nm', 'crouch_attack', 'aflame', 'aflame_crouch', 'jump']:
         player.current_frame = 0
         player.last_anim_update = effective_current_time_ms
     
-    player.state_timer = effective_current_time_ms # Always update state_timer
+    player.state_timer = effective_current_time_ms
 
-    # State-specific initializations (like setting is_dashing=True or timers)
-    # This section mostly remains the same, just ensure it doesn't conflict with the flag clearing above.
+    # State-specific initializations for movement/actions (mostly unchanged)
     if new_state == 'idle': player.is_crouching = False
     elif new_state == 'run': player.is_crouching = False
-    elif new_state == 'crouch' or new_state == 'crouch_walk': player.is_crouching = True
-    elif new_state == 'jump': player.is_crouching = False # Cannot be crouching and jumping
+    elif new_state == 'crouch' or new_state == 'crouch_walk' or new_state == 'aflame_crouch' or new_state == 'burning_crouch' or new_state == 'deflame_crouch':
+        player.is_crouching = True
+    elif new_state == 'jump': player.is_crouching = False
     elif new_state == 'dash':
         player.is_dashing = True; player.dash_timer = player.state_timer
         player.is_crouching = False
@@ -232,8 +254,7 @@ def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Op
         player.is_rolling = True; player.roll_timer = player.state_timer
         player.is_crouching = False
         if hasattr(player, 'vel'):
-            current_vel_x = player.vel.x()
-            target_roll_vel_x = C.PLAYER_ROLL_SPEED * (1 if getattr(player, 'facing_right', True) else -1)
+            current_vel_x = player.vel.x(); target_roll_vel_x = C.PLAYER_ROLL_SPEED * (1 if getattr(player, 'facing_right', True) else -1)
             if abs(current_vel_x) < C.PLAYER_ROLL_SPEED * 0.7: player.vel.setX(target_roll_vel_x)
             else: player.vel.setX(current_vel_x * 0.8 + target_roll_vel_x * 0.2)
             player.vel.setX(max(-C.PLAYER_ROLL_SPEED, min(C.PLAYER_ROLL_SPEED, player.vel.x())))
@@ -245,8 +266,7 @@ def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Op
     elif 'attack' in new_state:
         player.is_attacking = True; player.attack_timer = player.state_timer
         anim_frames = player_animations.get(new_state, []) if player_animations else []
-        num_frames = len(anim_frames)
-        ms_per_frame_attack = C.ANIM_FRAME_DURATION
+        num_frames = len(anim_frames); ms_per_frame_attack = C.ANIM_FRAME_DURATION
         if getattr(player, 'attack_type', 0) == 2 and hasattr(C, 'PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER'):
             ms_per_frame_attack = int(C.ANIM_FRAME_DURATION * C.PLAYER_ATTACK2_FRAME_DURATION_MULTIPLIER)
         player.attack_duration = num_frames * ms_per_frame_attack if num_frames > 0 else getattr(C, 'CHARACTER_ATTACK_STATE_DURATION', 300)
@@ -254,21 +274,20 @@ def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Op
             if hasattr(player, 'vel'): player.vel.setX(0.0)
     elif new_state == 'hit':
         player.is_taking_hit = True; player.hit_timer = player.state_timer 
-        if not getattr(player, 'on_ground', False) and hasattr(player, 'vel'): # Air hit
-            if player.vel.y() > -abs(C.PLAYER_JUMP_STRENGTH * 0.5): # Don't override strong upward knockback
+        if not getattr(player, 'on_ground', False) and hasattr(player, 'vel'):
+            if player.vel.y() > -abs(C.PLAYER_JUMP_STRENGTH * 0.5):
                 player.vel.setX(player.vel.x() * -0.3); player.vel.setY(C.PLAYER_JUMP_STRENGTH * 0.4)
         player.is_attacking = False; setattr(player, 'attack_type', 0) 
     elif new_state == 'death' or new_state == 'death_nm':
-        player.is_dead = True # Explicitly ensure is_dead is true
+        player.is_dead = True
         if hasattr(player, 'vel'): player.vel.setX(0.0); 
-        if hasattr(player, 'vel') and player.vel.y() < -1: player.vel.setY(1.0) # Stop upward movement if dying mid-air
+        if hasattr(player, 'vel') and player.vel.y() < -1: player.vel.setY(1.0)
         if hasattr(player, 'acc'): player.acc.setX(0.0) 
-        # Gravity for dead body is handled in Player.update or physics handler
         player.death_animation_finished = False 
     elif new_state in ['frozen', 'defrost', 'petrified', 'smashed']: 
         if hasattr(player, 'vel'): player.vel = QPointF(0,0)
-        if hasattr(player, 'acc'): player.acc = QPointF(0,0)
-        if new_state == 'petrified' and not getattr(player, 'on_ground', False) and hasattr(player, 'acc'): # Allow gravity if petrified mid-air
-                 player.acc.setY(float(getattr(C, 'PLAYER_GRAVITY', 0.7)))
+        if hasattr(player, 'acc'): player.acc = QPointF(0,0) # Immobilize X and Y for freeze/petrify
+        if new_state == 'petrified' and not getattr(player, 'on_ground', False) and hasattr(player, 'acc'):
+                 player.acc.setY(float(getattr(C, 'PLAYER_GRAVITY', 0.7))) # Except allow gravity if petrified mid-air
     
     update_player_animation(player)
