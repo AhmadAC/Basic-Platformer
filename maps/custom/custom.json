@@ -3369,11 +3369,11 @@
                 "is_background": true,
                 "is_obstacle": false,
                 "destructible": false,
-                "health": 100,
+                "health": 93,
                 "scroll_factor_x": 1.0,
                 "scroll_factor_y": 1.0,
                 "apply_gravity": false,
-                "opacity": 100
+                "opacity": 42
             }
         }
     ],
