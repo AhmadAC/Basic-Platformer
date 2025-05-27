@@ -4,12 +4,14 @@
 Handles file operations, dialogs, and map/asset management logic for the editor.
 MODIFIED: load_map_action now uses QFileDialog.getExistingDirectory and then
           constructs the expected JSON file path from the selected folder name.
+MODIFIED: Improved path comparison robustness in load_map_action.
 """
 from typing import Dict, Optional, Any, List, Tuple, cast, TYPE_CHECKING
 import logging
 import os
 import shutil
-from PySide6.QtCore import Qt, Slot, QTimer, Signal, QSize, QRectF # Added QRectF for type hinting
+# PySide6 imports
+from PySide6.QtCore import Qt, Slot, QTimer, Signal, QSize, QRectF
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QInputDialog, QColorDialog
 from PySide6.QtGui import QImage, QPainter,QFont, QColor
 
@@ -21,9 +23,10 @@ if TYPE_CHECKING:
     from .editor_main_window import EditorMainWindow
     from .editor_state import EditorState
 
-logger = logging.getLogger(__name__) # Uses the logger configured in editor_main_window.py
+logger = logging.getLogger(__name__)
 
 # --- Helper for internal save/export ---
+# ... (rest of the helper functions remain the same) ...
 def _internal_save_map_json(editor_state: 'EditorState', parent_window: 'EditorMainWindow') -> bool:
     logger.debug("Internal Save Map (JSON) called.")
     if editor_map_utils.save_map_to_json(editor_state):
@@ -45,9 +48,11 @@ def _internal_export_map_py(editor_state: 'EditorState', parent_window: 'EditorM
         QMessageBox.critical(parent_window, "Export Error", "Failed to export map for game (.py). Check logs.")
         return False
 
+
 # --- Main File Operations ---
 
 def new_map_action(main_win: 'EditorMainWindow'):
+    # ... (new_map_action remains the same) ...
     editor_state = main_win.editor_state
     logger.info("New Map action triggered.")
     if not main_win.confirm_unsaved_changes("create a new map"):
@@ -89,6 +94,7 @@ def new_map_action(main_win: 'EditorMainWindow'):
     else:
         main_win.show_status_message("New map cancelled.")
 
+
 def load_map_action(main_win: 'EditorMainWindow'):
     editor_state = main_win.editor_state
     logger.info("Load Map action triggered (folder selection mode).")
@@ -100,7 +106,6 @@ def load_map_action(main_win: 'EditorMainWindow'):
          QMessageBox.critical(main_win, "Error", f"Cannot access or create base maps directory: {maps_base_dir}")
          return
 
-    # Use QFileDialog.getExistingDirectory to select a folder
     selected_folder_path = QFileDialog.getExistingDirectory(
         main_win,
         "Select Map Folder to Load",
@@ -111,15 +116,37 @@ def load_map_action(main_win: 'EditorMainWindow'):
     if selected_folder_path:
         logger.info(f"Map folder selected by user: {selected_folder_path}")
 
-        # Ensure the selected folder is within the expected maps_base_dir structure
-        if not selected_folder_path.startswith(os.path.normpath(maps_base_dir)):
-            QMessageBox.warning(main_win, "Invalid Selection", "Please select a map folder within the main maps directory.")
-            logger.warning(f"User selected folder '{selected_folder_path}' which is outside the base maps dir '{maps_base_dir}'.")
+        # Robust path comparison
+        norm_selected_folder = os.path.normcase(os.path.abspath(selected_folder_path))
+        norm_maps_base_dir = os.path.normcase(os.path.abspath(maps_base_dir))
+
+        logger.debug(f"Normalized selected folder: {norm_selected_folder}")
+        logger.debug(f"Normalized maps base dir: {norm_maps_base_dir}")
+
+        if not norm_selected_folder.startswith(norm_maps_base_dir):
+            # Additionally check if the selected folder IS the maps_base_dir itself
+            # (which might happen if user selects 'maps' instead of a subfolder)
+            # In that case, we can't form a valid map_folder_name from it directly.
+            if norm_selected_folder == norm_maps_base_dir:
+                 QMessageBox.warning(main_win, "Invalid Selection",
+                                     "Please select a specific map folder *inside* the main maps directory, not the maps directory itself.")
+                 logger.warning(f"User selected the base maps directory '{selected_folder_path}' directly. This is not a specific map.")
+                 return
+            else:
+                QMessageBox.warning(main_win, "Invalid Selection", "Please select a map folder within the main maps directory.")
+                logger.warning(f"User selected folder '{selected_folder_path}' which is outside the base maps dir '{maps_base_dir}'.")
+                return
+
+        map_folder_name = os.path.basename(norm_selected_folder) # Use normalized path for basename
+        if not map_folder_name: # Should not happen if selection is valid and not the root
+            QMessageBox.warning(main_win, "Invalid Selection", "Could not determine map name from selected folder.")
+            logger.error(f"Could not determine map folder name from: {selected_folder_path}")
             return
 
-        map_folder_name = os.path.basename(selected_folder_path)
         expected_json_filename = f"{map_folder_name}{ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION}"
+        # Construct json_file_path_to_load using the originally selected_folder_path to preserve original casing for file system access
         json_file_path_to_load = os.path.join(selected_folder_path, expected_json_filename)
+
 
         logger.info(f"Attempting to load map JSON: {json_file_path_to_load}")
 
@@ -146,6 +173,7 @@ def load_map_action(main_win: 'EditorMainWindow'):
 
 
 def save_map_action(main_win: 'EditorMainWindow') -> bool:
+    # ... (save_map_action remains the same) ...
     editor_state = main_win.editor_state
     logger.info("Save Map (Unified JSON & PY) action triggered.")
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
@@ -205,6 +233,7 @@ def save_map_action(main_win: 'EditorMainWindow') -> bool:
         return False
 
 def rename_map_action(main_win: 'EditorMainWindow'):
+    # ... (rename_map_action remains the same) ...
     editor_state = main_win.editor_state
     logger.info("Rename Map action triggered.")
     if not editor_state.current_json_filename or not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
@@ -258,6 +287,7 @@ def rename_map_action(main_win: 'EditorMainWindow'):
 
 
 def delete_map_folder_action(main_win: 'EditorMainWindow'):
+    # ... (delete_map_folder_action remains the same) ...
     editor_state = main_win.editor_state
     logger.info("Delete Map Folder action triggered.")
     if not editor_state.current_json_filename or not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
@@ -286,6 +316,7 @@ def delete_map_folder_action(main_win: 'EditorMainWindow'):
         main_win.show_status_message("Delete map folder cancelled.")
 
 def export_map_as_image_action(main_win: 'EditorMainWindow'):
+    # ... (export_map_as_image_action remains the same) ...
     editor_state = main_win.editor_state
     logger.info("Export Map as Image action triggered.")
     if not editor_state.placed_objects and not editor_state.current_json_filename:
@@ -385,6 +416,7 @@ def export_map_as_image_action(main_win: 'EditorMainWindow'):
 
 
 def upload_image_to_map_action(main_win: 'EditorMainWindow'):
+    # ... (upload_image_to_map_action remains the same) ...
     editor_state = main_win.editor_state
     logger.info("Upload Image to Map action triggered.")
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":
@@ -458,6 +490,7 @@ def upload_image_to_map_action(main_win: 'EditorMainWindow'):
 
 
 def handle_upload_image_for_trigger_dialog(main_win: 'EditorMainWindow', trigger_object_data_ref: Dict[str, Any]):
+    # ... (handle_upload_image_for_trigger_dialog remains the same) ...
     editor_state = main_win.editor_state
     logger.info(f"Upload Image for Trigger action triggered for: {id(trigger_object_data_ref)}")
     if not editor_state.map_name_for_function or editor_state.map_name_for_function == "untitled_map":

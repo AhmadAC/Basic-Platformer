@@ -1,2 +1,2 @@
-[2025-05-28 00:04:21.351] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-28 00:04:21.367] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-28 00:15:09.034] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-28 00:15:09.035] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
