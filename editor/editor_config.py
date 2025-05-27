@@ -1,7 +1,8 @@
+#################### START OF FILE: editor_config.py ####################
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.5 (Added apply_gravity property for custom images)
+## version 2.2.6 (Opacity Slider for Custom Images)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added "Select Tool".
 - Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
@@ -9,6 +10,7 @@ Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Uncommented wall corner rounding properties for slider implementation.
 - Added "is_crouched_variant" to stone object properties.
 - Added "apply_gravity" to custom image properties.
+- Added "opacity" slider (0-100) for custom images.
 """
 import sys
 import os
@@ -313,7 +315,8 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "health": {"type": "int", "default": 100, "min": 0, "max": 1000, "label": "Health (if Destructible)"},
         "scroll_factor_x": {"type": "float", "default": 1.0, "min": 0.0, "max": 2.0, "label": "Scroll Factor X (Parallax)"},
         "scroll_factor_y": {"type": "float", "default": 1.0, "min": 0.0, "max": 2.0, "label": "Scroll Factor Y (Parallax)"},
-        "apply_gravity": {"type": "bool", "default": False, "label": "Apply Gravity"}, # ADDED
+        "apply_gravity": {"type": "bool", "default": False, "label": "Apply Gravity"},
+        "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Opacity (%)"},
     },
     # Trigger Square
     TRIGGER_SQUARE_GAME_TYPE_ID: { # Keyed by game_type_id
@@ -356,3 +359,5 @@ STATUS_BAR_MESSAGE_TIMEOUT = 3000
 LOG_LEVEL = "DEBUG"
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log"
+
+#################### END OF FILE: editor_config.py ####################

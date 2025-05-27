@@ -1,8 +1,10 @@
+#################### START OF FILE: properties_editor_widget.py ####################
 # editor/properties_editor_widget.py
 # -*- coding: utf-8 -*-
 """
 Properties Editor Widget for the Platformer Level Editor.
-Version 2.2.12 (Corrected indentation and new_combo_idx error, refined layout management)
+Version 2.2.13 (Refined slider max fallback)
+- Slider max value now correctly taken from definition, with a more general fallback.
 """
 import logging
 import os
@@ -287,14 +289,36 @@ class PropertiesEditorDockWidget(QWidget):
         prop_type = definition["type"]
         
         if prop_type == "slider":
-            slider_layout = QHBoxLayout(); slider = QSlider(Qt.Orientation.Horizontal); slider.setMinimum(definition.get("min", 0)); slider.setMaximum(definition.get("max", ED_CONFIG.TS // 2 if var_name == "corner_radius" else 100))
-            spin_box = QSpinBox(); spin_box.setMinimum(definition.get("min", 0)); spin_box.setMaximum(definition.get("max", ED_CONFIG.TS // 2 if var_name == "corner_radius" else 100))
-            try: initial_val = int(current_value); slider.setValue(initial_val); spin_box.setValue(initial_val)
-            except (ValueError, TypeError): default_val = int(definition["default"]); slider.setValue(default_val); spin_box.setValue(default_val)
-            slider.valueChanged.connect(lambda val, sb=spin_box: sb.setValue(val)); slider.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
-            spin_box.valueChanged.connect(lambda val, sl=slider: sl.setValue(val)); spin_box.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
-            slider_layout.addWidget(slider, 2); slider_layout.addWidget(spin_box, 1); container_widget = QWidget(); container_widget.setLayout(slider_layout); widget = container_widget
-            self.input_widgets[var_name + "_slider_widget"] = slider; self.input_widgets[var_name + "_spinbox_widget"] = spin_box
+            slider_layout = QHBoxLayout()
+            slider = QSlider(Qt.Orientation.Horizontal)
+            slider.setMinimum(definition.get("min", 0))
+            slider.setMaximum(definition.get("max", 100 if var_name != "corner_radius" else ED_CONFIG.TS // 2)) # Refined fallback
+            
+            spin_box = QSpinBox()
+            spin_box.setMinimum(definition.get("min", 0))
+            spin_box.setMaximum(definition.get("max", 100 if var_name != "corner_radius" else ED_CONFIG.TS // 2)) # Refined fallback
+
+            try: 
+                initial_val = int(current_value)
+                slider.setValue(initial_val)
+                spin_box.setValue(initial_val)
+            except (ValueError, TypeError): 
+                default_val = int(definition["default"])
+                slider.setValue(default_val)
+                spin_box.setValue(default_val)
+
+            slider.valueChanged.connect(lambda val, sb=spin_box: sb.setValue(val))
+            slider.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
+            spin_box.valueChanged.connect(lambda val, sl=slider: sl.setValue(val))
+            spin_box.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
+            
+            slider_layout.addWidget(slider, 2)
+            slider_layout.addWidget(spin_box, 1)
+            container_widget = QWidget()
+            container_widget.setLayout(slider_layout)
+            widget = container_widget
+            self.input_widgets[var_name + "_slider_widget"] = slider
+            self.input_widgets[var_name + "_spinbox_widget"] = spin_box
         elif prop_type == "int":
             spinner = QSpinBox(); widget = spinner; spinner.setMinimum(definition.get("min", -2147483648)); spinner.setMaximum(definition.get("max", 2147483647))
             if "step" in definition: spinner.setSingleStep(definition["step"])
@@ -580,6 +604,23 @@ class PropertiesEditorDockWidget(QWidget):
                 self.properties_changed.emit(map_object_data_ref); color_button = self.input_widgets.get("_color_button")
                 if isinstance(color_button, QPushButton): self._update_color_button_visuals(color_button, map_object_data_ref)
     
+    def _browse_for_linked_map(self, var_name: str, line_edit_ref: QLineEdit):
+        maps_base_dir = editor_map_utils.get_maps_base_directory()
+        if not editor_map_utils.ensure_maps_directory_exists():
+            QMessageBox.critical(self, "Error", f"Cannot access or create base maps directory: {maps_base_dir}")
+            return
+        
+        selected_dir = QFileDialog.getExistingDirectory(self, "Select Map Folder", maps_base_dir, QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks)
+        if selected_dir:
+            map_folder_name = os.path.basename(selected_dir)
+            # Basic validation: check if a .json file with the same name as folder exists inside
+            expected_json_file = os.path.join(selected_dir, map_folder_name + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION)
+            if os.path.exists(expected_json_file):
+                line_edit_ref.setText(map_folder_name)
+                self._on_property_value_changed(var_name, map_folder_name)
+            else:
+                QMessageBox.warning(self, "Invalid Map Folder", f"Selected folder '{map_folder_name}' does not appear to be a valid map folder (missing {os.path.basename(expected_json_file)}).")
+        
     # --- Controller Navigation Methods ---
     def _update_focused_property_visuals(self):
         for var_name, widget_container, label_widget in self._controller_property_widgets_ordered:
@@ -712,3 +753,4 @@ class PropertiesEditorDockWidget(QWidget):
                 if 0 <= new_combo_idx < widget_to_act_on.count(): widget_to_act_on.setCurrentIndex(new_combo_idx)
             elif isinstance(widget_to_act_on, QSlider): widget_to_act_on.setValue(widget_to_act_on.value() + step * widget_to_act_on.singleStep())
         elif action == ACTION_UI_TAB_NEXT or action == ACTION_UI_TAB_PREV: self.controller_focus_requested_elsewhere.emit()
+#################### END OF FILE: properties_editor_widget.py ####################

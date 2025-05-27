@@ -1,12 +1,14 @@
+#################### START OF FILE: editor_custom_items.py ####################
 # editor/editor_custom_items.py
 # -*- coding: utf-8 -*-
 """
 Custom QGraphicsItem classes for special map objects in the editor,
 such as uploaded images and trigger squares.
-Version 2.2.6 (Refined TriggerSquareMapItem paint and shape)
+Version 2.2.7 (Opacity for CustomImageMapItem)
 - BaseResizableMapItem now correctly sets Movable flag and visibility on init and update.
 - TriggerSquareMapItem paint method clarified for visibility and selection.
 - Added shape() method to TriggerSquareMapItem for better interaction.
+- Added opacity handling for CustomImageMapItem.
 """
 import os
 import logging
@@ -268,8 +270,11 @@ class CustomImageMapItem(BaseResizableMapItem):
         
         display_w = int(max(1, current_width))
         display_h = int(max(1, current_height))
-        pixmap = QPixmap(display_w, display_h)
-        pixmap.fill(Qt.GlobalColor.transparent)
+        
+        # The final pixmap that will be set on the QGraphicsPixmapItem
+        # It needs to be transparent if opacity < 1.0 so underlying scene shows through.
+        final_pixmap = QPixmap(display_w, display_h)
+        final_pixmap.fill(Qt.GlobalColor.transparent)
 
         if map_folder and rel_path:
             full_image_path = os.path.join(map_folder, rel_path)
@@ -281,7 +286,7 @@ class CustomImageMapItem(BaseResizableMapItem):
                         obj_data["original_width"] = full_qimage.width()
                         obj_data["original_height"] = full_qimage.height()
 
-                    image_to_render = full_qimage
+                    image_to_render = full_qimage # This is the original full image or a QImage that will be cropped
                     crop_rect_data = obj_data.get("crop_rect")
 
                     if isinstance(crop_rect_data, dict) and \
@@ -303,28 +308,63 @@ class CustomImageMapItem(BaseResizableMapItem):
                             obj_data["crop_rect"] = None
                         else:
                             qt_crop_rect = QRect(crop_x, crop_y, crop_w, crop_h)
-                            image_to_render = full_qimage.copy(qt_crop_rect)
+                            image_to_render = full_qimage.copy(qt_crop_rect) # Now image_to_render is the cropped part
                     
                     if not image_to_render.isNull():
+                        # Scale the (possibly cropped) image to display dimensions
                         scaled_image = image_to_render.scaled(
                             display_w, display_h,
                             Qt.AspectRatioMode.IgnoreAspectRatio,
                             Qt.TransformationMode.SmoothTransformation
                         )
-                        pixmap = QPixmap.fromImage(scaled_image)
-                    else:
+                        
+                        # Get opacity from properties
+                        opacity_percent = obj_data.get("properties", {}).get("opacity", 100)
+                        if not isinstance(opacity_percent, (int, float)): # Default if property malformed
+                            opacity_percent = 100
+                        
+                        opacity_value = max(0.0, min(1.0, float(opacity_percent) / 100.0))
+
+                        if opacity_value < 1.0:
+                            # Draw the scaled_image onto the final_pixmap (which is already transparent)
+                            # with the specified opacity.
+                            painter = QPainter(final_pixmap)
+                            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+                            painter.setOpacity(opacity_value)
+                            painter.drawImage(0, 0, scaled_image)
+                            painter.end()
+                        else:
+                            # If opacity is 1.0, we can just convert the scaled_image directly.
+                            # However, to ensure the base is transparent if the image itself has alpha,
+                            # it's safer to still draw it onto our transparent final_pixmap.
+                            painter = QPainter(final_pixmap)
+                            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+                            # Opacity is 1.0 by default for QPainter
+                            painter.drawImage(0, 0, scaled_image)
+                            painter.end()
+                            
+                    else: # image_to_render is null after crop/copy
                         logger.warning(f"CustomImageMapItem: image_to_render is null after crop/copy for {full_image_path}")
-                        pixmap.fill(QColor(255, 0, 255, 120)) # Magenta fallback
-                else:
+                        painter = QPainter(final_pixmap)
+                        painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) # Magenta fallback
+                        painter.end()
+                else: # full_qimage is null
                     logger.warning(f"CustomImageMapItem: Failed to load QImage from {full_image_path}")
-                    pixmap.fill(QColor(255, 0, 255, 120)) # Magenta fallback
-            else:
+                    painter = QPainter(final_pixmap)
+                    painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) # Magenta fallback
+                    painter.end()
+            else: # file not found
                 logger.warning(f"CustomImageMapItem: Image file not found at {full_image_path}")
-                pixmap.fill(QColor(255, 165, 0, 120)) # Orange fallback
-        else:
+                painter = QPainter(final_pixmap)
+                painter.fillRect(final_pixmap.rect(), QColor(255, 165, 0, 120)) # Orange fallback
+                painter.end()
+        else: # map_folder or rel_path missing
             logger.warning(f"CustomImageMapItem: Missing map_folder or relative_path for custom image.")
-            pixmap.fill(QColor(255, 255, 0, 120)) # Yellow fallback
-        return pixmap
+            painter = QPainter(final_pixmap)
+            painter.fillRect(final_pixmap.rect(), QColor(255, 255, 0, 120)) # Yellow fallback
+            painter.end()
+            
+        return final_pixmap
 
     def update_visuals_from_data(self, editor_state: Any): # editor_state type hint
         new_pixmap = self._load_pixmap_from_data(self.map_object_data_ref, editor_state)
@@ -453,3 +493,5 @@ class TriggerSquareMapItem(BaseResizableMapItem):
         else: # Trigger squares only support resize for now
             if self.current_interaction_mode != "resize":
                 super().set_interaction_mode("resize")
+
+#################### END OF FILE: editor_custom_items.py ####################
