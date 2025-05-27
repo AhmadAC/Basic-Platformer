@@ -4432,7 +4432,7 @@
             "world_y": 880,
             "game_type_id": "player1_spawn",
             "properties": {
-                "max_health": 200,
+                "max_health": 206,
                 "move_speed": 348.0,
                 "jump_strength": -900.0
             },
@@ -4448,7 +4448,7 @@
             "world_y": 880,
             "game_type_id": "player2_spawn",
             "properties": {
-                "max_health": 100,
+                "max_health": 111,
                 "move_speed": 350.0,
                 "jump_strength": -900.0
             },
@@ -5656,10 +5656,26 @@
             "rotation": 0,
             "editor_hidden": false,
             "editor_locked": false
+        },
+        {
+            "asset_editor_key": "item_chest",
+            "world_x": 200,
+            "world_y": 720,
+            "game_type_id": "chest",
+            "layer_order": 0,
+            "properties": {
+                "item_type": "coin",
+                "item_quantity": 1,
+                "requires_key_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         }
     ],
-    "camera_offset_x": 316.0,
-    "camera_offset_y": 193.0,
+    "camera_offset_x": -316.0,
+    "camera_offset_y": 542.0,
     "zoom_level": 1.2,
     "show_grid": true,
     "asset_specific_variables": {}

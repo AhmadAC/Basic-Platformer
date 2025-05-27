@@ -1,4 +1,4 @@
-#################### START OF FILE: editor_map_utils.py ####################
+#################### START OF FILE: editor\editor_map_utils.py ####################
 # editor/editor_map_utils.py
 # -*- coding: utf-8 -*-
 """
@@ -7,6 +7,7 @@ Handles saving/loading editor JSON and exporting game-compatible Python data scr
 Manages map-specific folders.
 VERSION 2.4.9 (Selection Pane Hide/Lock State Persistence in Map Utils)
 - Ensures `editor_hidden` and `editor_locked` are initialized for new objects.
+MODIFIED: Corrected export of player_spawn_props to be flat, not nested.
 """
 import sys
 import os
@@ -461,7 +462,7 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
                        'type': current_block.get('type'), 'color': current_block.get('color'),
                        'properties': current_block.get('properties', {}),
                        'is_flipped_h': current_block.get('is_flipped_h', False),
-                       'rotation': current_block.get('rotation', 0)} 
+                       'rotation': current_block.get('rotation', 0)}
         if 'image_path' in current_block: final_entry['image_path'] = current_block['image_path']
         if 'crop_rect' in current_block and current_block['crop_rect'] is not None:
             final_entry['crop_rect'] = current_block['crop_rect']
@@ -511,8 +512,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         wx, wy = obj_data.get("world_x"), obj_data.get("world_y")
         obj_props = obj_data.get("properties", {})
         is_flipped_h = obj_data.get("is_flipped_h", False)
-        rotation = obj_data.get("rotation", 0) 
-        
+        rotation = obj_data.get("rotation", 0)
+
         if wx is None or wy is None or not asset_key: continue
 
         export_x, export_y = float(wx), float(wy)
@@ -545,16 +546,19 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             final_color_for_export = final_color_for_export or getattr(C, 'GRAY', (128,128,128))
 
         effective_w_for_bounds, effective_h_for_bounds = obj_w, obj_h
-        if rotation % 180 != 0: 
+        if rotation % 180 != 0:
             effective_w_for_bounds, effective_h_for_bounds = obj_h, obj_w
         all_placed_objects_rect_data_for_bounds.append({'x': export_x, 'y': export_y, 'width': effective_w_for_bounds, 'height': effective_h_for_bounds})
 
-
-        common_export_props = {
+        # Common properties for most export types (except player spawns which are handled differently)
+        # Note: For player spawns, obj_props ALREADY CONTAINS keys like "max_health".
+        # common_export_props was previously causing the nesting issue for player spawns.
+        common_export_props_for_non_player_spawns = {
             "properties": obj_props,
             "is_flipped_h": is_flipped_h,
             "rotation": rotation
         }
+
 
         if is_custom_image_type:
             image_export_data = {
@@ -564,7 +568,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                 'original_height': obj_data.get("original_height"),
                 'crop_rect': obj_data.get("crop_rect"),
                 'layer_order': obj_data.get("layer_order", 0),
-                **common_export_props
+                **common_export_props_for_non_player_spawns # Use the version that keeps properties nested
             }
             if image_export_data['original_width'] is None: del image_export_data['original_width']
             if image_export_data['original_height'] is None: del image_export_data['original_height']
@@ -574,11 +578,17 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             trigger_squares_export.append({
                 'rect': (export_x, export_y, obj_w, obj_h),
                 'layer_order': obj_data.get("layer_order", 0),
-                **common_export_props
+                **common_export_props_for_non_player_spawns # Use the version that keeps properties nested
             })
         elif category == "spawn":
-            spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h) 
-            spawn_props_to_export = {**common_export_props} 
+            spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h)
+            # MODIFIED: Construct spawn_props_to_export by directly spreading obj_props
+            # and adding flip/rotation info. This avoids the double "properties" nesting.
+            spawn_props_to_export = {
+                **obj_props, # obj_props directly contains "max_health", "move_speed", etc.
+                "is_flipped_h": is_flipped_h,
+                "rotation": rotation
+            }
             for p_num in range(1,5):
                 p_spawn_def_key = f"player{p_num}_spawn"
                 p_spawn_def_data = ED_CONFIG.EDITOR_PALETTE_ASSETS.get(p_spawn_def_key,{}) # type: ignore
@@ -589,19 +599,19 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                     elif p_num == 4: player_start_pos_p4 = spawn_pos; player4_spawn_props = spawn_props_to_export.copy()
                     break
         elif category == "tile" or "platform" in game_type_id.lower():
-             platforms_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props})
+             platforms_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props_for_non_player_spawns})
         elif category == "enemy":
-             enemies_list_export.append({'start_pos': (export_x + obj_w / 2.0, export_y + obj_h), 'type': game_type_id, **common_export_props})
-        elif "ladder" in game_type_id.lower(): ladders_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': 'ladder', **common_export_props})
-        elif "hazard" in game_type_id.lower(): hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props})
-        elif category == "item": items_list_export.append({'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), 'type': game_type_id, **common_export_props})
-        elif "object_stone" in game_type_id.lower(): statue_list_export.append({'id': obj_data.get("unique_id", f"statue_{len(statue_list_export)}"), 'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), **common_export_props})
+             enemies_list_export.append({'start_pos': (export_x + obj_w / 2.0, export_y + obj_h), 'type': game_type_id, **common_export_props_for_non_player_spawns})
+        elif "ladder" in game_type_id.lower(): ladders_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': 'ladder', **common_export_props_for_non_player_spawns})
+        elif "hazard" in game_type_id.lower(): hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props_for_non_player_spawns})
+        elif category == "item": items_list_export.append({'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), 'type': game_type_id, **common_export_props_for_non_player_spawns})
+        elif "object_stone" in game_type_id.lower(): statue_list_export.append({'id': obj_data.get("unique_id", f"statue_{len(statue_list_export)}"), 'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), **common_export_props_for_non_player_spawns})
         elif category == "background_tile":
             bg_tile_export_data = {'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h,
                                    'color': final_color_for_export, 'type': game_type_id,
                                    'image_path': asset_entry_from_palette.get("source_file") if asset_entry_from_palette else None,
                                    'crop_rect': obj_data.get("crop_rect"),
-                                   **common_export_props}
+                                   **common_export_props_for_non_player_spawns}
             if bg_tile_export_data['crop_rect'] is None: del bg_tile_export_data['crop_rect']
             background_tiles_data_raw.append(bg_tile_export_data)
 
