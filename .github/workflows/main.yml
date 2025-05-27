@@ -1,12 +1,13 @@
-# .github/workflows/main.yml
-name: Build Windows Executable (Platformer Game)
+name: Build Python Game with Dynamic Spec
 
 on:
-  workflow_dispatch: # Allows manual triggering
   push:
-    branches: [ "Best-Version-28-05" ]
-  release:
-    types: [published]
+    branches:
+      - Best-Version-28-05
+  pull_request:
+    branches:
+      - Best-Version-28-05
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -14,81 +15,121 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11' # Or your preferred Python version
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: requirements.txt
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-        shell: bash # Using bash for consistency, but pwsh is fine too
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if (Test-Path requirements.txt) {
+            pip install -r requirements.txt
+        } else {
+            Write-Error "requirements.txt not found! Please create one with your project dependencies."
+            pip install pyinstaller pygame PySide6 Pillow numpy 
+        }
+      shell: pwsh
 
-      # --- Build Platformer.exe ---
-      - name: Generate Base PyInstaller Spec File for Platformer
-        run: |
-          pyi-makespec --windowed --name Platformer ^
-            --hidden-import PIL ^
-            --hidden-import PIL.Image ^
-            --hidden-import numpy ^
-            --hidden-import PySide6.QtGui ^
-            --hidden-import PySide6.QtCore ^
-            --hidden-import PySide6.QtWidgets ^
-            --hidden-import pygame ^
-            --hidden-import pynput ^
-            --hidden-import pyperclip ^
-            app_core.py
-        shell: cmd # Using cmd for multiline makespec command, pwsh with backticks works too
+    - name: Generate Platformer.spec
+      shell: bash
+      run: |
+        echo "# -*- mode: python ; coding: utf-8 -*-" > Platformer.spec
+        echo "block_cipher = None" >> Platformer.spec
+        echo "a = Analysis(" >> Platformer.spec
+        echo "    ['main.py']," >> Platformer.spec
+        echo "    pathex=['.']," >> Platformer.spec
+        echo "    binaries=[]," >> Platformer.spec
+        echo "    datas=[" >> Platformer.spec
+        echo "        ('characters/assets', 'characters/assets')," >> Platformer.spec
+        echo "        ('characters/cactus', 'characters/cactus')," >> Platformer.spec
+        echo "        ('characters/gray', 'characters/gray')," >> Platformer.spec
+        echo "        ('characters/green', 'characters/green')," >> Platformer.spec
+        echo "        ('characters/items', 'characters/items')," >> Platformer.spec
+        echo "        ('characters/orange', 'characters/orange')," >> Platformer.spec
+        echo "        ('characters/pink', 'characters/pink')," >> Platformer.spec
+        echo "        ('characters/player1', 'characters/player1')," >> Platformer.spec
+        echo "        ('characters/player2', 'characters/player2')," >> Platformer.spec
+        echo "        ('characters/player3', 'characters/player3')," >> Platformer.spec
+        echo "        ('characters/player4', 'characters/player4')," >> Platformer.spec
+        echo "        ('characters/purple', 'characters/purple')," >> Platformer.spec
+        echo "        ('characters/Shadow', 'characters/Shadow')," >> Platformer.spec
+        echo "        ('characters/Stone', 'characters/Stone')," >> Platformer.spec
+        echo "        ('characters/truck', 'characters/truck')," >> Platformer.spec
+        echo "        ('characters/weapons', 'characters/weapons')," >> Platformer.spec
+        echo "        ('characters/yellow', 'characters/yellow')," >> Platformer.spec
+        echo "        ('maps', 'maps')," >> Platformer.spec
+        echo "        ('controller_settings', 'controller_settings')," >> Platformer.spec
+        echo "        ('3d models', '3d models')," >> Platformer.spec
+        echo "        ('game_config.json', '.')," >> Platformer.spec
+        echo "    ]," >> Platformer.spec
+        echo "    hiddenimports=[" >> Platformer.spec
+        echo "        'PIL'," >> Platformer.spec
+        echo "        'PIL.Image'," >> Platformer.spec
+        echo "        'numpy'," >> Platformer.spec
+        echo "        'PySide6.QtGui'," >> Platformer.spec
+        echo "        'PySide6.QtCore'," >> Platformer.spec
+        echo "        'PySide6.QtWidgets'," >> Platformer.spec
+        echo "        'pygame'," >> Platformer.spec
+        echo "    ]," >> Platformer.spec
+        echo "    hookspath=[]," >> Platformer.spec
+        echo "    hooksconfig={}," >> Platformer.spec
+        echo "    runtime_hooks=[]," >> Platformer.spec
+        echo "    excludes=[]," >> Platformer.spec
+        echo "    win_no_prefer_redirects=False," >> Platformer.spec
+        echo "    win_private_assemblies=False," >> Platformer.spec
+        echo "    cipher=block_cipher," >> Platformer.spec
+        echo "    noarchive=False," >> Platformer.spec
+        echo "    optimize=0" >> Platformer.spec
+        echo ")" >> Platformer.spec
+        echo "pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)" >> Platformer.spec
+        echo "exe = EXE(" >> Platformer.spec
+        echo "    pyz," >> Platformer.spec
+        echo "    a.scripts," >> Platformer.spec
+        echo "    []," >> Platformer.spec
+        echo "    a.zipfiles," >> Platformer.spec
+        echo "    a.datas," >> Platformer.spec
+        echo "    name='Platformer'," >> Platformer.spec
+        echo "    debug=False," >> Platformer.spec
+        echo "    bootloader_ignore_signals=False," >> Platformer.spec
+        echo "    strip=False," >> Platformer.spec
+        echo "    upx=True," >> Platformer.spec
+        echo "    upx_exclude=[]," >> Platformer.spec
+        echo "    runtime_tmpdir=None," >> Platformer.spec
+        echo "    console=False," >> Platformer.spec
+        echo ")" >> Platformer.spec
+        echo "coll = COLLECT(" >> Platformer.spec
+        echo "    exe," >> Platformer.spec
+        echo "    a.binaries," >> Platformer.spec
+        echo "    a.zipfiles," >> Platformer.spec
+        echo "    a.datas," >> Platformer.spec
+        echo "    strip=False," >> Platformer.spec
+        echo "    upx=True," >> Platformer.spec
+        echo "    upx_exclude=[]," >> Platformer.spec
+        echo "    name='Platformer'" >> Platformer.spec
+        echo ")" >> Platformer.spec
 
-      - name: Modify the Spec File to Add Data Files for Platformer
-        run: |
-          $specFile = "Platformer.spec"
-          Write-Host "Checking if $specFile exists..."
-          if (!(Test-Path $specFile)) {
-            Write-Error "$specFile not found after pyi-makespec!"
-            exit 1
-          }
-          Write-Host "$specFile found. Attempting to modify..."
-          $specContent = Get-Content -Path $specFile -Raw
-          
-          # Add 'assets', 'characters', 'maps', and 'controller_settings' folders.
-          # The paths are relative to the project root (where app_core.py and the spec file are).
-          # The destination is relative to the bundled app's root (dist/Platformer/).
-          $dataToAdd = "[('assets', 'assets'), ('characters', 'characters'), ('maps', 'maps'), ('controller_settings', 'controller_settings')]"
-                                        
-          # Regex to find 'datas=[]' and replace it. 
-          # It handles potential whitespace variations within the brackets.
-          $modifiedContent = $specContent -replace 'datas=\s*\[\s*\]', "datas=$dataToAdd"
+    - name: Display generated Platformer.spec
+      if: always()
+      run: |
+        echo "--- Generated Platformer.spec content ---"
+        type Platformer.spec 
+        echo "-----------------------------------------"
+      shell: pwsh
 
-          if ($specContent -eq $modifiedContent) {
-            Write-Host "--- Platformer Spec File Content START ---"
-            Write-Host $specContent
-            Write-Host "--- Platformer Spec File Content END ---"
-            Write-Error "Failed to find and replace 'datas=[]' pattern in $specFile. Check the spec file content. It might not be empty or already modified."
-            exit 1
-          }
+    - name: Build Platformer executable from Spec File
+      run: |
+        pyinstaller --noconfirm --log-level INFO Platformer.spec
+      shell: pwsh
 
-          Set-Content -Path $specFile -Value $modifiedContent
-          Write-Host "Successfully added datas to $specFile."
-          Write-Host "--- Modified Platformer Spec File Content START ---"
-          Get-Content -Path $specFile | Write-Host
-          Write-Host "--- Modified Platformer Spec File Content END ---"
-        shell: pwsh
-
-      - name: Build Platformer executable from Spec File
-        run: |
-          pyinstaller --noconfirm --log-level INFO Platformer.spec
-        shell: bash
-
-      - name: Upload Platformer Windows Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Platformer-Windows-Release
-          path: dist/Platformer/ # This path contains the executable and all bundled files
-          if-no-files-found: error
+    - name: Upload Platformer Windows Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Platformer-Windows-Release
+        path: dist/Platformer/
+        if-no-files-found: error
