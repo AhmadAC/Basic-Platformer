@@ -5,18 +5,19 @@ Handles game logic for local couch co-op mode using PySide6.
 UI rendering and input capture are handled by the main Qt application.
 MODIFIED: Statue physics and lifecycle management in game loop.
 MODIFIED: Chest can insta-kill player if it lands from sufficient height.
+MODIFIED: Chest interaction rect is slightly expanded.
 """
-# version 2.0.20 (Chest Insta-Kill Logic)
+# version 2.0.21 (Chest Interaction Rect Expanded)
 
 import time
 import math # Added for math.sqrt in chest-crush logic
 from typing import Dict, List, Any, Optional
-from PySide6.QtCore import QRectF
+from PySide6.QtCore import QRectF # Ensure QRectF is imported
 import constants as C
 from game_state_manager import reset_game_state
 from enemy import Enemy
-from items import Chest
-from statue import Statue # Import Statue
+from items import Chest # Ensure Chest is imported
+from statue import Statue 
 from tiles import Platform, Ladder, Lava, BackgroundTile
 from player import Player
 
@@ -211,7 +212,7 @@ def run_couch_play_mode(
                             chest_landed_on_player_and_killed = True
                             if hasattr(current_chest, '_update_rect_from_image_and_pos'):
                                 current_chest._update_rect_from_image_and_pos()
-                            break 
+                            break # Player was killed, stop checking other players for this chest this frame
         
         current_chest.on_ground = False # Reset before platform collision
         if chest_landed_on_player_and_killed:
@@ -248,11 +249,13 @@ def run_couch_play_mode(
                 (player1, p1_action_events), (player2, p2_action_events),
                 (player3, p3_action_events), (player4, p4_action_events)
             ]
+            # MODIFIED INTERACTION CHECK HERE
+            interaction_chest_rect_couch = QRectF(current_chest.rect).adjusted(-5, -5, 5, 5) # Expand by 5px
             for p_instance_chest, p_actions_chest in player_action_pairs:
                 if p_instance_chest and hasattr(p_instance_chest, 'alive') and p_instance_chest.alive() and \
                    not getattr(p_instance_chest, 'is_dead', True) and not getattr(p_instance_chest,'is_petrified',False) and \
-                   hasattr(p_instance_chest, 'rect') and p_instance_chest.rect.intersects(current_chest.rect) and \
-                   p_actions_chest.get("interact", False):
+                   hasattr(p_instance_chest, 'rect') and p_instance_chest.rect.intersects(interaction_chest_rect_couch) and \
+                   p_actions_chest.get("interact", False): # Use adjusted rect
                     player_interacted_chest = p_instance_chest
                     break
             if player_interacted_chest:
