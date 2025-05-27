@@ -266,7 +266,7 @@ class CustomImageMapItem(BaseResizableMapItem):
         self.editor_state_ref = editor_state
         initial_pixmap = self._load_pixmap_from_data(map_object_data_ref, editor_state)
         super().__init__(map_object_data_ref, initial_pixmap, parent)
-        logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}) __init__ called. Opacity from data: {self.map_object_data_ref.get('properties', {}).get('opacity')}")
+        # logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}) __init__ called. Opacity from data: {self.map_object_data_ref.get('properties', {}).get('opacity')}")
 
 
     def _load_pixmap_from_data(self, obj_data: Dict[str, Any], editor_state: Any) -> QPixmap: # editor_state type hint
@@ -423,21 +423,23 @@ class TriggerSquareMapItem(BaseResizableMapItem):
 
         if not props.get("visible", True) and is_editor_preview:
             return
-        if item_opacity_float < 0.01 and is_editor_preview: 
+        if item_opacity_float < 0.01 and is_editor_preview: # Don't draw if essentially transparent in game preview
             return
 
         painter.save()
         painter.setOpacity(item_opacity_float)
 
         if not props.get("visible", True) and not is_editor_preview: 
-            painter.setPen(QPen(QColor(150, 150, 255, int(100 * item_opacity_float)), 2, Qt.PenStyle.DashLine)) 
+            pen_alpha = int(100 * item_opacity_float) if item_opacity_float > 0 else 0 # Base alpha for pen
+            painter.setPen(QPen(QColor(150, 150, 255, pen_alpha), 2, Qt.PenStyle.DashLine)) 
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(rect)
             
-            text_color = QColor(0,0,0, int(255 * item_opacity_float)) 
-            if item_opacity_float * 100 < 50: 
-                text_color = QColor(50,50,50, int(255 * item_opacity_float))
-            painter.setPen(text_color)
+            text_alpha = int(255 * item_opacity_float) if item_opacity_float > 0 else 0
+            text_color_val = QColor(0,0,0, text_alpha) 
+            if item_opacity_float * 100 < 50 and item_opacity_float > 0: 
+                text_color_val = QColor(50,50,50, text_alpha)
+            painter.setPen(text_color_val)
             painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "Invisible Trigger")
             
             if option.state & QStyle.StateFlag.State_Selected: # type: ignore
@@ -458,31 +460,32 @@ class TriggerSquareMapItem(BaseResizableMapItem):
                     if not img.isNull():
                         target_size = rect.size().toSize()
                         if target_size.width() > 0 and target_size.height() > 0:
+                            # Image itself might have alpha, painter.setOpacity handles overall
                             painter.drawImage(rect, img.scaled(target_size, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation))
                             image_drawn_successfully = True
                         else:
                             logger.warning(f"TriggerSquareMapItem: Invalid target_size {target_size} for image drawing.")
         
         if not image_drawn_successfully:
-            fill_color_rgba = props.get("fill_color_rgba")
+            fill_color_rgba_prop = props.get("fill_color_rgba")
             base_q_color: QColor
-            if fill_color_rgba and isinstance(fill_color_rgba, (list, tuple)) and len(fill_color_rgba) == 4:
+            if fill_color_rgba_prop and isinstance(fill_color_rgba_prop, (list, tuple)) and len(fill_color_rgba_prop) == 4:
                 # Use the alpha from RGBA, painter.setOpacity will further modulate this
-                base_q_color = QColor(fill_color_rgba[0], fill_color_rgba[1], fill_color_rgba[2], fill_color_rgba[3])
+                base_q_color = QColor(fill_color_rgba_prop[0], fill_color_rgba_prop[1], fill_color_rgba_prop[2], fill_color_rgba_prop[3])
             else: 
                 base_q_color = QColor(100,100,255,100) # Default semi-transparent blue
 
-            painter.setBrush(base_q_color)
-            painter.setPen(QPen(QColor(0,0,0, int(180 * item_opacity_float)), 1)) 
+            painter.setBrush(base_q_color) # Brush color uses its own alpha component
+            painter.setPen(QPen(QColor(0,0,0, int(180 * item_opacity_float)), 1)) # Pen alpha modulated by item_opacity
             painter.drawRect(rect)
 
-            if not fill_color_rgba: 
+            if not fill_color_rgba_prop: 
                 text_color_with_opacity = QColor(0,0,0, int(255 * item_opacity_float))
                 painter.setPen(text_color_with_opacity)
                 painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "Trigger")
 
         if option.state & QStyle.StateFlag.State_Selected: # type: ignore
-            pen = QPen(QColor(255, 255, 0, int(255*item_opacity_float)), 2, Qt.PenStyle.SolidLine) 
+            pen = QPen(QColor(255, 255, 0, int(255*item_opacity_float)), 2, Qt.PenStyle.SolidLine) # Modulate selection alpha
             painter.setPen(pen)
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(rect)

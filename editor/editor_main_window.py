@@ -1,9 +1,13 @@
+#################### START OF FILE: editor_main_window.py ####################
+
 # editor/editor_main_window.py
 # -*- coding: utf-8 -*-
 """
 Main Window for the Platformer Level Editor (PySide6 Version).
 Orchestrates UI components and top-level editor actions.
 Version 2.2.7 (Ensured focused_widget check for controller actions)
+MODIFIED: Connects and handles opacity toggle signals from SelectionPane.
+MODIFIED: Handles `_handle_item_opacity_toggled` to manage `last_visible_opacity`.
 """
 import sys
 import os
@@ -272,7 +276,7 @@ class EditorMainWindow(QMainWindow):
         self.properties_editor_widget.upload_image_for_trigger_requested.connect(self.handle_upload_image_for_trigger_dialog)
 
         self.selection_pane_widget.select_map_object_via_pane_requested.connect(self._handle_select_map_object_from_pane) 
-        self.selection_pane_widget.item_visibility_toggled_in_pane.connect(self._toggle_item_visibility)
+        self.selection_pane_widget.item_opacity_toggled_in_pane.connect(self._handle_item_opacity_toggled)
         self.selection_pane_widget.item_lock_toggled_in_pane.connect(self._toggle_item_lock)
 
         if self.minimap_widget:
@@ -325,7 +329,8 @@ class EditorMainWindow(QMainWindow):
             self.map_view_widget.on_scene_selection_changed()
 
             if hasattr(item_to_select, 'map_object_data_ref'):
-                 item_to_select.setVisible(not item_to_select.map_object_data_ref.get("editor_hidden", False)) # type: ignore
+                 item_to_select.setVisible(not item_to_select.map_object_data_ref.get("editor_hidden", False) and # type: ignore
+                                           item_to_select.map_object_data_ref.get("properties", {}).get("opacity", 100) > 0) # type: ignore
             
             self.map_view_widget.ensureVisible(item_to_select, 50, 50)
             self.map_view_widget.setFocus(Qt.FocusReason.OtherFocusReason)
@@ -342,23 +347,49 @@ class EditorMainWindow(QMainWindow):
             self.map_view_widget.map_scene.clearSelection()
             self.properties_editor_widget.clear_display()
 
-    @Slot(object, bool)
-    def _toggle_item_visibility(self, obj_data_ref: Dict[str, Any], new_visible_state: bool):
-        if logger: logger.debug(f"MainWin: Toggle visibility for obj ID {id(obj_data_ref)} to {new_visible_state}")
+    @Slot(object, int)
+    def _handle_item_opacity_toggled(self, obj_data_ref: Dict[str, Any], new_target_opacity: int):
+        if logger: logger.debug(f"MainWin: Opacity toggle for obj ID {id(obj_data_ref)} to target {new_target_opacity}")
         if obj_data_ref:
-            editor_history.push_undo_state(self.editor_state)
-            obj_data_ref["editor_hidden"] = not new_visible_state
+            editor_history.push_undo_state(self.editor_state) # Push undo state here, as this is where data changes
+            
+            props = obj_data_ref.setdefault('properties', {})
+            current_opacity = props.get('opacity', 100)
+
+            if new_target_opacity == 0: # Logic to hide
+                if current_opacity != 0: # Only store if it was actually visible
+                    props['last_visible_opacity'] = current_opacity
+                props['opacity'] = 0
+            else: # Logic to make visible
+                # new_target_opacity already contains the desired restored value (or 100)
+                props['opacity'] = new_target_opacity
+                # props.pop('last_visible_opacity', None) # Optionally clear if desired
+
+            final_opacity = props['opacity']
+
             self.map_view_widget.update_specific_object_visuals(obj_data_ref)
-            self.handle_map_content_changed()
+            self.handle_map_content_changed() 
+
+            # Update properties editor if this object is selected
+            if self.properties_editor_widget.current_object_data_ref is obj_data_ref:
+                self.properties_editor_widget.update_property_field_value(obj_data_ref, "opacity", final_opacity)
+            
+            item_graphics = self.map_view_widget._map_object_items.get(id(obj_data_ref))
+            if item_graphics:
+                is_editor_hidden_flag = obj_data_ref.get("editor_hidden", False)
+                item_graphics.setVisible(not is_editor_hidden_flag and final_opacity > 0)
+            
+            self.selection_pane_widget.populate_items()
 
     @Slot(object, bool)
     def _toggle_item_lock(self, obj_data_ref: Dict[str, Any], new_lock_state: bool):
         if logger: logger.debug(f"MainWin: Toggle lock for obj ID {id(obj_data_ref)} to {new_lock_state}")
         if obj_data_ref:
-            editor_history.push_undo_state(self.editor_state)
-            obj_data_ref["editor_locked"] = new_lock_state
-            self.map_view_widget.update_specific_object_visuals(obj_data_ref)
+            # editor_history.push_undo_state(self.editor_state) # This is done in SelectionPaneWidget
+            # obj_data_ref["editor_locked"] is already updated by SelectionPaneWidget before signal
+            self.map_view_widget.update_specific_object_visuals(obj_data_ref) 
             self.handle_map_content_changed()
+            # Selection pane will be repopulated by handle_map_content_changed, updating the icon
 
     def _init_controller_system(self):
         if logger: logger.info("Initializing controller system...")
@@ -738,7 +769,7 @@ class EditorMainWindow(QMainWindow):
     def handle_upload_image_for_trigger_dialog(self, trigger_object_data_ref: Dict[str, Any]):
         EFO.handle_upload_image_for_trigger_dialog(self, trigger_object_data_ref)
 
-    @Slot(object, QPointF) # QPointF might be better than QPoint for scene coords
+    @Slot(object, QPointF) 
     def show_map_item_context_menu(self, map_object_data_ref: Dict[str, Any], global_pos_qpointf: QPointF):
         if not map_object_data_ref: return
         asset_key = map_object_data_ref.get("asset_editor_key")
@@ -956,3 +987,5 @@ if __name__ == "__main__":
     return_code_standalone = editor_main(embed_mode=False)
     print(f"--- editor_main_window.py standalone execution finished (exit code: {return_code_standalone}) ---")
     sys.exit(return_code_standalone)
+
+#################### END OF FILE: editor_main_window.py ####################

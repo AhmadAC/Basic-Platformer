@@ -1,12 +1,12 @@
-#################### START OF FILE: game_ui.py ####################
-
 # game_ui.py
 # -*- coding: utf-8 -*-
 """
 Manages UI elements for the PySide6 version of the game.
 This includes GameSceneWidget rendering and dialogs.
+MODIFIED: Corrected Qt.AlignmentFlag.WordWrap to Qt.TextFlag.WordWrap.
+MODIFIED: Added dynamic title to the status message overlay.
 """
-# version 2.0.12 (Corrected logger alias scope) # Updated to 2.0.13
+# version 2.0.13 (Fixed WordWrap flag, dynamic status title)
 
 import sys
 import os
@@ -32,35 +32,36 @@ from utils import PrintLimiter
 
 # --- Logging Setup ---
 import logging
-logger = logging.getLogger(__name__) # Get a logger for this module
+logger_game_ui = logging.getLogger(__name__) # Changed logger name to avoid conflict
 
 # Define aliases at the module level, initially as fallbacks
-def log_info(msg, *args, **kwargs): logger.info(msg, *args, **kwargs)
-def log_debug(msg, *args, **kwargs): logger.debug(msg, *args, **kwargs)
-def log_warning(msg, *args, **kwargs): logger.warning(msg, *args, **kwargs)
-def log_error(msg, *args, **kwargs): logger.error(msg, *args, **kwargs)
-def log_critical(msg, *args, **kwargs): logger.critical(msg, *args, **kwargs)
+def log_info(msg, *args, **kwargs): logger_game_ui.info(msg, *args, **kwargs)
+def log_debug(msg, *args, **kwargs): logger_game_ui.debug(msg, *args, **kwargs)
+def log_warning(msg, *args, **kwargs): logger_game_ui.warning(msg, *args, **kwargs)
+def log_error(msg, *args, **kwargs): logger_game_ui.error(msg, *args, **kwargs)
+def log_critical(msg, *args, **kwargs): logger_game_ui.critical(msg, *args, **kwargs)
 
 try:
     from logger import info as project_info, debug as project_debug, \
                        warning as project_warning, error as project_error, \
                        critical as project_critical
-    
+
     log_info = project_info
     log_debug = project_debug
     log_warning = project_warning
     log_error = project_error
     log_critical = project_critical
-    logger.debug("GameUI: Successfully aliased project's logger functions.")
+    # Use log_debug here to avoid potential circular log calls if logger itself uses game_ui
+    log_debug("GameUI: Successfully aliased project's logger functions.")
 
 except ImportError:
-    if not logger.hasHandlers() and not logging.getLogger().hasHandlers():
+    if not logger_game_ui.hasHandlers() and not logging.getLogger().hasHandlers():
         _gameui_fallback_console_handler = logging.StreamHandler(sys.stdout)
         _gameui_fallback_console_formatter = logging.Formatter('GAME_UI (ImportFallbackConsole): %(levelname)s - %(message)s')
         _gameui_fallback_console_handler.setFormatter(_gameui_fallback_console_formatter)
-        logger.addHandler(_gameui_fallback_console_handler)
-        logger.setLevel(logging.DEBUG) 
-        logger.propagate = False 
+        logger_game_ui.addHandler(_gameui_fallback_console_handler)
+        logger_game_ui.setLevel(logging.DEBUG)
+        logger_game_ui.propagate = False
     log_critical("GameUI: Failed to import project's logger. Using isolated fallback for game_ui.py.")
 
 
@@ -72,7 +73,7 @@ def draw_health_bar_qt(painter: QPainter, x: float, y: float,
     current_hp_clamped = max(0.0, min(current_hp, max_hp))
     bar_width = max(1.0, float(width)); bar_height = max(1.0, float(height))
     health_ratio = current_hp_clamped / max_hp
-    
+
     color_red_rgb = getattr(C, 'RED', (255,0,0))
     color_green_rgb = getattr(C, 'GREEN', (0,255,0))
     color_dark_gray_rgb = getattr(C, 'DARK_GRAY', (50,50,50))
@@ -80,17 +81,17 @@ def draw_health_bar_qt(painter: QPainter, x: float, y: float,
 
     qcolor_red = QColor(*color_red_rgb); qcolor_green = QColor(*color_green_rgb)
     qcolor_dark_gray = QColor(*color_dark_gray_rgb); qcolor_black = QColor(*color_black_rgb)
-    
+
     r = int(qcolor_red.redF()   * (1 - health_ratio) * 255 + qcolor_green.redF()   * health_ratio * 255)
     g = int(qcolor_red.greenF() * (1 - health_ratio) * 255 + qcolor_green.greenF() * health_ratio * 255)
     b = int(qcolor_red.blueF()  * (1 - health_ratio) * 255 + qcolor_green.blueF()  * health_ratio * 255)
     health_qcolor = QColor(max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
-    
+
     background_rect = QRectF(x, y, bar_width, bar_height)
     painter.fillRect(background_rect, qcolor_dark_gray)
     health_fill_width = bar_width * health_ratio
     if health_fill_width > 0: painter.fillRect(QRectF(x, y, health_fill_width, bar_height), health_qcolor)
-    
+
     pen = QPen(qcolor_black); pen.setWidth(1)
     painter.setPen(pen); painter.drawRect(background_rect)
 
@@ -102,31 +103,31 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: P
 
     player_label_text = f"P{player_number}"
     qcolor_white = QColor(*getattr(C, 'WHITE', (255,255,255)))
-    
+
     painter.setFont(hud_qfont)
     painter.setPen(qcolor_white)
-    
+
     font_metrics = QFontMetrics(hud_qfont)
     label_text_height = float(font_metrics.height())
     painter.drawText(QPointF(x, y + label_text_height - float(font_metrics.descent())), player_label_text)
-    
-    label_height_offset = label_text_height 
+
+    label_height_offset = label_text_height
     health_bar_pos_x = x
-    health_bar_pos_y = y + label_height_offset + 5.0 
-    
+    health_bar_pos_y = y + label_height_offset + 5.0
+
     hud_health_bar_width = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100.0))
     hud_health_bar_height = float(getattr(C, 'HUD_HEALTH_BAR_HEIGHT', 12.0))
-    
-    draw_health_bar_qt(painter, health_bar_pos_x, health_bar_pos_y, 
+
+    draw_health_bar_qt(painter, health_bar_pos_x, health_bar_pos_y,
                        hud_health_bar_width, hud_health_bar_height,
                        float(player_instance.current_health), float(player_instance.max_health))
-    
+
     health_value_text = f"{int(player_instance.current_health)}/{int(player_instance.max_health)}"
-    text_bounding_rect = font_metrics.boundingRect(health_value_text) 
-    
-    health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 5.0 
-    health_text_pos_y = health_bar_pos_y + (hud_health_bar_height / 2.0) + (float(text_bounding_rect.height()) / 4.0) 
-    
+    text_bounding_rect = font_metrics.boundingRect(health_value_text)
+
+    health_text_pos_x = health_bar_pos_x + hud_health_bar_width + 5.0
+    health_text_pos_y = health_bar_pos_y + (hud_health_bar_height / 2.0) + (float(text_bounding_rect.height()) / 4.0)
+
     painter.drawText(QPointF(health_text_pos_x, health_text_pos_y), health_value_text)
 
 
@@ -138,22 +139,22 @@ class GameSceneWidget(QWidget):
         self.game_elements = game_elements_ref
         self.fonts = fonts_ref
         self.download_status_message: Optional[str] = None
+        self.download_status_title: Optional[str] = None # Added to store title
         self.download_progress_percent: Optional[float] = None
 
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
-        self.setAutoFillBackground(False) 
+        self.setAutoFillBackground(False)
 
         self._level_pixel_width: float = float(getattr(C, 'GAME_WIDTH', 800.0))
         self._level_min_x_abs: float = 0.0
         self._level_min_y_abs: float = 0.0
         self._level_max_y_abs: float = float(getattr(C, 'GAME_HEIGHT', 600.0))
-        
+
         log_debug("GameSceneWidget initialized.")
 
     def get_camera(self) -> Optional[Camera]:
         cam = self.game_elements.get("camera")
         if not isinstance(cam, Camera):
-            # MODIFIED: Changed from can_print to can_log
             if GameSceneWidget.paint_event_limiter.can_log("camera_missing_type"):
                  log_warning(f"GameSceneWidget: 'camera' in game_elements is not a Camera instance (type: {type(cam)}).")
             return None
@@ -176,14 +177,16 @@ class GameSceneWidget(QWidget):
                     f"MinX:{self._level_min_x_abs:.1f}, MinY:{self._level_min_y_abs:.1f}, MaxY:{self._level_max_y_abs:.1f}")
         self.update()
 
-    def update_game_state(self, game_time_ticks_ignored: int, 
+    def update_game_state(self, game_time_ticks_ignored: int,
+                          download_title: Optional[str] = None, # Added title parameter
                           download_msg: Optional[str] = None,
                           download_prog: Optional[float] = None):
+        self.download_status_title = download_title
         self.download_status_message = download_msg
         self.download_progress_percent = download_prog
-        self.update() 
+        self.update()
 
-    def resizeEvent(self, event: QResizeEvent): 
+    def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
         new_width = float(event.size().width())
         new_height = float(event.size().height())
@@ -193,7 +196,7 @@ class GameSceneWidget(QWidget):
         if camera:
             log_debug(f"GameSceneWidget.resizeEvent: Updating camera screen dimensions to {new_width:.1f}x{new_height:.1f}")
             camera.set_screen_dimensions(new_width, new_height)
-            
+
             player1 = self.game_elements.get("player1")
             player2 = self.game_elements.get("player2")
             focus_target = None
@@ -201,19 +204,19 @@ class GameSceneWidget(QWidget):
             elif player2 and isinstance(player2, Player) and player2.alive() and player2._valid_init and not getattr(player2, 'is_dead', True) and not getattr(player2, 'is_petrified', False): focus_target = player2
             elif player1 and isinstance(player1, Player) and player1.alive() and player1._valid_init: focus_target = player1
             elif player2 and isinstance(player2, Player) and player2.alive() and player2._valid_init: focus_target = player2
-            
+
             if focus_target:
                 log_debug(f"GameSceneWidget.resizeEvent: Re-focusing camera on {type(focus_target).__name__} P{getattr(focus_target, 'player_id', '?')}")
                 camera.update(focus_target)
             else:
                 log_debug("GameSceneWidget.resizeEvent: No primary focus target after resize, camera performs static_update.")
                 camera.static_update()
-        
+
         self.game_elements['main_app_screen_width'] = new_width
         self.game_elements['main_app_screen_height'] = new_height
         self.update()
 
-    def paintEvent(self, event: QPaintEvent): 
+    def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
@@ -227,7 +230,6 @@ class GameSceneWidget(QWidget):
             painter.setPen(QColor(Qt.GlobalColor.red)); painter.setFont(self.fonts.get("medium", QFont("Arial", 12)))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "GAME CAMERA NOT INITIALIZED"); painter.end(); return
 
-        # MODIFIED: Changed from can_print to can_log
         if GameSceneWidget.paint_event_limiter.can_log("paint_details_gs"):
             cam_offset = camera.get_offset()
             log_debug(f"PaintEvent GSW: CameraOffset=({cam_offset.x():.1f}, {cam_offset.y():.1f}), "
@@ -236,7 +238,6 @@ class GameSceneWidget(QWidget):
                          f"Y:{camera.level_top_y_abs:.0f} to {camera.level_bottom_y_abs:.0f})")
 
         background_tiles: List[BackgroundTile] = self.game_elements.get("background_tiles_list", [])
-        # MODIFIED: Changed from can_print to can_log
         if GameSceneWidget.paint_event_limiter.can_log("bg_tiles_count"):
              log_debug(f"PaintEvent GSW: Drawing {len(background_tiles)} background tiles.")
         for bg_tile_idx, bg_tile in enumerate(background_tiles):
@@ -244,12 +245,11 @@ class GameSceneWidget(QWidget):
                 bg_tile.draw_pyside(painter, camera)
 
         all_renderables: List[Any] = self.game_elements.get("all_renderable_objects", [])
-        # MODIFIED: Changed from can_print to can_log
         if GameSceneWidget.paint_event_limiter.can_log("renderables_count_main"):
             log_debug(f"PaintEvent GSW: Drawing {len(all_renderables)} main game objects.")
 
         for i, entity in enumerate(all_renderables):
-            if isinstance(entity, BackgroundTile): continue 
+            if isinstance(entity, BackgroundTile): continue
 
             if hasattr(entity, 'draw_pyside') and callable(entity.draw_pyside):
                 entity.draw_pyside(painter, camera)
@@ -257,11 +257,10 @@ class GameSceneWidget(QWidget):
                  hasattr(entity, 'image') and isinstance(entity.image, QPixmap) and not entity.image.isNull():
                 should_draw_generic = True
                 if hasattr(entity, 'alive') and callable(entity.alive) and not entity.alive():
-                    should_draw_generic = False 
-                
+                    should_draw_generic = False
                 if should_draw_generic:
                     screen_rect_qrectf = camera.apply(entity.rect)
-                    if self.rect().intersects(screen_rect_qrectf.toRect()): 
+                    if self.rect().intersects(screen_rect_qrectf.toRect()):
                         painter.drawPixmap(screen_rect_qrectf.topLeft(), entity.image)
 
         player1: Optional[Player] = self.game_elements.get("player1")
@@ -270,10 +269,8 @@ class GameSceneWidget(QWidget):
         for p_instance in [player1, player2]:
             if p_instance and isinstance(p_instance, Player) and p_instance.alive() and \
                not getattr(p_instance, 'is_petrified', False) and \
-               p_instance.current_health < p_instance.max_health and not p_instance.is_dead: 
-                
+               p_instance.current_health < p_instance.max_health and not p_instance.is_dead:
                 if not p_instance.rect.isValid(): continue
-
                 enemy_screen_rect = camera.apply(p_instance.rect)
                 hb_w = float(getattr(C, 'HEALTH_BAR_WIDTH', 50)); hb_h = float(getattr(C, 'HEALTH_BAR_HEIGHT', 8))
                 hb_x = enemy_screen_rect.center().x() - hb_w / 2.0
@@ -284,8 +281,8 @@ class GameSceneWidget(QWidget):
         if player1 and isinstance(player1, Player) and player1.alive() and not getattr(player1, 'is_petrified', False):
             draw_player_hud_qt(painter, 10.0, 10.0, player1, 1, hud_font)
         if player2 and isinstance(player2, Player) and player2.alive() and not getattr(player2, 'is_petrified', False):
-            p2_hud_width_estimate = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100.0)) + 120.0 
-            p2_hud_x = self.width() - p2_hud_width_estimate - 10.0 
+            p2_hud_width_estimate = float(getattr(C, 'HUD_HEALTH_BAR_WIDTH', 100.0)) + 120.0
+            p2_hud_x = self.width() - p2_hud_width_estimate - 10.0
             draw_player_hud_qt(painter, p2_hud_x, 10.0, player2, 2, hud_font)
 
         if self.download_status_message:
@@ -294,16 +291,32 @@ class GameSceneWidget(QWidget):
             dialog_rect.moveCenter(QPointF(self.width() / 2.0, self.height() / 2.0))
             painter.fillRect(dialog_rect, QColor(50,50,50, 200)); painter.setPen(QColor(*getattr(C, 'WHITE', (255,255,255)))); painter.drawRect(dialog_rect)
             title_font = self.fonts.get("large", QFont("Arial", 24, QFont.Weight.Bold)); msg_font = self.fonts.get("medium", QFont("Arial", 12))
+
+            # Use stored title or derive one
+            dialog_title_text = self.download_status_title if self.download_status_title else "Status"
+            if not self.download_status_title: # If no explicit title, try to infer
+                if "Downloading" in self.download_status_message or "Synchronizing" in self.download_status_message :
+                    dialog_title_text = "File Transfer"
+                elif "Loading" in self.download_status_message:
+                    dialog_title_text = "Loading Level"
+                elif "Game Over" in self.download_status_message:
+                    dialog_title_text = "Game Over"
+
             painter.setFont(title_font); title_text_rect = dialog_rect.adjusted(10,10,-10,-10)
-            painter.drawText(title_text_rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, "File Transfer")
+            painter.drawText(title_text_rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, dialog_title_text)
+
             painter.setFont(msg_font); title_fm = QFontMetrics(title_font); msg_y_start = title_text_rect.top() + float(title_fm.height()) + 10.0
             msg_rect_adjusted = QRectF(dialog_rect.left() + 10, msg_y_start, dialog_rect.width() - 20, dialog_rect.height() - msg_y_start - 10)
-            painter.drawText(msg_rect_adjusted, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.WordWrap, self.download_status_message)
+
+            # CORRECTED LINE: Use int() to cast combined flags
+            alignment_flags_for_text = Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop | Qt.TextFlag.WordWrap
+            painter.drawText(msg_rect_adjusted, int(alignment_flags_for_text), self.download_status_message)
+
             if self.download_progress_percent is not None and self.download_progress_percent >= 0:
                 bar_margin = 20.0; bar_h = 30.0; msg_fm = QFontMetrics(msg_font)
-                approx_msg_height = float(msg_fm.height()) * (len(self.download_status_message) // 30 + 1) 
+                approx_msg_height = float(msg_fm.height()) * (len(self.download_status_message) // 30 + 1)
                 bar_y_pos = msg_y_start + approx_msg_height + 15.0
-                if bar_y_pos + bar_h > dialog_rect.bottom() - bar_margin: bar_y_pos = dialog_rect.center().y() + 10 
+                if bar_y_pos + bar_h > dialog_rect.bottom() - bar_margin: bar_y_pos = dialog_rect.center().y() + 10
                 bar_rect = QRectF(dialog_rect.left() + bar_margin, bar_y_pos, dialog_rect.width() - 2 * bar_margin, bar_h)
                 if bar_rect.bottom() > dialog_rect.bottom() - bar_margin: bar_rect.setHeight(max(5.0, dialog_rect.bottom() - bar_margin - bar_y_pos))
                 painter.fillRect(bar_rect, QColor(*getattr(C, 'GRAY', (128,128,128))))
@@ -317,12 +330,12 @@ class GameSceneWidget(QWidget):
 
     def clear_scene_for_new_game(self):
         log_info("GameSceneWidget: Clearing visual state for new game (download messages).")
+        self.download_status_title = None
         self.download_status_message = None
         self.download_progress_percent = None
-        self.update() 
+        self.update()
 
 
-# --- Dialogs ---
 class SelectMapDialog(QDialog):
     def __init__(self, fonts: Dict[str, QFont], parent: Optional[QWidget] = None):
         super().__init__(parent); self.setWindowTitle("Select Map"); self.selected_map_name: Optional[str] = None; self.fonts = fonts
@@ -339,12 +352,21 @@ class SelectMapDialog(QDialog):
         log_debug(f"SelectMapDialog: Populating maps from '{maps_dir_abs}' (PY files only)")
         if os.path.exists(maps_dir_abs) and os.path.isdir(maps_dir_abs):
             try:
-                map_files_py = sorted([f[:-3] for f in os.listdir(maps_dir_abs) if f.endswith(".py") and f != "__init__.py" and f[:-3] != "level_default"])
-                prio_maps = ["original", "lava", "cpu_extended", "noenemy", "bigmap1", "one"] 
-                final_ordered_maps = [m for m in prio_maps if m in map_files_py] + [m for m in map_files_py if m not in prio_maps]
+                # Modified to list folders that contain a .py file of the same name
+                available_map_folder_names: List[str] = []
+                for entry_name in os.listdir(maps_dir_abs):
+                    potential_map_folder_path = os.path.join(maps_dir_abs, entry_name)
+                    if os.path.isdir(potential_map_folder_path):
+                        expected_map_py_file = os.path.join(potential_map_folder_path, f"{entry_name}.py")
+                        if os.path.isfile(expected_map_py_file):
+                            available_map_folder_names.append(entry_name)
+
+                prio_maps = ["original", "lava", "cpu_extended", "noenemy", "bigmap1", "one"]
+                final_ordered_maps = [m for m in prio_maps if m in available_map_folder_names] + \
+                                     [m for m in available_map_folder_names if m not in prio_maps]
                 if final_ordered_maps: self.list_widget.addItems(final_ordered_maps);
                 if self.list_widget.count() > 0: self.list_widget.setCurrentRow(0)
-                else: self.list_widget.addItem("No selectable game maps (.py) found."); self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+                else: self.list_widget.addItem("No selectable game maps (folders with .py) found."); self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
             except OSError as e: self.list_widget.addItem(f"Error reading maps: {e}"); self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
         else: self.list_widget.addItem(f"Maps directory not found: {maps_dir_abs}"); self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
     def accept(self):
@@ -371,5 +393,3 @@ class IPInputDialog(QDialog):
         else: QMessageBox.warning(self, "Input Error", "IP and Port cannot be empty.")
     def clear_input_and_focus(self): self.line_edit.clear(); self.line_edit.setFocus()
     def get_ip_port(self) -> Optional[str]: return self.ip_port_string
-
-#################### END OF FILE: game_ui.py ####################
