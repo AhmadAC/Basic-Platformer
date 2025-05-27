@@ -12,7 +12,7 @@ def load_map_8():
         'hazards_list': [],
         'background_tiles_list': [],
         'enemies_list': [],
-        'items_list': [],
+        'items_list': [{'pos': (701.0, 945.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}, {'pos': (781.0, 825.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}, {'pos': (821.0, 705.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}],
         'statues_list': [],
         'custom_images_list': [{'rect': (160.0, 600.0, 175.0, 273.0), 'source_file_path': 'Custom/OIP-C.jpg', 'original_width': 474, 'original_height': 629, 'crop_rect': {'x': 0, 'y': 0, 'width': 474, 'height': 629}, 'layer_order': 10, 'properties': {'is_background': False, 'is_obstacle': True, 'destructible': False, 'health': 100, 'scroll_factor_x': 1.0, 'scroll_factor_y': 1.0, 'apply_gravity': False}, 'is_flipped_h': False, 'rotation': 0}],
         'trigger_squares_list': [{'rect': (520.0, 840.0, 150.0, 134.0), 'layer_order': 10, 'properties': {'visible': True, 'fill_color_rgba': (255, 17, 152, 100), 'image_in_square': '', 'linked_map_name': 'three', 'trigger_event_type': 'player_enter', 'one_time_trigger': True, 'activation_id': ''}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (360.0, 880.0, 74.0, 80.0), 'layer_order': 10, 'properties': {'visible': True, 'fill_color_rgba': (100, 100, 255, 100), 'image_in_square': '', 'linked_map_name': 'three', 'trigger_event_type': 'player_use', 'one_time_trigger': True, 'activation_id': ''}, 'is_flipped_h': False, 'rotation': 0}],

@@ -1,10 +1,13 @@
+#################### START OF FILE: assets.py ####################
+
 # assets.py
 # -*- coding: utf-8 -*-
-## version 2.0.4 (Stone/Smashed animations are common, not per-character)
+## version 2.0.5 (Added zapped animation to player and enemy loading)
 """
 Handles loading game assets, primarily animations from GIF files using Pillow and PySide6.
 Includes a helper function `resource_path` to ensure correct asset pathing.
 Stone/Smashed animations are now considered common and loaded by character base classes.
+MODIFIED: Added 'zapped' animation to player and enemy loading.
 """
 from PySide6.QtWidgets import (
     QApplication
@@ -111,7 +114,6 @@ def load_gif_frames(full_path_to_gif_file: str) -> List[QPixmap]:
 def load_all_player_animations(relative_asset_folder: str = 'characters/player1') -> Optional[Dict[str, List[QPixmap]]]:
     animations_dict: Dict[str, List[QPixmap]] = {}
     
-    # REMOVED 'petrified' and 'smashed' from here. They are loaded by Player/EnemyBase.
     animation_filenames_map = {
         'attack': '__Attack.gif', 'attack2': '__Attack2.gif', 'attack_combo': '__AttackCombo2hit.gif',
         'attack_nm': '__AttackNoMovement.gif', 'attack2_nm': '__Attack2NoMovement.gif',
@@ -132,6 +134,7 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
         'aflame': '__Aflame.gif', 'burning': '__Burning.gif',
         'aflame_crouch': '__Aflame_crouch.gif', 'burning_crouch': '__Burning_crouch.gif',
         'deflame': '__Deflame.gif', 'deflame_crouch': '__Deflame_crouch.gif',
+        'zapped': '__Zapped.gif', # ADDED
     }
 
     missing_files_log: List[Tuple[str, str, str]] = []
@@ -142,7 +145,7 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
          relative_path_to_gif_for_resource_path = os.path.join(relative_asset_folder, gif_filename)
          absolute_gif_path = resource_path(relative_path_to_gif_for_resource_path)
          if not os.path.exists(absolute_gif_path):
-             core_animations = ['idle', 'run', 'jump', 'fall', 'attack', 'death', 'hit']
+             core_animations = ['idle', 'run', 'jump', 'fall', 'attack', 'death', 'hit', 'zapped'] # ADDED 'zapped'
              if anim_state_name in core_animations:
                  missing_files_log.append((anim_state_name, relative_path_to_gif_for_resource_path, absolute_gif_path))
              animations_dict[anim_state_name] = [] 
@@ -199,7 +202,6 @@ def load_all_player_animations(relative_asset_folder: str = 'characters/player1'
 def load_enemy_animations(relative_asset_folder: str) -> Optional[Dict[str, List[QPixmap]]]:
     animations_dict: Dict[str, List[QPixmap]] = {}
     
-    # REMOVED 'petrified' and 'smashed' from here.
     enemy_animation_filenames_map = {
         'idle': '__Idle.gif',
         'run': '__Run.gif',
@@ -212,6 +214,7 @@ def load_enemy_animations(relative_asset_folder: str) -> Optional[Dict[str, List
         'defrost': '__Defrost.gif',
         'aflame': '__Aflame.gif', 
         'deflame': '__Deflame.gif',
+        'zapped': '__Zapped.gif', # ADDED
     }
 
     missing_files_log: List[Tuple[str, str, str]] = []
@@ -222,7 +225,7 @@ def load_enemy_animations(relative_asset_folder: str) -> Optional[Dict[str, List
         relative_path_to_gif = os.path.join(relative_asset_folder, gif_filename)
         absolute_gif_path = resource_path(relative_path_to_gif)
         if not os.path.exists(absolute_gif_path):
-            core_enemy_animations = ['idle', 'run', 'attack', 'death', 'hit'] 
+            core_enemy_animations = ['idle', 'run', 'attack', 'death', 'hit', 'zapped'] # ADDED 'zapped'
             if anim_state_name in core_enemy_animations or \
                anim_state_name in ['frozen','defrost','aflame','deflame']: # Status effects are important too
                 missing_files_log.append((anim_state_name, relative_path_to_gif, absolute_gif_path))
@@ -291,7 +294,7 @@ if __name__ == "__main__":
     loaded_p1_animations = load_all_player_animations(relative_asset_folder=player1_asset_folder_relative)
     if loaded_p1_animations:
         info(f"Assets Test (Player 1): Successfully loaded PLAYER animation data. Found states: {', '.join(k for k,v in loaded_p1_animations.items() if v)}")
-        for anim_key in ['idle', 'run', 'jump', 'attack', 'death', 'aflame', 'frozen']: # Removed 'petrified', 'smashed'
+        for anim_key in ['idle', 'run', 'jump', 'attack', 'death', 'aflame', 'frozen', 'zapped']: 
             if anim_key in loaded_p1_animations and loaded_p1_animations[anim_key]:
                 first_frame = loaded_p1_animations[anim_key][0]
                 if first_frame.size() == QSize(30,40) and \
@@ -300,7 +303,7 @@ if __name__ == "__main__":
                 else:
                      info(f"Assets Test (Player 1): Animation '{anim_key}' loaded with {len(loaded_p1_animations[anim_key])} frames. First frame size: {first_frame.size().width()}x{first_frame.size().height()}")
             else:
-                core_player_animations = ['idle', 'run', 'jump', 'fall', 'attack', 'death', 'hit']
+                core_player_animations = ['idle', 'run', 'jump', 'fall', 'attack', 'death', 'hit', 'zapped']
                 if anim_key in core_player_animations:
                     warning(f"Assets Test (Player 1) WARNING: CORE Animation '{anim_key}' missing or empty after load.")
     else: error("\nAssets Test (Player 1): PLAYER Animation loading FAILED (returned None). Likely critical 'idle' issue.")
@@ -310,7 +313,7 @@ if __name__ == "__main__":
     loaded_green_enemy_animations = load_enemy_animations(relative_asset_folder=green_enemy_asset_folder_relative)
     if loaded_green_enemy_animations:
         info(f"Assets Test (Green Enemy): Successfully loaded ENEMY animation data. Found states: {', '.join(k for k,v in loaded_green_enemy_animations.items() if v)}")
-        for anim_key in ['idle', 'run', 'attack', 'death', 'aflame']: # Removed 'petrified', 'smashed'
+        for anim_key in ['idle', 'run', 'attack', 'death', 'aflame', 'zapped']: 
             if anim_key in loaded_green_enemy_animations and loaded_green_enemy_animations[anim_key]:
                 first_frame = loaded_green_enemy_animations[anim_key][0]
                 if first_frame.size() == QSize(30,40) and \
@@ -319,7 +322,7 @@ if __name__ == "__main__":
                 else:
                      info(f"Assets Test (Green Enemy): Animation '{anim_key}' loaded with {len(loaded_green_enemy_animations[anim_key])} frames. First frame size: {first_frame.size().width()}x{first_frame.size().height()}")
             else:
-                core_enemy_anims = ['idle', 'run', 'attack', 'death', 'hit']
+                core_enemy_anims = ['idle', 'run', 'attack', 'death', 'hit', 'zapped']
                 if anim_key in core_enemy_anims:
                     warning(f"Assets Test (Green Enemy) WARNING: CORE Animation '{anim_key}' missing or empty after load.")
     else: error("\nAssets Test (Green Enemy): ENEMY Animation loading FAILED (returned None). Likely critical 'idle' issue.")
@@ -331,3 +334,5 @@ if __name__ == "__main__":
     else: error("\nAssets Test (Gray Enemy): ENEMY Animation loading FAILED (returned None). Likely critical 'idle' issue.")
 
     info("Assets.py direct run test finished.")
+
+#################### END OF FILE: assets.py ####################

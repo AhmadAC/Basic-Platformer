@@ -3455,10 +3455,58 @@
             "editor_locked": false,
             "current_width": 74,
             "current_height": 80.0
+        },
+        {
+            "asset_editor_key": "item_chest",
+            "world_x": 680,
+            "world_y": 920,
+            "game_type_id": "chest",
+            "layer_order": 0,
+            "properties": {
+                "item_type": "coin",
+                "item_quantity": 1,
+                "requires_key_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "item_chest",
+            "world_x": 760,
+            "world_y": 800,
+            "game_type_id": "chest",
+            "layer_order": 0,
+            "properties": {
+                "item_type": "coin",
+                "item_quantity": 1,
+                "requires_key_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "item_chest",
+            "world_x": 800,
+            "world_y": 680,
+            "game_type_id": "chest",
+            "layer_order": 0,
+            "properties": {
+                "item_type": "coin",
+                "item_quantity": 1,
+                "requires_key_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         }
     ],
-    "camera_offset_x": -1.0,
-    "camera_offset_y": -116.0,
+    "camera_offset_x": 82.0,
+    "camera_offset_y": 484.0,
     "zoom_level": 0.8333333333333334,
     "show_grid": true,
     "asset_specific_variables": {}

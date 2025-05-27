@@ -1,3 +1,5 @@
+#################### START OF FILE: constants.py ####################
+
 # constants.py
 # -*- coding: utf-8 -*-
 """
@@ -6,6 +8,7 @@ Dynamically sets MAPS_DIR based on execution environment (development vs. PyInst
 Map paths now refer to map_name_folder/map_name_file.py structure.
 """
 # version 2.1.1 (Clarified MAPS_DIR and its usage)
+# MODIFIED: Added ZAPPED duration and damage constants (v2.1.2)
 import os
 import sys
 import math
@@ -153,9 +156,9 @@ ENEMY_FROZEN_DURATION_MS = 3000
 ENEMY_DEFROST_DURATION_MS = 1000
 STONE_SMASHED_DURATION_MS = 5000
 # New Enemy Status Effect Durations
-ENEMY_ZAPPED_DURATION_MS = 2500
-ENEMY_ZAPPED_DAMAGE_PER_TICK = 2
-ENEMY_ZAPPED_DAMAGE_INTERVAL_MS = 300
+ENEMY_ZAPPED_DURATION_MS = 3000 # MODIFIED
+ENEMY_ZAPPED_DAMAGE_PER_TICK = 0 # MODIFIED (set to 0 as not requested, can be changed)
+ENEMY_ZAPPED_DAMAGE_INTERVAL_MS = 300 # MODIFIED (interval for potential future damage)
 
 PLAYER_AFLAME_DURATION_MS = 3000
 PLAYER_DEFLAME_DURATION_MS = 2000
@@ -164,9 +167,9 @@ PLAYER_AFLAME_DAMAGE_INTERVAL_MS = 100
 PLAYER_FROZEN_DURATION_MS = 2800
 PLAYER_DEFROST_DURATION_MS = 1200
 # New Player Status Effect Durations
-PLAYER_ZAPPED_DURATION_MS = 2000 # Example, could be different from enemy
-PLAYER_ZAPPED_DAMAGE_PER_TICK = 2 # Example
-PLAYER_ZAPPED_DAMAGE_INTERVAL_MS = 300 # Example
+PLAYER_ZAPPED_DURATION_MS = 3000 # MODIFIED
+PLAYER_ZAPPED_DAMAGE_PER_TICK = 0 # MODIFIED (set to 0 as not requested)
+PLAYER_ZAPPED_DAMAGE_INTERVAL_MS = 300 # MODIFIED
 
 PLAYER_AFLAME_ACCEL_MULTIPLIER = 1.15
 PLAYER_AFLAME_SPEED_MULTIPLIER = 1.3
@@ -306,3 +309,5 @@ STATE_PAUSED = "PAUSED"; STATE_LEVEL_EDITOR = "LEVEL_EDITOR"
 if _SCRIPT_LOGGING_ENABLED:
     print(f"CONSTANTS.PY: PROJECT_ROOT determined as: {PROJECT_ROOT}")
     print(f"CONSTANTS.PY: MAPS_DIR (base maps folder) determined as: {MAPS_DIR}")
+
+#################### END OF FILE: constants.py ####################
