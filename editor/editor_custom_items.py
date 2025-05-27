@@ -4,11 +4,13 @@
 """
 Custom QGraphicsItem classes for special map objects in the editor,
 such as uploaded images and trigger squares.
-Version 2.2.7 (Opacity for CustomImageMapItem)
+Version 2.2.9 (Forced Real-time Opacity Update for CustomImageMapItem)
 - BaseResizableMapItem now correctly sets Movable flag and visibility on init and update.
 - TriggerSquareMapItem paint method clarified for visibility and selection.
 - Added shape() method to TriggerSquareMapItem for better interaction.
 - Added opacity handling for CustomImageMapItem.
+- Ensured CustomImageMapItem always re-sets its pixmap and calls update()
+  on property changes to reflect opacity changes in real-time.
 """
 import os
 import logging
@@ -215,8 +217,8 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
         self._update_display_aspect_ratio()
         
-        self.prepareGeometryChange()
-        self.update_handle_positions()
+        self.prepareGeometryChange() # Important before changing bounding rect / pixmap size
+        self.update_handle_positions() # Also depends on bounding rect
 
     def hoverMoveEvent(self, event: QHoverEvent):
         if self.isSelected() and not self.map_object_data_ref.get("editor_locked", False):
@@ -271,8 +273,6 @@ class CustomImageMapItem(BaseResizableMapItem):
         display_w = int(max(1, current_width))
         display_h = int(max(1, current_height))
         
-        # The final pixmap that will be set on the QGraphicsPixmapItem
-        # It needs to be transparent if opacity < 1.0 so underlying scene shows through.
         final_pixmap = QPixmap(display_w, display_h)
         final_pixmap.fill(Qt.GlobalColor.transparent)
 
@@ -286,7 +286,7 @@ class CustomImageMapItem(BaseResizableMapItem):
                         obj_data["original_width"] = full_qimage.width()
                         obj_data["original_height"] = full_qimage.height()
 
-                    image_to_render = full_qimage # This is the original full image or a QImage that will be cropped
+                    image_to_render = full_qimage
                     crop_rect_data = obj_data.get("crop_rect")
 
                     if isinstance(crop_rect_data, dict) and \
@@ -308,57 +308,42 @@ class CustomImageMapItem(BaseResizableMapItem):
                             obj_data["crop_rect"] = None
                         else:
                             qt_crop_rect = QRect(crop_x, crop_y, crop_w, crop_h)
-                            image_to_render = full_qimage.copy(qt_crop_rect) # Now image_to_render is the cropped part
+                            image_to_render = full_qimage.copy(qt_crop_rect)
                     
                     if not image_to_render.isNull():
-                        # Scale the (possibly cropped) image to display dimensions
                         scaled_image = image_to_render.scaled(
                             display_w, display_h,
                             Qt.AspectRatioMode.IgnoreAspectRatio,
                             Qt.TransformationMode.SmoothTransformation
                         )
                         
-                        # Get opacity from properties
                         opacity_percent = obj_data.get("properties", {}).get("opacity", 100)
-                        if not isinstance(opacity_percent, (int, float)): # Default if property malformed
+                        if not isinstance(opacity_percent, (int, float)):
                             opacity_percent = 100
-                        
                         opacity_value = max(0.0, min(1.0, float(opacity_percent) / 100.0))
 
-                        if opacity_value < 1.0:
-                            # Draw the scaled_image onto the final_pixmap (which is already transparent)
-                            # with the specified opacity.
-                            painter = QPainter(final_pixmap)
-                            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
-                            painter.setOpacity(opacity_value)
-                            painter.drawImage(0, 0, scaled_image)
-                            painter.end()
-                        else:
-                            # If opacity is 1.0, we can just convert the scaled_image directly.
-                            # However, to ensure the base is transparent if the image itself has alpha,
-                            # it's safer to still draw it onto our transparent final_pixmap.
-                            painter = QPainter(final_pixmap)
-                            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
-                            # Opacity is 1.0 by default for QPainter
-                            painter.drawImage(0, 0, scaled_image)
-                            painter.end()
+                        painter = QPainter(final_pixmap)
+                        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+                        painter.setOpacity(opacity_value)
+                        painter.drawImage(0, 0, scaled_image)
+                        painter.end()
                             
-                    else: # image_to_render is null after crop/copy
+                    else:
                         logger.warning(f"CustomImageMapItem: image_to_render is null after crop/copy for {full_image_path}")
                         painter = QPainter(final_pixmap)
                         painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) # Magenta fallback
                         painter.end()
-                else: # full_qimage is null
+                else:
                     logger.warning(f"CustomImageMapItem: Failed to load QImage from {full_image_path}")
                     painter = QPainter(final_pixmap)
                     painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) # Magenta fallback
                     painter.end()
-            else: # file not found
+            else:
                 logger.warning(f"CustomImageMapItem: Image file not found at {full_image_path}")
                 painter = QPainter(final_pixmap)
                 painter.fillRect(final_pixmap.rect(), QColor(255, 165, 0, 120)) # Orange fallback
                 painter.end()
-        else: # map_folder or rel_path missing
+        else:
             logger.warning(f"CustomImageMapItem: Missing map_folder or relative_path for custom image.")
             painter = QPainter(final_pixmap)
             painter.fillRect(final_pixmap.rect(), QColor(255, 255, 0, 120)) # Yellow fallback
@@ -367,17 +352,14 @@ class CustomImageMapItem(BaseResizableMapItem):
         return final_pixmap
 
     def update_visuals_from_data(self, editor_state: Any): # editor_state type hint
+        self.prepareGeometryChange() # Call before _load_pixmap...
+        
         new_pixmap = self._load_pixmap_from_data(self.map_object_data_ref, editor_state)
+        self.setPixmap(new_pixmap) 
         
-        current_pixmap_ref = self.pixmap()
-        pixmap_changed = (current_pixmap_ref.isNull() or new_pixmap.isNull() or
-                          current_pixmap_ref.cacheKey() != new_pixmap.cacheKey() or
-                          current_pixmap_ref.size() != new_pixmap.size())
-
-        if pixmap_changed:
-            self.setPixmap(new_pixmap)
-        
-        super().update_visuals_from_data(editor_state)
+        super().update_visuals_from_data(editor_state) # Handles position, z-order, handles etc.
+                                                       # This will call prepareGeometryChange again, which is fine.
+        self.update() # Explicitly schedule a repaint
 
 
 class TriggerSquareMapItem(BaseResizableMapItem):
@@ -391,10 +373,9 @@ class TriggerSquareMapItem(BaseResizableMapItem):
         
         super().__init__(map_object_data_ref, transparent_pixmap, parent)
         self.editor_state_ref = editor_state
-        # Store current dimensions in data_ref if not already there, crucial for bounding rect
         self.map_object_data_ref["current_width"] = current_w
         self.map_object_data_ref["current_height"] = current_h
-        self.update_visuals_from_data(editor_state) # Call after setting dimensions
+        self.update_visuals_from_data(editor_state)
 
 
     def boundingRect(self) -> QRectF:
@@ -417,11 +398,10 @@ class TriggerSquareMapItem(BaseResizableMapItem):
             if hasattr(parent_widget, 'editor_state'):
                  is_editor_preview = parent_widget.editor_state.is_game_preview_mode # type: ignore
 
-        # Handle "invisible in game" triggers
-        if not props.get("visible", True) and is_editor_preview: # In-game invisible
-            return # Draw nothing
+        if not props.get("visible", True) and is_editor_preview:
+            return
 
-        if not props.get("visible", True) and not is_editor_preview: # Editor-visible but marked as in-game invisible
+        if not props.get("visible", True) and not is_editor_preview: 
             painter.setPen(QPen(QColor(150, 150, 255, 100), 2, Qt.PenStyle.DashLine))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(rect)
@@ -433,7 +413,6 @@ class TriggerSquareMapItem(BaseResizableMapItem):
                 painter.drawRect(rect.adjusted(1,1,-1,-1))
             return
 
-        # Default drawing for visible triggers
         image_path_rel = props.get("image_in_square", "")
         image_drawn_successfully = False
         if image_path_rel and hasattr(self, 'editor_state_ref'):
@@ -454,13 +433,13 @@ class TriggerSquareMapItem(BaseResizableMapItem):
             fill_color_rgba = props.get("fill_color_rgba")
             if fill_color_rgba and isinstance(fill_color_rgba, (list, tuple)) and len(fill_color_rgba) == 4:
                 painter.setBrush(QColor(*fill_color_rgba)) # type: ignore
-                painter.setPen(QPen(QColor(0,0,0,180), 1)) # Black border
+                painter.setPen(QPen(QColor(0,0,0,180), 1))
                 painter.drawRect(rect)
-            else: # Fallback if color is invalid
-                painter.setBrush(QColor(100,100,255,50)) # Default semi-transparent blue
-                painter.setPen(QPen(QColor(50,50,150,150),1)) # Darker border
+            else: 
+                painter.setBrush(QColor(100,100,255,50))
+                painter.setPen(QPen(QColor(50,50,150,150),1))
                 painter.drawRect(rect)
-                painter.setPen(QColor(0,0,0)) # Black text
+                painter.setPen(QColor(0,0,0))
                 painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "Trigger")
 
         if option.state & QStyle.StateFlag.State_Selected: # type: ignore
@@ -470,27 +449,27 @@ class TriggerSquareMapItem(BaseResizableMapItem):
             painter.drawRect(rect)
 
     def update_visuals_from_data(self, editor_state: Any): # editor_state type hint
-        # Ensure current dimensions are set on the data ref before creating the pixmap
         current_w = self.map_object_data_ref.get("current_width", ED_CONFIG.BASE_GRID_SIZE * 2)
         current_h = self.map_object_data_ref.get("current_height", ED_CONFIG.BASE_GRID_SIZE * 2)
-        self.map_object_data_ref["current_width"] = current_w # Ensure these are set
+        self.map_object_data_ref["current_width"] = current_w
         self.map_object_data_ref["current_height"] = current_h
 
         display_w = int(max(1, current_w))
         display_h = int(max(1, current_h))
 
         if self.pixmap().width() != display_w or self.pixmap().height() != display_h:
+            self.prepareGeometryChange()
             new_pixmap = QPixmap(display_w, display_h)
             new_pixmap.fill(Qt.GlobalColor.transparent)
             self.setPixmap(new_pixmap)
         
-        super().update_visuals_from_data(editor_state) # This calls prepareGeometryChange
-        self.update() # Force a repaint after visuals are updated
+        super().update_visuals_from_data(editor_state) 
+        self.update() 
 
     def set_interaction_mode(self, mode: str):
         if mode == "resize":
             super().set_interaction_mode(mode)
-        else: # Trigger squares only support resize for now
+        else: 
             if self.current_interaction_mode != "resize":
                 super().set_interaction_mode("resize")
 

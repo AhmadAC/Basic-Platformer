@@ -1,0 +1,3385 @@
+{
+    "map_name_for_function": "custom",
+    "map_width_tiles": 40,
+    "map_height_tiles": 25,
+    "grid_size": 40.0,
+    "background_color": [
+        173,
+        216,
+        230
+    ],
+    "placed_objects": [
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 40,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 80,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 80,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 120,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 120,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 160,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 160,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 200,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 200,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 240,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 240,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 280,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 280,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 320,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 320,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 360,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 400,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 440,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 440,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 480,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 480,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 520,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 560,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 560,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 600,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 600,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 640,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 640,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 680,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 680,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 720,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 720,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 760,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 760,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 800,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 800,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 840,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 840,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 880,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 880,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 920,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 920,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 960,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 960,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1000,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1040,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1080,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1120,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1120,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1160,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1200,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1200,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1240,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1240,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1280,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1280,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1320,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1320,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1360,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1360,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1400,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1400,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1440,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1440,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1480,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1480,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1520,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1520,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 0,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 960,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 40,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 40,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 80,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 80,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 120,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 120,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 160,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 160,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 200,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 200,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 240,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 240,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 280,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 280,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 320,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 320,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 360,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 400,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 400,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 440,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 440,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 480,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 480,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 520,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 560,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 600,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 600,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 640,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 680,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 680,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 720,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 720,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 760,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 760,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 800,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 800,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 840,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 840,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 880,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 880,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 0,
+            "world_y": 920,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "platform_wall_gray",
+            "world_x": 1560,
+            "world_y": 920,
+            "game_type_id": "platform_wall_gray",
+            "override_color": [
+                128,
+                128,
+                128
+            ],
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "player1_spawn",
+            "world_x": 80,
+            "world_y": 880,
+            "game_type_id": "player1_spawn",
+            "properties": {
+                "max_health": 100,
+                "move_speed": 350.0,
+                "jump_strength": -900.0
+            },
+            "layer_order": 10,
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "player2_spawn",
+            "world_x": 160,
+            "world_y": 880,
+            "game_type_id": "player2_spawn",
+            "properties": {
+                "max_health": 100,
+                "move_speed": 350.0,
+                "jump_strength": -900.0
+            },
+            "layer_order": 10,
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "player3_spawn",
+            "world_x": 240,
+            "world_y": 880,
+            "game_type_id": "player3_spawn",
+            "properties": {
+                "max_health": 100,
+                "move_speed": 350.0,
+                "jump_strength": -900.0
+            },
+            "layer_order": 10,
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "player4_spawn",
+            "world_x": 320,
+            "world_y": 880,
+            "game_type_id": "player4_spawn",
+            "properties": {
+                "max_health": 100,
+                "move_speed": 350.0,
+                "jump_strength": -900.0
+            },
+            "layer_order": 10,
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
+        },
+        {
+            "asset_editor_key": "custom_image_object",
+            "game_type_id": "custom_image_object",
+            "world_x": 400,
+            "world_y": 320,
+            "source_file_path": "Custom/OIP-C.jpg",
+            "original_width": 474,
+            "original_height": 629,
+            "current_width": 474,
+            "current_height": 629,
+            "crop_rect": null,
+            "layer_order": 0,
+            "rotation": 0,
+            "is_flipped_h": false,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "properties": {
+                "is_background": true,
+                "is_obstacle": false,
+                "destructible": false,
+                "health": 100,
+                "scroll_factor_x": 1.0,
+                "scroll_factor_y": 1.0,
+                "apply_gravity": false,
+                "opacity": 23
+            }
+        }
+    ],
+    "camera_offset_x": 9.0,
+    "camera_offset_y": 0.0,
+    "zoom_level": 0.48225308641975323,
+    "show_grid": true,
+    "asset_specific_variables": {}
+}
