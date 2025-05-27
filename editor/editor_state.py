@@ -1,14 +1,17 @@
+#################### START OF FILE: editor_state.py ####################
+
 # editor_state.py
 # -*- coding: utf-8 -*-
 """
-## version 2.0.1 (PySide6 Conversion - No Tooltips)
+## version 2.2.2 (Asset Flip/Cycle State and Rotation)
 Defines the EditorState class, which holds all the dynamic state
 and data for the level editor, adapted for PySide6.
+- Added state for palette asset orientation (flip, rotation) and wall variant cycling.
 """
 import logging
 from typing import Optional, Dict, List, Tuple, Any, Callable
 
-import editor_config as ED_CONFIG
+from . import editor_config as ED_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -18,39 +21,50 @@ class EditorState:
         # --- Map Data ---
         self.current_map_filename: Optional[str] = None 
         self.current_json_filename: Optional[str] = None 
-        self.map_name_for_function: str = "untitled_map"
+        self.map_name_for_function: str = "untitled_map" 
         self.map_width_tiles: int = ED_CONFIG.DEFAULT_MAP_WIDTH_TILES
         self.map_height_tiles: int = ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES
         self.grid_size: int = ED_CONFIG.BASE_GRID_SIZE
         self.background_color: Tuple[int, int, int] = ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE
 
         # --- Placed Objects and Properties ---
+        # Each object includes "is_flipped_h": bool and "rotation": int (0, 90, 180, 270)
         self.placed_objects: List[Dict[str, Any]] = []
         self.asset_specific_variables: Dict[str, Dict[str, Any]] = {} 
 
         # --- Asset Palette State ---
-        self.assets_palette: Dict[str, Dict[str, Any]] = {} 
-        self._selected_asset_editor_key: Optional[str] = None 
-        self.current_selected_asset_paint_color: Optional[Tuple[int,int,int]] = None # NEW: For pre-setting color of next placed asset
+        self.assets_palette: Dict[str, Dict[str, Any]] = {}
+        self._selected_asset_editor_key: Optional[str] = None # Asset key whose *properties* are shown (DEPRECATED for placement)
+        self.current_selected_asset_paint_color: Optional[Tuple[int,int,int]] = None
+        
+        # State for the asset currently selected for placement from the palette
+        self.palette_current_asset_key: Optional[str] = None 
+        self.palette_asset_is_flipped_h: bool = False 
+        self.palette_asset_rotation: int = 0 # Degrees: 0, 90, 180, 270
+        self.palette_wall_variant_index: int = 0 # Index into ED_CONFIG.WALL_VARIANTS_CYCLE
+        self.current_tool_mode: str = "place" 
 
         # --- Camera, View, and Tool State ---
-        self.camera_offset_x: float = 0.0 
-        self.camera_offset_y: float = 0.0 
-        self.zoom_level: float = 1.0 
+        self.camera_offset_x: float = 0.0
+        self.camera_offset_y: float = 0.0
+        self.zoom_level: float = 1.0
         self.show_grid: bool = True
 
-        self.current_tool_mode: str = "place" 
-        self.current_tile_paint_color: Optional[Tuple[int,int,int]] = None # For the dedicated Color Picker Tool operation
+        self.current_tile_paint_color: Optional[Tuple[int,int,int]] = None # For color picker tool
 
         self.last_painted_tile_coords: Optional[Tuple[int, int]] = None
         self.last_erased_tile_coords: Optional[Tuple[int, int]] = None
         self.last_colored_tile_coords: Optional[Tuple[int, int]] = None
 
-        self._current_editor_mode: str = "editing_map" 
+        self._current_editor_mode: str = "editing_map"
         self.unsaved_changes: bool = False
         self.status_message: Optional[str] = None
-        self.undo_stack: List[Dict[str, Any]] = [] 
+        self.undo_stack: List[Dict[str, Any]] = []
         self.redo_stack: List[Dict[str, Any]] = []
+
+        self.controller_mode_active: bool = False
+        self.is_game_preview_mode: bool = False
+
 
         logger.debug("EditorState initialized.")
 
@@ -63,24 +77,68 @@ class EditorState:
         if self._current_editor_mode != value:
             logger.debug(f"Changing editor mode from '{self._current_editor_mode}' to '{value}'")
             self._current_editor_mode = value
-            
+
     @property
     def selected_asset_editor_key(self) -> Optional[str]:
+        """
+        DEPRECATED for placement context.
+        This property indicates which asset's *default properties* are displayed in the PropertiesEditor
+        when an asset is selected from the palette (but not yet placed).
+        For actual placement context, use palette_current_asset_key, palette_asset_is_flipped_h,
+        palette_asset_rotation, and palette_wall_variant_index.
+        """
         return self._selected_asset_editor_key
 
     @selected_asset_editor_key.setter
     def selected_asset_editor_key(self, value: Optional[str]):
+        """
+        DEPRECATED for placement context. Sets the asset whose properties are shown.
+        When a new asset type is selected for *info display* from the palette,
+        it also becomes the *initial candidate* for placement, resetting its orientation.
+        """
         if self._selected_asset_editor_key != value:
             self._selected_asset_editor_key = value
-            logger.info(f"selected_asset_editor_key changed to: '{value}'")
+            logger.info(f"EditorState: _selected_asset_editor_key (for properties panel) changed to: '{value}'")
             
+            # If an asset type is selected in the palette (e.g., for viewing its default props),
+            # also make it the current candidate for placement and reset its orientation.
+            if value is not None:
+                 self.palette_current_asset_key = value 
+                 self.palette_asset_is_flipped_h = False
+                 self.palette_asset_rotation = 0 
+                 if value == ED_CONFIG.WALL_BASE_KEY: # type: ignore
+                     self.palette_wall_variant_index = 0 
+                 else: 
+                     self.palette_wall_variant_index = 0 
+
+
+    def get_current_placement_info(self) -> Tuple[Optional[str], bool, int, int]:
+        """
+        Returns the effective asset key for placement (considering wall variants),
+        its flip state, rotation, and wall variant index.
+        """
+        effective_key = self.palette_current_asset_key
+        if self.palette_current_asset_key == ED_CONFIG.WALL_BASE_KEY: # type: ignore
+            if 0 <= self.palette_wall_variant_index < len(ED_CONFIG.WALL_VARIANTS_CYCLE): # type: ignore
+                effective_key = ED_CONFIG.WALL_VARIANTS_CYCLE[self.palette_wall_variant_index] # type: ignore
+            else:
+                logger.warning(f"palette_wall_variant_index {self.palette_wall_variant_index} out of bounds for WALL_VARIANTS_CYCLE. Using WALL_BASE_KEY.")
+                effective_key = ED_CONFIG.WALL_BASE_KEY # type: ignore
+        
+        return (
+            effective_key,
+            self.palette_asset_is_flipped_h,
+            self.palette_asset_rotation,
+            self.palette_wall_variant_index
+        )
+
     def get_map_pixel_width(self) -> int:
         return self.map_width_tiles * self.grid_size
 
     def get_map_pixel_height(self) -> int:
         return self.map_height_tiles * self.grid_size
 
-    def set_status_message(self, message: str, duration_ignored: float = 0): 
+    def set_status_message(self, message: str, duration_ignored: float = 0):
         self.status_message = message
         logger.info(f"Status message set internally: '{message}'")
 
@@ -89,7 +147,7 @@ class EditorState:
         self.map_name_for_function = "untitled_map"
         self.current_map_filename = None
         self.current_json_filename = None
-        self.placed_objects = []
+        self.placed_objects = [] 
         self.asset_specific_variables.clear()
         self.map_width_tiles = ED_CONFIG.DEFAULT_MAP_WIDTH_TILES
         self.map_height_tiles = ED_CONFIG.DEFAULT_MAP_HEIGHT_TILES
@@ -98,11 +156,16 @@ class EditorState:
         self.camera_offset_x, self.camera_offset_y = 0.0, 0.0
         self.zoom_level = 1.0
         self.unsaved_changes = False
-        self.selected_asset_editor_key = None
-        self.current_tool_mode = "place" 
-        self.current_tile_paint_color = None
-        # self.current_selected_asset_paint_color remains, as it's a palette-level setting, not map-specific context.
+        
+        self._selected_asset_editor_key = None # Info selection (for properties panel)
+        self.palette_current_asset_key = None # Actual placement selection
+        self.palette_asset_is_flipped_h = False
+        self.palette_asset_rotation = 0
+        self.palette_wall_variant_index = 0
 
+        self.current_tool_mode = "place" # Reset tool mode
+        self.current_tile_paint_color = None
+        
         self.last_painted_tile_coords = None
         self.last_erased_tile_coords = None
         self.last_colored_tile_coords = None
@@ -110,3 +173,5 @@ class EditorState:
         self.undo_stack.clear()
         self.redo_stack.clear()
         logger.debug(f"Map context reset complete. Current map name: '{self.map_name_for_function}'.")
+
+#################### END OF FILE: editor_state.py ####################

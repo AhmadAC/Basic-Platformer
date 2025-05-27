@@ -1,564 +1,460 @@
 # game_state_manager.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.0.6 (Added missing imports, fixed Chest sync for client)
-Manages game state, including reset and network synchronization.
+Manages game state, including reset and network synchronization for PySide6.
+Reset functionality now fully relies on game_setup.initialize_game_elements
+to ensure a pristine reload of the map and all entities.
+Network state synchronization handles creating/updating entities on the client
+based on server data.
 """
-import pygame
-import traceback
+# version 2.1.9 (Refined network state sync, ensured projectile class map has fallbacks)
 import os
-from typing import Optional, List, Dict, Any
+import sys
+import gc # Garbage Collector
+from typing import Optional, List, Dict, Any, Tuple
+
+# PySide6 imports
+from PySide6.QtCore import QRectF, QPointF # For type hints and potential use
+from PySide6.QtGui import QColor # For type hints
 
 # Game-specific imports
-from game_setup import spawn_chest # For respawning chest on reset
 from enemy import Enemy
 from items import Chest
-from statue import Statue # Import Statue for network sync
-from projectiles import (
-    Fireball, PoisonShot, BoltProjectile, BloodShot,
-    IceShard, ShadowProjectile, GreyProjectile
-)
-from assets import load_all_player_animations, load_gif_frames, resource_path # For client-side enemy color sync
+from statue import Statue
+from player import Player
+from tiles import Platform, Ladder, Lava, BackgroundTile # For type checking and potential direct use
+from camera import Camera # For type checking camera instance
 import constants as C
+# from level_loader import LevelLoader # Not directly used here anymore for reset, game_setup handles it
+from assets import load_all_player_animations # Might be needed if a player needs re-init due to network
+import config as game_config # For player control schemes if needed during re-init
+from game_setup import initialize_game_elements # CRUCIAL: This is the new reset mechanism
 
-# Logger import with fallback
+# Projectile classes for network deserialization
+try:
+    from projectiles import (
+        Fireball, PoisonShot, BoltProjectile, BloodShot,
+        IceShard, ShadowProjectile, GreyProjectile
+    )
+    PROJECTILES_MODULE_AVAILABLE = True
+except ImportError:
+    PROJECTILES_MODULE_AVAILABLE = False
+    # Define dummy classes if projectiles.py is missing, to prevent NameErrors
+    class Fireball: pass
+    class PoisonShot: pass
+    class BoltProjectile: pass
+    class BloodShot: pass
+    class IceShard: pass
+    class ShadowProjectile: pass
+    class GreyProjectile: pass
+
+
+# Logger setup
 try:
     from logger import info, debug, warning, error, critical
+    # Player state handler is often closely tied, import if used directly
+    from player_state_handler import set_player_state
 except ImportError:
-    print("CRITICAL GAME_STATE_MANAGER: logger.py not found. Falling back to print statements.")
-    def info(msg): print(f"INFO: {msg}")
-    def debug(msg): print(f"DEBUG: {msg}")
-    def warning(msg): print(f"WARNING: {msg}")
-    def error(msg): print(f"ERROR: {msg}") # Define error in fallback
-    def critical(msg): print(f"CRITICAL: {msg}")
+    import logging
+    logging.basicConfig(level=logging.DEBUG, format='GSM (Fallback): %(levelname)s - %(message)s')
+    _fallback_logger_gsm = logging.getLogger(__name__ + "_fallback_gsm")
+    def info(msg, *args, **kwargs): _fallback_logger_gsm.info(msg, *args, **kwargs)
+    def debug(msg, *args, **kwargs): _fallback_logger_gsm.debug(msg, *args, **kwargs)
+    def warning(msg, *args, **kwargs): _fallback_logger_gsm.warning(msg, *args, **kwargs)
+    def error(msg, *args, **kwargs): _fallback_logger_gsm.error(msg, *args, **kwargs)
+    def critical(msg, *args, **kwargs): _fallback_logger_gsm.critical(msg, *args, **kwargs)
+    def set_player_state(player: Any, new_state: str): # Fallback dummy
+        if hasattr(player, 'state'): player.state = new_state
+        warning(f"Fallback set_player_state used for P{getattr(player, 'player_id', '?')} to '{new_state}'")
+    critical("GameStateManager: Failed to import project's logger or player_state_handler. Using isolated fallbacks.")
+
+# --- Projectile Class Mapping for Deserialization ---
+# Uses getattr with a default to None if projectiles module failed to import
+projectile_class_map: Dict[str, Optional[type]] = {
+    "Fireball": getattr(sys.modules.get("projectiles"), "Fireball", None) if PROJECTILES_MODULE_AVAILABLE else None,
+    "PoisonShot": getattr(sys.modules.get("projectiles"), "PoisonShot", None) if PROJECTILES_MODULE_AVAILABLE else None,
+    "BoltProjectile": getattr(sys.modules.get("projectiles"), "BoltProjectile", None) if PROJECTILES_MODULE_AVAILABLE else None,
+    "BloodShot": getattr(sys.modules.get("projectiles"), "BloodShot", None) if PROJECTILES_MODULE_AVAILABLE else None,
+    "IceShard": getattr(sys.modules.get("projectiles"), "IceShard", None) if PROJECTILES_MODULE_AVAILABLE else None,
+    "ShadowProjectile": getattr(sys.modules.get("projectiles"), "ShadowProjectile", None) if PROJECTILES_MODULE_AVAILABLE else None,
+    "GreyProjectile": getattr(sys.modules.get("projectiles"), "GreyProjectile", None) if PROJECTILES_MODULE_AVAILABLE else None,
+}
+if not PROJECTILES_MODULE_AVAILABLE:
+    warning("GameStateManager: Projectiles module not available. Projectile net sync will be non-functional.")
 
 
 def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
     """
-    Resets the state of players, enemies, collectibles, and other game elements
-    to their initial or default states for the current level.
-
-    Args:
-        game_elements (Dict[str, Any]): The dictionary holding all current game elements.
-
-    Returns:
-        Optional[Chest]: The newly spawned chest instance, or None if chest spawning fails.
+    Resets the game state by calling the comprehensive initialize_game_elements function
+    from game_setup.py. This ensures a full reload of the map and re-creation of all entities.
     """
-    info("GSM: --- Resetting Platformer Game State ---")
+    info("GameStateManager: reset_game_state called. Deferring to game_setup.initialize_game_elements for full reset.")
     
-    player1 = game_elements.get("player1")
-    player2 = game_elements.get("player2")
-    enemy_list: List[Enemy] = game_elements.get("enemy_list", [])
-    statue_objects_list: List[Statue] = game_elements.get("statue_objects", []) # Get statues
-    current_chest = game_elements.get("current_chest")
-    
-    player1_spawn_pos = game_elements.get("player1_spawn_pos")
-    player2_spawn_pos = game_elements.get("player2_spawn_pos")
-    
-    all_sprites: pygame.sprite.Group = game_elements.get("all_sprites")
-    enemy_sprites: pygame.sprite.Group = game_elements.get("enemy_sprites")
-    collectible_sprites: pygame.sprite.Group = game_elements.get("collectible_sprites")
-    projectile_sprites: pygame.sprite.Group = game_elements.get("projectile_sprites")
-    camera = game_elements.get("camera")
+    # Determine the map name to reset/reload
+    current_map_to_reset = game_elements.get("map_name", game_elements.get("loaded_map_name"))
+    if not current_map_to_reset:
+        critical("GameStateManager Reset: CRITICAL - 'map_name' is missing from game_elements. Cannot reload map. Reset ABORTED.")
+        return game_elements.get("current_chest") # Return existing chest or None to avoid crashing caller
 
-    # Reset Players
-    if player1 and hasattr(player1, 'reset_state'):
-        debug(f"GSM: Resetting P1 at {player1_spawn_pos}")
-        player1.reset_state(player1_spawn_pos)
-        if player1._valid_init and not player1.alive(): # Re-add if valid but not in group (e.g., after kill)
-            all_sprites.add(player1)
-        debug("GSM: P1 Reset complete.")
-        
-    if player2 and hasattr(player2, 'reset_state'):
-        debug(f"GSM: Resetting P2 at {player2_spawn_pos}")
-        player2.reset_state(player2_spawn_pos)
-        if player2._valid_init and not player2.alive():
-            all_sprites.add(player2)
-        debug("GSM: P2 Reset complete.")
+    # Get necessary parameters for initialize_game_elements
+    # These should be present in game_elements if the game was running
+    screen_width = game_elements.get('main_app_screen_width', getattr(C, 'GAME_WIDTH', 960))
+    screen_height = game_elements.get('main_app_screen_height', getattr(C, 'GAME_HEIGHT', 600))
+    current_game_mode = game_elements.get("current_game_mode", "couch_play") # Default to a mode that spawns entities
 
-    # Reset Enemies
-    for enemy_instance in enemy_list:
-        if hasattr(enemy_instance, 'reset'):
-            enemy_instance.reset()
-            if enemy_instance._valid_init and not enemy_instance.alive():
-                all_sprites.add(enemy_instance)
-                enemy_sprites.add(enemy_instance)
-    debug(f"GSM: {len(enemy_list)} enemies processed for reset.")
+    # Call the main initialization function which now handles full reload/reset
+    # initialize_game_elements modifies game_elements in-place.
+    success = initialize_game_elements(
+        current_width=int(screen_width),
+        current_height=int(screen_height),
+        game_elements_ref=game_elements, # This will be modified
+        for_game_mode=current_game_mode,
+        map_module_name=current_map_to_reset # Pass the specific map to reload
+    )
 
-    # Reset Statues (they are part of the level, don't respawn, just reset state if needed)
-    # For now, statues simply get re-created if the level is fully reloaded.
-    # If they have state that needs resetting without a full level reload (e.g. if they could be damaged but not smashed),
-    # add reset logic here. For now, assume they are static or handled by full reload.
-    # If statues are dynamic and added to `all_sprites`, ensure they are handled correctly on client creation.
-    for statue_instance in statue_objects_list:
-        if hasattr(statue_instance, 'is_smashed') and statue_instance.is_smashed:
-            # If a statue was smashed, it should be removed or reset.
-            # For simplicity, if the game expects statues to reappear on reset, they would
-            # typically be re-added by game_setup. If they should persist as smashed until
-            # explicitly removed by map logic, this might not need to do anything.
-            # For now, let's assume they are part of the map and if smashed, they stay smashed
-            # until a full level reload or map-specific reset logic handles them.
-            # If they are meant to reappear, they should be killed and re-added by game_setup.
-            # Let's assume game_setup handles their initial placement. If a statue is smashed,
-            # it will self.kill() after its animation. Resetting here might mean making it unsmashed.
-            if hasattr(statue_instance, 'is_smashed'): statue_instance.is_smashed = False
-            if hasattr(statue_instance, 'is_dead'): statue_instance.is_dead = False
-            if hasattr(statue_instance, 'death_animation_finished'): statue_instance.death_animation_finished = False
-            if hasattr(statue_instance, 'image') and hasattr(statue_instance, 'initial_image_frames') and statue_instance.initial_image_frames:
-                statue_instance.image = statue_instance.initial_image_frames[0]
-                old_center = statue_instance.rect.center
-                statue_instance.rect = statue_instance.image.get_rect(center=old_center)
-            if not statue_instance.alive(): # If it was killed (e.g. after smash anim)
-                all_sprites.add(statue_instance) # Re-add to sprite group
-                # statue_objects_list might not need direct manipulation if game_elements dict is source of truth
-    debug(f"GSM: {len(statue_objects_list)} statues processed for state reset.")
-
-
-    # Clear Projectiles
-    if projectile_sprites:
-        for proj in projectile_sprites: proj.kill()
-        projectile_sprites.empty() # Ensure the group is empty
-        debug("GSM: Projectiles cleared.")
-
-    # Respawn Chest
-    if current_chest and current_chest.alive():
-        current_chest.kill() # Remove existing chest
-    debug(f"GSM: Existing chest killed (if any).")
-
-    # Spawn new chest (spawn_chest handles adding to groups if successful)
-    new_chest = spawn_chest(game_elements.get("platform_sprites"), game_elements.get("ground_level_y"))
-    if new_chest:
-        # spawn_chest should ideally add to all_sprites and collectible_sprites if it creates one
-        # If not, ensure they are added here.
-        if not all_sprites.has(new_chest): all_sprites.add(new_chest)
-        if not collectible_sprites.has(new_chest): collectible_sprites.add(new_chest)
-        game_elements["current_chest"] = new_chest # Update the reference in game_elements
-        debug("GSM: Chest respawned.")
+    if success:
+        info("GameStateManager: reset_game_state completed successfully via initialize_game_elements.")
     else:
-        game_elements["current_chest"] = None # Ensure reference is None if spawn failed
-        debug("GSM: Failed to respawn chest or Chest class not available.")
+        error("GameStateManager: reset_game_state FAILED (initialize_game_elements returned False).")
+        # Consider how to handle this failure, e.g., by informing the main application
+        # or attempting to load a fallback default map.
 
-    # Reset Camera
-    if camera:
-        camera.set_pos(0,0) # Reset camera to default position (or level start)
-    debug("GSM: Camera position reset.")
-
-    info("GSM: --- Game State Reset Finished ---\n")
-    return new_chest
+    # Return the (potentially new) chest instance from the reset game_elements
+    return game_elements.get("current_chest")
 
 
 def get_network_game_state(game_elements: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Gathers all relevant game state into a dictionary for network transmission.
-    This is typically called by the server.
+    Serializes the current game state into a dictionary for network transmission.
+    Ensures all relevant game entities are included.
     """
-    player1 = game_elements.get("player1")
-    player2 = game_elements.get("player2")
-    enemy_list: List[Enemy] = game_elements.get("enemy_list", [])
-    statue_objects_list: List[Statue] = game_elements.get("statue_objects", [])
-    current_chest: Optional[Chest] = game_elements.get("current_chest")
-    projectile_sprites: pygame.sprite.Group = game_elements.get("projectile_sprites", pygame.sprite.Group())
-
     state: Dict[str, Any] = {
-        'p1': None, 'p2': None, 'enemies': {}, 'chest': None, 
-        'statues': [], 'projectiles': [], 'game_over': False
+        'p1': None, 'p2': None, 'p3': None, 'p4': None,
+        'enemies': {}, 
+        'chest': None, 
+        'statues': [], 
+        'projectiles': [], 
+        'game_over': False, 
+        'map_name': game_elements.get("map_name", game_elements.get("loaded_map_name", "unknown_map"))
     }
 
-    # Player states
-    if player1 and hasattr(player1, 'get_network_data'):
-        state['p1'] = player1.get_network_data()
-    if player2 and hasattr(player2, 'get_network_data'):
-        state['p2'] = player2.get_network_data()
+    # Players (up to 4)
+    for i in range(1, 5):
+        player_key = f"player{i}"
+        player_instance = game_elements.get(player_key)
+        if player_instance and hasattr(player_instance, '_valid_init') and player_instance._valid_init and \
+           hasattr(player_instance, 'get_network_data'):
+            state[player_key] = player_instance.get_network_data()
 
-    # Enemy states (only send if alive or death animation not finished)
+    # Enemies
+    enemy_list: List[Enemy] = game_elements.get("enemy_list", [])
     for enemy in enemy_list:
-        if hasattr(enemy, 'enemy_id') and hasattr(enemy, 'get_network_data'):
-            # Send if enemy is alive, or if it's dead but its death animation hasn't finished playing
-            if enemy.alive() or (enemy.is_dead and not enemy.death_animation_finished):
-                 state['enemies'][str(enemy.enemy_id)] = enemy.get_network_data()
+        if hasattr(enemy, '_valid_init') and enemy._valid_init and hasattr(enemy, 'enemy_id') and \
+           hasattr(enemy, 'get_network_data'):
+            # Only send enemies that are alive, or recently dead (for death anim), or petrified
+            is_enemy_net_relevant = (
+                (hasattr(enemy, 'alive') and enemy.alive()) or
+                (getattr(enemy, 'is_dead', False) and not getattr(enemy, 'death_animation_finished', True)) or
+                getattr(enemy, 'is_petrified', False)
+            )
+            if is_enemy_net_relevant:
+                state['enemies'][str(enemy.enemy_id)] = enemy.get_network_data()
 
-    # Statue states
-    for s_obj in statue_objects_list:
-        # Send if statue is alive (not self.kill()ed), OR
-        # if it's smashed and its "disappearance" animation isn't logically finished.
-        # The statue's own `is_dead` and `death_animation_finished` will reflect this.
-        if s_obj.alive() or (s_obj.is_smashed and not s_obj.death_animation_finished):
-            if hasattr(s_obj, 'get_network_data'):
-                state['statues'].append(s_obj.get_network_data())
+    # Statues
+    statue_list: List[Statue] = game_elements.get("statue_objects", [])
+    for statue_obj in statue_list:
+        if hasattr(statue_obj, '_valid_init') and statue_obj._valid_init and \
+           hasattr(statue_obj, 'get_network_data'):
+            is_statue_net_relevant = (
+                (hasattr(statue_obj, 'alive') and statue_obj.alive()) or
+                (getattr(statue_obj, 'is_smashed', False) and not getattr(statue_obj, 'death_animation_finished', True))
+            )
+            if is_statue_net_relevant:
+                state['statues'].append(statue_obj.get_network_data())
 
-    # Chest state
-    if current_chest and hasattr(current_chest, 'rect'): 
-        # Send chest state if it's alive or in a state that implies it was recently active (like fading)
-        if current_chest.alive() or current_chest.state in ['fading', 'killed']: # 'killed' means it just finished fading
-            state['chest'] = {
-                'pos': (current_chest.rect.centerx, current_chest.rect.centery),
-                'is_collected_internal': getattr(current_chest, 'is_collected_flag_internal', False),
-                'chest_state': current_chest.state, 
-                'animation_timer': getattr(current_chest, 'animation_timer', 0), 
-                'time_opened_start': getattr(current_chest, 'time_opened_start', 0),
-                'fade_alpha': getattr(current_chest, 'fade_alpha', 255),
-                'current_frame_index': getattr(current_chest, 'current_frame_index', 0),
-            }
-        else: 
-            state['chest'] = None # Chest exists but is not in a transmittable state (e.g. fully reset but not respawned)
-    else: 
-        state['chest'] = None # No chest object
-    
-    # Game over state (simple P1 check for now, could be more complex)
-    p1_truly_gone = True # Assume P1 is gone unless proven otherwise
-    if player1 and player1._valid_init: 
-        if player1.alive(): # If P1 is in any sprite group
-            if hasattr(player1, 'is_dead') and player1.is_dead: # If logically dead
-                # Check if death animation is still playing (for petrified, death_anim_finished might be true early)
-                if hasattr(player1, 'is_petrified') and player1.is_petrified and not player1.is_stone_smashed:
-                    p1_truly_gone = False # Petrified but not smashed isn't "game over" yet
-                elif hasattr(player1, 'death_animation_finished') and not player1.death_animation_finished:
-                    p1_truly_gone = False # Death animation playing
-            else: # Alive and not dead
-                p1_truly_gone = False
-    state['game_over'] = p1_truly_gone 
+    # Chest
+    current_chest: Optional[Chest] = game_elements.get("current_chest")
+    if current_chest and hasattr(current_chest, '_valid_init') and current_chest._valid_init and \
+       hasattr(current_chest, 'get_network_data'):
+        # Send chest if it's alive OR in a state that needs syncing (opening, visible, fading)
+        is_chest_net_relevant = (
+            (hasattr(current_chest, 'alive') and current_chest.alive()) or
+            getattr(current_chest, 'state', 'closed') in ['opening', 'opened_visible', 'fading']
+        )
+        if is_chest_net_relevant:
+            state['chest'] = current_chest.get_network_data()
+        else:
+            state['chest'] = None # Explicitly None if not relevant
+    else:
+        state['chest'] = None
 
-    # Projectile states
-    state['projectiles'] = [proj.get_network_data() for proj in projectile_sprites if hasattr(proj, 'get_network_data')]
+    # Projectiles
+    projectiles_list: List[Any] = game_elements.get("projectiles_list", [])
+    state['projectiles'] = [
+        proj.get_network_data() for proj in projectiles_list 
+        if hasattr(proj, 'get_network_data') and hasattr(proj, 'alive') and proj.alive()
+    ]
+
+    # Determine Game Over state based on ALL active players
+    any_player_active_and_not_truly_gone = False
+    for i in range(1, 5):
+        player = game_elements.get(f"player{i}")
+        if player and hasattr(player, '_valid_init') and player._valid_init: # Check if player instance exists and is valid
+            if hasattr(player, 'alive') and player.alive(): # Actively alive
+                any_player_active_and_not_truly_gone = True; break
+            elif getattr(player, 'is_dead', False): # Is marked dead
+                if getattr(player, 'is_petrified', False) and not getattr(player, 'is_stone_smashed', False):
+                    any_player_active_and_not_truly_gone = True; break # Petrified but not smashed is still "in play"
+                elif not getattr(player, 'death_animation_finished', True):
+                    any_player_active_and_not_truly_gone = True; break # Death animation playing
+    state['game_over'] = not any_player_active_and_not_truly_gone
     
     return state
 
 
-def set_network_game_state(network_state_data: Dict[str, Any], 
-                           game_elements: Dict[str, Any], 
-                           client_player_id: Optional[int] = None): 
+def set_network_game_state(
+    network_state_data: Dict[str, Any],
+    game_elements: Dict[str, Any],
+    client_player_id: Optional[int] = None # Helps client identify its own player object
+):
     """
-    Applies received network data to update the local game state.
-    This is primarily used on clients.
+    Updates the client's game state based on data received from the server.
+    Creates or updates entities as needed.
     """
-    player1 = game_elements.get("player1")
-    player2 = game_elements.get("player2")
-    enemy_list: List[Enemy] = game_elements.get("enemy_list", []) 
-    statue_objects_list_client: List[Statue] = game_elements.get("statue_objects", [])
-    current_chest: Optional[Chest] = game_elements.get("current_chest") 
+    if not network_state_data:
+        warning("GSM set_network_game_state: Received empty network_state_data. No changes made.")
+        return
+
+    debug(f"GSM Client: Processing received network state. Client Player ID: {client_player_id}")
+
+    # Prepare a new list for all renderable objects for this frame
+    new_all_renderables: List[Any] = []
+    current_all_renderables_set = set() # To avoid duplicates in new_all_renderables
+
+    def add_to_renderables_if_new(obj: Any):
+        if obj is not None and obj not in current_all_renderables_set:
+            new_all_renderables.append(obj)
+            current_all_renderables_set.add(obj)
+
+    # --- Static elements are assumed to be loaded from map file on client; no network sync needed for them ---
+    # Add existing static elements to the render list first (they don't change over network)
+    for static_list_key in ["platforms_list", "ladders_list", "hazards_list", "background_tiles_list"]:
+        for static_item in game_elements.get(static_list_key, []):
+            add_to_renderables_if_new(static_item)
     
-    all_sprites: pygame.sprite.Group = game_elements.get("all_sprites")
-    enemy_sprites: pygame.sprite.Group = game_elements.get("enemy_sprites")
-    collectible_sprites: pygame.sprite.Group = game_elements.get("collectible_sprites")
-    projectile_sprites: pygame.sprite.Group = game_elements.get("projectile_sprites", pygame.sprite.Group())
-    
-    # Cache of enemy spawn data (from level file) for creating new enemies on client
+    # Fetch spawn data caches (used if new entities need to be created on client)
     enemy_spawns_data_cache: List[Dict[str, Any]] = game_elements.get("enemy_spawns_data_cache", [])
+    statue_spawns_data_cache: List[Dict[str, Any]] = game_elements.get("statue_spawns_data_cache", [])
 
-    # Player 1 update
-    if player1 and 'p1' in network_state_data and network_state_data['p1'] and hasattr(player1, 'set_network_data'):
-        player1.set_network_data(network_state_data['p1'])
-        # Ensure P1 is in all_sprites if valid and not fully "gone" (e.g., petrified but not smashed is not gone)
-        if player1._valid_init and not player1.alive():
-            is_p1_permanently_gone = player1.is_dead and \
-                                     (not player1.is_petrified or player1.is_stone_smashed) and \
-                                     player1.death_animation_finished
-            if not is_p1_permanently_gone:
-                 all_sprites.add(player1)
+    # --- Players ---
+    for i in range(1, 5):
+        player_key_net = f"p{i}" # Key from network data
+        player_key_local = f"player{i}" # Key in local game_elements
+        player_instance_local = game_elements.get(player_key_local)
+        player_data_from_server = network_state_data.get(player_key_net)
 
-    # Player 2 update
-    if player2 and 'p2' in network_state_data and network_state_data['p2'] and hasattr(player2, 'set_network_data'):
-        player2.set_network_data(network_state_data['p2'])
-        if player2._valid_init and not player2.alive():
-            is_p2_permanently_gone = player2.is_dead and \
-                                     (not player2.is_petrified or player2.is_stone_smashed) and \
-                                     player2.death_animation_finished
-            if not is_p2_permanently_gone:
-                 all_sprites.add(player2)
-
-    # Enemy updates
-    if 'enemies' in network_state_data:
-        received_enemy_data_map = network_state_data['enemies'] # Keyed by enemy_id as string
-        current_client_enemies_map = {str(enemy.enemy_id): enemy for enemy in enemy_list if hasattr(enemy, 'enemy_id')}
-
-        # Update existing enemies or create new ones
-        for enemy_id_str, enemy_data_from_server in received_enemy_data_map.items():
-            enemy_id_int = int(enemy_id_str) # Convert ID to int for local use
-            
-            if enemy_data_from_server.get('_valid_init', False): # If server says enemy is valid
-                if enemy_id_str in current_client_enemies_map: # Enemy already exists on client
-                    client_enemy = current_client_enemies_map[enemy_id_str]
-                    if hasattr(client_enemy, 'set_network_data'):
-                        client_enemy.set_network_data(enemy_data_from_server)
-                        # Ensure enemy is in sprite groups if it should be visible/active
-                        if client_enemy._valid_init and not client_enemy.alive():
-                            # Add back if dead but anim not finished, OR if not dead at all
-                            if (client_enemy.is_dead and not client_enemy.death_animation_finished) or \
-                               (not client_enemy.is_dead):
-                                 all_sprites.add(client_enemy); enemy_sprites.add(client_enemy)
-                else: # New enemy on server, create instance on client
-                    try:
-                        # Attempt to find original spawn data for this enemy ID
-                        spawn_pos_e_default = enemy_data_from_server.get('pos', (0,0)) # Fallback if no cache
-                        patrol_area_e_obj = None
-                        enemy_color_name_from_cache = None
-
-                        if enemy_id_int < len(enemy_spawns_data_cache): # Check if ID is within cache bounds
-                            original_spawn_info = enemy_spawns_data_cache[enemy_id_int]
-                            spawn_pos_e_default = original_spawn_info.get('pos', spawn_pos_e_default)
-                            patrol_data_from_level = original_spawn_info.get('patrol')
-                            if patrol_data_from_level:
-                                try: patrol_area_e_obj = pygame.Rect(patrol_data_from_level)
-                                except TypeError: debug(f"Client: Invalid patrol data from cache for new enemy {enemy_id_int}.")
-                            enemy_color_name_from_cache = original_spawn_info.get('enemy_color_id')
-                        else:
-                            debug(f"Client: No original spawn data in cache for new enemy_id {enemy_id_int}. Using server pos and default color if needed.")
-
-                        # Create new Enemy instance
-                        # Use server's color name if provided and different from cache, otherwise use cache or default
-                        server_color_name = enemy_data_from_server.get('color_name')
-                        final_color_for_new_enemy = server_color_name if server_color_name else enemy_color_name_from_cache
-
-                        new_enemy_instance = Enemy(spawn_pos_e_default[0], spawn_pos_e_default[1],
-                                             patrol_area=patrol_area_e_obj, enemy_id=enemy_id_int,
-                                             color_name=final_color_for_new_enemy) # Pass color_name
-                        
-                        # If animations for this color are missing, _valid_init will be False
-                        if new_enemy_instance._valid_init:
-                            # If server sent a color and it's different from the one used for init (e.g. if cache was None)
-                            # and animations need to be reloaded based on server's authoritative color.
-                            # This path is less common if color_name is correctly passed to Enemy constructor.
-                            if server_color_name and new_enemy_instance.color_name != server_color_name:
-                                new_enemy_instance.color_name = server_color_name
-                                enemy_asset_folder = os.path.join('characters', server_color_name)
-                                new_enemy_instance.animations = load_all_player_animations(
-                                    relative_asset_folder=enemy_asset_folder
-                                )
-                                if new_enemy_instance.animations is None: # Critical if anims fail for server color
-                                    error(f"Client CRITICAL: Failed to reload animations for new enemy {enemy_id_int} with server color {server_color_name} from '{enemy_asset_folder}'")
-                                    new_enemy_instance._valid_init = False
-                                    # Create visual placeholder if anims fail
-                                    if hasattr(C, 'BLUE'):
-                                        new_enemy_instance.image = pygame.Surface((30, 40)).convert_alpha()
-                                        new_enemy_instance.image.fill(C.BLUE)
-                                        new_enemy_instance.rect = new_enemy_instance.image.get_rect(midbottom=(spawn_pos_e_default[0], spawn_pos_e_default[1]))
-                                else: # Successfully reloaded anims for server color
-                                    initial_idle_animation_new_color = new_enemy_instance.animations.get('idle')
-                                    if initial_idle_animation_new_color and len(initial_idle_animation_new_color) > 0:
-                                        new_enemy_instance.image = initial_idle_animation_new_color[0]
-                                    else: # Fallback if even reloaded idle is bad
-                                        if hasattr(C, 'BLUE'):
-                                            new_enemy_instance.image = pygame.Surface((30, 40)).convert_alpha()
-                                            new_enemy_instance.image.fill(C.BLUE)
-                                    new_enemy_instance.rect = new_enemy_instance.image.get_rect(midbottom=(spawn_pos_e_default[0], spawn_pos_e_default[1]))
-                        
-                        if new_enemy_instance._valid_init:
-                            new_enemy_instance.set_network_data(enemy_data_from_server) # Apply rest of server state
-                            all_sprites.add(new_enemy_instance); enemy_sprites.add(new_enemy_instance)
-                            enemy_list.append(new_enemy_instance) # Add to the game_elements list
-                    except Exception as e:
-                        error(f"Client: Error creating new instance of enemy {enemy_id_str} from network data: {e}")
-                        traceback.print_exc()
-            
-            elif enemy_id_str in current_client_enemies_map: # Server says this enemy is no longer valid (or gone)
-                enemy_to_remove = current_client_enemies_map[enemy_id_str]
-                if enemy_to_remove.alive(): enemy_to_remove.kill()
-                if enemy_to_remove in enemy_list: enemy_list.remove(enemy_to_remove)
-
-        # Remove enemies on client that no longer exist on server
-        server_enemy_ids_present_in_message = set(received_enemy_data_map.keys())
-        client_enemy_ids_to_remove_fully = set(current_client_enemies_map.keys()) - server_enemy_ids_present_in_message
-        for removed_id_str_fully in client_enemy_ids_to_remove_fully:
-            if removed_id_str_fully in current_client_enemies_map:
-                enemy_to_remove_fully = current_client_enemies_map[removed_id_str_fully]
-                if enemy_to_remove_fully.alive(): enemy_to_remove_fully.kill()
-                if enemy_to_remove_fully in enemy_list: enemy_list.remove(enemy_to_remove_fully)
-        game_elements["enemy_list"] = enemy_list # Update the main game_elements list
-
-    # Chest update
-    if 'chest' in network_state_data:
-        chest_data_from_server = network_state_data['chest']
-        
-        if chest_data_from_server and isinstance(Chest, type): # Ensure Chest is a class and data exists
-            server_chest_pos_center = chest_data_from_server.get('pos')
-            server_chest_state = chest_data_from_server.get('chest_state')
-            
-            # If server says chest is gone (state 'killed') or has no position, remove client's chest
-            if server_chest_state == 'killed' or not server_chest_pos_center: 
-                if current_chest and current_chest.alive():
-                    current_chest.kill()
-                game_elements["current_chest"] = None # Nullify reference
-            else: # Server indicates chest exists and is in some state
-                # If client has no chest, or its chest was 'killed' but server says it's back
-                if not current_chest or not current_chest.alive() or \
-                   (current_chest and current_chest.state == 'killed' and server_chest_state != 'killed'): 
-                    if current_chest and current_chest.alive(): current_chest.kill() # Remove old if any
-                    
-                    # Create new chest instance on client
-                    # Chest constructor expects midbottom, server sends center. Adjust.
-                    temp_chest_height_approx = 30 # Default, might be refined if Chest class has a static height
-                    # Try to get default height from a temporary Chest instance's closed frame
-                    try:
-                        temp_frames = Chest(0,0).frames_closed # Get default closed frames
-                        if temp_frames and len(temp_frames[0].get_size()) == 2:
-                             temp_chest_height_approx = temp_frames[0].get_height()
-                    except: pass # Ignore if temp instance fails
-                    
-                    chest_spawn_x_midbottom = server_chest_pos_center[0]
-                    chest_spawn_y_midbottom = server_chest_pos_center[1] + temp_chest_height_approx / 2 # Adjust from center to midbottom
-
-                    current_chest = Chest(chest_spawn_x_midbottom, chest_spawn_y_midbottom)
-                    if current_chest._valid_init:
-                        all_sprites.add(current_chest)
-                        collectible_sprites.add(current_chest)
-                        game_elements["current_chest"] = current_chest # Update game_elements
-                    else: # Failed to create chest
-                        game_elements["current_chest"] = None # Ensure it's None
-                        current_chest = None # Local var also None
+        if player_data_from_server and isinstance(player_data_from_server, dict):
+            if not player_instance_local or not getattr(player_instance_local, '_valid_init', False):
+                # Player doesn't exist locally or is invalid, create it
+                spawn_pos_from_net = player_data_from_server.get('pos', (100.0 + i*50, float(getattr(C, 'GAME_HEIGHT', 600)) - 100.0))
+                # Get initial properties from game_elements (should have been loaded from map)
+                initial_props_for_new_player = game_elements.get(f"player{i}_spawn_props", {})
                 
-                # If chest instance exists (either pre-existing or newly created), sync its state
-                if current_chest: 
-                    current_chest.state = server_chest_state
-                    current_chest.is_collected_flag_internal = chest_data_from_server.get('is_collected_internal', False)
-                    current_chest.animation_timer = chest_data_from_server.get('animation_timer', pygame.time.get_ticks()) # Sync timer
-                    current_chest.time_opened_start = chest_data_from_server.get('time_opened_start', 0)
-                    current_chest.fade_alpha = chest_data_from_server.get('fade_alpha', 255)
+                player_instance_local = Player(float(spawn_pos_from_net[0]), float(spawn_pos_from_net[1]), 
+                                               player_id=i, initial_properties=initial_props_for_new_player)
+                game_elements[player_key_local] = player_instance_local
+                debug(f"GSM Client: Created NEW Player {i} instance from network state.")
+            
+            if player_instance_local and hasattr(player_instance_local, 'set_network_data'):
+                player_instance_local.set_network_data(player_data_from_server)
+                # Determine if this player should be rendered
+                is_renderable = getattr(player_instance_local, '_valid_init', False) and (
+                    (hasattr(player_instance_local, 'alive') and player_instance_local.alive()) or
+                    (getattr(player_instance_local, 'is_dead', False) and not getattr(player_instance_local, 'death_animation_finished', True) and not getattr(player_instance_local, 'is_petrified', False)) or
+                    getattr(player_instance_local, 'is_petrified', False)
+                )
+                if is_renderable:
+                    add_to_renderables_if_new(player_instance_local)
+        elif player_instance_local and getattr(player_instance_local, '_valid_init', False):
+            # Server did NOT send data for this player, assume it's gone/invalid on server
+            if hasattr(player_instance_local, 'alive') and player_instance_local.alive() and hasattr(player_instance_local, 'kill'):
+                player_instance_local.kill()
+            game_elements[player_key_local] = None # Remove from active game elements
+            debug(f"GSM Client: Player {i} not in network state, marked as None/killed locally.")
+
+    # --- Enemies ---
+    new_enemy_list_for_client: List[Enemy] = []
+    current_client_enemies_map = {str(enemy.enemy_id): enemy for enemy in game_elements.get("enemy_list", []) if hasattr(enemy, 'enemy_id')}
+    
+    server_enemy_data_map = network_state_data.get('enemies', {})
+    if isinstance(server_enemy_data_map, dict):
+        for enemy_id_str, enemy_data_from_server in server_enemy_data_map.items():
+            try: enemy_id_int = int(enemy_id_str)
+            except ValueError: error(f"GSM Client: Invalid enemy_id '{enemy_id_str}' from server. Skipping."); continue
+            
+            client_enemy_instance: Optional[Enemy] = current_client_enemies_map.get(enemy_id_str)
+
+            if enemy_data_from_server.get('_valid_init', False): # Server says this enemy is valid
+                if not client_enemy_instance or not getattr(client_enemy_instance, '_valid_init', False):
+                    # Create new enemy instance on client
+                    original_spawn_info_for_enemy = enemy_spawns_data_cache[enemy_id_int] if enemy_spawns_data_cache and 0 <= enemy_id_int < len(enemy_spawns_data_cache) else None
                     
-                    net_frame_index = chest_data_from_server.get('current_frame_index', 0)
+                    spawn_pos_e_tuple = enemy_data_from_server.get('pos', original_spawn_info_for_enemy.get('start_pos') if original_spawn_info_for_enemy else (100.0,100.0))
+                    patrol_area_e_qrectf: Optional[QRectF] = None
+                    if original_spawn_info_for_enemy and 'patrol_rect_data' in original_spawn_info_for_enemy and isinstance(original_spawn_info_for_enemy['patrol_rect_data'], dict):
+                        pr_d = original_spawn_info_for_enemy['patrol_rect_data']
+                        patrol_area_e_qrectf = QRectF(float(pr_d.get('x',0)), float(pr_d.get('y',0)), float(pr_d.get('width',100)), float(pr_d.get('height',50)))
                     
-                    # Determine correct frame set based on state
-                    if current_chest.state in ['opening', 'opened', 'fading']:
-                        current_chest.frames_current_set = current_chest.frames_open
-                    else: # 'closed' or unknown default
-                        current_chest.frames_current_set = current_chest.frames_closed
-
-                    # Validate and set frame index
-                    if current_chest.frames_current_set and 0 <= net_frame_index < len(current_chest.frames_current_set):
-                        current_chest.current_frame_index = net_frame_index
-                    else: # Fallback if index is bad or frames_current_set is empty
-                        current_chest.current_frame_index = 0 
-                        if current_chest.frames_current_set: # If set has frames, try to use last valid one
-                             current_chest.current_frame_index = max(0, len(current_chest.frames_current_set) -1)
-
-                    # Sync position (rect center)
-                    current_chest.rect.center = server_chest_pos_center # Server sends center
-                    current_chest.pos = pygame.math.Vector2(current_chest.rect.midbottom) # Update internal pos from rect
+                    e_color_name = enemy_data_from_server.get('color_name', original_spawn_info_for_enemy.get('type') if original_spawn_info_for_enemy else 'enemy_green')
+                    e_props_dict = enemy_data_from_server.get('properties', original_spawn_info_for_enemy.get('properties', {}) if original_spawn_info_for_enemy else {})
                     
-                    # Update image based on synced state and frame
-                    if current_chest.frames_current_set and 0 <= current_chest.current_frame_index < len(current_chest.frames_current_set):
-                        current_chest.image = current_chest.frames_current_set[current_chest.current_frame_index].copy() # Use copy
-                        if current_chest.state == 'fading': # Apply alpha for fading
-                            current_chest.image.set_alpha(max(0, min(255,current_chest.fade_alpha)))
-                    elif current_chest.frames_closed and current_chest.frames_closed[0]: # Fallback to default closed image
-                         current_chest.image = current_chest.frames_closed[0]
-                    # Player healing is server-authoritative, client just shows visuals.
-
-        elif not network_state_data.get('chest'): # Server explicitly says no chest (or key missing)
-            if current_chest and current_chest.alive():
-                current_chest.kill()
-            game_elements["current_chest"] = None
-
-    # Statue updates (client-side)
-    if 'statues' in network_state_data:
-        received_statue_data_map = {s_data['id']: s_data for s_data in network_state_data.get('statues', []) if 'id' in s_data}
-        current_client_statues_map = {s.statue_id: s for s in statue_objects_list_client if hasattr(s, 'statue_id')}
-
-        for statue_id_server, statue_data_server in received_statue_data_map.items():
-            if statue_data_server.get('_valid_init', False): # Server says statue is valid
-                if statue_id_server in current_client_statues_map: # Statue exists on client
-                    client_statue = current_client_statues_map[statue_id_server]
-                    if hasattr(client_statue, 'set_network_data'):
-                        client_statue.set_network_data(statue_data_server)
-                        # Add back to all_sprites if valid but not alive (e.g., after smash anim but before duration kill)
-                        if client_statue._valid_init and not client_statue.alive() and not client_statue.is_dead:
-                             all_sprites.add(client_statue)
-                else: # New statue on server, create on client
-                    try:
-                        statue_pos_default = statue_data_server.get('pos', (0,0)) # Server sends center
-                        # If map files can specify custom images for statues, client needs to know these paths
-                        # For now, assume Statue class loads default stone assets.
-                        # custom_initial_path_net = statue_data_server.get('initial_image_path')
-                        # custom_smashed_path_net = statue_data_server.get('smashed_anim_path')
-
-                        new_statue_client = Statue(statue_pos_default[0], statue_pos_default[1], statue_id=statue_id_server)
-                                                   # initial_image_path=custom_initial_path_net,
-                                                   # smashed_anim_path=custom_smashed_path_net)
-                        if new_statue_client._valid_init:
-                            new_statue_client.set_network_data(statue_data_server)
-                            all_sprites.add(new_statue_client)
-                            statue_objects_list_client.append(new_statue_client) # Add to local list
-                        else:
-                             error(f"Client: Failed to init new statue {statue_id_server} from network data.")
-                    except Exception as e:
-                        error(f"Client: Error creating new statue {statue_id_server} from network: {e}")
-                        traceback.print_exc()
-            elif statue_id_server in current_client_statues_map: # Server says invalid/gone
-                statue_to_remove_invalid = current_client_statues_map[statue_id_server]
-                if statue_to_remove_invalid.alive(): statue_to_remove_invalid.kill()
-                if statue_to_remove_invalid in statue_objects_list_client: statue_objects_list_client.remove(statue_to_remove_invalid)
-        
-        # Remove statues on client that no longer exist on server
-        server_statue_ids_present = set(received_statue_data_map.keys())
-        client_statue_ids_to_remove_fully = set(current_client_statues_map.keys()) - server_statue_ids_present
-        for removed_id_statue_fully in client_statue_ids_to_remove_fully:
-            if removed_id_statue_fully in current_client_statues_map:
-                statue_to_kill_fully = current_client_statues_map[removed_id_statue_fully]
-                if statue_to_kill_fully.alive(): statue_to_kill_fully.kill()
-                if statue_to_kill_fully in statue_objects_list_client: statue_objects_list_client.remove(statue_to_kill_fully)
-        game_elements["statue_objects"] = statue_objects_list_client # Update main game_elements list
-
-    # Projectile updates
-    if 'projectiles' in network_state_data:
-        received_proj_data_map = {p_data['id']: p_data for p_data in network_state_data.get('projectiles', []) if 'id' in p_data}
-        current_client_proj_map = {p.projectile_id: p for p in projectile_sprites if hasattr(p, 'projectile_id')}
-
-        # Map projectile type names (from server) to their classes
-        projectile_class_map = {
-            "Fireball": Fireball, "PoisonShot": PoisonShot, "BoltProjectile": BoltProjectile,
-            "BloodShot": BloodShot, "IceShard": IceShard,
-            "ShadowProjectile": ShadowProjectile, "GreyProjectile": GreyProjectile
-            # Add other projectile classes here as they are created
-        }
-
-        # Update existing or create new projectiles on client
-        for proj_id_server, proj_data_server in received_proj_data_map.items():
-            if proj_id_server in current_client_proj_map: # Projectile exists on client
-                existing_proj_client = current_client_proj_map[proj_id_server]
-                if hasattr(existing_proj_client, 'set_network_data'):
-                    existing_proj_client.set_network_data(proj_data_server)
-            else: # New projectile from server, create on client
-                owner_instance_client = None
-                owner_id_from_server = proj_data_server.get('owner_id')
-                if owner_id_from_server is not None: # Determine owner (P1 or P2)
-                    if owner_id_from_server == 1 and player1: owner_instance_client = player1
-                    elif owner_id_from_server == 2 and player2: owner_instance_client = player2
+                    client_enemy_instance = Enemy(start_x=float(spawn_pos_e_tuple[0]), start_y=float(spawn_pos_e_tuple[1]), 
+                                                  patrol_area=patrol_area_e_qrectf, enemy_id=enemy_id_int, 
+                                                  color_name=e_color_name, properties=e_props_dict)
+                    debug(f"GSM Client: Created NEW Enemy ID {enemy_id_int} (Type: {e_color_name}) from network state.")
                 
-                # Check if essential data is present to create the projectile
-                if owner_instance_client and 'pos' in proj_data_server and 'vel' in proj_data_server and 'type' in proj_data_server:
-                    proj_type_name = proj_data_server['type']
-                    ProjClass = projectile_class_map.get(proj_type_name) # Get class from map
+                if client_enemy_instance and getattr(client_enemy_instance, '_valid_init', False):
+                    if hasattr(client_enemy_instance, 'set_network_data'):
+                        client_enemy_instance.set_network_data(enemy_data_from_server)
+                    new_enemy_list_for_client.append(client_enemy_instance)
+                    if (hasattr(client_enemy_instance, 'alive') and client_enemy_instance.alive()) or \
+                       (getattr(client_enemy_instance, 'is_dead', False) and not getattr(client_enemy_instance, 'death_animation_finished', True) and not getattr(client_enemy_instance, 'is_petrified', False)) or \
+                       getattr(client_enemy_instance, 'is_petrified', False):
+                        add_to_renderables_if_new(client_enemy_instance)
+    game_elements["enemy_list"] = new_enemy_list_for_client
 
-                    if ProjClass:
-                        # Direction vector from server velocity (or default if zero)
-                        direction_vec_server = pygame.math.Vector2(proj_data_server['vel'])
-                        if direction_vec_server.length_squared() == 0: # Fallback direction
-                            direction_vec_server = pygame.math.Vector2(1,0) if owner_instance_client.facing_right else pygame.math.Vector2(-1,0)
-                        
-                        try:
-                            # Create new projectile instance
-                            new_proj_client = ProjClass(proj_data_server['pos'][0], proj_data_server['pos'][1],
-                                                 direction_vec_server, owner_instance_client)
-                            new_proj_client.projectile_id = proj_id_server # Assign server's ID
-                            
-                            # Apply full network state to new projectile
-                            if hasattr(new_proj_client, 'set_network_data'):
-                                new_proj_client.set_network_data(proj_data_server) 
-                            
-                            projectile_sprites.add(new_proj_client)
-                            all_sprites.add(new_proj_client)
-                        except Exception as e:
-                            error(f"GSM Client: Error creating new projectile of type {proj_type_name} (ID: {proj_id_server}): {e}") 
-                            traceback.print_exc()
-                    else:
-                        warning(f"GSM Client: Unknown projectile type '{proj_type_name}' received from server.")
-                else:
-                     warning(f"GSM Client: Insufficient data to create projectile {proj_id_server} (owner, pos, vel, or type missing).")
+    # --- Statues ---
+    new_statue_list_for_client: List[Statue] = []
+    current_client_statues_map = {str(s.statue_id): s for s in game_elements.get("statue_objects", []) if hasattr(s, 'statue_id')}
+    
+    server_statue_data_list = network_state_data.get('statues', [])
+    if isinstance(server_statue_data_list, list):
+        for statue_data_from_server in server_statue_data_list:
+            if not (isinstance(statue_data_from_server,dict) and 'id' in statue_data_from_server): continue
+            statue_id_from_server = str(statue_data_from_server['id'])
+            client_statue_instance: Optional[Statue] = current_client_statues_map.get(statue_id_from_server)
 
+            if statue_data_from_server.get('_valid_init', False):
+                if not client_statue_instance or not getattr(client_statue_instance, '_valid_init', False):
+                    original_statue_info = next((s_inf for s_inf in statue_spawns_data_cache if s_inf.get('id') == statue_id_from_server), None)
+                    s_pos_tuple = statue_data_from_server.get('pos', original_statue_info.get('pos') if original_statue_info else (200.0,200.0))
+                    s_props_dict = statue_data_from_server.get('properties', original_statue_info.get('properties',{}) if original_statue_info else {})
+                    client_statue_instance = Statue(float(s_pos_tuple[0]), float(s_pos_tuple[1]), statue_id=statue_id_from_server, properties=s_props_dict)
+                    debug(f"GSM Client: Created NEW Statue ID {statue_id_from_server} from network state.")
+                
+                if client_statue_instance and getattr(client_statue_instance, '_valid_init', False):
+                    if hasattr(client_statue_instance, 'set_network_data'): client_statue_instance.set_network_data(statue_data_from_server)
+                    new_statue_list_for_client.append(client_statue_instance)
+                    if (hasattr(client_statue_instance, 'alive') and client_statue_instance.alive()) or \
+                       (getattr(client_statue_instance,'is_smashed',False) and not getattr(client_statue_instance,'death_animation_finished',True)):
+                        add_to_renderables_if_new(client_statue_instance)
+    game_elements["statue_objects"] = new_statue_list_for_client
 
-        # Remove projectiles on client that no longer exist on server
-        client_proj_ids_to_remove = set(current_client_proj_map.keys()) - set(received_proj_data_map.keys())
-        for removed_proj_id_client in client_proj_ids_to_remove:
-            if removed_proj_id_client in current_client_proj_map:
-                proj_to_kill_client = current_client_proj_map[removed_proj_id_client]
-                if proj_to_kill_client.alive(): proj_to_kill_client.kill()
-        game_elements["projectile_sprites"] = projectile_sprites # Update main game_elements
+    # --- Chest ---
+    current_chest_obj_synced_client: Optional[Chest] = None # This will be the one for game_elements
+    current_chest_obj_local_client: Optional[Chest] = game_elements.get("current_chest")
+    chest_data_from_server = network_state_data.get('chest')
+
+    if chest_data_from_server and isinstance(chest_data_from_server, dict) and \
+       chest_data_from_server.get('_valid_init', False) and \
+       (chest_data_from_server.get('_alive', True) or chest_data_from_server.get('chest_state', 'closed') in ['opening', 'opened_visible', 'fading']):
+        
+        if not current_chest_obj_local_client or not getattr(current_chest_obj_local_client, '_valid_init', False):
+            # Create new chest instance on client if it doesn't exist or is invalid
+            chest_pos_tuple_net = chest_data_from_server.get('pos_midbottom', (300.0,300.0)) # Midbottom for Chest
+            # If Chest init needs properties, fetch from item_list in level_data (if it was stored there)
+            current_chest_obj_local_client = Chest(x=float(chest_pos_tuple_net[0]), y=float(chest_pos_tuple_net[1]))
+            game_elements["current_chest"] = current_chest_obj_local_client # Update main ref
+            debug("GSM Client: Created NEW Chest instance from network state.")
+
+        if current_chest_obj_local_client and getattr(current_chest_obj_local_client, '_valid_init', False):
+            if hasattr(current_chest_obj_local_client, 'set_network_data'):
+                current_chest_obj_local_client.set_network_data(chest_data_from_server)
+            current_chest_obj_synced_client = current_chest_obj_local_client
+            # Determine if chest should be rendered
+            if (hasattr(current_chest_obj_synced_client, 'alive') and current_chest_obj_synced_client.alive()) or \
+               getattr(current_chest_obj_synced_client, 'state', 'closed') in ['opening', 'opened_visible', 'fading']:
+                add_to_renderables_if_new(current_chest_obj_synced_client)
+    else: # Server says no chest or chest is not in a renderable/syncable state
+        game_elements["current_chest"] = None 
+
+    game_elements.get("collectible_list", []).clear() # Clear old list
+    if current_chest_obj_synced_client:
+        game_elements.get("collectible_list", []).append(current_chest_obj_synced_client)
+
+    # --- Projectiles ---
+    new_projectiles_list_for_client: List[Any] = []
+    current_client_proj_map = {str(p.projectile_id): p for p in game_elements.get("projectiles_list", []) if hasattr(p, 'projectile_id')}
+    
+    server_projectile_data_list = network_state_data.get('projectiles', [])
+    if isinstance(server_projectile_data_list, list):
+        for proj_data_from_server in server_projectile_data_list:
+            if not (isinstance(proj_data_from_server, dict) and 'id' in proj_data_from_server): continue
+            proj_id_from_server = str(proj_data_from_server['id'])
+            client_proj_instance: Optional[Any] = current_client_proj_map.get(proj_id_from_server)
+
+            if not client_proj_instance: # Projectile doesn't exist on client, create it
+                owner_id_net = proj_data_from_server.get('owner_id')
+                owner_instance_client: Optional[Player] = None
+                for i_p_owner in range(1,5): # Check all players
+                    p_inst_check_owner = game_elements.get(f"player{i_p_owner}")
+                    if p_inst_check_owner and hasattr(p_inst_check_owner, 'player_id') and \
+                       p_inst_check_owner.player_id == owner_id_net:
+                        owner_instance_client = p_inst_check_owner; break
+                
+                proj_type_str = proj_data_from_server.get('type')
+                ProjectileClass = projectile_class_map.get(str(proj_type_str)) if proj_type_str else None
+
+                if owner_instance_client and ProjectileClass and all(k in proj_data_from_server for k in ['pos','vel']):
+                    pos_data_proj, vel_data_proj = proj_data_from_server['pos'], proj_data_from_server['vel']
+                    spawn_dir_qpointf = QPointF(float(vel_data_proj[0]), float(vel_data_proj[1])).normalized() # Direction from velocity
+                    
+                    client_proj_instance = ProjectileClass(float(pos_data_proj[0]), float(pos_data_proj[1]), 
+                                                           spawn_dir_qpointf, owner_instance_client)
+                    if hasattr(client_proj_instance, 'projectile_id'):
+                        client_proj_instance.projectile_id = proj_id_from_server # Assign server's ID
+                    if hasattr(client_proj_instance, 'game_elements_ref'):
+                         client_proj_instance.game_elements_ref = game_elements # Link game elements
+                    debug(f"GSM Client: Created NEW {proj_type_str} ID {proj_id_from_server} from network.")
+                elif not ProjectileClass:
+                     warning(f"GSM Client: Unknown projectile type '{proj_type_str}' from server. Cannot create.")
+                elif not owner_instance_client:
+                     warning(f"GSM Client: Owner ID '{owner_id_net}' for projectile '{proj_id_from_server}' not found on client.")
+
+            if client_proj_instance and hasattr(client_proj_instance, 'set_network_data'):
+                client_proj_instance.set_network_data(proj_data_from_server)
+                if hasattr(client_proj_instance, 'alive') and client_proj_instance.alive():
+                    new_projectiles_list_for_client.append(client_proj_instance)
+                    add_to_renderables_if_new(client_proj_instance)
+    game_elements["projectiles_list"] = new_projectiles_list_for_client
+
+    # --- Finalize all_renderable_objects for this frame ---
+    game_elements["all_renderable_objects"] = new_all_renderables
+    
+    # # Sync game over state
+    # game_elements['game_over_server_state'] = network_state_data.get('game_over', False)
+
+    # --- Handle Camera Update for Client if Map Dimensions Changed ---
+    server_map_name = network_state_data.get('map_name')
+    camera_instance_client: Optional[Camera] = game_elements.get('camera')
+    # Check if map changed OR if camera dimensions haven't been set yet for the current map
+    if server_map_name and camera_instance_client and \
+       (game_elements.get('loaded_map_name') != server_map_name or not game_elements.get('camera_level_dims_set', False)):
+        
+        client_level_data_for_cam = game_elements.get('level_data')
+        if client_level_data_for_cam and isinstance(client_level_data_for_cam, dict) and \
+           game_elements.get('loaded_map_name') == server_map_name: # Ensure client's level_data matches server's map
+            
+            cam_lvl_w = float(client_level_data_for_cam.get('level_pixel_width', getattr(C, 'GAME_WIDTH', 960) * 2.0))
+            cam_min_x = float(client_level_data_for_cam.get('level_min_x_absolute', 0.0))
+            cam_min_y = float(client_level_data_for_cam.get('level_min_y_absolute', 0.0))
+            cam_max_y = float(client_level_data_for_cam.get('level_max_y_absolute', getattr(C, 'GAME_HEIGHT', 600)))
+            
+            camera_instance_client.set_level_dimensions(cam_lvl_w, cam_min_x, cam_min_y, cam_max_y)
+            game_elements['camera_level_dims_set'] = True # Mark that dimensions are set
+            debug(f"GSM Client: Camera level dimensions updated for map '{server_map_name}'.")
+        else:
+            warning(f"GSM Client: Server map '{server_map_name}' but client's level_data is for "
+                    f"'{game_elements.get('loaded_map_name')}' or missing. Camera dimensions may be incorrect.")
+
+    debug(f"GSM Client set_network_game_state END: Renderables count: {len(game_elements['all_renderable_objects'])}")

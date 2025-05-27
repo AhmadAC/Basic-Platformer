@@ -3,250 +3,295 @@
 # enemy_physics_handler.py
 # -*- coding: utf-8 -*-
 """
-# version 1.0.2 (Allow aflame/deflame physics, block only for frozen/defrosting)
-Handles enemy physics, including movement, gravity, friction,
-and collision detection/response with platforms, characters, and hazards.
-Ensures aflame enemies can ignite other characters.
+Handles enemy physics, movement, and collisions for PySide6.
+Ensures robust platform (wall/floor/ceiling) collision resolution.
+MODIFIED: Enemies respect statue solidity (ignore smashed statues).
 """
-import pygame
+# version 2.0.6 (Enemy respects statue solidity)
+
+import time
+from typing import List, Any, Optional, TYPE_CHECKING
+
+from PySide6.QtCore import QPointF, QRectF
+
 import constants as C
-from tiles import Lava 
-import enemy as enemy_module_ref 
+from tiles import Lava
+from statue import Statue # Import Statue
+
+if TYPE_CHECKING:
+    from enemy import Enemy as EnemyClass_TYPE
 
 try:
     from enemy_ai_handler import set_enemy_new_patrol_target
 except ImportError:
     def set_enemy_new_patrol_target(enemy):
-        print(f"WARNING ENEMY_PHYSICS: enemy_ai_handler.set_enemy_new_patrol_target not found for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')}")
-
+        enemy_id_log = getattr(enemy, 'enemy_id', 'N/A')
+        print(f"WARNING ENEMY_PHYSICS: enemy_ai_handler.set_enemy_new_patrol_target not found for Enemy ID {enemy_id_log}")
 
 try:
     from logger import info, debug, warning, error, critical
 except ImportError:
-    print("CRITICAL ENEMY_PHYSICS_HANDLER: logger.py not found. Falling back to print statements.")
-    def info(msg): print(f"INFO: {msg}")
-    def debug(msg): print(f"DEBUG: {msg}")
-    def warning(msg): print(f"WARNING: {msg}")
-    def error_log_func(msg): print(f"ERROR: {msg}")
-    def critical(msg): print(f"CRITICAL: {msg}")
-    error = error_log_func
+    print("CRITICAL ENEMY_PHYSICS_HANDLER: logger.py not found. Falling back to print statements for logging.")
+    def info(msg, *args, **kwargs): print(f"INFO: {msg}", *args)
+    def debug(msg, *args, **kwargs): print(f"DEBUG ENEMY_PHYSICS: {msg}", *args)
+    def warning(msg, *args, **kwargs): print(f"WARNING ENEMY_PHYSICS: {msg}", *args)
+    def error(msg, *args, **kwargs): print(f"ERROR ENEMY_PHYSICS: {msg}", *args)
+    def critical(msg, *args, **kwargs): print(f"CRITICAL ENEMY_PHYSICS: {msg}", *args)
 
-# --- Internal Helper Functions for Collision ---
-
-def _check_enemy_platform_collisions(enemy, direction: str, platforms_group: pygame.sprite.Group):
-    """
-    Handles collisions between the enemy and solid platforms.
-    Modifies enemy.rect, enemy.vel, enemy.on_ground.
-    Calls set_enemy_new_patrol_target if a wall is hit during patrolling.
-    """
-    for platform_sprite in pygame.sprite.spritecollide(enemy, platforms_group, False):
-        if direction == 'x':
-            original_vel_x = enemy.vel.x
-            if enemy.vel.x > 0: enemy.rect.right = platform_sprite.rect.left
-            elif enemy.vel.x < 0: enemy.rect.left = platform_sprite.rect.right
-            enemy.vel.x = 0
-            if enemy.ai_state == 'patrolling' and abs(original_vel_x) > 0.1:
-                if (abs(enemy.rect.right - platform_sprite.rect.left) < 2 or \
-                    abs(enemy.rect.left - platform_sprite.rect.right) < 2):
-                    set_enemy_new_patrol_target(enemy)
-        elif direction == 'y':
-            if enemy.vel.y > 0: 
-                if enemy.rect.bottom > platform_sprite.rect.top and \
-                   (enemy.pos.y - enemy.vel.y) <= platform_sprite.rect.top + 1: 
-                     enemy.rect.bottom = platform_sprite.rect.top
-                     enemy.on_ground = True
-                     enemy.vel.y = 0
-            elif enemy.vel.y < 0: 
-                if enemy.rect.top < platform_sprite.rect.bottom and \
-                   ((enemy.pos.y - enemy.standard_height) - enemy.vel.y) >= platform_sprite.rect.bottom - 1: 
-                     enemy.rect.top = platform_sprite.rect.bottom
-                     enemy.vel.y = 0
-        if direction == 'x': enemy.pos.x = enemy.rect.centerx
-        else: enemy.pos.y = enemy.rect.bottom
+_start_time_enemy_phys_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    return int((time.monotonic() - _start_time_enemy_phys_monotonic) * 1000)
 
 
-def _check_enemy_character_collision(enemy, direction: str, character_list: list):
-    """
-    Handles collisions between the enemy and other characters (players, other enemies).
-    Applies pushback. Allows aflame enemies to ignite other non-aflame characters.
-    Returns True if a collision occurred, False otherwise.
-    """
-    collision_occurred = False
-    for other_char_sprite in character_list:
-        if other_char_sprite is enemy: continue 
+def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, platforms_list: List[Any], dt_sec: float):
+    if not (hasattr(enemy, 'rect') and isinstance(enemy.rect, QRectF) and \
+            hasattr(enemy, 'vel') and isinstance(enemy.vel, QPointF)):
+        warning(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Missing essential attributes for platform collision. Skipping.")
+        return
 
-        if not (other_char_sprite and hasattr(other_char_sprite, '_valid_init') and \
-                other_char_sprite._valid_init and hasattr(other_char_sprite, 'is_dead') and \
-                (not other_char_sprite.is_dead or getattr(other_char_sprite, 'is_petrified', False)) and \
-                other_char_sprite.alive()):
+    for platform_obj in platforms_list:
+        if not hasattr(platform_obj, 'rect') or not isinstance(platform_obj.rect, QRectF) or not platform_obj.rect.isValid():
+            warning(f"Enemy Collision: Platform object {platform_obj} missing valid rect. Skipping.")
             continue
 
-        if enemy.rect.colliderect(other_char_sprite.rect):
+        # --- MODIFIED: Ignore smashed statues as platforms ---
+        if isinstance(platform_obj, Statue) and platform_obj.is_smashed:
+            # Optional: Add a debug log here if needed
+            # debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} collision check: Ignoring smashed statue {platform_obj.statue_id} as platform.")
+            continue
+        # --- END MODIFICATION ---
+
+        if not enemy.rect.intersects(platform_obj.rect):
+            continue
+
+        original_vel_x_for_ai_reaction = enemy.vel.x()
+
+        if direction == 'x':
+            if enemy.vel.x() > 0:
+                overlap_x = enemy.rect.right() - platform_obj.rect.left()
+                if overlap_x > 0:
+                    enemy.rect.translate(-overlap_x, 0)
+                    enemy.vel.setX(0.0)
+            elif enemy.vel.x() < 0:
+                overlap_x = platform_obj.rect.right() - enemy.rect.left()
+                if overlap_x > 0:
+                    enemy.rect.translate(overlap_x, 0)
+                    enemy.vel.setX(0.0)
+
+            if getattr(enemy, 'ai_state', None) == 'patrolling' and \
+               abs(original_vel_x_for_ai_reaction) > 0.05 and enemy.vel.x() == 0.0:
+                vertical_overlap_for_patrol_turn = min(enemy.rect.bottom(), platform_obj.rect.bottom()) - \
+                                                   max(enemy.rect.top(), platform_obj.rect.top())
+                if vertical_overlap_for_patrol_turn > enemy.rect.height() * 0.5:
+                    set_enemy_new_patrol_target(enemy)
+
+        elif direction == 'y':
+            if enemy.vel.y() >= 0:
+                overlap_y = enemy.rect.bottom() - platform_obj.rect.top()
+                if overlap_y > 0:
+                    min_h_overlap_ratio = 0.1
+                    min_h_overlap_pixels = enemy.rect.width() * min_h_overlap_ratio
+                    actual_h_overlap = min(enemy.rect.right(), platform_obj.rect.right()) - \
+                                       max(enemy.rect.left(), platform_obj.rect.left())
+                    if actual_h_overlap >= min_h_overlap_pixels:
+                        displacement_y_this_frame = enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0)
+                        previous_enemy_bottom_y_estimate = enemy.rect.bottom() - displacement_y_this_frame
+                        was_above_or_at_surface_epsilon = 1.0
+                        was_truly_above_or_at_surface = previous_enemy_bottom_y_estimate <= platform_obj.rect.top() + was_above_or_at_surface_epsilon
+                        can_snap_down_from_current = enemy.rect.bottom() > platform_obj.rect.top() and \
+                                                     enemy.rect.bottom() <= platform_obj.rect.top() + getattr(C, 'GROUND_SNAP_THRESHOLD', 5.0)
+
+                        if was_truly_above_or_at_surface or (getattr(enemy, 'on_ground', False) and can_snap_down_from_current):
+                            enemy.rect.translate(0, -overlap_y)
+                            setattr(enemy, 'on_ground', True)
+                            enemy.vel.setY(0.0)
+                            if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setY'): enemy.acc.setY(0.0)
+            elif enemy.vel.y() < 0:
+                overlap_y = platform_obj.rect.bottom() - enemy.rect.top()
+                if overlap_y > 0:
+                    min_h_overlap_ratio_ceil = 0.1
+                    min_h_overlap_pixels_ceil = enemy.rect.width() * min_h_overlap_ratio_ceil
+                    actual_h_overlap_ceil = min(enemy.rect.right(), platform_obj.rect.right()) - \
+                                            max(enemy.rect.left(), platform_obj.rect.left())
+                    if actual_h_overlap_ceil >= min_h_overlap_pixels_ceil:
+                        enemy.rect.translate(0, overlap_y)
+                        enemy.vel.setY(0.0)
+
+
+def _check_enemy_character_collision(enemy: 'EnemyClass_TYPE', direction: str, character_list: List[Any]) -> bool:
+    collision_occurred = False
+    if not (hasattr(enemy, 'rect') and isinstance(enemy.rect, QRectF) and \
+            hasattr(enemy, 'vel') and isinstance(enemy.vel, QPointF) and \
+            hasattr(enemy, 'pos') and isinstance(enemy.pos, QPointF)):
+        warning(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Missing attributes for char collision. Skipping.")
+        return False
+
+    for other_char in character_list:
+        if other_char is enemy or \
+           not hasattr(other_char, 'rect') or not isinstance(other_char.rect, QRectF) or \
+           not (hasattr(other_char, 'alive') and other_char.alive()):
+            continue
+        if not (hasattr(other_char, '_valid_init') and other_char._valid_init and
+                hasattr(other_char, 'is_dead') and
+                (not other_char.is_dead or getattr(other_char, 'is_petrified', False)) ):
+            continue
+
+        if enemy.rect.intersects(other_char.rect):
             collision_occurred = True
-            is_other_petrified = getattr(other_char_sprite, 'is_petrified', False)
-            is_other_character_aflame_or_deflaming = getattr(other_char_sprite, 'is_aflame', False) or \
-                                                     getattr(other_char_sprite, 'is_deflaming', False)
-            is_other_character_frozen_or_defrosting = getattr(other_char_sprite, 'is_frozen', False) or \
-                                                      getattr(other_char_sprite, 'is_defrosting', False)
+            is_other_petrified_solid = getattr(other_char, 'is_petrified', False) and not getattr(other_char, 'is_stone_smashed', False)
 
+            is_other_target_susceptible_to_fire = not (getattr(other_char, 'is_aflame', False) or \
+                                                     getattr(other_char, 'is_frozen', False) or \
+                                                     getattr(other_char, 'is_petrified', False))
+            if getattr(enemy, 'is_aflame', False) and \
+               hasattr(other_char, 'apply_aflame_effect') and callable(other_char.apply_aflame_effect) and \
+               is_other_target_susceptible_to_fire and \
+               not getattr(enemy, 'has_ignited_another_enemy_this_cycle', True) :
+                other_char.apply_aflame_effect()
+                enemy.has_ignited_another_enemy_this_cycle = True
 
-            # Aflame spread logic: enemy to another character (player or enemy)
-            if enemy.is_aflame and hasattr(other_char_sprite, 'apply_aflame_effect') and \
-               not is_other_character_aflame_or_deflaming and \
-               not is_other_character_frozen_or_defrosting and \
-               not enemy.has_ignited_another_enemy_this_cycle and not is_other_petrified:
-                
-                # Specific logic for enemy-to-enemy ignition (only one)
-                if isinstance(other_char_sprite, enemy_module_ref.Enemy): # MODIFIED: enemy_module_ref.Enemy
-                    debug(f"Enemy {enemy.enemy_id} (aflame) touched Enemy {getattr(other_char_sprite, 'enemy_id', 'Unknown')}. Igniting.")
-                    other_char_sprite.apply_aflame_effect()
-                    enemy.has_ignited_another_enemy_this_cycle = True 
-                # Logic for enemy-to-player ignition
-                elif 'Player' in other_char_sprite.__class__.__name__: # Check if it's a Player instance
-                    debug(f"Enemy {enemy.enemy_id} (aflame) touched Player {getattr(other_char_sprite, 'player_id', 'Unknown')}. Igniting player.")
-                    other_char_sprite.apply_aflame_effect()
-                    # Note: has_ignited_another_enemy_this_cycle might prevent igniting multiple players too quickly,
-                    # or you might want a separate flag/timer for player ignition cooldown from a single enemy.
-                    # For now, the single flag applies to igniting *any* other character once.
-                    enemy.has_ignited_another_enemy_this_cycle = True
+            bounce_vel_char = float(getattr(C, 'CHARACTER_BOUNCE_VELOCITY', 2.5)) * 0.7
 
-                continue # Skip pushback if just ignited
-
-            bounce_vel = getattr(C, 'CHARACTER_BOUNCE_VELOCITY', 2.5)
             if direction == 'x':
-                push_dir_self = -1 if enemy.rect.centerx < other_char_sprite.rect.centerx else 1
-                if push_dir_self == -1: enemy.rect.right = other_char_sprite.rect.left
-                else: enemy.rect.left = other_char_sprite.rect.right
-                enemy.vel.x = push_dir_self * bounce_vel
-
-                if not is_other_petrified: 
-                    can_push_other = True
-                    if hasattr(other_char_sprite, 'is_attacking') and other_char_sprite.is_attacking: can_push_other = False
-                    if hasattr(other_char_sprite, 'is_aflame') and other_char_sprite.is_aflame: can_push_other = False
-                    if hasattr(other_char_sprite, 'is_frozen') and other_char_sprite.is_frozen: can_push_other = False
-                    if hasattr(other_char_sprite, 'is_dashing') and other_char_sprite.is_dashing: can_push_other = False
-                    if hasattr(other_char_sprite, 'is_rolling') and other_char_sprite.is_rolling: can_push_other = False
-
-                    if hasattr(other_char_sprite, 'vel') and can_push_other:
-                        other_char_sprite.vel.x = -push_dir_self * bounce_vel
-                    if hasattr(other_char_sprite, 'pos') and hasattr(other_char_sprite, 'rect') and can_push_other:
-                        other_char_sprite.pos.x += (-push_dir_self * 1.5) 
-                        other_char_sprite.rect.centerx = round(other_char_sprite.pos.x)
-                        other_char_sprite.rect.bottom = round(other_char_sprite.pos.y)
-                        other_char_sprite.pos.x = other_char_sprite.rect.centerx
-                        other_char_sprite.pos.y = other_char_sprite.rect.bottom
-                enemy.pos.x = enemy.rect.centerx
-
-            elif direction == 'y': 
-                if enemy.vel.y > 0 and enemy.rect.bottom > other_char_sprite.rect.top and \
-                   enemy.rect.centery < other_char_sprite.rect.centery:
-                    enemy.rect.bottom = other_char_sprite.rect.top
-                    enemy.on_ground = True
-                    enemy.vel.y = 0
-                elif enemy.vel.y < 0 and enemy.rect.top < other_char_sprite.rect.bottom and \
-                     enemy.rect.centery > other_char_sprite.rect.centery:
-                    enemy.rect.top = other_char_sprite.rect.bottom
-                    enemy.vel.y = 0
-                enemy.pos.y = enemy.rect.bottom
+                overlap_x_char = 0.0; push_dir_self = 0
+                if enemy.vel.x() > 0:
+                    overlap_x_char = enemy.rect.right() - other_char.rect.left()
+                    if overlap_x_char > 0: enemy.rect.translate(-overlap_x_char, 0); push_dir_self = -1
+                elif enemy.vel.x() < 0:
+                    overlap_x_char = other_char.rect.right() - enemy.rect.left()
+                    if overlap_x_char > 0: enemy.rect.translate(overlap_x_char, 0); push_dir_self = 1
+                else:
+                    if enemy.rect.center().x() < other_char.rect.center().x():
+                        overlap_x_char = enemy.rect.right() - other_char.rect.left()
+                        if overlap_x_char > 0:
+                            enemy.rect.translate(-overlap_x_char / 2.0, 0)
+                            if hasattr(other_char, 'rect') and hasattr(other_char.rect, 'translate'): other_char.rect.translate(overlap_x_char / 2.0, 0)
+                            push_dir_self = -1
+                    else:
+                        overlap_x_char = other_char.rect.right() - enemy.rect.left()
+                        if overlap_x_char > 0:
+                            enemy.rect.translate(overlap_x_char / 2.0, 0)
+                            if hasattr(other_char, 'rect') and hasattr(other_char.rect, 'translate'): other_char.rect.translate(-overlap_x_char / 2.0, 0)
+                            push_dir_self = 1
+                if overlap_x_char > 0 and push_dir_self != 0:
+                    enemy.vel.setX(push_dir_self * bounce_vel_char)
+                    can_push_other_char = not (getattr(other_char, 'is_attacking', False) or \
+                                         is_other_petrified_solid or \
+                                         getattr(other_char, 'is_dashing', False) or \
+                                         getattr(other_char, 'is_rolling', False) or \
+                                         getattr(other_char, 'is_aflame', False) or \
+                                         getattr(other_char, 'is_frozen', False) )
+                    if hasattr(other_char, 'vel') and isinstance(other_char.vel, QPointF) and can_push_other_char:
+                        other_char.vel.setX(-push_dir_self * bounce_vel_char)
+            elif direction == 'y':
+                overlap_y_char = 0.0
+                if enemy.vel.y() > 0 and enemy.rect.bottom() > other_char.rect.top() and enemy.rect.center().y() < other_char.rect.center().y():
+                    overlap_y_char = enemy.rect.bottom() - other_char.rect.top()
+                    if overlap_y_char > 0: enemy.rect.translate(0, -overlap_y_char); setattr(enemy, 'on_ground', True); enemy.vel.setY(0.0)
+                elif enemy.vel.y() < 0 and enemy.rect.top() < other_char.rect.bottom() and enemy.rect.center().y() > other_char.rect.center().y():
+                    overlap_y_char = other_char.rect.bottom() - enemy.rect.top()
+                    if overlap_y_char > 0: enemy.rect.translate(0, overlap_y_char); enemy.vel.setY(0.0)
     return collision_occurred
 
 
-def _check_enemy_hazard_collisions(enemy, hazards_group: pygame.sprite.Group):
-    """Handles collisions between the enemy and hazards like lava."""
-    current_time_ms = pygame.time.get_ticks()
-    if not enemy._valid_init or enemy.is_dead or not enemy.alive() or \
-       (enemy.is_taking_hit and current_time_ms - enemy.hit_timer < enemy.hit_cooldown) or \
-       enemy.is_petrified or enemy.is_frozen: # Petrified or Frozen enemies are immune to standard hazards
+def _check_enemy_hazard_collisions(enemy: 'EnemyClass_TYPE', hazards_list: List[Any]):
+    current_time_ms = get_current_ticks_monotonic()
+    if not getattr(enemy, '_valid_init', False) or getattr(enemy, 'is_dead', True) or \
+       not (hasattr(enemy, 'alive') and enemy.alive()) or \
+       (getattr(enemy, 'is_taking_hit', False) and \
+        current_time_ms - getattr(enemy, 'hit_timer', 0) < getattr(enemy, 'hit_cooldown', 500)) or \
+       getattr(enemy, 'is_petrified', False) or getattr(enemy, 'is_frozen', False):
+        return
+    if not hasattr(enemy, 'rect') or not isinstance(enemy.rect, QRectF): return
+
+    damage_taken_this_frame = False
+    for hazard_obj in hazards_list:
+        if not hasattr(hazard_obj, 'rect') or not isinstance(hazard_obj.rect, QRectF):
+            warning(f"Enemy Collision: Hazard object {hazard_obj} missing valid rect. Skipping."); continue
+        if not enemy.rect.intersects(hazard_obj.rect): continue
+        if isinstance(hazard_obj, Lava):
+            enemy_feet_in_lava = enemy.rect.bottom() > hazard_obj.rect.top() + (enemy.rect.height() * 0.2)
+            min_h_overlap = enemy.rect.width() * 0.20
+            actual_h_overlap = min(enemy.rect.right(), hazard_obj.rect.right()) - max(enemy.rect.left(), hazard_obj.rect.left())
+            if enemy_feet_in_lava and actual_h_overlap >= min_h_overlap:
+                if not damage_taken_this_frame:
+                    if hasattr(enemy, 'apply_aflame_effect') and callable(enemy.apply_aflame_effect) and not enemy.is_aflame:
+                        enemy.apply_aflame_effect()
+                    lava_damage = int(getattr(C, 'LAVA_DAMAGE', 25))
+                    if lava_damage > 0 and hasattr(enemy, 'take_damage') and callable(enemy.take_damage):
+                        enemy.take_damage(lava_damage)
+                    damage_taken_this_frame = True
+                    break
+        if damage_taken_this_frame: break
+
+
+def update_enemy_physics_and_collisions(enemy: 'EnemyClass_TYPE', dt_sec: float, platforms_list: List[Any],
+                                        hazards_list: List[Any], all_other_characters_list: List[Any]):
+    if not getattr(enemy, '_valid_init', False) or \
+       not (hasattr(enemy, 'alive') and enemy.alive()):
+        if (getattr(enemy, 'is_dead', False) and not getattr(enemy, 'death_animation_finished', True)) or \
+           (getattr(enemy, 'is_stone_smashed', False) and not getattr(enemy, 'death_animation_finished', True) ):
+            if not getattr(enemy, 'on_ground', True) and hasattr(enemy, 'vel') and hasattr(enemy, 'acc') and hasattr(enemy, 'pos') and hasattr(enemy, 'rect'):
+                enemy.vel.setY(enemy.vel.y() + enemy.acc.y())
+                enemy.vel.setY(min(enemy.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
+                enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0))
+                if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
+                _check_enemy_platform_collisions(enemy, 'y', platforms_list, dt_sec)
+                if hasattr(enemy, 'pos'): enemy.pos.setY(enemy.rect.bottom())
         return
 
-    damage_taken_this_frame = False # Keep using this flag name for consistency
-    hazard_check_point = (enemy.rect.centerx, enemy.rect.bottom - 1) 
-
-    for hazard in hazards_group:
-        if isinstance(hazard, Lava) and hazard.rect.collidepoint(hazard_check_point):
-            if not damage_taken_this_frame: # Process only once per collision check
-                
-                # --- MODIFICATION START ---
-                # Set enemy aflame
-                if hasattr(enemy, 'apply_aflame_effect'):
-                    enemy.apply_aflame_effect()
-
-                # Optional: Apply initial contact damage from lava as well
-                if getattr(C, 'LAVA_DAMAGE', 25) > 0 and hasattr(enemy, 'take_damage'):
-                    enemy.take_damage(getattr(C, 'LAVA_DAMAGE', 25))
-                # --- MODIFICATION END ---
-                
-                damage_taken_this_frame = True # Mark that an interaction with lava happened this frame
-
-                # Keep existing pushback logic
-                if not enemy.is_dead: 
-                    enemy.vel.y = getattr(C, 'PLAYER_JUMP_STRENGTH', -15) * 0.3 
-                    push_dir = 1 if enemy.rect.centerx < hazard.rect.centerx else -1
-                    enemy.vel.x = -push_dir * 4 
-                    enemy.on_ground = False 
-                break 
-        if damage_taken_this_frame: break 
-
-
-# --- Main Physics and Collision Update Function ---
-
-def update_enemy_physics_and_collisions(enemy, dt_sec, platforms_group, hazards_group, all_other_characters_list):
-    """
-    Applies all physics (gravity, friction, movement) and handles all collisions
-    for the given enemy instance.
-    This is called from the main Enemy.update() method if the enemy is not in an
-    overriding state (like frozen, petrified, smashed, etc.).
-    MODIFIED: Now allows physics processing for aflame/deflaming states.
-    """
-    if not enemy._valid_init or enemy.is_dead or not enemy.alive() or \
-       enemy.is_petrified or enemy.is_frozen or enemy.is_defrosting: # MODIFIED: Removed aflame/deflaming from this blocking condition
-        # Petrified, Frozen, Defrosting enemies have simplified or no physics handled here.
-        # Gravity for petrified is in status_effects, others are stationary.
+    if (getattr(enemy, 'is_petrified', False) and not getattr(enemy, 'is_stone_smashed', False) and getattr(enemy, 'on_ground', True)) or \
+       getattr(enemy, 'is_frozen', False) or \
+       getattr(enemy, 'is_defrosting', False) :
+        if hasattr(enemy, 'vel'): enemy.vel.setX(0); enemy.vel.setY(0)
+        if hasattr(enemy, 'acc'): enemy.acc.setX(0);
         return
 
-    # --- Apply Gravity ---
-    enemy.vel.y += enemy.acc.y # acc.y should be gravity
+    if not (hasattr(enemy, 'vel') and isinstance(enemy.vel, QPointF) and
+            hasattr(enemy, 'acc') and isinstance(enemy.acc, QPointF) and
+            hasattr(enemy, 'pos') and isinstance(enemy.pos, QPointF) and
+            hasattr(enemy, 'rect') and isinstance(enemy.rect, QRectF)):
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Missing physics attributes. Skipping update.")
+        return
 
-    # --- Horizontal Movement and Friction (based on AI decisions in enemy.acc.x) ---
-    enemy_friction = getattr(C, 'ENEMY_FRICTION', -0.12)
-    
-    # Determine speed limit based on state
-    if enemy.is_aflame:
-        current_speed_limit = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5) * getattr(C, 'ENEMY_AFLAME_SPEED_MULTIPLIER', 1.0)
-    elif enemy.is_deflaming:
-        current_speed_limit = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5) * getattr(C, 'ENEMY_DEFLAME_SPEED_MULTIPLIER', 1.0)
+    if not getattr(enemy, 'on_ground', False):
+        if not (getattr(enemy, 'can_fly', False) and getattr(enemy, 'ai_state', '') == 'chasing'):
+            enemy.vel.setY(enemy.vel.y() + enemy.acc.y())
+
+    enemy.vel.setX(enemy.vel.x() + enemy.acc.x())
+
+    if getattr(enemy, 'on_ground', False) and abs(enemy.acc.x()) < 1e-6:
+        friction_coeff = float(getattr(C, 'ENEMY_FRICTION', -0.12))
+        friction_force = enemy.vel.x() * friction_coeff
+        if abs(enemy.vel.x()) > 0.1: enemy.vel.setX(enemy.vel.x() + friction_force)
+        else: enemy.vel.setX(0.0)
+
+    speed_limit = float(getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0))
+    if getattr(enemy, 'is_aflame', False): speed_limit *= float(getattr(C, 'ENEMY_AFLAME_SPEED_MULTIPLIER', 1.3))
+    elif getattr(enemy, 'is_deflaming', False): speed_limit *= float(getattr(C, 'ENEMY_DEFLAME_SPEED_MULTIPLIER', 1.2))
+
+    enemy.vel.setX(max(-speed_limit, min(speed_limit, enemy.vel.x())))
+    enemy.vel.setY(min(enemy.vel.y(), float(getattr(C, 'TERMINAL_VELOCITY_Y', 18.0))))
+
+    setattr(enemy, 'on_ground', False)
+
+    enemy.pos.setX(enemy.pos.x() + enemy.vel.x() * dt_sec * getattr(C, 'FPS', 60.0))
+    if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
+    _check_enemy_platform_collisions(enemy, 'x', platforms_list, dt_sec)
+    _check_enemy_character_collision(enemy, 'x', all_other_characters_list)
+    if hasattr(enemy, 'pos') and hasattr(enemy.rect, 'center'): enemy.pos.setX(enemy.rect.center().x())
+
+    enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0))
+    if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
+    _check_enemy_platform_collisions(enemy, 'y', platforms_list, dt_sec)
+    _check_enemy_character_collision(enemy, 'y', all_other_characters_list)
+    if hasattr(enemy, 'pos') and hasattr(enemy.rect, 'bottom'): enemy.pos.setY(enemy.rect.bottom())
+
+    _check_enemy_hazard_collisions(enemy, hazards_list)
+
+    if hasattr(enemy, '_update_rect_from_image_and_pos'):
+        enemy._update_rect_from_image_and_pos()
     else:
-        current_speed_limit = getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5)
-
-    terminal_velocity = getattr(C, 'TERMINAL_VELOCITY_Y', 18)
-
-    enemy.vel.x += enemy.acc.x # Apply AI-driven acceleration
-
-    if enemy.on_ground and enemy.acc.x == 0:
-        friction_force = enemy.vel.x * enemy_friction
-        if abs(enemy.vel.x) > 0.1:
-            enemy.vel.x += friction_force
-        else:
-            enemy.vel.x = 0 
-
-    enemy.vel.x = max(-current_speed_limit, min(current_speed_limit, enemy.vel.x))
-    enemy.vel.y = min(enemy.vel.y, terminal_velocity)
-
-    enemy.on_ground = False 
-
-    enemy.pos.x += enemy.vel.x
-    enemy.rect.centerx = round(enemy.pos.x) 
-    _check_enemy_platform_collisions(enemy, 'x', platforms_group)
-    collided_x_char = _check_enemy_character_collision(enemy, 'x', all_other_characters_list)
-    enemy.pos.x = enemy.rect.centerx 
-
-    enemy.pos.y += enemy.vel.y
-    enemy.rect.bottom = round(enemy.pos.y) 
-    _check_enemy_platform_collisions(enemy, 'y', platforms_group)
-    if not collided_x_char: 
-        _check_enemy_character_collision(enemy, 'y', all_other_characters_list)
-    enemy.pos.y = enemy.rect.bottom 
-
-    _check_enemy_hazard_collisions(enemy, hazards_group)
-
-#################### END OF FILE: enemy_physics_handler.py ####################
+        if hasattr(enemy, 'image') and enemy.image and not enemy.image.isNull() and hasattr(enemy, 'rect'):
+            img_w = float(enemy.image.width()); img_h = float(enemy.image.height())
+            enemy.rect.setRect(enemy.pos.x() - img_w / 2.0, enemy.pos.y() - img_h, img_w, img_h)

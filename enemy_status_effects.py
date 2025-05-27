@@ -1,295 +1,288 @@
+#################### START OF FILE: enemy_status_effects.py ####################
+
 # enemy_status_effects.py
 # -*- coding: utf-8 -*-
 """
-# version 1.0.5 (Refined stomp squash animation to be independent of animation handler)
-Handles the application and management of status effects for enemies,
-such as aflame, frozen, petrified, and stomp death.
+Handles the application and management of status effects for enemies using PySide6.
+MODIFIED: Added apply_zapped_effect and zapped state handling in update.
+MODIFIED: Passes current_time_ms to set_enemy_state for timer consistency.
+MODIFIED: Implements 5-second overall fire effect timeout to force 'idle'.
+MODIFIED: Correctly uses enemy constants for status effect durations.
+MODIFIED: Ensures zapped effect also prevents other status applications and is cleared.
+MODIFIED: Zapped effect is applied if target is not already in a conflicting state.
 """
-import pygame
-import constants as C # For durations, damage values, etc.
+# version 2.0.5 (Zapped application refined)
+
+import time # For monotonic timer
+from typing import List, Optional, Any, TYPE_CHECKING
+
+# PySide6 imports
+from PySide6.QtGui import QPixmap, QImage, QTransform, QColor
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt
+
+# Game imports
+import constants as C # Use C directly for constants
+
+if TYPE_CHECKING:
+    from enemy import Enemy # For type hinting
 
 try:
     from enemy_state_handler import set_enemy_state
 except ImportError:
-    # Fallback if direct import fails (e.g., during early refactoring stages)
-    def set_enemy_state(enemy, new_state):
-        if hasattr(enemy, 'set_state'): # Check if the old method might still exist on the enemy instance
-            enemy.set_state(new_state)
-        else:
-            # This critical print is better than crashing if the handler isn't found during dev
-            print(f"CRITICAL ENEMY_STATUS_EFFECTS: enemy_state_handler.set_enemy_state not found for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')}")
+    # This fallback is critical if the import fails
+    print("CRITICAL ENEMY_STATUS_EFFECTS: enemy_state_handler.set_enemy_state not found.")
+    def set_enemy_state(enemy, new_state, current_game_time_ms_param=None): # Add param for consistency
+        if hasattr(enemy, 'state'): enemy.state = new_state
+        else: print(f"CRITICAL ENEMY_STATUS_EFFECTS (Fallback): Cannot set state for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')}.")
 
-# Assuming logger is set up and accessible
+
 try:
     from logger import info, debug, warning, error, critical
 except ImportError:
     print("CRITICAL ENEMY_STATUS_EFFECTS: logger.py not found. Falling back to print statements for logging.")
-    def info(msg): print(f"INFO: {msg}")
-    def debug(msg): print(f"DEBUG: {msg}")
-    def warning(msg): print(f"WARNING: {msg}")
-    def error(msg): print(f"ERROR: {msg}") # Defined error for fallback
-    def critical(msg): print(f"CRITICAL: {msg}")
+    def info(msg, *args, **kwargs): print(f"INFO: {msg}")
+    def debug(msg, *args, **kwargs): print(f"DEBUG: {msg}")
+    def warning(msg, *args, **kwargs): print(f"WARNING: {msg}")
+    def error(msg, *args, **kwargs): print(f"ERROR: {msg}")
+    def critical(msg, *args, **kwargs): print(f"CRITICAL: {msg}")
+
+# --- Monotonic Timer ---
+_start_time_enemy_status_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    """Returns monotonic time in milliseconds since module load or a fixed point."""
+    return int((time.monotonic() - _start_time_enemy_status_monotonic) * 1000)
+# --- End Monotonic Timer ---
+
 
 # --- Functions to APPLY status effects ---
 
-def apply_aflame_effect(enemy):
-    """
-    Applies the 'aflame' status effect to the enemy if not already in a conflicting state.
-    """
-    # Prevent applying if already aflame/deflaming, dead, petrified, or frozen/defrosting
-    if enemy.is_aflame or enemy.is_deflaming or enemy.is_dead or \
-       enemy.is_petrified or enemy.is_frozen or enemy.is_defrosting:
+def apply_aflame_effect(enemy: 'Enemy'):
+    current_time_ms = get_current_ticks_monotonic() 
+    if getattr(enemy, 'is_aflame', False) or \
+       getattr(enemy, 'is_deflaming', False) or \
+       getattr(enemy, 'is_dead', False) or \
+       getattr(enemy, 'is_petrified', False) or \
+       getattr(enemy, 'is_frozen', False) or \
+       getattr(enemy, 'is_defrosting', False) or \
+       getattr(enemy, 'is_zapped', False):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_aflame_effect called but already in conflicting state. Ignoring.")
         return
     
     debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} ({getattr(enemy, 'color_name', 'N/A')}): Applying aflame effect.")
-    enemy.has_ignited_another_enemy_this_cycle = False # Reset ignition flag for this new aflame cycle
-    set_enemy_state(enemy, 'aflame') # This will set is_aflame=True and timers via state_handler
-    
-    # Stop current actions
-    enemy.is_attacking = False 
-    enemy.attack_type = 0
-    # Physics handler will adjust speed based on is_aflame flag
+    enemy.has_ignited_another_enemy_this_cycle = False
+    set_enemy_state(enemy, 'aflame', current_time_ms)
+    if hasattr(enemy, 'is_attacking'): enemy.is_attacking = False
+    if hasattr(enemy, 'attack_type'): enemy.attack_type = 0
 
-def apply_freeze_effect(enemy):
-    """
-    Applies the 'frozen' status effect to the enemy if not already in a conflicting state.
-    """
-    if enemy.is_frozen or enemy.is_defrosting or enemy.is_dead or \
-       enemy.is_petrified or enemy.is_aflame or enemy.is_deflaming:
+def apply_freeze_effect(enemy: 'Enemy'):
+    current_time_ms = get_current_ticks_monotonic()
+    if getattr(enemy, 'is_frozen', False) or \
+       getattr(enemy, 'is_defrosting', False) or \
+       getattr(enemy, 'is_dead', False) or \
+       getattr(enemy, 'is_petrified', False) or \
+       getattr(enemy, 'is_aflame', False) or \
+       getattr(enemy, 'is_deflaming', False) or \
+       getattr(enemy, 'is_zapped', False):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_freeze_effect called but already in conflicting state. Ignoring.")
         return
         
     debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} ({getattr(enemy, 'color_name', 'N/A')}): Applying freeze effect.")
-    set_enemy_state(enemy, 'frozen') # state_handler sets is_frozen=True and timers, stops movement
-    
-    # Ensure movement and attacks are stopped
-    enemy.vel.xy = 0,0
-    enemy.acc.x = 0
-    enemy.is_attacking = False
-    enemy.attack_type = 0
+    set_enemy_state(enemy, 'frozen', current_time_ms)
+    if hasattr(enemy, 'is_attacking'): enemy.is_attacking = False
+    if hasattr(enemy, 'attack_type'): enemy.attack_type = 0
 
-def petrify_enemy(enemy):
-    """
-    Turns the enemy into stone if not already petrified or truly dead.
-    """
-    # Prevent petrifying if already petrified OR if truly dead (not just "petrified dead")
-    if enemy.is_petrified or (enemy.is_dead and not enemy.is_petrified):
-        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: petrify_enemy called but already petrified or truly dead. Ignoring.")
+def apply_zapped_effect(enemy: 'Enemy'):
+    current_time_ms = get_current_ticks_monotonic()
+    if getattr(enemy, 'is_zapped', False) or \
+       getattr(enemy, 'is_dead', False) or \
+       getattr(enemy, 'is_petrified', False) or \
+       getattr(enemy, 'is_frozen', False) or \
+       getattr(enemy, 'is_defrosting', False) or \
+       getattr(enemy, 'is_aflame', False) or \
+       getattr(enemy, 'is_deflaming', False):
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_zapped_effect called but already in conflicting state. Ignoring.")
+        return
+    
+    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} ({getattr(enemy, 'color_name', 'N/A')}): Applying ZAPPED effect.")
+    set_enemy_state(enemy, 'zapped', current_time_ms)
+    if hasattr(enemy, 'is_attacking'): enemy.is_attacking = False
+    if hasattr(enemy, 'attack_type'): enemy.attack_type = 0
+
+def petrify_enemy(enemy: 'Enemy'):
+    current_time_ms = get_current_ticks_monotonic()
+    if getattr(enemy, 'is_petrified', False) or \
+       (getattr(enemy, 'is_dead', False) and not getattr(enemy, 'is_petrified', False)) or \
+       getattr(enemy, 'is_zapped', False):
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: petrify_enemy called but already petrified, truly dead, or zapped. Ignoring.")
         return
         
-    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {enemy.color_name}) is being petrified by petrify_enemy.")
-    enemy.facing_at_petrification = enemy.facing_right # Store facing direction for consistent visuals
-    set_enemy_state(enemy, 'petrified') # state_handler manages flags (is_petrified=True, is_dead=True), stops movement
+    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {getattr(enemy, 'color_name', 'N/A')}) is being petrified.")
+    if hasattr(enemy, 'facing_right'):
+        enemy.facing_at_petrification = enemy.facing_right
+    else: enemy.facing_at_petrification = True
     
-    # Ensure movement is stopped
-    enemy.vel.x = 0 # Redundant if state_handler does it, but safe
-    enemy.acc.x = 0
+    set_enemy_state(enemy, 'petrified', current_time_ms)
 
-def smash_petrified_enemy(enemy):
-    """
-    Smashes a petrified enemy if it's currently petrified and not already smashed.
-    """
-    if enemy.is_petrified and not enemy.is_stone_smashed: # Can only smash if petrified AND not yet smashed
-        debug(f"Petrified Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {enemy.color_name}) is being smashed by smash_petrified_enemy.")
-        set_enemy_state(enemy, 'smashed') # state_handler sets is_stone_smashed=True, timers, and handles animation
+def smash_petrified_enemy(enemy: 'Enemy'):
+    current_time_ms = get_current_ticks_monotonic()
+    if getattr(enemy, 'is_petrified', False) and not getattr(enemy, 'is_stone_smashed', False):
+        debug(f"Petrified Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {getattr(enemy, 'color_name', 'N/A')}) is being smashed.")
+        set_enemy_state(enemy, 'smashed', current_time_ms)
     else:
-        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: smash_petrified_enemy called but enemy not in a smashable state (Petrified: {enemy.is_petrified}, Smashed: {enemy.is_stone_smashed}).")
+        debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: smash_petrified_enemy called but not in smashable state (Petrified: {getattr(enemy, 'is_petrified', False)}, Smashed: {getattr(enemy, 'is_stone_smashed', False)}).")
 
-def stomp_kill_enemy(enemy):
-    """
-    Initiates the stomp death sequence for the enemy.
-    Sets flags and captures the current image for the squash animation.
-    """
-    # Prevent stomp if already dead/stomp_dying or in an overriding state
-    if enemy.is_dead or enemy.is_stomp_dying or enemy.is_petrified or \
-       enemy.is_aflame or enemy.is_frozen: # Cannot stomp if on fire or frozen
+def stomp_kill_enemy(enemy: 'Enemy'):
+    current_time_ms = get_current_ticks_monotonic()
+    if getattr(enemy, 'is_dead', False) or \
+       getattr(enemy, 'is_stomp_dying', False) or \
+       getattr(enemy, 'is_petrified', False) or \
+       getattr(enemy, 'is_aflame', False) or \
+       getattr(enemy, 'is_frozen', False) or \
+       getattr(enemy, 'is_zapped', False):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: stomp_kill_enemy called but already in conflicting state. Ignoring.")
         return
         
-    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {enemy.color_name}): Stomp kill initiated by stomp_kill_enemy.")
+    debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {getattr(enemy, 'color_name', 'N/A')}): Stomp kill initiated.")
     
-    enemy.is_stomp_dying = True # Primary flag for stomp visual effect
-    enemy.stomp_death_start_time = pygame.time.get_ticks() # Timer for squash duration
-    enemy.original_stomp_facing_right = enemy.facing_right # Save facing for consistent squash visual
-    
-    # Capture the exact current image for scaling (before state changes to 'stomp_death')
-    # Ensure the image is not None and has a valid surface
-    if hasattr(enemy, 'image') and enemy.image and isinstance(enemy.image, pygame.Surface):
-        enemy.original_stomp_death_image = enemy.image.copy() # Use a copy
-    else: # Fallback if image is bad or missing
-        # Create a transparent placeholder based on rect size if available
-        width_ph = enemy.rect.width if hasattr(enemy, 'rect') else getattr(C, 'TILE_SIZE', 30)
-        height_ph = enemy.rect.height if hasattr(enemy, 'rect') else int(getattr(C, 'TILE_SIZE', 30) * 1.5)
-        enemy.original_stomp_death_image = pygame.Surface((width_ph, height_ph), pygame.SRCALPHA)
-        enemy.original_stomp_death_image.fill((0,0,0,0)) # Fully transparent
-        warning(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Could not copy valid image for stomp squash animation; using transparent placeholder.")
+    enemy.is_stomp_dying = True
+    enemy.stomp_death_start_time = current_time_ms
+    if hasattr(enemy, 'facing_right'): enemy.original_stomp_facing_right = enemy.facing_right
+    else: enemy.original_stomp_facing_right = True
 
-    # Set logical death state properties
-    enemy.is_dead = True      # Logically dead
-    enemy.current_health = 0  # No health
-    enemy.vel.xy = 0,0        # Stop movement
-    enemy.acc.xy = 0,0        # Stop acceleration
-    enemy.death_animation_finished = False # Stomp squash animation needs to play
-    
-    # Set logical state to 'stomp_death'. Animation handler might use this,
-    # but the primary visual is the scaling transform handled in update_enemy_status_effects.
-    set_enemy_state(enemy, 'stomp_death')
+    if hasattr(enemy, 'image') and enemy.image and not enemy.image.isNull():
+        enemy.original_stomp_death_image = enemy.image.copy()
+    else:
+        rect_w = enemy.rect.width() if hasattr(enemy, 'rect') and hasattr(enemy.rect, 'width') and enemy.rect.width() > 0 else getattr(C, 'TILE_SIZE', 30.0)
+        rect_h = enemy.rect.height() if hasattr(enemy, 'rect') and hasattr(enemy.rect, 'height') and enemy.rect.height() > 0 else int(getattr(C, 'TILE_SIZE', 30.0) * 1.5)
+        enemy.original_stomp_death_image = QPixmap(int(rect_w), int(rect_h))
+        if not enemy.original_stomp_death_image.isNull():
+            enemy.original_stomp_death_image.fill(Qt.GlobalColor.transparent)
+        warning(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Could not copy valid image for stomp; using transparent placeholder.")
+
+    enemy.is_dead = True; enemy.current_health = 0
+    if hasattr(enemy, 'vel'): enemy.vel = QPointF(0,0)
+    if hasattr(enemy, 'acc'): enemy.acc = QPointF(0,0)
+    enemy.death_animation_finished = False 
+    set_enemy_state(enemy, 'stomp_death', current_time_ms)
 
 
-# --- Function to UPDATE status effects (called each frame from Enemy.update) ---
+# --- Function to UPDATE status effects ---
 
-def update_enemy_status_effects(enemy, current_time_ms, platforms_group):
-    """
-    Manages timers and transitions for active status effects on the enemy.
-    Also handles visual updates for effects like stomp squash.
-    Returns True if a status effect is active and overriding normal updates, False otherwise.
-    """
+def update_enemy_status_effects(enemy: 'Enemy', current_time_ms: int, platforms_list: List[Any]) -> bool:
     enemy_id_log = getattr(enemy, 'enemy_id', 'Unknown')
-    an_effect_is_overriding_updates = False # Flag to indicate if normal AI/physics should be skipped
 
-    # --- Stomp Death Animation Handling (High Priority if active) ---
-    if enemy.is_stomp_dying:
-        an_effect_is_overriding_updates = True # Stomp death overrides everything
-        elapsed_stomp_time = current_time_ms - enemy.stomp_death_start_time
-        stomp_squash_duration = getattr(C, 'ENEMY_STOMP_SQUASH_DURATION_MS', 400) # Duration of squash
+    if (getattr(enemy, 'is_aflame', False) or getattr(enemy, 'is_deflaming', False)) and \
+       hasattr(enemy, 'overall_fire_effect_start_time') and \
+       getattr(enemy, 'overall_fire_effect_start_time', 0) > 0:
+        
+        if current_time_ms - getattr(enemy, 'overall_fire_effect_start_time', current_time_ms) > 5000:
+            debug(f"EnemyStatusEffects ({enemy_id_log}): Overall 5s fire effect duration met. Forcing state to 'idle'.")
+            set_enemy_state(enemy, 'idle' if getattr(enemy, 'on_ground', False) else 'fall', current_time_ms)
+            return True
 
-        if elapsed_stomp_time >= stomp_squash_duration: # Squash animation finished
-            if not enemy.death_animation_finished:
-                debug(f"Enemy {enemy_id_log}: Stomp squash duration ({stomp_squash_duration}ms) ended.")
-                enemy.death_animation_finished = True # Mark as visually "done"
-            if enemy.alive(): # If still in sprite groups
-                enemy.kill() # Remove from all groups
-        else: # Squash animation is in progress
-            if enemy.original_stomp_death_image: # Ensure we have an image to scale
-                progress_ratio = elapsed_stomp_time / stomp_squash_duration # 0.0 to 1.0
-                scale_y_factor = 1.0 - progress_ratio # Height shrinks from 1.0 down to 0.0
-                
-                original_width = enemy.original_stomp_death_image.get_width()
-                original_height = enemy.original_stomp_death_image.get_height()
-                
-                # Calculate new dimensions for squash effect
-                new_height = max(1, int(original_height * scale_y_factor)) # Ensure at least 1px height
-                new_width = original_width # Width usually doesn't change, or could bulge slightly
+    if getattr(enemy, 'is_stomp_dying', False):
+        elapsed_stomp_time = current_time_ms - getattr(enemy, 'stomp_death_start_time', current_time_ms)
+        stomp_squash_duration = getattr(C, 'ENEMY_STOMP_SQUASH_DURATION_MS', 400)
+        if elapsed_stomp_time >= stomp_squash_duration:
+            if not getattr(enemy, 'death_animation_finished', True):
+                debug(f"Enemy {enemy_id_log}: Stomp squash duration ended.")
+                enemy.death_animation_finished = True
+            if hasattr(enemy, 'alive') and enemy.alive() and hasattr(enemy, 'kill'): enemy.kill()
+        else:
+            original_stomp_image = getattr(enemy, 'original_stomp_death_image', None)
+            if original_stomp_image and not original_stomp_image.isNull():
+                progress_ratio = elapsed_stomp_time / stomp_squash_duration
+                scale_y_factor = max(0.0, 1.0 - progress_ratio)
+                original_width = original_stomp_image.width(); original_height = original_stomp_image.height()
+                new_height = max(1, int(original_height * scale_y_factor)); new_width = original_width
+                if new_width > 0 and new_height > 0:
+                    base_image_to_scale = original_stomp_image.copy()
+                    if not getattr(enemy, 'original_stomp_facing_right', True):
+                        q_img = base_image_to_scale.toImage()
+                        if not q_img.isNull(): base_image_to_scale = QPixmap.fromImage(q_img.mirrored(True, False))
+                    squashed_pixmap = base_image_to_scale.scaled(new_width, new_height, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    old_midbottom_qpointf = QPointF(enemy.rect.center().x(), enemy.rect.bottom()) if hasattr(enemy, 'rect') and enemy.rect else None
+                    enemy.image = squashed_pixmap
+                    if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos(old_midbottom_qpointf)
+                else:
+                    fallback_width = original_width if original_width > 0 else 1
+                    enemy.image = QPixmap(fallback_width, 1); 
+                    if not enemy.image.isNull(): enemy.image.fill(Qt.GlobalColor.transparent)
+                    if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
+            if hasattr(enemy, 'vel'): enemy.vel = QPointF(0,0)
+            if hasattr(enemy, 'acc'): enemy.acc = QPointF(0,0)
+            enemy.on_ground = True
+        return True 
 
-                if new_width > 0 and new_height > 0: # Valid dimensions for scaling
-                    try:
-                        # Create a fresh copy from original for scaling to avoid cumulative errors/artifacts
-                        base_image_to_scale = enemy.original_stomp_death_image.copy()
-                        # Apply facing flip to the base image if needed *before* scaling
-                        if not enemy.original_stomp_facing_right: # Use facing at time of stomp
-                            base_image_to_scale = pygame.transform.flip(base_image_to_scale, True, False)
+    if getattr(enemy, 'is_stone_smashed', False):
+        if getattr(enemy, 'death_animation_finished', False) or \
+           (current_time_ms - getattr(enemy, 'smashed_timer_start', current_time_ms) > C.STONE_SMASHED_DURATION_MS):
+            if hasattr(enemy, 'alive') and enemy.alive() and hasattr(enemy, 'kill'): enemy.kill()
+        return True 
 
-                        squashed_image = pygame.transform.smoothscale(base_image_to_scale, (new_width, new_height))
-                    except (pygame.error, ValueError): # Fallback to simple scale if smoothscale fails (e.g., 0-dim)
-                        base_image_to_scale = enemy.original_stomp_death_image.copy() # Fresh copy
-                        if not enemy.original_stomp_facing_right:
-                            base_image_to_scale = pygame.transform.flip(base_image_to_scale, True, False)
-                        squashed_image = pygame.transform.scale(base_image_to_scale, (new_width, new_height))
-                    
-                    old_midbottom_pos = enemy.rect.midbottom # Preserve position
-                    enemy.image = squashed_image
-                    enemy.rect = enemy.image.get_rect(midbottom=old_midbottom_pos) # Re-anchor
-                    enemy.pos = pygame.math.Vector2(enemy.rect.midbottom) # Sync pos
-                else: # Fallback if new dimensions are invalid (e.g., height becomes 0)
-                    # Create a minimal (e.g., 1x1 transparent) surface to avoid errors
-                    min_fallback_width = original_width if original_width > 0 else 1
-                    enemy.image = pygame.Surface((min_fallback_width, 1), pygame.SRCALPHA) 
-                    enemy.image.fill((0,0,0,0)) # Transparent
-                    old_midbottom_pos = enemy.rect.midbottom
-                    enemy.rect = enemy.image.get_rect(midbottom=old_midbottom_pos)
-                    enemy.pos = pygame.math.Vector2(enemy.rect.midbottom)
-            
-            # Ensure stomped enemy doesn't move and stays on ground (visually)
-            enemy.vel.xy = 0,0
-            enemy.acc.xy = 0,0
-            enemy.on_ground = True # Visually, it's squashed onto the ground
-        return an_effect_is_overriding_updates # True because stomp death is happening
+    if getattr(enemy, 'is_petrified', False):
+        if not getattr(enemy, 'on_ground', True):
+            if hasattr(enemy, 'vel') and hasattr(enemy.vel, 'y') and hasattr(enemy.vel, 'setY') and \
+               hasattr(enemy, 'acc') and hasattr(enemy.acc, 'y'):
+                enemy.vel.setY(enemy.vel.y() + getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.7)))
+                enemy.vel.setY(min(enemy.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
+            if hasattr(enemy, 'pos') and hasattr(enemy.pos, 'y') and hasattr(enemy.pos, 'setY') and \
+               hasattr(enemy, 'vel') and hasattr(enemy.vel, 'y'):
+                enemy.pos.setY(enemy.pos.y() + enemy.vel.y()) 
+            if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
+            for platform_obj in platforms_list:
+                 if hasattr(platform_obj, 'rect') and hasattr(enemy, 'rect') and enemy.rect.intersects(platform_obj.rect):
+                     if hasattr(enemy, 'vel') and enemy.vel.y() > 0 and enemy.rect.bottom() > platform_obj.rect.top() and \
+                        hasattr(enemy, 'pos') and (enemy.pos.y() - enemy.vel.y()) <= platform_obj.rect.top() + 1:
+                          enemy.rect.moveBottom(platform_obj.rect.top())
+                          enemy.on_ground = True; enemy.vel.setY(0.0)
+                          if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setY'): enemy.acc.setY(0.0)
+                          if hasattr(enemy, 'pos') and hasattr(enemy.pos, 'setY'): enemy.pos.setY(enemy.rect.bottom())
+                          break
+        return True 
 
-    # --- Petrified and Smashed State Handling ---
-    if enemy.is_stone_smashed: # If smashed, it's an overriding state until duration ends
-        an_effect_is_overriding_updates = True
-        if enemy.death_animation_finished or \
-           (current_time_ms - enemy.stone_smashed_timer_start > C.STONE_SMASHED_DURATION_MS):
-            debug(f"Smashed stone Enemy {enemy_id_log} duration/animation ended. Killing sprite.")
-            if enemy.alive(): enemy.kill() # Remove from all groups
-        # Animation itself (frame cycling for smashed GIF) is handled by enemy_animation_handler
-        return an_effect_is_overriding_updates 
+    if getattr(enemy, 'is_zapped', False):
+        if current_time_ms - getattr(enemy, 'zapped_timer_start', current_time_ms) > C.ENEMY_ZAPPED_DURATION_MS:
+            debug(f"Enemy {enemy_id_log}: Zapped duration ended.")
+            set_enemy_state(enemy, 'idle' if getattr(enemy, 'on_ground', False) else 'fall', current_time_ms)
+            # Fall through this frame if zapped just ended
+        else:
+            if C.ENEMY_ZAPPED_DAMAGE_PER_TICK > 0 and \
+               current_time_ms - getattr(enemy, 'zapped_damage_last_tick', 0) > C.ENEMY_ZAPPED_DAMAGE_INTERVAL_MS:
+                debug(f"Enemy {enemy_id_log}: Taking zapped damage.")
+                if hasattr(enemy, 'take_damage'): enemy.take_damage(C.ENEMY_ZAPPED_DAMAGE_PER_TICK)
+                enemy.zapped_damage_last_tick = current_time_ms
+            if hasattr(enemy, 'vel'): enemy.vel.setX(0)
+            if getattr(enemy,'on_ground', False) and hasattr(enemy,'vel'): enemy.vel.setY(0)
+            return True 
 
-    if enemy.is_petrified: # If petrified (but not smashed), it's also overriding
-        an_effect_is_overriding_updates = True
-        # Petrified enemies might fall if not on ground
-        if not enemy.on_ground:
-            enemy.vel.y += getattr(C, 'ENEMY_GRAVITY', getattr(C, 'PLAYER_GRAVITY', 0.8)) # Apply gravity
-            enemy.vel.y = min(enemy.vel.y, getattr(C, 'TERMINAL_VELOCITY_Y', 18)) # Terminal velocity
-            enemy.pos.y += enemy.vel.y # Update position
-            enemy.rect.midbottom = (round(enemy.pos.x), round(enemy.pos.y)) # Update rect
-            # Basic platform collision for falling stone
-            for platform_sprite in pygame.sprite.spritecollide(enemy, platforms_group, False):
-                 if enemy.vel.y > 0 and enemy.rect.bottom > platform_sprite.rect.top and \
-                    (enemy.pos.y - enemy.vel.y) <= platform_sprite.rect.top + 1: # Landed
-                      enemy.rect.bottom = platform_sprite.rect.top
-                      enemy.on_ground = True; enemy.vel.y = 0; enemy.acc.y = 0 # Stop on ground
-                      enemy.pos.y = enemy.rect.bottom; break # Update pos
-        # Static petrified image is handled by enemy_animation_handler
-        return an_effect_is_overriding_updates
+    if getattr(enemy, 'is_frozen', False):
+        if current_time_ms - getattr(enemy, 'frozen_effect_timer', current_time_ms) > C.ENEMY_FROZEN_DURATION_MS:
+            set_enemy_state(enemy, 'defrost', current_time_ms)
+        return True 
+    elif getattr(enemy, 'is_defrosting', False):
+        if current_time_ms - getattr(enemy, 'frozen_effect_timer', current_time_ms) > \
+           (C.ENEMY_FROZEN_DURATION_MS + C.ENEMY_DEFROST_DURATION_MS):
+            set_enemy_state(enemy, 'idle' if getattr(enemy, 'on_ground', False) else 'fall', current_time_ms)
+        else:
+            return True 
 
-    # --- Aflame/Deflame Handling (These don't fully override physics/AI, but manage timers/damage) ---
-    processed_aflame_or_deflame_this_tick = False # To track if aflame/deflame logic ran
-    if enemy.is_aflame:
-        processed_aflame_or_deflame_this_tick = True
-        # Check if aflame duration has ended
-        if current_time_ms - enemy.aflame_timer_start > C.ENEMY_AFLAME_DURATION_MS:
-            debug(f"Enemy {enemy_id_log}: Aflame duration ended. Transitioning to deflame state.")
-            set_enemy_state(enemy, 'deflame') # Transition to deflaming state
-        # Apply damage over time if aflame
-        elif current_time_ms - enemy.aflame_damage_last_tick > C.ENEMY_AFLAME_DAMAGE_INTERVAL_MS:
-            if hasattr(enemy, 'take_damage'): # Ensure method exists
-                enemy.take_damage(C.ENEMY_AFLAME_DAMAGE_PER_TICK) # Apply damage
-            enemy.aflame_damage_last_tick = current_time_ms # Reset damage tick timer
+    if getattr(enemy, 'is_aflame', False):
+        if current_time_ms - getattr(enemy, 'aflame_timer_start', current_time_ms) > C.ENEMY_AFLAME_DURATION_MS:
+            set_enemy_state(enemy, 'deflame', current_time_ms)
+        elif C.ENEMY_AFLAME_DAMAGE_PER_TICK > 0 and \
+             current_time_ms - getattr(enemy, 'aflame_damage_last_tick', 0) > C.ENEMY_AFLAME_DAMAGE_INTERVAL_MS:
+            if hasattr(enemy, 'take_damage'): enemy.take_damage(C.ENEMY_AFLAME_DAMAGE_PER_TICK)
+            enemy.aflame_damage_last_tick = current_time_ms
+    elif getattr(enemy, 'is_deflaming', False):
+        if current_time_ms - getattr(enemy, 'deflame_timer_start', current_time_ms) > C.ENEMY_DEFLAME_DURATION_MS:
+            set_enemy_state(enemy, 'idle' if getattr(enemy, 'on_ground', False) else 'fall', current_time_ms)
 
-    if enemy.is_deflaming: # Separate check, could transition from aflame to deflame in one tick
-        processed_aflame_or_deflame_this_tick = True
-        # Check if deflame duration has ended
-        if current_time_ms - enemy.deflame_timer_start > C.ENEMY_DEFLAME_DURATION_MS:
-            debug(f"Enemy {enemy_id_log}: Deflame duration ended. Transitioning to idle state.")
-            set_enemy_state(enemy, 'idle') # Transition to idle state
+    if getattr(enemy, 'is_dead', False) and not getattr(enemy, 'death_animation_finished', False):
+        if hasattr(enemy, 'alive') and enemy.alive() and getattr(enemy, 'death_animation_finished', False):
+             if hasattr(enemy, 'kill'): enemy.kill()
+        return True 
 
-    # --- Frozen/Defrost Handling (These ARE overriding states) ---
-    if enemy.is_frozen:
-        an_effect_is_overriding_updates = True
-        enemy.vel.xy = 0,0; enemy.acc.x = 0 # Ensure no movement
-        # Check if frozen duration has ended
-        if current_time_ms - enemy.frozen_effect_timer > C.ENEMY_FROZEN_DURATION_MS:
-            debug(f"Enemy {enemy_id_log}: Frozen duration ended. Transitioning to defrost state.")
-            set_enemy_state(enemy, 'defrost') # Transition to defrosting state
-        return an_effect_is_overriding_updates 
-
-    if enemy.is_defrosting:
-        an_effect_is_overriding_updates = True
-        enemy.vel.xy = 0,0; enemy.acc.x = 0 # Still no movement during defrost
-        # Check if total (frozen + defrost) duration has passed
-        if current_time_ms - enemy.frozen_effect_timer > (C.ENEMY_FROZEN_DURATION_MS + C.ENEMY_DEFROST_DURATION_MS):
-            debug(f"Enemy {enemy_id_log}: Defrost duration ended. Transitioning to idle state.")
-            set_enemy_state(enemy, 'idle') # Transition to idle state
-            return False # No longer overriding after transition to idle
-        return an_effect_is_overriding_updates 
-
-    # --- Regular Death Animation Handling (if not petrified/stomp_dying) ---
-    # This handles the case where an enemy dies from normal damage and plays its 'death' animation.
-    if enemy.is_dead: # And not handled by stomp, petrify, smash, frozen, aflame logic above
-        an_effect_is_overriding_updates = True
-        if enemy.alive(): # If still in sprite groups
-            if enemy.death_animation_finished: # If the 'death' animation is visually complete
-                debug(f"Enemy {enemy_id_log}: Regular death animation finished. Killing sprite.")
-                enemy.kill() # Remove from all groups
-        # Animation itself is handled by enemy_animation_handler
-        return an_effect_is_overriding_updates 
-
-    # If aflame/deflame was processed but didn't result in an overriding state (like freeze/death)
-    # return False to allow normal AI/physics to proceed (with aflame speed modifiers).
-    if processed_aflame_or_deflame_this_tick:
-        return False # Aflame/Deflame modify behavior but don't fully stop updates like freeze does
-
-    # If no overriding status effect is active
     return False
+
+#################### END OF FILE: enemy_status_effects.py ####################

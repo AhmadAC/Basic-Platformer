@@ -1,270 +1,395 @@
 # couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.1.2 (Reset/Pause events process even if player is dead)
-Handles the game logic for the local couch co-op (two players on one machine) mode.
+Handles game logic for local couch co-op mode using PySide6.
+UI rendering and input capture are handled by the main Qt application.
+MODIFIED: Statue physics and lifecycle management in game loop.
+MODIFIED: Chest can insta-kill player if it lands from sufficient height.
+MODIFIED: Chest interaction rect is slightly expanded.
+MODIFIED: Custom images are now correctly included in the render list and sorted by layer.
+MODIFIED: Added extensive debug logging.
+MODIFIED: Ensures statues are included in hittable targets for player attacks.
 """
-import pygame
-import traceback
-from typing import Dict, List # Added List
+# version 2.0.23 (Statue targeting for player attacks)
+
+import time
+import math # Added for math.sqrt in chest-crush logic
+from typing import Dict, List, Any, Optional
+from PySide6.QtCore import QRectF # Ensure QRectF is imported
+import constants as C
+from game_state_manager import reset_game_state
+from enemy import Enemy
+from items import Chest # Ensure Chest is imported
+from statue import Statue
+from tiles import Platform, Ladder, Lava, BackgroundTile # For type checking
+from player import Player
+
+# Import for layer sorting
+try:
+    from game_setup import get_layer_order_key
+except ImportError:
+    # Fallback if game_setup is not directly importable (e.g., during isolated testing)
+    # This is a simplified version. The actual game_setup.get_layer_order_key is more robust.
+    print("COUCH_PLAY_LOGIC WARNING: Could not import get_layer_order_key from game_setup. Using fallback for sorting.")
+    def get_layer_order_key(item: Any) -> int:
+        if isinstance(item, dict) and 'layer_order' in item: return item['layer_order']
+        if hasattr(item, 'layer_order'): return getattr(item, 'layer_order', 0)
+        if isinstance(item, Player): return 100 # Players on top
+        if isinstance(item, BackgroundTile): return -10 # Backgrounds behind
+        return 0
+
+
+# --- Per-script logging toggle ---
+_SCRIPT_LOGGING_ENABLED = True
+# --- End per-script logging toggle ---
+
+# Logger setup
+import logging
+logger_couch = logging.getLogger(__name__) # Get a logger for this module
+
+# Define aliases at the module level, initially as fallbacks
+def log_info(msg, *args, **kwargs): logger_couch.info(msg, *args, **kwargs)
+def log_debug(msg, *args, **kwargs): logger_couch.debug(msg, *args, **kwargs)
+def log_warning(msg, *args, **kwargs): logger_couch.warning(msg, *args, **kwargs)
+def log_error(msg, *args, **kwargs): logger_couch.error(msg, *args, **kwargs)
+def log_critical(msg, *args, **kwargs): logger_couch.critical(msg, *args, **kwargs)
 
 try:
-    from logger import info, debug, warning, error, critical
+    from logger import info as project_info, debug as project_debug, \
+                       warning as project_warning, error as project_error, \
+                       critical as project_critical
+
+    log_info = project_info
+    log_debug = project_debug
+    log_warning = project_warning
+    log_error = project_error
+    log_critical = project_critical
+    if _SCRIPT_LOGGING_ENABLED: log_debug("CouchPlayLogic: Successfully aliased project's logger functions.")
+
 except ImportError:
-    print("CRITICAL COUCH_PLAY_LOGIC: logger.py not found. Falling back to print statements for logging.")
-    def info(msg): print(f"INFO: {msg}")
-    def debug(msg): print(f"DEBUG: {msg}")
-    def warning(msg): print(f"WARNING: {msg}")
-    def error(msg): print(f"ERROR: {msg}") # Defined error for fallback
-    def critical(msg): print(f"CRITICAL: {msg}")
+    # This configuration is for when the script is run directly or the project logger is not found
+    if not logger_couch.hasHandlers() and not logging.getLogger().hasHandlers(): # Avoid adding handlers multiple times
+        _couch_fallback_handler_specific = logging.StreamHandler() # To console
+        _couch_fallback_formatter_specific = logging.Formatter('COUCH_PLAY (ImportFallbackConsole - specific): %(levelname)s - %(module)s:%(lineno)d - %(message)s')
+        _couch_fallback_handler_specific.setFormatter(_couch_fallback_formatter_specific)
+        logger_couch.addHandler(_couch_fallback_handler_specific)
+        logger_couch.setLevel(logging.DEBUG) # Process all messages from DEBUG level upwards
+        logger_couch.propagate = False # Don't pass to root logger if it also has handlers
+    if _SCRIPT_LOGGING_ENABLED: log_critical("CouchPlayLogic: Failed to import project's logger. Using isolated fallback for couch_play_logic.py.")
 
-import constants as C
-from game_state_manager import reset_game_state # For resetting the game
-from enemy import Enemy # For type hinting if needed
-from items import Chest # For type hinting if needed
-from statue import Statue # Import Statue for interaction
-import game_ui # For drawing the scene
-import config as game_config # For player control configurations
+_start_time_couch_play_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    return int((time.monotonic() - _start_time_couch_play_monotonic) * 1000)
 
-def run_couch_play_mode(screen: pygame.Surface, clock: pygame.time.Clock,
-                        fonts: dict, game_elements_ref: dict, app_status_obj):
-    """
-    Runs the main game loop for couch co-op mode.
 
-    Args:
-        screen (pygame.Surface): The main game screen surface.
-        clock (pygame.time.Clock): The Pygame clock object for controlling FPS.
-        fonts (dict): A dictionary of loaded Pygame font objects.
-        game_elements_ref (dict): A dictionary containing all active game elements
-                                  (players, enemies, platforms, etc.).
-        app_status_obj (Any): An object with an 'app_running' boolean attribute
-                              to control the overall application loop.
-    """
-    info("CouchPlayLogic: Entering Couch Play mode.")
-    pygame.display.set_caption(f"Platformer - Couch Co-op (P1: {game_config.CURRENT_P1_INPUT_DEVICE}, P2: {game_config.CURRENT_P2_INPUT_DEVICE} | Reset: Mapped Keys / Q)")
-    current_width, current_height = screen.get_size()
+def run_couch_play_mode(
+    game_elements_ref: Dict[str, Any],
+    app_status_obj: Any,
+    get_p1_input_callback: callable,
+    get_p2_input_callback: callable,
+    get_p3_input_callback: callable,
+    get_p4_input_callback: callable,
+    process_qt_events_callback: callable,
+    dt_sec_provider: callable,
+    show_status_message_callback: Optional[callable] = None
+    ) -> bool:
 
-    # Get player instances from game_elements
-    p1 = game_elements_ref.get("player1")
-    p2 = game_elements_ref.get("player2")
+    if not game_elements_ref.get('game_ready_for_logic', False) or \
+       game_elements_ref.get('initialization_in_progress', True):
+        if _SCRIPT_LOGGING_ENABLED and (not hasattr(run_couch_play_mode, "_init_wait_logged_couch") or not run_couch_play_mode._init_wait_logged_couch): # type: ignore
+            log_debug("COUCH_PLAY: Waiting for game elements initialization to complete...")
+            run_couch_play_mode._init_wait_logged_couch = True # type: ignore
+        return True
 
-    couch_game_active = True
-    while couch_game_active and app_status_obj.app_running:
-        dt_sec = clock.tick(C.FPS) / 1000.0 # Delta time in seconds
-        now_ticks_couch = pygame.time.get_ticks() # Current game time in milliseconds
+    if hasattr(run_couch_play_mode, "_init_wait_logged_couch"):
+        delattr(run_couch_play_mode, "_init_wait_logged_couch")
 
-        # Get all Pygame events and current keyboard state
-        pygame_events = pygame.event.get()
-        keys_pressed = pygame.key.get_pressed()
+    log_debug(f"COUCH_PLAY: --- Start of frame {get_current_ticks_monotonic()} ---")
 
-        # Flags for universal actions (reset game, pause/exit mode)
-        any_player_requested_reset = False
-        any_player_requested_pause = False # Pause in couch mode usually means exit to menu
+    # Fetch game elements
+    player1: Optional[Player] = game_elements_ref.get("player1")
+    player2: Optional[Player] = game_elements_ref.get("player2")
+    player3: Optional[Player] = game_elements_ref.get("player3")
+    player4: Optional[Player] = game_elements_ref.get("player4")
+    platforms_list_this_frame: List[Any] = game_elements_ref.get("platforms_list", [])
+    ladders_list: List[Ladder] = game_elements_ref.get("ladders_list", [])
+    hazards_list: List[Lava] = game_elements_ref.get("hazards_list", [])
+    current_enemies_list_ref: List[Enemy] = game_elements_ref.get("enemy_list", []) # Renamed for clarity
+    statue_objects_list_ref: List[Statue] = game_elements_ref.get("statue_objects", []) # Renamed for clarity
+    projectiles_list: List[Any] = game_elements_ref.get("projectiles_list", [])
+    collectible_items_list_ref: List[Any] = game_elements_ref.get("collectible_list", [])
+    current_chest: Optional[Chest] = game_elements_ref.get("current_chest")
+    camera_obj: Optional[Any] = game_elements_ref.get("camera")
+    processed_custom_images_for_render: List[Dict[str,Any]] = game_elements_ref.get("processed_custom_images_for_render", [])
 
-        # --- Process Pygame Events for Global Actions (Escape, Q, debug keys) ---
-        for event in pygame_events:
-            if event.type == pygame.QUIT: # Window close button
-                couch_game_active = False
-                app_status_obj.app_running = False # Signal main app to quit
-                break
-            if event.type == pygame.VIDEORESIZE: # Window resized
-                if not screen.get_flags() & pygame.FULLSCREEN: # Ignore if fullscreen (resize often internal)
-                    current_width, current_height = max(320,event.w), max(240,event.h)
-                    screen = pygame.display.set_mode((current_width,current_height), pygame.RESIZABLE|pygame.DOUBLEBUF)
-                    if game_elements_ref.get("camera"): # Update camera with new screen dimensions
-                        game_elements_ref["camera"].set_screen_dimensions(current_width, current_height)
-            
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE: # K_ESCAPE exits couch play mode
-                    any_player_requested_pause = True 
-                    info("Couch Play: Global ESC key pressed, treating as pause/exit mode.")
-                    break # Stop processing further events this frame if exiting
-                
-                if event.key == pygame.K_q: # Developer reset key
-                    any_player_requested_reset = True
-                    info("Couch Play: Dev 'Q' key reset triggered.")
+    if _SCRIPT_LOGGING_ENABLED and (not hasattr(run_couch_play_mode, "_platform_debug_printed_couch") or not run_couch_play_mode._platform_debug_printed_couch) : # type: ignore
+        log_debug(f"COUCH_PLAY: First valid tick. Platforms (inc statues): {len(platforms_list_this_frame)}, Ladders: {len(ladders_list)}, Hazards: {len(hazards_list)}, Chest: {'Present' if current_chest else 'None'}, CustomImages: {len(processed_custom_images_for_render)}")
+        run_couch_play_mode._platform_debug_printed_couch = True # type: ignore
 
-                # Player-specific self-harm/heal debug keys (useful for testing)
-                if p1 and p1._valid_init:
-                    if event.key == pygame.K_h and hasattr(p1, 'self_inflict_damage'):
-                        p1.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
-                    if event.key == pygame.K_g and hasattr(p1, 'heal_to_full'):
-                        p1.heal_to_full()
-                if p2 and p2._valid_init:
-                    if event.key == pygame.K_n and hasattr(p2, 'self_inflict_damage'): # Different keys for P2 debug
-                        p2.self_inflict_damage(C.PLAYER_SELF_DAMAGE)
-                    if event.key == pygame.K_m and hasattr(p2, 'heal_to_full'):
-                        p2.heal_to_full()
+    dt_sec = dt_sec_provider()
+    current_game_time_ms = get_current_ticks_monotonic()
+
+    # --- Input Processing ---
+    p1_action_events: Dict[str, bool] = {}
+    if player1 and hasattr(player1, '_valid_init') and player1._valid_init:
+        p1_action_events = get_p1_input_callback(player1)
+
+    p2_action_events: Dict[str, bool] = {}
+    if player2 and hasattr(player2, '_valid_init') and player2._valid_init:
+        p2_action_events = get_p2_input_callback(player2)
+
+    p3_action_events: Dict[str, bool] = {}
+    if player3 and hasattr(player3, '_valid_init') and player3._valid_init:
+        p3_action_events = get_p3_input_callback(player3)
+
+    p4_action_events: Dict[str, bool] = {}
+    if player4 and hasattr(player4, '_valid_init') and player4._valid_init:
+        p4_action_events = get_p4_input_callback(player4)
+
+    # log_debug(f"COUCH_PLAY: P1_Actions={{k:v for k,v in p1_action_events.items() if v}}, P2_Actions={{k:v for k,v in p2_action_events.items() if v}}") # Example for P1/P2
+
+    if p1_action_events.get("pause") or p2_action_events.get("pause") or \
+       p3_action_events.get("pause") or p4_action_events.get("pause"):
+        log_info("Couch Play: Pause action detected. Signaling app to stop this game mode.")
+        if show_status_message_callback: show_status_message_callback("Exiting Couch Play...")
+        run_couch_play_mode._platform_debug_printed_couch = False
+        return False
+
+    if p1_action_events.get("reset") or p2_action_events.get("reset") or \
+       p3_action_events.get("reset") or p4_action_events.get("reset"):
+        log_info("Couch Play: Game state reset initiated by player action.")
+        reset_game_state(game_elements_ref)
+        # Re-fetch all list references as they would have been replaced by reset_game_state
+        player1 = game_elements_ref.get("player1"); player2 = game_elements_ref.get("player2")
+        player3 = game_elements_ref.get("player3"); player4 = game_elements_ref.get("player4")
+        platforms_list_this_frame = game_elements_ref.get("platforms_list", [])
+        ladders_list = game_elements_ref.get("ladders_list", [])
+        hazards_list = game_elements_ref.get("hazards_list", [])
+        current_enemies_list_ref = game_elements_ref.get("enemy_list", [])
+        statue_objects_list_ref = game_elements_ref.get("statue_objects", [])
+        projectiles_list = game_elements_ref.get("projectiles_list", [])
+        collectible_items_list_ref = game_elements_ref.get("collectible_list", [])
+        current_chest = game_elements_ref.get("current_chest")
+        processed_custom_images_for_render = game_elements_ref.get("processed_custom_images_for_render", [])
+        log_debug(f"COUCH_PLAY Reset: Enemies={len(current_enemies_list_ref)}, Statues={len(statue_objects_list_ref)}, CustomImages: {len(processed_custom_images_for_render)}")
+
+    # --- Chest Update ---
+    if current_chest and isinstance(current_chest, Chest) and current_chest.alive():
+        # ... (existing chest physics, crush logic, and platform collision) ...
+        # This part seems okay and remains unchanged.
+        current_chest.apply_physics_step(dt_sec)
+        chest_landed_on_player_and_killed = False
+        if not current_chest.is_collected_flag_internal and current_chest.state == 'closed':
+            player_instances_for_chest_check = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init and hasattr(p, 'alive') and p.alive() and not getattr(p, 'is_dead', True) and not getattr(p, 'is_petrified', False)]
+            for p_instance_crush_check in player_instances_for_chest_check:
+                if not (hasattr(current_chest, 'rect') and isinstance(current_chest.rect, QRectF) and hasattr(p_instance_crush_check, 'rect') and isinstance(p_instance_crush_check.rect, QRectF)): continue
+                if current_chest.rect.intersects(p_instance_crush_check.rect):
+                    is_chest_falling_meaningfully = hasattr(current_chest, 'vel_y') and current_chest.vel_y > 1.0
+                    vertical_overlap_landing = current_chest.rect.bottom() >= p_instance_crush_check.rect.top() and current_chest.rect.top() < p_instance_crush_check.rect.bottom()
+                    is_landing_on_head_area = vertical_overlap_landing and current_chest.rect.bottom() <= p_instance_crush_check.rect.top() + (p_instance_crush_check.rect.height() * 0.6)
+                    min_horizontal_overlap_for_crush = current_chest.rect.width() * 0.3
+                    actual_horizontal_overlap_for_crush = min(current_chest.rect.right(), p_instance_crush_check.rect.right()) - max(current_chest.rect.left(), p_instance_crush_check.rect.left())
+                    has_sufficient_horizontal_overlap = actual_horizontal_overlap_for_crush >= min_horizontal_overlap_for_crush
+                    if is_chest_falling_meaningfully and is_landing_on_head_area and has_sufficient_horizontal_overlap:
+                        player_height_for_calc = getattr(p_instance_crush_check, 'standing_collision_height', float(C.TILE_SIZE) * 1.5);                        
+                        if player_height_for_calc <= 0: player_height_for_calc = 60.0
+                        required_fall_distance = 2.0 * player_height_for_calc
+                        try: gravity_val = float(C.PLAYER_GRAVITY); min_vel_y_for_kill_sq = 2 * gravity_val * required_fall_distance; vel_y_for_kill_threshold = math.sqrt(min_vel_y_for_kill_sq) if min_vel_y_for_kill_sq > 0 else 0.0
+                        except ValueError: vel_y_for_kill_threshold = 10.0
+                        if current_chest.vel_y >= vel_y_for_kill_threshold:
+                            if hasattr(p_instance_crush_check, 'insta_kill'): p_instance_crush_check.insta_kill()
+                            else: p_instance_crush_check.take_damage(p_instance_crush_check.max_health * 10)
+                            current_chest.rect.moveBottom(p_instance_crush_check.rect.top())
+                            if hasattr(current_chest, 'pos_midbottom'): current_chest.pos_midbottom.setY(current_chest.rect.bottom())
+                            current_chest.vel_y = 0.0; current_chest.on_ground = True; chest_landed_on_player_and_killed = True
+                            if hasattr(current_chest, '_update_rect_from_image_and_pos'): current_chest._update_rect_from_image_and_pos()
+                            break
+        current_chest.on_ground = False
+        if chest_landed_on_player_and_killed: current_chest.on_ground = True
+        if not chest_landed_on_player_and_killed and not current_chest.is_collected_flag_internal and current_chest.state == 'closed':
+            for platform_collidable in platforms_list_this_frame:
+                if isinstance(platform_collidable, Statue) and platform_collidable.is_smashed: continue
+                if not hasattr(platform_collidable, 'rect') or not isinstance(platform_collidable.rect, QRectF): continue
+                if current_chest.rect.intersects(platform_collidable.rect):
+                    previous_chest_bottom_y_estimate = current_chest.rect.bottom() - (current_chest.vel_y * dt_sec * C.FPS if current_chest.vel_y > 0 else 0)
+                    if current_chest.vel_y >= 0 and current_chest.rect.bottom() >= platform_collidable.rect.top() and previous_chest_bottom_y_estimate <= platform_collidable.rect.top() + C.GROUND_SNAP_THRESHOLD :
+                        min_overlap_ratio_chest = 0.1; min_horizontal_overlap_chest = current_chest.rect.width() * min_overlap_ratio_chest
+                        actual_overlap_width_chest = min(current_chest.rect.right(), platform_collidable.rect.right()) - max(current_chest.rect.left(), platform_collidable.rect.left())
+                        if actual_overlap_width_chest >= min_horizontal_overlap_chest:
+                            current_chest.rect.moveBottom(platform_collidable.rect.top())
+                            if hasattr(current_chest, 'pos_midbottom'): current_chest.pos_midbottom.setY(current_chest.rect.bottom())
+                            current_chest.vel_y = 0.0; current_chest.on_ground = True; break
+            if hasattr(current_chest, '_update_rect_from_image_and_pos'): current_chest._update_rect_from_image_and_pos()
+        current_chest.update(dt_sec) # Animation and state
+        if current_chest.state == 'closed' and not current_chest.is_collected_flag_internal:
+            player_interacted_chest: Optional[Player] = None
+            player_action_pairs = [(player1, p1_action_events), (player2, p2_action_events), (player3, p3_action_events), (player4, p4_action_events)]
+            interaction_chest_rect_couch = QRectF(current_chest.rect).adjusted(-5, -5, 5, 5)
+            for p_instance_chest, p_actions_chest in player_action_pairs:
+                if p_instance_chest and hasattr(p_instance_chest, 'alive') and p_instance_chest.alive() and not getattr(p_instance_chest, 'is_dead', True) and not getattr(p_instance_chest,'is_petrified',False) and hasattr(p_instance_chest, 'rect') and p_instance_chest.rect.intersects(interaction_chest_rect_couch) and p_actions_chest.get("interact", False):
+                    player_interacted_chest = p_instance_chest; break
+            if player_interacted_chest:
+                current_chest.collect(player_interacted_chest)
+    # --- End Chest Update ---
+
+    # --- Player Updates ---
+    active_players_for_collision_check = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init and hasattr(p, 'alive') and p.alive()]
+    player_instances_to_update = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init]
+
+    # --- MODIFIED: Create comprehensive target list for player attacks ---
+    hittable_targets_for_player_melee: List[Any] = []
+    hittable_targets_for_player_melee.extend(
+        [e for e in current_enemies_list_ref if hasattr(e, 'alive') and e.alive()]
+    )
+    hittable_targets_for_player_melee.extend(
+        [s for s in statue_objects_list_ref if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)]
+    )
+    # --- END MODIFICATION ---
+
+    for p_instance in player_instances_to_update:
+        all_others_for_this_player = [other_p for other_p in active_players_for_collision_check if other_p is not p_instance]
+        # Add chest to "other characters" for player's collision checks if it's closed and solid
+        if current_chest and current_chest.alive() and current_chest.state == 'closed':
+            all_others_for_this_player.append(current_chest)
         
-        # Exit main loop if app quit or couch mode ended by global ESC
-        if not app_status_obj.app_running or not couch_game_active: break
-        if any_player_requested_pause: # If global ESC was pressed to pause/exit
-            couch_game_active = False; break
-
-
-        # --- Process P1 input ---
-        p1_action_events: Dict[str, bool] = {} # Stores one-time events like "jump_pressed"
-        if p1 and p1._valid_init and hasattr(p1, 'process_input'):
-            # process_input is called even if P1 is dead to capture universal events like reset/pause
-            p1_action_events = p1.process_input(pygame_events, game_elements_ref.get("platform_sprites", pygame.sprite.Group()), keys_pressed_override=keys_pressed)
+        p_instance.game_elements_ref_for_projectiles = game_elements_ref # Ensure this is set for projectile spawning
         
-        # Check for universal events (pause/reset) from P1's input
-        if p1_action_events.get("pause"):
-            any_player_requested_pause = True
-            info("Couch Play: P1 pause action detected from input.")
-        if p1_action_events.get("reset"):
-            any_player_requested_reset = True
-            info("Couch Play: P1 reset action detected from input.")
-        
-        if any_player_requested_pause: # Check if P1 paused the game
-            couch_game_active = False; break
+        # Pass the comprehensive hittable_targets list
+        p_instance.update(dt_sec, 
+                          platforms_list_this_frame, 
+                          ladders_list, 
+                          hazards_list, 
+                          all_others_for_this_player, 
+                          hittable_targets_for_player_melee) # MODIFIED
+    log_debug(f"COUCH_PLAY: Players updated.")
 
+    # --- Enemy Updates ---
+    active_players_for_ai = [p for p in player_instances_to_update if not getattr(p, 'is_dead', True) and hasattr(p, 'alive') and p.alive()]
+    enemies_to_keep_this_frame = []
+    for enemy_instance in list(current_enemies_list_ref):
+        if hasattr(enemy_instance, '_valid_init') and enemy_instance._valid_init:
+            enemy_instance.update(dt_sec, active_players_for_ai, platforms_list_this_frame, hazards_list, current_enemies_list_ref)
+            if hasattr(enemy_instance, 'alive') and enemy_instance.alive():
+                enemies_to_keep_this_frame.append(enemy_instance)
+    game_elements_ref["enemy_list"] = enemies_to_keep_this_frame
+    log_debug(f"COUCH_PLAY: Enemies updated. Count: {len(enemies_to_keep_this_frame)}")
 
-        # --- Process P2 input ---
-        p2_action_events: Dict[str, bool] = {}
-        if p2 and p2._valid_init and hasattr(p2, 'process_input') and p2.control_scheme is not None:
-            # process_input called even if P2 is dead for reset/pause events
-            p2_action_events = p2.process_input(pygame_events, game_elements_ref.get("platform_sprites", pygame.sprite.Group()), keys_pressed_override=keys_pressed)
-
-        # Check for universal events (pause/reset) from P2's input
-        if p2_action_events.get("pause"):
-            any_player_requested_pause = True
-            info("Couch Play: P2 pause action detected from input.")
-        if p2_action_events.get("reset"):
-            any_player_requested_reset = True
-            info("Couch Play: P2 reset action detected from input.")
-
-        if any_player_requested_pause: # Check if P2 paused the game
-            couch_game_active = False; break
-
-
-        # --- Game Action Logic ---
-        if any_player_requested_reset:
-            info("Couch Play: Game state reset initiated.")
-            # reset_game_state handles resetting players, enemies, chest
-            game_elements_ref["current_chest"] = reset_game_state(game_elements_ref)
-            # Ensure players are re-added to sprite groups if they were killed then reset
-            if p1 and p1._valid_init and not p1.alive(): game_elements_ref.get("all_sprites", pygame.sprite.Group()).add(p1)
-            if p2 and p2._valid_init and not p2.alive(): game_elements_ref.get("all_sprites", pygame.sprite.Group()).add(p2)
-
-        # --- Update P1 (Host player) ---
-        # P1's Player.update method handles physics, state changes based on input, etc.
-        # Input events (p1_action_events) are not directly passed to update; Player.update
-        # relies on Player attributes set by its own process_input call.
-        if p1 and p1._valid_init: 
-            other_players_for_p1_update = [char for char in [p2] if char and char._valid_init and char.alive() and char is not p1]
-            p1.game_elements_ref_for_projectiles = game_elements_ref # For projectile spawning
-            p1.update(dt_sec, game_elements_ref.get("platform_sprites", pygame.sprite.Group()),
-                      game_elements_ref.get("ladder_sprites", pygame.sprite.Group()),
-                      game_elements_ref.get("hazard_sprites", pygame.sprite.Group()),
-                      other_players_for_p1_update, # List of other players for collision
-                      game_elements_ref.get("enemy_list", [])) # List of enemies for collision/targeting
-
-        # --- Update P2 (Second local player) ---
-        if p2 and p2._valid_init:
-            other_players_for_p2_update = [char for char in [p1] if char and char._valid_init and char.alive() and char is not p2]
-            p2.game_elements_ref_for_projectiles = game_elements_ref
-            p2.update(dt_sec, game_elements_ref.get("platform_sprites", pygame.sprite.Group()),
-                      game_elements_ref.get("ladder_sprites", pygame.sprite.Group()),
-                      game_elements_ref.get("hazard_sprites", pygame.sprite.Group()),
-                      other_players_for_p2_update,
-                      game_elements_ref.get("enemy_list", []))
-
-        # --- Update Enemies ---
-        active_players_for_enemy_ai = [char for char in [p1, p2] if char and char._valid_init and not char.is_dead and char.alive()]
-        for enemy_couch in list(game_elements_ref.get("enemy_list", [])): # Iterate copy if list can be modified
-            if enemy_couch._valid_init:
-                enemy_couch.update(dt_sec, active_players_for_enemy_ai,
-                                   game_elements_ref.get("platform_sprites", pygame.sprite.Group()),
-                                   game_elements_ref.get("hazard_sprites", pygame.sprite.Group()),
-                                   game_elements_ref.get("enemy_list", [])) # Pass list of all enemies for enemy-enemy collision
-                # Server-authoritative removal of enemies if their death animation is finished
-                if enemy_couch.is_dead and hasattr(enemy_couch, 'death_animation_finished') and \
-                   enemy_couch.death_animation_finished and enemy_couch.alive():
-                    debug(f"Couch Play: Auto-killing enemy {enemy_couch.enemy_id} as death anim finished.")
-                    enemy_couch.kill() # Remove from all sprite groups
-
-        # --- Update Statues ---
-        statue_objects_list_couch: List[Statue] = game_elements_ref.get("statue_objects", [])
-        for statue_instance_couch in statue_objects_list_couch:
+    # --- Statue Updates ---
+    statues_to_keep_this_frame_couch = []
+    statues_killed_this_frame_couch = []
+    for statue_instance_couch in list(statue_objects_list_ref):
+        if hasattr(statue_instance_couch, 'alive') and statue_instance_couch.alive():
+            if hasattr(statue_instance_couch, 'apply_physics_step') and not statue_instance_couch.is_smashed:
+                statue_instance_couch.apply_physics_step(dt_sec, platforms_list_this_frame)
             if hasattr(statue_instance_couch, 'update'):
-                statue_instance_couch.update(dt_sec) # Handles smash animation and self.kill()
+                statue_instance_couch.update(dt_sec)
+            if statue_instance_couch.alive():
+                statues_to_keep_this_frame_couch.append(statue_instance_couch)
+            else:
+                statues_killed_this_frame_couch.append(statue_instance_couch)
+    game_elements_ref["statue_objects"] = statues_to_keep_this_frame_couch
+    if statues_killed_this_frame_couch:
+        current_main_platforms = game_elements_ref.get("platforms_list", [])
+        new_main_platforms_list = [p for p in current_main_platforms if not (isinstance(p, Statue) and p in statues_killed_this_frame_couch)]
+        if len(new_main_platforms_list) != len(current_main_platforms):
+            game_elements_ref["platforms_list"] = new_main_platforms_list
+            platforms_list_this_frame = new_main_platforms_list
+    log_debug(f"COUCH_PLAY: Statues updated. Count: {len(statues_to_keep_this_frame_couch)}")
 
-        # --- Update Projectiles ---
-        # Create a group of all characters/objects that projectiles can hit
-        hittable_targets_couch_group = pygame.sprite.Group()
-        if p1 and p1.alive() and p1._valid_init and not getattr(p1, 'is_petrified', False): hittable_targets_couch_group.add(p1)
-        if p2 and p2.alive() and p2._valid_init and not getattr(p2, 'is_petrified', False): hittable_targets_couch_group.add(p2)
-        
-        for enemy_instance_proj_target in game_elements_ref.get("enemy_list", []):
-            if enemy_instance_proj_target and enemy_instance_proj_target.alive() and \
-               enemy_instance_proj_target._valid_init and not getattr(enemy_instance_proj_target, 'is_petrified', False):
-                hittable_targets_couch_group.add(enemy_instance_proj_target)
-        
-        for statue_target_couch in statue_objects_list_couch: # Add active statues to hittable group
-            if statue_target_couch.alive() and hasattr(statue_target_couch, 'is_smashed') and \
-               not statue_target_couch.is_smashed: # Can only hit non-smashed statues
-                hittable_targets_couch_group.add(statue_target_couch)
-        
-        # Ensure projectiles have access to game elements (e.g., for spawning sub-projectiles if any)
-        for proj_instance_couch in game_elements_ref.get("projectile_sprites", pygame.sprite.Group()):
-            if hasattr(proj_instance_couch, 'game_elements_ref') and proj_instance_couch.game_elements_ref is None:
-                proj_instance_couch.game_elements_ref = game_elements_ref
-        
-        game_elements_ref.get("projectile_sprites", pygame.sprite.Group()).update(
-            dt_sec, game_elements_ref.get("platform_sprites", pygame.sprite.Group()), hittable_targets_couch_group
-        )
+    # --- Projectile Updates ---
+    hittable_targets_for_projectiles: List[Any] = []
+    for p_target in player_instances_to_update:
+        if hasattr(p_target, 'alive') and p_target.alive() and not getattr(p_target, 'is_petrified', False):
+            hittable_targets_for_projectiles.append(p_target)
+    for enemy_target in game_elements_ref.get("enemy_list",[]):
+        if hasattr(enemy_target, 'alive') and enemy_target.alive() and not getattr(enemy_target, 'is_petrified', False):
+            hittable_targets_for_projectiles.append(enemy_target)
+    for statue_target in game_elements_ref.get("statue_objects", []):
+        if hasattr(statue_target, 'alive') and statue_target.alive() and not getattr(statue_target, 'is_smashed', False):
+            hittable_targets_for_projectiles.append(statue_target)
+    projectiles_to_keep_this_frame = []
+    for proj_instance in list(projectiles_list):
+        if hasattr(proj_instance, 'update') and hasattr(proj_instance, 'alive') and proj_instance.alive():
+            proj_instance.update(dt_sec, platforms_list_this_frame, hittable_targets_for_projectiles)
+        if hasattr(proj_instance, 'alive') and proj_instance.alive():
+            projectiles_to_keep_this_frame.append(proj_instance)
+    game_elements_ref["projectiles_list"] = projectiles_to_keep_this_frame
+    log_debug(f"COUCH_PLAY: Projectiles updated. Count: {len(projectiles_to_keep_this_frame)}")
 
-        # --- Update Collectibles (Chests, etc.) ---
-        game_elements_ref.get("collectible_sprites", pygame.sprite.Group()).update(dt_sec)
+    # --- Collectibles (Chest) ---
+    collectibles_to_keep = []
+    if current_chest and current_chest.alive():
+        collectibles_to_keep.append(current_chest)
+    game_elements_ref["collectible_list"] = collectibles_to_keep
+    if not (current_chest and current_chest.alive()):
+        game_elements_ref["current_chest"] = None
+    log_debug(f"COUCH_PLAY: Collectibles updated. Chest present: {bool(game_elements_ref.get('current_chest'))}")
 
-        # --- Chest Interaction Logic ---
-        # Uses action_events captured earlier from player input processing.
-        couch_current_chest = game_elements_ref.get("current_chest")
-        if isinstance(couch_current_chest, Chest) and couch_current_chest.alive() and \
-           not couch_current_chest.is_collected_flag_internal: # Check if chest can be collected
-            
-            player_who_interacted_with_chest_couch = None
-            # Check P1 interaction
-            if p1 and p1._valid_init and not p1.is_dead and p1.alive() and not getattr(p1, 'is_petrified', False) and \
-               pygame.sprite.collide_rect(p1, couch_current_chest) and p1_action_events.get("interact", False):
-                player_who_interacted_with_chest_couch = p1
-            # Check P2 interaction (if P1 didn't already interact this frame)
-            elif p2 and p2._valid_init and not p2.is_dead and p2.alive() and not getattr(p2, 'is_petrified', False) and \
-                 pygame.sprite.collide_rect(p2, couch_current_chest) and p2_action_events.get("interact", False):
-                player_who_interacted_with_chest_couch = p2
-            
-            if player_who_interacted_with_chest_couch:
-                couch_current_chest.collect(player_who_interacted_with_chest_couch) # Trigger chest collection
+    # --- Camera Update ---
+    if camera_obj:
+        # ... (existing camera focus logic remains the same) ...
+        focus_targets_alive_couch = [p for p in player_instances_to_update if p and hasattr(p, 'alive') and p.alive() and not getattr(p, 'is_dead', True) and not getattr(p, 'is_petrified', False)]
+        if focus_targets_alive_couch:
+            focus_target_for_camera_couch = focus_targets_alive_couch[0]
+            for p_idx_focus_couch in range(len(focus_targets_alive_couch)):
+                current_p_for_cam_focus = focus_targets_alive_couch[p_idx_focus_couch]
+                if current_p_for_cam_focus.player_id == 1: focus_target_for_camera_couch = current_p_for_cam_focus; break
+                if current_p_for_cam_focus.player_id == 2 and focus_target_for_camera_couch.player_id != 1: focus_target_for_camera_couch = current_p_for_cam_focus
+                elif current_p_for_cam_focus.player_id == 3 and focus_target_for_camera_couch.player_id not in [1,2]: focus_target_for_camera_couch = current_p_for_cam_focus
+                elif current_p_for_cam_focus.player_id == 4 and focus_target_for_camera_couch.player_id not in [1,2,3]: focus_target_for_camera_couch = current_p_for_cam_focus
+            camera_obj.update(focus_target_for_camera_couch)
+        else: camera_obj.static_update()
+    log_debug(f"COUCH_PLAY: Camera updated.")
 
-        # --- Update Camera ---
-        couch_camera = game_elements_ref.get("camera")
-        if couch_camera:
-            camera_focus_target_couch = None
-            # Prioritize P1 if alive and not dead/petrified
-            if p1 and p1.alive() and p1._valid_init and not p1.is_dead and not getattr(p1, 'is_petrified', False):
-                camera_focus_target_couch = p1
-            # Else, try P2 if alive and not dead/petrified
-            elif p2 and p2.alive() and p2._valid_init and not p2.is_dead and not getattr(p2, 'is_petrified', False):
-                camera_focus_target_couch = p2
-            # Fallbacks if primary targets are dead/petrified (still show them if they exist)
-            elif p1 and p1.alive() and p1._valid_init and (p1.is_dead or getattr(p1, 'is_petrified', False)):
-                 camera_focus_target_couch = p1
-            elif p2 and p2.alive() and p2._valid_init and (p2.is_dead or getattr(p2, 'is_petrified', False)):
-                 camera_focus_target_couch = p2
-            
-            if camera_focus_target_couch: couch_camera.update(camera_focus_target_couch)
-            else: couch_camera.static_update() # If no valid target, camera remains static
+    # --- Assemble Renderables ---
+    new_all_renderables_couch: List[Any] = []
+    new_all_renderables_couch.extend(game_elements_ref.get("background_tiles_list", []))
+    new_all_renderables_couch.extend(game_elements_ref.get("ladders_list", []))
+    new_all_renderables_couch.extend(game_elements_ref.get("hazards_list", []))
+    new_all_renderables_couch.extend(game_elements_ref.get("platforms_list", []))
+    new_all_renderables_couch.extend(game_elements_ref.get("processed_custom_images_for_render", []))
+    new_all_renderables_couch.extend(game_elements_ref.get("enemy_list", []))
+    new_all_renderables_couch.extend(game_elements_ref.get("statue_objects", []))
+    new_all_renderables_couch.extend(game_elements_ref.get("collectible_list", []))
+    new_all_renderables_couch.extend(game_elements_ref.get("projectiles_list", []))
+    for p_render_couch in player_instances_to_update:
+        if p_render_couch and hasattr(p_render_couch, 'alive') and p_render_couch.alive():
+            new_all_renderables_couch.append(p_render_couch)
+        elif p_render_couch and getattr(p_render_couch, 'is_dead', False) and \
+             not getattr(p_render_couch, 'death_animation_finished', True):
+            new_all_renderables_couch.append(p_render_couch)
+    try:
+        new_all_renderables_couch.sort(key=get_layer_order_key)
+    except Exception as e_sort:
+        log_error(f"COUCH_PLAY: Error sorting renderables: {e_sort}. Render order might be incorrect.")
+    game_elements_ref["all_renderable_objects"] = new_all_renderables_couch
+    log_debug(f"COUCH_PLAY: Assembled renderables. Count: {len(game_elements_ref['all_renderable_objects'])}")
 
-        # --- Draw Scene ---
-        try:
-            game_ui.draw_platformer_scene_on_surface(screen, game_elements_ref, fonts, now_ticks_couch)
-        except Exception as e_draw:
-            error(f"Couch Play draw error: {e_draw}", exc_info=True)
-            couch_game_active=False; break # Critical draw error, exit mode
-        
-        pygame.display.flip() # Update the full display
+    # # --- Game Over Check ---
+    # # ... (existing game over check logic remains the same) ...
+    # def is_player_truly_gone_couch(p_instance_couch):
+    #     if not p_instance_couch or not hasattr(p_instance_couch, '_valid_init') or not p_instance_couch._valid_init: return True
+    #     if hasattr(p_instance_couch, 'alive') and p_instance_couch.alive():
+    #         if getattr(p_instance_couch, 'is_dead', False):
+    #             if getattr(p_instance_couch, 'is_petrified', False) and not getattr(p_instance_couch, 'is_stone_smashed', False): return False
+    #             elif not getattr(p_instance_couch, 'death_animation_finished', True): return False
+    #         else: return False
+    #     return True
+    # num_players_for_mode = game_elements_ref.get('num_active_players_for_mode', 2)
+    # active_player_instances_in_map_couch = [p for p_idx, p in enumerate([player1,player2,player3,player4]) if p_idx < num_players_for_mode and p and hasattr(p, '_valid_init') and p._valid_init]
+    # if not active_player_instances_in_map_couch:
+    #     log_info(f"Couch Play: No active player instances for this mode ({num_players_for_mode} players). Game Over by default.")
+    #     if show_status_message_callback: show_status_message_callback(f"Game Over! No active players.")
+    #     run_couch_play_mode._platform_debug_printed_couch = False
+    #     return False
+    # all_active_players_are_gone_couch = True
+    # for p_active_inst_couch in active_player_instances_in_map_couch:
+    #     if not is_player_truly_gone_couch(p_active_inst_couch): all_active_players_are_gone_couch = False; break
+    # if all_active_players_are_gone_couch:
+    #     log_info(f"Couch Play: All {len(active_player_instances_in_map_couch)} active players are gone. Game Over.")
+    #     if show_status_message_callback: show_status_message_callback(f"Game Over! All {len(active_player_instances_in_map_couch)} players defeated.")
+    #     process_qt_events_callback(); time.sleep(1.5); run_couch_play_mode._platform_debug_printed_couch = False
+    #     return False
 
-    info("CouchPlayLogic: Exiting Couch Play mode.")
-    # Game elements (players, enemies, etc.) persist in game_elements_ref
-    # for potential reuse or cleanup by the main loop.
+    log_debug(f"COUCH_PLAY: --- End of frame {get_current_ticks_monotonic()} ---")
+    return True

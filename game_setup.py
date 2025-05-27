@@ -1,410 +1,434 @@
 # game_setup.py
 # -*- coding: utf-8 -*-
 """
-Handles initialization of game elements, levels, and entities.
-version 1.0.0.8 (Set player control_scheme and joystick_id_idx from game_config)
-version 1.0.0.9 (Corrected map data unpacking to fix TypeError)
+Handles initialization and FULL RE-INITIALIZATION (reset) of game elements,
+levels, and entities. Employs aggressive cache busting for map reloading.
+Map paths now use map_name_folder/map_name_file.py structure.
+MODIFIED: Adds map-defined Statues to platforms_list (only if not smashed).
+MODIFIED: Processes custom_images_list from map data for rendering.
+MODIFIED: Sorts all_renderable_objects by layer_order.
+MODIFIED: Enhanced logging for custom image processing and path handling.
 """
+# version 2.0.11 (Enhanced logging for custom image processing and path handling)
 import sys
-import pygame
-import random
-import traceback
+import os
+import importlib # For importlib.invalidate_caches()
+import gc # Garbage Collector
+from typing import Dict, Optional, Any, Tuple, List
+
+# PySide6 imports for custom image processing
+from PySide6.QtGui import QImage, QPixmap, QTransform, QColor
+from PySide6.QtCore import Qt, QRectF
+
+# Game-specific imports
 import constants as C
 from player import Player
 from enemy import Enemy
 from items import Chest
-from statue import Statue # Import the Statue class
-# import levels as LevelLoader # Not used directly if using importlib
+from statue import Statue
 from camera import Camera
-from typing import Dict, Optional, Any, Tuple, List
-import importlib
-import config as game_config # Import the game config
+from level_loader import LevelLoader
+import config as game_config
 
+from tiles import Platform, Ladder, Lava, BackgroundTile
 
-DEFAULT_LEVEL_MODULE_NAME = "level_default" # A fallback map if specific one fails
+DEFAULT_LEVEL_MODULE_NAME = "original" # Or your preferred default map name
 
 try:
     from logger import info, debug, warning, critical, error
 except ImportError:
-    print("CRITICAL GAME_SETUP: logger.py not found. Falling back to print statements for logging.")
-    def info(msg): print(f"INFO: {msg}")
-    def debug(msg): print(f"DEBUG: {msg}")
-    def warning(msg): print(f"WARNING: {msg}")
-    def critical(msg): print(f"CRITICAL: {msg}")
-    def error(msg): print(f"ERROR: {msg}")
+    import logging
+    logging.basicConfig(level=logging.DEBUG, format='GAME_SETUP (Fallback): %(levelname)s - %(message)s')
+    _fallback_logger_gs = logging.getLogger(__name__ + "_fallback_gs")
+    def info(msg, *args, **kwargs): _fallback_logger_gs.info(msg, *args, **kwargs)
+    def debug(msg, *args, **kwargs): _fallback_logger_gs.debug(msg, *args, **kwargs)
+    def warning(msg, *args, **kwargs): _fallback_logger_gs.warning(msg, *args, **kwargs)
+    def critical(msg, *args, **kwargs): _fallback_logger_gs.critical(msg, *args, **kwargs)
+    def error(msg, *args, **kwargs): _fallback_logger_gs.error(msg, *args, **kwargs)
+    critical("GameSetup: Failed to import project's logger. Using isolated fallback.")
 
-def initialize_game_elements(current_width: int, current_height: int,
-                             for_game_mode: str = "unknown",
-                             existing_sprites_groups: Optional[Dict[str, Any]] = None,
-                             map_module_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
+def add_to_renderables_if_new(obj_to_add: Any, renderables_list_ref: List[Any]):
+    """Helper to prevent duplicates in all_renderable_objects list."""
+    if obj_to_add is not None and obj_to_add not in renderables_list_ref:
+        renderables_list_ref.append(obj_to_add)
+
+def get_layer_order_key(item: Any) -> int:
     """
-    Initializes all game elements including players, enemies, items, platforms,
-    and camera based on the selected map and game mode.
-
-    Args:
-        current_width (int): Current width of the game screen.
-        current_height (int): Current height of the game screen.
-        for_game_mode (str): The mode for which elements are being set up
-                             (e.g., "host", "couch_play", "join_lan").
-        existing_sprites_groups (Optional[Dict[str, Any]]):
-            A dictionary of sprite groups from a previous state, used for
-            preserving projectiles or other specific elements across resets/reloads.
-        map_module_name (Optional[str]): The name of the map module to load (e.g., "level_default").
-
-    Returns:
-        Optional[Dict[str, Any]]: A dictionary containing all initialized game elements,
-                                 or None if a critical error occurs.
+    Key function for sorting renderable objects by layer_order.
+    Higher values are drawn on top.
     """
-    info(f"GameSetup: Initializing elements. Mode: '{for_game_mode}', Screen: {current_width}x{current_height}, Requested Map: '{map_module_name}'")
+    if isinstance(item, dict) and 'layer_order' in item:
+        return item['layer_order']
+    if isinstance(item, Player):
+        return 100
+    direct_layer_order = getattr(item, 'layer_order', None)
+    if direct_layer_order is not None:
+        return int(direct_layer_order)
+    properties_dict = getattr(item, 'properties', None)
+    if isinstance(properties_dict, dict):
+        return int(properties_dict.get('layer_order', 0))
+    if hasattr(item, 'projectile_id'): return 90
+    if isinstance(item, Enemy): return 10
+    if isinstance(item, Statue): return 9
+    if isinstance(item, Chest): return 8
+    if isinstance(item, Platform): return -5
+    if isinstance(item, Ladder): return -6
+    if isinstance(item, Lava): return -7
+    if isinstance(item, BackgroundTile): return -10
+    return 0
 
-    # Initialize sprite groups
-    platform_sprites = pygame.sprite.Group()
-    ladder_sprites = pygame.sprite.Group()
-    hazard_sprites = pygame.sprite.Group()
-    enemy_sprites = pygame.sprite.Group() # For enemies specifically
-    collectible_sprites = pygame.sprite.Group() # For chests, etc.
-    statue_objects_list: List[Statue] = [] # List to hold Statue instances
 
-    projectile_sprites_from_existing = existing_sprites_groups.get('projectile_sprites') if existing_sprites_groups else None
-    all_sprites_from_existing = existing_sprites_groups.get('all_sprites') if existing_sprites_groups else None
+def initialize_game_elements(
+    current_width: int,
+    current_height: int,
+    game_elements_ref: Dict[str, Any],
+    for_game_mode: str = "unknown",
+    map_module_name: Optional[str] = None
+) -> bool:
+    current_map_to_load = map_module_name
+    if not current_map_to_load:
+        current_map_to_load = game_elements_ref.get("map_name", game_elements_ref.get("loaded_map_name"))
+        if not current_map_to_load:
+            current_map_to_load = DEFAULT_LEVEL_MODULE_NAME
+            info(f"GameSetup: No specific map name for (re)load, defaulting to '{DEFAULT_LEVEL_MODULE_NAME}'.")
 
-    projectile_sprites = projectile_sprites_from_existing if isinstance(projectile_sprites_from_existing, pygame.sprite.Group) else pygame.sprite.Group()
-    all_sprites = all_sprites_from_existing if isinstance(all_sprites_from_existing, pygame.sprite.Group) else pygame.sprite.Group()
+    info(f"GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---")
+    info(f"GameSetup: Mode: '{for_game_mode}', Screen: {current_width}x{current_height}, Target Map Folder/Stem: '{current_map_to_load}'")
 
-    debug(f"GameSetup: Initial projectile_sprites count: {len(projectile_sprites.sprites())}")
-    debug(f"GameSetup: Initial all_sprites count: {len(all_sprites.sprites())}")
+    # --- Determine absolute path to the base "maps" directory ---
+    maps_base_dir_abs = str(getattr(C, "MAPS_DIR", "maps"))
+    if not os.path.isabs(maps_base_dir_abs):
+        # If C.PROJECT_ROOT is not set or empty, derive from this file's location (assuming specific project structure)
+        project_root_from_constants = getattr(C, 'PROJECT_ROOT', None)
+        if not project_root_from_constants: # Fallback if C.PROJECT_ROOT is empty or not set
+            project_root_from_constants = os.path.dirname(os.path.abspath(__file__)) # Assumes game_setup.py is in project root
+            # If game_setup.py is in a subfolder (e.g., 'game_logic'), adjust this:
+            # project_root_from_constants = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            warning(f"GameSetup: C.PROJECT_ROOT not found or empty. Guessed project root for maps: {project_root_from_constants}")
 
-    debug("GameSetup: Clearing sprite groups (except projectile_sprites and all_sprites initially)...")
-    player1_to_kill = existing_sprites_groups.get('player1') if existing_sprites_groups else None
-    if player1_to_kill and hasattr(player1_to_kill, 'kill'): player1_to_kill.kill()
+        maps_base_dir_abs = os.path.join(project_root_from_constants, maps_base_dir_abs)
+    maps_base_dir_abs = os.path.normpath(maps_base_dir_abs) # Normalize path
+    debug(f"GameSetup: Resolved absolute base maps directory to: {maps_base_dir_abs}")
+    # --- End Base Maps Directory Determination ---
 
-    player2_to_kill = existing_sprites_groups.get('player2') if existing_sprites_groups else None
-    if player2_to_kill and hasattr(player2_to_kill, 'kill'): player2_to_kill.kill()
+    debug("GameSetup: Clearing all existing game elements from game_elements_ref...")
+    for i in range(1, 5):
+        player_key = f"player{i}"
+        if player_key in game_elements_ref:
+            if isinstance(game_elements_ref[player_key], Player) and hasattr(game_elements_ref[player_key], 'reset_for_new_game_or_round'):
+                game_elements_ref[player_key].reset_for_new_game_or_round()
+            game_elements_ref[player_key] = None
+    game_elements_ref["camera"] = None
+    game_elements_ref["current_chest"] = None
+    game_elements_ref["level_data"] = None
+    list_keys_to_reinitialize = [
+        "enemy_list", "statue_objects", "collectible_list", "projectiles_list",
+        "platforms_list", "ladders_list", "hazards_list", "background_tiles_list",
+        "all_renderable_objects", "enemy_spawns_data_cache", "statue_spawns_data_cache",
+        "processed_custom_images_for_render"
+    ]
+    for key in list_keys_to_reinitialize:
+        game_elements_ref[key] = []
+    game_elements_ref['initialization_in_progress'] = True
+    game_elements_ref['game_ready_for_logic'] = False
+    game_elements_ref['camera_level_dims_set'] = False
+    gc.collect()
+    debug("GameSetup: Existing game elements cleared and lists re-initialized.")
 
-    current_chest_to_kill = existing_sprites_groups.get('current_chest') if existing_sprites_groups else None
-    if current_chest_to_kill and hasattr(current_chest_to_kill, 'kill'): current_chest_to_kill.kill()
+    level_data: Optional[Dict[str, Any]] = None
+    loader = LevelLoader()
 
-    for group in [platform_sprites, ladder_sprites, hazard_sprites, enemy_sprites, collectible_sprites]:
-        if group is not None: group.empty()
+    debug(f"GameSetup: Attempting to load map '{current_map_to_load}' using base maps directory '{maps_base_dir_abs}'.")
+    level_data = loader.load_map(str(current_map_to_load), maps_base_dir_abs)
 
-    if all_sprites_from_existing:
-        for sprite in list(all_sprites.sprites()):
-             if sprite not in [player1_to_kill, player2_to_kill, current_chest_to_kill]:
-                 if not isinstance(sprite, Player) and not ('Projectile' in sprite.__class__.__name__):
-                    sprite.kill()
+    if not level_data or not isinstance(level_data, dict):
+        critical(f"GameSetup FATAL: Failed to load/reload map data for '{current_map_to_load}' from base '{maps_base_dir_abs}'. Initialization aborted.")
+        game_elements_ref["loaded_map_name"] = None
+        game_elements_ref['initialization_in_progress'] = False
+        return False
 
-    if projectile_sprites_from_existing:
-        projectile_sprites.empty()
+    game_elements_ref["level_data"] = level_data
+    game_elements_ref["loaded_map_name"] = current_map_to_load
+    game_elements_ref["map_name"] = current_map_to_load # Ensure map_name is also set for consistency
+    info(f"GameSetup: Successfully reloaded pristine map data for '{current_map_to_load}'.")
 
-    debug(f"GameSetup: After clearing, projectile_sprites count: {len(projectile_sprites.sprites())}")
-    debug(f"GameSetup: After clearing, all_sprites count: {len(all_sprites.sprites())}")
+    # Extract level properties from loaded data
+    game_elements_ref["level_background_color"] = tuple(level_data.get('background_color', getattr(C, 'LIGHT_BLUE', (173, 216, 230))))
+    game_elements_ref["level_pixel_width"] = float(level_data.get('level_pixel_width', float(current_width) * 2.0))
+    game_elements_ref["level_min_x_absolute"] = float(level_data.get('level_min_x_absolute', 0.0))
+    game_elements_ref["level_min_y_absolute"] = float(level_data.get('level_min_y_absolute', 0.0))
+    game_elements_ref["level_max_y_absolute"] = float(level_data.get('level_max_y_absolute', float(current_height)))
+    game_elements_ref["ground_level_y_ref"] = float(level_data.get('ground_level_y_ref', game_elements_ref["level_max_y_absolute"] - float(getattr(C, 'TILE_SIZE', 40.0))))
+    game_elements_ref["ground_platform_height_ref"] = float(level_data.get('ground_platform_height_ref', float(getattr(C, 'TILE_SIZE', 40.0))))
 
-    enemy_list: List[Enemy] = []
+    # Cache spawn data (used if server/authoritative mode)
+    game_elements_ref["enemy_spawns_data_cache"] = list(level_data.get('enemies_list', []))
+    game_elements_ref["statue_spawns_data_cache"] = list(level_data.get('statues_list', []))
 
-    level_data_loaded_successfully = False
-    target_map_name_for_load = map_module_name if map_module_name else DEFAULT_LEVEL_MODULE_NAME # Fallback here
-
-    level_background_color = C.LIGHT_BLUE
-    local_enemy_spawns_data_list: List[Dict[str,Any]] = []
-    collectible_spawns_data_list: List[Dict[str,Any]] = []
-    statue_spawns_data_list: List[Dict[str,Any]] = []
-
-    player1_spawn_pos = (100, current_height - (C.TILE_SIZE * 2))
-    player1_props_for_init = {} # Default player1 properties
-    player2_spawn_pos = (150, current_height - (C.TILE_SIZE * 2))
-
-    level_pixel_width = current_width
-    lvl_min_y_abs = 0
-    lvl_max_y_abs = current_height
-    ground_level_y = current_height - C.TILE_SIZE
-    ground_platform_height = C.TILE_SIZE
-    loaded_map_name_return = None
-
-    if target_map_name_for_load:
-        safe_map_name_for_func = target_map_name_for_load.replace('-', '_').replace(' ', '_')
-        expected_level_load_func_name = f"load_map_{safe_map_name_for_func}"
-
-        debug(f"GameSetup: Attempting to load map module 'maps.{target_map_name_for_load}' and call function '{expected_level_load_func_name}'")
-
+    # Create NEW Static Tile Instances (Platforms, Ladders, Hazards, BackgroundTiles)
+    for p_data in level_data.get('platforms_list', []):
         try:
-            map_module_full_path = f"maps.{target_map_name_for_load}"
-            if map_module_full_path in sys.modules:
-                debug(f"GameSetup: Reloading map module '{map_module_full_path}'")
-                map_module = importlib.reload(sys.modules[map_module_full_path])
-            else:
-                map_module = importlib.import_module(map_module_full_path)
+            rect_tuple = p_data.get('rect')
+            if rect_tuple and len(rect_tuple) == 4:
+                game_elements_ref["platforms_list"].append(Platform(
+                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
+                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
+                    color_tuple=tuple(p_data.get('color', getattr(C, 'GRAY', (128,128,128)))),
+                    platform_type=str(p_data.get('type', 'generic_platform')),
+                    properties=p_data.get('properties', {}) ))
+        except Exception as e_plat: error(f"GameSetup: Error creating platform: {e_plat}", exc_info=True)
 
-            load_level_function = getattr(map_module, expected_level_load_func_name)
-            level_data_tuple = load_level_function(current_width, current_height)
+    for l_data in level_data.get('ladders_list', []):
+        try:
+            rect_tuple = l_data.get('rect')
+            if rect_tuple and len(rect_tuple) == 4:
+                game_elements_ref["ladders_list"].append(Ladder(
+                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
+                    width=float(rect_tuple[2]), height=float(rect_tuple[3]) ))
+        except Exception as e_lad: error(f"GameSetup: Error creating ladder: {e_lad}", exc_info=True)
 
-            # Define constants for tuple unpacking based on editor_map_utils.py return structure:
-            # (platforms, ladders, hazards, enemy_spawns, collectible_spawns,
-            #  p1_spawn_pos, p1_spawn_props,
-            #  map_total_width, level_min_y, level_max_y,
-            #  ground_y, ground_h,
-            #  LEVEL_BG_COLOR,
-            #  statue_spawns_data)
-            # Total: 14 elements
-            IDX_PLATFORMS = 0
-            IDX_LADDERS = 1
-            IDX_HAZARDS = 2
-            IDX_ENEMY_SPAWNS = 3
-            IDX_COLLECTIBLE_SPAWNS = 4
-            IDX_P1_SPAWN_POS = 5
-            IDX_P1_SPAWN_PROPS = 6
-            IDX_MAP_TOTAL_WIDTH = 7
-            IDX_LEVEL_MIN_Y = 8
-            IDX_LEVEL_MAX_Y = 9
-            IDX_GROUND_Y_REF = 10
-            IDX_GROUND_H_REF = 11
-            IDX_BG_COLOR = 12
-            IDX_STATUE_SPAWNS = 13
-            
-            MIN_EXPECTED_ELEMENTS_FROM_MAP = IDX_BG_COLOR + 1 # Expect at least up to background color
-            EXPECTED_ELEMENTS_WITH_STATUES = IDX_STATUE_SPAWNS + 1
+    for h_data in level_data.get('hazards_list', []):
+        try:
+            rect_tuple = h_data.get('rect')
+            if rect_tuple and len(rect_tuple) == 4 and \
+               (str(h_data.get('type', '')).lower() == 'lava' or "lava" in str(h_data.get('type', '')).lower()):
+                game_elements_ref["hazards_list"].append(Lava(
+                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
+                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
+                    color_tuple=tuple(h_data.get('color', getattr(C, 'ORANGE_RED', (255,69,0)))) ))
+        except Exception as e_haz: error(f"GameSetup: Error creating hazard: {e_haz}", exc_info=True)
 
-            if level_data_tuple and len(level_data_tuple) >= MIN_EXPECTED_ELEMENTS_FROM_MAP:
-                platform_data_group = level_data_tuple[IDX_PLATFORMS]
-                ladder_data_group = level_data_tuple[IDX_LADDERS]
-                hazard_data_group = level_data_tuple[IDX_HAZARDS]
-                local_enemy_spawns_data_list_loaded = level_data_tuple[IDX_ENEMY_SPAWNS]
-                collectible_spawns_data_list_loaded = level_data_tuple[IDX_COLLECTIBLE_SPAWNS]
-                p1_spawn_tuple = level_data_tuple[IDX_P1_SPAWN_POS]
-                p1_spawn_props_loaded = level_data_tuple[IDX_P1_SPAWN_PROPS] # Correctly get props
-                lvl_total_width_pixels_loaded = level_data_tuple[IDX_MAP_TOTAL_WIDTH] # Now this is an int
-                lvl_min_y_abs_loaded = level_data_tuple[IDX_LEVEL_MIN_Y]
-                lvl_max_y_abs_loaded = level_data_tuple[IDX_LEVEL_MAX_Y]
-                main_ground_y_reference_loaded = level_data_tuple[IDX_GROUND_Y_REF]
-                main_ground_height_reference_loaded = level_data_tuple[IDX_GROUND_H_REF]
-                
-                level_background_color_loaded = level_data_tuple[IDX_BG_COLOR]
-                if isinstance(level_background_color_loaded, (tuple, list)) and len(level_background_color_loaded) == 3:
-                    level_background_color = level_background_color_loaded
-                
-                platform_sprites.add(platform_data_group.sprites() if platform_data_group else [])
-                ladder_sprites.add(ladder_data_group.sprites() if ladder_data_group else [])
-                hazard_sprites.add(hazard_data_group.sprites() if hazard_data_group else [])
+    for bg_data in level_data.get('background_tiles_list', []):
+        try:
+            rect_tuple = bg_data.get('rect')
+            if rect_tuple and len(rect_tuple) == 4:
+                game_elements_ref["background_tiles_list"].append(BackgroundTile(
+                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
+                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
+                    color_tuple=tuple(bg_data.get('color', getattr(C, 'DARK_GRAY', (50,50,50)))),
+                    tile_type=str(bg_data.get('type', 'generic_background')),
+                    image_path=bg_data.get('image_path'),
+                    properties=bg_data.get('properties', {}) ))
+        except Exception as e_bg: error(f"GameSetup: Error creating background tile: {e_bg}", exc_info=True)
+    info(f"GameSetup: Static tile-based elements re-created. Platforms: {len(game_elements_ref['platforms_list'])}")
 
-                local_enemy_spawns_data_list = local_enemy_spawns_data_list_loaded if local_enemy_spawns_data_list_loaded else []
-                collectible_spawns_data_list = collectible_spawns_data_list_loaded if collectible_spawns_data_list_loaded else []
-
-                player1_spawn_pos = p1_spawn_tuple
-                player1_props_for_init = p1_spawn_props_loaded if isinstance(p1_spawn_props_loaded, dict) else {}
-
-                p2_spawn_x = p1_spawn_tuple[0] + C.TILE_SIZE * 1.5
-                if lvl_total_width_pixels_loaded is not None and isinstance(lvl_total_width_pixels_loaded, (int, float)): # Check type
-                    if p2_spawn_x + (C.TILE_SIZE / 2) > lvl_total_width_pixels_loaded - C.TILE_SIZE:
-                        p2_spawn_x = lvl_total_width_pixels_loaded - C.TILE_SIZE * 2.5
-                    if p2_spawn_x - (C.TILE_SIZE / 2) < C.TILE_SIZE:
-                        p2_spawn_x = C.TILE_SIZE * 2.5
-                else:
-                    warning(f"GameSetup: lvl_total_width_pixels_loaded is not a number ({lvl_total_width_pixels_loaded}), cannot adjust P2 spawn X relative to map width.")
-                player2_spawn_pos = (p2_spawn_x, p1_spawn_tuple[1])
-
-                level_pixel_width = lvl_total_width_pixels_loaded if isinstance(lvl_total_width_pixels_loaded, (int, float)) else current_width
-                lvl_min_y_abs = lvl_min_y_abs_loaded if isinstance(lvl_min_y_abs_loaded, (int, float)) else 0
-                lvl_max_y_abs = lvl_max_y_abs_loaded if isinstance(lvl_max_y_abs_loaded, (int, float)) else current_height
-                ground_level_y = main_ground_y_reference_loaded if isinstance(main_ground_y_reference_loaded, (int,float)) else current_height - C.TILE_SIZE
-                ground_platform_height = main_ground_height_reference_loaded if isinstance(main_ground_height_reference_loaded, (int,float)) else C.TILE_SIZE
-
-                if len(level_data_tuple) >= EXPECTED_ELEMENTS_WITH_STATUES:
-                    statue_spawns_data_list_from_map = level_data_tuple[IDX_STATUE_SPAWNS]
-                    if isinstance(statue_spawns_data_list_from_map, list):
-                        statue_spawns_data_list = statue_spawns_data_list_from_map
-                    else:
-                        debug(f"GameSetup: Statue data from map '{target_map_name_for_load}' was not a list.")
-
-                debug(f"GameSetup: Level geometry loaded. Width: {level_pixel_width}, MinY: {lvl_min_y_abs}, MaxY: {lvl_max_y_abs}, P1 Spawn: {player1_spawn_pos}, P2 Spawn: {player2_spawn_pos}, BG Color: {level_background_color}, Statues: {len(statue_spawns_data_list)}")
-                level_data_loaded_successfully = True
-                loaded_map_name_return = target_map_name_for_load
-            else:
-                critical(f"GameSetup CRITICAL Error: Map '{target_map_name_for_load}' function '{expected_level_load_func_name}' did not return enough data elements (expected at least {MIN_EXPECTED_ELEMENTS_FROM_MAP}). Got {len(level_data_tuple) if level_data_tuple else 'None'}.")
-
-        except ImportError:
-            critical(f"GameSetup CRITICAL Error: Could not import map module 'maps.{target_map_name_for_load}'. Path issue?"); traceback.print_exc()
-        except AttributeError:
-            critical(f"GameSetup CRITICAL Error: Map module 'maps.{target_map_name_for_load}' does not have function '{expected_level_load_func_name}'."); traceback.print_exc()
-        except Exception as e:
-            critical(f"GameSetup CRITICAL Error: Unexpected error loading map '{target_map_name_for_load}': {e}"); traceback.print_exc()
-
-        if not level_data_loaded_successfully:
-            if target_map_name_for_load != DEFAULT_LEVEL_MODULE_NAME:
-                warning(f"GameSetup Warning: Failed to load map '{target_map_name_for_load}'. Trying default map '{DEFAULT_LEVEL_MODULE_NAME}'.")
-                return initialize_game_elements(current_width, current_height, for_game_mode, existing_sprites_groups, DEFAULT_LEVEL_MODULE_NAME)
-            else:
-                critical(f"GameSetup FATAL: Default map '{DEFAULT_LEVEL_MODULE_NAME}' also failed to load. Cannot proceed."); return None
+    # --- Custom Image Processing (with Enhanced Logging) ---
+    game_elements_ref["processed_custom_images_for_render"] = []
+    custom_images_data_from_map = level_data.get("custom_images_list")
+    if custom_images_data_from_map is None:
+        info("GameSetup: 'custom_images_list' key NOT FOUND in level_data. No custom images will be loaded.")
+    elif not custom_images_data_from_map: # It was found, but it's an empty list
+        info("GameSetup: 'custom_images_list' key FOUND in level_data, but the list is EMPTY.")
     else:
-        debug("GameSetup: No map module name provided. Skipping level geometry loading. Players/camera shells will be created if mode requires.")
-        loaded_map_name_return = None
+        info(f"GameSetup: Found 'custom_images_list' with {len(custom_images_data_from_map)} entries. Processing them...")
+        # `current_map_to_load` is the folder/stem name (e.g., "chest")
+        current_map_folder_path = os.path.join(maps_base_dir_abs, str(current_map_to_load))
+        debug(f"GameSetup: Custom image base folder path: {current_map_folder_path}")
 
-    all_sprites.add(platform_sprites.sprites(), ladder_sprites.sprites(), hazard_sprites.sprites())
-
-    player1, player2 = None, None
-
-    if for_game_mode in ["host", "couch_play", "join_lan", "join_ip"]:
-        player1 = Player(player1_spawn_pos[0], player1_spawn_pos[1], player_id=1)
-        if not player1._valid_init: critical(f"GameSetup CRITICAL: P1 initialization failed."); return None
-        player1.control_scheme = game_config.CURRENT_P1_INPUT_DEVICE
-        if "joystick" in player1.control_scheme:
-            try: player1.joystick_id_idx = int(player1.control_scheme.split('_')[-1])
-            except (IndexError, ValueError): player1.joystick_id_idx = None
-        all_sprites.add(player1)
-        # Apply player1_props_for_init here if needed, e.g., player1.apply_properties(player1_props_for_init)
-
-    if for_game_mode == "couch_play":
-        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2)
-        if not player2._valid_init: critical(f"GameSetup CRITICAL: P2 (couch) initialization failed."); return None
-        player2.control_scheme = game_config.CURRENT_P2_INPUT_DEVICE
-        if "joystick" in player2.control_scheme:
-            try: player2.joystick_id_idx = int(player2.control_scheme.split('_')[-1])
-            except (IndexError, ValueError): player2.joystick_id_idx = None
-        all_sprites.add(player2)
-    elif for_game_mode in ["join_lan", "join_ip", "host"]:
-        player2 = Player(player2_spawn_pos[0], player2_spawn_pos[1], player_id=2)
-        if not player2._valid_init: critical(f"GameSetup CRITICAL: P2 shell initialization failed."); return None
-        if for_game_mode != "host":
-            player2.control_scheme = game_config.CURRENT_P2_INPUT_DEVICE
-            if "joystick" in player2.control_scheme:
-                try: player2.joystick_id_idx = int(player2.control_scheme.split('_')[-1])
-                except: player2.joystick_id_idx = None
-        all_sprites.add(player2)
-
-    debug(f"GameSetup: Before setting proj groups for P1: projectile_sprites count {len(projectile_sprites.sprites())}, all_sprites count {len(all_sprites.sprites())}")
-    if player1 and hasattr(player1, 'set_projectile_group_references'):
-        player1.set_projectile_group_references(projectile_sprites, all_sprites)
-        player1.game_elements_ref_for_projectiles = {"projectile_sprites": projectile_sprites, "all_sprites": all_sprites} # Simplified ref
-
-    debug(f"GameSetup: Before setting proj groups for P2: projectile_sprites count {len(projectile_sprites.sprites())}, all_sprites count {len(all_sprites.sprites())}")
-    if player2 and hasattr(player2, 'set_projectile_group_references'):
-        player2.set_projectile_group_references(projectile_sprites, all_sprites)
-        player2.game_elements_ref_for_projectiles = {"projectile_sprites": projectile_sprites, "all_sprites": all_sprites} # Simplified ref
-
-
-    if (for_game_mode == "host" or for_game_mode == "couch_play") and local_enemy_spawns_data_list:
-        debug(f"GameSetup: Spawning {len(local_enemy_spawns_data_list)} enemies from level data...")
-        for i, spawn_info in enumerate(local_enemy_spawns_data_list):
+        for img_idx, img_data_raw in enumerate(custom_images_data_from_map):
             try:
-                patrol_rect = pygame.Rect(spawn_info['patrol']) if spawn_info.get('patrol') else None
-                enemy_color_id_from_map = spawn_info.get('enemy_color_id')
-                enemy_instance = Enemy(start_x=spawn_info['pos'][0], start_y=spawn_info['pos'][1],
-                              patrol_area=patrol_rect, enemy_id=i, color_name=enemy_color_id_from_map)
-                if enemy_instance._valid_init:
-                    all_sprites.add(enemy_instance); enemy_sprites.add(enemy_instance); enemy_list.append(enemy_instance)
-                else:
-                    warning(f"GameSetup Warning: Enemy {i} (Color: {enemy_color_id_from_map}) at {spawn_info['pos']} failed _valid_init during setup.")
-            except Exception as e:
-                error(f"GameSetup Error: Spawning enemy {i} with data {spawn_info}: {e}"); traceback.print_exc()
+                rect_tuple = img_data_raw.get('rect')
+                rel_path = img_data_raw.get('source_file_path') # This path is relative to current_map_folder_path
+                layer_order = img_data_raw.get('layer_order', 0)
+                is_flipped_h = img_data_raw.get('is_flipped_h', False)
+                rotation_angle = float(img_data_raw.get('rotation', 0))
 
-    if (for_game_mode == "host" or for_game_mode == "couch_play") and statue_spawns_data_list:
-        debug(f"GameSetup: Spawning {len(statue_spawns_data_list)} statues from level data...")
-        for i, statue_data in enumerate(statue_spawns_data_list):
-            try:
-                statue_id = statue_data.get('id', f"map_statue_{i}")
-                statue_pos_center_x, statue_pos_center_y = statue_data['pos']
-                custom_initial_img_path = statue_data.get('initial_image_path')
-                custom_smashed_anim_path = statue_data.get('smashed_anim_path')
-                new_statue = Statue(statue_pos_center_x, statue_pos_center_y, statue_id=statue_id,
-                                    initial_image_path=custom_initial_img_path,
-                                    smashed_anim_path=custom_smashed_anim_path)
-                if new_statue._valid_init:
-                    all_sprites.add(new_statue)
-                    statue_objects_list.append(new_statue)
-                    debug(f"GameSetup: Statue {statue_id} spawned at center ({statue_pos_center_x},{statue_pos_center_y}).")
-                else:
-                    warning(f"GameSetup Warning: Statue {statue_id} at {statue_data['pos']} failed _valid_init.")
-            except Exception as e:
-                error(f"GameSetup Error: Spawning statue {i} with data {statue_data}: {e}"); traceback.print_exc()
+                if not rect_tuple or not rel_path:
+                    warning(f"GameSetup: Custom image data entry {img_idx} missing rect or source_file_path: {img_data_raw}")
+                    continue
 
-    current_chest = None
-    if Chest and (for_game_mode == "host" or for_game_mode == "couch_play"):
-        if collectible_spawns_data_list:
-            for item_data in collectible_spawns_data_list:
-                if item_data.get('type') == 'chest':
-                    try:
-                        chest_midbottom_x, chest_midbottom_y = item_data['pos']
-                        current_chest = Chest(chest_midbottom_x, chest_midbottom_y)
-                        if current_chest._valid_init:
-                            all_sprites.add(current_chest); collectible_sprites.add(current_chest)
-                            debug(f"GameSetup: Chest spawned from level data at {current_chest.rect.topleft} (midbottom: {item_data['pos']})")
-                            break
-                        else: warning(f"GameSetup Warning: Chest from level data at {item_data['pos']} failed _valid_init.")
-                    except Exception as e: error(f"GameSetup Error spawning chest from level data: {e}")
+                full_image_path = os.path.join(current_map_folder_path, rel_path)
+                debug(f"GameSetup: Checking custom image {img_idx}. Relative path from map: '{rel_path}'. Full constructed path for loading: '{full_image_path}'")
 
-        if not current_chest:
-            debug("GameSetup: No chest from level data, attempting random spawn on ledge...")
-            current_chest = spawn_chest(platform_sprites, ground_level_y)
-            if current_chest:
-                all_sprites.add(current_chest); collectible_sprites.add(current_chest)
-                debug(f"GameSetup: Random chest spawned at {current_chest.rect.topleft}")
-            else: debug("GameSetup: Random chest spawn also failed or returned None.")
+                if not os.path.exists(full_image_path):
+                    error(f"GameSetup: Custom image file NOT FOUND: {full_image_path}") # More prominent error
+                    continue
 
-    camera_instance = Camera(level_pixel_width, lvl_min_y_abs, lvl_max_y_abs, current_width, current_height)
+                q_image_original = QImage(full_image_path)
+                if q_image_original.isNull():
+                    error(f"GameSetup: Failed to load custom image (QImage isNull): {full_image_path}")
+                    continue
 
-    debug(f"GameSetup: Final counts before return - AllSprites: {len(all_sprites.sprites())}, Projectiles: {len(projectile_sprites.sprites())}, Statues: {len(statue_objects_list)}")
+                target_w = float(rect_tuple[2]); target_h = float(rect_tuple[3])
+                if target_w <= 0 or target_h <= 0:
+                    warning(f"GameSetup: Invalid target dimensions ({target_w}x{target_h}) for custom image {rel_path}. Using original size.")
+                    target_w = float(q_image_original.width()); target_h = float(q_image_original.height())
 
-    game_elements_dict = {
-        "player1": player1, "player2": player2, "camera": camera_instance,
-        "current_chest": current_chest, "enemy_list": enemy_list,
-        "platform_sprites": platform_sprites, "ladder_sprites": ladder_sprites,
-        "hazard_sprites": hazard_sprites, "enemy_sprites": enemy_sprites,
-        "collectible_sprites": collectible_sprites, "projectile_sprites": projectile_sprites,
-        "all_sprites": all_sprites,
-        "statue_objects": statue_objects_list,
-        "level_pixel_width": level_pixel_width,
-        "level_min_y_absolute": lvl_min_y_abs,
-        "level_max_y_absolute": lvl_max_y_abs,
-        "ground_level_y": ground_level_y,
-        "ground_platform_height": ground_platform_height,
-        "player1_spawn_pos": player1_spawn_pos,
-        "player1_spawn_props": player1_props_for_init, # Store the loaded props
-        "player2_spawn_pos": player2_spawn_pos,
-        "enemy_spawns_data_cache": local_enemy_spawns_data_list,
-        "level_background_color": level_background_color,
-        "loaded_map_name": loaded_map_name_return
-    }
-    return game_elements_dict
+                processed_image = q_image_original.scaled(int(target_w), int(target_h),
+                                                          Qt.AspectRatioMode.IgnoreAspectRatio,
+                                                          Qt.TransformationMode.SmoothTransformation)
+                if is_flipped_h: processed_image = processed_image.mirrored(True, False)
+                if rotation_angle != 0:
+                    transform = QTransform()
+                    img_center_x = processed_image.width() / 2.0; img_center_y = processed_image.height() / 2.0
+                    transform.translate(img_center_x, img_center_y); transform.rotate(rotation_angle); transform.translate(-img_center_x, -img_center_y)
+                    processed_image = processed_image.transformed(transform, Qt.TransformationMode.SmoothTransformation)
 
+                final_pixmap = QPixmap.fromImage(processed_image)
+                if final_pixmap.isNull():
+                    error(f"GameSetup: Failed to create QPixmap from processed image for {full_image_path}")
+                    continue
 
-def spawn_chest(all_platform_sprites_group: pygame.sprite.Group, main_ground_y_surface_level: int) -> Optional[Chest]:
-    """
-    Spawns a chest randomly on a suitable 'ledge' platform.
-    If no suitable ledges are found, returns None.
-    """
-    if Chest is None:
-        warning("GameSetup (spawn_chest): Chest class is None, cannot spawn."); return None
+                renderable_custom_image = {
+                    'rect': QRectF(float(rect_tuple[0]), float(rect_tuple[1]), target_w, target_h),
+                    'image': final_pixmap, 'layer_order': layer_order, 'source_file_path_debug': rel_path
+                }
+                game_elements_ref["processed_custom_images_for_render"].append(renderable_custom_image)
+                debug(f"GameSetup: Processed custom image '{rel_path}' for rendering. Layer: {layer_order}")
+            except Exception as e_custom_img:
+                error(f"GameSetup: Error processing custom image data entry {img_idx} ({img_data_raw}): {e_custom_img}", exc_info=True)
+    info(f"GameSetup: Custom images processed: {len(game_elements_ref['processed_custom_images_for_render'])}")
+    # --- End Custom Image Processing ---
 
-    try:
-        ledge_platforms = [
-            p for p in all_platform_sprites_group
-            if hasattr(p, 'platform_type') and p.platform_type == "ledge" and
-               p.rect.width > C.TILE_SIZE * 1.25
-        ]
+    # Create NEW Player Instances
+    active_player_count = 0
+    tile_sz = float(getattr(C, 'TILE_SIZE', 40.0))
+    player1_default_spawn_pos_tuple = (100.0, float(current_height) - (tile_sz * 2.0))
 
-        if not ledge_platforms:
-            debug("GameSetup (spawn_chest): No suitable 'ledge' platforms found for chest spawn."); return None
+    for i in range(1, 5):
+        player_key = f"player{i}"
+        spawn_pos_key = f"player_start_pos_p{i}"
+        spawn_props_key = f"player{i}_spawn_props"
 
-        candidate_platforms = list(ledge_platforms)
-        if not candidate_platforms:
-            debug("GameSetup (spawn_chest): No candidate ledges after filtering (if any)."); return None
+        player_spawn_pos_tuple_from_map = level_data.get(spawn_pos_key)
+        player_props_for_init_from_map = level_data.get(spawn_props_key, {})
 
-        chosen_platform = random.choice(candidate_platforms)
+        game_elements_ref[spawn_pos_key] = player_spawn_pos_tuple_from_map
+        game_elements_ref[spawn_props_key] = player_props_for_init_from_map
 
-        inset = C.TILE_SIZE * 0.5
-        min_cx = chosen_platform.rect.left + inset
-        max_cx = chosen_platform.rect.right - inset
+        final_spawn_x, final_spawn_y = -1.0, -1.0
 
-        cx = random.randint(int(min_cx), int(max_cx)) if min_cx < max_cx else chosen_platform.rect.centerx
-        cy = chosen_platform.rect.top
-
-        debug(f"GameSetup (spawn_chest): Attempting to spawn chest at calculated pos (midbottom): ({cx},{cy}) on platform {chosen_platform.rect}")
-        new_chest = Chest(cx, cy)
-
-        if hasattr(new_chest, '_valid_init') and new_chest._valid_init:
-            debug(f"GameSetup (spawn_chest): Random chest spawned on ledge at {new_chest.rect.topleft} (midbottom: ({cx},{cy}))")
-            return new_chest
+        if player_spawn_pos_tuple_from_map and isinstance(player_spawn_pos_tuple_from_map, (tuple, list)) and len(player_spawn_pos_tuple_from_map) == 2:
+            final_spawn_x, final_spawn_y = float(player_spawn_pos_tuple_from_map[0]), float(player_spawn_pos_tuple_from_map[1])
+        elif i == 1 :
+            final_spawn_x, final_spawn_y = player1_default_spawn_pos_tuple[0], player1_default_spawn_pos_tuple[1]
+            game_elements_ref[spawn_pos_key] = (final_spawn_x, final_spawn_y)
+            debug(f"GameSetup: {spawn_pos_key} not in map data. Using fallback default for P1: ({final_spawn_x:.1f},{final_spawn_y:.1f})")
         else:
-            warning(f"GameSetup (spawn_chest): New chest created at ({cx},{cy}) failed _valid_init.")
+            game_elements_ref[player_key] = None
+            continue
 
-    except Exception as e:
-        error(f"GameSetup Error in spawn_chest: {e}"); traceback.print_exc()
-    return None
+        player_instance = Player(final_spawn_x, final_spawn_y, player_id=i, initial_properties=player_props_for_init_from_map)
+        if not player_instance._valid_init:
+            critical(f"GameSetup CRITICAL: {player_key} initialization FAILED! Map: '{current_map_to_load}'");
+            game_elements_ref[player_key] = None; continue
+
+        player_instance.control_scheme = getattr(game_config, f"CURRENT_P{i}_INPUT_DEVICE", game_config.UNASSIGNED_DEVICE_ID)
+        if "joystick" in player_instance.control_scheme:
+            try: player_instance.joystick_id_idx = int(player_instance.control_scheme.split('_')[-1])
+            except (IndexError, ValueError): player_instance.joystick_id_idx = None
+
+        game_elements_ref[player_key] = player_instance
+        player_instance.set_projectile_group_references(
+            game_elements_ref["projectiles_list"],
+            game_elements_ref["all_renderable_objects"],
+            game_elements_ref["platforms_list"]
+        )
+        active_player_count +=1
+        info(f"GameSetup: {player_key} RE-CREATED. Pos: ({final_spawn_x:.1f},{final_spawn_y:.1f}), Control: {player_instance.control_scheme}")
+    info(f"GameSetup: Total active players RE-CREATED: {active_player_count}")
+
+    authoritative_modes_for_spawn = ["couch_play", "host_game", "host", "host_waiting", "host_active"]
+    if for_game_mode in authoritative_modes_for_spawn:
+        debug(f"GameSetup: Re-spawning dynamic entities for authoritative mode '{for_game_mode}'.")
+
+        for i_enemy, spawn_info in enumerate(game_elements_ref["enemy_spawns_data_cache"]):
+            try:
+                patrol_raw = spawn_info.get('patrol_rect_data'); patrol_qrectf: Optional[QRectF] = None
+                if isinstance(patrol_raw, dict) and all(k in patrol_raw for k in ['x','y','width','height']):
+                    patrol_qrectf = QRectF(float(patrol_raw['x']), float(patrol_raw['y']), float(patrol_raw['width']), float(patrol_raw['height']))
+
+                enemy_color_name = str(spawn_info.get('type', 'enemy_green'))
+                start_pos_tuple = tuple(map(float, spawn_info.get('start_pos', (100.0, 100.0))))
+                enemy_props = spawn_info.get('properties', {})
+
+                new_enemy = Enemy(start_x=start_pos_tuple[0], start_y=start_pos_tuple[1],
+                                  patrol_area=patrol_qrectf, enemy_id=i_enemy,
+                                  color_name=enemy_color_name, properties=enemy_props)
+                if new_enemy._valid_init:
+                    game_elements_ref["enemy_list"].append(new_enemy)
+                else: warning(f"GameSetup: Failed to initialize enemy {i_enemy} (type: {enemy_color_name}) during reset.")
+            except Exception as e_enemy_create: error(f"GameSetup: Error creating enemy {i_enemy} during reset: {e_enemy_create}", exc_info=True)
+        info(f"GameSetup: Enemies re-created: {len(game_elements_ref['enemy_list'])}")
+
+        for i_statue, statue_data in enumerate(game_elements_ref["statue_spawns_data_cache"]):
+            try:
+                s_id = statue_data.get('id', f"map_statue_rs_{i_statue}")
+                s_pos_tuple = tuple(map(float, statue_data.get('pos', (200.0, 200.0))))
+                s_props = statue_data.get('properties', {})
+
+                new_statue = Statue(center_x=s_pos_tuple[0], center_y=s_pos_tuple[1],
+                                    statue_id=s_id, properties=s_props)
+                if new_statue._valid_init:
+                    game_elements_ref["statue_objects"].append(new_statue)
+                    if not new_statue.is_smashed:
+                        game_elements_ref["platforms_list"].append(new_statue)
+                else: warning(f"GameSetup: Failed to initialize statue {i_statue} (id: {s_id}) during reset.")
+            except Exception as e_statue_create: error(f"GameSetup: Error creating statue {i_statue} during reset: {e_statue_create}", exc_info=True)
+        info(f"GameSetup: Statues re-created: {len(game_elements_ref['statue_objects'])}")
+
+        new_chest_instance: Optional[Chest] = None
+        items_from_fresh_map_data = level_data.get('items_list', [])
+        for item_data_fresh in items_from_fresh_map_data:
+            if item_data_fresh.get('type', '').lower() == 'chest':
+                try:
+                    chest_pos_fresh = tuple(map(float, item_data_fresh.get('pos', (300.0, 300.0))))
+                    new_chest_instance = Chest(x=chest_pos_fresh[0], y=chest_pos_fresh[1])
+                    if new_chest_instance._valid_init:
+                        game_elements_ref["collectible_list"].append(new_chest_instance)
+                        info(f"GameSetup (Reset): Chest RE-CREATED at {chest_pos_fresh} from fresh map data.")
+                    else: warning("GameSetup (Reset): NEW Chest instance from map data failed to initialize.")
+                    break
+                except Exception as e_chest_create: error(f"GameSetup: Error creating NEW Chest instance during reset: {e_chest_create}", exc_info=True)
+        game_elements_ref["current_chest"] = new_chest_instance
+    else:
+        debug(f"GameSetup: Dynamic entities not re-spawned by client for mode '{for_game_mode}'. Server state will dictate.")
+        game_elements_ref["current_chest"] = None
+
+    camera_instance = Camera(
+        initial_level_width=game_elements_ref.get("level_pixel_width", float(current_width) * 2.0),
+        initial_world_start_x=game_elements_ref.get("level_min_x_absolute", 0.0),
+        initial_world_start_y=game_elements_ref.get("level_min_y_absolute", 0.0),
+        initial_level_bottom_y_abs=game_elements_ref.get("level_max_y_absolute", float(current_height)),
+        screen_width=float(current_width),
+        screen_height=float(current_height)
+    )
+    game_elements_ref["camera"] = camera_instance
+    game_elements_ref["camera_level_dims_set"] = True
+
+    p1_for_cam = game_elements_ref.get("player1")
+    if p1_for_cam and p1_for_cam._valid_init and p1_for_cam.alive():
+        camera_instance.update(p1_for_cam)
+    else:
+        first_active_player_for_cam = None
+        for i_p_cam in range(1,5):
+            p_check_cam = game_elements_ref.get(f"player{i_p_cam}")
+            if p_check_cam and p_check_cam._valid_init and p_check_cam.alive():
+                first_active_player_for_cam = p_check_cam; break
+        if first_active_player_for_cam: camera_instance.update(first_active_player_for_cam)
+        else: camera_instance.static_update()
+    info("GameSetup: Camera re-initialized and focused.")
+
+    new_all_renderables_setup_temp: List[Any] = []
+    for static_key in ["background_tiles_list", "ladders_list", "hazards_list", "platforms_list"]:
+        for item in game_elements_ref.get(static_key, []):
+            add_to_renderables_if_new(item, new_all_renderables_setup_temp)
+    for custom_img_dict in game_elements_ref.get("processed_custom_images_for_render", []):
+        add_to_renderables_if_new(custom_img_dict, new_all_renderables_setup_temp)
+    for dynamic_key in ["enemy_list", "statue_objects", "collectible_list", "projectiles_list"]:
+        for item_dyn in game_elements_ref.get(dynamic_key, []):
+            add_to_renderables_if_new(item_dyn, new_all_renderables_setup_temp)
+    for i_p_render in range(1, 5):
+        p_to_render = game_elements_ref.get(f"player{i_p_render}")
+        if p_to_render:
+            add_to_renderables_if_new(p_to_render, new_all_renderables_setup_temp)
+
+    new_all_renderables_setup_temp.sort(key=get_layer_order_key)
+    game_elements_ref["all_renderable_objects"] = new_all_renderables_setup_temp
+    debug(f"GameSetup: Assembled and sorted all_renderable_objects. Count: {len(game_elements_ref['all_renderable_objects'])}")
+
+    game_elements_ref["game_ready_for_logic"] = True
+    game_elements_ref["initialization_in_progress"] = False
+
+    info(f"GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map '{current_map_to_load}' ---")
+    return True

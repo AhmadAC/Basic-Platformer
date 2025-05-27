@@ -1,316 +1,293 @@
 # enemy_animation_handler.py
 # -*- coding: utf-8 -*-
 """
-# version 1.0.3 (Stomp death visual handled by status_effects scaler)
-Handles animation selection and frame updates for Enemy instances.
-Ensures correct visual representation based on logical state and manages
-animation frame cycling and transitions.
+Handles animation selection and frame updates for Enemy instances using PySide6.
+Includes zapped animation.
 """
-import pygame
+# version 2.0.3 (Added zapped animation, local import for state_handler)
+
+import time
+from typing import List, Optional, Any # Added Any
+
+from PySide6.QtGui import QPixmap, QImage, QTransform, QColor
+from PySide6.QtCore import QPointF, QRectF, Qt, QSize
+
 import constants as C
+# Removed: from utils import PrintLimiter (not used directly in this version)
 
-try:
-    from logger import info, debug, warning, error, critical
-except ImportError:
-    print("CRITICAL ENEMY_ANIM_HANDLER: logger.py not found. Falling back to print statements.")
-    def info(msg): print(f"INFO: {msg}")
-    def debug(msg): print(f"DEBUG: {msg}")
-    def warning(msg): print(f"WARNING: {msg}")
-    def error(msg): print(f"ERROR: {msg}") # Defined error for fallback
-    def critical(msg): print(f"CRITICAL: {msg}")
+# Logger
+from logger import debug, warning, critical # Use global logger
 
-try:
-    from enemy_state_handler import set_enemy_state
-except ImportError:
-    # Fallback if direct import fails
-    def set_enemy_state(enemy, new_state):
-        if hasattr(enemy, 'set_state'): # Check if the old method might still exist on the enemy instance
-            enemy.set_state(new_state)
-        else:
-            critical(f"CRITICAL ENEMY_ANIM_HANDLER: enemy_state_handler.set_enemy_state not found for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')}")
+# DO NOT do top-level import of enemy_state_handler here
+# try:
+# from enemy_state_handler import set_enemy_state
+# except ImportError:
+#    ... fallback
+
+_start_time_enemy_anim_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    return int((time.monotonic() - _start_time_enemy_anim_monotonic) * 1000)
 
 
-def determine_enemy_animation_key(enemy):
-    """
-    Determines the correct animation key based on the enemy's current logical state and flags.
-    Prioritizes status effect visuals (petrified, aflame, frozen) over transient states like 'hit'.
-    Returns the animation key string.
-    """
+def determine_enemy_animation_key(enemy: Any) -> str:
     enemy_id_log = getattr(enemy, 'enemy_id', 'Unknown')
-    # Start with the enemy's current logical state as the default animation key
-    animation_key = enemy.state 
+    current_state = getattr(enemy, 'state', 'idle')
+    vel_x = getattr(getattr(enemy, 'vel', None), 'x', lambda: 0.0)()
+    vel_y = getattr(getattr(enemy, 'vel', None), 'y', lambda: 0.0)()
 
-    # Highest priority: Petrified / Smashed states
-    if enemy.is_petrified: # This flag is true for both 'petrified' and 'smashed' states
-        return 'smashed' if enemy.is_stone_smashed else 'petrified' # Visual key maps to 'stone' or 'stone_smashed'
+    # --- Highest Priority: Terminal/Overriding Visual States ---
+    if getattr(enemy, 'is_petrified', False):
+        return 'smashed' if getattr(enemy, 'is_stone_smashed', False) else 'petrified'
+    if getattr(enemy, 'is_dead', False):
+        if getattr(enemy, 'is_stomp_dying', False): return 'stomp_death'
+        is_still_nm = abs(vel_x) < 0.1 and abs(vel_y) < 0.1
+        key_variant = 'death_nm' if is_still_nm and hasattr(enemy, 'animations') and enemy.animations and enemy.animations.get('death_nm') else 'death'
+        return key_variant if hasattr(enemy, 'animations') and enemy.animations and enemy.animations.get(key_variant) else \
+               ('death' if hasattr(enemy, 'animations') and enemy.animations and enemy.animations.get('death') else 'idle')
 
-    # Next priority: Death states (if not petrified)
-    if enemy.is_dead:
-        # If stomp_dying, the visual is a scaled version of its original_stomp_death_image.
-        # The animation handler doesn't cycle frames for this; it's a transform.
-        # We return a key that can correspond to this single image if needed, or 'idle' as a fallback
-        # if the image assignment logic elsewhere expects a valid key from player.animations.
-        if enemy.is_stomp_dying:
-            return 'stomp_death' # This key can be used to fetch enemy.original_stomp_death_image
-        else: # Regular death (not stomp, not petrified)
-            is_still_nm = abs(enemy.vel.x) < 0.1 and abs(enemy.vel.y) < 0.1 # Check for no movement
-            # Prefer 'death_nm' if available and no movement
-            key_variant = 'death_nm' if is_still_nm and enemy.animations.get('death_nm') else 'death'
-            if enemy.animations.get(key_variant): return key_variant
-            if enemy.animations.get('death'): return 'death' # Fallback to standard 'death'
-            return 'idle' # Ultimate fallback if no death animations
+    # --- Next Priority: Other Major Status Effects ---
+    if getattr(enemy, 'is_zapped', False): return 'zapped' # New zapped state
+    if getattr(enemy, 'is_aflame', False): return 'aflame'
+    if getattr(enemy, 'is_deflaming', False): return 'deflame'
+    if getattr(enemy, 'is_frozen', False): return 'frozen'
+    if getattr(enemy, 'is_defrosting', False): return 'defrost'
 
-    # Status effects (aflame, frozen) - these override most other action visuals
-    if enemy.is_aflame: return 'aflame' # Looping burn animation
-    if enemy.is_deflaming: return 'deflame' # Fire going out animation
-    if enemy.is_frozen: return 'frozen' # Static frozen image/animation
-    if enemy.is_defrosting: return 'defrost' # Defrosting animation
+    # --- Action States ---
+    if current_state == 'hit': return 'hit'
 
-    # Transient states like 'hit' (flinch animation)
-    if enemy.state == 'hit': # Logical state is 'hit'
-        return 'hit'
-
-    # If in post-attack pause, usually show 'idle'
     if hasattr(enemy, 'post_attack_pause_timer') and enemy.post_attack_pause_timer > 0 and \
-       pygame.time.get_ticks() < enemy.post_attack_pause_timer:
+       get_current_ticks_monotonic() < enemy.post_attack_pause_timer:
         return 'idle'
 
-    # Attacking state
-    if enemy.is_attacking:
-        # enemy.state should be 'attack' or 'attack_nm' if set correctly by AI/state handler
-        if 'attack' in enemy.state and enemy.animations.get(enemy.state):
-            return enemy.state # Use the specific attack animation (e.g., 'attack_nm')
-        # Fallback if enemy.state isn't a valid attack animation key
-        default_attack_key = 'attack_nm' if enemy.animations.get('attack_nm') else 'attack'
-        return default_attack_key if enemy.animations.get(default_attack_key) else 'idle'
+    if getattr(enemy, 'is_attacking', False):
+        if 'attack' in current_state and hasattr(enemy, 'animations') and enemy.animations and enemy.animations.get(current_state):
+            return current_state # e.g. if state is already 'attack_nm'
+        # Fallback to determine attack animation if current_state isn't specific enough
+        default_attack_key = 'attack_nm' if hasattr(enemy, 'animations') and enemy.animations and enemy.animations.get('attack_nm') else 'attack'
+        return default_attack_key if hasattr(enemy, 'animations') and enemy.animations and enemy.animations.get(default_attack_key) else 'idle'
 
-    # Movement states (patrolling, chasing)
-    if enemy.ai_state == 'chasing' or (enemy.ai_state == 'patrolling' and abs(enemy.vel.x) > 0.1):
-        return 'run' # Use 'run' animation for movement
-    if enemy.ai_state == 'patrolling' and abs(enemy.vel.x) <= 0.1: # Patrolling but currently still
+    # --- Movement States based on AI and Physics ---
+    ai_state = getattr(enemy, 'ai_state', 'patrolling')
+    if ai_state == 'chasing' or (ai_state == 'patrolling' and abs(vel_x) > 0.1):
+        return 'run'
+    if ai_state == 'patrolling' and abs(vel_x) <= 0.1: # Patrolling but stopped (e.g. at target)
         return 'idle'
-    
-    # In-air state (if not covered by other states like attack, hit, status effects)
-    if not enemy.on_ground and enemy.state not in ['jump', 'jump_fall_trans']: # Assuming enemies don't typically 'jump'
-        return 'fall'
-    
-    # Default to the enemy's current logical state if a specific animation exists for it
-    if enemy.animations.get(enemy.state):
-        return enemy.state
 
-    # Ultimate fallback if no other specific animation key could be determined
-    warning(f"EnemyAnimHandler (ID: {enemy_id_log}, Color: {enemy.color_name}): "
-            f"Could not determine specific animation for logical state '{enemy.state}'. Defaulting to 'idle'.")
+    # Fallback to current logical state if it has a direct animation
+    if hasattr(enemy, 'animations') and enemy.animations and enemy.animations.get(current_state):
+        return current_state
+
+    # Absolute fallback
+    warning(f"ENEMY_ANIM_HANDLER Warning (ID: {enemy_id_log}, Color: {getattr(enemy, 'color_name', 'N/A')}): "
+            f"Could not determine specific animation for logical state '{current_state}'. Defaulting to 'idle'.")
     return 'idle'
 
 
-def advance_enemy_frame_and_handle_transitions(enemy, current_animation_frames_list, current_time_ms, current_animation_key):
-    """
-    Advances the enemy's animation frame.
-    Handles transitions for animations that play once (e.g., 'hit', 'attack').
-    """
-    animation_frame_duration_ms = getattr(C, 'ANIM_FRAME_DURATION', 100) # Default anim speed
+def advance_enemy_frame_and_handle_transitions(enemy: Any, current_animation_frames_list: List[QPixmap], current_time_ms: int, current_animation_key: str):
+    # LOCAL IMPORT for set_enemy_state
+    try:
+        from enemy_state_handler import set_enemy_state
+    except ImportError:
+        critical("ENEMY_ANIM_HANDLER (advance_frame): Failed to import set_enemy_state locally.")
+        def set_enemy_state(enemy_arg: Any, new_state_arg: str): pass # Fallback dummy
 
-    # Petrified (non-smashed) uses a single static frame. No advancement needed.
-    if enemy.is_petrified and not enemy.is_stone_smashed:
-        enemy.current_frame = 0 # Ensure it's on the first (only) frame
+    if not current_animation_frames_list: return
+
+    animation_frame_duration_ms = int(getattr(C, 'ANIM_FRAME_DURATION', 100))
+
+    # Static frames for certain states
+    if getattr(enemy, 'is_petrified', False) and not getattr(enemy, 'is_stone_smashed', False):
+        enemy.current_frame = 0; return
+    if getattr(enemy, 'is_stomp_dying', False): # Stomp death visuals handled by status_effects
         return
-        
-    # Stomp dying visual is a scale transform, not frame cycling. Handled by status_effects.
-    if enemy.is_stomp_dying:
-        return # No frame advancement here
+    if getattr(enemy, 'is_frozen', False): # Frozen holds frame
+        enemy.current_frame = 0 # Or last frame of 'frozen' if it's multi-frame
+        if len(current_animation_frames_list) > 1 and current_animation_key == 'frozen':
+            enemy.current_frame = len(current_animation_frames_list) -1
+        return
+    if getattr(enemy, 'is_zapped', False): # Zapped might have its own anim loop or hold
+        # If zapped is a looping animation:
+        if current_time_ms - enemy.last_anim_update > animation_frame_duration_ms:
+            enemy.last_anim_update = current_time_ms
+            enemy.current_frame = (enemy.current_frame + 1) % len(current_animation_frames_list)
+        return
 
-    # Advance frame if enough time has passed
+
+    # Frame advancement for other animations
     if current_time_ms - enemy.last_anim_update > animation_frame_duration_ms:
         enemy.last_anim_update = current_time_ms
         enemy.current_frame += 1
 
-        # Check if animation sequence has finished
         if enemy.current_frame >= len(current_animation_frames_list):
-            # --- Handle end of non-looping animations ---
-            # Death animations (regular or smashed)
-            if (enemy.is_dead and not enemy.is_petrified and not enemy.is_stomp_dying) or \
-               (enemy.is_petrified and enemy.is_stone_smashed):
-                enemy.current_frame = len(current_animation_frames_list) - 1 # Hold last frame
-                enemy.death_animation_finished = True # Mark animation as visually complete
-                return # No further state change from here; removal is handled by timer/main loop
+            # Handle end of animation
+            is_dead_no_petri_no_stomp = getattr(enemy, 'is_dead', False) and \
+                                        not getattr(enemy, 'is_petrified', False) and \
+                                        not getattr(enemy, 'is_stomp_dying', False)
+            is_petrified_and_smashed = getattr(enemy, 'is_petrified', False) and \
+                                       getattr(enemy, 'is_stone_smashed', False)
 
-            # 'hit' animation finished
+            if is_dead_no_petri_no_stomp or is_petrified_and_smashed:
+                enemy.current_frame = len(current_animation_frames_list) - 1
+                enemy.death_animation_finished = True; return
             elif current_animation_key == 'hit':
-                debug(f"Enemy {enemy.enemy_id}: 'hit' animation finished. Transitioning based on ground state.")
-                # After hit, transition to idle if on ground, or fall if in air
-                # Status effects like aflame will override this in determine_enemy_animation_key
-                set_enemy_state(enemy, 'idle' if enemy.on_ground else 'fall')
-                return # State changed, animation will be re-evaluated
+                set_enemy_state(enemy, 'idle' if getattr(enemy, 'on_ground', False) else 'fall'); return
+            elif 'attack' in current_animation_key:
+                # Attack animation finished, state transition handled by AI or state timer
+                enemy.current_frame = 0 # Could loop attack anim or transition (AI decides)
+            elif current_animation_key in ['deflame', 'defrost']: # Hold last frame
+                enemy.current_frame = len(current_animation_frames_list) - 1
+            else: # Default: Loop animation
+                enemy.current_frame = 0
 
-            # 'attack' animation finished
-            elif 'attack' in current_animation_key: # Covers 'attack', 'attack_nm'
-                enemy.current_frame = 0 # Reset frame for potential next attack or other state
-                # AI/State handler will determine next logical state after attack completes
-                # (e.g., post-attack pause, then back to patrolling/chasing)
-                debug(f"Enemy {enemy.enemy_id}: Attack animation '{current_animation_key}' looped/ended. AI will decide next state.")
-                # No explicit state change here, is_attacking flag will be reset by AI or state handler
-            
-            # Default for other (looping) animations
-            else:
-                enemy.current_frame = 0 # Loop animation
-
-    # Ensure current_frame is always valid for the current list
+    # Safeguard frame index
     if not current_animation_frames_list or enemy.current_frame < 0 or \
        enemy.current_frame >= len(current_animation_frames_list):
-        enemy.current_frame = 0 # Default to first frame if out of bounds
+        enemy.current_frame = 0
 
 
-def update_enemy_animation(enemy):
-    """
-    Updates the enemy's current animation frame and image based on its state.
-    """
-    if not enemy._valid_init or not hasattr(enemy, 'animations'): # Check for valid init and animations dict
-        if hasattr(enemy, 'image') and enemy.image: enemy.image.fill(C.MAGENTA) # Visual error
+def update_enemy_animation(enemy: Any):
+    qcolor_magenta = QColor(*(C.MAGENTA if hasattr(C, 'MAGENTA') else (255,0,255)))
+    qcolor_red = QColor(*(C.RED if hasattr(C, 'RED') else (255,0,0)))
+    qcolor_blue = QColor(*(C.BLUE if hasattr(C, 'BLUE') else (0,0,255)))
+    qcolor_yellow = QColor(*(C.YELLOW if hasattr(C, 'YELLOW') else (255,255,0)))
+
+    if not getattr(enemy, '_valid_init', False) or not hasattr(enemy, 'animations') or not enemy.animations:
+        if hasattr(enemy, 'image') and enemy.image and not enemy.image.isNull():
+            enemy.image.fill(qcolor_magenta)
         return
 
-    # If stomp_dying, visuals are handled by scaling in update_enemy_status_effects.
-    # The image is already being transformed there. We should not interfere here.
-    if enemy.is_stomp_dying:
-        # Optional: Ensure rect is synced with pos if anything external might have moved it,
-        # but status_effects should already handle this.
-        # enemy.rect.midbottom = round(enemy.pos.x), round(enemy.pos.y)
-        return # Visuals handled elsewhere
+    # Determine if animation should proceed
+    can_animate_now = (hasattr(enemy, 'alive') and enemy.alive()) or \
+                      (getattr(enemy, 'is_dead', False) and not getattr(enemy, 'death_animation_finished', True)) or \
+                      getattr(enemy, 'is_petrified', False) or \
+                      getattr(enemy, 'is_zapped', False) # Zapped enemies animate
 
-    # Determine if enemy should be animating (alive, or dead but animation not finished, or petrified)
-    can_animate_now = enemy.alive() or \
-                      (enemy.is_dead and not enemy.death_animation_finished) or \
-                      enemy.is_petrified # Petrified (smashed or not) has a visual state
+    if not can_animate_now: return
 
-    if not can_animate_now: # If truly gone or death animation fully complete and not petrified
-        return
+    current_time_ms = get_current_ticks_monotonic()
+    determined_key = determine_enemy_animation_key(enemy)
 
-    current_time_ms = pygame.time.get_ticks()
-    determined_key = determine_enemy_animation_key(enemy) # Get the animation key for the current state
-    
-    # Get the list of frames for the determined animation key
-    current_frames_list = None
-    if determined_key == 'petrified': # Special handling for single-frame petrified state
-        current_frames_list = [enemy.stone_image_frame] if enemy.stone_image_frame else []
-    elif determined_key == 'smashed': # Special handling for multi-frame smashed animation
-        current_frames_list = enemy.stone_smashed_frames if enemy.stone_smashed_frames else []
-    elif determined_key == 'stomp_death': # Should be caught by is_stomp_dying check above
-        # Fallback if somehow reached here for stomp_death: use the captured image
-        current_frames_list = [enemy.original_stomp_death_image] if enemy.original_stomp_death_image else enemy.animations.get('idle', [])
-    else: # Standard animations from the enemy's dictionary
+    current_frames_list: Optional[List[QPixmap]] = None
+    # --- Get frames based on determined key ---
+    if determined_key == 'petrified':
+        stone_frame = getattr(enemy, 'stone_image_frame', None)
+        current_frames_list = [stone_frame] if stone_frame and not stone_frame.isNull() else []
+    elif determined_key == 'smashed':
+        current_frames_list = getattr(enemy, 'stone_smashed_frames', [])
+    elif determined_key == 'stomp_death':
+        # Stomp death visual scaling is handled in status_effects, use original image as base
+        stomp_img = getattr(enemy, 'original_stomp_death_image', None)
+        current_frames_list = [stomp_img] if stomp_img and not stomp_img.isNull() else \
+                              (enemy.animations.get('idle', []) if enemy.animations else [])
+    elif enemy.animations:
         current_frames_list = enemy.animations.get(determined_key)
 
-    # --- Validate the chosen animation frames ---
-    animation_is_actually_valid = True
-    if not current_frames_list: # No frames found for the key
-        animation_is_actually_valid = False
-    elif len(current_frames_list) == 1 and determined_key not in ['petrified', 'idle', 'run', 'fall', 'frozen', 'stomp_death']:
-        # If it's a single-frame animation for a non-static state, check if it's a placeholder
-        frame_surf = current_frames_list[0]
-        if frame_surf.get_size() == (30, 40): # Common placeholder size
-            pixel_color = frame_surf.get_at((0,0))
-            if pixel_color == C.RED or pixel_color == C.BLUE: # Placeholder colors
-                animation_is_actually_valid = False
-                debug(f"EnemyAnimHandler (ID: {enemy.enemy_id}, Color: {enemy.color_name}): "
-                      f"Animation for key '{determined_key}' is a RED/BLUE placeholder. Will use idle.")
+    # --- Validate frames, fallback to 'idle' if necessary ---
+    animation_is_valid = True
+    if not current_frames_list or not current_frames_list[0] or current_frames_list[0].isNull():
+        animation_is_valid = False
+    # Check if it's a placeholder (red/blue 30x40 rect) for non-static states
+    elif len(current_frames_list) == 1 and \
+         determined_key not in ['petrified', 'idle', 'run', 'fall', 'frozen', 'stomp_death', 'zapped']:
+        frame_pixmap = current_frames_list[0]
+        if frame_pixmap.size() == QSize(30, 40):
+            qimg = frame_pixmap.toImage()
+            if not qimg.isNull():
+                pixel_color = qimg.pixelColor(0,0)
+                if pixel_color == qcolor_red or pixel_color == qcolor_blue:
+                    animation_is_valid = False
 
-    # If animation is not valid, fall back to 'idle'
-    if not animation_is_actually_valid:
-        if determined_key != 'idle': # Avoid redundant warning if already trying idle
-            warning(f"EnemyAnimHandler (ID: {enemy.enemy_id}, Color: {enemy.color_name}): "
-                    f"Animation for determined key '{determined_key}' (logical state: {enemy.state}) is missing or a placeholder. "
-                    f"Switching to 'idle' animation.")
-        determined_key = 'idle' # Update key to 'idle'
-        current_frames_list = enemy.animations.get('idle') # Get idle frames
-        
-        # Critical check: if even 'idle' is missing/placeholder, then visuals are broken
-        if not current_frames_list or \
-           (len(current_frames_list) == 1 and current_frames_list[0].get_size() == (30,40) and \
-            (current_frames_list[0].get_at((0,0)) == C.RED or current_frames_list[0].get_at((0,0)) == C.BLUE)):
-            critical(f"EnemyAnimHandler CRITICAL (ID: {enemy.enemy_id}, Color: {enemy.color_name}): "
-                     f"Fallback 'idle' animation is ALSO missing/placeholder! Enemy visuals will be broken.")
-            if hasattr(enemy, 'image') and enemy.image: enemy.image.fill(C.MAGENTA) # Magenta error
-            return # Cannot proceed
+    if not animation_is_valid:
+        if determined_key != 'idle':
+             warning(f"ENEMY_ANIM_HANDLER Warning (ID: {getattr(enemy, 'enemy_id', 'N/A')}, Color: {getattr(enemy, 'color_name', 'N/A')}): "
+                   f"Animation for key '{determined_key}' (State: {getattr(enemy, 'state', 'N/A')}) missing/placeholder. Switching to 'idle'.")
+        determined_key = 'idle' # Update the key being processed
+        current_frames_list = enemy.animations.get('idle') if enemy.animations else None
 
-    if not current_frames_list: # Should be caught by above, but defensive check
-        critical(f"EnemyAnimHandler CRITICAL (ID: {enemy.enemy_id}): No frames for '{determined_key}' after all checks.")
-        if hasattr(enemy, 'image') and enemy.image: enemy.image.fill(C.BLUE) # Blue error
-        return
-    
-    # --- Advance frame and handle state transitions (if not stomp_death, which is handled by scaling) ---
-    # Stomp death visual is a scale transform, not frame cycling.
+        is_idle_still_invalid = not current_frames_list or \
+                                not current_frames_list[0] or \
+                                current_frames_list[0].isNull() or \
+                                (len(current_frames_list) == 1 and \
+                                 current_frames_list[0].size() == QSize(30,40) and \
+                                 (current_frames_list[0].toImage().pixelColor(0,0) == qcolor_red or \
+                                  current_frames_list[0].toImage().pixelColor(0,0) == qcolor_blue))
+        if is_idle_still_invalid:
+            critical(f"ENEMY_ANIM_HANDLER CRITICAL (ID: {getattr(enemy, 'enemy_id', 'N/A')}): Fallback 'idle' ALSO missing/placeholder! Visuals broken.")
+            if hasattr(enemy, 'image') and enemy.image and not enemy.image.isNull(): enemy.image.fill(qcolor_magenta)
+            return
+
+    if not current_frames_list: # Should be caught by above, but as a safeguard
+        if hasattr(enemy, 'image') and enemy.image and not enemy.image.isNull(): enemy.image.fill(qcolor_blue); return
+
+    # --- Advance frame and handle state transitions based on animation end ---
+    # Stomp death visual scaling is special, don't advance frame here for it.
     if determined_key != 'stomp_death':
         advance_enemy_frame_and_handle_transitions(enemy, current_frames_list, current_time_ms, determined_key)
 
-    # --- Re-determine animation key for RENDERING if state changed during advance_frame ---
-    # This is important if an animation finishes and transitions the enemy to a new logical state.
-    # Skip if it's stomp_death, as that state and visual are tightly coupled.
-    if enemy.state != determined_key and \
-       not (enemy.is_petrified and determined_key in ['petrified', 'smashed']) and \
+    # --- Re-determine animation key if logical state changed during advance_frame ---
+    # This ensures the final image rendered matches the most up-to-date state.
+    render_key_for_final_image = determined_key
+    current_enemy_logical_state = getattr(enemy, 'state', 'idle')
+    if current_enemy_logical_state != determined_key and \
+       not (getattr(enemy, 'is_petrified', False) and determined_key in ['petrified', 'smashed']) and \
        determined_key != 'stomp_death':
-        
-        new_determined_key_after_transition = determine_enemy_animation_key(enemy)
-        if new_determined_key_after_transition != determined_key: # If key actually changed
-            determined_key = new_determined_key_after_transition # Update key for rendering
-            # Update current_frames_list based on the new key
-            if determined_key == 'petrified': current_frames_list = [enemy.stone_image_frame] if enemy.stone_image_frame else []
-            elif determined_key == 'smashed': current_frames_list = enemy.stone_smashed_frames if enemy.stone_smashed_frames else []
-            elif determined_key == 'stomp_death': current_frames_list = [enemy.original_stomp_death_image] if enemy.original_stomp_death_image else []
-            else: current_frames_list = enemy.animations.get(determined_key, []) # Get frames for new key
-            
-            # Fallback if new key has no frames (should be rare if determine_enemy_animation_key has good fallbacks)
-            if not current_frames_list:
-                 warning(f"EnemyAnimHandler (ID: {enemy.enemy_id}): No frames for re-determined key '{determined_key}' after state transition. Using last valid image or placeholder.")
-                 # If image attribute exists, it will retain the last valid frame. If not, create placeholder.
-                 if not (hasattr(enemy, 'image') and enemy.image):
-                     enemy.image = enemy._create_placeholder_surface(C.YELLOW, "AnimErr") # Assuming _create_placeholder_surface exists
-                     if hasattr(enemy, 'pos'): # Try to position placeholder correctly
-                         enemy.rect = enemy.image.get_rect(midbottom=enemy.pos)
-                 return # Stop further animation update this frame if frames are missing for new state
-    
-    # If it IS stomp_death, the image is ALREADY set and scaled by update_enemy_status_effects.
-    # We should skip the standard image assignment logic below.
-    if determined_key == 'stomp_death':
-        # Rect and pos should be managed by the scaling logic in status_effects.
-        # If needed, ensure rect is synced: enemy.rect.midbottom = round(enemy.pos.x), round(enemy.pos.y)
+
+        new_render_key_candidate = determine_enemy_animation_key(enemy)
+        if new_render_key_candidate != determined_key:
+            render_key_for_final_image = new_render_key_candidate
+            # Update current_frames_list based on the new render_key
+            if render_key_for_final_image == 'petrified':
+                stone_frame_render = getattr(enemy, 'stone_image_frame', None)
+                current_frames_list = [stone_frame_render] if stone_frame_render and not stone_frame_render.isNull() else []
+            elif render_key_for_final_image == 'smashed':
+                current_frames_list = getattr(enemy, 'stone_smashed_frames', [])
+            # Stomp death handled separately.
+            elif enemy.animations:
+                new_frames_for_render = enemy.animations.get(render_key_for_final_image, [])
+                if new_frames_for_render and new_frames_for_render[0] and not new_frames_for_render[0].isNull():
+                    current_frames_list = new_frames_for_render
+                elif not (current_frames_list and current_frames_list[0] and not current_frames_list[0].isNull()): # If previous was also bad
+                    current_frames_list = enemy.animations.get('idle', [enemy.image] if enemy.image and not enemy.image.isNull() else [])
+
+    # --- Final Safeguard and Image Assignment ---
+    if determined_key == 'stomp_death': # Visuals handled by status_effects squash logic
         return
 
-    # --- Final check on frame index and get the image for this frame ---
     if not current_frames_list or enemy.current_frame < 0 or enemy.current_frame >= len(current_frames_list):
-        enemy.current_frame = 0 # Reset to first frame if index is out of bounds
-        # if not current_frames_list: # Should be impossible if earlier checks passed, but very defensive
-            #  if hasattr(enemy, 'image') and enemy.image: enemy.image.fill(C.CYAN); return # 
+        enemy.current_frame = 0 # Reset frame index if out of bounds
+        if not current_frames_list: # Absolute fallback if list became empty
+            if hasattr(enemy, 'image') and enemy.image and not enemy.image.isNull(): enemy.image.fill(qcolor_yellow); return
 
+    image_this_frame = current_frames_list[enemy.current_frame]
+    if image_this_frame.isNull(): # Should be caught earlier
+        if hasattr(enemy, 'image') and enemy.image and not enemy.image.isNull(): enemy.image.fill(qcolor_magenta); return
 
-    image_for_this_frame = current_frames_list[enemy.current_frame]
+    # Determine facing for visual display
+    display_facing_right = getattr(enemy, 'facing_right', True)
+    if render_key_for_final_image == 'petrified' or render_key_for_final_image == 'smashed':
+        display_facing_right = getattr(enemy, 'facing_at_petrification', True)
 
-    # --- Handle image flipping based on facing direction ---
-    # For petrified states, use the direction enemy was facing when petrified.
-    current_display_facing_right = enemy.facing_right
-    if enemy.is_petrified: # Covers both 'petrified' and 'smashed' states
-        current_display_facing_right = enemy.facing_at_petrification
+    final_image_to_set = image_this_frame
+    if not display_facing_right: # Flip if facing left
+        # Don't flip static stone images here if they are pre-rendered for one direction
+        if not (render_key_for_final_image == 'petrified' or render_key_for_final_image == 'smashed'):
+            q_img = image_this_frame.toImage()
+            if not q_img.isNull():
+                final_image_to_set = QPixmap.fromImage(q_img.mirrored(True, False))
+            # else: final_image_to_set remains original if conversion fails
 
-    # Flip image if not facing right (and not petrified, as petrified images are pre-oriented)
-    # Actually, petrified images from common assets might also need flipping.
-    # The stone_image_frame and stone_smashed_frames on the enemy instance should be
-    # the correctly oriented versions.
-    if not current_display_facing_right:
-        # This assumes that `enemy.stone_image_frame` and `enemy.stone_smashed_frames`
-        # are already correctly flipped if `facing_at_petrification` was False.
-        # So, if `image_for_this_frame` comes directly from those, it's already oriented.
-        # If it comes from `enemy.animations`, then flip is needed.
-        if not (determined_key == 'petrified' or determined_key == 'smashed'):
-            image_for_this_frame = pygame.transform.flip(image_for_this_frame, True, False)
+    # Check if image content or facing direction actually changed before updating
+    image_content_changed = (not hasattr(enemy, 'image') or enemy.image is None) or \
+                            (hasattr(enemy.image, 'cacheKey') and hasattr(final_image_to_set, 'cacheKey') and \
+                             enemy.image.cacheKey() != final_image_to_set.cacheKey()) or \
+                            (enemy.image is not final_image_to_set) # Fallback direct comparison
 
-    # --- Update enemy's image and rect if changed ---
-    # Only update if the image surface itself is different OR if the facing direction (that affects flip) has changed.
-    if enemy.image is not image_for_this_frame or enemy._last_facing_right != current_display_facing_right:
-        old_enemy_midbottom_pos = enemy.rect.midbottom # Preserve position
-        
-        enemy.image = image_for_this_frame
-        enemy.rect = enemy.image.get_rect(midbottom=old_enemy_midbottom_pos) # Re-anchor
-        
-        # Update pos based on new rect to ensure consistency (physics uses pos)
-        enemy.pos = pygame.math.Vector2(enemy.rect.midbottom)
-        
-        enemy._last_facing_right = current_display_facing_right # Store facing for next frame's check
+    if image_content_changed or getattr(enemy, '_last_facing_right_visual', None) != display_facing_right:
+        # Store midbottom to re-anchor after image change if height differs
+        old_midbottom_qpointf = QPointF(enemy.rect.center().x(), enemy.rect.bottom()) if hasattr(enemy, 'rect') and enemy.rect else None
+
+        enemy.image = final_image_to_set
+        if hasattr(enemy, '_update_rect_from_image_and_pos'):
+            enemy._update_rect_from_image_and_pos(old_midbottom_qpointf)
+
+        enemy._last_facing_right_visual = display_facing_right # Store the visual facing direction

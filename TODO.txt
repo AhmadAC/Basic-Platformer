@@ -1,13 +1,12 @@
 https://3d.hunyuan.tencent.com/animationTo3D
-
+pip install --force-reinstall PySide6 PySide6-Addons
+pip install PySDL2
 update main aspect ratio of png2gif
 
-fix auto save map wrong name after rename stuff
 
-wont load map if its renamed
+update editor, have a portal to another map or random map etc 
+have the option to hide a map from main menu lock/unlocked
 
-enemy's gifs are breaking somewhere
-getting thrown throw a wall when i get attacked
 
 fix delete menu
 Current Platformer game issues, things to test, and features to add:

@@ -1,850 +1,1272 @@
+# controller_settings/controller_mapper_gui.py
+# controller mapping>json>config>app ui creator
+# playerinput handler is related to
 import sys
 import json
 import threading
 import time
 import logging
 import os
+from typing import Dict, Optional, Any, List, Tuple
+import copy
 
 import pygame
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QComboBox, QPushButton, QTableWidget, QTableWidgetItem, QAbstractItemView,
-    QHeaderView, QLabel, QLineEdit, QInputDialog, QMessageBox, QTextEdit
+    QHeaderView, QLabel, QLineEdit, QInputDialog, QMessageBox, QTextEdit,
+    QGroupBox, QSizePolicy, QSplitter
 )
-from PySide6.QtCore import Qt, QThread, Signal
-from pynput.keyboard import Controller as KeyboardController, Key
+from PySide6.QtCore import Qt, QThread, Signal, QSettings, QByteArray, QTimer
+from PySide6.QtGui import QKeyEvent
 
-# --- Logging Setup ---
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
+try:
+    from pynput.keyboard import Controller as KeyboardController, Key # type: ignore
+    PYNPUT_AVAILABLE = True
+except ImportError:
+    PYNPUT_AVAILABLE = False
+    print("WARNING in controller_mapper_gui.py: pynput.keyboard not found. Keyboard simulation will not work.")
+    class Key: # type: ignore
+        shift = 'stub_shift'; ctrl = 'stub_ctrl'; alt = 'stub_alt'
+        enter = 'stub_enter'; tab = 'stub_tab'; esc = 'stub_esc'
+        up = 'stub_up'; down = 'stub_down'; left = 'stub_left'; right = 'stub_right'
+    class KeyboardController: # type: ignore
+        def press(self, key): pass
+        def release(self, key): pass
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc_val, exc_tb): pass
 
-# --- Configuration ---
-# Internal keys used for saving and processing
-MAPPABLE_KEYS = [
-    "MOVE_UP", "MOVE_LEFT", "MOVE_DOWN", "MOVE_RIGHT", # WASD typically
-    "JUMP", "CROUCH", "INTERACT",
-    "ATTACK_PRIMARY", "ATTACK_SECONDARY", "DASH", "ROLL",
-    "RESET", # <-- ADDED RESET ACTION
-    "WEAPON_1", "WEAPON_2", "WEAPON_3", "WEAPON_4", # Number keys
-    "WEAPON_DPAD_UP", "WEAPON_DPAD_DOWN", "WEAPON_DPAD_LEFT", "WEAPON_DPAD_RIGHT", # D-Pad weapons
-    "MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN",
-    # For direct key mappings if still desired alongside abstract actions:
-    "W", "A", "S", "D", "1", "2", "3", "4", "5", "Q", "E", "V", "B",
-    "SPACE", "SHIFT", "CTRL", "ALT",
-]
+if __name__ == "__main__":
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+        print(f"ControllerMapperGUI (Standalone): Added '{parent_dir}' to sys.path.")
 
-# User-friendly names for display in the UI
-GAME_ACTIONS_FRIENDLY_NAMES = {
-    "MOVE_UP": "Move UP/JUMP (W)",
-    "MOVE_LEFT": "Move Left (A)",
-    "MOVE_DOWN": "Move DOWN/Crouch (S)", # Assuming S might be crouch or move back
-    "MOVE_RIGHT": "Move Right (D)",
-    "JUMP": "Jump (L-Stick Up / Space)",
-    "CROUCH": "Crouch (L-Stick Down / Ctrl)", # More explicit crouch
-    "INTERACT": "Interact (E)",
-    "ATTACK_PRIMARY": "Primary Attack (LMB / V)",
-    "ATTACK_SECONDARY": "Secondary Attack (RMB / B)",
-    "DASH": "Dash (Shift)",
-    "ROLL": "Roll (Ctrl - if not crouch)",
-    "RESET": "Reset Action (Q)", # <-- ADDED FRIENDLY NAME FOR RESET
-    "WEAPON_1": "Weapon Slot 1 (1)",
-    "WEAPON_2": "Weapon Slot 2 (2)",
-    "WEAPON_3": "Weapon Slot 3 (3)",
-    "WEAPON_4": "Weapon Slot 4 (4)",
-    "WEAPON_DPAD_UP": "Weapon D-Pad Up",
-    "WEAPON_DPAD_DOWN": "Weapon D-Pad Down",
-    "WEAPON_DPAD_LEFT": "Weapon D-Pad Left",
-    "WEAPON_DPAD_RIGHT": "Weapon D-Pad Right",
-    "MENU_CONFIRM": "Menu Confirm (Enter)",
-    "MENU_CANCEL": "Menu Cancel (Esc)",
-    "MENU_RETURN": "Return to Menu",
-    # Direct key mappings (can be kept for flexibility or specific needs)
-    "W": "Key W", "A": "Key A", "S": "Key S", "D": "Key D",
-    "1": "Key 1", "2": "Key 2", "3": "Key 3", "4": "Key 4", "5": "Key 5",
-    "Q": "Key Q", "E": "Key E", "V": "Key V", "B": "Key B",
-    "SPACE": "Key Space", "SHIFT": "Key Shift", "CTRL": "Key Ctrl", "ALT": "Key Alt",
-}
+# --- GUI Navigation Actions ---
+GUI_NAV_UP = "gui_nav_up"
+GUI_NAV_DOWN = "gui_nav_down"
+GUI_NAV_LEFT = "gui_nav_left"
+GUI_NAV_RIGHT = "gui_nav_right"
+GUI_NAV_CONFIRM = "gui_nav_confirm"
+GUI_NAV_CANCEL = "gui_nav_cancel"
+GUI_NAV_ACTIONS = [GUI_NAV_UP, GUI_NAV_DOWN, GUI_NAV_LEFT, GUI_NAV_RIGHT, GUI_NAV_CONFIRM, GUI_NAV_CANCEL]
 
+try:
+    import config as game_config
+    print("Successfully imported 'config as game_config'")
+    # Dynamically add GUI nav actions if not present, assuming game_config.GAME_ACTIONS is a list
+    if hasattr(game_config, 'GAME_ACTIONS') and isinstance(game_config.GAME_ACTIONS, list):
+        for action in GUI_NAV_ACTIONS:
+            if action not in game_config.GAME_ACTIONS:
+                game_config.GAME_ACTIONS.append(action)
+    if hasattr(game_config, 'EXTERNAL_TO_INTERNAL_ACTION_MAP') and isinstance(game_config.EXTERNAL_TO_INTERNAL_ACTION_MAP, dict):
+        default_gui_friendly_names = {
+            GUI_NAV_UP: "GUI Up", GUI_NAV_DOWN: "GUI Down", GUI_NAV_LEFT: "GUI Left",
+            GUI_NAV_RIGHT: "GUI Right", GUI_NAV_CONFIRM: "GUI Confirm", GUI_NAV_CANCEL: "GUI Cancel"
+        }
+        for internal_action, friendly_name in default_gui_friendly_names.items():
+            # Add if internal_action is not a value, and friendly_name is not a key
+            if internal_action not in game_config.EXTERNAL_TO_INTERNAL_ACTION_MAP.values() and \
+               friendly_name not in game_config.EXTERNAL_TO_INTERNAL_ACTION_MAP:
+                game_config.EXTERNAL_TO_INTERNAL_ACTION_MAP[friendly_name] = internal_action
 
-EXCLUSIVE_ACTIONS = ["MENU_RETURN"] # Add other exclusive actions like "JUMP" if a controller input for jump shouldn't also fire a weapon
-AXIS_THRESHOLD = 0.7
+except ImportError:
+    print("CRITICAL ERROR in controller_mapper_gui.py: Could not import 'config as game_config'. Using fallback.")
+    class GameConfigFallback:
+        BASE_GAME_ACTIONS = ["jump", "attack1", "left", "right", "up", "down", "menu_confirm", "menu_cancel", "pause"]
+        GAME_ACTIONS = BASE_GAME_ACTIONS + GUI_NAV_ACTIONS
+        EXTERNAL_TO_INTERNAL_ACTION_MAP = {
+            "JUMP": "jump", "ATTACK": "attack1", "LEFT": "left", "RIGHT": "right", "UP": "up", "DOWN": "down",
+            "CONFIRM": "menu_confirm", "CANCEL": "menu_cancel", "PAUSE": "pause",
+            "GUI Up": GUI_NAV_UP, "GUI Down": GUI_NAV_DOWN, "GUI Left": GUI_NAV_LEFT, "GUI Right": GUI_NAV_RIGHT,
+            "GUI Confirm": GUI_NAV_CONFIRM, "GUI Cancel": GUI_NAV_CANCEL
+        }
+        AXIS_THRESHOLD_DEFAULT = 0.7
+        MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH = "controller_mappings_fallback.json"
+        _pygame_initialized_globally = False; _joystick_initialized_globally = False
+        LOADED_PYGAME_JOYSTICK_MAPPINGS: Dict[str, Dict[str, Any]] = {}
+        DEFAULT_P1_INPUT_DEVICE = "keyboard_p1"; DEFAULT_P2_INPUT_DEVICE = "keyboard_p2"
+        DEFAULT_P3_INPUT_DEVICE = "unassigned"; DEFAULT_P4_INPUT_DEVICE = "unassigned"
+        CURRENT_P1_INPUT_DEVICE = DEFAULT_P1_INPUT_DEVICE; P1_KEYBOARD_ENABLED = True; P1_CONTROLLER_ENABLED = False
+        CURRENT_P2_INPUT_DEVICE = DEFAULT_P2_INPUT_DEVICE; P2_KEYBOARD_ENABLED = True; P2_CONTROLLER_ENABLED = False
+        CURRENT_P3_INPUT_DEVICE = DEFAULT_P3_INPUT_DEVICE; P3_KEYBOARD_ENABLED = False; P3_CONTROLLER_ENABLED = False
+        CURRENT_P4_INPUT_DEVICE = DEFAULT_P4_INPUT_DEVICE; P4_KEYBOARD_ENABLED = False; P4_CONTROLLER_ENABLED = False
+        KEYBOARD_DEVICE_IDS = ["keyboard_p1", "keyboard_p2", "unassigned_keyboard"]
+        KEYBOARD_DEVICE_NAMES = ["Keyboard (P1)", "Keyboard (P2)", "Keyboard (Unassigned)"]
+        DEFAULT_GENERIC_JOYSTICK_MAPPINGS: Dict[str, Any] = { # Runtime format
+            "jump": {"type": "button", "id": 0},
+            "attack1": {"type": "button", "id": 1},
+            "menu_confirm": {"type": "button", "id": 0}, # Often same as jump
+            "menu_cancel": {"type": "button", "id": 1}, # Often same as an attack or distinct B
+            "pause": {"type": "button", "id": 9},      # E.g. Start button
+            "left": {"type": "hat", "id": 0, "value": (-1, 0)},
+            "right": {"type": "hat", "id": 0, "value": (1, 0)},
+            "up": {"type": "hat", "id": 0, "value": (0, 1)},
+            "down": {"type": "hat", "id": 0, "value": (0, -1)},
+            # Fallback GUI Navigation Mappings (example, adjust as needed)
+            GUI_NAV_UP: {"type": "hat", "id": 0, "value": (0, 1)},       # D-pad Up
+            GUI_NAV_DOWN: {"type": "hat", "id": 0, "value": (0, -1)},   # D-pad Down
+            GUI_NAV_LEFT: {"type": "hat", "id": 0, "value": (-1, 0)},   # D-pad Left
+            GUI_NAV_RIGHT: {"type": "hat", "id": 0, "value": (1, 0)},  # D-pad Right
+            GUI_NAV_CONFIRM: {"type": "button", "id": 0},                # 'A' button (Xbox) / Cross (PS)
+            GUI_NAV_CANCEL: {"type": "button", "id": 1},                 # 'B' button (Xbox) / Circle (PS)
+        }
+        DEFAULT_PYGAME_JOYSTICK_MAPPINGS: Dict[str, Any] = {"jump": {"type": "button", "id": 0}} # For fallback loading
+        UNASSIGNED_DEVICE_ID = "unassigned"; UNASSIGNED_DEVICE_NAME = "Unassigned"
 
-# --- Path Configuration ---
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SETTINGS_DIR = SCRIPT_DIR
-MAPPINGS_FILE = os.path.join(SETTINGS_DIR, "controller_mappings.json")
+        @staticmethod
+        def init_pygame_and_joystick_globally(force_rescan=False):
+            print("Fallback: Pygame Init Triggered")
+            if not GameConfigFallback._pygame_initialized_globally:
+                pygame.init()
+                GameConfigFallback._pygame_initialized_globally = True
+            if not GameConfigFallback._joystick_initialized_globally or force_rescan:
+                if GameConfigFallback._joystick_initialized_globally: pygame.joystick.quit()
+                pygame.joystick.init()
+                GameConfigFallback._joystick_initialized_globally = True
+            print(f"Fallback: Pygame initialized. Joystick count: {pygame.joystick.get_count() if GameConfigFallback._joystick_initialized_globally else 'N/A'}")
 
-logging.info(f"Script directory (and effective settings directory): {SCRIPT_DIR}")
-logging.info(f"Mappings file path: {MAPPINGS_FILE}")
+        @staticmethod
+        def get_available_joystick_names_with_indices_and_guids() -> List[Tuple[str, str, Optional[str], int]]:
+            if not GameConfigFallback._joystick_initialized_globally: return []
+            joysticks_data = []
+            for i in range(pygame.joystick.get_count()):
+                try:
+                    joy = pygame.joystick.Joystick(i)
+                    name = joy.get_name()
+                    guid = joy.get_guid() if hasattr(joy, 'get_guid') else f"noguid_idx{i}"
+                    internal_id = f"joystick_pygame_{guid if guid and guid != '00000000000000000000000000000000' else f'idx_{i}'}"
+                    display_name = f"Joy {i}: {name}"
+                    joysticks_data.append((display_name, internal_id, guid, i))
+                except pygame.error as e:
+                    print(f"Fallback: Error getting joystick {i}: {e}")
+                    continue
+            return joysticks_data
+        @staticmethod
+        def get_joystick_objects() -> List[Any]: return [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())] if GameConfigFallback._joystick_initialized_globally else []
+        @staticmethod
+        def save_config():
+            print("Fallback save_config called.")
+            data_to_save = {
+                "joystick_mappings": GameConfigFallback.LOADED_PYGAME_JOYSTICK_MAPPINGS,
+                "player_devices": {}
+            }
+            for i in range(1, 5):
+                dev_var = f"CURRENT_P{i}_INPUT_DEVICE"
+                kbd_en_var = f"P{i}_KEYBOARD_ENABLED"
+                ctrl_en_var = f"P{i}_CONTROLLER_ENABLED"
+                current_device = getattr(GameConfigFallback, dev_var, GameConfigFallback.UNASSIGNED_DEVICE_ID)
+                data_to_save["player_devices"][f"P{i}"] = {
+                    "device_id": current_device,
+                    "kbd_enabled": getattr(GameConfigFallback, kbd_en_var, False),
+                    "ctrl_enabled": getattr(GameConfigFallback, ctrl_en_var, False)
+                }
+            try:
+                with open(GameConfigFallback.MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH, 'w') as f:
+                    json.dump(data_to_save, f, indent=4)
+                return True
+            except Exception as e:
+                print(f"Fallback save_config error: {e}")
+                return False
+        @staticmethod
+        def load_config():
+            print("Fallback load_config called.")
+            try:
+                with open(GameConfigFallback.MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH, 'r') as f:
+                    data = json.load(f)
+                GameConfigFallback.LOADED_PYGAME_JOYSTICK_MAPPINGS = data.get("joystick_mappings", {})
+                player_devices_loaded = data.get("player_devices", {})
+                for i in range(1, 5):
+                    p_settings = player_devices_loaded.get(f"P{i}", {})
+                    def_dev_var = f"DEFAULT_P{i}_INPUT_DEVICE"
+                    setattr(GameConfigFallback, f"CURRENT_P{i}_INPUT_DEVICE", p_settings.get("device_id", getattr(GameConfigFallback, def_dev_var)))
+                    setattr(GameConfigFallback, f"P{i}_KEYBOARD_ENABLED", p_settings.get("kbd_enabled", i <= 2))
+                    setattr(GameConfigFallback, f"P{i}_CONTROLLER_ENABLED", p_settings.get("ctrl_enabled", False))
+            except FileNotFoundError:
+                print("Fallback: Mappings file not found, using defaults.")
+                GameConfigFallback.LOADED_PYGAME_JOYSTICK_MAPPINGS = {}
+                for i in range(1, 5):
+                    setattr(GameConfigFallback, f"CURRENT_P{i}_INPUT_DEVICE", getattr(GameConfigFallback, f"DEFAULT_P{i}_INPUT_DEVICE"))
+                    setattr(GameConfigFallback, f"P{i}_KEYBOARD_ENABLED", i <= 2)
+                    setattr(GameConfigFallback, f"P{i}_CONTROLLER_ENABLED", False)
+            except Exception as e:
+                print(f"Fallback load_config error: {e}")
+        @staticmethod
+        def update_player_mappings_from_config(): print("Fallback update_player_mappings called")
+        @staticmethod
+        def _translate_and_validate_gui_json_to_pygame_mappings(raw_gui_json_joystick_mappings: Dict[str, Any]) -> Dict[str, Any]:
+            print("Fallback: _translate_and_validate_gui_json_to_pygame_mappings called")
+            translated_mappings: Dict[str, Any] = {}
+            if not isinstance(raw_gui_json_joystick_mappings, dict): return {}
+            for action_key, mapping_info in raw_gui_json_joystick_mappings.items():
+                if not isinstance(mapping_info, dict): continue
+                details = mapping_info.get("details"); event_type = mapping_info.get("event_type")
+                if not details or not event_type: continue
+                runtime_map_entry: Dict[str, Any] = {"type": event_type}
+                if event_type == "button": runtime_map_entry["id"] = details.get("button_id")
+                elif event_type == "axis":
+                    runtime_map_entry["id"] = details.get("axis_id"); runtime_map_entry["value"] = details.get("direction")
+                    runtime_map_entry["threshold"] = details.get("threshold", GameConfigFallback.AXIS_THRESHOLD_DEFAULT)
+                elif event_type == "hat":
+                    runtime_map_entry["id"] = details.get("hat_id"); runtime_map_entry["value"] = tuple(details.get("value", (0,0)))
+                else: continue
+                if runtime_map_entry.get("id") is None: continue
+                if event_type == "axis" and runtime_map_entry.get("value") is None: continue
+                translated_mappings[action_key] = runtime_map_entry
+            return translated_mappings
+    game_config = GameConfigFallback()
 
+logger_cmg = logging.getLogger("CM_GUI")
+if not logger_cmg.hasHandlers():
+    _cmg_handler = logging.StreamHandler(sys.stdout)
+    _cmg_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    _cmg_handler.setFormatter(_cmg_formatter); logger_cmg.addHandler(_cmg_handler)
+    logger_cmg.setLevel(logging.INFO); logger_cmg.propagate = False
 
-# Helper to convert pynput special keys
-def get_pynput_key(key_str):
-    # These direct key mappings are for when the MAPPABLE_KEY itself is a keyboard key
-    if key_str == "SPACE": return Key.space
-    if key_str == "SHIFT": return Key.shift
-    if key_str == "CTRL": return Key.ctrl
-    if key_str == "ALT": return Key.alt
+MAPPABLE_KEYS = game_config.GAME_ACTIONS # Now includes GUI_NAV_ACTIONS
+INTERNAL_TO_FRIENDLY_ACTION_DISPLAY = {v: k for k, v in game_config.EXTERNAL_TO_INTERNAL_ACTION_MAP.items() if v in game_config.GAME_ACTIONS}
+for action in game_config.GAME_ACTIONS:
+    if action not in INTERNAL_TO_FRIENDLY_ACTION_DISPLAY: INTERNAL_TO_FRIENDLY_ACTION_DISPLAY[action] = action.replace("_", " ").title()
 
-    # Abstract actions do not directly map to a single pynput key via this function.
-    # Their corresponding keyboard keys (like 'W' for 'MOVE_UP') are simulated based on the action.
-    if key_str in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN",
-                   "MOVE_UP", "MOVE_LEFT", "MOVE_BDOWN", "MOVE_RIGHT",
-                   "JUMP", "CROUCH", "INTERACT", "ATTACK_PRIMARY", "ATTACK_SECONDARY",
-                   "DASH", "ROLL", "RESET", # Added RESET here as well for consistency if this logic is ever used, though primary handling is in on_mapped_event_triggered
-                   "WEAPON_1", "WEAPON_2", "WEAPON_3", "WEAPON_4",
-                   "WEAPON_DPAD_UP", "WEAPON_DPAD_DOWN", "WEAPON_DPAD_LEFT", "WEAPON_DPAD_RIGHT"]:
-        friendly_name = GAME_ACTIONS_FRIENDLY_NAMES.get(key_str, "")
-        if "(W)" in friendly_name: return 'w'
-        if "(A)" in friendly_name: return 'a'
-        if "(S)" in friendly_name: return 's'
-        if "(D)" in friendly_name: return 'd'
-        if "(Space)" in friendly_name: return Key.space
-        if "(Q)" in friendly_name and key_str == "RESET": return 'q' # Explicit for RESET if parsed here
-        # ... add more for other abstract actions if they have a single key equivalent for pynput
-        return None # Abstract actions without a direct single key simulation
+MENU_SPECIFIC_ACTIONS = ["menu_confirm", "menu_cancel", "menu_up", "menu_down", "menu_left", "menu_right", "pause"] + GUI_NAV_ACTIONS # GUI nav actions are menu-like
+EXCLUSIVE_ACTIONS = ["pause", "menu_cancel"] # GUI nav actions are not exclusive in the same way as pause
+AXIS_THRESHOLD = game_config.AXIS_THRESHOLD_DEFAULT
+MAPPINGS_FILE = game_config.MAPPINGS_AND_DEVICE_CHOICES_FILE_PATH
+UNASSIGNED_DEVICE_ID = getattr(game_config, "UNASSIGNED_DEVICE_ID", "unassigned")
+UNASSIGNED_DEVICE_NAME = getattr(game_config, "UNASSIGNED_DEVICE_NAME", "Unassigned")
 
-    if len(key_str) == 1 and key_str.isalnum(): # Single alphanumeric keys
-        return key_str.lower()
-
-    logging.warning(f"get_pynput_key: Unknown or non-simulatable key string '{key_str}'")
+def get_pynput_key(key_str: str) -> Optional[Any]:
+    if not PYNPUT_AVAILABLE: return None
+    key_map = {
+        "SHIFT": Key.shift, "CTRL": Key.ctrl, "ALT": Key.alt, "ENTER": Key.enter, "RETURN": Key.enter,
+        "TAB": Key.tab, "ESC": Key.esc, "UP_ARROW": Key.up, "DOWN_ARROW": Key.down,
+        "LEFT_ARROW": Key.left, "RIGHT_ARROW": Key.right,
+        "up": 'w', "left": 'a', "down": 's', "right": 'd', "jump": 'w', "attack1": 'v',
+        "pause": Key.esc, "menu_confirm": Key.enter,
+        # GUI Nav keys generally don't simulate pynput keys, they control the GUI itself.
+        # However, if a game also used these actions, they could be mapped here.
+    }
+    if key_str in key_map: return key_map[key_str]
+    if len(key_str) == 1 and key_str.isalnum(): return key_str.lower()
+    try:
+        if key_str.lower().startswith('f') and key_str[1:].isdigit(): return getattr(Key, key_str.lower())
+    except AttributeError: pass
+    if key_str not in GUI_NAV_ACTIONS: logger_cmg.warning(f"Pynput key for '{key_str}' not found.")
     return None
 
-# PygameControllerThread class
+def _convert_runtime_default_to_gui_storage(action: str, runtime_map: Dict[str, Any], joy_idx_for_raw_str: int) -> Optional[Dict[str, Any]]:
+    gui_storage_map: Dict[str, Any] = {}; details: Dict[str, Any] = {}
+    raw_str_parts = [f"Joy{joy_idx_for_raw_str}"]
+    map_type = runtime_map.get("type"); map_id = runtime_map.get("id")
+    if map_type == "button":
+        gui_storage_map["event_type"] = "button"; details["button_id"] = map_id; details["type"] = "button"
+        raw_str_parts.append(f"Btn {map_id}")
+    elif map_type == "axis":
+        gui_storage_map["event_type"] = "axis"; details["axis_id"] = map_id
+        details["direction"] = runtime_map.get("value"); details["threshold"] = runtime_map.get("threshold", AXIS_THRESHOLD)
+        details["type"] = "axis"
+        if details["direction"] is None: logger_cmg.warning(f"Axis map for '{action}' (runtime default) missing direction."); return None
+        raw_str_parts.append(f"Axis {map_id} {'Pos' if details['direction'] == 1 else 'Neg'}")
+    elif map_type == "hat":
+        gui_storage_map["event_type"] = "hat"; details["hat_id"] = map_id
+        details["value"] = list(runtime_map.get("value", (0,0))); details["type"] = "hat"
+        raw_str_parts.append(f"Hat {map_id} {tuple(details['value'])}")
+    else: logger_cmg.warning(f"Unknown map type '{map_type}' for action '{action}' in runtime default."); return None
+    gui_storage_map["details"] = details; gui_storage_map["raw_str"] = " ".join(raw_str_parts)
+    return gui_storage_map
+
 class PygameControllerThread(QThread):
-    controllerEventCaptured = Signal(dict, str)
-    mappedEventTriggered = Signal(str, bool)
+    controllerEventCaptured = Signal(dict, str) # For mapping
+    mappedEventTriggered = Signal(str, bool)    # For game action simulation
+    guiNavigationRequested = Signal(str, bool)  # For GUI navigation
     controllerHotplug = Signal(str)
 
-    def __init__(self, mappings_ref):
+    def __init__(self):
         super().__init__()
-        self.joystick = None
+        self.joystick: Optional[pygame.joystick.Joystick] = None
         self.is_listening_for_mapping = False
         self.stop_flag = threading.Event()
-        self.mappings = mappings_ref # This is a reference to MainWindow.mappings
-        self.active_axis_keys = {}
-        self.active_hat_keys = {}
+        self._translated_mappings_for_triggering: Dict[str, Any] = {}
+        self.active_axis_keys: Dict[Tuple[int, int], str] = {}
+        self.active_hat_keys: Dict[Tuple[int, Tuple[int, int]], str] = {}
         self._last_joystick_count = -1
-        logging.debug("PygameControllerThread initialized.")
+        self.joystick_idx_to_monitor = -1
+        self.joystick_instance_id_to_monitor: Optional[int] = None
+        logger_cmg.debug("PygameControllerThread initialized.")
+
+    @property
+    def translated_mappings_for_triggering(self) -> Dict[str, Any]: return self._translated_mappings_for_triggering
+    @translated_mappings_for_triggering.setter
+    def translated_mappings_for_triggering(self, new_mappings: Dict[str, Any]):
+        self._translated_mappings_for_triggering = new_mappings
+        self.active_axis_keys.clear(); self.active_hat_keys.clear()
+
+    def set_joystick_to_monitor(self, pygame_index: int):
+        if self.joystick_idx_to_monitor != pygame_index:
+            logger_cmg.info(f"PygameControllerThread: Target monitor index changed from {self.joystick_idx_to_monitor} to {pygame_index}")
+            self.joystick_idx_to_monitor = pygame_index
+            if self.joystick:
+                try: self.joystick.quit()
+                except pygame.error: pass
+            self.joystick = None; self.joystick_instance_id_to_monitor = None
+            self.active_axis_keys.clear(); self.active_hat_keys.clear()
+            if pygame_index == -1: logger_cmg.info("PygameControllerThread: Monitoring disabled (index set to -1).")
+
+    def start_listening(self): self.is_listening_for_mapping = True; logger_cmg.debug("PygameControllerThread: Started listening for mapping event.")
+    def stop_listening(self): self.is_listening_for_mapping = False; logger_cmg.debug("PygameControllerThread: Stopped listening for mapping event.")
+    def stop(self): self.stop_flag.set(); logger_cmg.debug("PygameControllerThread: Stop flag set.")
 
     def run(self):
-        logging.info("PygameControllerThread started.")
-        try:
-            pygame.init()
-            pygame.joystick.init()
-            self.controllerHotplug.emit("Pygame Initialized. Waiting for controller...")
-        except pygame.error as e:
-            logging.error(f"Pygame initialization failed: {e}")
-            self.controllerHotplug.emit(f"Pygame init error: {e}")
-            return
+        logger_cmg.info("PygameControllerThread started running.")
+        if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
+            logger_cmg.error("Pygame or Joystick system not globally initialized! Thread cannot run reliably.")
+            self.controllerHotplug.emit("Error: Pygame Joystick system not ready."); return
 
         while not self.stop_flag.is_set():
             try:
+                pygame.event.pump()
                 current_joystick_count = pygame.joystick.get_count()
+                if self._last_joystick_count != current_joystick_count:
+                    self.controllerHotplug.emit(f"Joystick count changed: {current_joystick_count}")
+                    logger_cmg.info(f"Joystick count changed from {self._last_joystick_count} to {current_joystick_count}.")
+                    if self.joystick:
+                        try: self.joystick.quit()
+                        except pygame.error: pass
+                    self.joystick = None; self.joystick_instance_id_to_monitor = None
+                self._last_joystick_count = current_joystick_count
 
                 if self.joystick is None:
-                    if current_joystick_count > 0:
+                    if 0 <= self.joystick_idx_to_monitor < current_joystick_count:
                         try:
-                            self.joystick = pygame.joystick.Joystick(0)
-                            self.joystick.init()
+                            temp_joy = pygame.joystick.Joystick(self.joystick_idx_to_monitor); temp_joy.init()
+                            self.joystick = temp_joy; self.joystick_instance_id_to_monitor = self.joystick.get_instance_id()
                             name = self.joystick.get_name()
-                            self.controllerHotplug.emit(f"Controller connected: {name} (GUID: {self.joystick.guid if hasattr(self.joystick, 'guid') else 'N/A'})")
-                            logging.info(f"Controller connected: {name}")
+                            logger_cmg.info(f"PygameControllerThread: Monitoring '{name}' (Idx:{self.joystick_idx_to_monitor}, InstID:{self.joystick_instance_id_to_monitor}).")
+                            self.controllerHotplug.emit(f"Controller {self.joystick_idx_to_monitor} ({name}) ready for mapping/simulation.")
                         except pygame.error as e:
-                            logging.error(f"Error initializing joystick: {e}")
-                            self.joystick = None
-                            self.controllerHotplug.emit(f"Joystick init error. Retrying...")
-                            time.sleep(1)
-                            continue
-                    else:
-                        if self._last_joystick_count != 0:
-                            self.controllerHotplug.emit("No controller detected. Waiting...")
-                            logging.info("No controller detected.")
-                        self._last_joystick_count = 0
-                        time.sleep(1)
-                        continue
-                elif not self.joystick.get_init() or (current_joystick_count == 0 and self.joystick is not None):
-                    name = "Unknown"
-                    try: name = self.joystick.get_name()
-                    except: pass
-                    logging.warning(f"Controller '{name}' connection lost. Attempting to re-initialize.")
-                    self.controllerHotplug.emit(f"Controller '{name}' lost. Reconnecting...")
-                    self.joystick = None
-                    self.active_axis_keys.clear() # Clear active states on disconnect
-                    self.active_hat_keys.clear()
-                    pygame.joystick.quit()
-                    pygame.joystick.init()
-                    self._last_joystick_count = 0
-                    time.sleep(1)
-                    continue
-                self._last_joystick_count = current_joystick_count
+                            logger_cmg.error(f"Run loop: Error initializing joystick {self.joystick_idx_to_monitor}: {e}")
+                            self.joystick = None; self.joystick_instance_id_to_monitor = None
+                            self.controllerHotplug.emit(f"Joystick {self.joystick_idx_to_monitor} init error. Retrying...")
+
+                if not self.joystick or not self.joystick.get_init():
+                    if self.joystick and not self.joystick.get_init():
+                        logger_cmg.warning(f"Monitored joystick {self.joystick_idx_to_monitor} (Instance ID: {self.joystick_instance_id_to_monitor}) no longer initialized or lost.")
+                        self.controllerHotplug.emit(f"Controller {self.joystick_idx_to_monitor} lost.")
+                        try: self.joystick.quit()
+                        except pygame.error: pass
+                        self.joystick = None; self.joystick_instance_id_to_monitor = None
+                        self.active_axis_keys.clear(); self.active_hat_keys.clear()
+                    time.sleep(0.1); continue
 
                 for event in pygame.event.get():
                     if self.stop_flag.is_set(): break
-                    event_details = None
-                    raw_event_str = ""
+                    if not hasattr(event, 'instance_id') or event.instance_id != self.joystick_instance_id_to_monitor: continue
+
+                    event_details: Optional[Dict[str, Any]] = None; raw_str = ""
                     if event.type == pygame.JOYAXISMOTION:
-                        axis_id = event.axis
-                        value = event.value
-                        # Check for axis release
-                        for internal_action_key, mapping_info in list(self.mappings.items()): # Use internal_action_key
-                            if mapping_info and mapping_info["event_type"] == "axis" and \
-                               mapping_info["details"]["axis_id"] == axis_id:
-                                mapped_direction = mapping_info["details"]["direction"]
-                                # Release if axis returns to neutral or moves significantly away from active direction
-                                if (mapped_direction == 1 and value < 0.1) or \
-                                   (mapped_direction == -1 and value > -0.1) or \
-                                   (abs(value) < AXIS_THRESHOLD * 0.5 and self.active_axis_keys.get(internal_action_key) == mapped_direction): # More robust release
-                                    if self.active_axis_keys.get(internal_action_key) == mapped_direction:
-                                        self.mappedEventTriggered.emit(internal_action_key, False)
-                                        if internal_action_key in self.active_axis_keys:
-                                            del self.active_axis_keys[internal_action_key]
-                        # Check for axis press
-                        if value > AXIS_THRESHOLD:
-                            event_details = {"type": "axis", "axis_id": axis_id, "direction": 1, "threshold": AXIS_THRESHOLD}
-                            raw_event_str = f"Axis {axis_id} > {AXIS_THRESHOLD:.1f}"
-                        elif value < -AXIS_THRESHOLD:
-                            event_details = {"type": "axis", "axis_id": axis_id, "direction": -1, "threshold": AXIS_THRESHOLD}
-                            raw_event_str = f"Axis {axis_id} < -{AXIS_THRESHOLD:.1f}"
+                        axis, value = event.axis, event.value
+                        raw_str = f"Joy{self.joystick_idx_to_monitor} Axis {axis}: {value:.2f}"
+                        if self.is_listening_for_mapping and abs(value) > AXIS_THRESHOLD:
+                            event_details = {"type": "axis", "axis_id": axis, "direction": 1 if value > 0 else -1, "threshold": AXIS_THRESHOLD}
+                        elif not self.is_listening_for_mapping:
+                            for (ax_id, direction), act_key in list(self.active_axis_keys.items()):
+                                if ax_id == axis:
+                                    map_info_for_thresh = self.translated_mappings_for_triggering.get(act_key, {})
+                                    release_thresh = map_info_for_thresh.get("threshold", AXIS_THRESHOLD) * 0.5
+                                    if (direction == 1 and value < release_thresh) or \
+                                       (direction == -1 and value > -release_thresh) or \
+                                       (abs(value) < release_thresh):
+                                        if act_key in GUI_NAV_ACTIONS: self.guiNavigationRequested.emit(act_key, False)
+                                        else: self.mappedEventTriggered.emit(act_key, False)
+                                        if (ax_id, direction) in self.active_axis_keys: del self.active_axis_keys[(ax_id, direction)]
+                            for act_key, map_info in self.translated_mappings_for_triggering.items():
+                                if map_info.get("type") == "axis" and map_info.get("id") == axis:
+                                    map_val_dir = map_info.get("value"); map_thresh = map_info.get("threshold", AXIS_THRESHOLD)
+                                    active = (map_val_dir == 1 and value > map_thresh) or \
+                                             (map_val_dir == -1 and value < -map_thresh)
+                                    if active and (axis, map_val_dir) not in self.active_axis_keys:
+                                        if act_key in GUI_NAV_ACTIONS: self.guiNavigationRequested.emit(act_key, True)
+                                        else: self.mappedEventTriggered.emit(act_key, True)
+                                        self.active_axis_keys[(axis, map_val_dir)] = act_key
                     elif event.type == pygame.JOYBUTTONDOWN:
-                        event_details = {"type": "button", "button_id": event.button}
-                        raw_event_str = f"Button {event.button} Down"
+                        raw_str = f"Joy{self.joystick_idx_to_monitor} Btn {event.button} Down"
+                        if self.is_listening_for_mapping:
+                            event_details = {"type": "button", "button_id": event.button}
+                        else:
+                            for act_key, map_info in self.translated_mappings_for_triggering.items():
+                                if map_info.get("type") == "button" and map_info.get("id") == event.button:
+                                    if act_key in GUI_NAV_ACTIONS: self.guiNavigationRequested.emit(act_key, True)
+                                    else: self.mappedEventTriggered.emit(act_key, True)
+                                    break
                     elif event.type == pygame.JOYBUTTONUP:
-                        for internal_action_key, mapping_info in self.mappings.items(): # Use internal_action_key
-                            if mapping_info and mapping_info["event_type"] == "button" and \
-                               mapping_info["details"]["button_id"] == event.button:
-                                self.mappedEventTriggered.emit(internal_action_key, False)
+                        raw_str = f"Joy{self.joystick_idx_to_monitor} Btn {event.button} Up"
+                        if not self.is_listening_for_mapping:
+                            for act_key, map_info in self.translated_mappings_for_triggering.items():
+                                if map_info.get("type") == "button" and map_info.get("id") == event.button:
+                                    if act_key in GUI_NAV_ACTIONS: self.guiNavigationRequested.emit(act_key, False)
+                                    else: self.mappedEventTriggered.emit(act_key, False)
+                                    break
                     elif event.type == pygame.JOYHATMOTION:
-                        hat_id = event.hat
-                        hat_value_tuple = event.value
-                        # Check for hat release
-                        for internal_action_key, mapping_info in list(self.mappings.items()): # Use internal_action_key
-                            if mapping_info and mapping_info["event_type"] == "hat" and \
-                               mapping_info["details"]["hat_id"] == hat_id:
-                                active_hat_val_tuple = tuple(self.active_hat_keys.get(internal_action_key, (0,0)))
-                                mapped_hat_val_tuple = tuple(mapping_info["details"]["value"])
-                                if active_hat_val_tuple == mapped_hat_val_tuple and hat_value_tuple != mapped_hat_val_tuple:
-                                    self.mappedEventTriggered.emit(internal_action_key, False)
-                                    if internal_action_key in self.active_hat_keys:
-                                        del self.active_hat_keys[internal_action_key]
-                        # Check for hat press
-                        if hat_value_tuple != (0,0):
-                            event_details = {"type": "hat", "hat_id": hat_id, "value": list(hat_value_tuple)}
-                            raw_event_str = f"Hat {hat_id} {hat_value_tuple}"
-                        elif hat_value_tuple == (0,0): 
-                            for internal_action_key, mapping_info in list(self.mappings.items()):
-                                if mapping_info and mapping_info["event_type"] == "hat" and \
-                                   mapping_info["details"]["hat_id"] == hat_id:
-                                    if tuple(self.active_hat_keys.get(internal_action_key, ())) == tuple(mapping_info["details"]["value"]):
-                                        self.mappedEventTriggered.emit(internal_action_key, False)
-                                        if internal_action_key in self.active_hat_keys:
-                                            del self.active_hat_keys[internal_action_key]
+                        hat, value_tuple = event.hat, event.value
+                        raw_str = f"Joy{self.joystick_idx_to_monitor} Hat {hat} {value_tuple}"
+                        if self.is_listening_for_mapping and value_tuple != (0, 0):
+                            event_details = {"type": "hat", "hat_id": hat, "value": list(value_tuple)}
+                        elif not self.is_listening_for_mapping:
+                            for (h_id, h_val_active), act_key in list(self.active_hat_keys.items()):
+                                if h_id == hat and h_val_active != value_tuple: # Hat value changed from active state
+                                    if act_key in GUI_NAV_ACTIONS: self.guiNavigationRequested.emit(act_key, False)
+                                    else: self.mappedEventTriggered.emit(act_key, False)
+                                    if (h_id, h_val_active) in self.active_hat_keys: del self.active_hat_keys[(h_id, h_val_active)]
+                            if value_tuple != (0, 0): # New hat direction pressed
+                                for act_key, map_info in self.translated_mappings_for_triggering.items():
+                                    if map_info.get("type") == "hat" and \
+                                       map_info.get("id") == hat and \
+                                       tuple(map_info.get("value", (9,9))) == value_tuple:
+                                        if (hat, value_tuple) not in self.active_hat_keys:
+                                            if act_key in GUI_NAV_ACTIONS: self.guiNavigationRequested.emit(act_key, True)
+                                            else: self.mappedEventTriggered.emit(act_key, True)
+                                            self.active_hat_keys[(hat, value_tuple)] = act_key
+                                        break
+                            # This handles the case where a hat returns to neutral (0,0) implicitly releasing any active direction on that hat.
+                            # It might double-emit release if already handled by the value_tuple change above, but that's usually fine.
+                            if value_tuple == (0,0):
+                                for (h_id, h_val_active), act_key in list(self.active_hat_keys.items()):
+                                    if h_id == hat: # Any active direction on this hat
+                                        if act_key in GUI_NAV_ACTIONS: self.guiNavigationRequested.emit(act_key, False)
+                                        else: self.mappedEventTriggered.emit(act_key, False)
+                                        if (h_id, h_val_active) in self.active_hat_keys: del self.active_hat_keys[(h_id, h_val_active)]
 
 
                     if self.is_listening_for_mapping and event_details:
-                        logging.info(f"Event captured for mapping: {raw_event_str} -> {event_details}")
-                        self.controllerEventCaptured.emit(event_details, raw_event_str)
-                        self.is_listening_for_mapping = False 
-                    elif not self.is_listening_for_mapping and event_details:
-                        triggered_exclusive_action_this_event = False
-                        for internal_action_key, mapping_info in self.mappings.items():
-                            if not mapping_info: continue 
-                            match = False
-                            if mapping_info["event_type"] == event_details.get("type"):
-                                stored_details = mapping_info["details"]
-                                current_details = event_details 
-                                if mapping_info["event_type"] == "button" and stored_details["button_id"] == current_details["button_id"]:
-                                    match = True
-                                elif mapping_info["event_type"] == "axis" and \
-                                     stored_details["axis_id"] == current_details["axis_id"] and \
-                                     stored_details["direction"] == current_details["direction"]:
-                                    match = True
-                                elif mapping_info["event_type"] == "hat" and \
-                                     stored_details["hat_id"] == current_details["hat_id"] and \
-                                     tuple(stored_details["value"]) == tuple(current_details["value"]):
-                                    match = True
-                            if match:
-                                if triggered_exclusive_action_this_event and internal_action_key not in EXCLUSIVE_ACTIONS:
-                                    continue 
-                                if internal_action_key in EXCLUSIVE_ACTIONS and triggered_exclusive_action_this_event and self.mappings.get(internal_action_key) != mapping_info :
-                                     continue
-
-                                if mapping_info["event_type"] == "axis":
-                                    if self.active_axis_keys.get(internal_action_key) != mapping_info["details"]["direction"]:
-                                        self.mappedEventTriggered.emit(internal_action_key, True) 
-                                        self.active_axis_keys[internal_action_key] = mapping_info["details"]["direction"]
-                                elif mapping_info["event_type"] == "hat":
-                                    if tuple(self.active_hat_keys.get(internal_action_key, ())) != tuple(event_details["value"]):
-                                        self.mappedEventTriggered.emit(internal_action_key, True) 
-                                        self.active_hat_keys[internal_action_key] = list(event_details["value"])
-                                else: 
-                                    self.mappedEventTriggered.emit(internal_action_key, True) 
-
-                                if internal_action_key in EXCLUSIVE_ACTIONS:
-                                    triggered_exclusive_action_this_event = True
-                                    break 
+                        event_details["type"] = event_details.get("type")
+                        self.controllerEventCaptured.emit(event_details, raw_str)
+                        self.stop_listening()
                 time.sleep(0.01)
             except pygame.error as e:
-                logging.error(f"Pygame error in controller loop: {e}")
-                self.controllerHotplug.emit(f"Pygame error: {e}. Trying to recover...")
-                self.joystick = None
-                self.active_axis_keys.clear()
-                self.active_hat_keys.clear()
+                logger_cmg.error(f"Pygame error in controller loop (joystick {self.joystick_idx_to_monitor}): {e}")
+                self.controllerHotplug.emit(f"Pygame error with Joy {self.joystick_idx_to_monitor}. Re-scanning...")
+                if self.joystick:
+                    try: self.joystick.quit()
+                    except pygame.error: pass
+                self.joystick = None; self.joystick_instance_id_to_monitor = None
+                self.active_axis_keys.clear(); self.active_hat_keys.clear()
                 try:
-                    pygame.joystick.quit()
-                    pygame.joystick.init()
-                except pygame.error: pass
+                    if pygame.joystick.get_init(): pygame.joystick.quit()
+                    pygame.joystick.init(); self._last_joystick_count = -1
+                    logger_cmg.info("Pygame joystick subsystem re-initialized after error.")
+                except pygame.error as reinit_e: logger_cmg.error(f"Failed to re-initialize pygame.joystick: {reinit_e}")
                 time.sleep(1)
-            except Exception as e:
-                logging.exception("Unhandled exception in controller thread loop:")
-                time.sleep(1) 
+            except Exception as e_unhandled:
+                logger_cmg.exception(f"Unhandled exception in controller thread loop (joystick {self.joystick_idx_to_monitor}): {e_unhandled}")
+                time.sleep(1)
 
-        pygame.joystick.quit()
-        pygame.quit()
+        if self.joystick:
+            try: self.joystick.quit()
+            except pygame.error: pass
         self.controllerHotplug.emit("Controller thread stopped.")
-        logging.info("PygameControllerThread stopped.")
+        logger_cmg.info("PygameControllerThread finished running.")
 
-    def stop(self):
-        logging.debug("PygameControllerThread stop called.")
-        self.stop_flag.set()
-
-    def start_listening(self):
-        logging.debug("PygameControllerThread start_listening called.")
-        self.is_listening_for_mapping = True
-
-    def stop_listening(self):
-        logging.debug("PygameControllerThread stop_listening called.")
-        self.is_listening_for_mapping = False
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Controller Mapper v0.9.1 (Reset Button)") # <-- UPDATED WINDOW TITLE
-        self.setGeometry(100, 100, 850, 700)
-
-        self.keyboard = KeyboardController()
+class ControllerSettingsWindow(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.keyboard = KeyboardController() if PYNPUT_AVAILABLE else None
         self.currently_pressed_keys = set()
-        self.mappings = {}
-        self.current_listening_key = None
-        self.last_selected_row_for_mapping = -1
-        logging.info("MainWindow initializing...")
+        self.all_joystick_mappings_by_guid: Dict[str, Dict[str, Any]] = {}
+        self.current_translated_mappings_for_thread_sim: Dict[str, Any] = {}
+        self.current_listening_key_for_joystick_map: Optional[str] = None
+        self.last_selected_row_for_joystick_mapping = -1
+        self.ui_settings_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "controller_gui_ui_settings.ini")
+        self.ui_settings = QSettings(self.ui_settings_file_path, QSettings.Format.IniFormat)
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        self._focusable_widgets: List[QWidget] = []
+        self._current_focus_index: int = -1
+        self._combo_box_open: Optional[QComboBox] = None # Tracks if a combo box popup is open
 
+        self._setup_ui() # Encapsulate UI creation
+
+        self.controller_thread = PygameControllerThread()
+        self.controller_thread.controllerEventCaptured.connect(self.on_controller_event_captured_for_mapping)
+        self.controller_thread.mappedEventTriggered.connect(self.on_mapped_event_triggered_for_simulation)
+        self.controller_thread.guiNavigationRequested.connect(self.handle_gui_navigation)
+        self.controller_thread.controllerHotplug.connect(self.update_status_and_log_and_joystick_combos)
+
+        QTimer.singleShot(0, self._populate_focusable_widgets_list) # Populate after UI is fully set up
+
+        logger_cmg.info("ControllerSettingsWindow initialized.")
+        self.setStyleSheet("QWidget:focus { border: 2px solid #0078D7; } QComboBox::item:selected { background-color: #0078D7; color: white; }") # Basic focus highlight
+
+        if not parent: self.load_settings_into_ui(); self.activate_controller_monitoring()
+
+    def _setup_ui(self):
+        main_layout = QVBoxLayout(self)
         self.status_label = QLabel("Initializing...")
         main_layout.addWidget(self.status_label)
+        self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        main_layout.addWidget(self.main_splitter, 1)
 
-        self.debug_console = QTextEdit()
-        self.debug_console.setReadOnly(True)
-        self.debug_console.setFixedHeight(100)
+        # Player Configuration Group
+        player_config_group = QGroupBox("Player Input Configuration")
+        player_config_v_layout = QVBoxLayout(player_config_group)
+        self.config_grid_layout = QGridLayout()
+        self.player_device_combos: List[QComboBox] = []
+        for i in range(4):
+            player_num = i + 1; player_row_layout = QHBoxLayout()
+            player_label = QLabel(f"<b>Player {player_num}:</b>")
+            player_row_layout.addWidget(player_label, 0, Qt.AlignmentFlag.AlignLeft); dev_combo = QComboBox()
+            dev_combo.setMinimumWidth(180); dev_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            dev_combo.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+            self.player_device_combos.append(dev_combo); player_row_layout.addWidget(dev_combo, 1)
+            self.config_grid_layout.addLayout(player_row_layout, i, 0)
+        player_config_v_layout.addLayout(self.config_grid_layout); player_config_v_layout.addStretch(1)
+        self.main_splitter.addWidget(player_config_group)
 
-        self.load_mappings()
-
-        mapping_controls_layout = QHBoxLayout()
-        self.key_to_map_combo = QComboBox()
-        for internal_key in MAPPABLE_KEYS:
-            friendly_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_key, internal_key)
-            self.key_to_map_combo.addItem(friendly_name, userData=internal_key)
-        mapping_controls_layout.addWidget(QLabel("Action/Key to Map:"))
-        mapping_controls_layout.addWidget(self.key_to_map_combo)
-        self.listen_button = QPushButton("Listen for Controller Input to Map")
-        self.listen_button.clicked.connect(self.start_listening_for_map_from_button)
-        mapping_controls_layout.addWidget(self.listen_button)
-        main_layout.addLayout(mapping_controls_layout)
-
-        self.mappings_table = QTableWidget()
-        self.mappings_table.setColumnCount(5)
-        self.mappings_table.setHorizontalHeaderLabels(["Action/Key", "Controller Input", "Friendly Name", "Rename", "Clear"])
-        self.mappings_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
-        self.mappings_table.setColumnWidth(1, 150)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.mappings_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        # Controller Mapping Group
+        joy_map_group = QGroupBox("Controller Button/Axis Mapping (for selected controller)")
+        joy_map_table_v_layout = QVBoxLayout(joy_map_group)
+        self.mappings_table = QTableWidget(); self.mappings_table.setColumnCount(8)
+        self.mappings_table.setHorizontalHeaderLabels(["Action", "Input", "", "", "Action", "Input", "", ""])
+        self.mappings_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.mappings_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems) # Select cells
+        self.mappings_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        header = self.mappings_table.horizontalHeader()
+        for col_idx in [0, 4]: header.setSectionResizeMode(col_idx, QHeaderView.ResizeMode.ResizeToContents)
+        for col_idx in [1, 5]: header.setSectionResizeMode(col_idx, QHeaderView.ResizeMode.Stretch)
+        for col_idx in [2, 3, 6, 7]: header.setSectionResizeMode(col_idx, QHeaderView.ResizeMode.ResizeToContents)
         self.mappings_table.cellDoubleClicked.connect(self.handle_table_double_click)
-        main_layout.addWidget(self.mappings_table)
+        self.mappings_table.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        joy_map_table_v_layout.addWidget(self.mappings_table); self.main_splitter.addWidget(joy_map_group)
 
-        file_buttons_layout = QHBoxLayout()
-        save_button = QPushButton("Save Mappings")
-        save_button.clicked.connect(self.save_mappings)
-        file_buttons_layout.addWidget(save_button)
-        load_button = QPushButton("Reload Mappings")
-        load_button.clicked.connect(self.load_mappings_and_refresh)
-        file_buttons_layout.addWidget(load_button)
-        
-        self.reset_mappings_button = QPushButton("Reset All Mappings")
-        self.reset_mappings_button.clicked.connect(self.confirm_reset_all_mappings)
-        file_buttons_layout.addWidget(self.reset_mappings_button)
-        
-        main_layout.addLayout(file_buttons_layout)
+        # Monitoring & Log Group
+        monitor_and_log_group = QGroupBox("Monitoring & Event Log")
+        monitor_log_v_layout = QVBoxLayout(monitor_and_log_group)
+        map_ctrl_h_layout = QHBoxLayout(); map_ctrl_h_layout.addWidget(QLabel("Monitor & Map Controller:"))
+        self.joystick_select_combo_for_mapping = QComboBox()
+        self.joystick_select_combo_for_mapping.currentIndexChanged.connect(self.on_monitor_joystick_changed)
+        self.joystick_select_combo_for_mapping.setMinimumWidth(180)
+        self.joystick_select_combo_for_mapping.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.joystick_select_combo_for_mapping.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        map_ctrl_h_layout.addWidget(self.joystick_select_combo_for_mapping, 1); monitor_log_v_layout.addLayout(map_ctrl_h_layout)
 
-        main_layout.addWidget(QLabel("Debug Log:"))
-        main_layout.addWidget(self.debug_console)
+        tbl_ctrl_h_layout = QHBoxLayout(); tbl_ctrl_h_layout.addWidget(QLabel("Action to Map:"))
+        self.key_to_map_combo = QComboBox(); self.key_to_map_combo.setMinimumWidth(130)
+        self.key_to_map_combo.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.key_to_map_combo.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        for ik_idx, ik in enumerate(MAPPABLE_KEYS):
+             self.key_to_map_combo.addItem(INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(ik, ik), userData=ik)
+             if ik in GUI_NAV_ACTIONS: # Visually separate GUI actions slightly
+                 self.key_to_map_combo.setItemData(ik_idx, Qt.ItemDataRole.UserRole + 1, True) # Mark as GUI action
+                 font = self.key_to_map_combo.font()
+                 # font.setItalic(True) # Optional: style GUI actions
+                 self.key_to_map_combo.setItemData(ik_idx, font, Qt.ItemDataRole.FontRole)
 
-        self.controller_thread = PygameControllerThread(self.mappings)
-        self.controller_thread.controllerEventCaptured.connect(self.on_controller_event_captured)
-        self.controller_thread.mappedEventTriggered.connect(self.on_mapped_event_triggered)
-        self.controller_thread.controllerHotplug.connect(self.update_status_and_log)
-        self.controller_thread.start()
 
-        self.refresh_mappings_table()
-        logging.info("MainWindow initialized and controller thread started.")
+        tbl_ctrl_h_layout.addWidget(self.key_to_map_combo, 1); monitor_log_v_layout.addLayout(tbl_ctrl_h_layout)
 
-    def update_status_and_log(self, message):
-        self.status_label.setText(message)
-        self.log_to_debug_console(message)
-        if "error" in message.lower() or "lost" in message.lower() or "no controller" in message.lower():
-            logging.warning(f"Status Update: {message}")
+        listen_buttons_layout = QHBoxLayout()
+        self.listen_button = QPushButton("Map Selected Action to Input")
+        self.listen_button.clicked.connect(self.start_listening_for_joystick_map_from_button)
+        self.listen_button.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        listen_buttons_layout.addWidget(self.listen_button)
+
+        self.cancel_listen_button = QPushButton("Cancel Listening")
+        self.cancel_listen_button.clicked.connect(self.cancel_listening_manually)
+        self.cancel_listen_button.setVisible(False) # Initially hidden
+        self.cancel_listen_button.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        listen_buttons_layout.addWidget(self.cancel_listen_button)
+        monitor_log_v_layout.addLayout(listen_buttons_layout)
+
+        self.clear_current_mappings_button = QPushButton("Clear Mappings for Selected Controller")
+        self.clear_current_mappings_button.clicked.connect(self.confirm_clear_current_controller_mappings)
+        self.clear_current_mappings_button.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        monitor_log_v_layout.addWidget(self.clear_current_mappings_button)
+
+        monitor_log_v_layout.addWidget(QLabel("Event Log:"))
+        self.debug_console = QTextEdit(); self.debug_console.setReadOnly(True)
+        self.debug_console.setFocusPolicy(Qt.FocusPolicy.NoFocus) # Usually not controller navigated
+        monitor_log_v_layout.addWidget(self.debug_console, 1); self.main_splitter.addWidget(monitor_and_log_group)
+
+        self.main_splitter.setStretchFactor(0, 2); self.main_splitter.setStretchFactor(1, 5); self.main_splitter.setStretchFactor(2, 2)
+        self.load_splitter_sizes()
+
+        file_btn_layout = QHBoxLayout()
+        self.save_btn = QPushButton("Save All Settings") # Made it an attribute
+        self.save_btn.clicked.connect(self.save_all_settings_and_ui)
+        self.save_btn.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        file_btn_layout.addWidget(self.save_btn)
+
+        self.reset_btn = QPushButton("Reset All Settings to Default") # Made it an attribute
+        self.reset_btn.clicked.connect(self.confirm_reset_all_settings)
+        self.reset_btn.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        file_btn_layout.addWidget(self.reset_btn)
+        main_layout.addLayout(file_btn_layout)
+
+    def _populate_focusable_widgets_list(self):
+        self._focusable_widgets = []
+        for combo in self.player_device_combos: self._focusable_widgets.append(combo)
+        self._focusable_widgets.append(self.save_btn)
+        self._focusable_widgets.append(self.reset_btn)
+        self._focusable_widgets.append(self.joystick_select_combo_for_mapping)
+        self._focusable_widgets.append(self.key_to_map_combo)
+        self._focusable_widgets.append(self.listen_button)
+        self._focusable_widgets.append(self.cancel_listen_button) # Will be skipped if not visible
+        self._focusable_widgets.append(self.clear_current_mappings_button)
+        self._focusable_widgets.append(self.mappings_table)
+
+        # Set initial focus to the first available controller if possible, or first focusable widget
+        if self.joystick_select_combo_for_mapping.count() > 0 and self.joystick_select_combo_for_mapping.itemData(0) is not None:
+            self.set_current_focus_widget(self.joystick_select_combo_for_mapping)
+        elif self._focusable_widgets:
+             self.set_current_focus_widget(self._focusable_widgets[0])
+
+
+    def keyPressEvent(self, event: QKeyEvent):
+        # Fallback keyboard navigation if controller isn't working or for accessibility
+        # This is basic, real controller navigation is via guiNavigationRequested signal
+        if event.key() == Qt.Key.Key_Tab:
+            self.navigate_focus(True) # True for forward
+            event.accept()
+        elif event.key() == Qt.Key.Key_Backtab: # Shift+Tab
+            self.navigate_focus(False) # False for backward
+            event.accept()
+        elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+            focused_widget = QApplication.focusWidget()
+            if focused_widget: self.activate_widget(focused_widget)
+            event.accept()
         else:
-            logging.info(f"Status Update: {message}")
+            super().keyPressEvent(event)
 
-    def log_to_debug_console(self, message):
-        if hasattr(self, 'debug_console'):
-            timestamp = time.strftime("%H:%M:%S", time.localtime())
-            self.debug_console.append(f"[{timestamp}] {message}")
-            self.debug_console.ensureCursorVisible()
+    def on_monitor_joystick_changed(self, index_in_combo: int):
+        logger_cmg.debug(f"Monitor joystick changed. Combo index: {index_in_combo}")
+        if self.controller_thread.is_listening_for_mapping: self.cancel_listening_manually()
+
+        if index_in_combo == -1 or self.joystick_select_combo_for_mapping.count() == 0:
+            self.controller_thread.set_joystick_to_monitor(-1); self.update_status_and_log("No controller selected for mapping.")
+            self.listen_button.setEnabled(False); self.clear_current_mappings_button.setEnabled(False)
+            self.update_simulation_thread_mappings({}); self.refresh_joystick_mappings_table(None); return
+
+        joy_data = self.joystick_select_combo_for_mapping.itemData(index_in_combo)
+        if not isinstance(joy_data, dict):
+            self.controller_thread.set_joystick_to_monitor(-1); self.update_status_and_log("No valid controller selected (data error).")
+            self.listen_button.setEnabled(False); self.clear_current_mappings_button.setEnabled(False)
+            self.update_simulation_thread_mappings({}); self.refresh_joystick_mappings_table(None); return
+
+        pygame_joy_idx = joy_data.get("index"); current_guid = joy_data.get("guid")
+        current_joy_text = self.joystick_select_combo_for_mapping.itemText(index_in_combo)
+        if pygame_joy_idx is not None and current_guid:
+            self.controller_thread.set_joystick_to_monitor(pygame_joy_idx)
+            self.update_status_and_log(f"Monitoring '{current_joy_text}' for mapping and simulation.")
+            self.listen_button.setEnabled(True); self.clear_current_mappings_button.setEnabled(True)
+            if current_guid not in self.all_joystick_mappings_by_guid:
+                logger_cmg.info(f"No specific GUI mappings for GUID {current_guid}. Attempting fallback/default.")
+                source_guid_for_fallback = next((g for g, m in self.all_joystick_mappings_by_guid.items() if m and g != current_guid), None)
+                if source_guid_for_fallback:
+                    self.all_joystick_mappings_by_guid[current_guid] = copy.deepcopy(self.all_joystick_mappings_by_guid[source_guid_for_fallback])
+                    self.update_status_and_log(f"Applied fallback GUI mappings from '{self.get_joystick_display_name_by_guid(source_guid_for_fallback)}' to '{current_joy_text}'.")
+                elif hasattr(game_config, 'DEFAULT_GENERIC_JOYSTICK_MAPPINGS') and isinstance(getattr(game_config, 'DEFAULT_GENERIC_JOYSTICK_MAPPINGS'), dict):
+                    defaults_in_gui_format = {}
+                    for action, runtime_map_entry in getattr(game_config, 'DEFAULT_GENERIC_JOYSTICK_MAPPINGS').items():
+                        if action in MAPPABLE_KEYS: # Includes GUI nav actions
+                            gui_map_entry = _convert_runtime_default_to_gui_storage(action, runtime_map_entry, pygame_joy_idx)
+                            if gui_map_entry: defaults_in_gui_format[action] = gui_map_entry
+                    if defaults_in_gui_format:
+                        self.all_joystick_mappings_by_guid[current_guid] = defaults_in_gui_format
+                        self.update_status_and_log(f"Applied default generic joystick mappings (converted to GUI format) to '{current_joy_text}'.")
+                    else: self.all_joystick_mappings_by_guid[current_guid] = {}
+                else: self.all_joystick_mappings_by_guid[current_guid] = {}
+
+            current_gui_mappings = self.all_joystick_mappings_by_guid.get(current_guid, {})
+            self.update_simulation_thread_mappings(current_gui_mappings)
+            self.refresh_joystick_mappings_table(current_guid)
         else:
-            logging.warning(f"Debug console not ready for message: {message}")
+            self.controller_thread.set_joystick_to_monitor(-1); self.update_status_and_log("Error: Invalid data for selected controller.")
+            self.listen_button.setEnabled(False); self.clear_current_mappings_button.setEnabled(False)
+            self.update_simulation_thread_mappings({}); self.refresh_joystick_mappings_table(None)
 
-    def start_listening_for_map_from_button(self):
-        internal_key_to_map = self.key_to_map_combo.currentData()
-        if not internal_key_to_map:
-            friendly_name = self.key_to_map_combo.currentText()
-            logging.error(f"Could not get internal key for friendly name '{friendly_name}' from ComboBox.")
-            QMessageBox.critical(self, "Error", "Internal error: Could not determine action to map.")
-            return
-        self.initiate_listening_sequence(internal_key_to_map)
-
-    def initiate_listening_sequence(self, internal_key_to_map_str, originating_row=-1):
-        if self.listen_button.text() == "Listening... (Press Controller Input)":
-            if self.current_listening_key and self.current_listening_key != internal_key_to_map_str:
-                 QMessageBox.information(self, "Already Listening", f"Already listening for input for '{GAME_ACTIONS_FRIENDLY_NAMES.get(self.current_listening_key, self.current_listening_key)}'. Complete or cancel first.")
-                 return
-            elif not self.current_listening_key:
-                 self.reset_listening_ui() 
-
-        self.current_listening_key = internal_key_to_map_str
-        self.last_selected_row_for_mapping = originating_row
-
-        logging.debug(f"initiate_listening_sequence for internal key: {self.current_listening_key}")
-        if not self.current_listening_key:
-            QMessageBox.warning(self, "No Action Selected", "Please select an action to map.")
-            self.reset_listening_ui()
-            return
-
-        index = self.key_to_map_combo.findData(self.current_listening_key)
-        if index != -1:
-            if self.key_to_map_combo.currentIndex() != index:
-                self.key_to_map_combo.setCurrentIndex(index)
+    def update_simulation_thread_mappings(self, raw_gui_mappings: Dict[str, Any]):
+        self.current_translated_mappings_for_thread_sim.clear()
+        if hasattr(game_config, '_translate_and_validate_gui_json_to_pygame_mappings'):
+            translated_runtime_mappings = game_config._translate_and_validate_gui_json_to_pygame_mappings(raw_gui_mappings)
+            if isinstance(translated_runtime_mappings, dict):
+                self.current_translated_mappings_for_thread_sim = translated_runtime_mappings
+            else: logger_cmg.error("Translation from GUI to runtime mappings failed or returned invalid type.")
         else:
-            logging.warning(f"Internal key '{self.current_listening_key}' not found in combo box data during initiate_listening.")
+            logger_cmg.error("Config module is missing '_translate_and_validate_gui_json_to_pygame_mappings' function. Using fallback.")
+            for action_key, map_info_gui in raw_gui_mappings.items():
+                if isinstance(map_info_gui, dict):
+                    details = map_info_gui.get("details"); event_type = map_info_gui.get("event_type")
+                    if not details or not event_type: continue
+                    runtime_map_entry: Dict[str, Any] = {"type": event_type}
+                    if event_type == "button": runtime_map_entry["id"] = details.get("button_id")
+                    elif event_type == "axis":
+                        runtime_map_entry["id"] = details.get("axis_id"); runtime_map_entry["value"] = details.get("direction")
+                        runtime_map_entry["threshold"] = details.get("threshold", AXIS_THRESHOLD)
+                    elif event_type == "hat":
+                        runtime_map_entry["id"] = details.get("hat_id"); runtime_map_entry["value"] = tuple(details.get("value", (0,0)))
+                    else: continue
+                    if runtime_map_entry.get("id") is not None:
+                         self.current_translated_mappings_for_thread_sim[action_key] = runtime_map_entry
+        self.controller_thread.translated_mappings_for_triggering = self.current_translated_mappings_for_thread_sim
 
-        self.controller_thread.start_listening()
-        friendly_name_for_status = GAME_ACTIONS_FRIENDLY_NAMES.get(self.current_listening_key, self.current_listening_key)
-        self.update_status_and_log(f"Listening for controller input for '{friendly_name_for_status}'...")
-        self.listen_button.setText("Listening... (Press Controller Input)")
-        self.listen_button.setEnabled(False)
-        self.key_to_map_combo.setEnabled(False)
+    def save_splitter_sizes(self):
+        if hasattr(self, 'main_splitter') and self.main_splitter:
+            self.ui_settings.setValue("splitter_sizes", [int(s) for s in self.main_splitter.sizes()])
+    def load_splitter_sizes(self):
+        if hasattr(self, 'main_splitter') and self.main_splitter and self.main_splitter.count() == 3:
+            default_sizes = [int(self.main_splitter.width() * 0.25), int(self.main_splitter.width() * 0.5), int(self.main_splitter.width() * 0.25)]
+            saved_value = self.ui_settings.value("splitter_sizes"); sizes_to_apply = []
+            if isinstance(saved_value, list) and len(saved_value) == 3:
+                try: sizes_to_apply = [int(s) for s in saved_value]
+                except (ValueError, TypeError): sizes_to_apply = default_sizes
+            elif isinstance(saved_value, str): # QSettings might store as string occasionally
+                 try:
+                    str_list = saved_value.strip('[]').split(',')
+                    if len(str_list) == 3: sizes_to_apply = [int(s.strip()) for s in str_list]
+                    else: sizes_to_apply = default_sizes
+                 except: sizes_to_apply = default_sizes
+            else: sizes_to_apply = default_sizes
+            if sizes_to_apply and sum(sizes_to_apply) > 50 : self.main_splitter.setSizes(sizes_to_apply)
 
-
-    def on_controller_event_captured(self, event_details, raw_event_str):
-        friendly_name_current_key = GAME_ACTIONS_FRIENDLY_NAMES.get(self.current_listening_key, self.current_listening_key)
-        logging.info(f"on_controller_event_captured: Action='{friendly_name_current_key}' (Internal: {self.current_listening_key}), Raw='{raw_event_str}', Details={event_details}")
-
-        keys_to_unmap_due_to_conflict = []
-        is_current_key_exclusive = self.current_listening_key in EXCLUSIVE_ACTIONS
-
-        for existing_internal_key, mapping_info in list(self.mappings.items()):
-            if mapping_info and mapping_info["raw_str"] == raw_event_str:
-                if existing_internal_key == self.current_listening_key:
-                    continue
-                is_existing_key_exclusive = existing_internal_key in EXCLUSIVE_ACTIONS
-                friendly_name_existing_key = GAME_ACTIONS_FRIENDLY_NAMES.get(existing_internal_key, existing_internal_key)
-
-                if is_current_key_exclusive and is_existing_key_exclusive:
-                    keys_to_unmap_due_to_conflict.append(existing_internal_key)
-                elif is_current_key_exclusive and not is_existing_key_exclusive:
-                    keys_to_unmap_due_to_conflict.append(existing_internal_key)
-                elif not is_current_key_exclusive and is_existing_key_exclusive:
-                    QMessageBox.warning(self, "Mapping Conflict",
-                                        f"Controller input '{raw_event_str}' is already mapped to the exclusive action '{friendly_name_existing_key}'.\n"
-                                        f"Cannot map non-exclusive action '{friendly_name_current_key}' to this input.\n"
-                                        f"Clear the mapping for '{friendly_name_existing_key}' first.")
-                    self.reset_listening_ui(preserve_scroll=True)
-                    return
-
-        if keys_to_unmap_due_to_conflict:
-            conflict_details = "\n".join([f"- {GAME_ACTIONS_FRIENDLY_NAMES.get(k, k)}" for k in keys_to_unmap_due_to_conflict])
-            conflict_msg = (f"The controller input '{raw_event_str}' conflicts with existing mappings for '{friendly_name_current_key}'. "
-                            f"The following will be unmapped:\n{conflict_details}"
-                            f"\n\nProceed with mapping '{friendly_name_current_key}' to this input?")
-
-            reply = QMessageBox.question(self, "Confirm Reassignment", conflict_msg,
-                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if reply == QMessageBox.No:
-                self.update_status_and_log(f"Mapping for '{friendly_name_current_key}' cancelled due to conflict.")
-                self.reset_listening_ui(preserve_scroll=True)
-                return
-            else:
-                for key_to_remove in keys_to_unmap_due_to_conflict:
-                    if key_to_remove in self.mappings:
-                        logging.info(f"Unmapping '{GAME_ACTIONS_FRIENDLY_NAMES.get(key_to_remove, key_to_remove)}' (Internal: {key_to_remove}) due to conflict with '{friendly_name_current_key}'.")
-                        del self.mappings[key_to_remove]
-
-        if self.current_listening_key:
-            self.mappings[self.current_listening_key] = {
-                "event_type": event_details["type"],
-                "details": event_details,
-                "raw_str": raw_event_str,
-                "friendly_name": f"{raw_event_str}"
-            }
-            self.update_status_and_log(f"Mapped '{raw_event_str}' to '{friendly_name_current_key}'.")
-            logging.info(f"New mapping: {friendly_name_current_key} (Internal: {self.current_listening_key}) -> {self.mappings[self.current_listening_key]}")
-            self.refresh_mappings_table(preserve_scroll=True, target_row_key=self.current_listening_key)
-        self.reset_listening_ui(preserve_scroll=True)
-
-
-    def reset_listening_ui(self, preserve_scroll=False):
-        self.listen_button.setText("Listen for Controller Input to Map")
-        self.listen_button.setEnabled(True)
-        self.key_to_map_combo.setEnabled(True)
-        self.controller_thread.stop_listening()
-        if self.current_listening_key: 
-            self.current_listening_key = None
-        if not preserve_scroll:
-            self.last_selected_row_for_mapping = -1
-
-
-    def on_mapped_event_triggered(self, internal_action_key_str, is_press_event):
-        action_display_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_action_key_str, internal_action_key_str)
-
-        if internal_action_key_str in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"]:
-            if is_press_event:
-                self.log_to_debug_console(f"{action_display_name} action triggered by controller.")
-                logging.info(f"{action_display_name} action triggered by controller.")
-            return
-
-        pynput_key_to_simulate = None
-        if internal_action_key_str == "MOVE_UP": pynput_key_to_simulate = 'w'
-        elif internal_action_key_str == "MOVE_LEFT": pynput_key_to_simulate = 'a'
-        elif internal_action_key_str == "MOVE_DOWN": pynput_key_to_simulate = 's'
-        elif internal_action_key_str == "MOVE_RIGHT": pynput_key_to_simulate = 'd'
-        elif internal_action_key_str == "JUMP": pynput_key_to_simulate = Key.space
-        elif internal_action_key_str == "CROUCH": pynput_key_to_simulate = Key.ctrl
-        elif internal_action_key_str == "RESET": pynput_key_to_simulate = 'q' # <-- ADDED RESET ACTION HANDLING
-        elif internal_action_key_str in ["W","A","S","D","SPACE","SHIFT","CTRL","ALT","1","2","3","4","5","Q","E","V","B"]:
-            pynput_key_to_simulate = get_pynput_key(internal_action_key_str)
-
-        if pynput_key_to_simulate:
-            try:
-                if is_press_event:
-                    if pynput_key_to_simulate not in self.currently_pressed_keys:
-                        self.keyboard.press(pynput_key_to_simulate)
-                        self.currently_pressed_keys.add(pynput_key_to_simulate)
-                        self.log_to_debug_console(f"Simulating Press: {action_display_name} -> Key {str(pynput_key_to_simulate)}")
-                else:
-                    if pynput_key_to_simulate in self.currently_pressed_keys:
-                        self.keyboard.release(pynput_key_to_simulate)
-                        self.currently_pressed_keys.remove(pynput_key_to_simulate)
-                        self.log_to_debug_console(f"Simulating Release: {action_display_name} -> Key {str(pynput_key_to_simulate)}")
-            except Exception as e:
-                logging.error(f"Pynput error for action '{action_display_name}' (Simulating: {pynput_key_to_simulate}, Press: {is_press_event}): {e}")
-        elif internal_action_key_str not in ["MENU_CONFIRM", "MENU_CANCEL", "MENU_RETURN"]:
-             if is_press_event:
-                self.log_to_debug_console(f"Action Triggered (No Key Sim): {action_display_name}")
-
-
-    def refresh_mappings_table(self, preserve_scroll=False, target_row_key=None):
-        logging.debug(f"Refreshing mappings table... Preserve scroll: {preserve_scroll}, Target internal key: {target_row_key}")
+    def save_all_settings_and_ui(self): self.save_all_settings(); self.save_splitter_sizes()
+    def refresh_joystick_mappings_table(self, current_controller_guid: Optional[str], preserve_scroll=False, target_row_action_key: Optional[str] = None):
         current_v_scroll_value = self.mappings_table.verticalScrollBar().value() if preserve_scroll else -1
-        target_row_to_ensure_visible = -1
-
         self.mappings_table.setRowCount(0)
-        for i, internal_key in enumerate(MAPPABLE_KEYS):
-            friendly_display_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_key, internal_key)
-            if target_row_key and internal_key == target_row_key:
-                target_row_to_ensure_visible = i
-            elif preserve_scroll and self.last_selected_row_for_mapping == i and not target_row_key :
-                 target_row_to_ensure_visible = i
-
-            mapping_info = self.mappings.get(internal_key)
-            row_position = self.mappings_table.rowCount()
-            self.mappings_table.insertRow(row_position)
-
-            action_item = QTableWidgetItem(friendly_display_name)
-            action_item.setData(Qt.UserRole, internal_key)
-            self.mappings_table.setItem(row_position, 0, action_item)
-
-            if mapping_info:
-                self.mappings_table.setItem(row_position, 1, QTableWidgetItem(mapping_info["raw_str"]))
-                self.mappings_table.setItem(row_position, 2, QTableWidgetItem(mapping_info["friendly_name"]))
-                rename_button = QPushButton("Rename")
-                rename_button.clicked.connect(lambda checked, k_internal=internal_key: self.rename_friendly_name_prompt_button(k_internal))
-                self.mappings_table.setCellWidget(row_position, 3, rename_button)
-                clear_button = QPushButton("Clear")
-                clear_button.clicked.connect(lambda checked, k_internal=internal_key: self.clear_mapping(k_internal))
-                self.mappings_table.setCellWidget(row_position, 4, clear_button)
-            else:
-                self.mappings_table.setItem(row_position, 1, QTableWidgetItem("Not Mapped"))
-                self.mappings_table.setItem(row_position, 2, QTableWidgetItem(""))
-                empty_rename_button = QPushButton("---"); empty_rename_button.setEnabled(False)
-                self.mappings_table.setCellWidget(row_position, 3, empty_rename_button)
-                empty_clear_button = QPushButton("---"); empty_clear_button.setEnabled(False)
-                self.mappings_table.setCellWidget(row_position, 4, empty_clear_button)
-
-        if target_row_to_ensure_visible != -1:
-            self.mappings_table.scrollToItem(self.mappings_table.item(target_row_to_ensure_visible, 0), QAbstractItemView.PositionAtCenter)
-            logging.debug(f"Scrolled to ensure row for internal key '{MAPPABLE_KEYS[target_row_to_ensure_visible]}' is visible.")
-        elif preserve_scroll and current_v_scroll_value != -1:
-            self.mappings_table.verticalScrollBar().setValue(current_v_scroll_value)
-            logging.debug(f"Restored vertical scroll to {current_v_scroll_value}")
-
-        if not preserve_scroll and not target_row_key:
-             self.last_selected_row_for_mapping = -1
-        logging.debug("Mappings table refresh complete.")
-
-
-    def handle_table_double_click(self, row, column):
-        action_item = self.mappings_table.item(row, 0)
-        if not action_item: return
-        internal_key_clicked = action_item.data(Qt.UserRole)
-        friendly_name_clicked = action_item.text()
-
-        if not internal_key_clicked:
-            logging.error(f"Internal key not found for clicked row {row} (Display: {friendly_name_clicked})")
-            return
-
-        logging.debug(f"Table double-clicked: Row={row}, Col={column}, Action='{friendly_name_clicked}' (Internal: '{internal_key_clicked}')")
-
-        if column == 0 or column == 1:
-            if self.listen_button.text() == "Listening... (Press Controller Input)" and self.current_listening_key == internal_key_clicked:
-                logging.debug(f"Already listening for '{friendly_name_clicked}', double-click ignored.")
-                return
-            self.initiate_listening_sequence(internal_key_clicked, originating_row=row)
-        elif column == 2:
-            if self.mappings.get(internal_key_clicked):
-                self.rename_friendly_name_prompt_button(internal_key_clicked)
-
-
-    def change_keyboard_key_assignment_prompt(self, old_internal_key):
-        friendly_name_old_key = GAME_ACTIONS_FRIENDLY_NAMES.get(old_internal_key, old_internal_key)
-        logging.debug(f"change_keyboard_key_assignment_prompt for '{friendly_name_old_key}' (Internal: '{old_internal_key}')")
-        current_mapping_data = self.mappings.get(old_internal_key)
-
-        if not current_mapping_data:
-            QMessageBox.information(self, "Not Mapped", f"Action '{friendly_name_old_key}' is not currently mapped. Double-click its row to map it.")
-            return
-
-        available_actions_for_reassign_data = []
-        for ik in MAPPABLE_KEYS:
-            if ik not in self.mappings or ik == old_internal_key:
-                available_actions_for_reassign_data.append(
-                    (GAME_ACTIONS_FRIENDLY_NAMES.get(ik, ik), ik)
-                )
-        available_actions_for_reassign_data.sort(key=lambda x: x[0])
-        
-        display_texts_for_dialog = [item[0] for item in available_actions_for_reassign_data]
-        internal_keys_ordered = [item[1] for item in available_actions_for_reassign_data]
-        
-        current_selection_index_dialog = 0
-        try:
-            current_selection_index_dialog = internal_keys_ordered.index(old_internal_key)
-        except ValueError:
-            logging.warning(f"Old internal key '{old_internal_key}' not found in sorted available keys for dialog.")
-
-        new_friendly_name_selected, ok = QInputDialog.getItem(self, "Change Action Assignment",
-            f"Controller input '{current_mapping_data['raw_str']}' is currently mapped to:\n'{friendly_name_old_key}'.\n\nMove this controller input to a new Action:",
-            display_texts_for_dialog, current_selection_index_dialog, False)
-
-        if ok and new_friendly_name_selected:
-            selected_dialog_idx = display_texts_for_dialog.index(new_friendly_name_selected)
-            new_internal_key = internal_keys_ordered[selected_dialog_idx]
-            friendly_name_new_key = GAME_ACTIONS_FRIENDLY_NAMES.get(new_internal_key, new_internal_key)
-
-            if new_internal_key != old_internal_key:
-                if new_internal_key in EXCLUSIVE_ACTIONS:
-                    for k_existing, v_existing in self.mappings.items():
-                        if v_existing['raw_str'] == current_mapping_data['raw_str'] and \
-                           k_existing != old_internal_key and k_existing in EXCLUSIVE_ACTIONS:
-                            QMessageBox.critical(self, "Exclusivity Conflict",
-                                f"Cannot reassign to exclusive action '{friendly_name_new_key}'.\n"
-                                f"The controller input '{current_mapping_data['raw_str']}' is already mapped to another exclusive action: '{GAME_ACTIONS_FRIENDLY_NAMES.get(k_existing, k_existing)}'.\n"
-                                f"Please clear that mapping first.")
-                            return
-
-                logging.info(f"Attempting to reassign mapping from '{friendly_name_old_key}' (Internal: {old_internal_key}) to '{friendly_name_new_key}' (Internal: {new_internal_key})")
-                del self.mappings[old_internal_key]
-                self.mappings[new_internal_key] = current_mapping_data
-                self.refresh_mappings_table(preserve_scroll=True, target_row_key=new_internal_key)
-                self.update_status_and_log(f"Mapping for '{current_mapping_data['raw_str']}' moved from '{friendly_name_old_key}' to '{friendly_name_new_key}'.")
-        else:
-            logging.debug("Action assignment cancelled or unchanged.")
-
-
-    def rename_friendly_name_prompt_button(self, internal_key):
-        action_display_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_key, internal_key)
-        logging.debug(f"rename_friendly_name_prompt_button for action '{action_display_name}' (Internal: '{internal_key}')")
-        mapping_info = self.mappings.get(internal_key)
-        if mapping_info:
-            current_ctrl_input_friendly_name = mapping_info.get("friendly_name", mapping_info.get("raw_str", ""))
-            text, ok = QInputDialog.getText(self, "Rename Controller Input Label",
-                f"Enter new label for controller input '{mapping_info['raw_str']}'\n(currently mapped to Action: '{action_display_name}'):",
-                QLineEdit.Normal, current_ctrl_input_friendly_name)
-            if ok and text:
-                mapping_info["friendly_name"] = text
-                self.refresh_mappings_table(preserve_scroll=True, target_row_key=internal_key)
-                self.update_status_and_log(f"Label for controller input mapped to '{action_display_name}' renamed.")
-                logging.info(f"Controller input for '{action_display_name}' (Internal: {internal_key}) relabeled to '{text}'.")
-
-
-    def clear_mapping(self, internal_key):
-        action_display_name = GAME_ACTIONS_FRIENDLY_NAMES.get(internal_key, internal_key)
-        logging.debug(f"clear_mapping for action '{action_display_name}' (Internal: '{internal_key}')")
-        if internal_key in self.mappings:
-            del self.mappings[internal_key]
-            self.refresh_mappings_table(preserve_scroll=True, target_row_key=internal_key)
-            self.update_status_and_log(f"Cleared mapping for '{action_display_name}'.")
-            logging.info(f"Mapping for '{action_display_name}' (Internal: {internal_key}) cleared.")
-
-
-    def save_mappings(self):
-        logging.info(f"Attempting to save mappings to {MAPPINGS_FILE}")
-        logging.debug(f"Mappings to save (using internal keys): {json.dumps(self.mappings, indent=2)}")
-        try:
-            with open(MAPPINGS_FILE, 'w') as f:
-                json.dump(self.mappings, f, indent=4)
-            self.update_status_and_log(f"Mappings saved to {MAPPINGS_FILE}")
-        except Exception as e:
-            logging.exception(f"Could not save mappings to {MAPPINGS_FILE}:")
-            QMessageBox.critical(self, "Save Error", f"Could not save mappings: {e}")
-            self.update_status_and_log(f"Error saving mappings: {e}")
-
-
-    def load_mappings(self):
-        logging.info(f"Attempting to load mappings from {MAPPINGS_FILE}")
-        temp_loaded_mappings = {}
-        file_found = False
-        try:
-            with open(MAPPINGS_FILE, 'r') as f:
-                temp_loaded_mappings = json.load(f)
-                file_found = True
-                logging.debug(f"Raw loaded mappings from file (should use internal keys): {json.dumps(temp_loaded_mappings, indent=2)}")
-            self.mappings.clear()
-            loaded_count = 0
-            skipped_count = 0
-            for internal_key_from_mappable_list in MAPPABLE_KEYS:
-                if internal_key_from_mappable_list in temp_loaded_mappings:
-                    loaded_entry = temp_loaded_mappings[internal_key_from_mappable_list]
-                    if isinstance(loaded_entry, dict) and \
-                       all(k_check in loaded_entry for k_check in ["event_type", "details", "raw_str"]) and \
-                       isinstance(loaded_entry.get("details"), dict) and \
-                       isinstance(loaded_entry.get("event_type"), str) and \
-                       isinstance(loaded_entry.get("raw_str"), str):
-                        if "friendly_name" not in loaded_entry or not isinstance(loaded_entry["friendly_name"], str):
-                            loaded_entry["friendly_name"] = loaded_entry["raw_str"]
-
-                        valid_structure = False
-                        event_type = loaded_entry["event_type"]
-                        details = loaded_entry["details"]
-                        if event_type == "button" and "button_id" in details: valid_structure = True
-                        elif event_type == "axis" and "axis_id" in details and "direction" in details: valid_structure = True
-                        elif event_type == "hat" and "hat_id" in details and "value" in details and isinstance(details["value"], list): valid_structure = True
-                        
-                        if valid_structure:
-                            self.mappings[internal_key_from_mappable_list] = loaded_entry
-                            loaded_count += 1
-                        else:
-                            logging.warning(f"Entry for '{internal_key_from_mappable_list}' in {MAPPINGS_FILE} has invalid 'details' or 'event_type' structure. Skipping. Entry: {loaded_entry}")
-                            skipped_count += 1
-                    else:
-                        logging.warning(f"Entry for '{internal_key_from_mappable_list}' in {MAPPINGS_FILE} is malformed or missing required keys. Skipping. Entry: {loaded_entry}")
-                        skipped_count += 1
-            logging.info(f"Load complete. Loaded {loaded_count} valid mappings. Skipped {skipped_count} malformed/invalid entries.")
-            logging.debug(f"Final self.mappings after load (internal keys): {json.dumps(self.mappings, indent=2)}")
-            if hasattr(self, 'status_label') and self.status_label:
-                if file_found:
-                    self.update_status_and_log(f"Loaded {loaded_count} mappings from {MAPPINGS_FILE}. Skipped {skipped_count}.")
-        except FileNotFoundError:
-            logging.info(f"Mappings file '{MAPPINGS_FILE}' not found. Starting fresh.")
-            self.mappings.clear()
-            if hasattr(self, 'status_label') and self.status_label:
-                self.update_status_and_log(f"No mappings file ({MAPPINGS_FILE}). Starting fresh.")
-        except json.JSONDecodeError as e:
-            logging.error(f"Error decoding JSON from '{MAPPINGS_FILE}': {e}")
-            self.mappings.clear()
-            QMessageBox.warning(self, "Load Error", f"Error decoding mappings file '{MAPPINGS_FILE}': {e}. Starting with fresh mappings.")
-            if hasattr(self, 'status_label') and self.status_label:
-                self.update_status_and_log(f"Error in '{MAPPINGS_FILE}'. Starting fresh.")
-        except Exception as e:
-            logging.exception(f"An unexpected error occurred while loading mappings from {MAPPINGS_FILE}:")
-            self.mappings.clear()
-            QMessageBox.critical(self, "Load Error", f"Could not load mappings: {e}")
-            if hasattr(self, 'status_label') and self.status_label:
-                self.update_status_and_log(f"Error loading mappings: {e}")
-
-    def load_mappings_and_refresh(self):
-        logging.info("load_mappings_and_refresh called.")
-        current_v_scroll_value = self.mappings_table.verticalScrollBar().value()
-        self.load_mappings()
-        self.refresh_mappings_table()
-        self.mappings_table.verticalScrollBar().setValue(current_v_scroll_value)
-        self.update_status_and_log("Mappings reloaded and GUI updated.")
-
-    def confirm_reset_all_mappings(self):
-        reply = QMessageBox.question(self, "Confirm Reset",
-                                     "Are you sure you want to reset all controller mappings?\n"
-                                     "This will clear all current mappings in memory.\n"
-                                     "Changes will be permanent if you save afterwards.",
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            self.perform_reset_mappings()
-
-    def perform_reset_mappings(self):
-        logging.info("Performing reset of all mappings.")
-        
-        if self.listen_button.text() != "Listen for Controller Input to Map":
-            self.reset_listening_ui()
-
-        self.mappings.clear()
-        
-        if hasattr(self, 'controller_thread'):
-            self.controller_thread.active_axis_keys.clear()
-            self.controller_thread.active_hat_keys.clear()
-            
-        self.release_all_simulated_keys()
-
-        self.refresh_mappings_table() 
-        self.update_status_and_log("All controller mappings have been reset. Save to make changes permanent.")
-
-    def release_all_simulated_keys(self):
-        logging.debug("Releasing all currently simulated pynput keys.")
-        for pynput_key in list(self.currently_pressed_keys):
-            try:
-                self.keyboard.release(pynput_key)
-                logging.debug(f"Released simulated key {pynput_key}.")
-            except Exception as e:
-                logging.warning(f"Error releasing simulated key {pynput_key} during reset: {e}")
-        self.currently_pressed_keys.clear()
-
+        if not current_controller_guid: self.log_to_debug_console("Mapping table cleared (no controller)."); return
+        mappings_to_display = self.all_joystick_mappings_by_guid.get(current_controller_guid, {})
+        num_actions = len(MAPPABLE_KEYS); num_rows_needed = (num_actions + 1) // 2
+        self.mappings_table.setRowCount(num_rows_needed); target_table_row_to_ensure_visible = -1
+        min_button_width = 70
+        for i in range(num_rows_needed):
+            for col_group in range(2):
+                action_idx = i * 2 + col_group;
+                if action_idx >= num_actions: continue
+                internal_key = MAPPABLE_KEYS[action_idx]
+                friendly_display_name = INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(internal_key, internal_key)
+                if target_row_action_key and internal_key == target_row_action_key: target_table_row_to_ensure_visible = i
+                base_col = col_group * 4
+                action_item = QTableWidgetItem(friendly_display_name); action_item.setData(Qt.ItemDataRole.UserRole, internal_key)
+                self.mappings_table.setItem(i, base_col + 0, action_item)
+                mapping_info = mappings_to_display.get(internal_key)
+                if mapping_info:
+                    self.mappings_table.setItem(i, base_col + 1, QTableWidgetItem(mapping_info.get("raw_str", "N/A")))
+                    rename_btn = QPushButton("Rename"); rename_btn.setMinimumWidth(min_button_width)
+                    rename_btn.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
+                    rename_btn.setProperty("internal_key", internal_key); rename_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus) # Buttons in table not directly focusable
+                    rename_btn.clicked.connect(lambda checked=False, k=internal_key: self.rename_joystick_mapping_friendly_name_prompt(k))
+                    self.mappings_table.setCellWidget(i, base_col + 2, rename_btn)
+                    clear_btn = QPushButton("Clear"); clear_btn.setMinimumWidth(min_button_width)
+                    clear_btn.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
+                    clear_btn.setProperty("internal_key", internal_key); clear_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+                    clear_btn.clicked.connect(lambda checked=False, k=internal_key: self.clear_joystick_mapping(k))
+                    self.mappings_table.setCellWidget(i, base_col + 3, clear_btn)
+                else: self.mappings_table.setItem(i, base_col + 1, QTableWidgetItem("Not Mapped"))
+        if target_table_row_to_ensure_visible != -1: self.mappings_table.scrollToItem(self.mappings_table.item(target_table_row_to_ensure_visible, 0), QAbstractItemView.ScrollHint.PositionAtCenter)
+        elif preserve_scroll and current_v_scroll_value != -1: self.mappings_table.verticalScrollBar().setValue(current_v_scroll_value)
+        if self.current_listening_key_for_joystick_map == target_row_action_key : self.current_listening_key_for_joystick_map = None
     def closeEvent(self, event):
-        logging.info("Close event received. Shutting down.")
-        self.update_status_and_log("Stopping controller thread...")
-        if hasattr(self, 'controller_thread') and self.controller_thread.isRunning():
+        logger_cmg.info("ControllerSettingsWindow closeEvent. Shutting down thread and saving UI state.")
+        self.save_splitter_sizes(); self.deactivate_controller_monitoring(); super().closeEvent(event)
+    def save_all_settings(self):
+        logger_cmg.info("Saving game configuration settings.")
+        for i in range(4):
+            player_idx = i
+            default_device_attr = f"DEFAULT_P{player_idx+1}_INPUT_DEVICE"
+            default_kbd_enabled_attr = f"DEFAULT_P{player_idx+1}_KEYBOARD_ENABLED" # Fallback attributes
+            default_ctrl_enabled_attr = f"DEFAULT_P{player_idx+1}_CONTROLLER_ENABLED"
+
+            if player_idx < len(self.player_device_combos):
+                selected_device_id = self.player_device_combos[player_idx].currentData()
+                setattr(game_config, f"CURRENT_P{player_idx+1}_INPUT_DEVICE", selected_device_id)
+                is_keyboard_device = selected_device_id and selected_device_id.startswith("keyboard_")
+                is_joystick_device = selected_device_id and selected_device_id.startswith("joystick_pygame_")
+                setattr(game_config, f"P{player_idx+1}_KEYBOARD_ENABLED", is_keyboard_device)
+                setattr(game_config, f"P{player_idx+1}_CONTROLLER_ENABLED", is_joystick_device)
+            elif hasattr(game_config, default_device_attr):
+                setattr(game_config, f"CURRENT_P{player_idx+1}_INPUT_DEVICE", getattr(game_config, default_device_attr))
+                setattr(game_config, f"P{player_idx+1}_KEYBOARD_ENABLED", getattr(game_config, default_kbd_enabled_attr, False))
+                setattr(game_config, f"P{player_idx+1}_CONTROLLER_ENABLED", getattr(game_config, default_ctrl_enabled_attr, False))
+            else:
+                 setattr(game_config, f"CURRENT_P{player_idx+1}_INPUT_DEVICE", UNASSIGNED_DEVICE_ID)
+                 setattr(game_config, f"P{player_idx+1}_KEYBOARD_ENABLED", False)
+                 setattr(game_config, f"P{player_idx+1}_CONTROLLER_ENABLED", False)
+
+        game_config.LOADED_PYGAME_JOYSTICK_MAPPINGS = copy.deepcopy(self.all_joystick_mappings_by_guid)
+        if game_config.save_config(): self.update_status_and_log("All game settings saved successfully.")
+        else: QMessageBox.critical(self, "Save Error", "Could not save game settings to file."); self.update_status_and_log("Error: Could not save game settings.")
+    def load_settings_into_ui(self):
+        logger_cmg.info("Loading settings into UI..."); game_config.load_config()
+        self.all_joystick_mappings_by_guid = copy.deepcopy(getattr(game_config, 'LOADED_PYGAME_JOYSTICK_MAPPINGS', {}))
+        self.populate_joystick_device_combos() # This will trigger on_monitor_joystick_changed if selection changes
+        for i in range(len(self.player_device_combos)):
+            player_idx = i
+            current_device_val = getattr(game_config, f"CURRENT_P{player_idx+1}_INPUT_DEVICE", UNASSIGNED_DEVICE_ID)
+            combo = self.player_device_combos[player_idx]
+            idx = combo.findData(current_device_val)
+            combo.setCurrentIndex(idx if idx != -1 else 0)
+        # Ensure on_monitor_joystick_changed is called if joystick_select_combo_for_mapping has a valid selection
+        # This is often handled by populate_joystick_device_combos if the index changes or is set.
+        # Force call if it's already on the correct index but mappings weren't loaded.
+        if self.joystick_select_combo_for_mapping.currentIndex() != -1 and self.joystick_select_combo_for_mapping.currentData():
+            self.on_monitor_joystick_changed(self.joystick_select_combo_for_mapping.currentIndex())
+        else: # No controller selected or available
+            self.refresh_joystick_mappings_table(None)
+            self.update_simulation_thread_mappings({})
+            self.listen_button.setEnabled(False)
+            self.clear_current_mappings_button.setEnabled(False)
+
+        self.update_status_and_log("Settings loaded into UI.")
+    def confirm_reset_all_settings(self):
+        if QMessageBox.question(self, "Confirm Reset", "Reset all input settings to default values (including all controller mappings and UI layout)?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
+            self.perform_reset_all_settings()
+    def perform_reset_all_settings(self):
+        logger_cmg.info("Resetting all settings to default values.")
+        for i in range(4):
+            player_idx = i
+            default_device_attr = f"DEFAULT_P{player_idx+1}_INPUT_DEVICE"
+            if hasattr(game_config, default_device_attr):
+                setattr(game_config, f"CURRENT_P{player_idx+1}_INPUT_DEVICE", getattr(game_config, default_device_attr))
+            else: setattr(game_config, f"CURRENT_P{player_idx+1}_INPUT_DEVICE", UNASSIGNED_DEVICE_ID if i >= 2 else (f"keyboard_p{i+1}"))
+        self.all_joystick_mappings_by_guid.clear()
+        if hasattr(game_config, 'LOADED_PYGAME_JOYSTICK_MAPPINGS'): game_config.LOADED_PYGAME_JOYSTICK_MAPPINGS.clear()
+        self.ui_settings.remove("splitter_sizes"); self.ui_settings.remove("main_window_geometry")
+        logger_cmg.info("Cleared UI settings (splitter sizes, window geometry) from .ini file.")
+        self.load_settings_into_ui(); self.load_splitter_sizes() # Reload to apply defaults
+        self.update_status_and_log("All settings reset to default. Save to make changes permanent.")
+
+    def confirm_clear_current_controller_mappings(self):
+        current_guid = self.get_current_mapping_joystick_guid()
+        if not current_guid:
+            QMessageBox.information(self, "No Controller", "No controller selected to clear mappings for.", QMessageBox.StandardButton.Ok)
+            return
+        controller_name = self.joystick_select_combo_for_mapping.currentText()
+        reply = QMessageBox.question(self, "Confirm Clear", f"Are you sure you want to clear all mappings for '{controller_name}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            self.perform_clear_current_controller_mappings(current_guid, controller_name)
+
+    def perform_clear_current_controller_mappings(self, guid_to_clear: str, controller_name_for_log: str):
+        if guid_to_clear in self.all_joystick_mappings_by_guid:
+            self.all_joystick_mappings_by_guid[guid_to_clear].clear()
+            self.refresh_joystick_mappings_table(guid_to_clear)
+            self.update_simulation_thread_mappings(self.all_joystick_mappings_by_guid.get(guid_to_clear, {}))
+            self.update_status_and_log(f"Cleared all mappings for '{controller_name_for_log}'. Save to make permanent.")
+        else:
+            self.update_status_and_log(f"No mappings found to clear for '{controller_name_for_log}'.")
+
+    def activate_controller_monitoring(self):
+        logger_cmg.info("Activating controller monitoring thread.")
+        if not self.controller_thread.isRunning():
+            self.controller_thread.stop_flag.clear(); self.controller_thread.start()
+        self.update_status_and_log_and_joystick_combos("Controller monitoring activated.")
+    def deactivate_controller_monitoring(self):
+        logger_cmg.info("Deactivating controller monitoring thread.")
+        if self.controller_thread.isRunning():
             self.controller_thread.stop()
-            self.controller_thread.wait(2000) 
-        
-        self.release_all_simulated_keys() 
-        self.save_mappings() 
-        
-        event.accept()
-        logging.info("Application closed.")
+            if not self.controller_thread.wait(1000): logger_cmg.warning("Controller thread did not stop gracefully.")
+            else: logger_cmg.info("Controller thread stopped successfully.")
+        if self.keyboard and self.currently_pressed_keys:
+            logger_cmg.debug(f"Releasing simulated keys: {self.currently_pressed_keys}")
+            for key_to_release in list(self.currently_pressed_keys):
+                try: self.keyboard.release(key_to_release)
+                except Exception as e: logger_cmg.error(f"Error releasing key {key_to_release}: {e}")
+            self.currently_pressed_keys.clear()
+    def log_to_debug_console(self, message: str):
+        if hasattr(self, 'debug_console'):
+            self.debug_console.append(f"[{time.strftime('%H:%M:%S')}] {message}"); self.debug_console.ensureCursorVisible()
+    def update_status_and_log(self, message: str):
+        if hasattr(self, 'status_label'): self.status_label.setText(message)
+        self.log_to_debug_console(message)
+        level = logging.WARNING if "error" in message.lower() or "lost" in message.lower() else logging.INFO
+        logger_cmg.log(level, f"Settings GUI Status: {message}")
+    def update_status_and_log_and_joystick_combos(self, message: str):
+        self.update_status_and_log(message); self.populate_joystick_device_combos()
+    def get_current_mapping_joystick_guid(self) -> Optional[str]:
+        if self.joystick_select_combo_for_mapping.currentIndex() == -1: return None
+        joy_data = self.joystick_select_combo_for_mapping.currentData()
+        return joy_data.get("guid") if isinstance(joy_data, dict) else None
+    def get_joystick_display_name_by_guid(self, target_guid: str) -> str:
+        for i in range(self.joystick_select_combo_for_mapping.count()):
+            data = self.joystick_select_combo_for_mapping.itemData(i)
+            if isinstance(data, dict) and data.get("guid") == target_guid:
+                return self.joystick_select_combo_for_mapping.itemText(i)
+        return f"Ctrl (GUID:...{target_guid[-6:]})" if target_guid else "Unknown Ctrl"
+    def populate_joystick_device_combos(self):
+        logger_cmg.debug("Populating all joystick device comboboxes...")
+        if not game_config._joystick_initialized_globally:
+            logger_cmg.warning("Populate Combos: Pygame joystick not globally initialized. Attempting init.")
+            game_config.init_pygame_and_joystick_globally(force_rescan=True)
+        available_joysticks_full_data = game_config.get_available_joystick_names_with_indices_and_guids()
+        logger_cmg.debug(f"Available joysticks for combos: {available_joysticks_full_data}")
+
+        current_player_dev_selections = [combo.currentData() for combo in self.player_device_combos]
+        prev_selected_mapping_guid = self.get_current_mapping_joystick_guid()
+
+        all_combos_to_clear = self.player_device_combos + [self.joystick_select_combo_for_mapping]
+        for combo in all_combos_to_clear: combo.blockSignals(True); combo.clear(); combo.blockSignals(False)
+
+        for i, player_combo in enumerate(self.player_device_combos):
+            player_combo.blockSignals(True); player_combo.addItem(UNASSIGNED_DEVICE_NAME, UNASSIGNED_DEVICE_ID)
+            if hasattr(game_config, 'KEYBOARD_DEVICE_IDS') and hasattr(game_config, 'KEYBOARD_DEVICE_NAMES'):
+                for k_idx, k_id in enumerate(game_config.KEYBOARD_DEVICE_IDS):
+                    if k_id == UNASSIGNED_DEVICE_ID: continue
+                    k_name = game_config.KEYBOARD_DEVICE_NAMES[k_idx] if k_idx < len(game_config.KEYBOARD_DEVICE_NAMES) else k_id
+                    player_combo.addItem(k_name, k_id)
+            else: player_combo.addItem("Keyboard (P1)", "keyboard_p1"); player_combo.addItem("Keyboard (P2)", "keyboard_p2")
+            for joy_display_name, internal_id_for_assignment, _, _ in available_joysticks_full_data:
+                player_combo.addItem(joy_display_name, internal_id_for_assignment)
+            player_combo.blockSignals(False)
+            idx_to_set = player_combo.findData(current_player_dev_selections[i] if i < len(current_player_dev_selections) else UNASSIGNED_DEVICE_ID)
+            player_combo.setCurrentIndex(idx_to_set if idx_to_set != -1 else 0)
+
+        new_mapping_combo_selection_idx = -1
+        self.joystick_select_combo_for_mapping.blockSignals(True)
+        if not available_joysticks_full_data:
+            self.joystick_select_combo_for_mapping.addItem("No Controllers Detected", None)
+            self.listen_button.setEnabled(False); self.clear_current_mappings_button.setEnabled(False)
+        else:
+            for joy_display_name, _, joy_guid_str, pygame_joy_idx in available_joysticks_full_data:
+                name_part = joy_display_name.split(': ', 1)[-1].split(' (GUID:')[0]
+                map_combo_display_name = f"Joy {pygame_joy_idx}: {name_part}"
+                self.joystick_select_combo_for_mapping.addItem(map_combo_display_name, {"index": pygame_joy_idx, "guid": joy_guid_str, "name": map_combo_display_name})
+                if joy_guid_str == prev_selected_mapping_guid: new_mapping_combo_selection_idx = self.joystick_select_combo_for_mapping.count() - 1
+        self.joystick_select_combo_for_mapping.blockSignals(False)
+
+        if new_mapping_combo_selection_idx != -1: self.joystick_select_combo_for_mapping.setCurrentIndex(new_mapping_combo_selection_idx)
+        elif self.joystick_select_combo_for_mapping.count() > 0: self.joystick_select_combo_for_mapping.setCurrentIndex(0)
+        # Trigger change if valid item is selected, otherwise disable relevant buttons
+        if self.joystick_select_combo_for_mapping.count() > 0 and self.joystick_select_combo_for_mapping.currentData() is not None:
+            self.on_monitor_joystick_changed(self.joystick_select_combo_for_mapping.currentIndex()) # This will enable buttons if controller valid
+        else:
+            self.controller_thread.set_joystick_to_monitor(-1); self.update_simulation_thread_mappings({})
+            self.refresh_joystick_mappings_table(None);
+            self.listen_button.setEnabled(False); self.clear_current_mappings_button.setEnabled(False)
+            if not available_joysticks_full_data: self.update_status_and_log("No controllers available for mapping.")
+        logger_cmg.debug("All joystick device comboboxes populated.")
+
+    def start_listening_for_joystick_map_from_button(self):
+        current_mapping_guid = self.get_current_mapping_joystick_guid()
+        if not current_mapping_guid: self.update_status_and_log("Error: No controller selected to map to."); return
+        internal_key_to_map = self.key_to_map_combo.currentData()
+        if not internal_key_to_map: self.update_status_and_log("Error: No action selected to map."); return
+        self.initiate_listening_sequence_for_joystick_map(internal_key_to_map)
+    def initiate_listening_sequence_for_joystick_map(self, internal_key_to_map_str: str, originating_row_idx_in_table:int = -1):
+        current_mapping_guid = self.get_current_mapping_joystick_guid()
+        if not current_mapping_guid or self.controller_thread.joystick_idx_to_monitor == -1 or self.controller_thread.joystick is None:
+            self.update_status_and_log("Cannot listen: No controller selected or controller not ready/active."); return
+        self.current_listening_key_for_joystick_map = internal_key_to_map_str
+        self.last_selected_row_for_joystick_mapping = originating_row_idx_in_table
+        self.controller_thread.start_listening()
+        friendly_name = INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(internal_key_to_map_str, internal_key_to_map_str)
+        monitor_joy_text = self.joystick_select_combo_for_mapping.currentText()
+        self.update_status_and_log(f"Listening for '{friendly_name}' on {monitor_joy_text}... Press input or '{GUI_NAV_CANCEL}' to cancel.")
+
+        self.listen_button.setText("Listening..."); self.listen_button.setEnabled(False)
+        self.cancel_listen_button.setVisible(True); self.cancel_listen_button.setEnabled(True)
+        self.set_current_focus_widget(self.cancel_listen_button) # Focus cancel button for easy controller cancel
+
+        self.key_to_map_combo.setEnabled(False); self.joystick_select_combo_for_mapping.setEnabled(False)
+        self.mappings_table.setEnabled(False); self.clear_current_mappings_button.setEnabled(False)
+        self.save_btn.setEnabled(False); self.reset_btn.setEnabled(False)
+
+    def cancel_listening_manually(self):
+        if self.controller_thread.is_listening_for_mapping:
+            self.controller_thread.stop_listening()
+            action_being_mapped = self.current_listening_key_for_joystick_map
+            friendly_name = INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(action_being_mapped, action_being_mapped) if action_being_mapped else "action"
+            self.update_status_and_log(f"Listening for '{friendly_name}' cancelled by user.")
+            self.reset_listening_ui_for_joystick_map()
+
+    def on_controller_event_captured_for_mapping(self, event_details_from_thread: dict, raw_event_str: str):
+        current_mapping_guid = self.get_current_mapping_joystick_guid()
+        action_being_mapped = self.current_listening_key_for_joystick_map
+        if not action_being_mapped or not current_mapping_guid:
+            logger_cmg.warning("Controller event captured but no action or GUID. Resetting UI.")
+            self.reset_listening_ui_for_joystick_map(); return
+        if current_mapping_guid not in self.all_joystick_mappings_by_guid:
+            self.all_joystick_mappings_by_guid[current_mapping_guid] = {}
+        current_controller_mappings_gui_format = self.all_joystick_mappings_by_guid[current_mapping_guid]
+        perform_conflict_check = action_being_mapped not in MENU_SPECIFIC_ACTIONS # MENU_SPECIFIC_ACTIONS now includes GUI_NAV_ACTIONS
+        if perform_conflict_check:
+            for existing_key, mapping_info in list(current_controller_mappings_gui_format.items()):
+                if existing_key in MENU_SPECIFIC_ACTIONS: continue
+                if mapping_info and mapping_info.get("raw_str") == raw_event_str and existing_key != action_being_mapped:
+                    reply = QMessageBox.question(self, "Input Conflict", f"Input '{raw_event_str}' is already mapped to '{INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(existing_key, existing_key)}'. Overwrite?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+                    if reply == QMessageBox.StandardButton.No:
+                        self.update_status_and_log(f"Mapping for '{INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(action_being_mapped,action_being_mapped)}' cancelled due to conflict.")
+                        self.reset_listening_ui_for_joystick_map(); return
+                    del current_controller_mappings_gui_format[existing_key]
+                    self.log_to_debug_console(f"Overwriting mapping for '{INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(existing_key, existing_key)}'."); break
+        current_controller_mappings_gui_format[action_being_mapped] = {
+            "event_type": event_details_from_thread["type"],
+            "details": event_details_from_thread, "raw_str": raw_event_str
+        }
+        action_friendly_name = INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(action_being_mapped, action_being_mapped)
+        self.log_to_debug_console(f"Mapped '{raw_event_str}' to '{action_friendly_name}' for current controller (GUI Format).")
+        self.update_status_and_log(f"Mapped '{raw_event_str}' to '{action_friendly_name}'.") # Update main status
+        self.refresh_joystick_mappings_table(current_mapping_guid, preserve_scroll=True, target_row_action_key=action_being_mapped)
+        self.update_simulation_thread_mappings(current_controller_mappings_gui_format)
+        self.reset_listening_ui_for_joystick_map(preserve_scroll=True)
+    def reset_listening_ui_for_joystick_map(self, preserve_scroll=False):
+        self.listen_button.setText("Map Selected Action to Input")
+        can_listen_and_map = (self.joystick_select_combo_for_mapping.currentIndex() != -1 and \
+                              self.joystick_select_combo_for_mapping.currentData() is not None)
+        self.listen_button.setEnabled(can_listen_and_map)
+        self.cancel_listen_button.setVisible(False); self.cancel_listen_button.setEnabled(False)
+
+        self.key_to_map_combo.setEnabled(True); self.joystick_select_combo_for_mapping.setEnabled(True)
+        self.mappings_table.setEnabled(True); self.clear_current_mappings_button.setEnabled(can_listen_and_map)
+        self.save_btn.setEnabled(True); self.reset_btn.setEnabled(True)
+
+        self.controller_thread.stop_listening() # Ensure thread is stopped
+        if not preserve_scroll: self.last_selected_row_for_joystick_mapping = -1
+        # Try to set focus back to the listen button or action combo
+        if self.key_to_map_combo.isEnabled(): self.set_current_focus_widget(self.key_to_map_combo)
+        elif self.listen_button.isEnabled(): self.set_current_focus_widget(self.listen_button)
+
+    def on_mapped_event_triggered_for_simulation(self, internal_action_key_str: str, is_press_event: bool):
+        # This is for game actions, not GUI navigation actions
+        if internal_action_key_str in GUI_NAV_ACTIONS: return
+
+        action_display_name = INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(internal_action_key_str, internal_action_key_str)
+        should_simulate_pynput = not (internal_action_key_str in EXCLUSIVE_ACTIONS and not is_press_event)
+        log_msg = f"Simulated Game Event: '{action_display_name}' {'Pressed' if is_press_event else 'Released'}"
+        if should_simulate_pynput and self.keyboard:
+            pynput_key_to_simulate = get_pynput_key(internal_action_key_str)
+            if pynput_key_to_simulate:
+                try:
+                    if is_press_event and pynput_key_to_simulate not in self.currently_pressed_keys:
+                        self.keyboard.press(pynput_key_to_simulate); self.currently_pressed_keys.add(pynput_key_to_simulate)
+                        log_msg += f" (Keyboard Sim: {str(pynput_key_to_simulate)} Press)"
+                    elif not is_press_event and pynput_key_to_simulate in self.currently_pressed_keys:
+                        self.keyboard.release(pynput_key_to_simulate); self.currently_pressed_keys.remove(pynput_key_to_simulate)
+                        log_msg += f" (Keyboard Sim: {str(pynput_key_to_simulate)} Release)"
+                except Exception as e: logger_cmg.error(f"Pynput error for '{action_display_name}': {e}"); log_msg += " (Pynput Error)"
+            else: log_msg += " (Pynput sim skipped - no key)"
+        elif should_simulate_pynput and not self.keyboard: log_msg += " (Pynput sim skipped - lib not available)"
+        self.log_to_debug_console(log_msg)
+    def handle_table_double_click(self, row: int, column: int):
+        col_group = 0 if column < 4 else 1
+        item_column_index_in_table = col_group * 4 + 0 # Action name column
+        action_item = self.mappings_table.item(row, item_column_index_in_table)
+        if not action_item: return
+        internal_key_clicked = action_item.data(Qt.ItemDataRole.UserRole)
+        if not internal_key_clicked: return
+        # Double click on action name or mapped value should start listening for that action
+        if (column % 4) <= 1: # Action name or Mapped Input columns
+            self.key_to_map_combo.setCurrentIndex(self.key_to_map_combo.findData(internal_key_clicked))
+            self.initiate_listening_sequence_for_joystick_map(internal_key_clicked, originating_row_idx_in_table=row)
+    def rename_joystick_mapping_friendly_name_prompt(self, internal_key: str):
+        current_mapping_guid = self.get_current_mapping_joystick_guid()
+        if not current_mapping_guid or current_mapping_guid not in self.all_joystick_mappings_by_guid or \
+           internal_key not in self.all_joystick_mappings_by_guid[current_mapping_guid]:
+            self.update_status_and_log("Cannot rename: Mapping not found."); return
+        mapping_info = self.all_joystick_mappings_by_guid[current_mapping_guid][internal_key]
+        current_label = mapping_info.get("raw_str", "")
+        text, ok = QInputDialog.getText(self, "Rename Input Label", f"Custom label for '{INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(internal_key,internal_key)}' (current: {current_label}):", QLineEdit.EchoMode.Normal, current_label)
+        if ok and text:
+            mapping_info["raw_str"] = text
+            self.refresh_joystick_mappings_table(current_mapping_guid, preserve_scroll=True, target_row_action_key=internal_key)
+            self.log_to_debug_console(f"Relabeled input for '{INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(internal_key,internal_key)}' to '{text}'.")
+    def clear_joystick_mapping(self, internal_key: str):
+        current_mapping_guid = self.get_current_mapping_joystick_guid()
+        if not current_mapping_guid or current_mapping_guid not in self.all_joystick_mappings_by_guid or \
+           internal_key not in self.all_joystick_mappings_by_guid[current_mapping_guid]:
+            self.update_status_and_log("Cannot clear: Mapping not found."); return
+        del self.all_joystick_mappings_by_guid[current_mapping_guid][internal_key]
+        self.refresh_joystick_mappings_table(current_mapping_guid, preserve_scroll=True, target_row_action_key=internal_key)
+        self.update_simulation_thread_mappings(self.all_joystick_mappings_by_guid.get(current_mapping_guid, {}))
+        self.log_to_debug_console(f"Cleared joystick mapping for '{INTERNAL_TO_FRIENDLY_ACTION_DISPLAY.get(internal_key, internal_key)}'.")
+
+    # --- Controller Navigation Methods ---
+    def set_current_focus_widget(self, widget: Optional[QWidget]):
+        if widget and widget in self._focusable_widgets and widget.isVisible() and widget.isEnabled():
+            self._current_focus_index = self._focusable_widgets.index(widget)
+            widget.setFocus(Qt.FocusReason.OtherFocusReason)
+            # Special handling for table focusing first cell
+            if widget == self.mappings_table and self.mappings_table.rowCount() > 0 and self.mappings_table.columnCount() > 0:
+                 if self.mappings_table.currentItem() is None: # Only if no cell is current
+                    self.mappings_table.setCurrentCell(0,0)
+        elif self._focusable_widgets: # Fallback if widget is invalid
+            # Try to find the first valid widget
+            for i, w in enumerate(self._focusable_widgets):
+                if w.isVisible() and w.isEnabled():
+                    self._current_focus_index = i
+                    w.setFocus(Qt.FocusReason.OtherFocusReason)
+                    if w == self.mappings_table and self.mappings_table.rowCount() > 0 and self.mappings_table.columnCount() > 0:
+                        if self.mappings_table.currentItem() is None: self.mappings_table.setCurrentCell(0,0)
+                    break
+
+    def navigate_focus(self, forward: bool):
+        if not self._focusable_widgets: return
+        if self._combo_box_open: # Let combo box handle up/down
+            current_idx = self._combo_box_open.currentIndex()
+            count = self._combo_box_open.count()
+            if forward: # Down
+                self._combo_box_open.setCurrentIndex(min(count - 1, current_idx + 1))
+            else: # Up
+                self._combo_box_open.setCurrentIndex(max(0, current_idx - 1))
+            return
+
+        start_index = self._current_focus_index
+        num_widgets = len(self._focusable_widgets)
+        for i in range(num_widgets):
+            if forward:
+                self._current_focus_index = (start_index + 1 + i) % num_widgets
+            else:
+                self._current_focus_index = (start_index - 1 - i + num_widgets) % num_widgets
+            
+            next_widget = self._focusable_widgets[self._current_focus_index]
+            if next_widget.isVisible() and next_widget.isEnabled() and next_widget.focusPolicy() != Qt.FocusPolicy.NoFocus:
+                self.set_current_focus_widget(next_widget)
+                return
+        # If no suitable widget found, keep current focus or set to first available.
+        current_focus_widget = QApplication.focusWidget()
+        if current_focus_widget and current_focus_widget in self._focusable_widgets:
+            self._current_focus_index = self._focusable_widgets.index(current_focus_widget)
+        elif self._focusable_widgets:
+            self.set_current_focus_widget(self._focusable_widgets[0])
+
+
+    def activate_widget(self, widget: Optional[QWidget]):
+        if not widget: widget = QApplication.focusWidget()
+        if not widget: return
+
+        if self._combo_box_open: # Combo box is open
+            if widget == self._combo_box_open:
+                self._combo_box_open.hidePopup()
+                # PySide6 QComboBox automatically emits activated when item selected via keyboard/controller in popup
+                # If not, you might need: self._combo_box_open.activated.emit(self._combo_box_open.currentIndex())
+                self._combo_box_open = None
+                self.log_to_debug_console(f"ComboBox '{widget.objectName()}' item selected and closed.")
+            return # Don't process other activations if combo was open
+
+        if isinstance(widget, QPushButton):
+            widget.click() # Use click for proper signal emission, animateClick is visual
+            self.log_to_debug_console(f"Button '{widget.text()}' activated.")
+        elif isinstance(widget, QComboBox):
+            widget.showPopup()
+            self._combo_box_open = widget
+            self.log_to_debug_console(f"ComboBox '{widget.objectName()}' opened.")
+        elif isinstance(widget, QTableWidget) and widget == self.mappings_table:
+            row, col = widget.currentRow(), widget.currentColumn()
+            if row >=0 and col >= 0:
+                cell_widget = widget.cellWidget(row, col)
+                if isinstance(cell_widget, QPushButton):
+                    cell_widget.click()
+                    self.log_to_debug_console(f"Table button at ({row},{col}) clicked.")
+                else: # Treat as double click on item for mapping
+                    self.handle_table_double_click(row, col)
+                    self.log_to_debug_console(f"Table cell ({row},{col}) activated for mapping.")
+            else: self.log_to_debug_console("Table activated, but no cell selected.")
+
+
+    def handle_gui_navigation(self, gui_action_key: str, is_press: bool):
+        if not is_press: # Most GUI actions are on press
+            if gui_action_key == GUI_NAV_CANCEL and self._combo_box_open:
+                 # Handle ComboBox cancel on release if needed, though hidePopup usually works on confirm/escape
+                pass
+            return
+
+        focused_widget = QApplication.focusWidget()
+
+        if self.controller_thread.is_listening_for_mapping: # Special mode: Listening for input
+            if gui_action_key == GUI_NAV_CANCEL:
+                self.cancel_listening_manually()
+            # Other nav inputs ignored while listening, except cancel
+            return
+
+        if gui_action_key == GUI_NAV_CONFIRM:
+            self.activate_widget(focused_widget)
+        elif gui_action_key == GUI_NAV_CANCEL:
+            if self._combo_box_open:
+                self._combo_box_open.hidePopup()
+                self.set_current_focus_widget(self._combo_box_open) # Refocus the combo itself
+                self._combo_box_open = None
+                self.log_to_debug_console("ComboBox popup cancelled.")
+            # elif could handle other cancel contexts, e.g. closing dialogs if any
+            else:
+                self.log_to_debug_console("GUI Cancel received, no active context to cancel.")
+
+        elif gui_action_key == GUI_NAV_UP:
+            if self._combo_box_open: self.navigate_focus(False) # Navigates combo items
+            elif focused_widget == self.mappings_table:
+                new_row = max(0, self.mappings_table.currentRow() - 1)
+                self.mappings_table.setCurrentCell(new_row, self.mappings_table.currentColumn())
+            else: self.navigate_focus(False) # Moves focus to previous widget
+
+        elif gui_action_key == GUI_NAV_DOWN:
+            if self._combo_box_open: self.navigate_focus(True)  # Navigates combo items
+            elif focused_widget == self.mappings_table:
+                new_row = min(self.mappings_table.rowCount() - 1, self.mappings_table.currentRow() + 1)
+                if new_row >=0 : self.mappings_table.setCurrentCell(new_row, self.mappings_table.currentColumn())
+            else: self.navigate_focus(True)   # Moves focus to next widget
+
+        elif gui_action_key == GUI_NAV_LEFT:
+            if focused_widget == self.mappings_table:
+                new_col = max(0, self.mappings_table.currentColumn() - 1)
+                self.mappings_table.setCurrentCell(self.mappings_table.currentRow(), new_col)
+            elif not self._combo_box_open : self.navigate_focus(False) # Treat as 'prev' if not in table/combo
+
+        elif gui_action_key == GUI_NAV_RIGHT:
+            if focused_widget == self.mappings_table:
+                new_col = min(self.mappings_table.columnCount() - 1, self.mappings_table.currentColumn() + 1)
+                if new_col >= 0: self.mappings_table.setCurrentCell(self.mappings_table.currentRow(), new_col)
+            elif not self._combo_box_open : self.navigate_focus(True) # Treat as 'next' if not in table/combo
 
 if __name__ == "__main__":
-    logging.info("Application starting...")
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+    QApplication.setOrganizationName("YourAppNameOrOrg"); QApplication.setApplicationName("ControllerMapperStandalone")
+    logger_cmg.info("ControllerSettingsWindow application starting (standalone)...")
+
+    # Critical: Pygame init BEFORE QApplication instance for joystick events, especially on some OS.
+    if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
+        print("Standalone GUI: Pygame/Joystick not globally initialized by config. Attempting init now.")
+        game_config.init_pygame_and_joystick_globally(force_rescan=True) # force_rescan True
+        if not game_config._joystick_initialized_globally:
+            # Need an app instance for QMessageBox even if it's temporary
+            _temp_app_for_msg = QApplication.instance() or QApplication(sys.argv)
+            QMessageBox.critical(None, "Joystick Initialization Error",
+                                 "Failed to initialize Pygame Joystick system. Controller functionality will be severely limited or unavailable.")
+            logger_cmg.critical("Standalone GUI: FAILED to initialize Pygame Joystick system globally.")
+            # If joystick init fails, GUI might still run but controller features won't work.
+
+    app = QApplication.instance() or QApplication(sys.argv)
+
+    main_window_for_testing = QMainWindow()
+    settings_widget = ControllerSettingsWindow(parent=None) # parent=None for load_settings_into_ui and activate_controller_monitoring
+    main_window_for_testing.setCentralWidget(settings_widget)
+    main_window_for_testing.setWindowTitle("Controller & Input Settings (Standalone Test)")
+
+    main_window_ui_settings = QSettings(settings_widget.ui_settings_file_path, QSettings.Format.IniFormat)
+    geom = main_window_ui_settings.value("main_window_geometry")
+    if geom and isinstance(geom, QByteArray): main_window_for_testing.restoreGeometry(geom); logger_cmg.info("Restored main window geometry.")
+    else: main_window_for_testing.setGeometry(100, 100, 1250, 800); logger_cmg.info(f"Using default main window geometry. Loaded geom: {geom}")
+
+    main_window_for_testing.show()
+
+    def on_main_window_close(event): # Override QMainWindow's closeEvent
+        logger_cmg.info("Main test window closing, saving geometry.")
+        current_geometry = main_window_for_testing.saveGeometry()
+        if current_geometry: main_window_ui_settings.setValue("main_window_geometry", current_geometry)
+        else: logger_cmg.warning("Could not save main window geometry.")
+        # The ControllerSettingsWindow's own closeEvent will handle its cleanup
+        settings_widget.closeEvent(event) # Explicitly call child's close if needed, or rely on Qt hierarchy
+        event.accept()
+
+    main_window_for_testing.closeEvent = on_main_window_close # Assign the custom handler
+
+    exit_code = app.exec()
+
+    # Ensure thread is stopped if it was running (already handled in settings_widget.closeEvent, but good for standalone)
+    if hasattr(settings_widget, 'controller_thread') and settings_widget.controller_thread.isRunning():
+        logger_cmg.info("Main app exit: Ensuring controller thread is stopped.")
+        settings_widget.deactivate_controller_monitoring() # This calls thread.stop() and wait()
+
+    # Pygame quit (already handled in settings_widget generally, but good for standalone)
+    if game_config._pygame_initialized_globally:
+        if game_config._joystick_initialized_globally:
+            try: pygame.joystick.quit()
+            except Exception as e: logger_cmg.error(f"Error quitting pygame.joystick: {e}")
+        try: pygame.quit()
+        except Exception as e: logger_cmg.error(f"Error quitting pygame: {e}")
+        logger_cmg.info("Standalone GUI: Pygame quit.")
+
+    sys.exit(exit_code)

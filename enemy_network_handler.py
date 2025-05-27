@@ -1,282 +1,259 @@
+#################### START OF FILE: enemy_network_handler.py ####################
+
 # enemy_network_handler.py
 # -*- coding: utf-8 -*-
 """
-version 1.0.0.4 (Sync petrification flags)
-Handles network-related data serialization and deserialization for the Enemy class.
-Functions here will typically take an 'enemy' instance as their first argument.
+Handles network data serialization and deserialization for the Enemy class (PySide6).
 """
-import pygame
-import constants as C # For any network-specific constants if needed in future
-from assets import load_all_player_animations # For client-side enemy animation loading if color changes
-import os # For os.path.join if needed for color sync (though GSM usually handles enemy creation)
+# version 2.0.2 
+# MODIFIED: Added zapped attributes (version 2.0.3)
 
-def get_enemy_network_data(enemy):
-    """
-    Gathers essential enemy data into a dictionary for network transmission.
-    This is typically called by the server to send enemy states to clients.
+import os
+import time # For monotonic timer
+from typing import Dict, Any, TYPE_CHECKING
 
-    Args:
-        enemy (Enemy): The enemy instance whose data is being serialized.
+# PySide6 imports
+from PySide6.QtCore import QPointF
+from PySide6.QtGui import QPixmap, QColor
 
-    Returns:
-        dict: A dictionary containing the enemy's network-relevant state.
-    """
+# Game imports
+import constants as C
+from assets import load_all_player_animations # Assumed Qt-based
+
+if TYPE_CHECKING:
+    from enemy import Enemy # For type checking and IDEs
+
+try:
+    from logger import debug, error, warning
+except ImportError:
+    def debug(msg): print(f"DEBUG_ENET: {msg}")
+    def error(msg): print(f"ERROR_ENET: {msg}")
+    def warning(msg): print(f"WARNING_ENET: {msg}")
+
+# --- Monotonic Timer ---
+_start_time_enemy_net_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    """Returns monotonic time in milliseconds since module load or a fixed point."""
+    return int((time.monotonic() - _start_time_enemy_net_monotonic) * 1000)
+# --- End Monotonic Timer ---
+
+
+def get_enemy_network_data(enemy: 'Enemy') -> Dict[str, Any]:
+    # Ensure attributes exist before accessing, using getattr for safety
+    pos_x = getattr(getattr(enemy, 'pos', None), 'x', lambda: 0.0)()
+    pos_y = getattr(getattr(enemy, 'pos', None), 'y', lambda: 0.0)()
+    vel_x = getattr(getattr(enemy, 'vel', None), 'x', lambda: 0.0)()
+    vel_y = getattr(getattr(enemy, 'vel', None), 'y', lambda: 0.0)()
+
     data = {
-        'enemy_id': enemy.enemy_id, 
-        '_valid_init': enemy._valid_init, 
-        
-        'pos': (enemy.pos.x, enemy.pos.y), 
-        'vel': (enemy.vel.x, enemy.vel.y), 
-        'facing_right': enemy.facing_right, 
-        
-        'state': enemy.state, 
-        'current_frame': enemy.current_frame, 
-        'last_anim_update': enemy.last_anim_update, 
-        
-        'current_health': enemy.current_health, 
-        'is_dead': enemy.is_dead, # This will reflect if enemy is "game over" dead (e.g. smashed or regular death)
-        'death_animation_finished': enemy.death_animation_finished,
-        
-        'is_attacking': enemy.is_attacking, 
-        'attack_type': enemy.attack_type, 
-        
-        'is_taking_hit': enemy.is_taking_hit, 
-        'post_attack_pause_timer': enemy.post_attack_pause_timer, 
-        'color_name': getattr(enemy, 'color_name', 'default_color'),
-
-        'is_stomp_dying': getattr(enemy, 'is_stomp_dying', False), 
+        'enemy_id': getattr(enemy, 'enemy_id', None),
+        '_valid_init': getattr(enemy, '_valid_init', False),
+        'pos': (pos_x, pos_y),
+        'vel': (vel_x, vel_y),
+        'facing_right': getattr(enemy, 'facing_right', True),
+        'state': getattr(enemy, 'state', 'idle'),
+        'current_frame': getattr(enemy, 'current_frame', 0),
+        'last_anim_update': getattr(enemy, 'last_anim_update', 0),
+        'current_health': getattr(enemy, 'current_health', 0),
+        'is_dead': getattr(enemy, 'is_dead', True), # Default to True if not found
+        'death_animation_finished': getattr(enemy, 'death_animation_finished', True),
+        'is_attacking': getattr(enemy, 'is_attacking', False),
+        'attack_type': getattr(enemy, 'attack_type', 0),
+        'is_taking_hit': getattr(enemy, 'is_taking_hit', False),
+        'hit_timer': getattr(enemy, 'hit_timer', 0),
+        'post_attack_pause_timer': getattr(enemy, 'post_attack_pause_timer', 0),
+        'color_name': getattr(enemy, 'color_name', 'unknown'),
+        'is_stomp_dying': getattr(enemy, 'is_stomp_dying', False),
         'stomp_death_start_time': getattr(enemy, 'stomp_death_start_time', 0),
         'original_stomp_facing_right': getattr(enemy, 'original_stomp_facing_right', True),
-
-        # Frozen/Defrost state
         'is_frozen': getattr(enemy, 'is_frozen', False),
         'is_defrosting': getattr(enemy, 'is_defrosting', False),
         'frozen_effect_timer': getattr(enemy, 'frozen_effect_timer', 0),
-        
-        # Aflame/Deflame state
         'is_aflame': getattr(enemy, 'is_aflame', False),
         'aflame_timer_start': getattr(enemy, 'aflame_timer_start', 0),
         'is_deflaming': getattr(enemy, 'is_deflaming', False),
         'deflame_timer_start': getattr(enemy, 'deflame_timer_start', 0),
         'has_ignited_another_enemy_this_cycle': getattr(enemy, 'has_ignited_another_enemy_this_cycle', False),
-
-        # Petrification state
         'is_petrified': getattr(enemy, 'is_petrified', False),
         'is_stone_smashed': getattr(enemy, 'is_stone_smashed', False),
         'stone_smashed_timer_start': getattr(enemy, 'stone_smashed_timer_start', 0),
+        'facing_at_petrification': getattr(enemy, 'facing_at_petrification', True),
+        'is_zapped': getattr(enemy, 'is_zapped', False), # ADDED
+        'zapped_timer_start': getattr(enemy, 'zapped_timer_start', 0), # ADDED
     }
     return data
 
-def set_enemy_network_data(enemy, network_data): 
-    """
-    Applies received network data to update the local enemy instance's state.
-    This is primarily used on clients to reflect the server's authoritative state for each enemy.
+def set_enemy_network_data(enemy: 'Enemy', network_data: Dict[str, Any]):
+    if network_data is None: return
+    from enemy_state_handler import set_enemy_state # Local import
 
-    Args:
-        enemy (Enemy): The enemy instance to be updated.
-        network_data (dict): The dictionary of enemy state received over the network.
-    """
-    if network_data is None: return 
-    
-    enemy._valid_init = network_data.get('_valid_init', enemy._valid_init)
+    enemy._valid_init = network_data.get('_valid_init', getattr(enemy, '_valid_init', False))
     if not enemy._valid_init:
-        if enemy.alive(): enemy.kill()  
-        return 
+        if hasattr(enemy, 'alive') and enemy.alive() and hasattr(enemy, 'kill'): enemy.kill()
+        return
 
     pos_data = network_data.get('pos')
-    if pos_data: enemy.pos.x, enemy.pos.y = pos_data
-    
+    if hasattr(enemy, 'pos') and pos_data and len(pos_data) == 2:
+        if hasattr(enemy.pos, 'setX'): enemy.pos.setX(pos_data[0])
+        if hasattr(enemy.pos, 'setY'): enemy.pos.setY(pos_data[1])
+
     vel_data = network_data.get('vel')
-    if vel_data: enemy.vel.x, enemy.vel.y = vel_data
-    
-    enemy.facing_right = network_data.get('facing_right', enemy.facing_right) 
-    
-    enemy.current_health = network_data.get('current_health', enemy.current_health)
-    # Note: is_dead and death_animation_finished will be set based on petrified/smashed status first,
-    # then by regular death status if not petrified.
-    
-    # --- Petrified State Synchronization (handle this early as it overrides others) ---
-    new_is_petrified_net = network_data.get('is_petrified', enemy.is_petrified)
-    new_is_smashed_net = network_data.get('is_stone_smashed', enemy.is_stone_smashed)
-    net_stone_smashed_timer_start = network_data.get('stone_smashed_timer_start', enemy.stone_smashed_timer_start)
-    net_is_dead_for_petrify = network_data.get('is_dead', enemy.is_dead) # Server's overall dead status
-    net_death_anim_finished_for_petrify = network_data.get('death_animation_finished', enemy.death_animation_finished)
+    if hasattr(enemy, 'vel') and vel_data and len(vel_data) == 2:
+        if hasattr(enemy.vel, 'setX'): enemy.vel.setX(vel_data[0])
+        if hasattr(enemy.vel, 'setY'): enemy.vel.setY(vel_data[1])
 
-    state_changed_by_petrify_logic = False
-
+    enemy.facing_right = network_data.get('facing_right', getattr(enemy, 'facing_right', True))
+    enemy.current_health = network_data.get('current_health', getattr(enemy, 'current_health', 0))
+    new_is_dead_net = network_data.get('is_dead', getattr(enemy, 'is_dead', True))
+    enemy.death_animation_finished = network_data.get('death_animation_finished', getattr(enemy, 'death_animation_finished', True))
+    new_is_petrified_net = network_data.get('is_petrified', getattr(enemy, 'is_petrified', False))
+    new_is_smashed_net = network_data.get('is_stone_smashed', getattr(enemy, 'is_stone_smashed', False))
+    enemy.facing_at_petrification = network_data.get('facing_at_petrification', getattr(enemy, 'facing_at_petrification', True))
+    
+    state_changed_by_priority = False
     if new_is_petrified_net:
-        if not enemy.is_petrified: # Client wasn't petrified, but server says it is
-            enemy.is_petrified = True # Set flag first
-            # Apply local side-effects of becoming petrified
-            enemy.vel.xy = 0,0; enemy.acc.xy = 0,0
-            enemy.is_attacking = False; enemy.attack_type = 0
-            enemy.is_taking_hit = False
-            enemy.is_frozen = False; enemy.is_defrosting = False
-            enemy.is_aflame = False; enemy.is_deflaming = False
-            state_changed_by_petrify_logic = True
-        
-        enemy.is_petrified = True # Ensure it's set
-
+        if not getattr(enemy, 'is_petrified', False): enemy.is_petrified = True; state_changed_by_priority = True
+        enemy.is_aflame = False; enemy.is_deflaming = False; enemy.is_frozen = False; enemy.is_defrosting = False; enemy.is_zapped = False
         if new_is_smashed_net:
-            if not enemy.is_stone_smashed: # Client was petrified but not smashed, server says smashed
-                enemy.is_stone_smashed = True
-                state_changed_by_petrify_logic = True
-            enemy.is_dead = net_is_dead_for_petrify # Smashed means it's game-over dead
-            enemy.death_animation_finished = net_death_anim_finished_for_petrify
-            enemy.stone_smashed_timer_start = net_stone_smashed_timer_start
-            enemy.set_state('smashed') # This will also handle animation
+            if not getattr(enemy, 'is_stone_smashed', False): enemy.is_stone_smashed = True; state_changed_by_priority = True
+            enemy.stone_smashed_timer_start = network_data.get('stone_smashed_timer_start', getattr(enemy, 'stone_smashed_timer_start', 0))
+            enemy.is_dead = True
+            enemy.death_animation_finished = network_data.get('death_animation_finished', getattr(enemy, 'death_animation_finished', False))
+            if getattr(enemy, 'state', 'idle') != 'smashed': set_enemy_state(enemy, 'smashed')
         else: # Petrified but not smashed
-            if enemy.is_stone_smashed: # Client was smashed, but server says only petrified (e.g. error or complex rollback)
-                enemy.is_stone_smashed = False
-                state_changed_by_petrify_logic = True
-            # For unsmashed petrified, is_dead is False by new logic, health is > 0
-            # Server should send is_dead = False if it's just petrified with health.
-            enemy.is_dead = net_is_dead_for_petrify 
-            enemy.set_state('petrified') # This will also handle animation
+            if getattr(enemy, 'is_stone_smashed', False): enemy.is_stone_smashed = False; state_changed_by_priority = True
+            enemy.is_dead = False # Petrified != truly dead for gameplay until smashed or duration
+            enemy.death_animation_finished = True # No "death" anim for petrified, it's instant visually
+            if getattr(enemy, 'state', 'idle') != 'petrified': set_enemy_state(enemy, 'petrified')
+    elif getattr(enemy, 'is_petrified', False): # Was petrified, now server says not
+        enemy.is_petrified = False; enemy.is_stone_smashed = False; state_changed_by_priority = True
 
-    elif enemy.is_petrified: # Client is petrified, but server says it's not (e.g. reset)
-        enemy.is_petrified = False
-        enemy.is_stone_smashed = False
-        state_changed_by_petrify_logic = True
-        # is_dead will be handled by general death sync below if not petrified
-        # This usually means it's resetting to 'idle' or another normal state
+    if not getattr(enemy, 'is_petrified', False): # Only process normal death if not petrified
+        if new_is_dead_net != getattr(enemy, 'is_dead', True):
+            enemy.is_dead = new_is_dead_net
+            state_changed_by_priority = True
+            if enemy.is_dead:
+                enemy.current_health = 0
+                if getattr(enemy, 'state', 'idle') not in ['death', 'death_nm']: set_enemy_state(enemy, 'death')
+            else: # Revived by server?
+                if getattr(enemy, 'state', 'idle') in ['death', 'death_nm']: set_enemy_state(enemy, 'idle')
+                enemy.death_animation_finished = False
+        else: # is_dead state matches, just ensure consistency
+            enemy.is_dead = new_is_dead_net
+
+
+    # Sync other status effects if not petrified and not "permanently" dead
+    can_sync_other_statuses = not getattr(enemy, 'is_petrified', False) and \
+                              not (getattr(enemy, 'is_dead', False) and getattr(enemy, 'death_animation_finished', False))
+
+    if can_sync_other_statuses:
+        current_ticks_val = get_current_ticks_monotonic() # Use monotonic timer
+        new_is_aflame = network_data.get('is_aflame', getattr(enemy, 'is_aflame', False))
+        if new_is_aflame and not getattr(enemy, 'is_aflame', False):
+            enemy.aflame_timer_start = network_data.get('aflame_timer_start', current_ticks_val)
+        enemy.is_aflame = new_is_aflame
+
+        new_is_deflaming = network_data.get('is_deflaming', getattr(enemy, 'is_deflaming', False))
+        if new_is_deflaming and not getattr(enemy, 'is_deflaming', False):
+            enemy.deflame_timer_start = network_data.get('deflame_timer_start', current_ticks_val)
+        enemy.is_deflaming = new_is_deflaming
         
-    # If state was set by petrify/smash logic, it might have handled is_dead.
-    # Sync overall is_dead status from server, especially if not petrified.
-    enemy.is_dead = network_data.get('is_dead', enemy.is_dead)
-    enemy.death_animation_finished = network_data.get('death_animation_finished', enemy.death_animation_finished)
+        new_is_frozen = network_data.get('is_frozen', getattr(enemy, 'is_frozen', False))
+        if new_is_frozen and not getattr(enemy, 'is_frozen', False):
+            enemy.frozen_effect_timer = network_data.get('frozen_effect_timer', current_ticks_val)
+        enemy.is_frozen = new_is_frozen
 
+        new_is_defrosting = network_data.get('is_defrosting', getattr(enemy, 'is_defrosting', False))
+        if new_is_defrosting and not getattr(enemy, 'is_defrosting', False): # If starts defrosting, use frozen_effect_timer
+            enemy.frozen_effect_timer = network_data.get('frozen_effect_timer', getattr(enemy, 'frozen_effect_timer', current_ticks_val))
+        enemy.is_defrosting = new_is_defrosting
 
-    # --- Aflame/Frozen/Stomp logic (only if NOT petrified) ---
-    if not enemy.is_petrified:
-        # Frozen/Defrost State Synchronization
-        new_is_frozen_net = network_data.get('is_frozen', enemy.is_frozen)
-        new_is_defrosting_net = network_data.get('is_defrosting', enemy.is_defrosting)
-        net_frozen_effect_timer = network_data.get('frozen_effect_timer', enemy.frozen_effect_timer)
+        new_is_zapped = network_data.get('is_zapped', getattr(enemy, 'is_zapped', False)) # ADDED
+        if new_is_zapped and not getattr(enemy, 'is_zapped', False):
+            enemy.zapped_timer_start = network_data.get('zapped_timer_start', current_ticks_val)
+            enemy.zapped_damage_last_tick = enemy.zapped_timer_start # Init damage tick timer
+        enemy.is_zapped = new_is_zapped
 
-        # Aflame/Deflame State Synchronization
-        new_is_aflame_net = network_data.get('is_aflame', enemy.is_aflame)
-        new_is_deflaming_net = network_data.get('is_deflaming', enemy.is_deflaming)
-        net_aflame_timer_start = network_data.get('aflame_timer_start', enemy.aflame_timer_start)
-        net_deflame_timer_start = network_data.get('deflame_timer_start', enemy.deflame_timer_start)
-        enemy.has_ignited_another_enemy_this_cycle = network_data.get('has_ignited_another_enemy_this_cycle', enemy.has_ignited_another_enemy_this_cycle)
-
-        # Priority: Aflame > Frozen > Normal
-        if new_is_aflame_net and not enemy.is_aflame:
-            enemy.is_aflame = True; enemy.is_deflaming = False
-            enemy.aflame_timer_start = net_aflame_timer_start
-            enemy.is_frozen = False; enemy.is_defrosting = False 
-            enemy.set_state('aflame')
-        elif not new_is_aflame_net and enemy.is_aflame:
-            enemy.is_aflame = False
-
-        if new_is_deflaming_net and not enemy.is_deflaming:
-            enemy.is_deflaming = True; enemy.is_aflame = False 
-            enemy.deflame_timer_start = net_deflame_timer_start
-            enemy.is_frozen = False; enemy.is_defrosting = False
-            enemy.set_state('deflame')
-        elif not new_is_deflaming_net and enemy.is_deflaming:
-            enemy.is_deflaming = False
-
-        # If not aflame or deflaming, then check frozen status
-        if not (new_is_aflame_net or new_is_deflaming_net):
-            if new_is_frozen_net and not enemy.is_frozen:
-                enemy.is_frozen = True; enemy.is_defrosting = False
-                enemy.frozen_effect_timer = net_frozen_effect_timer
-                enemy.set_state('frozen')
-            elif not new_is_frozen_net and enemy.is_frozen:
-                enemy.is_frozen = False
-
-            if new_is_defrosting_net and not enemy.is_defrosting:
-                enemy.is_defrosting = True; enemy.is_frozen = False
-                enemy.frozen_effect_timer = net_frozen_effect_timer
-                enemy.set_state('defrost')
-            elif not new_is_defrosting_net and enemy.is_defrosting:
-                enemy.is_defrosting = False
-                
-            if not new_is_frozen_net and not new_is_defrosting_net:
-                enemy.is_frozen = False; enemy.is_defrosting = False
-
-        # If server says not under any major status, ensure local flags are cleared
-        if not new_is_aflame_net and not new_is_deflaming_net and not new_is_frozen_net and not new_is_defrosting_net:
-            enemy.is_aflame = False; enemy.is_deflaming = False
-            enemy.is_frozen = False; enemy.is_defrosting = False
-            if enemy.state in ['aflame', 'deflame', 'frozen', 'defrost'] and \
-               network_data.get('state', enemy.state) not in ['aflame', 'deflame', 'frozen', 'defrost']:
-                 enemy.set_state(network_data.get('state', 'idle'))
-
-        # Stomp Death Handling (only if not petrified, aflame, frozen etc.)
-        if not (enemy.is_aflame or enemy.is_deflaming or enemy.is_frozen or enemy.is_defrosting):
-            new_is_stomp_dying_from_net = network_data.get('is_stomp_dying', False)
-            if new_is_stomp_dying_from_net and not enemy.is_stomp_dying:
-                enemy.is_stomp_dying = True
-                enemy.stomp_death_start_time = network_data.get('stomp_death_start_time', pygame.time.get_ticks())
-                enemy.original_stomp_facing_right = network_data.get('original_stomp_facing_right', enemy.facing_right)
-                
-                # Temporarily set facing for correct original_stomp_death_image generation
+        new_is_stomp_dying_net = network_data.get('is_stomp_dying', False)
+        if new_is_stomp_dying_net and not getattr(enemy, 'is_stomp_dying', False):
+            enemy.is_stomp_dying = True
+            enemy.stomp_death_start_time = network_data.get('stomp_death_start_time', current_ticks_val)
+            enemy.original_stomp_facing_right = network_data.get('original_stomp_facing_right', getattr(enemy, 'facing_right', True))
+            if hasattr(enemy, 'animate') and hasattr(enemy, 'image'):
                 original_facing_for_stomp_img = enemy.facing_right
                 enemy.facing_right = enemy.original_stomp_facing_right
-                _temp_stomp_flag_for_anim = enemy.is_stomp_dying # Store and restore
-                enemy.is_stomp_dying = False # Temporarily unset for clean animate call
-                enemy.animate() # Call animate to get the base image for stomp
-                enemy.is_stomp_dying = _temp_stomp_flag_for_anim # Restore
-                enemy.original_stomp_death_image = enemy.image.copy() # Capture the correctly oriented frame
-                enemy.facing_right = original_facing_for_stomp_img # Restore original facing
+                _temp_stomp_flag = enemy.is_stomp_dying; enemy.is_stomp_dying = False 
+                enemy.animate() 
+                enemy.is_stomp_dying = _temp_stomp_flag
+                enemy.original_stomp_death_image = enemy.image.copy() if enemy.image and not enemy.image.isNull() else None
+                enemy.facing_right = original_facing_for_stomp_img 
+            if getattr(enemy, 'state', 'idle') != 'stomp_death': set_enemy_state(enemy, 'stomp_death')
+        elif not new_is_stomp_dying_net and getattr(enemy, 'is_stomp_dying', False):
+            enemy.is_stomp_dying = False
+            enemy.original_stomp_death_image = None
 
-                enemy.is_dead = True; enemy.current_health = 0 # Stomp kill always sets health to 0
-                enemy.vel.xy = 0,0; enemy.acc.xy = 0,0
-                enemy.death_animation_finished = False 
-                enemy.state = 'stomp_death' 
-            elif not new_is_stomp_dying_from_net and enemy.is_stomp_dying: 
-                enemy.is_stomp_dying = False
-                enemy.original_stomp_death_image = None
 
-        # Regular Death Status (only if not under a priority status effect like stomp/fire/freeze and not petrified)
-        if not enemy.is_stomp_dying and not enemy.is_frozen and not enemy.is_defrosting and \
-           not enemy.is_aflame and not enemy.is_deflaming:
-            
-            # is_dead was synced earlier based on petrification.
-            # If not petrified, this handles regular death.
-            if enemy.is_dead and enemy.state not in ['death', 'death_nm']: # If server says dead, but client state isn't death
-                # Health should already be 0 from server if it's a regular death
-                enemy.set_state('death') 
-            elif not enemy.is_dead and enemy.state in ['death', 'death_nm']: # Server says not dead, but client is in death state
-                enemy.death_animation_finished = False # Reset this too
-                enemy.set_state('idle') 
+    can_sync_actions = can_sync_other_statuses and not \
+                       (getattr(enemy, 'is_aflame', False) or getattr(enemy, 'is_deflaming', False) or \
+                        getattr(enemy, 'is_frozen', False) or getattr(enemy, 'is_defrosting', False) or \
+                        getattr(enemy, 'is_stomp_dying', False) or getattr(enemy, 'is_zapped', False)) # Check zapped
 
-    # --- Combat and Action States (only if not under an overriding effect like petrified, stomp, fire, freeze) ---
-    if not enemy.is_petrified and not enemy.is_stomp_dying and not enemy.is_frozen and \
-       not enemy.is_defrosting and not enemy.is_aflame and not enemy.is_deflaming:
-        enemy.is_attacking = network_data.get('is_attacking', enemy.is_attacking)
-        enemy.attack_type = network_data.get('attack_type', enemy.attack_type)
+    if can_sync_actions:
+        enemy.is_attacking = network_data.get('is_attacking', getattr(enemy, 'is_attacking', False))
+        enemy.attack_type = network_data.get('attack_type', getattr(enemy, 'attack_type', 0))
         
-        new_is_taking_hit_from_net = network_data.get('is_taking_hit', enemy.is_taking_hit)
-        if new_is_taking_hit_from_net and not enemy.is_taking_hit: 
-            enemy.is_taking_hit = True
-            enemy.hit_timer = pygame.time.get_ticks() 
-            if enemy.state != 'hit' and not enemy.is_dead : enemy.set_state('hit') 
-        elif not new_is_taking_hit_from_net and enemy.is_taking_hit: 
-            enemy.is_taking_hit = False
-            if enemy.state == 'hit' and not enemy.is_dead : enemy.set_state('idle') 
+        new_is_taking_hit = network_data.get('is_taking_hit', getattr(enemy, 'is_taking_hit', False))
+        new_hit_timer = network_data.get('hit_timer', getattr(enemy, 'hit_timer', 0))
+        if new_is_taking_hit != getattr(enemy, 'is_taking_hit', False) or \
+           (new_is_taking_hit and getattr(enemy, 'hit_timer', 0) != new_hit_timer):
+            enemy.is_taking_hit = new_is_taking_hit
+            enemy.hit_timer = new_hit_timer
+            current_enemy_state = getattr(enemy, 'state', 'idle')
+            is_enemy_actually_dead = getattr(enemy, 'is_dead', False)
+            if enemy.is_taking_hit and current_enemy_state != 'hit' and not is_enemy_actually_dead:
+                set_enemy_state(enemy, 'hit')
+            elif not enemy.is_taking_hit and current_enemy_state == 'hit' and not is_enemy_actually_dead:
+                set_enemy_state(enemy, 'idle')
+        enemy.post_attack_pause_timer = network_data.get('post_attack_pause_timer', getattr(enemy, 'post_attack_pause_timer', 0))
 
-        enemy.post_attack_pause_timer = network_data.get('post_attack_pause_timer', enemy.post_attack_pause_timer)
-        
-    # --- Final State and Animation Sync if not set by petrify/smashed logic ---
-    if not state_changed_by_petrify_logic:
-        new_logical_state_from_net = network_data.get('state', enemy.state)
-        # Only set state if it's truly different and current state isn't an overriding one
-        # and also not a petrified/smashed state (which were handled above)
-        is_priority_override_state = enemy.state in ['stomp_death', 'frozen', 'defrost', 'aflame', 'deflame', 'petrified', 'smashed']
-        
-        if not is_priority_override_state and enemy.state != new_logical_state_from_net:
-            # Also ensure that if enemy.is_dead is true, the new state is a death state
-            if not (enemy.is_dead and new_logical_state_from_net not in ['death', 'death_nm']):
-                enemy.set_state(new_logical_state_from_net)
-        else: # If state is the same or an override, just sync frame and anim time
-            enemy.current_frame = network_data.get('current_frame', enemy.current_frame)
-            enemy.last_anim_update = network_data.get('last_anim_update', enemy.last_anim_update)
+    # Sync logical state if no higher-priority state took precedence
+    if not state_changed_by_priority:
+        new_logical_state_from_net = network_data.get('state', getattr(enemy, 'state', 'idle'))
+        current_enemy_state = getattr(enemy, 'state', 'idle')
+        # Check if current state is one that shouldn't be easily overridden by a generic 'idle' or 'run' from network
+        is_current_state_a_priority_status = current_enemy_state in [
+            'aflame','deflame','frozen','defrost','petrified','smashed','death','death_nm','stomp_death', 'hit', 'zapped' # Added zapped
+        ]
+        if not is_current_state_a_priority_status and current_enemy_state != new_logical_state_from_net:
+            set_enemy_state(enemy, new_logical_state_from_net)
+        else: # If state matches or current is priority, just sync animation frame data
+            enemy.current_frame = network_data.get('current_frame', getattr(enemy, 'current_frame', 0))
+            enemy.last_anim_update = network_data.get('last_anim_update', getattr(enemy, 'last_anim_update', 0))
     
-    enemy.rect.midbottom = (round(enemy.pos.x), round(enemy.pos.y)) 
-    
-    if enemy._valid_init and enemy.alive(): 
-        enemy.animate()
+    # Ensure rect is updated based on current pos and image (which might have changed due to state)
+    if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
+    elif hasattr(enemy, 'rect') and hasattr(enemy, 'pos'): # Fallback if method missing
+        if hasattr(enemy.rect, 'center') and hasattr(enemy.rect, 'bottom'): # Check QRectF methods
+            enemy.rect.moveCenter(enemy.pos); enemy.rect.moveBottom(enemy.pos.y()) # Example midbottom anchor
+
+    # Handle color change (implies animation reload)
+    new_color_name_from_net = network_data.get('color_name', getattr(enemy, 'color_name', 'unknown'))
+    if hasattr(enemy, 'color_name') and enemy.color_name != new_color_name_from_net:
+        warning(f"Client Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Color changed by server from '{enemy.color_name}' to '{new_color_name_from_net}'. Reloading animations.")
+        enemy.color_name = new_color_name_from_net
+        new_asset_folder = os.path.join('characters', enemy.color_name)
+        enemy.animations = load_all_player_animations(relative_asset_folder=new_asset_folder)
+        if enemy.animations is None:
+            error(f"Client CRITICAL: Failed to reload animations for enemy {getattr(enemy, 'enemy_id', 'N/A')} with new color {enemy.color_name} from '{new_asset_folder}'")
+            enemy._valid_init = False
+            if hasattr(C, 'BLUE') and hasattr(enemy, 'image') and hasattr(enemy, 'rect'):
+                blue_color_tuple = getattr(C, 'BLUE', (0,0,255))
+                qcolor_blue = QColor(*blue_color_tuple)
+                enemy.image = QPixmap(30,40); enemy.image.fill(qcolor_blue)
+                if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
+
+    # Final animation call if still valid and alive
+    if getattr(enemy, '_valid_init', False) and hasattr(enemy, 'alive') and enemy.alive():
+        if hasattr(enemy, 'animate'): enemy.animate()
+
+#################### END OF FILE: enemy_network_handler.py ####################

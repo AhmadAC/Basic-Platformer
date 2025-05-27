@@ -1,428 +1,468 @@
 # projectiles.py
 # -*- coding: utf-8 -*-
 """
-Defines projectile classes like Fireball, PoisonShot, etc.
+Defines projectile classes like Fireball, PoisonShot, etc. for PySide6.
 Handles projectile effects including setting targets aflame or frozen.
 """
-# version 1.0.7 (Players can be set aflame/frozen by projectiles not their own)
-import pygame
-import os # For os.path.join if needed (though resource_path handles most of it)
-import math # For vector math if pygame.math.Vector2 is not sufficient
+# version 2.0.7 (BoltProjectile Y-offset for up/down, revised upward rotation)
+import os
+import math # For atan2, degrees for rotation
+import time # For monotonic timer
+from typing import List, Optional, Any, Tuple, Dict
+
+# PySide6 imports
+from PySide6.QtGui import QPixmap, QColor, QPainter, QTransform, QImage
+from PySide6.QtCore import QRectF, QPointF, QSizeF, Qt, QSize
+
+# Game imports
 import constants as C
-from assets import load_gif_frames, resource_path
-from enemy import Enemy # For isinstance checks to apply effects correctly
-from statue import Statue # Import Statue for collision checking
+from assets import load_gif_frames, resource_path # Assumed Qt-based
+from enemy import Enemy # For isinstance checks (assumed PySide6 compatible)
+from statue import Statue # For isinstance checks (assumed PySide6 compatible)
 
+# Logger import
 try:
-    from logger import debug # Use your game's logger
+    from logger import debug
 except ImportError:
-    def debug(msg): print(f"DEBUG_PROJ: {msg}") # Fallback print
+    def debug(msg): print(f"DEBUG_PROJ: {msg}")
+
+# --- Monotonic Timer ---
+_start_time_projectiles_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    """Returns monotonic time in milliseconds since module load or a fixed point."""
+    return int((time.monotonic() - _start_time_projectiles_monotonic) * 1000)
+# --- End Monotonic Timer ---
 
 
-class BaseProjectile(pygame.sprite.Sprite):
-    def __init__(self, x, y, direction_vector, owner_player, config):
-        super().__init__()
-        self.owner_player = owner_player # The Player instance that fired this
+class BaseProjectile:
+    def __init__(self, x: float, y: float, direction_qpointf: QPointF, owner_player: Any, config: dict):
+        self.owner_player = owner_player
         self.damage = config['damage']
         self.speed = config['speed']
-        self.lifespan = config['lifespan'] # In milliseconds
-        self.dimensions = config['dimensions'] # Tuple (width, height), mainly for fallback
-        self.sprite_path = config['sprite_path'] # Relative path to GIF
-        self.effect_type = config.get('effect_type', None) # e.g., "aflame", "freeze", "petrify"
-        
-        # Load animation frames
+        self.lifespan = config['lifespan']
+        self.dimensions = QSizeF(float(config['dimensions'][0]), float(config['dimensions'][1]))
+        self.sprite_path = config['sprite_path']
+        self.effect_type = config.get('effect_type')
+
         full_gif_path = resource_path(self.sprite_path)
-        self.frames = load_gif_frames(full_gif_path)
-        
-        # Fallback if GIF loading fails
-        if not self.frames or \
-           (len(self.frames) == 1 and self.frames[0].get_size() == (30,40) and self.frames[0].get_at((0,0)) == C.RED): 
-            debug(f"Warning: Projectile GIF '{full_gif_path}' failed to load or is default placeholder. Using fallback.")
-            # If frames were loaded but are the error placeholder, try to get dimensions from original config
-            # If frames were loaded but invalid, self.dimensions might be from the placeholder
-            if self.frames and not (len(self.frames) == 1 and self.frames[0].get_size() == (30,40) and self.frames[0].get_at((0,0)) == C.RED):
-                self.dimensions = self.frames[0].get_size() # Use dimensions of the loaded (but bad) frame
+        self.frames: List[QPixmap] = load_gif_frames(full_gif_path)
 
-            self.image = pygame.Surface(self.dimensions, pygame.SRCALPHA).convert_alpha()
-            self.image.fill((0,0,0,0)) # Transparent fallback
-            # Simple visual fallback (e.g., colored circle)
-            pygame.draw.circle(self.image, config.get('fallback_color1', C.ORANGE_RED), (self.dimensions[0]//2, self.dimensions[1]//2), self.dimensions[0]//3)
-            pygame.draw.circle(self.image, config.get('fallback_color2', C.RED), (self.dimensions[0]//2, self.dimensions[1]//2), self.dimensions[0]//4)
-            self.frames = [self.image] # Use the single fallback frame
-        else: # Frames loaded successfully
-            self.dimensions = self.frames[0].get_size() # Update dimensions based on loaded GIF
-        
+        if not self.frames or self._is_placeholder_qpixmap(self.frames[0]):
+            debug(f"Warning: Projectile GIF '{full_gif_path}' failed. Using fallback for {self.__class__.__name__}.")
+            fb_color1_tuple = config.get('fallback_color1', getattr(C, 'ORANGE_RED', (255, 69, 0)))
+            fb_color2_tuple = config.get('fallback_color2', getattr(C, 'RED', (255, 0, 0)))
+            fb_color1 = QColor(*fb_color1_tuple)
+            fb_color2 = QColor(*fb_color2_tuple)
+
+            w, h = max(1, int(self.dimensions.width())), max(1, int(self.dimensions.height()))
+            fallback_pixmap = QPixmap(w, h)
+            fallback_pixmap.fill(Qt.GlobalColor.transparent)
+            painter = QPainter(fallback_pixmap)
+            painter.setBrush(fb_color1); painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QRectF(0,0,float(w),float(h)))
+            if w > 4 and h > 4:
+                 painter.setBrush(fb_color2)
+                 painter.drawEllipse(QRectF(w*0.25, h*0.25, w*0.5, h*0.5))
+            painter.end()
+            self.frames = [fallback_pixmap]
+
+        if self.frames and self.frames[0] and not self.frames[0].isNull():
+            self.dimensions = QSizeF(float(self.frames[0].width()), float(self.frames[0].height()))
+        else:
+            self.dimensions = QSizeF(10.0, 10.0)
+            self.image = QPixmap(10,10); self.image.fill(QColor(255,0,255)) # Magenta placeholder
+            self.frames = [self.image]
+
+
         self.current_frame_index = 0
-        self.image = self.frames[self.current_frame_index] # Set initial image
-        self.rect = self.image.get_rect(center=(x, y))
-        
-        # Set velocity based on direction vector
-        if direction_vector.length_squared() > 0:
-            self.vel = direction_vector.normalize() * self.speed
-        else: # Fallback if direction is zero (should not happen ideally)
-            self.vel = pygame.math.Vector2(1 if owner_player.facing_right else -1, 0) * self.speed
+        self.image: QPixmap = self.frames[self.current_frame_index]
 
-        # Store original frames for transformations (like rotation in Bolt)
-        self.original_frames = [frame.copy() for frame in self.frames] # Deep copy
-        self._post_init_hook(self.vel) # For class-specific transformations like Bolt rotation
+        # Calculate velocity first, as Bolt's Y-offset depends on it.
+        player_facing_right = getattr(self.owner_player, 'facing_right', True) # Needed for fallback vel
+        direction_mag = math.sqrt(direction_qpointf.x()**2 + direction_qpointf.y()**2)
+        if direction_mag > 1e-6:
+            norm_dir_x = direction_qpointf.x() / direction_mag
+            norm_dir_y = direction_qpointf.y() / direction_mag
+            self.vel = QPointF(norm_dir_x * self.speed, norm_dir_y * self.speed)
+        else:
+            vel_x_fallback = self.speed if player_facing_right else -self.speed
+            self.vel = QPointF(vel_x_fallback, 0.0)
 
-        # After potential transformation by _post_init_hook, re-set image and rect
-        self.image = self.frames[self.current_frame_index % len(self.frames)] # Ensure index is valid
-        self.rect = self.image.get_rect(center=(x,y)) # Re-center based on new image
-        self.pos = pygame.math.Vector2(self.rect.center) # Position for precise movement
-        
-        # Timing and ID
-        self.spawn_time = pygame.time.get_ticks()
+        # --- Start of spawn position calculation ---
+        spawn_initial_x = float(x)
+        spawn_initial_y = float(y)
+
+
+        projectile_spawn_offset_x = 0.0
+        projectile_spawn_offset_y = 0.0
+
+        if self.__class__.__name__ == "BoltProjectile":
+            bolt_x_offset_from_player_center = float(getattr(C,'TILE_SIZE', 40)/4)
+                    
+            if player_facing_right:
+                spawn_initial_x += bolt_x_offset_from_player_center
+                projectile_spawn_offset_x = -10.0
+            else: # Firing left
+                spawn_initial_x -= bolt_x_offset_from_player_center
+                projectile_spawn_offset_x = 10.0
+
+            # Determine Y offset and store flight info for _post_init_hook
+            self._bolt_flight_angle_deg = math.degrees(math.atan2(self.vel.y(), self.vel.x()))
+            self._bolt_is_firing_predominantly_upwards = False
+            is_firing_predominantly_downwards = False
+
+            if self.vel.y() < -0.01: # Moving upwards
+                if abs(self.vel.y()) > abs(self.vel.x()) * 1.5 or \
+                   (-120 < self._bolt_flight_angle_deg < -60):
+                    self._bolt_is_firing_predominantly_upwards = True
+                    # projectile_spawn_offset_y = -20.0
+            elif self.vel.y() > 0.01: # Moving downwards
+                 if abs(self.vel.y()) > abs(self.vel.x()) * 1.5 or \
+                   (60 < self._bolt_flight_angle_deg < 120): # Cone around +90 for DOWN
+                    is_firing_predominantly_downwards = True
+                    projectile_spawn_offset_y = 10.0 # Symmetrical offset for downwards
+
+
+        self.pos = QPointF(spawn_initial_x + projectile_spawn_offset_x,
+                           spawn_initial_y + projectile_spawn_offset_y)
+        # --- End of spawn position calculation ---
+
+        img_w_initial = float(self.image.width()) if self.image and not self.image.isNull() else self.dimensions.width()
+        img_h_initial = float(self.image.height()) if self.image and not self.image.isNull() else self.dimensions.height()
+        rect_x = self.pos.x() - img_w_initial / 2.0
+        rect_y = self.pos.y() - img_h_initial / 2.0
+        self.rect = QRectF(rect_x, rect_y, img_w_initial, img_h_initial)
+
+        self.original_frames = [frame.copy() for frame in self.frames]
+        self._post_init_hook() # Pass relevant info for Bolt rotation via instance attrs now
+
+        if self.frames and self.current_frame_index < len(self.frames) and \
+           self.frames[self.current_frame_index] and not self.frames[self.current_frame_index].isNull():
+            self.image = self.frames[self.current_frame_index]
+            self.dimensions = QSizeF(float(self.image.width()), float(self.image.height()))
+        self._update_rect_from_image_and_pos()
+
+        self.spawn_time = get_current_ticks_monotonic()
         self.last_anim_update = self.spawn_time
         proj_type_name = self.__class__.__name__.lower()
-        # Create a unique ID for network synchronization
-        self.projectile_id = f"{proj_type_name}_{getattr(owner_player, 'player_id', 'unknown')}_{self.spawn_time}"
+        owner_id_str = str(getattr(owner_player, 'player_id', 'unknownP'))
+        self.projectile_id = f"{proj_type_name}_{owner_id_str}_{self.spawn_time}"
+        self._alive = True
+        self.game_elements_ref: Optional[Dict[str, Any]] = None
 
-    def _post_init_hook(self, final_velocity_vector):
-        """
-        Optional hook for subclasses to perform actions after initial setup,
-        like rotating sprites based on velocity (e.g., BoltProjectile).
-        """
-        pass # Base class does nothing here
+    def _is_placeholder_qpixmap(self, pixmap: QPixmap) -> bool:
+        if pixmap.isNull(): return True
+        if pixmap.size() == QSize(1,1) and pixmap.toImage().pixelColor(0,0) == QColor(255,0,255):
+            return True
+        if pixmap.size() == QSize(30,40):
+            qimage = pixmap.toImage()
+            if not qimage.isNull():
+                color_at_origin = qimage.pixelColor(0,0)
+                qcolor_red = QColor(*(getattr(C, 'RED', (255,0,0))))
+                qcolor_blue = QColor(*(getattr(C, 'BLUE', (0,0,255))))
+                if color_at_origin == qcolor_red or color_at_origin == qcolor_blue:
+                    return True
+        return False
+
+    def _update_rect_from_image_and_pos(self):
+        img_w, img_h = self.dimensions.width(), self.dimensions.height()
+        if self.image and not self.image.isNull():
+            img_w, img_h = float(self.image.width()), float(self.image.height())
+        rect_x = self.pos.x() - img_w / 2.0
+        rect_y = self.pos.y() - img_h / 2.0
+        if not hasattr(self, 'rect') or self.rect is None:
+             self.rect = QRectF(rect_x, rect_y, img_w, img_h)
+        else:
+             self.rect.setRect(rect_x, rect_y, img_w, img_h)
+
+    def _post_init_hook(self): # Removed final_velocity_qpointf parameter
+        pass
+
+    def alive(self) -> bool:
+        return self._alive
+
+    def kill(self):
+        self._alive = False
 
     def animate(self):
-        """Handles frame cycling for animated projectiles."""
-        now = pygame.time.get_ticks()
-        anim_duration = C.ANIM_FRAME_DURATION / 1.5 # Default animation speed for projectiles
-        if hasattr(self, 'custom_anim_speed_divisor'): # Allow subclasses to override
-            anim_duration = C.ANIM_FRAME_DURATION / self.custom_anim_speed_divisor
-
-        if now - self.last_anim_update > anim_duration:
-            self.last_anim_update = now
-            self.current_frame_index = (self.current_frame_index + 1) % len(self.frames)
-            old_center = self.rect.center # Preserve center for consistent positioning
-            
-            base_image_for_anim = self.frames[self.current_frame_index] # Get the current frame
-
-            # Handle flipping for non-Bolt projectiles (Bolt handles its own rotation)
-            if not isinstance(self, BoltProjectile): # Bolts are rotated, not flipped
-                if self.vel.x < 0: # If moving left
-                    self.image = pygame.transform.flip(base_image_for_anim, True, False)
-                else:
-                    self.image = base_image_for_anim # Moving right or vertically, no flip needed
-            else: # For Bolt or other rotation-handled projectiles
-                self.image = base_image_for_anim 
-            
-            self.rect = self.image.get_rect(center=old_center) # Re-apply rect with new image
-
-    def update(self, dt_sec, platforms, characters_to_hit_group): 
-        """
-        Updates projectile position, animation, and checks for collisions.
-        dt_sec is delta time (not directly used if movement is frame-based, but good practice to pass).
-        """
-        # Movement based on velocity (scaled by FPS for consistent speed)
-        self.pos += self.vel * dt_sec * C.FPS # dt_sec * FPS effectively cancels out, giving per-frame movement
-        self.rect.center = round(self.pos.x), round(self.pos.y)
-        
-        self.animate() # Update animation frame
-
-        # Lifespan check
-        if pygame.time.get_ticks() - self.spawn_time > self.lifespan:
-            self.kill(); return
-
-        # Collision with platforms
-        if pygame.sprite.spritecollideany(self, platforms):
-            self.kill(); return
-
-        # Collision with characters (Enemies, other Players, Statues)
-        hit_characters = pygame.sprite.spritecollide(self, characters_to_hit_group, False)
-        for char in hit_characters:
-            # --- Skip hitting self under certain conditions ---
-            is_self_hit_allowed_fireball = getattr(C, "ALLOW_SELF_FIREBALL_DAMAGE", False)
-            is_fireball_and_self = self.__class__.__name__ == "Fireball" and char is self.owner_player
-            is_bloodshot_and_self = self.__class__.__name__ == "BloodShot" and char is self.owner_player
-            is_ice_shard_and_self = self.__class__.__name__ == "IceShard" and char is self.owner_player
-            
-            # Prevent immediate self-collision (e.g., if spawned inside owner)
-            if char is self.owner_player and (pygame.time.get_ticks() - self.spawn_time < 100): # 100ms grace period
-                continue
-            # Fireball self-hit logic (controlled by constant)
-            if is_fireball_and_self and not is_self_hit_allowed_fireball:
-                continue
-            # Bloodshot and Iceshard generally don't hit their owner
-            if is_bloodshot_and_self or is_ice_shard_and_self:
-                continue
-                
-            # --- Damage and Effect Application ---
-            if hasattr(char, 'take_damage') and callable(char.take_damage):
-                can_damage_target = True
-                # Check if target is invulnerable (e.g., in hit cooldown)
-                if hasattr(char, 'is_taking_hit') and hasattr(char, 'hit_timer') and hasattr(char, 'hit_cooldown'):
-                    now = pygame.time.get_ticks()
-                    if char.is_taking_hit and (now - char.hit_timer < char.hit_cooldown):
-                        can_damage_target = False
-                
-                # Prevent re-applying same status if already active and not a damage-over-time effect
-                # This simple check might need refinement for stacking effects or DoTs.
-                if self.effect_type == "freeze" and getattr(char, 'is_frozen', False): can_damage_target = False 
-                elif self.effect_type == "aflame" and getattr(char, 'is_aflame', False): can_damage_target = False 
-
-                if can_damage_target:
-                    target_type_name = type(char).__name__
-                    target_id_log = getattr(char, 'player_id', getattr(char, 'enemy_id', getattr(char, 'statue_id', 'UnknownTarget')))
-
-                    # Specific logic for GREY projectile (petrify)
-                    if self.effect_type == 'petrify':
-                        if isinstance(char, Statue): # Grey projectile hitting an already stone statue
-                            debug(f"Grey shot hit a Statue object {target_id_log}. No effect (already stone). Projectile continues or dies.")
-                            # Optionally, self.kill() here if it should dissipate on hitting existing statues.
-                            # If it should pass through, do nothing here or break to allow multiple hits if desired.
-                            continue # Skip further damage/effect processing for this statue
-                        elif hasattr(char, 'petrify') and not getattr(char, 'is_petrified', False):
-                            debug(f"Grey shot hit {target_type_name} {target_id_log}. Petrifying.")
-                            char.petrify()
-                            self.kill(); return # Petrify effect applied, projectile is consumed
-
-                    # Apply direct damage if projectile has damage value
-                    if self.damage > 0 : 
-                        debug(f"{self.__class__.__name__} (Owner: P{self.owner_player.player_id}) hit {target_type_name} {target_id_log} for {self.damage} DMG.")
-                        char.take_damage(self.damage) 
-                    
-                    # Apply status effects (Freeze, Aflame)
-                    if self.effect_type == "freeze":
-                        if hasattr(char, 'apply_freeze_effect') and not getattr(char, 'is_frozen', False): # Check if not already frozen
-                            debug(f"{self.__class__.__name__} applying freeze to {target_type_name} {target_id_log}.")
-                            char.apply_freeze_effect()
-                    elif self.effect_type == "aflame":
-                        if hasattr(char, 'apply_aflame_effect') and not getattr(char, 'is_aflame', False): # Check if not already aflame
-                            # Special condition for green enemies (if that's still a rule)
-                            if isinstance(char, Enemy) and getattr(char, 'color_name', None) == 'green':
-                                debug(f"{self.__class__.__name__} with 'aflame' effect hit green Enemy {target_id_log}. Applying aflame.")
-                                char.apply_aflame_effect()
-                            elif 'Player' in target_type_name or isinstance(char, Enemy): # If it's a player or any other enemy type
-                                debug(f"{self.__class__.__name__} with 'aflame' effect hit {target_type_name} {target_id_log}. Applying aflame.")
-                                char.apply_aflame_effect()
-                                
-                    self.kill(); return # Projectile is consumed after hitting a valid target and applying effects/damage
-        
-    def get_network_data(self):
-        """Gathers projectile data for network transmission."""
-        image_flipped = False # Default for non-Bolt projectiles
-        if not isinstance(self, BoltProjectile): # Bolts handle rotation, not simple flipping
-            image_flipped = self.vel.x < 0
-
-        return {
-            'id': self.projectile_id, 
-            'type': self.__class__.__name__, # Class name to recreate on client
-            'pos': (self.pos.x, self.pos.y), 
-            'vel': (self.vel.x, self.vel.y), # Send velocity for client-side prediction if used
-            'owner_id': self.owner_player.player_id if self.owner_player else None,
-            'frame': self.current_frame_index, 
-            'spawn_time': self.spawn_time, # For client-side lifespan calculation
-            'image_flipped': image_flipped, # For client-side rendering
-            'effect_type': self.effect_type # So client can potentially show special effects
-        }
-
-    def set_network_data(self, data):
-        """Applies received network data to update the local projectile instance."""
-        self.pos.x, self.pos.y = data['pos']
-        if 'vel' in data: # Velocity sync might be optional if client does full prediction
-            self.vel.x, self.vel.y = data['vel'] 
-        
-        self.rect.center = round(self.pos.x), round(self.pos.y) # Update rect based on new pos
-        self.current_frame_index = data.get('frame', self.current_frame_index)
-        self.effect_type = data.get('effect_type', self.effect_type) # Sync effect type
-        
-        # If frames were not loaded correctly initially (e.g., on client due to missing assets),
-        # try to reload them based on type if sprite_path is missing.
-        old_center = self.rect.center
-        
-        if not self.frames or (len(self.frames) == 1 and self.frames[0].get_size() == (1,1)): # Placeholder check
-            if not self.sprite_path: # Attempt to re-derive sprite_path if missing
-                proj_type_name_from_data = data.get('type')
-                if proj_type_name_from_data:
-                    # Construct constant name, e.g., "FIREBALL_SPRITE_PATH"
-                    path_const_name = f"{proj_type_name_from_data.upper()}_SPRITE_PATH" 
-                    if hasattr(C, path_const_name):
-                        self.sprite_path = getattr(C, path_const_name)
-            
-            if self.sprite_path: # If sprite_path is now available
-                full_gif_path = resource_path(self.sprite_path)
-                # Prefer original_frames if they exist and are valid (to preserve transformations)
-                if hasattr(self, 'original_frames') and self.original_frames and \
-                   not (len(self.original_frames) == 1 and self.original_frames[0].get_size() == (30,40) and self.original_frames[0].get_at((0,0)) == C.RED):
-                    self.frames = [frame.copy() for frame in self.original_frames] # Restore from original
-                else: # Otherwise, load fresh
-                    self.frames = load_gif_frames(full_gif_path)
-                    self.original_frames = [frame.copy() for frame in self.frames] # Store newly loaded as original
-                
-                if not self.frames or (len(self.frames) == 1 and self.frames[0].get_size() == (30,40) and self.frames[0].get_at((0,0)) == C.RED): # Still failed
-                    fallback_dims = self.dimensions if self.dimensions else (1,1) # Use stored or tiny default
-                    self.frames = [pygame.Surface(fallback_dims, pygame.SRCALPHA)] # Single transparent frame
-                    self.frames[0].fill(C.MAGENTA) # Error color
-                else: # Successfully loaded or reloaded
-                    self.dimensions = self.frames[0].get_size() # Update dimensions
-                
-                # Re-apply post_init_hook for rotation if applicable (e.g., Bolt)
-                final_velocity_vector_for_hook = pygame.math.Vector2(data.get('vel', (self.vel.x, self.vel.y)))
-                self._post_init_hook(final_velocity_vector_for_hook) 
-
-        # Ensure frames list is not empty before trying to access it
-        if not self.frames: # Absolute fallback if still no frames
-            self.image = pygame.Surface((1,1)); self.rect = self.image.get_rect(center=old_center)
+        if not self._alive or not self.frames or len(self.frames) <= 1:
+            if self.frames and len(self.frames) == 1 and self.frames[0] and not self.frames[0].isNull():
+                self.image = self.frames[0]
             return
 
-        # Set current image based on (potentially reloaded) frames and synced index/flip
-        self.current_frame_index = self.current_frame_index % len(self.frames) # Ensure valid index
-        base_image = self.frames[self.current_frame_index] # Get the correct frame
+        now = get_current_ticks_monotonic()
+        anim_frame_duration_config = getattr(C, 'ANIM_FRAME_DURATION', 100)
+        anim_speed_divisor = getattr(self, 'custom_anim_speed_divisor', 0)
+        if anim_speed_divisor <= 1e-6:
+            anim_speed_divisor = 1.5
+        actual_anim_duration = anim_frame_duration_config / anim_speed_divisor
 
-        # Apply flip for non-Bolt projectiles
+        if now - self.last_anim_update > actual_anim_duration:
+            self.last_anim_update = now
+            self.current_frame_index = (self.current_frame_index + 1) % len(self.frames)
+            new_image_candidate = self.frames[self.current_frame_index]
+
+            if not isinstance(self, BoltProjectile):
+                current_vel_x = 0.0
+                if hasattr(self, 'vel') and self.vel is not None and hasattr(self.vel, 'x') and callable(self.vel.x):
+                    current_vel_x = self.vel.x()
+                if current_vel_x < -0.01:
+                    qimg = new_image_candidate.toImage()
+                    self.image = QPixmap.fromImage(qimg.mirrored(True, False)) if not qimg.isNull() else new_image_candidate
+                else:
+                    self.image = new_image_candidate
+            else:
+                self.image = new_image_candidate
+            self._update_rect_from_image_and_pos()
+
+    def update(self, dt_sec: float, platforms: List[Any], characters_to_hit_list: List[Any]):
+        if not self._alive: return
+        time_scaling_factor = dt_sec * getattr(C, 'FPS', 60.0)
+        frame_scaled_vel_x = self.vel.x() * time_scaling_factor
+        frame_scaled_vel_y = self.vel.y() * time_scaling_factor
+        self.pos.setX(self.pos.x() + frame_scaled_vel_x)
+        self.pos.setY(self.pos.y() + frame_scaled_vel_y)
+        self._update_rect_from_image_and_pos()
+        self.animate()
+        current_time_ticks = get_current_ticks_monotonic()
+        if current_time_ticks - self.spawn_time > self.lifespan:
+            self.kill(); return
+        for platform_obj in platforms:
+            if hasattr(platform_obj, 'rect') and isinstance(platform_obj.rect, QRectF) and \
+               hasattr(self, 'rect') and self.rect is not None and self.rect.intersects(platform_obj.rect):
+                self.kill(); return
+        for char_target in characters_to_hit_list:
+            if not hasattr(char_target, 'rect') or not isinstance(char_target.rect, QRectF) or \
+               (hasattr(char_target, 'alive') and not char_target.alive()):
+                continue
+            if char_target is self.owner_player and (current_time_ticks - self.spawn_time < 100):
+                continue
+            if isinstance(self, Fireball) and char_target is self.owner_player and not getattr(C, "ALLOW_SELF_FIREBALL_DAMAGE", False):
+                continue
+            if isinstance(self, (BloodShot, IceShard)) and char_target is self.owner_player:
+                continue
+            if hasattr(self, 'rect') and self.rect is not None and self.rect.intersects(char_target.rect):
+                can_damage_target = True
+                if hasattr(char_target, 'is_taking_hit') and hasattr(char_target, 'hit_timer') and hasattr(char_target, 'hit_cooldown'):
+                    if char_target.is_taking_hit and (current_time_ticks - char_target.hit_timer < char_target.hit_cooldown):
+                        can_damage_target = False
+                if self.effect_type == "freeze" and getattr(char_target, 'is_frozen', False): can_damage_target = False
+                elif self.effect_type == "aflame" and getattr(char_target, 'is_aflame', False): can_damage_target = False
+                if can_damage_target:
+                    target_type_name = type(char_target).__name__
+                    target_id_log = getattr(char_target, 'player_id', getattr(char_target, 'enemy_id', getattr(char_target, 'statue_id', 'UnknownTarget')))
+                    owner_id_log = getattr(self.owner_player, 'player_id', 'Owner?') if self.owner_player else 'NoOwner'
+                    if self.effect_type == 'petrify':
+                        if isinstance(char_target, Statue): continue
+                        elif hasattr(char_target, 'petrify') and callable(char_target.petrify) and \
+                             not getattr(char_target, 'is_petrified', False):
+                            debug(f"GreyProjectile by P{owner_id_log} hit {target_type_name} {target_id_log}. Petrifying.")
+                            char_target.petrify()
+                            self.kill(); return
+                    if self.damage > 0 and hasattr(char_target, 'take_damage') and callable(char_target.take_damage):
+                        debug(f"{self.__class__.__name__} (Owner: P{owner_id_log}) hit {target_type_name} {target_id_log} for {self.damage} DMG.")
+                        char_target.take_damage(self.damage)
+                    if self.effect_type == "freeze" and hasattr(char_target, 'apply_freeze_effect') and callable(char_target.apply_freeze_effect) and \
+                       not getattr(char_target, 'is_frozen', False):
+                        char_target.apply_freeze_effect()
+                    elif self.effect_type == "aflame" and hasattr(char_target, 'apply_aflame_effect') and callable(char_target.apply_aflame_effect) and \
+                         not getattr(char_target, 'is_aflame', False):
+                        char_target.apply_aflame_effect()
+                    self.kill(); return
+
+    def get_network_data(self) -> Dict[str, Any]:
+        image_flipped = False
+        vel_x_val, vel_y_val = 0.0, 0.0
+        if hasattr(self, 'vel') and self.vel is not None:
+            if hasattr(self.vel, 'x') and callable(self.vel.x): vel_x_val = self.vel.x()
+            if hasattr(self.vel, 'y') and callable(self.vel.y): vel_y_val = self.vel.y()
+        if not isinstance(self, BoltProjectile): image_flipped = vel_x_val < -0.01
+        owner_player_id = getattr(getattr(self, 'owner_player', None), 'player_id', None)
+        pos_x_val = self.pos.x() if hasattr(self, 'pos') and self.pos is not None else 0.0
+        pos_y_val = self.pos.y() if hasattr(self, 'pos') and self.pos is not None else 0.0
+        return {
+            'id': getattr(self, 'projectile_id', f"unknown_{get_current_ticks_monotonic()}"),
+            'type': self.__class__.__name__, 'pos': (pos_x_val, pos_y_val),
+            'vel': (vel_x_val, vel_y_val), 'owner_id': owner_player_id,
+            'frame': getattr(self, 'current_frame_index', 0),
+            'spawn_time': getattr(self, 'spawn_time', 0),
+            'image_flipped': image_flipped, 'effect_type': getattr(self, 'effect_type', None)
+        }
+
+    def set_network_data(self, data: Dict[str, Any]):
+        if hasattr(self, 'pos') and isinstance(self.pos, QPointF) and 'pos' in data and isinstance(data['pos'], (list, tuple)) and len(data['pos']) == 2:
+            self.pos.setX(data['pos'][0]); self.pos.setY(data['pos'][1])
+        if hasattr(self, 'vel') and isinstance(self.vel, QPointF) and 'vel' in data and isinstance(data['vel'], (list, tuple)) and len(data['vel']) == 2:
+            self.vel.setX(data['vel'][0]); self.vel.setY(data['vel'][1])
+        self._update_rect_from_image_and_pos()
+        self.current_frame_index = data.get('frame', getattr(self, 'current_frame_index', 0))
+        self.effect_type = data.get('effect_type', getattr(self, 'effect_type', None))
+        old_center_qpointf = self.rect.center() if hasattr(self, 'rect') and self.rect is not None else QPointF(self.pos.x(), self.pos.y())
+        if not self.frames:
+            self.image = QPixmap(1,1); self.image.fill(QColor(*(getattr(C, 'MAGENTA', (255,0,255)))))
+            self._update_rect_from_image_and_pos(); return
+        self.current_frame_index = self.current_frame_index % len(self.frames) if self.frames and len(self.frames) > 0 else 0
+        base_image_candidate = self.frames[self.current_frame_index] if self.frames and len(self.frames) > self.current_frame_index else None
+        base_image = base_image_candidate if base_image_candidate and not base_image_candidate.isNull() else QPixmap(10,10); base_image.fill(QColor(255,0,255))
         if not isinstance(self, BoltProjectile) and data.get('image_flipped', False):
-            self.image = pygame.transform.flip(base_image, True, False)
-        else: # For Bolt (rotated) or non-flipped projectiles
-            self.image = base_image 
-        
-        self.rect = self.image.get_rect(center=old_center) # Update rect with new image and preserved center
+            qimg = base_image.toImage();
+            self.image = QPixmap.fromImage(qimg.mirrored(True, False)) if not qimg.isNull() else base_image
+        else:
+            self.image = base_image
+        if self.image and not self.image.isNull():
+            new_img_w, new_img_h = float(self.image.width()), float(self.image.height())
+            if hasattr(self, 'rect') and self.rect is not None:
+                self.rect.setRect(old_center_qpointf.x() - new_img_w/2.0, old_center_qpointf.y() - new_img_h/2.0, new_img_w, new_img_h)
+            else:
+                 self.rect = QRectF(self.pos.x() - new_img_w/2.0, self.pos.y() - new_img_h/2.0, new_img_w, new_img_h)
+            self.dimensions = QSizeF(new_img_w, new_img_h)
+        else:
+            self._update_rect_from_image_and_pos()
 
 
 # --- Specific Projectile Classes ---
-
 class Fireball(BaseProjectile):
-    def __init__(self, x, y, direction_vector, owner_player):
+    def __init__(self, x: float, y: float, direction_qpointf: QPointF, owner_player: Any):
         config = {
             'damage': C.FIREBALL_DAMAGE, 'speed': C.FIREBALL_SPEED, 'lifespan': C.FIREBALL_LIFESPAN,
             'sprite_path': C.FIREBALL_SPRITE_PATH, 'dimensions': C.FIREBALL_DIMENSIONS,
-            'fallback_color1': (255,120,0,200), 'fallback_color2': C.RED, # RGBA for fallback
-            'effect_type': "aflame" # This projectile applies the 'aflame' effect
+            'fallback_color1': getattr(C, 'ORANGE_RED', (255, 69, 0)),
+            'fallback_color2': getattr(C, 'RED', (255, 0, 0)),
+            'effect_type': "aflame"
         }
-        super().__init__(x, y, direction_vector, owner_player, config)
-        # Fireball specific properties can be added here if needed
+        super().__init__(x, y, direction_qpointf, owner_player, config)
 
 class PoisonShot(BaseProjectile):
-    def __init__(self, x, y, direction_vector, owner_player):
+    def __init__(self, x: float, y: float, direction_qpointf: QPointF, owner_player: Any):
         config = {
             'damage': C.POISON_DAMAGE, 'speed': C.POISON_SPEED, 'lifespan': C.POISON_LIFESPAN,
             'sprite_path': C.POISON_SPRITE_PATH, 'dimensions': C.POISON_DIMENSIONS,
-            'fallback_color1': (0,150,0,200), 'fallback_color2': C.DARK_GREEN
-            # 'effect_type': "poison" # If you add a poison status effect
+            'fallback_color1': getattr(C, 'GREEN', (0,255,0)),
+            'fallback_color2': getattr(C, 'DARK_GREEN', (0,100,0))
         }
-        super().__init__(x, y, direction_vector, owner_player, config)
+        super().__init__(x, y, direction_qpointf, owner_player, config)
 
 class BoltProjectile(BaseProjectile):
-    def __init__(self, x, y, direction_vector, owner_player):
+    def __init__(self, x: float, y: float, direction_qpointf: QPointF, owner_player: Any):
+        # Temporary attributes for rotation logic will be set in BaseProjectile.__init__
+        # specifically for BoltProjectile instances, e.g., self._bolt_flight_angle_deg
         config = {
             'damage': C.BOLT_DAMAGE, 'speed': C.BOLT_SPEED, 'lifespan': C.BOLT_LIFESPAN,
-            'sprite_path': C.BOLT_SPRITE_PATH, 'dimensions': C.BOLT_DIMENSIONS, # Original dimensions before rotation
-            'fallback_color1': (255,255,0,200), 'fallback_color2': C.YELLOW
+            'sprite_path': C.BOLT_SPRITE_PATH, 'dimensions': C.BOLT_DIMENSIONS,
+            'fallback_color1': getattr(C, 'YELLOW', (255,255,0)),
+            'fallback_color2': getattr(C, 'YELLOW', (255,255,0))
         }
-        super().__init__(x, y, direction_vector, owner_player, config)
-        # Bolt rotation is handled by _post_init_hook called by BaseProjectile constructor
+        super().__init__(x, y, direction_qpointf, owner_player, config)
 
-    def _post_init_hook(self, final_velocity_vector):
-        """Rotates the bolt sprites based on the final velocity vector."""
-        if not self.original_frames or not self.original_frames[0]: # Check if original frames are valid
-            debug("BoltProjectile: No original frames to rotate in _post_init_hook.")
-            return 
+    def _post_init_hook(self): # No longer takes final_velocity_qpointf
+        if not self.original_frames or (self.original_frames and self.original_frames[0].isNull()):
+            debug("BoltProjectile: No original frames for rotation or first frame is null."); return
+
+        # Ensure the attributes set in BaseProjectile.__init__ for Bolt exist
+        if not hasattr(self, '_bolt_flight_angle_deg') or not hasattr(self, '_bolt_is_firing_predominantly_upwards'):
+            debug("BoltProjectile: Missing flight angle or upward firing flag for rotation. Skipping rotation.")
+            # Clean up potentially partially set attributes
+            if hasattr(self, '_bolt_flight_angle_deg'): del self._bolt_flight_angle_deg
+            if hasattr(self, '_bolt_is_firing_predominantly_upwards'): del self._bolt_is_firing_predominantly_upwards
+            return
+
+        self.frames = [frame.copy() for frame in self.original_frames]
+
+        flight_angle_deg = self._bolt_flight_angle_deg
+        is_firing_predominantly_upwards = self._bolt_is_firing_predominantly_upwards
         
-        self.frames = [frame.copy() for frame in self.original_frames] # Work with copies of original for rotation
+        alignment_rotation_deg = flight_angle_deg + 90.0
+        final_rotation_deg: float
+        debug_msg_prefix = ""
+
+        if is_firing_predominantly_upwards:
+            final_rotation_deg = -180.0 # Per user request for upward fire
+            debug_msg_prefix = f"Bolt (UP override to -180deg P{getattr(self.owner_player,'player_id','?')})"
+            debug(f"{debug_msg_prefix}: FlightAngle={flight_angle_deg:.1f}, FinalRot={final_rotation_deg:.1f}")
+        else:
+            # For other directions, maintain the "180 degrees rotated from alignment"
+            final_rotation_deg = alignment_rotation_deg + 180.0
+            debug_msg_prefix = f"Bolt (180deg flip from alignment P{getattr(self.owner_player,'player_id','?')})"
+            debug(f"{debug_msg_prefix}: FlightAngle={flight_angle_deg:.1f}, AlignRot={alignment_rotation_deg:.1f}, FinalRot={final_rotation_deg:.1f}")
+
+        transformed_frames_new: List[QPixmap] = []
+        for frame_idx, frame_pixmap in enumerate(self.frames):
+            if frame_pixmap.isNull():
+                debug(f"BoltProjectile: Frame {frame_idx} is null, skipping rotation.")
+                transformed_frames_new.append(frame_pixmap); continue
+            center = QPointF(frame_pixmap.width() / 2.0, frame_pixmap.height() / 2.0)
+            transform = QTransform().translate(center.x(), center.y()).rotate(final_rotation_deg).translate(-center.x(), -center.y())
+            rotated_pixmap = frame_pixmap.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+            if rotated_pixmap.isNull():
+                debug(f"BoltProjectile: Rotated frame {frame_idx} became null. Using original.")
+                transformed_frames_new.append(frame_pixmap.copy())
+            else:
+                transformed_frames_new.append(rotated_pixmap)
         
-        vx, vy = final_velocity_vector.x, final_velocity_vector.y
-        transformed_frames = []
-
-        # Determine rotation based on velocity vector
-        # Prioritize vertical if moving mostly up/down, otherwise horizontal
-        if abs(vy) > abs(vx) * 1.5 and vy < 0: # Moving mostly upwards
-            debug(f"Bolt shot upwards (vx:{vx:.2f}, vy:{vy:.2f}). Applying vertical flip (or no rotation if sprite is already up).")
-            # If your bolt sprite is designed to point right by default, rotating -90 (or 270) would make it point up.
-            # If it's designed to point up, flip may not be needed or use rotate(0)
-            for frame in self.frames:
-                if frame and frame.get_width() > 0 and frame.get_height() > 0:
-                    # Assuming original bolt points right: rotate -90 deg for up
-                    transformed_frames.append(pygame.transform.rotate(frame, 90)) 
-                elif frame: transformed_frames.append(frame) # Add original if transform fails
-        elif vx > 0: # Moving right (or mostly right)
-            debug(f"Bolt shot right (vx:{vx:.2f}, vy:{vy:.2f}). No rotation needed (sprite defaults right).")
-            transformed_frames = self.frames # No rotation needed if sprite already points right
-        elif vx < 0: # Moving left (or mostly left)
-            debug(f"Bolt shot left (vx:{vx:.2f}, vy:{vy:.2f}). Rotating 180 deg.")
-            for frame in self.frames:
-                if frame and frame.get_width() > 0 and frame.get_height() > 0:
-                    transformed_frames.append(pygame.transform.rotate(frame, 180)) # Flip 180 deg for left
-                elif frame: transformed_frames.append(frame)
-        else: # Default case (e.g., if vy is dominant but positive, or vx is zero and vy is not strongly up)
-              # Could be straight down, or a shallow angle. Default to original orientation.
-            transformed_frames = self.frames 
-            
-        if transformed_frames:
-            self.frames = transformed_frames
+        if transformed_frames_new:
+            self.frames = transformed_frames_new
         
-        # Update current image and rect based on new frames
-        self.current_frame_index = 0 # Reset frame index after transformation
-        if self.frames:
-            self.image = self.frames[self.current_frame_index % len(self.frames)]
-            # Re-center rect because rotation can change dimensions
-            old_center = self.rect.center if hasattr(self, 'rect') else self.pos
-            self.rect = self.image.get_rect(center=old_center)
-            self.dimensions = self.image.get_size() # Update dimensions
-        else: # Should not happen if original_frames was valid
-            self.image = pygame.Surface(self.dimensions, pygame.SRCALPHA); self.image.fill(C.MAGENTA)
-            self.frames = [self.image] 
+        self.current_frame_index = 0
+
+        # Clean up temporary attributes
+        del self._bolt_flight_angle_deg
+        del self._bolt_is_firing_predominantly_upwards
 
 
-    def animate(self): # Bolt animation might be simpler if it's not a multi-frame GIF after rotation
-        """Handles frame cycling for animated projectiles. Bolt might just be static after rotation."""
-        now = pygame.time.get_ticks()
-        anim_duration = C.ANIM_FRAME_DURATION / 1.5 
-        if hasattr(self, 'custom_anim_speed_divisor'):
-            anim_duration = C.ANIM_FRAME_DURATION / self.custom_anim_speed_divisor
+    def animate(self):
+        if not self._alive or not self.frames: return
+        if len(self.frames) <= 1:
+             if self.frames and self.frames[0] and not self.frames[0].isNull():
+                 self.image = self.frames[0]
+             return
+        super().animate()
 
-        if len(self.frames) > 1 and (now - self.last_anim_update > anim_duration): # Only animate if multiple frames
-            self.last_anim_update = now
-            self.current_frame_index = (self.current_frame_index + 1) % len(self.frames)
-            old_center = self.rect.center
-            self.image = self.frames[self.current_frame_index] # Bolt frames are already rotated
-            self.rect = self.image.get_rect(center=old_center)
-        elif len(self.frames) == 1: # If only one frame (e.g., after rotation or if static GIF)
-            self.image = self.frames[0] # Ensure it's set, no animation needed
-            # Rect should already be correct from init or _post_init_hook
 
 class BloodShot(BaseProjectile):
-    def __init__(self, x, y, direction_vector, owner_player):
+    def __init__(self, x: float, y: float, direction_qpointf: QPointF, owner_player: Any):
         config = {
             'damage': C.BLOOD_DAMAGE, 'speed': C.BLOOD_SPEED, 'lifespan': C.BLOOD_LIFESPAN,
             'sprite_path': C.BLOOD_SPRITE_PATH, 'dimensions': C.BLOOD_DIMENSIONS,
-            'fallback_color1': (150,0,0,200), 'fallback_color2': C.DARK_RED
+            'fallback_color1': getattr(C, 'RED', (255,0,0)),
+            'fallback_color2': getattr(C, 'DARK_RED', (139,0,0))
         }
-        super().__init__(x, y, direction_vector, owner_player, config)
+        super().__init__(x, y, direction_qpointf, owner_player, config)
 
 class IceShard(BaseProjectile):
-    def __init__(self, x, y, direction_vector, owner_player):
+    def __init__(self, x: float, y: float, direction_qpointf: QPointF, owner_player: Any):
         config = {
             'damage': C.ICE_DAMAGE, 'speed': C.ICE_SPEED, 'lifespan': C.ICE_LIFESPAN,
             'sprite_path': C.ICE_SPRITE_PATH, 'dimensions': C.ICE_DIMENSIONS,
-            'fallback_color1': (150,200,255,200), 'fallback_color2': C.LIGHT_BLUE,
-            'effect_type': "freeze" # This projectile applies the 'freeze' effect
+            'fallback_color1': getattr(C, 'LIGHT_BLUE', (173,216,230)),
+            'fallback_color2': getattr(C, 'BLUE', (0,0,255)),
+            'effect_type': "freeze"
         }
-        super().__init__(x, y, direction_vector, owner_player, config)
+        super().__init__(x, y, direction_qpointf, owner_player, config)
 
-class ShadowProjectile(BaseProjectile): 
-    def __init__(self, x, y, direction_vector, owner_player):
+class ShadowProjectile(BaseProjectile):
+    def __init__(self, x: float, y: float, direction_qpointf: QPointF, owner_player: Any):
         config = {
-            'damage': C.SHADOW_PROJECTILE_DAMAGE, 'speed': C.SHADOW_PROJECTILE_SPEED, 
+            'damage': C.SHADOW_PROJECTILE_DAMAGE, 'speed': C.SHADOW_PROJECTILE_SPEED,
             'lifespan': C.SHADOW_PROJECTILE_LIFESPAN,
-            'sprite_path': C.SHADOW_PROJECTILE_SPRITE_PATH, 
-            'dimensions': C.SHADOW_PROJECTILE_DIMENSIONS, 
-            'fallback_color1': (50,50,50,200), 'fallback_color2': C.BLACK,
-            'effect_type': None # No special status effect by default
+            'sprite_path': C.SHADOW_PROJECTILE_SPRITE_PATH,
+            'dimensions': C.SHADOW_PROJECTILE_DIMENSIONS,
+            'fallback_color1': getattr(C, 'DARK_GRAY', (50,50,50)),
+            'fallback_color2': getattr(C, 'BLACK', (0,0,0)),
         }
-        super().__init__(x, y, direction_vector, owner_player, config)
-        self.custom_anim_speed_divisor = 1.2 # Example: make shadow projectile animate slightly faster
+        super().__init__(x, y, direction_qpointf, owner_player, config)
+        self.custom_anim_speed_divisor = 1.2
 
-class GreyProjectile(BaseProjectile): 
-    def __init__(self, x, y, direction_vector, owner_player):
+class GreyProjectile(BaseProjectile):
+    def __init__(self, x: float, y: float, direction_qpointf: QPointF, owner_player: Any):
         config = {
-            'damage': C.GREY_PROJECTILE_DAMAGE, # Usually 0, as it petrifies
-            'speed': C.GREY_PROJECTILE_SPEED, 
+            'damage': C.GREY_PROJECTILE_DAMAGE,
+            'speed': C.GREY_PROJECTILE_SPEED,
             'lifespan': C.GREY_PROJECTILE_LIFESPAN,
-            'sprite_path': C.GREY_PROJECTILE_SPRITE_PATH, 
-            'dimensions': C.GREY_PROJECTILE_DIMENSIONS, 
-            'fallback_color1': (100,100,100,200), 'fallback_color2': C.DARK_GRAY,
-            'effect_type': 'petrify' # Applies petrification
+            'sprite_path': C.GREY_PROJECTILE_SPRITE_PATH,
+            'dimensions': C.GREY_PROJECTILE_DIMENSIONS,
+            'fallback_color1': getattr(C, 'GRAY', (128,128,128)),
+            'fallback_color2': getattr(C, 'DARK_GRAY', (50,50,50)),
+            'effect_type': 'petrify'
         }
-        super().__init__(x, y, direction_vector, owner_player, config)
-        self.custom_anim_speed_divisor = 1.0 # Normal animation speed
+        super().__init__(x, y, direction_qpointf, owner_player, config)
+        self.custom_anim_speed_divisor = 1.0
