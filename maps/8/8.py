@@ -6,7 +6,7 @@ def load_map_8():
         'level_name': '8',
         'background_color': (173, 216, 230),
         'player_start_pos_p1': (90.5, 918.0),
-        'player1_spawn_props': {'properties': {'max_health': 500, 'move_speed': 350.0, 'jump_strength': -900.0}, 'is_flipped_h': False, 'rotation': 0},
+        'player1_spawn_props': {'max_health': 500, 'move_speed': 350.0, 'jump_strength': -900.0, 'is_flipped_h': False, 'rotation': 0},
         'platforms_list': [{'rect': (0.0, 40.0, 40.0, 920.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (0.0, 960.0, 1360.0, 40.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (0.0, 0.0, 1600.0, 40.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (320.0, 920.0, 40.0, 40.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': True, 'health': 1, 'material_type': 'stone', 'corner_radius': 19, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (1000.0, 960.0, 40.0, 40.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (1400.0, 960.0, 200.0, 40.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (1560.0, 40.0, 40.0, 920.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}],
         'ladders_list': [],
         'hazards_list': [],
@@ -23,11 +23,11 @@ def load_map_8():
         'ground_level_y_ref': 1000.0,
         'ground_platform_height_ref': 40.0,
         'player_start_pos_p2': (170.5, 918.0),
-        'player2_spawn_props': {'properties': {'max_health': 100, 'move_speed': 350.0, 'jump_strength': -900.0}, 'is_flipped_h': False, 'rotation': 0},
+        'player2_spawn_props': {'max_health': 100, 'move_speed': 350.0, 'jump_strength': -900.0, 'is_flipped_h': False, 'rotation': 0},
         'player_start_pos_p3': (250.5, 918.0),
-        'player3_spawn_props': {'properties': {'max_health': 100, 'move_speed': 350.0, 'jump_strength': -900.0}, 'is_flipped_h': False, 'rotation': 0},
+        'player3_spawn_props': {'max_health': 100, 'move_speed': 350.0, 'jump_strength': -900.0, 'is_flipped_h': False, 'rotation': 0},
         'player_start_pos_p4': (410.5, 838.0),
-        'player4_spawn_props': {'properties': {'max_health': 100, 'move_speed': 350.0, 'jump_strength': -900.0}, 'is_flipped_h': False, 'rotation': 0},
+        'player4_spawn_props': {'max_health': 100, 'move_speed': 350.0, 'jump_strength': -900.0, 'is_flipped_h': False, 'rotation': 0},
     }
     return game_data
 

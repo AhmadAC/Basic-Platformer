@@ -4,9 +4,9 @@
     "map_height_tiles": 25,
     "grid_size": 40.0,
     "background_color": [
-        173,
-        216,
-        230
+        0,
+        0,
+        0
     ],
     "placed_objects": [
         {
@@ -31,7 +31,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -55,7 +57,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -79,7 +83,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -103,7 +109,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -127,7 +135,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -151,7 +161,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -175,7 +187,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -199,7 +213,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -223,7 +239,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -247,7 +265,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -271,7 +291,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -295,7 +317,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -319,7 +343,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -343,7 +369,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -367,7 +395,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -391,7 +421,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -415,7 +447,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -439,7 +473,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -463,7 +499,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -487,7 +525,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -511,7 +551,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -535,7 +577,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -559,7 +603,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -583,7 +629,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -607,7 +655,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -631,7 +681,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -655,7 +707,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -679,7 +733,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -703,7 +759,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -727,7 +785,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -751,7 +811,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -775,7 +837,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -799,7 +863,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -823,7 +889,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -847,7 +915,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -871,7 +941,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -895,7 +967,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -919,7 +993,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -943,7 +1019,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -967,7 +1045,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -991,7 +1071,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1015,7 +1097,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1039,7 +1123,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1063,7 +1149,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1087,7 +1175,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1111,7 +1201,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1135,7 +1227,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1159,7 +1253,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1183,7 +1279,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1207,7 +1305,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1231,7 +1331,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1255,7 +1357,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1279,7 +1383,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1303,7 +1409,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1327,7 +1435,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1351,7 +1461,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1375,7 +1487,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1399,7 +1513,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1423,7 +1539,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1447,7 +1565,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1471,7 +1591,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1495,7 +1617,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1519,7 +1643,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1543,7 +1669,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1567,7 +1695,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1591,7 +1721,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1615,7 +1747,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1639,7 +1773,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1663,7 +1799,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1687,7 +1825,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1711,7 +1851,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1735,7 +1877,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1759,7 +1903,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1783,7 +1929,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1807,7 +1955,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1831,7 +1981,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1855,7 +2007,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1879,7 +2033,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1903,7 +2059,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1927,7 +2085,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1951,7 +2111,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1975,7 +2137,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -1999,7 +2163,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2023,7 +2189,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2047,7 +2215,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2071,7 +2241,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2095,7 +2267,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2119,7 +2293,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2143,7 +2319,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2167,7 +2345,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2191,7 +2371,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2215,7 +2397,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2239,7 +2423,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2263,7 +2449,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2287,7 +2475,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2311,7 +2501,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2335,7 +2527,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2359,7 +2553,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2383,7 +2579,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2407,7 +2605,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2431,7 +2631,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2455,7 +2657,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2479,7 +2683,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2503,7 +2709,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2527,7 +2735,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2551,7 +2761,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2575,7 +2787,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2599,7 +2813,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2623,7 +2839,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2647,7 +2865,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2671,7 +2891,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2695,7 +2917,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2719,7 +2943,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2743,7 +2969,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2767,7 +2995,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2791,7 +3021,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2815,7 +3047,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2839,7 +3073,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2863,7 +3099,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2887,7 +3125,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2911,7 +3151,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2935,7 +3177,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2959,7 +3203,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -2983,7 +3229,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3007,7 +3255,9 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "platform_wall_gray",
@@ -3031,30 +3281,35 @@
                 "is_boundary": true
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         },
         {
             "asset_editor_key": "custom_image_object",
-            "game_type_id": "custom_image_object",
-            "world_x": 27,
-            "world_y": 25,
-            "source_file_path": "Custom/R-C.jpg",
-            "original_width": 1920,
-            "original_height": 1080,
-            "current_width": 1554,
-            "current_height": 960,
             "crop_rect": null,
-            "layer_order": -2,
-            "rotation": 0,
+            "current_height": 960,
+            "current_width": 1554,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "game_type_id": "custom_image_object",
             "is_flipped_h": false,
+            "layer_order": -2,
+            "original_height": 1080,
+            "original_width": 1920,
             "properties": {
-                "is_background": true,
-                "is_obstacle": false,
                 "destructible": false,
                 "health": 95,
+                "is_background": true,
+                "is_obstacle": false,
+                "opacity": 35,
                 "scroll_factor_x": 1.0,
                 "scroll_factor_y": 1.0
-            }
+            },
+            "rotation": 0,
+            "source_file_path": "Custom/R-C.jpg",
+            "world_x": 27,
+            "world_y": 25
         },
         {
             "asset_editor_key": "player1_spawn",
@@ -3068,12 +3323,14 @@
                 "jump_strength": -900.0
             },
             "is_flipped_h": false,
-            "rotation": 0
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         }
     ],
     "camera_offset_x": 0.0,
     "camera_offset_y": 0.0,
     "zoom_level": 0.3348979766803842,
-    "show_grid": true,
+    "show_grid": false,
     "asset_specific_variables": {}
 }

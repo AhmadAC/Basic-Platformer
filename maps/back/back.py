@@ -4,9 +4,9 @@
 def load_map_back():
     game_data = {
         'level_name': 'back',
-        'background_color': (173, 216, 230),
+        'background_color': (0, 0, 0),
         'player_start_pos_p1': (690.5, 678.0),
-        'player1_spawn_props': {'properties': {'max_health': 100, 'move_speed': 350.0, 'jump_strength': -900.0}, 'is_flipped_h': False, 'rotation': 0},
+        'player1_spawn_props': {'max_health': 100, 'move_speed': 350.0, 'jump_strength': -900.0, 'is_flipped_h': False, 'rotation': 0},
         'platforms_list': [{'rect': (0.0, 40.0, 40.0, 920.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (0.0, 0.0, 1600.0, 40.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (0.0, 960.0, 1600.0, 40.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}, {'rect': (1560.0, 40.0, 40.0, 920.0), 'type': 'platform_wall_gray', 'color': (128, 128, 128), 'properties': {'destructible': False, 'health': 100, 'material_type': 'stone', 'corner_radius': 0, 'round_top_left': True, 'round_top_right': True, 'round_bottom_left': True, 'round_bottom_right': True, 'is_boundary': True}, 'is_flipped_h': False, 'rotation': 0}],
         'ladders_list': [],
         'hazards_list': [],
@@ -14,7 +14,7 @@ def load_map_back():
         'enemies_list': [],
         'items_list': [],
         'statues_list': [],
-        'custom_images_list': [{'rect': (27.0, 25.0, 1554.0, 960.0), 'source_file_path': 'Custom/R-C.jpg', 'original_width': 1920, 'original_height': 1080, 'layer_order': -2, 'properties': {'is_background': True, 'is_obstacle': False, 'destructible': False, 'health': 95, 'scroll_factor_x': 1.0, 'scroll_factor_y': 1.0}, 'is_flipped_h': False, 'rotation': 0}],
+        'custom_images_list': [{'rect': (27.0, 25.0, 1554.0, 960.0), 'source_file_path': 'Custom/R-C.jpg', 'original_width': 1920, 'original_height': 1080, 'layer_order': -2, 'properties': {'destructible': False, 'health': 95, 'is_background': True, 'is_obstacle': False, 'opacity': 35, 'scroll_factor_x': 1.0, 'scroll_factor_y': 1.0}, 'is_flipped_h': False, 'rotation': 0}],
         'trigger_squares_list': [],
         'level_pixel_width': 1600.0,
         'level_min_x_absolute': 0.0,

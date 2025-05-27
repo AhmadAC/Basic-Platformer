@@ -12,7 +12,7 @@ def load_map_chest():
         'hazards_list': [],
         'background_tiles_list': [],
         'enemies_list': [],
-        'items_list': [{'pos': (421.0, 705.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}, {'pos': (541.0, 705.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}, {'pos': (661.0, 745.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}],
+        'items_list': [{'pos': (661.0, 745.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}, {'pos': (421.0, 665.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}, {'pos': (541.0, 625.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}],
         'statues_list': [],
         'custom_images_list': [],
         'trigger_squares_list': [],
