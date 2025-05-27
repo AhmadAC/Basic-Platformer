@@ -4,7 +4,7 @@ name: Build Windows Executable (Platformer Game)
 on:
   workflow_dispatch: # Allows manual triggering
   push:
-    branches: [ "main" ]
+    branches: [ "Best-Version-28-05" ]
   release:
     types: [published]
 
