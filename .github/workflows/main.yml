@@ -31,7 +31,7 @@ jobs:
         if (Test-Path requirements.txt) {
             pip install -r requirements.txt
         } else {
-            Write-Error "requirements.txt not found! Please create one with your project dependencies."
+            Write-Host "requirements.txt not found. Installing default PyInstaller dependencies."
             pip install pyinstaller pygame PySide6 Pillow numpy 
         }
       shell: pwsh
@@ -42,7 +42,7 @@ jobs:
         echo "# -*- mode: python ; coding: utf-8 -*-" > Platformer.spec
         echo "block_cipher = None" >> Platformer.spec
         echo "a = Analysis(" >> Platformer.spec
-        echo "    ['main.py']," >> Platformer.spec
+        echo "    ['app_core.py']," >> Platformer.spec  # <--- UPDATED TO app_core.py
         echo "    pathex=['.']," >> Platformer.spec
         echo "    binaries=[]," >> Platformer.spec
         echo "    datas=[" >> Platformer.spec
