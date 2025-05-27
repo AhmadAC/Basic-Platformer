@@ -1,3 +1,5 @@
+#################### START OF FILE: enemy_status_effects.py ####################
+
 # enemy_status_effects.py
 # -*- coding: utf-8 -*-
 """
@@ -7,8 +9,9 @@ MODIFIED: Passes current_time_ms to set_enemy_state for timer consistency.
 MODIFIED: Implements 5-second overall fire effect timeout to force 'idle'.
 MODIFIED: Correctly uses enemy constants for status effect durations.
 MODIFIED: Ensures zapped effect also prevents other status applications and is cleared.
+MODIFIED: Zapped effect is applied if target is not already in a conflicting state.
 """
-# version 2.0.4 (Corrected constants, pass time, 5s fire, zapped handling)
+# version 2.0.5 (Zapped application refined)
 
 import time # For monotonic timer
 from typing import List, Optional, Any, TYPE_CHECKING
@@ -54,20 +57,20 @@ def get_current_ticks_monotonic() -> int:
 # --- Functions to APPLY status effects ---
 
 def apply_aflame_effect(enemy: 'Enemy'):
-    current_time_ms = get_current_ticks_monotonic() # Get current time for set_enemy_state
+    current_time_ms = get_current_ticks_monotonic() 
     if getattr(enemy, 'is_aflame', False) or \
        getattr(enemy, 'is_deflaming', False) or \
        getattr(enemy, 'is_dead', False) or \
        getattr(enemy, 'is_petrified', False) or \
        getattr(enemy, 'is_frozen', False) or \
        getattr(enemy, 'is_defrosting', False) or \
-       getattr(enemy, 'is_zapped', False): # Check zapped
+       getattr(enemy, 'is_zapped', False):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_aflame_effect called but already in conflicting state. Ignoring.")
         return
     
     debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} ({getattr(enemy, 'color_name', 'N/A')}): Applying aflame effect.")
     enemy.has_ignited_another_enemy_this_cycle = False
-    set_enemy_state(enemy, 'aflame', current_time_ms) # Pass time
+    set_enemy_state(enemy, 'aflame', current_time_ms)
     if hasattr(enemy, 'is_attacking'): enemy.is_attacking = False
     if hasattr(enemy, 'attack_type'): enemy.attack_type = 0
 
@@ -79,13 +82,12 @@ def apply_freeze_effect(enemy: 'Enemy'):
        getattr(enemy, 'is_petrified', False) or \
        getattr(enemy, 'is_aflame', False) or \
        getattr(enemy, 'is_deflaming', False) or \
-       getattr(enemy, 'is_zapped', False): # Check zapped
+       getattr(enemy, 'is_zapped', False):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: apply_freeze_effect called but already in conflicting state. Ignoring.")
         return
         
     debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} ({getattr(enemy, 'color_name', 'N/A')}): Applying freeze effect.")
-    set_enemy_state(enemy, 'frozen', current_time_ms) # Pass time
-    # Immobilization handled by set_enemy_state for 'frozen'
+    set_enemy_state(enemy, 'frozen', current_time_ms)
     if hasattr(enemy, 'is_attacking'): enemy.is_attacking = False
     if hasattr(enemy, 'attack_type'): enemy.attack_type = 0
 
@@ -102,7 +104,7 @@ def apply_zapped_effect(enemy: 'Enemy'):
         return
     
     debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} ({getattr(enemy, 'color_name', 'N/A')}): Applying ZAPPED effect.")
-    set_enemy_state(enemy, 'zapped', current_time_ms) # Pass time. This will set is_zapped, timers, and initial immobilization.
+    set_enemy_state(enemy, 'zapped', current_time_ms)
     if hasattr(enemy, 'is_attacking'): enemy.is_attacking = False
     if hasattr(enemy, 'attack_type'): enemy.attack_type = 0
 
@@ -110,22 +112,22 @@ def petrify_enemy(enemy: 'Enemy'):
     current_time_ms = get_current_ticks_monotonic()
     if getattr(enemy, 'is_petrified', False) or \
        (getattr(enemy, 'is_dead', False) and not getattr(enemy, 'is_petrified', False)) or \
-       getattr(enemy, 'is_zapped', False): # Check zapped
+       getattr(enemy, 'is_zapped', False):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: petrify_enemy called but already petrified, truly dead, or zapped. Ignoring.")
         return
         
     debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {getattr(enemy, 'color_name', 'N/A')}) is being petrified.")
-    if hasattr(enemy, 'facing_right'): # Ensure facing_right exists before assigning
+    if hasattr(enemy, 'facing_right'):
         enemy.facing_at_petrification = enemy.facing_right
-    else: enemy.facing_at_petrification = True # Default if missing
+    else: enemy.facing_at_petrification = True
     
-    set_enemy_state(enemy, 'petrified', current_time_ms) # Pass time
+    set_enemy_state(enemy, 'petrified', current_time_ms)
 
 def smash_petrified_enemy(enemy: 'Enemy'):
     current_time_ms = get_current_ticks_monotonic()
     if getattr(enemy, 'is_petrified', False) and not getattr(enemy, 'is_stone_smashed', False):
         debug(f"Petrified Enemy {getattr(enemy, 'enemy_id', 'N/A')} (Color: {getattr(enemy, 'color_name', 'N/A')}) is being smashed.")
-        set_enemy_state(enemy, 'smashed', current_time_ms) # Pass time
+        set_enemy_state(enemy, 'smashed', current_time_ms)
     else:
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: smash_petrified_enemy called but not in smashable state (Petrified: {getattr(enemy, 'is_petrified', False)}, Smashed: {getattr(enemy, 'is_stone_smashed', False)}).")
 
@@ -136,7 +138,7 @@ def stomp_kill_enemy(enemy: 'Enemy'):
        getattr(enemy, 'is_petrified', False) or \
        getattr(enemy, 'is_aflame', False) or \
        getattr(enemy, 'is_frozen', False) or \
-       getattr(enemy, 'is_zapped', False): # Check zapped
+       getattr(enemy, 'is_zapped', False):
         debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: stomp_kill_enemy called but already in conflicting state. Ignoring.")
         return
         
@@ -161,7 +163,7 @@ def stomp_kill_enemy(enemy: 'Enemy'):
     if hasattr(enemy, 'vel'): enemy.vel = QPointF(0,0)
     if hasattr(enemy, 'acc'): enemy.acc = QPointF(0,0)
     enemy.death_animation_finished = False 
-    set_enemy_state(enemy, 'stomp_death', current_time_ms) # Pass time
+    set_enemy_state(enemy, 'stomp_death', current_time_ms)
 
 
 # --- Function to UPDATE status effects ---
@@ -169,18 +171,14 @@ def stomp_kill_enemy(enemy: 'Enemy'):
 def update_enemy_status_effects(enemy: 'Enemy', current_time_ms: int, platforms_list: List[Any]) -> bool:
     enemy_id_log = getattr(enemy, 'enemy_id', 'Unknown')
 
-    # --- MODIFIED: Overall 5-second fire effect timeout ---
     if (getattr(enemy, 'is_aflame', False) or getattr(enemy, 'is_deflaming', False)) and \
        hasattr(enemy, 'overall_fire_effect_start_time') and \
-       getattr(enemy, 'overall_fire_effect_start_time', 0) > 0: # Check if timer is active
+       getattr(enemy, 'overall_fire_effect_start_time', 0) > 0:
         
-        if current_time_ms - getattr(enemy, 'overall_fire_effect_start_time', current_time_ms) > 5000: # 5 seconds
+        if current_time_ms - getattr(enemy, 'overall_fire_effect_start_time', current_time_ms) > 5000:
             debug(f"EnemyStatusEffects ({enemy_id_log}): Overall 5s fire effect duration met. Forcing state to 'idle'.")
-            
-            # Flags are cleared by set_enemy_state when transitioning to a non-fire state
             set_enemy_state(enemy, 'idle' if getattr(enemy, 'on_ground', False) else 'fall', current_time_ms)
-            return True # Override complete for this frame
-    # --- END MODIFICATION ---
+            return True
 
     if getattr(enemy, 'is_stomp_dying', False):
         elapsed_stomp_time = current_time_ms - getattr(enemy, 'stomp_death_start_time', current_time_ms)
@@ -190,7 +188,7 @@ def update_enemy_status_effects(enemy: 'Enemy', current_time_ms: int, platforms_
                 debug(f"Enemy {enemy_id_log}: Stomp squash duration ended.")
                 enemy.death_animation_finished = True
             if hasattr(enemy, 'alive') and enemy.alive() and hasattr(enemy, 'kill'): enemy.kill()
-        else: # Stomp animation in progress
+        else:
             original_stomp_image = getattr(enemy, 'original_stomp_death_image', None)
             if original_stomp_image and not original_stomp_image.isNull():
                 progress_ratio = elapsed_stomp_time / stomp_squash_duration
@@ -243,7 +241,7 @@ def update_enemy_status_effects(enemy: 'Enemy', current_time_ms: int, platforms_
                           break
         return True 
 
-    if getattr(enemy, 'is_zapped', False): # ZAPPED LOGIC
+    if getattr(enemy, 'is_zapped', False):
         if current_time_ms - getattr(enemy, 'zapped_timer_start', current_time_ms) > C.ENEMY_ZAPPED_DURATION_MS:
             debug(f"Enemy {enemy_id_log}: Zapped duration ended.")
             set_enemy_state(enemy, 'idle' if getattr(enemy, 'on_ground', False) else 'fall', current_time_ms)
@@ -254,10 +252,8 @@ def update_enemy_status_effects(enemy: 'Enemy', current_time_ms: int, platforms_
                 debug(f"Enemy {enemy_id_log}: Taking zapped damage.")
                 if hasattr(enemy, 'take_damage'): enemy.take_damage(C.ENEMY_ZAPPED_DAMAGE_PER_TICK)
                 enemy.zapped_damage_last_tick = current_time_ms
-            # Zapped effect is active and overrides further AI/Physics for this frame
-            # (unless airborne, then physics handler might apply gravity if 'zapped' state doesn't zero Y acc)
-            if hasattr(enemy, 'vel'): enemy.vel.setX(0) # Zero X movement
-            if getattr(enemy,'on_ground', False) and hasattr(enemy,'vel'): enemy.vel.setY(0) # Zero Y if on ground
+            if hasattr(enemy, 'vel'): enemy.vel.setX(0)
+            if getattr(enemy,'on_ground', False) and hasattr(enemy,'vel'): enemy.vel.setY(0)
             return True 
 
     if getattr(enemy, 'is_frozen', False):
@@ -271,7 +267,6 @@ def update_enemy_status_effects(enemy: 'Enemy', current_time_ms: int, platforms_
         else:
             return True 
 
-    # Aflame/Deflame cycle (will only run if the 5s overall timer hasn't forced 'idle' yet)
     if getattr(enemy, 'is_aflame', False):
         if current_time_ms - getattr(enemy, 'aflame_timer_start', current_time_ms) > C.ENEMY_AFLAME_DURATION_MS:
             set_enemy_state(enemy, 'deflame', current_time_ms)
@@ -284,8 +279,10 @@ def update_enemy_status_effects(enemy: 'Enemy', current_time_ms: int, platforms_
             set_enemy_state(enemy, 'idle' if getattr(enemy, 'on_ground', False) else 'fall', current_time_ms)
 
     if getattr(enemy, 'is_dead', False) and not getattr(enemy, 'death_animation_finished', False):
-        if hasattr(enemy, 'alive') and enemy.alive() and getattr(enemy, 'death_animation_finished', False): # Re-check after anim might finish
+        if hasattr(enemy, 'alive') and enemy.alive() and getattr(enemy, 'death_animation_finished', False):
              if hasattr(enemy, 'kill'): enemy.kill()
         return True 
 
     return False
+
+#################### END OF FILE: enemy_status_effects.py ####################

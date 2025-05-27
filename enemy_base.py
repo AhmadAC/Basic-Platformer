@@ -1,3 +1,5 @@
+#################### START OF FILE: enemy_base.py ####################
+
 # enemy_base.py
 # -*- coding: utf-8 -*-
 """
@@ -6,8 +8,9 @@ Handles core attributes, animation loading, and common assets for PySide6.
 Now uses load_enemy_animations.
 MODIFIED: Added zapped attributes.
 MODIFIED: Added overall_fire_effect_start_time for 5s fire cycle management.
+MODIFIED: Zapped GIF path added.
 """
-# version 2.0.7 (Added overall_fire_effect_start_time)
+# version 2.0.8 (Zapped GIF path addition)
 
 import os
 import random
@@ -163,7 +166,7 @@ class EnemyBase:
         self.is_deflaming: bool = False; self.deflame_timer_start: int = 0
         self.aflame_damage_last_tick: int = 0
         self.has_ignited_another_enemy_this_cycle: bool = False
-        self.overall_fire_effect_start_time: int = 0 # MODIFIED: Added overall fire timer
+        self.overall_fire_effect_start_time: int = 0
 
         self.is_petrified: bool = False; self.is_stone_smashed: bool = False
         self.stone_smashed_timer_start: int = 0
@@ -172,6 +175,8 @@ class EnemyBase:
         self.is_zapped: bool = False
         self.zapped_timer_start: int = 0
         self.zapped_damage_last_tick: int = 0
+        self.zapped_gif_path = os.path.join(character_base_asset_folder, self.final_asset_color_name, "__Zapped.gif") # MODIFIED: Path to zapped GIF
+
 
         gray_color = getattr(C, 'GRAY', (128, 128, 128))
         dark_gray_color = getattr(C, 'DARK_GRAY', (50, 50, 50))
@@ -307,7 +312,7 @@ class EnemyBase:
         self.is_deflaming = False; self.deflame_timer_start = 0
         self.aflame_damage_last_tick = 0
         self.has_ignited_another_enemy_this_cycle = False
-        self.overall_fire_effect_start_time = 0 # MODIFIED: Reset overall fire timer
+        self.overall_fire_effect_start_time = 0
         self.is_petrified = False; self.is_stone_smashed = False
         self.stone_smashed_timer_start = 0
         self.facing_at_petrification = self.facing_right
@@ -349,7 +354,6 @@ class EnemyBase:
                 hb_x = screen_rect_qrectf.center().x() - hb_w / 2.0
                 hb_y = screen_rect_qrectf.top() - hb_h - hb_offset_above
                 
-                # Assuming draw_health_bar_qt is available (e.g., from game_ui or a common drawing utils)
                 try:
                     from game_ui import draw_health_bar_qt
                     draw_health_bar_qt(painter, hb_x, hb_y, hb_w, hb_h, 
@@ -357,3 +361,5 @@ class EnemyBase:
                 except ImportError:
                     if hasattr(self, 'print_limiter') and self.print_limiter.can_log(f"draw_health_bar_missing_{self.enemy_id}"):
                         warning(f"EnemyBase {self.enemy_id}: draw_health_bar_qt not found, cannot draw health bar.")
+
+#################### END OF FILE: enemy_base.py ####################

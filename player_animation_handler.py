@@ -6,11 +6,12 @@ Correctly anchors the player's rect when height changes.
 MODIFIED: Corrected animation priority for frozen/aflame states.
 NOTE: Gravity for dead players is handled by the physics simulation.
 MODIFIED: Improved crouch animation logic and attack animation selection.
+MODIFIED: Uses local import for set_player_state to mitigate circular dependencies.
 """
-# version 2.0.6 (Crouch animation refinement and attack logic)
+# version 2.0.7 (Local import for set_player_state)
 
+import time
 from typing import List, Optional, Any 
-import time 
 
 # PySide6 imports
 from PySide6.QtGui import QPixmap, QImage, QTransform, QColor
@@ -23,17 +24,13 @@ from utils import PrintLimiter
 # Logger
 try:
     from logger import debug, warning, critical
-    # CRITICAL: This import must succeed for proper state transitions.
-    from player_state_handler import set_player_state
+    # DO NOT import player_state_handler at the top level here
 except ImportError:
-    print("CRITICAL PLAYER_ANIM_HANDLER: Failed to import logger or player_state_handler.")
+    # This print statement indicates the logger itself failed to import, which is a separate issue.
+    print("CRITICAL PLAYER_ANIM_HANDLER: Failed to import logger.") 
     def debug(msg, *args, **kwargs): print(f"DEBUG_PANIM: {msg}")
     def warning(msg, *args, **kwargs): print(f"WARNING_PANIM: {msg}")
     def critical(msg, *args, **kwargs): print(f"CRITICAL_PANIM: {msg}")
-    # Fallback set_player_state (will cause issues if used, as it won't update flags like is_crouching)
-    def set_player_state(player, new_state, current_game_time_ms_param=None):
-        if hasattr(player, 'state'): player.state = new_state
-        warning(f"FALLBACK set_player_state used in player_animation_handler for P{getattr(player, 'player_id', '?')} to {new_state}. CROUCH WILL BE BROKEN.")
 
 
 _start_time_player_anim_monotonic = time.monotonic()
@@ -53,7 +50,7 @@ def determine_animation_key(player: Any) -> str:
     is_aflame = getattr(player, 'is_aflame', False)
     is_deflaming = getattr(player, 'is_deflaming', False)
     is_attacking = getattr(player, 'is_attacking', False)
-    is_crouching = getattr(player, 'is_crouching', False) # This flag is now key
+    is_crouching = getattr(player, 'is_crouching', False) 
     on_ground = getattr(player, 'on_ground', False)
     on_ladder = getattr(player, 'on_ladder', False)
     touching_wall = getattr(player, 'touching_wall', 0)
@@ -79,7 +76,7 @@ def determine_animation_key(player: Any) -> str:
     # --- Fire Status Effects (Consider crouch) ---
     if is_aflame:
         if is_crouching: return 'aflame_crouch' if animations and animations.get('aflame_crouch') else \
-                                 ('aflame' if animations and animations.get('aflame') else 'idle') # Fallback to standing aflame
+                                 ('aflame' if animations and animations.get('aflame') else 'idle') 
         return 'aflame' if animations and animations.get('aflame') else 'idle'
     if is_deflaming:
         if is_crouching: return 'deflame_crouch' if animations and animations.get('deflame_crouch') else \
@@ -92,12 +89,10 @@ def determine_animation_key(player: Any) -> str:
 
     if is_attacking:
         attack_type = getattr(player, 'attack_type', 0)
-        # If attack_type is 4 (crouch_attack), or if the logical state IS 'crouch_attack'
         if attack_type == 4 or current_logical_state == 'crouch_attack':
             return 'crouch_attack' if animations and animations.get('crouch_attack') else \
-                   ('crouch' if is_crouching and animations and animations.get('crouch') else 'idle') # Fallback if no crouch_attack anim
+                   ('crouch' if is_crouching and animations and animations.get('crouch') else 'idle') 
         
-        # Standard attacks (not crouch_attack)
         base_key = ''
         if attack_type == 1: base_key = 'attack'
         elif attack_type == 2: base_key = 'attack2'
@@ -105,9 +100,6 @@ def determine_animation_key(player: Any) -> str:
         
         if base_key:
             is_intentionally_moving_lr_anim = getattr(player, 'is_trying_to_move_left', False) or getattr(player, 'is_trying_to_move_right', False)
-            # Velocity check for attack_nm is more about if the *animation itself* should show movement,
-            # not if the player has a tiny residual velocity from friction.
-            # If player INTENDS to stand still or their current state suggests a non-moving attack, use _nm.
             use_nm_variant = (not is_intentionally_moving_lr_anim and player.state.endswith("_nm")) or \
                              (abs(vel_x) < 0.5 and not is_intentionally_moving_lr_anim)
 
@@ -116,36 +108,29 @@ def determine_animation_key(player: Any) -> str:
 
             if use_nm_variant and animations and animations.get(nm_variant_key): return nm_variant_key
             elif animations and animations.get(moving_variant_key): return moving_variant_key
-            elif animations and animations.get(nm_variant_key): return nm_variant_key # Fallback to NM if moving is missing
-            else: return 'idle' # Fallback if all attack anims missing
+            elif animations and animations.get(nm_variant_key): return nm_variant_key 
+            else: return 'idle' 
     
-    # --- Other Action States (Dash, Roll, Slide, Turn, Crouch Transition) ---
     if current_logical_state in ['dash', 'roll', 'slide', 'slide_trans_start', 'slide_trans_end', 'turn', 'crouch_trans']:
         return current_logical_state if animations and animations.get(current_logical_state) else 'idle'
 
-    # --- Contextual Movement (Ladder, Wall Interactions) ---
     if on_ladder: return 'ladder_climb' if abs(vel_y) > 0.1 else 'ladder_idle'
     if touching_wall != 0 and not on_ground:
         if current_logical_state == 'wall_slide': return 'wall_slide' if animations and animations.get('wall_slide') else 'fall'
     
-    # --- Basic Movement & Idle (Jump, Fall, Run, Crouch, Idle) ---
-    if not on_ground: # Airborne
+    if not on_ground: 
         if current_logical_state == 'jump': return 'jump' if animations and animations.get('jump') else 'fall'
         if current_logical_state == 'jump_fall_trans': return 'jump_fall_trans' if animations and animations.get('jump_fall_trans') else 'fall'
         return 'fall' if animations and animations.get('fall') else 'idle'
     
-    # On Ground
-    if is_crouching: # Check the is_crouching flag
-        # If logical state is already 'crouch' or 'crouch_walk', prefer it
+    if is_crouching: 
         if current_logical_state in ['crouch', 'crouch_walk'] and animations and animations.get(current_logical_state):
             return current_logical_state
-        # Fallback for is_crouching=True
         player_is_intending_to_move_lr_crouch = getattr(player, 'is_trying_to_move_left', False) or getattr(player, 'is_trying_to_move_right', False)
         crouch_key_variant = 'crouch_walk' if player_is_intending_to_move_lr_crouch else 'crouch'
         return crouch_key_variant if animations and animations.get(crouch_key_variant) else \
                ('crouch' if animations and animations.get('crouch') else 'idle')
 
-    # Standing on ground
     player_is_intending_to_move_lr_stand = getattr(player, 'is_trying_to_move_left', False) or getattr(player, 'is_trying_to_move_right', False)
     if player_is_intending_to_move_lr_stand:
         return 'run' if animations and animations.get('run') else 'idle'
@@ -154,6 +139,17 @@ def determine_animation_key(player: Any) -> str:
 
 
 def advance_frame_and_handle_state_transitions(player: Any, current_animation_frames_list: List[QPixmap], current_time_ms: int, current_animation_key: str):
+    # --- LOCAL IMPORT to break circular dependency ---
+    try:
+        from player_state_handler import set_player_state
+    except ImportError:
+        critical("PLAYER_ANIM_HANDLER (advance_frame): Failed to import set_player_state locally.")
+        # Fallback dummy that will cause problems if used, but prevents NameError
+        def set_player_state(player_arg: Any, new_state_arg: str, current_game_time_ms_param: Optional[int] = None):
+            if hasattr(player_arg, 'state'): player_arg.state = new_state_arg
+            warning(f"FALLBACK set_player_state used in player_animation_handler for P{getattr(player_arg, 'player_id', '?')} to {new_state_arg}. CROUCH WILL BE BROKEN.")
+    # --- END LOCAL IMPORT ---
+
     if not current_animation_frames_list: return
 
     ms_per_frame = C.ANIM_FRAME_DURATION
@@ -205,27 +201,25 @@ def advance_frame_and_handle_state_transitions(player: Any, current_animation_fr
                     elif player.is_deflaming: next_state = 'deflame_crouch' if player.is_crouching else 'deflame'
                     else: next_state = 'idle' if player.on_ground and not player.on_ladder else 'fall'
                 elif current_animation_key == 'turn': next_state = 'run' if player_is_intending_to_move_lr else 'idle'
-                elif current_animation_key == 'crouch_attack': # Specific transition for crouch_attack
+                elif current_animation_key == 'crouch_attack': 
                     player.is_attacking = False; player.attack_type = 0; player.can_combo = False
-                    # Stay crouching if still holding crouch or if that's the desired behavior post-attack
-                    next_state = 'crouch' # Or 'crouch_walk' if moving
-                elif 'attack' in current_animation_key: # For non-crouch attacks
+                    next_state = 'crouch' 
+                elif 'attack' in current_animation_key: 
                     player.is_attacking = False; player.attack_type = 0; player.can_combo = False
                     if player.on_ladder: next_state = 'ladder_idle'
-                    # elif player.is_crouching: next_state = 'crouch' # Should not happen if attack logic is correct
                     elif not player.on_ground: next_state = 'fall'
                     else: next_state = 'run' if player_is_intending_to_move_lr else 'idle'
                 elif current_animation_key == 'crouch_trans':
                     next_state = 'crouch_walk' if player_is_intending_to_move_lr else 'crouch'
                 elif current_animation_key == 'slide' or current_animation_key == 'slide_trans_end':
                     player.is_sliding = False
-                    next_state = 'crouch' # Always transition to crouch after slide finishes for toggle behavior
+                    next_state = 'crouch' 
                 elif current_animation_key == 'slide_trans_start': next_state = 'slide'
                 elif current_animation_key == 'dash': player.is_dashing = False; next_state = 'idle' if player.on_ground else 'fall'
                 elif current_animation_key == 'roll': player.is_rolling = False; next_state = 'idle' if player.on_ground else 'fall'
                 
                 if player.state == current_animation_key and next_state != player.state:
-                    set_player_state(player, next_state, get_current_ticks_monotonic())
+                    set_player_state(player, next_state, current_time_ms) # Pass time
                     return 
                 else: player.current_frame = 0
             
@@ -242,6 +236,7 @@ def update_player_animation(player: Any):
     qcolor_magenta = QColor(*(C.MAGENTA if hasattr(C, 'MAGENTA') else (255,0,255)))
     qcolor_red = QColor(*(C.RED if hasattr(C, 'RED') else (255,0,0)))
     qcolor_blue = QColor(*(C.BLUE if hasattr(C, 'BLUE') else (0,0,255)))
+    qcolor_yellow = QColor(*(C.YELLOW if hasattr(C, 'YELLOW') else (255,255,0)))
     
     if not getattr(player, '_valid_init', False) or not hasattr(player, 'animations') or not player.animations:
         if hasattr(player, 'image') and player.image and not player.image.isNull():
@@ -269,7 +264,7 @@ def update_player_animation(player: Any):
     if not current_frames_list or not current_frames_list[0] or current_frames_list[0].isNull():
         is_current_animation_valid = False
     elif len(current_frames_list) == 1 and \
-         determined_key_for_logic not in ['petrified', 'idle', 'run', 'fall', 'frozen', 'crouch', 'crouch_attack', 'ladder_idle', 'wall_hang']: # Added crouch_attack
+         determined_key_for_logic not in ['petrified', 'idle', 'run', 'fall', 'frozen', 'crouch', 'crouch_attack', 'ladder_idle', 'wall_hang']:
         frame_pixmap = current_frames_list[0]
         if frame_pixmap.size() == QSize(30, 40):
             qimg = frame_pixmap.toImage()
@@ -312,6 +307,10 @@ def update_player_animation(player: Any):
                 new_frames_for_render = player.animations.get(render_key_for_final_image)
                 if new_frames_for_render and new_frames_for_render[0] and not new_frames_for_render[0].isNull():
                     current_frames_list = new_frames_for_render
+                # Check if current_frames_list became invalid after this, if so, fallback to idle
+                elif not (current_frames_list and current_frames_list[0] and not current_frames_list[0].isNull()):
+                    current_frames_list = player.animations.get('idle', [player.image] if player.image and not player.image.isNull() else [])
+
 
     if not current_frames_list or player.current_frame < 0 or player.current_frame >= len(current_frames_list):
         player.current_frame = 0
@@ -340,11 +339,17 @@ def update_player_animation(player: Any):
                              player.image.cacheKey() != final_image_to_set.cacheKey()) or \
                             (player.image is not final_image_to_set)
 
-    if image_content_changed or (getattr(player, '_last_facing_right_visual_for_anim', True) != display_facing_right):
+    # Use _last_facing_right (which reflects player's logical facing)
+    # for flip check, unless it's a petrified/smashed state.
+    facing_direction_for_flip_check = player.facing_at_petrification if (render_key_for_final_image in ['petrified', 'smashed']) else player.facing_right
+
+    if image_content_changed or (player._last_facing_right != facing_direction_for_flip_check):
         old_rect_midbottom_qpointf = QPointF(player.rect.center().x(), player.rect.bottom()) if hasattr(player, 'rect') and player.rect else player.pos
+
         player.image = final_image_to_set
         if hasattr(player, '_update_rect_from_image_and_pos') and callable(player._update_rect_from_image_and_pos):
             player._update_rect_from_image_and_pos(old_rect_midbottom_qpointf)
         else: 
             player.rect = QRectF(old_rect_midbottom_qpointf - QPointF(player.image.width()/2.0, float(player.image.height())), player.image.size())
-        player._last_facing_right_visual_for_anim = display_facing_right
+        
+        player._last_facing_right = facing_direction_for_flip_check # Update the stored facing direction

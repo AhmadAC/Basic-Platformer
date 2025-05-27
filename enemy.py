@@ -1,3 +1,5 @@
+#################### START OF FILE: enemy.py ####################
+
 # enemy.py
 # -*- coding: utf-8 -*-
 """
@@ -5,8 +7,9 @@ Defines the main Enemy class, which coordinates various handlers for AI,
 physics, combat, state, animation, status effects, and network communication.
 Inherits core attributes and methods from EnemyBase.
 Now includes zapped effect.
+MODIFIED: apply_zapped_effect call added.
 """
-# version 2.0.4 (Integrated zapped effect)
+# version 2.0.5 (Call apply_zapped_effect from status_effects)
 
 import time # For monotonic timer
 from typing import Optional, List, Any, Dict # Ensure Optional, Dict, Any are imported
@@ -21,7 +24,7 @@ from enemy_base import EnemyBase
 try:
     from logger import info, debug, warning, error, critical
 except ImportError:
-    print("CRITICAL ENEMY (Main): logger.py not found. Falling back to print statements.")
+    print("CRITICAL ENEMY (Main): logger.py not found. Falling back to print statements for logging.")
     def info(msg, *args, **kwargs): print(f"INFO: {msg}")
     def debug(msg, *args, **kwargs): print(f"DEBUG: {msg}")
     def warning(msg, *args, **kwargs): print(f"WARNING: {msg}")
@@ -38,7 +41,7 @@ try:
         update_enemy_status_effects,
         apply_aflame_effect as apply_aflame_to_enemy,
         apply_freeze_effect as apply_freeze_to_enemy,
-        apply_zapped_effect as apply_zapped_to_enemy, # Added zapped
+        apply_zapped_effect as apply_zapped_to_enemy, 
         petrify_enemy as petrify_this_enemy,
         stomp_kill_enemy as stomp_kill_this_enemy,
         smash_petrified_enemy as smash_this_petrified_enemy
@@ -66,8 +69,7 @@ class Enemy(EnemyBase):
             critical(f"Enemy (ID: {self.enemy_id}) did not initialize correctly in EnemyBase. Main Enemy class init incomplete.")
             return
 
-        # Call set_enemy_new_patrol_target only if enemy is valid and has the necessary attributes
-        if hasattr(self, 'pos') and hasattr(self, 'rect'): # Basic check
+        if hasattr(self, 'pos') and hasattr(self, 'rect'):
             set_enemy_new_patrol_target(self)
         else:
             warning(f"Enemy (ID: {self.enemy_id}): pos or rect not fully initialized by EnemyBase. Patrol target not set initially by Enemy class.")
@@ -77,7 +79,7 @@ class Enemy(EnemyBase):
     # --- Status Effect Application Methods ---
     def apply_aflame_effect(self): apply_aflame_to_enemy(self)
     def apply_freeze_effect(self): apply_freeze_to_enemy(self)
-    def apply_zapped_effect(self): apply_zapped_to_enemy(self) # New
+    def apply_zapped_effect(self): apply_zapped_to_enemy(self)
     def petrify(self): petrify_this_enemy(self)
     def smash_petrification(self): smash_this_petrified_enemy(self)
     def stomp_kill(self): stomp_kill_this_enemy(self)
@@ -91,7 +93,7 @@ class Enemy(EnemyBase):
 
     # --- State and Animation ---
     def set_state(self, new_state: str):
-        enemy_state_handler.set_enemy_state(self, new_state)
+        enemy_state_handler.set_enemy_state(self, new_state, get_current_ticks_monotonic()) # Pass current time
     def animate(self): update_enemy_animation(self)
 
     # --- Main Update Loop ---
@@ -99,41 +101,27 @@ class Enemy(EnemyBase):
                platforms_list: list,
                hazards_list: list,
                all_enemies_list: list):
-        if not self._valid_init or not self._alive: # Use self._alive (from EnemyBase)
+        if not self._valid_init or not self._alive:
             return
 
         current_time_ms = get_current_ticks_monotonic()
 
-        # --- 1. Update Status Effects ---
-        # update_enemy_status_effects returns True if an effect (like frozen, petrified, zapped, stomp_dying)
-        # is active and should override normal AI and physics updates for this frame.
         status_overrode_update = update_enemy_status_effects(self, current_time_ms, platforms_list)
 
         if status_overrode_update:
-            # If an overriding status effect is active (e.g., frozen, petrified, zapped, stomp_dying):
-            # - Petrified and falling: Physics might still apply for falling.
-            # - Zapped and falling: Physics might still apply for falling.
-            # - Frozen/Stomped: Usually no physics.
-            # The update_enemy_status_effects function itself should handle minimal physics if needed for these states.
-            # Animation still runs for visual status effects.
             if hasattr(self, 'animate'): self.animate()
-            # Check if truly "gone" after status update
             if getattr(self, 'is_dead', False) and getattr(self, 'death_animation_finished', False) and self.alive():
                 if hasattr(self, 'kill'): self.kill()
-            return # Skip normal AI, physics, and combat if an effect overrode them
+            return
 
-        # --- 2. Handle "Normal" Death (if not overridden by a status effect) ---
-        if getattr(self, 'is_dead', False): # Player is marked as dead
-            if self.alive(): # Still "alive" in terms of needing processing (e.g., death animation)
-                # Minimal physics for falling dead body
+        if getattr(self, 'is_dead', False):
+            if self.alive():
                 if not getattr(self, 'on_ground', True) and hasattr(self, 'vel') and hasattr(self, 'acc') and hasattr(self, 'pos'):
-                    self.vel.setY(self.vel.y() + self.acc.y()) # Gravity
+                    self.vel.setY(self.vel.y() + self.acc.y())
                     self.vel.setY(min(self.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
-                    # Position update (assuming vel is displacement per frame, or dt_sec*FPS is baked in)
-                    self.pos.setY(self.pos.y() + self.vel.y()) # If vel is units/sec: self.pos.setY(self.pos.y() + self.vel.y() * dt_sec)
+                    self.pos.setY(self.pos.y() + self.vel.y()) 
                     if hasattr(self, '_update_rect_from_image_and_pos'): self._update_rect_from_image_and_pos()
 
-                    # Basic platform collision for falling body
                     self.on_ground = False
                     for platform_obj in platforms_list:
                         if hasattr(platform_obj, 'rect') and hasattr(self, 'rect') and self.rect.intersects(platform_obj.rect):
@@ -143,43 +131,35 @@ class Enemy(EnemyBase):
                                 self.on_ground = True; self.vel.setY(0.0)
                                 if hasattr(self.acc, 'setY'): self.acc.setY(0.0)
                                 self.pos.setY(self.rect.bottom()); break
-                # Animate death sequence
                 if hasattr(self, 'animate'): self.animate()
-                # If death animation finished, truly kill the object
                 if getattr(self, 'death_animation_finished', False):
                     if hasattr(self, 'kill'): self.kill()
-            return # No further AI/Physics/Combat if dead
+            return
 
-        # --- 3. AI Update (if no overriding status effect and not dead) ---
         enemy_ai_update(self, players_list_for_logic)
 
-        # --- 4. Physics and Collisions (if no overriding status effect and not dead) ---
         update_enemy_physics_and_collisions(
             self, dt_sec, platforms_list, hazards_list,
-            # Pass other players and *other* enemies for character collision
             players_list_for_logic + [e for e in all_enemies_list if e is not self and hasattr(e, 'alive') and e.alive()]
         )
 
-        # --- 5. Combat (if attacking and no overriding status effect and not dead) ---
         if getattr(self, 'is_attacking', False):
-            check_enemy_attack_collisions(self, players_list_for_logic) # Players are primary targets
+            check_enemy_attack_collisions(self, players_list_for_logic)
 
-        # --- 6. Animation (if no overriding status effect and not dead) ---
         if hasattr(self, 'animate'): self.animate()
 
-        # --- 7. Final "is_dead" check after all updates for the frame ---
-        # This handles cases where health dropped to 0 during combat or other means this frame.
         if getattr(self, 'is_dead', False) and getattr(self, 'death_animation_finished', False) and self.alive():
             if hasattr(self, 'kill'): self.kill()
 
 
     def reset(self):
-        super().reset() # Calls EnemyBase.reset()
-        # EnemyBase.reset should set _valid_init and _alive appropriately
+        super().reset()
         if self._valid_init:
-            if hasattr(self, 'pos') and hasattr(self, 'rect'): # Ensure necessary for patrol target
+            if hasattr(self, 'pos') and hasattr(self, 'rect'):
                  set_enemy_new_patrol_target(self)
-            enemy_state_handler.set_enemy_state(self, 'idle') # Use qualified call
+            enemy_state_handler.set_enemy_state(self, 'idle', get_current_ticks_monotonic()) # Pass time
             debug(f"Enemy (ID: {self.enemy_id}) fully reset. State: {getattr(self, 'state', 'N/A')}, AI State: {getattr(self, 'ai_state', 'N/A')}")
         else:
             warning(f"Enemy (ID: {self.enemy_id}): Reset called, but _valid_init is False. State not fully reset.")
+
+#################### END OF FILE: enemy.py ####################

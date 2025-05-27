@@ -4439,7 +4439,8 @@
             "rotation": 0,
             "is_flipped_h": false,
             "editor_hidden": false,
-            "editor_locked": false
+            "editor_locked": false,
+            "layer_order": 1
         },
         {
             "asset_editor_key": "player2_spawn",
@@ -4447,7 +4448,7 @@
             "world_y": 880,
             "game_type_id": "player2_spawn",
             "properties": {
-                "max_health": 200,
+                "max_health": 100,
                 "move_speed": 350.0,
                 "jump_strength": -900.0
             },
@@ -4567,20 +4568,6 @@
             "editor_locked": false
         },
         {
-            "asset_editor_key": "item_chest",
-            "world_x": 160,
-            "world_y": 600,
-            "game_type_id": "chest",
-            "properties": {
-                "item_type": "coin",
-                "item_quantity": 1
-            },
-            "rotation": 0,
-            "is_flipped_h": false,
-            "editor_hidden": false,
-            "editor_locked": false
-        },
-        {
             "asset_editor_key": "enemy_gray",
             "world_x": 600,
             "world_y": 880,
@@ -4588,7 +4575,7 @@
             "properties": {
                 "health": 3,
                 "move_speed": 100.0,
-                "max_health": 100
+                "max_health": 10
             },
             "rotation": 0,
             "is_flipped_h": false,
@@ -5653,11 +5640,27 @@
             "rotation": 0,
             "editor_hidden": false,
             "editor_locked": false
+        },
+        {
+            "asset_editor_key": "item_chest",
+            "world_x": 160,
+            "world_y": 520,
+            "game_type_id": "chest",
+            "layer_order": 0,
+            "properties": {
+                "item_type": "coin",
+                "item_quantity": 1,
+                "requires_key_id": ""
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         }
     ],
-    "camera_offset_x": -79.0,
-    "camera_offset_y": 188.0,
-    "zoom_level": 0.8333333333333334,
+    "camera_offset_x": 316.0,
+    "camera_offset_y": 193.0,
+    "zoom_level": 1.2,
     "show_grid": true,
     "asset_specific_variables": {}
 }
