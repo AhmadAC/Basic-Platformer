@@ -5,6 +5,7 @@
 """
 Custom Qt Widget for the Map View in the PySide6 Level Editor.
 Handles display, interaction, and dispatches actions to map_view_actions.
+Version 2.2.1 (More robust item update for property changes)
 """
 import logging
 import os
@@ -29,7 +30,7 @@ from .editor_assets import get_asset_pixmap
 from . import editor_map_utils
 
 # Import item classes
-from .map_object_items import StandardMapObjectItem # MOVED
+from .map_object_items import StandardMapObjectItem 
 from .editor_custom_items import BaseResizableMapItem, CustomImageMapItem, TriggerSquareMapItem, \
                                  HANDLE_TOP_LEFT, HANDLE_TOP_MIDDLE, HANDLE_TOP_RIGHT, \
                                  HANDLE_MIDDLE_LEFT, HANDLE_MIDDLE_RIGHT, \
@@ -45,7 +46,6 @@ from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTIO
 
 logger = logging.getLogger(__name__)
 
-# StandardMapObjectItem class has been moved to map_object_items.py
 
 class MapViewWidget(QGraphicsView):
     mouse_moved_on_map = Signal(tuple)
@@ -115,7 +115,6 @@ class MapViewWidget(QGraphicsView):
         MVActions.perform_place_action(self, grid_x, grid_y, continuous, is_first_action)
 
     def _place_single_object_on_map(self, asset_key_for_data: str, asset_definition: Dict, grid_x: int, grid_y: int, is_flipped_h: bool, rotation: int) -> bool:
-        # This method is called by _perform_place_action, so it's part of MVActions now
         return MVActions.place_single_object_on_map(self, asset_key_for_data, asset_definition, grid_x, grid_y, is_flipped_h, rotation)
 
     def _perform_erase_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
@@ -127,7 +126,7 @@ class MapViewWidget(QGraphicsView):
     def delete_selected_map_objects(self):
         MVActions.delete_selected_map_objects_action(self)
         
-    def _select_object_at_controller_cursor(self): # Kept here as it's controller specific to this view
+    def _select_object_at_controller_cursor(self): 
         if not self._controller_cursor_pos: return
         grid_x, grid_y = self._controller_cursor_pos
         world_x = grid_x * self.editor_state.grid_size
@@ -137,7 +136,7 @@ class MapViewWidget(QGraphicsView):
 
         found_item_to_select: Optional[QGraphicsItem] = None
         for item in items_at_cursor:
-            if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)): # Check against imported classes
+            if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)): 
                 if not item.map_object_data_ref.get("editor_locked", False): 
                     found_item_to_select = item
                     break
@@ -147,8 +146,6 @@ class MapViewWidget(QGraphicsView):
             found_item_to_select.setSelected(True)
         else:
             self.map_object_selected_for_properties.emit(None)
-    # --- End of delegated action methods ---
-
 
     def _update_controller_cursor_visuals(self):
         if not self._controller_has_focus or self._controller_cursor_pos is None:
@@ -255,8 +252,13 @@ class MapViewWidget(QGraphicsView):
 
     def draw_placed_objects(self):
         current_data_ids = {id(obj_data) for obj_data in self.editor_state.placed_objects}
+        logger.debug(f"MapView: draw_placed_objects. Current live data IDs: {current_data_ids}")
+        logger.debug(f"MapView: _map_object_items before sync: { {k: id(getattr(v, 'map_object_data_ref', None)) for k,v in self._map_object_items.items()} }")
+
 
         items_to_remove_ids = [item_id for item_id in self._map_object_items if item_id not in current_data_ids]
+        if items_to_remove_ids:
+            logger.debug(f"MapView: IDs to remove from _map_object_items: {items_to_remove_ids}")
         for item_id in items_to_remove_ids:
             map_obj_item_to_remove = self._map_object_items[item_id]
             if isinstance(map_obj_item_to_remove, BaseResizableMapItem):
@@ -270,18 +272,22 @@ class MapViewWidget(QGraphicsView):
 
         sorted_placed_objects = sorted(self.editor_state.placed_objects, key=lambda obj: obj.get("layer_order", 0))
 
-        for obj_data in sorted_placed_objects:
-            item_data_id = id(obj_data)
+        for obj_data in sorted_placed_objects: # obj_data is from editor_state.placed_objects
+            item_data_id_from_state = id(obj_data) # ID of the dictionary from editor_state
             asset_key = str(obj_data.get("asset_editor_key",""))
             map_scene_item: Optional[QGraphicsItem] = None
 
-            if item_data_id in self._map_object_items:
-                map_scene_item = self._map_object_items[item_data_id]
-                if hasattr(map_scene_item, 'map_object_data_ref'):
+            if item_data_id_from_state in self._map_object_items:
+                map_scene_item = self._map_object_items[item_data_id_from_state]
+                # Ensure the QGraphicsItem's internal data reference is the one from editor_state
+                if hasattr(map_scene_item, 'map_object_data_ref') and map_scene_item.map_object_data_ref is not obj_data: # type: ignore
+                    logger.warning(f"MapView: Correcting stale map_object_data_ref for item ID {item_data_id_from_state}. Old ref ID: {id(map_scene_item.map_object_data_ref)}, New ref ID: {id(obj_data)}") # type: ignore
                     map_scene_item.map_object_data_ref = obj_data # type: ignore
+                
                 if hasattr(map_scene_item, 'update_visuals_from_data'):
                     map_scene_item.update_visuals_from_data(self.editor_state) # type: ignore
-            else:
+            else: # Item not found by ID from editor_state, so it's a new item or its data object was replaced
+                logger.debug(f"MapView: Creating new QGraphicsItem for obj_data with ID {item_data_id_from_state}, asset_key: {asset_key}")
                 world_x, world_y = float(obj_data["world_x"]), float(obj_data["world_y"])
                 if asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY: # type: ignore
                     map_scene_item = CustomImageMapItem(obj_data, self.editor_state)
@@ -292,26 +298,88 @@ class MapViewWidget(QGraphicsView):
                                                            int(world_x), int(world_y), obj_data, self.editor_state)
                 if map_scene_item:
                     self.map_scene.addItem(map_scene_item)
-                    self._map_object_items[item_data_id] = map_scene_item
+                    self._map_object_items[item_data_id_from_state] = map_scene_item # Store with ID of obj_data from editor_state
             
             if map_scene_item: 
                 map_scene_item.setVisible(not obj_data.get("editor_hidden", False))
 
-
             if isinstance(map_scene_item, BaseResizableMapItem) and map_scene_item.isSelected():
                 map_scene_item.show_interaction_handles(True)
-
+        
+        logger.debug(f"MapView: _map_object_items AFTER sync: { {k: id(getattr(v, 'map_object_data_ref', None)) for k,v in self._map_object_items.items()} }")
         self.viewport().update()
 
-    def update_specific_object_visuals(self, map_object_data_ref: Dict[str, Any]):
-        item_id = id(map_object_data_ref)
-        if item_id in self._map_object_items:
-            map_obj_item = self._map_object_items[item_id]
-            if hasattr(map_obj_item, 'update_visuals_from_data'):
-                map_obj_item.update_visuals_from_data(self.editor_state) # type: ignore
-                self.viewport().update()
+    def update_specific_object_visuals(self, map_object_data_ref_received: Dict[str, Any]):
+        received_id = id(map_object_data_ref_received)
+        opacity_in_received = map_object_data_ref_received.get('properties',{}).get('opacity')
+        logger.debug(f"MapView: update_specific_object_visuals for received data ID: {received_id}. Opacity: {opacity_in_received}")
+
+        map_obj_item_to_update: Optional[QGraphicsItem] = None
+
+        if received_id in self._map_object_items:
+            map_obj_item_to_update = self._map_object_items[received_id]
+            # Ensure the item's internal ref IS the one we just received, which has the changes
+            # This is crucial if the properties editor modified this specific instance.
+            if hasattr(map_obj_item_to_update, 'map_object_data_ref'):
+                if map_obj_item_to_update.map_object_data_ref is not map_object_data_ref_received: # type: ignore
+                    logger.warning(f"MapView: update_specific_object_visuals - item {received_id} found, but its internal data_ref (ID {id(map_obj_item_to_update.map_object_data_ref)}) differs from received (ID {received_id}). Updating item's ref.") # type: ignore
+                    map_obj_item_to_update.map_object_data_ref = map_object_data_ref_received # type: ignore
         else:
-            logger.warning(f"Attempted to update visuals for non-tracked object data ID: {item_id}")
+            logger.warning(f"MapView: update_specific_object_visuals - Item ID {received_id} (opacity: {opacity_in_received}) NOT found in _map_object_items. Trying to find by selection...")
+            # Fallback: if ID is not found, it means the reference changed.
+            # Try to find the *currently selected* graphics item and assume it's the one.
+            selected_items_in_scene = self.map_scene.selectedItems()
+            if len(selected_items_in_scene) == 1:
+                candidate_item = selected_items_in_scene[0]
+                if hasattr(candidate_item, 'map_object_data_ref'):
+                    current_item_data_ref_in_scene_item = candidate_item.map_object_data_ref
+                    logger.warning(f"MapView: Fallback - Selected item has data_ref ID {id(current_item_data_ref_in_scene_item)}. Received data ref ID {received_id}.")
+                    
+                    # If this is the selected item, its map_object_data_ref should be updated
+                    # to point to map_object_data_ref_received because that's the one with the changes.
+                    # Also, editor_state.placed_objects needs to be updated.
+                    try:
+                        # Find the old reference in editor_state.placed_objects and replace it
+                        idx = -1
+                        for i, obj_in_state in enumerate(self.editor_state.placed_objects):
+                            if obj_in_state is current_item_data_ref_in_scene_item: # Find by object identity
+                                idx = i
+                                break
+                        if idx != -1:
+                            logger.info(f"MapView: Fallback - Found old ref in editor_state at index {idx}. Replacing with new ref ID {received_id}.")
+                            self.editor_state.placed_objects[idx] = map_object_data_ref_received
+                        else:
+                            logger.error(f"MapView: Fallback - Could not find old ref (ID {id(current_item_data_ref_in_scene_item)}) in editor_state.placed_objects to update.")
+                            
+                        # Update the graphics item's reference
+                        candidate_item.map_object_data_ref = map_object_data_ref_received # type: ignore
+                        map_obj_item_to_update = candidate_item
+
+                        # Remove old ID from _map_object_items and add new one
+                        if id(current_item_data_ref_in_scene_item) in self._map_object_items:
+                            del self._map_object_items[id(current_item_data_ref_in_scene_item)]
+                        self._map_object_items[received_id] = candidate_item
+                        logger.info(f"MapView: Fallback - Remapped item in _map_object_items to new ID {received_id}.")
+                        
+                    except ValueError:
+                         logger.error(f"MapView: Fallback - Error trying to update editor_state.placed_objects.")
+                else:
+                    logger.warning("MapView: Fallback - Selected item has no map_object_data_ref.")
+            else:
+                logger.warning(f"MapView: Fallback - No single item selected, cannot resolve non-tracked ID {received_id}.")
+
+
+        if map_obj_item_to_update and hasattr(map_obj_item_to_update, 'update_visuals_from_data'):
+            logger.info(f"MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID {id(getattr(map_obj_item_to_update, 'map_object_data_ref', None))}")
+            map_obj_item_to_update.update_visuals_from_data(self.editor_state) # type: ignore
+        elif map_obj_item_to_update:
+             logger.warning(f"Item for data ID {received_id} found, but no 'update_visuals_from_data' method.")
+        else:
+             logger.warning(f"MapView: update_specific_object_visuals - Still could not find/update item for data ID {received_id}.")
+        
+        # Always schedule a viewport update after attempting to update visuals
+        self.viewport().update()
+
 
     def screen_to_scene_coords(self, screen_pos_qpoint: QPointF) -> QPointF: return self.mapToScene(screen_pos_qpoint.toPoint())
     def screen_to_grid_coords(self, screen_pos_qpoint: QPointF) -> Tuple[int, int]: scene_pos = self.screen_to_scene_coords(screen_pos_qpoint); gs = self.editor_state.grid_size; return (int(scene_pos.x() // gs), int(scene_pos.y() // gs)) if gs > 0 else (int(scene_pos.x()), int(scene_pos.y()))
@@ -907,11 +975,13 @@ class MapViewWidget(QGraphicsView):
 
     @Slot(dict)
     def on_object_properties_changed(self, changed_object_data_ref: Dict[str, Any]):
+        logger.debug(f"MapView: on_object_properties_changed for obj data ID: {id(changed_object_data_ref)}")
         self.update_specific_object_visuals(changed_object_data_ref)
 
     @Slot()
     def on_scene_selection_changed(self):
         selected_qt_items = self.map_scene.selectedItems()
+        logger.debug(f"MapView: on_scene_selection_changed. Count: {len(selected_qt_items)}")
 
         for item_id, map_obj_item_generic in self._map_object_items.items():
             if isinstance(map_obj_item_generic, BaseResizableMapItem):
@@ -925,10 +995,16 @@ class MapViewWidget(QGraphicsView):
             if isinstance(selected_item_generic, (StandardMapObjectItem, BaseResizableMapItem)):
                 data_ref = getattr(selected_item_generic, 'map_object_data_ref', None)
                 if data_ref:
+                    logger.debug(f"MapView: Emitting map_object_selected_for_properties with data ID {id(data_ref)}")
                     self.map_object_selected_for_properties.emit(data_ref)
-                else: self.map_object_selected_for_properties.emit(None)
-            else: self.map_object_selected_for_properties.emit(None)
+                else: 
+                    logger.debug("MapView: Selected item has no data_ref. Emitting None.")
+                    self.map_object_selected_for_properties.emit(None)
+            else: 
+                logger.debug("MapView: Selected item not StandardMapObjectItem or BaseResizableMapItem. Emitting None.")
+                self.map_object_selected_for_properties.emit(None)
         else: 
+            logger.debug(f"MapView: {len(selected_qt_items)} items selected. Emitting None for properties.")
             self.map_object_selected_for_properties.emit(None)
 
     def show_status_message(self, message: str, timeout: int = 2000):
