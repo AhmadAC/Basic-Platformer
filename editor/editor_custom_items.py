@@ -1,4 +1,5 @@
 #################### START OF FILE: editor_custom_items.py ####################
+
 # editor/editor_custom_items.py
 # -*- coding: utf-8 -*-
 """
@@ -6,6 +7,8 @@ Custom QGraphicsItem classes for special map objects in the editor,
 such as uploaded images and trigger squares.
 Version 2.2.11 (Aggressive Real-time Opacity Update)
 - Added scene-level update for CustomImageMapItem to try and force repaint.
+MODIFIED: TriggerSquareMapItem.paint() now respects the 'opacity' property.
+MODIFIED: BaseResizableMapItem visibility logic updated for opacity.
 """
 import os
 import logging
@@ -54,7 +57,10 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         
         self.setAcceptHoverEvents(True)
         self.setZValue(self.map_object_data_ref.get("layer_order", 0))
-        self.setVisible(not self.map_object_data_ref.get("editor_hidden", False))
+        
+        is_editor_hidden = self.map_object_data_ref.get("editor_hidden", False)
+        opacity_prop = self.map_object_data_ref.get("properties", {}).get("opacity", 100)
+        self.setVisible(not is_editor_hidden and opacity_prop > 0)
 
 
         self.interaction_handles: List[QGraphicsRectItem] = []
@@ -196,7 +202,10 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
         if self.zValue() != new_z:
             self.setZValue(new_z)
         
-        self.setVisible(not self.map_object_data_ref.get("editor_hidden", False))
+        is_editor_hidden = self.map_object_data_ref.get("editor_hidden", False)
+        opacity_prop = self.map_object_data_ref.get("properties", {}).get("opacity", 100)
+        self.setVisible(not is_editor_hidden and opacity_prop > 0)
+        
         is_locked = self.map_object_data_ref.get("editor_locked", False)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not is_locked)
         if is_locked:
@@ -277,7 +286,7 @@ class CustomImageMapItem(BaseResizableMapItem):
         if not isinstance(opacity_percent, (int, float)):
             opacity_percent = 100
         opacity_value = max(0.0, min(1.0, float(opacity_percent) / 100.0))
-        logger.debug(f"CustomImageMapItem (ID {id(obj_data)}): _load_pixmap_from_data. Opacity: {opacity_percent}% ({opacity_value:.2f}) for path '{rel_path}'")
+        # logger.debug(f"CustomImageMapItem (ID {id(obj_data)}): _load_pixmap_from_data. Opacity: {opacity_percent}% ({opacity_value:.2f}) for path '{rel_path}'")
 
 
         if map_folder and rel_path:
@@ -323,56 +332,52 @@ class CustomImageMapItem(BaseResizableMapItem):
                         
                         painter = QPainter(final_pixmap)
                         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
-                        painter.setOpacity(opacity_value)
+                        painter.setOpacity(opacity_value) # This applies the item's overall opacity
                         painter.drawImage(0, 0, scaled_image)
                         painter.end()
                             
                     else:
                         logger.warning(f"CustomImageMapItem: image_to_render is null after crop/copy for {full_image_path}")
                         painter = QPainter(final_pixmap)
-                        painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) 
+                        painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, int(120 * opacity_value))) 
                         painter.end()
                 else:
                     logger.warning(f"CustomImageMapItem: Failed to load QImage from {full_image_path}")
                     painter = QPainter(final_pixmap)
-                    painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) 
+                    painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, int(120 * opacity_value))) 
                     painter.end()
             else:
                 logger.warning(f"CustomImageMapItem: Image file not found at {full_image_path}")
                 painter = QPainter(final_pixmap)
-                painter.fillRect(final_pixmap.rect(), QColor(255, 165, 0, 120)) 
+                painter.fillRect(final_pixmap.rect(), QColor(255, 165, 0, int(120 * opacity_value))) 
                 painter.end()
         else:
             logger.warning(f"CustomImageMapItem: Missing map_folder or relative_path for custom image.")
             painter = QPainter(final_pixmap)
-            painter.fillRect(final_pixmap.rect(), QColor(255, 255, 0, 120)) 
+            painter.fillRect(final_pixmap.rect(), QColor(255, 255, 0, int(120 * opacity_value))) 
             painter.end()
             
         return final_pixmap
 
     def update_visuals_from_data(self, editor_state: Any): # editor_state type hint
-        current_opacity = self.map_object_data_ref.get('properties', {}).get('opacity', 100)
-        logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): ENTER update_visuals_from_data. Opacity from data: {current_opacity}")
+        current_opacity_percent = self.map_object_data_ref.get('properties', {}).get('opacity', 100)
+        # logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): ENTER update_visuals_from_data. Opacity from data: {current_opacity_percent}")
         
         self.prepareGeometryChange() 
         
         new_pixmap = self._load_pixmap_from_data(self.map_object_data_ref, editor_state)
         
-        old_key = self.pixmap().cacheKey() if self.pixmap() else -1
-        new_key = new_pixmap.cacheKey()
-        
         self.setPixmap(new_pixmap)
-        logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Pixmap set. Old key: {old_key}, New key: {new_key}. New pixmap size: {new_pixmap.size()}")
+        # logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Pixmap set. New pixmap size: {new_pixmap.size()}")
         
         super().update_visuals_from_data(editor_state) 
         
-        logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Calling self.update() to schedule repaint.")
-        self.update() # Schedule item repaint
+        # logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Calling self.update() to schedule repaint.")
+        self.update()
         
         if self.scene() and self.scene().views():
-            logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Calling scene().update() for item's bounding rect.")
-            self.scene().update(self.mapToScene(self.boundingRect()).boundingRect()) # Schedule scene area repaint
-            # Forcing viewport update too, just in case
+            # logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Calling scene().update() for item's bounding rect.")
+            self.scene().update(self.mapToScene(self.boundingRect()).boundingRect())
             for view in self.scene().views():
                 view.viewport().update()
 
@@ -412,21 +417,35 @@ class TriggerSquareMapItem(BaseResizableMapItem):
             parent_widget = self.scene().parent()
             if hasattr(parent_widget, 'editor_state'):
                  is_editor_preview = parent_widget.editor_state.is_game_preview_mode # type: ignore
+        
+        item_opacity_percent = props.get("opacity", 100)
+        item_opacity_float = max(0.0, min(1.0, float(item_opacity_percent) / 100.0))
 
         if not props.get("visible", True) and is_editor_preview:
             return
+        if item_opacity_float < 0.01 and is_editor_preview: 
+            return
+
+        painter.save()
+        painter.setOpacity(item_opacity_float)
 
         if not props.get("visible", True) and not is_editor_preview: 
-            painter.setPen(QPen(QColor(150, 150, 255, 100), 2, Qt.PenStyle.DashLine))
+            painter.setPen(QPen(QColor(150, 150, 255, int(100 * item_opacity_float)), 2, Qt.PenStyle.DashLine)) 
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(rect)
+            
+            text_color = QColor(0,0,0, int(255 * item_opacity_float)) 
+            if item_opacity_float * 100 < 50: 
+                text_color = QColor(50,50,50, int(255 * item_opacity_float))
+            painter.setPen(text_color)
             painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "Invisible Trigger")
+            
             if option.state & QStyle.StateFlag.State_Selected: # type: ignore
-                selection_pen = QPen(QColor(Qt.GlobalColor.yellow), 2.5, Qt.PenStyle.SolidLine)
+                selection_pen = QPen(QColor(255, 255, 0, int(255 * item_opacity_float)), 2.5, Qt.PenStyle.SolidLine)
                 painter.setPen(selection_pen)
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.drawRect(rect.adjusted(1,1,-1,-1))
-            return
+            painter.restore(); return
 
         image_path_rel = props.get("image_in_square", "")
         image_drawn_successfully = False
@@ -446,22 +465,29 @@ class TriggerSquareMapItem(BaseResizableMapItem):
         
         if not image_drawn_successfully:
             fill_color_rgba = props.get("fill_color_rgba")
+            base_q_color: QColor
             if fill_color_rgba and isinstance(fill_color_rgba, (list, tuple)) and len(fill_color_rgba) == 4:
-                painter.setBrush(QColor(*fill_color_rgba)) # type: ignore
-                painter.setPen(QPen(QColor(0,0,0,180), 1))
-                painter.drawRect(rect)
+                # Use the alpha from RGBA, painter.setOpacity will further modulate this
+                base_q_color = QColor(fill_color_rgba[0], fill_color_rgba[1], fill_color_rgba[2], fill_color_rgba[3])
             else: 
-                painter.setBrush(QColor(100,100,255,50))
-                painter.setPen(QPen(QColor(50,50,150,150),1))
-                painter.drawRect(rect)
-                painter.setPen(QColor(0,0,0))
+                base_q_color = QColor(100,100,255,100) # Default semi-transparent blue
+
+            painter.setBrush(base_q_color)
+            painter.setPen(QPen(QColor(0,0,0, int(180 * item_opacity_float)), 1)) 
+            painter.drawRect(rect)
+
+            if not fill_color_rgba: 
+                text_color_with_opacity = QColor(0,0,0, int(255 * item_opacity_float))
+                painter.setPen(text_color_with_opacity)
                 painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "Trigger")
 
         if option.state & QStyle.StateFlag.State_Selected: # type: ignore
-            pen = QPen(QColor(Qt.GlobalColor.yellow), 2, Qt.PenStyle.SolidLine)
+            pen = QPen(QColor(255, 255, 0, int(255*item_opacity_float)), 2, Qt.PenStyle.SolidLine) 
             painter.setPen(pen)
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(rect)
+        
+        painter.restore()
 
     def update_visuals_from_data(self, editor_state: Any): # editor_state type hint
         current_w = self.map_object_data_ref.get("current_width", ED_CONFIG.BASE_GRID_SIZE * 2)

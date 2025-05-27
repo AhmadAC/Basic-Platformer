@@ -6,6 +6,7 @@
 Selection Pane Widget for the Platformer Level Editor.
 Allows viewing and selecting map objects from a list.
 Includes icons for hiding/locking objects.
+MODIFIED: Eyeball icon now toggles asset opacity (0% vs. last visible/100%).
 """
 import logging
 from typing import Optional, TYPE_CHECKING, List, Dict, Any
@@ -20,21 +21,24 @@ from PySide6.QtCore import Qt, Signal, Slot, QSize, QRectF, QPointF
 
 if TYPE_CHECKING:
     from .editor_state import EditorState
-    # from .map_view_widget import StandardMapObjectItem, BaseResizableMapItem # Not directly used here
+    from .editor_main_window import EditorMainWindow
 
 # Import ED_CONFIG correctly, handling standalone execution for testing
 try:
     from . import editor_config as ED_CONFIG
+    from . import editor_history # For undo/redo
 except ImportError:
     # Fallback for standalone execution or if editor_config is not found in the package
-    # This should ideally be a more robust mechanism or avoided if possible
-    # by running the module as part of the package.
-    class ED_CONFIG_FALLBACK:
+    class ED_CONFIG_FALLBACK: #type: ignore
         CUSTOM_ASSET_PALETTE_PREFIX = "custom:"
         TRIGGER_SQUARE_ASSET_KEY = "trigger_square"
         WALL_BASE_KEY = "platform_wall_gray" # For potential filtering if ever re-added
-    ED_CONFIG = ED_CONFIG_FALLBACK()
-    print("WARNING: editor_selection_pane.py using fallback ED_CONFIG.")
+    class editor_history_FALLBACK: #type: ignore
+        @staticmethod
+        def push_undo_state(state): pass # type: ignore
+    ED_CONFIG = ED_CONFIG_FALLBACK() #type: ignore
+    editor_history = editor_history_FALLBACK() #type: ignore
+    print("WARNING: editor_selection_pane.py using fallback ED_CONFIG and editor_history.")
 
 
 logger = logging.getLogger(__name__)
@@ -50,56 +54,61 @@ def _create_icon(icon_type: str, size: int = ICON_SIZE) -> QIcon:
     pen_color = QColor(70, 70, 70) 
     painter.setPen(QPen(pen_color, 1.5)) 
 
-    eye_center_y = size / 2
+    eye_center_y = size / 2.0
     eye_height = size * 0.45
     eye_width = size * 0.8
-    eye_rect = QRectF((size - eye_width) / 2, eye_center_y - eye_height / 2, eye_width, eye_height)
+    eye_rect = QRectF((size - eye_width) / 2.0, eye_center_y - eye_height / 2.0, eye_width, eye_height)
 
-    if icon_type == "visible":
+    if icon_type == "visible": # Normal eye (opacity > 0)
         painter.drawArc(eye_rect, 0 * 16, 360 * 16) 
-        pupil_radius = size / 6
+        pupil_radius = size / 6.0
         painter.setBrush(pen_color)
-        painter.drawEllipse(QPointF(size / 2, eye_center_y), pupil_radius, pupil_radius)
-    elif icon_type == "hidden":
-        painter.drawArc(eye_rect, 0 * 16, 360 * 16) 
-        pupil_radius = size / 6
-        painter.setBrush(pen_color)
-        painter.drawEllipse(QPointF(size / 2, eye_center_y), pupil_radius, pupil_radius)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QPen(QColor(200, 50, 50), 1.8)) 
-        painter.drawLine(QPointF(size * 0.15, size * 0.15), QPointF(size * 0.85, size * 0.85))
+        painter.drawEllipse(QPointF(size / 2.0, eye_center_y), pupil_radius, pupil_radius)
+    elif icon_type == "hidden": # Crossed-out eye (opacity == 0)
+        painter.drawArc(eye_rect, 0 * 16, 360 * 16)
+        # Pupil still visible but dimmer or smaller if desired
+        # pupil_radius = size / 7.0 
+        # painter.setBrush(QColor(100,100,100)) # Dimmer pupil
+        # painter.drawEllipse(QPointF(size / 2.0, eye_center_y), pupil_radius, pupil_radius)
+
+        # Draw a thicker cross line
+        cross_line_pen = QPen(QColor(200, 50, 50), 2.0) # Red cross
+        cross_line_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(cross_line_pen)
+        # Single diagonal line for "hidden" / "opacity 0"
+        painter.drawLine(QPointF(size * 0.2, size * 0.8), QPointF(size * 0.8, size * 0.2))
     elif icon_type == "unlocked":
         body_width = size * 0.55; body_height = size * 0.45
-        body_x = (size - body_width) / 2; body_y = size * 0.5
+        body_x = (size - body_width) / 2.0; body_y = size * 0.5
         body_rect = QRectF(body_x, body_y, body_width, body_height)
         painter.setBrush(QColor(220,220,220)); painter.drawRect(body_rect)
         shackle_width = size * 0.35; shackle_height = size * 0.35
-        shackle_x = (size - shackle_width) / 2; shackle_y = size * 0.15 
+        shackle_x = (size - shackle_width) / 2.0; shackle_y = size * 0.15 
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawArc(QRectF(shackle_x, shackle_y, shackle_width, shackle_height), 0 * 16, 180 * 16)
-        painter.drawLine(QPointF(shackle_x, shackle_y + shackle_height/2), QPointF(shackle_x, body_y)) 
-        painter.drawLine(QPointF(shackle_x + shackle_width, shackle_y + shackle_height/2), QPointF(shackle_x + shackle_width + size*0.05, body_y - size*0.1))
+        painter.drawLine(QPointF(shackle_x, shackle_y + shackle_height/2.0), QPointF(shackle_x, body_y)) 
+        painter.drawLine(QPointF(shackle_x + shackle_width, shackle_y + shackle_height/2.0), QPointF(shackle_x + shackle_width + size*0.05, body_y - size*0.1))
     elif icon_type == "locked":
         body_width = size * 0.55; body_height = size * 0.45
-        body_x = (size - body_width) / 2; body_y = size * 0.5
+        body_x = (size - body_width) / 2.0; body_y = size * 0.5
         body_rect = QRectF(body_x, body_y, body_width, body_height)
         painter.setBrush(QColor(180,180,180)); painter.drawRect(body_rect)
         shackle_width = size * 0.35; shackle_height = size * 0.35
-        shackle_x = (size - shackle_width) / 2; shackle_y = size * 0.15 
+        shackle_x = (size - shackle_width) / 2.0; shackle_y = size * 0.15 
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawArc(QRectF(shackle_x, shackle_y, shackle_width, shackle_height), 0 * 16, 180 * 16)
-        painter.drawLine(QPointF(shackle_x, shackle_y + shackle_height/2), QPointF(shackle_x, body_y))
-        painter.drawLine(QPointF(shackle_x + shackle_width, shackle_y + shackle_height/2), QPointF(shackle_x + shackle_width, body_y))
+        painter.drawLine(QPointF(shackle_x, shackle_y + shackle_height/2.0), QPointF(shackle_x, body_y))
+        painter.drawLine(QPointF(shackle_x + shackle_width, shackle_y + shackle_height/2.0), QPointF(shackle_x + shackle_width, body_y))
 
     painter.end()
     return QIcon(pixmap)
 
 
 class ObjectListItemWidget(QWidget):
-    visibility_button_clicked = Signal()
+    opacity_toggle_button_clicked = Signal()
     lock_button_clicked = Signal()
 
-    def __init__(self, text: str, is_hidden: bool, is_locked: bool, parent: Optional[QWidget] = None):
+    def __init__(self, text: str, opacity: int, is_locked: bool, parent: Optional[QWidget] = None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(3, 1, 3, 1) 
@@ -109,14 +118,14 @@ class ObjectListItemWidget(QWidget):
         self.name_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         layout.addWidget(self.name_label)
 
-        self.hide_button = QPushButton()
-        self.hide_button.setFlat(True)
-        self.hide_button.setFixedSize(ICON_SIZE + 4, ICON_SIZE + 4) 
-        self.hide_button.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
-        self.hide_button.setIcon(_create_icon("hidden" if is_hidden else "visible"))
-        self.hide_button.setToolTip("Toggle Visibility")
-        self.hide_button.clicked.connect(self.visibility_button_clicked) # Emits internal signal
-        layout.addWidget(self.hide_button)
+        self.opacity_button = QPushButton()
+        self.opacity_button.setFlat(True)
+        self.opacity_button.setFixedSize(ICON_SIZE + 4, ICON_SIZE + 4) 
+        self.opacity_button.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
+        self.opacity_button.setIcon(_create_icon("hidden" if opacity == 0 else "visible"))
+        self.opacity_button.setToolTip("Toggle Opacity (Visible/Hidden)")
+        self.opacity_button.clicked.connect(self.opacity_toggle_button_clicked)
+        layout.addWidget(self.opacity_button)
 
         self.lock_button = QPushButton()
         self.lock_button.setFlat(True)
@@ -124,12 +133,12 @@ class ObjectListItemWidget(QWidget):
         self.lock_button.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
         self.lock_button.setIcon(_create_icon("locked" if is_locked else "unlocked"))
         self.lock_button.setToolTip("Toggle Lock")
-        self.lock_button.clicked.connect(self.lock_button_clicked) # Emits internal signal
+        self.lock_button.clicked.connect(self.lock_button_clicked)
         layout.addWidget(self.lock_button)
         self.setLayout(layout)
 
-    def update_icons(self, is_hidden: bool, is_locked: bool):
-        self.hide_button.setIcon(_create_icon("hidden" if is_hidden else "visible"))
+    def update_icons(self, opacity: int, is_locked: bool):
+        self.opacity_button.setIcon(_create_icon("hidden" if opacity == 0 else "visible"))
         self.lock_button.setIcon(_create_icon("locked" if is_locked else "unlocked"))
 
     def set_text(self, text: str):
@@ -138,12 +147,12 @@ class ObjectListItemWidget(QWidget):
 
 class SelectionPaneWidget(QWidget):
     select_map_object_via_pane_requested = Signal(object) 
-    item_visibility_toggled_in_pane = Signal(object, bool) 
+    item_opacity_toggled_in_pane = Signal(object, int) # obj_data_ref, NEW_TARGET_OPACITY
     item_lock_toggled_in_pane = Signal(object, bool)     
     
     rename_item_requested = Signal(object, str) 
 
-    def __init__(self, editor_state: 'EditorState', parent_main_window: Optional[QWidget] = None):
+    def __init__(self, editor_state: 'EditorState', parent_main_window: Optional['EditorMainWindow'] = None):
         super().__init__(parent_main_window)
         self.editor_state = editor_state
         self.parent_main_window = parent_main_window 
@@ -162,7 +171,6 @@ class SelectionPaneWidget(QWidget):
         self.item_list_widget = QListWidget()
         self.item_list_widget.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.item_list_widget.itemClicked.connect(self._on_list_item_clicked)
-        # self.item_list_widget.itemActivated.connect(self._on_list_item_activated) # Double click for rename?
         self.main_layout.addWidget(self.item_list_widget)
         
         self.setObjectName("SelectionPaneWidget")
@@ -227,17 +235,16 @@ class SelectionPaneWidget(QWidget):
             list_item = QListWidgetItem(self.item_list_widget)
             list_item.setData(Qt.ItemDataRole.UserRole, obj_data)
 
-            is_hidden = obj_data.get("editor_hidden", False)
+            item_opacity = obj_data.get("properties", {}).get("opacity", 100)
             is_locked = obj_data.get("editor_locked", False)
 
-            item_widget = ObjectListItemWidget(display_name, is_hidden, is_locked)
+            item_widget = ObjectListItemWidget(display_name, item_opacity, is_locked)
             
-            # Connect button signals directly to the pane's handlers
-            item_widget.visibility_button_clicked.connect(
-                lambda obj=obj_data, btn_widget=item_widget: self._on_item_widget_visibility_toggle(obj, btn_widget)
+            item_widget.opacity_toggle_button_clicked.connect(
+                lambda checked=False, obj=obj_data, widget_ref=item_widget: self._on_item_widget_opacity_toggle(obj, widget_ref)
             )
             item_widget.lock_button_clicked.connect(
-                lambda obj=obj_data, btn_widget=item_widget: self._on_item_widget_lock_toggle(obj, btn_widget)
+                lambda checked=False, obj=obj_data, widget_ref=item_widget: self._on_item_widget_lock_toggle(obj, widget_ref)
             )
             
             list_item.setSizeHint(item_widget.sizeHint())
@@ -251,19 +258,28 @@ class SelectionPaneWidget(QWidget):
         if self.item_list_widget.selectedItems(): 
             self.item_list_widget.scrollToItem(self.item_list_widget.selectedItems()[0], QAbstractItemView.ScrollHint.EnsureVisible)
 
-    # NEW methods to handle clicks from item widgets
-    def _on_item_widget_visibility_toggle(self, obj_data_ref: Dict[str, Any], item_widget_ref: ObjectListItemWidget):
-        current_is_hidden_state = obj_data_ref.get("editor_hidden", False)
-        new_intended_visible_state = not current_is_hidden_state # This means if it's hidden, we want it visible
+    def _on_item_widget_opacity_toggle(self, obj_data_ref: Dict[str, Any], item_widget_ref: ObjectListItemWidget):
+        props = obj_data_ref.setdefault('properties', {})
+        current_opacity = props.get('opacity', 100)
         
-        logger.debug(f"SelectionPane: Visibility button clicked for '{obj_data_ref.get('asset_editor_key')}'. Current hidden: {current_is_hidden_state}. Emitting new visible: {new_intended_visible_state}")
-        self.item_visibility_toggled_in_pane.emit(obj_data_ref, new_intended_visible_state)
-        # The main window will update the data and call populate_items, which will refresh the icon.
+        new_target_opacity: int
+        if current_opacity == 0:
+            last_visible = props.get('last_visible_opacity', 100)
+            new_target_opacity = 100 if last_visible == 0 else last_visible 
+        else:
+            new_target_opacity = 0
+        
+        logger.debug(f"SelectionPane: Opacity button clicked for '{obj_data_ref.get('asset_editor_key')}'. Current: {current_opacity}, New Target: {new_target_opacity}")
+        self.item_opacity_toggled_in_pane.emit(obj_data_ref, new_target_opacity)
+        # The MainEditorWindow will handle data change, undo, and then call populate_items which updates the icon.
 
     def _on_item_widget_lock_toggle(self, obj_data_ref: Dict[str, Any], item_widget_ref: ObjectListItemWidget):
         current_is_locked_state = obj_data_ref.get("editor_locked", False)
-        logger.debug(f"SelectionPane: Lock button clicked for '{obj_data_ref.get('asset_editor_key')}'. Current locked: {current_is_locked_state}. Emitting new lock: {not current_is_locked_state}")
-        self.item_lock_toggled_in_pane.emit(obj_data_ref, not current_is_locked_state)
+        new_lock_state = not current_is_locked_state
+        
+        logger.debug(f"SelectionPane: Lock button clicked for '{obj_data_ref.get('asset_editor_key')}'. New lock state: {new_lock_state}")
+        self.item_lock_toggled_in_pane.emit(obj_data_ref, new_lock_state)
+        # MainEditorWindow handles data change, undo, and then calls populate_items.
 
 
     @Slot(str)
@@ -272,22 +288,17 @@ class SelectionPaneWidget(QWidget):
 
     @Slot(QListWidgetItem)
     def _on_list_item_clicked(self, list_widget_item: QListWidgetItem):
-        # This slot is for when the QListWidgetItem itself is clicked (e.g., its label area)
-        # not the buttons within its custom widget.
-        
-        # Check if the click actually happened on one of the buttons inside the widget.
-        # If so, the button's own clicked signal should have handled it.
         item_widget = self.item_list_widget.itemWidget(list_widget_item)
         if isinstance(item_widget, ObjectListItemWidget):
             mouse_pos_relative_to_item_widget = item_widget.mapFromGlobal(self.item_list_widget.viewport().mapToGlobal(self.item_list_widget.mapFromGlobal(QCursor.pos())))
             
-            hide_button_rect = item_widget.hide_button.geometry()
+            opacity_button_rect = item_widget.opacity_button.geometry()
             lock_button_rect = item_widget.lock_button.geometry()
 
-            if hide_button_rect.contains(mouse_pos_relative_to_item_widget) or \
+            if opacity_button_rect.contains(mouse_pos_relative_to_item_widget) or \
                lock_button_rect.contains(mouse_pos_relative_to_item_widget):
                 logger.debug("SelectionPane: Click was on an action button, _on_list_item_clicked ignoring.")
-                return # Let button's specific handler do its job
+                return
 
         obj_data_ref = list_widget_item.data(Qt.ItemDataRole.UserRole)
         if obj_data_ref:
@@ -343,7 +354,7 @@ class SelectionPaneWidget(QWidget):
 
         try:
             from .editor_actions import ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_ACCEPT, ACTION_UI_TAB_NEXT, ACTION_UI_TAB_PREV
-        except ImportError: # Fallback for standalone testing if needed
+        except ImportError: 
             ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_ACCEPT, ACTION_UI_TAB_NEXT, ACTION_UI_TAB_PREV = "UI_UP", "UI_DOWN", "UI_ACCEPT", "UI_TAB_NEXT", "UI_TAB_PREV"
 
 
@@ -364,7 +375,7 @@ class SelectionPaneWidget(QWidget):
         elif action == ACTION_UI_ACCEPT: 
             current_item = self.item_list_widget.currentItem()
             if current_item:
-                self._on_list_item_clicked(current_item) # Simulate a click on the item itself
+                self._on_list_item_clicked(current_item) 
         elif action == ACTION_UI_TAB_NEXT: 
             if self.item_list_widget.hasFocus():
                 self.search_box.setFocus()
