@@ -14,7 +14,7 @@ def load_map_custom():
         'enemies_list': [],
         'items_list': [],
         'statues_list': [],
-        'custom_images_list': [{'rect': (400.0, 320.0, 474.0, 629.0), 'source_file_path': 'Custom/OIP-C.jpg', 'original_width': 474, 'original_height': 629, 'layer_order': 0, 'properties': {'is_background': True, 'is_obstacle': False, 'destructible': False, 'health': 100, 'scroll_factor_x': 1.0, 'scroll_factor_y': 1.0, 'apply_gravity': False, 'opacity': 23}, 'is_flipped_h': False, 'rotation': 0}],
+        'custom_images_list': [{'rect': (400.0, 320.0, 474.0, 629.0), 'source_file_path': 'Custom/OIP-C.jpg', 'original_width': 474, 'original_height': 629, 'layer_order': 0, 'properties': {'is_background': True, 'is_obstacle': False, 'destructible': False, 'health': 100, 'scroll_factor_x': 1.0, 'scroll_factor_y': 1.0, 'apply_gravity': False, 'opacity': 100}, 'is_flipped_h': False, 'rotation': 0}],
         'trigger_squares_list': [],
         'level_pixel_width': 1600.0,
         'level_min_x_absolute': 0.0,

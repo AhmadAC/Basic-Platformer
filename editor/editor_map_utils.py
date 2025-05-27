@@ -1,12 +1,12 @@
-#################### START OF FILE: editor\editor_map_utils.py ####################
+#################### START OF FILE: editor_map_utils.py ####################
 # editor/editor_map_utils.py
 # -*- coding: utf-8 -*-
 """
 Utility functions for map operations in the Level Editor (PySide6 version).
 Handles saving/loading editor JSON and exporting game-compatible Python data scripts.
 Manages map-specific folders.
-VERSION 2.4.9 (Selection Pane Hide/Lock State Persistence in Map Utils)
-- Ensures `editor_hidden` and `editor_locked` are initialized for new objects.
+VERSION 2.4.10 (Using copy.deepcopy for history robustness)
+- Uses copy.deepcopy in history interactions to ensure true snapshots.
 MODIFIED: Corrected export of player_spawn_props to be flat, not nested.
 """
 import sys
@@ -17,6 +17,7 @@ import re
 import shutil
 from typing import Optional, Dict, List, Tuple, Any
 import logging
+import copy # Added for deepcopy
 
 logger = logging.getLogger(__name__)
 
@@ -74,12 +75,11 @@ class _editor_history_FALLBACK_MU:
     def restore_map_from_snapshot(state:'EditorState', snapshot: Dict[str,Any]): pass
     @staticmethod
     def push_undo_state(state:'EditorState'): pass
-    @staticmethod
-    def _deep_copy_object_data(obj_data: Dict[str, Any]) -> Dict[str, Any]: return obj_data.copy()
+    # Removed _deep_copy_object_data as we'll use copy.deepcopy in get_map_snapshot now
 
 ED_CONFIG = _ED_CONFIG_FALLBACK_MU()
 C = _C_FALLBACK_MU()
-editor_history = _editor_history_FALLBACK_MU()
+editor_history_module = _editor_history_FALLBACK_MU() # Renamed to avoid conflict
 
 try:
     if _IS_STANDALONE_EXECUTION_MAP_UTILS:
@@ -89,19 +89,19 @@ try:
 
         import editor_config as ED_CONFIG_actual # type: ignore
         from editor_state import EditorState as EditorState_actual  # type: ignore
-        import editor_history as editor_history_actual # type: ignore
+        import editor_history as editor_history_actual_module # type: ignore
         import constants as C_actual # type: ignore
         logger.info("editor_map_utils: Standalone execution - imports successful.")
     else:
         from . import editor_config as ED_CONFIG_actual
         from .editor_state import EditorState as EditorState_actual
-        from . import editor_history as editor_history_actual
+        from . import editor_history as editor_history_actual_module
         import constants as C_actual
         logger.info("editor_map_utils: Package execution - imports successful.")
 
     ED_CONFIG = ED_CONFIG_actual # type: ignore
     EditorState = EditorState_actual # type: ignore
-    editor_history = editor_history_actual # type: ignore
+    editor_history_module = editor_history_actual_module # type: ignore
     C = C_actual # type: ignore
 
 except ImportError as e:
@@ -125,7 +125,7 @@ def get_maps_base_directory() -> str:
     project_root_const = getattr(C, 'PROJECT_ROOT', None)
 
     if project_root_const is None or project_root_const == "":
-        project_root_for_maps = os.path.dirname(os.path.dirname(_CURRENT_FILE_DIR_MAP_UTILS)) # Go up one more level from editor/
+        project_root_for_maps = os.path.dirname(os.path.dirname(_CURRENT_FILE_DIR_MAP_UTILS)) 
     else:
         project_root_for_maps = project_root_const
 
@@ -178,7 +178,7 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     if not clean_map_name:
         clean_map_name = "untitled_map"
 
-    existing_objects = list(editor_state.placed_objects) if preserve_objects else []
+    existing_objects = copy.deepcopy(editor_state.placed_objects) if preserve_objects else []
     existing_bg_color = editor_state.background_color if preserve_objects else ED_CONFIG.DEFAULT_BACKGROUND_COLOR_TUPLE # type: ignore
 
     editor_state.map_name_for_function = clean_map_name
@@ -203,7 +203,7 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
         logger.error(f"Could not determine or create map folder for '{clean_map_name}' during init_new_map_state.")
 
     if preserve_objects:
-        editor_state.placed_objects = [editor_history._deep_copy_object_data(obj) for obj in existing_objects] # type: ignore
+        editor_state.placed_objects = existing_objects
     else:
         editor_state.placed_objects = []
         gs = float(editor_state.grid_size)
@@ -216,11 +216,11 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
             border_props = ED_CONFIG.get_default_properties_for_asset(border_game_type_id) # type: ignore
             border_props["is_boundary"] = True
             for i in range(map_width_tiles):
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": 0, "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int((map_height_tiles - 1) * gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": 0, "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": copy.deepcopy(border_props), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int(i * gs), "world_y": int((map_height_tiles - 1) * gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": copy.deepcopy(border_props), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
             for i in range(1, map_height_tiles - 1):
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": 0, "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
-                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int((map_width_tiles - 1)*gs), "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": border_props.copy(), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": 0, "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": copy.deepcopy(border_props), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
+                editor_state.placed_objects.append({"asset_editor_key": border_asset_key, "world_x": int((map_width_tiles - 1)*gs), "world_y": int(i*gs), "game_type_id": border_game_type_id, "override_color": border_color_tuple, "properties": copy.deepcopy(border_props), "is_flipped_h": False, "rotation": 0, **default_editor_flags})
 
         spawn_y = int((map_height_tiles - 3) * gs)
         for player_num in range(1, 5):
@@ -235,7 +235,7 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
                     "world_x": int(spawn_x_offset),
                     "world_y": spawn_y,
                     "game_type_id": spawn_game_type_id,
-                    "properties": default_props,
+                    "properties": copy.deepcopy(default_props),
                     "layer_order": 10,
                     "is_flipped_h": False,
                     "rotation": 0,
@@ -292,7 +292,7 @@ def save_map_to_json(editor_state: EditorState) -> bool:
     json_filepath = os.path.join(map_folder, json_filename)
     editor_state.current_json_filename = json_filepath
 
-    data_to_save = editor_history.get_map_snapshot(editor_state) # type: ignore
+    data_to_save = editor_history_module.get_map_snapshot(editor_state) # type: ignore
     try:
         with open(json_filepath, "w", encoding='utf-8') as f:
             json.dump(data_to_save, f, indent=4)
@@ -343,7 +343,7 @@ def load_map_from_json(editor_state: EditorState, chosen_json_filepath: str) -> 
         with open(actual_json_filepath_to_load, 'r', encoding='utf-8') as f:
             data_snapshot = json.load(f)
 
-        editor_history.restore_map_from_snapshot(editor_state, data_snapshot) # type: ignore
+        editor_history_module.restore_map_from_snapshot(editor_state, data_snapshot) # type: ignore
 
         map_name_from_json_content = sanitize_map_name(editor_state.map_name_for_function)
         final_map_folder_stem_for_paths = map_name_from_file_stem
@@ -379,7 +379,7 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
     if not objects_raw: return []
     working_objects: List[Dict[str, Any]] = []
     for obj_orig in objects_raw:
-        obj = obj_orig.copy()
+        obj = copy.deepcopy(obj_orig) # Use deepcopy for working copy
         obj['merged'] = False
         obj.setdefault('x', 0.0); obj.setdefault('y', 0.0)
         obj.setdefault('w', float(ED_CONFIG.BASE_GRID_SIZE)); obj.setdefault('h', float(ED_CONFIG.BASE_GRID_SIZE)) # type: ignore
@@ -387,10 +387,10 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
         if isinstance(color_val, list) and len(color_val) == 3: obj['color'] = tuple(color_val)
         elif not (isinstance(color_val, tuple) and len(color_val) == 3): obj['color'] = getattr(C, 'MAGENTA', (255,0,255)) # type: ignore
         obj.setdefault('type', f'generic_{object_category_name}')
-        if 'image_path' in obj_orig: obj['image_path'] = obj_orig['image_path']
-        if 'crop_rect' in obj_orig: obj['crop_rect'] = obj_orig['crop_rect']
-        obj.setdefault('is_flipped_h', False)
-        obj.setdefault('rotation', 0)
+        # Ensure properties exists and is a dict for export
+        if 'properties' not in obj or not isinstance(obj['properties'], dict):
+            obj['properties'] = {}
+
         working_objects.append(obj)
 
     horizontal_strips: List[Dict[str, Any]] = []
@@ -400,7 +400,7 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
 
     for i, p_base in enumerate(sorted_h):
         if p_base.get('merged'): continue
-        current_strip = p_base.copy(); p_base['merged'] = True
+        current_strip = copy.deepcopy(p_base); p_base['merged'] = True # Use deepcopy
         for j in range(i + 1, len(sorted_h)):
             p_next = sorted_h[j]
             if p_next.get('merged'): continue
@@ -426,7 +426,7 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
         horizontal_strips.append(current_strip)
 
     final_blocks_data: List[Dict[str, Any]] = []
-    strips_to_merge = [strip.copy() for strip in horizontal_strips]
+    strips_to_merge = [copy.deepcopy(strip) for strip in horizontal_strips] # Use deepcopy
     for strip in strips_to_merge: strip['merged'] = False
     key_func_v = lambda s: (str(s.get('type')), str(s.get('color')), s.get('x'), s.get('w'),
                             str(s.get('image_path', '')), str(s.get('crop_rect')), s.get('is_flipped_h'), s.get('rotation'), s.get('y'))
@@ -434,7 +434,7 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
 
     for i, s_base in enumerate(sorted_v):
         if s_base.get('merged'): continue
-        current_block = s_base.copy(); s_base['merged'] = True
+        current_block = copy.deepcopy(s_base); s_base['merged'] = True # Use deepcopy
         for j in range(i + 1, len(sorted_v)):
             s_next = sorted_v[j]
             if s_next.get('merged'): continue
@@ -458,9 +458,14 @@ def _merge_rect_objects_to_data(objects_raw: List[Dict[str, Any]], object_catego
                  s_next.get('rotation') != current_block.get('rotation'):
                 break
         current_block.pop('merged', None)
+        # Ensure properties is a dict, even if empty
+        final_props = current_block.get('properties', {})
+        if not isinstance(final_props, dict):
+            final_props = {}
+
         final_entry = {'rect': (current_block.get('x'), current_block.get('y'), current_block.get('w'), current_block.get('h')),
                        'type': current_block.get('type'), 'color': current_block.get('color'),
-                       'properties': current_block.get('properties', {}),
+                       'properties': final_props, # Use the ensured dict
                        'is_flipped_h': current_block.get('is_flipped_h', False),
                        'rotation': current_block.get('rotation', 0)}
         if 'image_path' in current_block: final_entry['image_path'] = current_block['image_path']
@@ -502,15 +507,19 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
 
     all_placed_objects_rect_data_for_bounds: List[Dict[str, float]] = []
 
-    for obj_data in editor_state.placed_objects:
-        # Skip exporting editor-hidden objects
+    for obj_data_original in editor_state.placed_objects:
+        obj_data = copy.deepcopy(obj_data_original) # Work with a deep copy for export processing
+
         if obj_data.get("editor_hidden", False):
             continue
 
         asset_key = str(obj_data.get("asset_editor_key", ""))
         game_type_id = str(obj_data.get("game_type_id", "unknown"))
         wx, wy = obj_data.get("world_x"), obj_data.get("world_y")
-        obj_props = obj_data.get("properties", {})
+        obj_props = obj_data.get("properties", {}) # This is now a deep copy
+        if not isinstance(obj_props, dict): # Ensure it's a dict
+            obj_props = {}
+            
         is_flipped_h = obj_data.get("is_flipped_h", False)
         rotation = obj_data.get("rotation", 0)
 
@@ -550,11 +559,8 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             effective_w_for_bounds, effective_h_for_bounds = obj_h, obj_w
         all_placed_objects_rect_data_for_bounds.append({'x': export_x, 'y': export_y, 'width': effective_w_for_bounds, 'height': effective_h_for_bounds})
 
-        # Common properties for most export types (except player spawns which are handled differently)
-        # Note: For player spawns, obj_props ALREADY CONTAINS keys like "max_health".
-        # common_export_props was previously causing the nesting issue for player spawns.
         common_export_props_for_non_player_spawns = {
-            "properties": obj_props,
+            "properties": obj_props, # obj_props is already a deep copy
             "is_flipped_h": is_flipped_h,
             "rotation": rotation
         }
@@ -568,7 +574,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                 'original_height': obj_data.get("original_height"),
                 'crop_rect': obj_data.get("crop_rect"),
                 'layer_order': obj_data.get("layer_order", 0),
-                **common_export_props_for_non_player_spawns # Use the version that keeps properties nested
+                **common_export_props_for_non_player_spawns 
             }
             if image_export_data['original_width'] is None: del image_export_data['original_width']
             if image_export_data['original_height'] is None: del image_export_data['original_height']
@@ -578,14 +584,12 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             trigger_squares_export.append({
                 'rect': (export_x, export_y, obj_w, obj_h),
                 'layer_order': obj_data.get("layer_order", 0),
-                **common_export_props_for_non_player_spawns # Use the version that keeps properties nested
+                **common_export_props_for_non_player_spawns 
             })
         elif category == "spawn":
             spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h)
-            # MODIFIED: Construct spawn_props_to_export by directly spreading obj_props
-            # and adding flip/rotation info. This avoids the double "properties" nesting.
             spawn_props_to_export = {
-                **obj_props, # obj_props directly contains "max_health", "move_speed", etc.
+                **obj_props, 
                 "is_flipped_h": is_flipped_h,
                 "rotation": rotation
             }
@@ -593,10 +597,10 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
                 p_spawn_def_key = f"player{p_num}_spawn"
                 p_spawn_def_data = ED_CONFIG.EDITOR_PALETTE_ASSETS.get(p_spawn_def_key,{}) # type: ignore
                 if game_type_id == p_spawn_def_data.get("game_type_id"):
-                    if p_num == 1: player_start_pos_p1 = spawn_pos; player1_spawn_props = spawn_props_to_export.copy()
-                    elif p_num == 2: player_start_pos_p2 = spawn_pos; player2_spawn_props = spawn_props_to_export.copy()
-                    elif p_num == 3: player_start_pos_p3 = spawn_pos; player3_spawn_props = spawn_props_to_export.copy()
-                    elif p_num == 4: player_start_pos_p4 = spawn_pos; player4_spawn_props = spawn_props_to_export.copy()
+                    if p_num == 1: player_start_pos_p1 = spawn_pos; player1_spawn_props = copy.deepcopy(spawn_props_to_export)
+                    elif p_num == 2: player_start_pos_p2 = spawn_pos; player2_spawn_props = copy.deepcopy(spawn_props_to_export)
+                    elif p_num == 3: player_start_pos_p3 = spawn_pos; player3_spawn_props = copy.deepcopy(spawn_props_to_export)
+                    elif p_num == 4: player_start_pos_p4 = spawn_pos; player4_spawn_props = copy.deepcopy(spawn_props_to_export)
                     break
         elif category == "tile" or "platform" in game_type_id.lower():
              platforms_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props_for_non_player_spawns})
@@ -618,7 +622,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
     if not player_start_pos_p1:
         p1_spawn_def = ED_CONFIG.EDITOR_PALETTE_ASSETS.get("player1_spawn",{}) # type: ignore
         p1_game_id = p1_spawn_def.get("game_type_id")
-        if p1_game_id: player1_spawn_props = {**ED_CONFIG.get_default_properties_for_asset(p1_game_id), "is_flipped_h": False, "rotation":0} # type: ignore
+        if p1_game_id: player1_spawn_props = {**copy.deepcopy(ED_CONFIG.get_default_properties_for_asset(p1_game_id)), "is_flipped_h": False, "rotation":0} # type: ignore
         player_start_pos_p1 = (ts * 2.5, editor_state.map_height_tiles * ts - ts * 3)
 
     platforms_list_export = _merge_rect_objects_to_data(platforms_data_raw, "platform")

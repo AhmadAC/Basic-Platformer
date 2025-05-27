@@ -4,13 +4,8 @@
 """
 Custom QGraphicsItem classes for special map objects in the editor,
 such as uploaded images and trigger squares.
-Version 2.2.9 (Forced Real-time Opacity Update for CustomImageMapItem)
-- BaseResizableMapItem now correctly sets Movable flag and visibility on init and update.
-- TriggerSquareMapItem paint method clarified for visibility and selection.
-- Added shape() method to TriggerSquareMapItem for better interaction.
-- Added opacity handling for CustomImageMapItem.
-- Ensured CustomImageMapItem always re-sets its pixmap and calls update()
-  on property changes to reflect opacity changes in real-time.
+Version 2.2.11 (Aggressive Real-time Opacity Update)
+- Added scene-level update for CustomImageMapItem to try and force repaint.
 """
 import os
 import logging
@@ -217,8 +212,8 @@ class BaseResizableMapItem(QGraphicsPixmapItem):
 
         self._update_display_aspect_ratio()
         
-        self.prepareGeometryChange() # Important before changing bounding rect / pixmap size
-        self.update_handle_positions() # Also depends on bounding rect
+        self.prepareGeometryChange()
+        self.update_handle_positions()
 
     def hoverMoveEvent(self, event: QHoverEvent):
         if self.isSelected() and not self.map_object_data_ref.get("editor_locked", False):
@@ -262,6 +257,8 @@ class CustomImageMapItem(BaseResizableMapItem):
         self.editor_state_ref = editor_state
         initial_pixmap = self._load_pixmap_from_data(map_object_data_ref, editor_state)
         super().__init__(map_object_data_ref, initial_pixmap, parent)
+        logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}) __init__ called. Opacity from data: {self.map_object_data_ref.get('properties', {}).get('opacity')}")
+
 
     def _load_pixmap_from_data(self, obj_data: Dict[str, Any], editor_state: Any) -> QPixmap: # editor_state type hint
         current_width = obj_data.get("current_width", ED_CONFIG.BASE_GRID_SIZE)
@@ -275,6 +272,13 @@ class CustomImageMapItem(BaseResizableMapItem):
         
         final_pixmap = QPixmap(display_w, display_h)
         final_pixmap.fill(Qt.GlobalColor.transparent)
+
+        opacity_percent = obj_data.get("properties", {}).get("opacity", 100)
+        if not isinstance(opacity_percent, (int, float)):
+            opacity_percent = 100
+        opacity_value = max(0.0, min(1.0, float(opacity_percent) / 100.0))
+        logger.debug(f"CustomImageMapItem (ID {id(obj_data)}): _load_pixmap_from_data. Opacity: {opacity_percent}% ({opacity_value:.2f}) for path '{rel_path}'")
+
 
         if map_folder and rel_path:
             full_image_path = os.path.join(map_folder, rel_path)
@@ -317,11 +321,6 @@ class CustomImageMapItem(BaseResizableMapItem):
                             Qt.TransformationMode.SmoothTransformation
                         )
                         
-                        opacity_percent = obj_data.get("properties", {}).get("opacity", 100)
-                        if not isinstance(opacity_percent, (int, float)):
-                            opacity_percent = 100
-                        opacity_value = max(0.0, min(1.0, float(opacity_percent) / 100.0))
-
                         painter = QPainter(final_pixmap)
                         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
                         painter.setOpacity(opacity_value)
@@ -331,35 +330,51 @@ class CustomImageMapItem(BaseResizableMapItem):
                     else:
                         logger.warning(f"CustomImageMapItem: image_to_render is null after crop/copy for {full_image_path}")
                         painter = QPainter(final_pixmap)
-                        painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) # Magenta fallback
+                        painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) 
                         painter.end()
                 else:
                     logger.warning(f"CustomImageMapItem: Failed to load QImage from {full_image_path}")
                     painter = QPainter(final_pixmap)
-                    painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) # Magenta fallback
+                    painter.fillRect(final_pixmap.rect(), QColor(255, 0, 255, 120)) 
                     painter.end()
             else:
                 logger.warning(f"CustomImageMapItem: Image file not found at {full_image_path}")
                 painter = QPainter(final_pixmap)
-                painter.fillRect(final_pixmap.rect(), QColor(255, 165, 0, 120)) # Orange fallback
+                painter.fillRect(final_pixmap.rect(), QColor(255, 165, 0, 120)) 
                 painter.end()
         else:
             logger.warning(f"CustomImageMapItem: Missing map_folder or relative_path for custom image.")
             painter = QPainter(final_pixmap)
-            painter.fillRect(final_pixmap.rect(), QColor(255, 255, 0, 120)) # Yellow fallback
+            painter.fillRect(final_pixmap.rect(), QColor(255, 255, 0, 120)) 
             painter.end()
             
         return final_pixmap
 
     def update_visuals_from_data(self, editor_state: Any): # editor_state type hint
-        self.prepareGeometryChange() # Call before _load_pixmap...
+        current_opacity = self.map_object_data_ref.get('properties', {}).get('opacity', 100)
+        logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): ENTER update_visuals_from_data. Opacity from data: {current_opacity}")
+        
+        self.prepareGeometryChange() 
         
         new_pixmap = self._load_pixmap_from_data(self.map_object_data_ref, editor_state)
-        self.setPixmap(new_pixmap) 
         
-        super().update_visuals_from_data(editor_state) # Handles position, z-order, handles etc.
-                                                       # This will call prepareGeometryChange again, which is fine.
-        self.update() # Explicitly schedule a repaint
+        old_key = self.pixmap().cacheKey() if self.pixmap() else -1
+        new_key = new_pixmap.cacheKey()
+        
+        self.setPixmap(new_pixmap)
+        logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Pixmap set. Old key: {old_key}, New key: {new_key}. New pixmap size: {new_pixmap.size()}")
+        
+        super().update_visuals_from_data(editor_state) 
+        
+        logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Calling self.update() to schedule repaint.")
+        self.update() # Schedule item repaint
+        
+        if self.scene() and self.scene().views():
+            logger.debug(f"CustomImageMapItem (ID {id(self.map_object_data_ref)}): Calling scene().update() for item's bounding rect.")
+            self.scene().update(self.mapToScene(self.boundingRect()).boundingRect()) # Schedule scene area repaint
+            # Forcing viewport update too, just in case
+            for view in self.scene().views():
+                view.viewport().update()
 
 
 class TriggerSquareMapItem(BaseResizableMapItem):

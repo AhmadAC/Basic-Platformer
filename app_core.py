@@ -6,10 +6,11 @@ Handles window creation, UI views, game loop, input management,
 and game mode orchestration.
 Map loading now uses map_name_folder/map_name_file.py structure.
 MODIFIED: Statue physics and lifecycle management in game loop.
+MODIFIED: Projectiles and P1 melee attacks in host_waiting now target statues.
 MODIFIED: Chest insta-kill logic for P1 in host_waiting mode. (Velocity check removed)
 MODIFIED: Chest interaction rect expanded in host_waiting mode.
 """
-# version 2.1.7 (Chest Interaction Rect Expanded in host_waiting - confirmed include)
+# version 2.1.8 (Statue targeting and refined lifecycle in host_waiting)
 
 import sys
 import os
@@ -43,7 +44,7 @@ try:
     from game_ui import GameSceneWidget, IPInputDialog
     import config as game_config
     from player import Player
-    from statue import Statue
+    from statue import Statue # Import Statue
     from items import Chest # Import Chest
 
     from app_ui_creator import (
@@ -72,27 +73,27 @@ try:
         from server_logic import ServerState
     except ImportError:
         warning("AppCore: server_logic.ServerState not found. Using stub.")
-        class ServerState:
+        class ServerState: # type: ignore
             def __init__(self): self.app_running = True; self.client_ready = False; self.current_map_name = None
     try:
         from client_logic import ClientState
     except ImportError:
         warning("AppCore: client_logic.ClientState not found. Using stub.")
-        class ClientState:
+        class ClientState: # type: ignore
              def __init__(self): self.app_running = True; self.map_download_status = "unknown"
     try:
         from couch_play_logic import run_couch_play_mode
     except ImportError:
         error("AppCore CRITICAL: couch_play_logic.run_couch_play_mode not found! Stubbing.")
-        def run_couch_play_mode(*args: Any, **kwargs: Any) -> bool: return False
+        def run_couch_play_mode(*args: Any, **kwargs: Any) -> bool: return False # type: ignore
 
     try:
         from game_state_manager import reset_game_state
         from game_setup import initialize_game_elements
     except ImportError:
         error("AppCore CRITICAL: game_state_manager.reset_game_state or game_setup.initialize_game_elements not found! Reset will fail.")
-        def reset_game_state(*args: Any, **kwargs: Any): pass
-        def initialize_game_elements(*args: Any, **kwargs: Any) -> bool: return False
+        def reset_game_state(*args: Any, **kwargs: Any): pass # type: ignore
+        def initialize_game_elements(*args: Any, **kwargs: Any) -> bool: return False # type: ignore
 
 except ImportError as e_core_imports:
     print(f"APP_CORE CRITICAL IMPORT ERROR: {e_core_imports}")
@@ -105,7 +106,7 @@ except ImportError as e_core_imports:
 
 PYPERCLIP_AVAILABLE_MAIN = False
 try:
-    import pyperclip
+    import pyperclip # type: ignore
     PYPERCLIP_AVAILABLE_MAIN = True
 except ImportError:
     pass
@@ -163,8 +164,8 @@ class NetworkThread(QThread):
         return {}
 
     def run(self):
-        from server_logic import run_server_mode
-        from client_logic import run_client_mode
+        from server_logic import run_server_mode # Local import
+        from client_logic import run_client_mode # Local import
         try:
             main_window_instance = MainWindow._instance
             if self.mode == "host" and self.server_state and main_window_instance:
@@ -239,7 +240,7 @@ class MainWindow(QMainWindow):
     status_progress_bar_in_dialog: Optional[QProgressBar] = None
 
     NUM_MAP_COLUMNS = 3
-    NetworkThread = NetworkThread
+    NetworkThread = NetworkThread # type: ignore
     render_print_limiter = PrintLimiter(default_limit=1, default_period=3.0)
 
 
@@ -381,7 +382,7 @@ class MainWindow(QMainWindow):
                     warning(f"AppCore Refresh: Failed to init joystick for UI/game. Name: '{getattr(joy_obj, 'name', 'N/A')}', Error: {e_init}")
                     continue
 
-                if ui_joy_count < 4:
+                if ui_joy_count < 4: # Only track up to 4 joysticks for UI navigation
                     self._pygame_joysticks.append(joy_obj)
                     joy_name_ui = getattr(joy_obj, 'name', f"UnknownJoy{ui_joy_count}")
                     debug(f"Added joystick '{joy_name_ui}' (Pygame Index: {joy_obj.get_id()}, Instance ID: {joy_obj.get_instance_id()}) to UI joysticks list (for UI nav).")
@@ -397,16 +398,20 @@ class MainWindow(QMainWindow):
 
     def _handle_config_load_failure(self):
         warning("MainWindow: Game config loading issue. Defaults will be used, joystick list refreshed.")
-        for i in range(1, 5):
+        for i in range(1, 5): # P1 to P4
             player_num_str = f"P{i}"
+            # Set current device to default device
             if hasattr(game_config, f"DEFAULT_{player_num_str}_INPUT_DEVICE"):
                 setattr(game_config, f"CURRENT_{player_num_str}_INPUT_DEVICE", getattr(game_config, f"DEFAULT_{player_num_str}_INPUT_DEVICE"))
-                setattr(game_config, f"{player_num_str}_KEYBOARD_ENABLED", getattr(game_config, f"DEFAULT_{player_num_str}_KEYBOARD_ENABLED", False))
-                setattr(game_config, f"{player_num_str}_CONTROLLER_ENABLED", getattr(game_config, f"DEFAULT_{player_num_str}_CONTROLLER_ENABLED", False))
+            # Set enabled flags to defaults
+            if hasattr(game_config, f"DEFAULT_{player_num_str}_KEYBOARD_ENABLED"):
+                setattr(game_config, f"{player_num_str}_KEYBOARD_ENABLED", getattr(game_config, f"DEFAULT_{player_num_str}_KEYBOARD_ENABLED"))
+            if hasattr(game_config, f"DEFAULT_{player_num_str}_CONTROLLER_ENABLED"):
+                setattr(game_config, f"{player_num_str}_CONTROLLER_ENABLED", getattr(game_config, f"DEFAULT_{player_num_str}_CONTROLLER_ENABLED"))
 
-        game_config.update_player_mappings_from_config()
+        game_config.update_player_mappings_from_config() # Update runtime mappings based on these defaults
         info("MainWindow: Fallback to default config player settings applied due to load failure.")
-        self._refresh_appcore_joystick_list()
+        self._refresh_appcore_joystick_list() # Refresh joystick list after config changes
 
 
     # --- Game Mode Launchers (delegated to app_game_modes) ---
@@ -425,7 +430,8 @@ class MainWindow(QMainWindow):
 
         num_controllers = len(self._pygame_joysticks)
         for i, btn in enumerate(self._couch_coop_player_select_dialog_buttons_ref):
-            players_option = i + 1
+            players_option = i + 1 # Button text is "1 Player", "2 Players", etc.
+            # Basic enablement logic (can be refined in controller settings if P1/P2 are controller-only)
             if players_option <= 2: # P1 and P2 usually keyboard or one controller each
                 btn.setEnabled(True)
             elif players_option == 3: # Needs at least 1 controller for P3 if P1/P2 are on keyboard
@@ -442,7 +448,7 @@ class MainWindow(QMainWindow):
         if self._couch_coop_player_select_dialog and hasattr(self._couch_coop_player_select_dialog, 'selected_players'):
             self.selected_couch_coop_players = self._couch_coop_player_select_dialog.selected_players # type: ignore
             info(f"Couch Co-op: {self.selected_couch_coop_players} players selected.")
-            self.current_modal_dialog = None
+            self.current_modal_dialog = None # Clear modal dialog state
             app_game_modes.initiate_couch_play_map_selection(self)
         else:
             error("Couch Co-op player selection dialog did not return selected_players.")
@@ -649,7 +655,7 @@ class MainWindow(QMainWindow):
 
         if navigated_by_keyboard_this_event:
             self._last_active_input_source = "keyboard"
-            self._ui_nav_focus_controller_index = -1
+            self._ui_nav_focus_controller_index = -1 # Keyboard took over
             if active_ui_element in ["menu", "map_select"]:
                  _update_current_menu_button_focus(self)
             elif active_ui_element == "couch_coop_player_select":
@@ -782,18 +788,29 @@ class MainWindow(QMainWindow):
                                 if self.server_state: self.server_state.current_map_name = map_name_to_reload
                             else: error("AppCore (host_waiting): Game reset FAILED.")
                         else: error("AppCore (host_waiting) Reset: Cannot determine map to reload.")
-                    
+
                     # Re-fetch p1 after potential reset
                     p1 = self.game_elements.get("player1")
                     if p1 and isinstance(p1, Player): # Check again
                         # In host_waiting, P1 is the only "active" player locally.
                         other_players_for_p1_local: List[Player] = [] # No other players to interact with locally
+
+                        # Combine enemies and statues for P1's melee attack targets
+                        hittable_targets_for_p1_melee: List[Any] = []
+                        hittable_targets_for_p1_melee.extend(
+                            [e for e in self.game_elements.get("enemy_list",[]) if hasattr(e, 'alive') and e.alive()]
+                        )
+                        hittable_targets_for_p1_melee.extend(
+                            [s for s in self.game_elements.get("statue_objects", [])
+                             if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)]
+                        )
+
                         p1.update(dt_sec,
                                   self.game_elements.get("platforms_list", []),
                                   self.game_elements.get("ladders_list", []),
                                   self.game_elements.get("hazards_list", []),
-                                  other_players_for_p1_local, # Pass empty list
-                                  self.game_elements.get("enemy_list", []) # Enemies are local
+                                  other_players_for_p1_local, # Pass empty list for other player collisions
+                                  hittable_targets_for_p1_melee # Pass combined list for attack targets
                                   )
 
                     # Update enemies (they are local to the host)
@@ -832,32 +849,34 @@ class MainWindow(QMainWindow):
                         ]
                         if len(new_platforms_list_ac) != len(current_platforms):
                             self.game_elements["platforms_list"] = new_platforms_list_ac
-                            debug(f"AppCore (host_waiting): Updated platforms_list after statue removal.")
+                            debug(f"AppCore (host_waiting): Updated platforms_list after statue removal. New count: {len(new_platforms_list_ac)}")
+
 
                     # Update projectiles (local to host)
                     projectiles_current_list = self.game_elements.get("projectiles_list", [])
                     for proj_obj in list(projectiles_current_list): # Iterate a copy
                         if hasattr(proj_obj, 'update'):
-                            # Targets for P1's projectiles are enemies and statues
+                            # Targets for P1's projectiles are enemies and non-smashed statues
                             proj_targets = [e for e in self.game_elements.get("enemy_list",[]) if hasattr(e, 'alive') and e.alive()]
-                            proj_targets.extend([s for s in self.game_elements.get("statue_objects", []) if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
+                            proj_targets.extend([s for s in self.game_elements.get("statue_objects", [])
+                                                 if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
                             # P1's own projectiles don't hit P1 by default (handled in projectile logic)
                             proj_obj.update(dt_sec, self.game_elements.get("platforms_list",[]), proj_targets)
                         if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
                             projectiles_list_ref = self.game_elements.get("projectiles_list");
                             if proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj)
-                    
+
                     # --- CHEST LOGIC FOR host_waiting (MODIFIED - Velocity check for insta-kill removed, interaction rect expanded) ---
                     current_chest_server: Optional[Chest] = self.game_elements.get("current_chest")
                     if current_chest_server and isinstance(current_chest_server, Chest) and hasattr(current_chest_server, 'alive') and current_chest_server.alive():
-                        current_chest_server.apply_physics_step(dt_sec) 
+                        current_chest_server.apply_physics_step(dt_sec)
 
                         chest_landed_on_p1_and_killed = False
                         if not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed' and \
                            p1 and hasattr(p1, '_valid_init') and p1._valid_init and \
                            hasattr(p1, 'alive') and p1.alive() and \
                            not getattr(p1, 'is_dead', True) and not getattr(p1, 'is_petrified', False):
-                            
+
                             if current_chest_server.rect.intersects(p1.rect):
                                 is_chest_falling_meaningfully_server = hasattr(current_chest_server, 'vel_y') and current_chest_server.vel_y > 1.0
                                 vertical_overlap_landing_server = current_chest_server.rect.bottom() >= p1.rect.top() and \
@@ -875,8 +894,9 @@ class MainWindow(QMainWindow):
                                         p1.insta_kill()
                                     else:
                                         warning(f"CRUSH_FAIL AppCore(host_waiting): P1 missing insta_kill(). Overkilling.")
-                                        p1.take_damage(p1.max_health * 10) 
-                                    
+                                        if hasattr(p1, 'take_damage') and hasattr(p1, 'max_health'):
+                                            p1.take_damage(p1.max_health * 10)
+
                                     current_chest_server.rect.moveBottom(p1.rect.top())
                                     if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
                                     current_chest_server.vel_y = 0.0
@@ -884,11 +904,11 @@ class MainWindow(QMainWindow):
                                     chest_landed_on_p1_and_killed = True
                                     if hasattr(current_chest_server, '_update_rect_from_image_and_pos'):
                                         current_chest_server._update_rect_from_image_and_pos()
-                        
-                        current_chest_server.on_ground = False 
+
+                        current_chest_server.on_ground = False
                         if chest_landed_on_p1_and_killed:
-                            current_chest_server.on_ground = True 
-                        
+                            current_chest_server.on_ground = True
+
                         if not chest_landed_on_p1_and_killed and \
                            not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed':
                             for plat_chest in self.game_elements.get("platforms_list", []):
@@ -896,7 +916,7 @@ class MainWindow(QMainWindow):
                                 if hasattr(plat_chest, 'rect') and current_chest_server.rect.intersects(plat_chest.rect):
                                      scaled_vel_y_chest = current_chest_server.vel_y * dt_sec * C.FPS
                                      previous_chest_bottom_y_estimate = current_chest_server.rect.bottom() - scaled_vel_y_chest
-                                     
+
                                      if current_chest_server.vel_y >=0 and current_chest_server.rect.bottom() >= plat_chest.rect.top() and \
                                         previous_chest_bottom_y_estimate <= plat_chest.rect.top() + C.GROUND_SNAP_THRESHOLD :
                                          min_overlap_ratio_chest = 0.1
@@ -910,7 +930,7 @@ class MainWindow(QMainWindow):
                                              current_chest_server.on_ground = True; break
                             if hasattr(current_chest_server, '_update_rect_from_image_and_pos'):
                                 current_chest_server._update_rect_from_image_and_pos()
-                        
+
                         current_chest_server.update(dt_sec) # Chest animation and state update
 
                         # MODIFIED INTERACTION CHECK HERE for host_waiting
@@ -918,7 +938,7 @@ class MainWindow(QMainWindow):
                         if current_chest_server.state == 'closed' and not current_chest_server.is_collected_flag_internal and \
                            p1 and p1.alive() and not p1.is_dead and not getattr(p1, 'is_petrified', False) and \
                            p1_actions.get("interact", False) and \
-                           hasattr(p1,'rect') and p1.rect.colliderect(interaction_chest_rect_host): # Use adjusted rect
+                           hasattr(p1,'rect') and p1.rect.intersects(interaction_chest_rect_host): # Use adjusted rect
                            current_chest_server.collect(p1)
                            info(f"AppCore(host_waiting): P1 collected chest.")
                     # --- END CHEST LOGIC FOR host_waiting ---

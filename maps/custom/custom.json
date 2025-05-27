@@ -3373,11 +3373,11 @@
                 "scroll_factor_x": 1.0,
                 "scroll_factor_y": 1.0,
                 "apply_gravity": false,
-                "opacity": 23
+                "opacity": 100
             }
         }
     ],
-    "camera_offset_x": 9.0,
+    "camera_offset_x": 26.0,
     "camera_offset_y": 0.0,
     "zoom_level": 0.48225308641975323,
     "show_grid": true,
