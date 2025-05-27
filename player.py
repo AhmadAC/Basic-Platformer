@@ -15,8 +15,10 @@ MODIFIED: Added overall_fire_effect_start_time for 5-second fire cycle override.
 MODIFIED: Zapped GIF path added to _init_common_status_assets.
 MODIFIED: petrify_player call now correctly passes game_elements_ref.
 MODIFIED: Initialized is_crouching earlier in __init__ to prevent AttributeError.
+MODIFIED: Refined Player.petrify logic for consistent state setting and to correctly use the
+          fixed external petrify_player function, ensuring player is fully petrified even in fallback.
 """
-# version 2.1.14 (Fixed is_crouching initialization order)
+# version 2.1.15 (Refined Player.petrify internal logic)
 
 import os
 import sys
@@ -70,10 +72,26 @@ except ImportError as e:
             if hasattr(player, 'state'): player.state = new_state
             warning("Fallback set_player_state used.")
     if 'petrify_player' not in globals():
-        def petrify_player(player, game_elements):
+        def petrify_player(player, game_elements): # type: ignore
             warning("Fallback petrify_player used.")
+            # Basic fallback for petrify_player if import fails
+            if hasattr(player, 'facing_right'): player.facing_at_petrification = player.facing_right
+            if hasattr(player, 'is_crouching'): player.was_crouching_when_petrified = player.is_crouching
+            if hasattr(player, 'is_aflame'): player.is_aflame = False
+            if hasattr(player, 'is_deflaming'): player.is_deflaming = False
+            if hasattr(player, 'overall_fire_effect_start_time'): player.overall_fire_effect_start_time = 0
+            if hasattr(player, 'is_frozen'): player.is_frozen = False
+            if hasattr(player, 'is_defrosting'): player.is_defrosting = False
+            if hasattr(player, 'is_petrified'): player.is_petrified = True
+            if hasattr(player, 'is_stone_smashed'): player.is_stone_smashed = False
+            if hasattr(player, 'is_dead'): player.is_dead = True
+            if hasattr(player, 'current_health'): player.current_health = 0
+            if hasattr(player, 'set_state'): player.set_state('petrified', get_current_ticks_monotonic())
+            if hasattr(player, 'kill'): player.kill()
+
+
     if 'update_player_status_effects' not in globals():
-        def update_player_status_effects(player, current_time_ms):
+        def update_player_status_effects(player, current_time_ms): # type: ignore
             warning("Fallback update_player_status_effects used.")
             return False
 
@@ -546,17 +564,57 @@ class Player:
         self.is_attacking = False; self.attack_type = 0
 
     def petrify(self):
+        # Initial guard: if already petrified, or dead-and-not-petrified, or zapped, do nothing.
         if self.is_petrified or (self.is_dead and not self.is_petrified) or self.is_zapped:
             if hasattr(self, 'print_limiter') and self.print_limiter.can_log(f"petrify_blocked_internal_{self.player_id}"):
-                debug(f"Player {self.player_id}: Internal petrify() blocked by conflicting state.")
+                debug(f"Player {self.player_id}: Internal petrify() blocked by conflicting state (petrified: {self.is_petrified}, dead: {self.is_dead}, zapped: {self.is_zapped}).")
             return
-        if self.game_elements_ref_for_projectiles is None:
-            error(f"Player {self.player_id}: game_elements_ref_for_projectiles is None. Cannot create statue for petrification.")
-            self.facing_at_petrification = self.facing_right; self.was_crouching_when_petrified = self.is_crouching
-            self.is_aflame = False; self.is_deflaming = False
-            if hasattr(self, 'overall_fire_effect_start_time'): self.overall_fire_effect_start_time = 0
-            self.set_state('petrified', get_current_ticks_monotonic()); return
-        petrify_player(self, self.game_elements_ref_for_projectiles)
+
+        # Store crucial state *before* any modifications or external calls.
+        # These are needed by the external petrify_player or by the fallback logic here.
+        self.facing_at_petrification = self.facing_right
+        self.was_crouching_when_petrified = self.is_crouching
+
+        # Clear conflicting status effects.
+        # (External petrify_player also does this, but good for consistency if fallback is taken).
+        self.is_aflame = False
+        self.is_deflaming = False
+        if hasattr(self, 'overall_fire_effect_start_time'):
+            self.overall_fire_effect_start_time = 0
+        self.is_frozen = False
+        self.is_defrosting = False
+        # is_zapped is handled by the guard condition above.
+
+        # Set core petrification flags immediately. These are true whether a statue is created or not.
+        self.is_petrified = True
+        self.is_stone_smashed = False # Player starts as a whole stone statue.
+        self.is_dead = True           # Petrified players are effectively dead/incapacitated.
+        self.current_health = 0       # No health as a statue.
+
+        # Attempt to call the full petrification logic (which creates a statue).
+        if self.game_elements_ref_for_projectiles is not None:
+            # The external petrify_player function (from player_status_effects.py) will:
+            # - use self.facing_at_petrification and self.was_crouching_when_petrified
+            # - re-clear conflicting statuses (redundant but safe)
+            # - re-set self.is_petrified, self.is_dead, etc. (redundant but safe)
+            # - call self.set_state('petrified')
+            # - create the statue object
+            # - add statue to game element lists
+            # - call self.kill()
+            petrify_player(self, self.game_elements_ref_for_projectiles)
+            # After petrify_player returns, the player object `self` has been fully processed.
+        else:
+            # Fallback: Game elements ref is missing, so no statue can be created.
+            # The player still becomes petrified in terms of state and flags.
+            error(f"Player {self.player_id}: game_elements_ref_for_projectiles is None. Cannot create statue. Player will be petrified in-place.")
+            
+            # Set the state to 'petrified'. This will handle animations and ensure visual consistency.
+            self.set_state('petrified', get_current_ticks_monotonic())
+            
+            # Mark the player as inactive/killed, as they are now a non-interactive petrified entity.
+            self.kill() 
+            info(f"Player {self.player_id}: Petrified in-place (no statue created due to missing game_elements_ref).")
+
 
     def smash_petrification(self):
         if self.is_petrified and not self.is_stone_smashed:

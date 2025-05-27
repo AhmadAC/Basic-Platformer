@@ -8,8 +8,9 @@ MODIFIED: Implements 5-second overall fire effect timeout to force 'idle'.
 MODIFIED: If a player is on fire, aflame is cancelled and damage stopped if they become frozen.
 MODIFIED: Calls to set_player_state now use player.set_state() for robustness.
 MODIFIED: Player-derived statue visuals are mirrored based on player's facing_at_petrification.
+MODIFIED: Corrected recursion in petrify_player by directly setting player state instead of calling player.petrify().
 """
-# version 2.0.6 (Player-Statue visual orientation fix)
+# version 2.0.7 (Fixed petrify_player recursion)
 
 import time
 from typing import TYPE_CHECKING, Dict, Any, Optional, List
@@ -27,15 +28,16 @@ if TYPE_CHECKING:
 # Logger and state handler
 try:
     from logger import debug, info, warning, error
-    # We keep the import here for petrify_player, but update_player_status_effects will use player.set_state
-    from player_state_handler import set_player_state as psh_set_player_state
+    # psh_set_player_state import is kept for historical context or if other functions here might use it,
+    # but petrify_player and update_player_status_effects should use player.set_state().
+    from player_state_handler import set_player_state as psh_set_player_state 
 except ImportError:
     print("CRITICAL PLAYER_STATUS_EFFECTS: Failed to import logger or player_state_handler.")
     def debug(msg, *args, **kwargs): print(f"DEBUG_PSTATUS: {msg}")
     def info(msg, *args, **kwargs): print(f"INFO_PSTATUS: {msg}")
     def warning(msg, *args, **kwargs): print(f"WARNING_PSTATUS: {msg}")
     def error(msg, *args, **kwargs): print(f"ERROR_PSTATUS: {msg}")
-    def psh_set_player_state(player, new_state, current_game_time_ms_param=None): # Renamed to avoid conflict if this file uses it elsewhere
+    def psh_set_player_state(player, new_state, current_game_time_ms_param=None):
         if hasattr(player, 'state'): player.state = new_state
         warning(f"Fallback psh_set_player_state used in player_status_effects.py for P{getattr(player, 'player_id', '?')} to '{new_state}'")
 
@@ -46,6 +48,7 @@ def get_current_ticks_monotonic() -> int:
 
 
 def petrify_player(player: 'PlayerClass_TYPE', game_elements: Dict[str, Any]):
+    # This initial check is also in Player.petrify(), serving as a safeguard.
     if player.is_petrified or (player.is_dead and not player.is_petrified) or player.is_zapped:
         debug(f"PlayerStatusEffects (P{player.player_id}): petrify_player called but already petrified, truly dead, or zapped. Ignoring.")
         return
@@ -53,70 +56,68 @@ def petrify_player(player: 'PlayerClass_TYPE', game_elements: Dict[str, Any]):
     player_id_log = getattr(player, 'player_id', 'Unknown')
     info(f"PlayerStatusEffects (P{player_id_log}): Petrifying player.")
 
-    # Store facing direction and crouch state *before* calling set_state('petrified')
-    # because set_state might alter player.facing_right if it involves 'turn' logic internally.
-    facing_at_moment_of_petrification = player.facing_right
-    was_crouching_at_moment_of_petrification = player.is_crouching
+    # Store facing direction and crouch state on the player instance *before* state changes.
+    # These will be used for the statue's appearance and are crucial for consistency.
+    player.facing_at_petrification = player.facing_right
+    player.was_crouching_when_petrified = player.is_crouching
     
-    # Clear conflicting status effects immediately
+    # Clear any conflicting status effects immediately.
     player.is_aflame = False
     player.is_deflaming = False
     if hasattr(player, 'overall_fire_effect_start_time'):
         player.overall_fire_effect_start_time = 0
     player.is_frozen = False
     player.is_defrosting = False
-    player.is_zapped = False # Ensure zapped is also cleared
+    player.is_zapped = False # Ensure zapped is also cleared as it's a conflicting major state.
 
-    # If Player class has its own petrify method that calls its own set_state
-    if hasattr(player, 'petrify') and callable(player.petrify):
-        player.petrify() # This should internally call set_state('petrified')
-                         # and set player.facing_at_petrification and player.was_crouching_when_petrified
-    else: # Fallback direct manipulation + psh_set_player_state
-        player.is_petrified = True
-        player.is_stone_smashed = False
-        player.is_dead = True
-        player.current_health = 0 # Or some "stone health" if desired
-        player.facing_at_petrification = facing_at_moment_of_petrification
-        player.was_crouching_when_petrified = was_crouching_at_moment_of_petrification
-        psh_set_player_state(player, 'petrified', get_current_ticks_monotonic())
+    # Set player's core petrification attributes directly.
+    player.is_petrified = True
+    player.is_stone_smashed = False # Player starts as a whole stone statue.
+    player.is_dead = True           # Petrified players are effectively dead/incapacitated.
+    player.current_health = 0       # No health as a statue (or could be stone-specific health if designed).
+    
+    # Set the player's state to 'petrified' using its own set_state method.
+    # This ensures animations and other state-specific logic are handled correctly.
+    current_time = get_current_ticks_monotonic()
+    player.set_state('petrified', current_time)
 
-    # Now, player.facing_at_petrification and player.was_crouching_when_petrified are definitively set.
+    # --- Statue Creation Logic ---
+    # The player's position (e.g., rect.center()) is used for the statue's initial position.
     statue_center_x = player.rect.center().x()
     statue_center_y = player.rect.center().y()
 
     statue_props = {
         "original_entity_type": "player",
         "original_player_id": player.player_id,
-        "was_crouching": player.was_crouching_when_petrified, # Use the stored value
-        "facing_at_petrification": player.facing_at_petrification, # Use the stored value
+        "was_crouching": player.was_crouching_when_petrified, # Use the stored value from player instance.
+        "facing_at_petrification": player.facing_at_petrification, # Use the stored value from player instance.
+        # Paths for assets; these could potentially be simplified if Statue directly uses player's current stone assets.
         "initial_image_path": getattr(player, 'stone_crouch_image_frame_original_path', None) if player.was_crouching_when_petrified else getattr(player, 'stone_image_frame_original_path', None),
         "smashed_anim_path": getattr(player, 'stone_crouch_smashed_frames_original_path', None) if player.was_crouching_when_petrified else getattr(player, 'stone_smashed_frames_original_path', None)
     }
 
     new_statue = Statue(statue_center_x, statue_center_y,
-                        statue_id=f"player_statue_{player.player_id}_{get_current_ticks_monotonic()}",
+                        statue_id=f"player_statue_{player.player_id}_{current_time}", # Unique ID for the statue.
                         properties=statue_props)
 
-    # --- MODIFICATION: Mirror frames for the new Statue if needed ---
+    # --- Mirroring logic for Statue visuals (copied from v2.0.6) ---
     def get_mirrored_pixmap_if_needed(original_pixmap: QPixmap, should_mirror: bool) -> QPixmap:
         if not should_mirror or original_pixmap.isNull():
-            return original_pixmap.copy() # Return a copy of the original
+            return original_pixmap.copy()
         q_img = original_pixmap.toImage()
         if q_img.isNull():
             warning(f"petrify_player: Could not convert pixmap to QImage for mirroring. Original size: {original_pixmap.size()}")
             return original_pixmap.copy()
-        mirrored_img = q_img.mirrored(True, False) # True for horizontal, False for vertical
+        mirrored_img = q_img.mirrored(True, False)
         return QPixmap.fromImage(mirrored_img)
 
     def get_mirrored_frames_if_needed(original_frames: List[QPixmap], should_mirror: bool) -> List[QPixmap]:
         if not should_mirror:
-            return [f.copy() for f in original_frames if f and not f.isNull()] # Return copies
+            return [f.copy() for f in original_frames if f and not f.isNull()]
         return [get_mirrored_pixmap_if_needed(f, True) for f in original_frames if f and not f.isNull()]
 
-    # Determine if the statue's visuals should be mirrored based on the player's facing direction AT PETRIFICATION
-    should_mirror_statue_visuals = not player.facing_at_petrification # Mirror if player was facing LEFT
+    should_mirror_statue_visuals = not player.facing_at_petrification # Mirror if player was facing LEFT.
 
-    # Apply mirroring to the frames copied TO THE STATUE
     if player.was_crouching_when_petrified:
         if hasattr(player, 'stone_crouch_image_frame_original') and player.stone_crouch_image_frame_original:
             new_statue.initial_image_frames = [get_mirrored_pixmap_if_needed(player.stone_crouch_image_frame_original, should_mirror_statue_visuals)]
@@ -128,14 +129,11 @@ def petrify_player(player: 'PlayerClass_TYPE', game_elements: Dict[str, Any]):
         if hasattr(player, 'stone_smashed_frames_original') and player.stone_smashed_frames_original:
             new_statue.smashed_frames = get_mirrored_frames_if_needed(player.stone_smashed_frames_original, should_mirror_statue_visuals)
     
-    # Set the initial image for the statue based on its (now correctly oriented) frames
     if new_statue.initial_image_frames and not new_statue.initial_image_frames[0].isNull():
         new_statue.image = new_statue.initial_image_frames[0]
-    else: # Fallback if frames became invalid
+    else:
         gray_color = getattr(C, 'GRAY', (128, 128, 128))
-        # Create a placeholder. The Statue's own _create_placeholder_qpixmap can be used if available
-        # or a similar one from Player, then mirror it.
-        placeholder_stone = player._create_placeholder_qpixmap(QColor(*gray_color), "StonePFail") # Assuming player has this method
+        placeholder_stone = player._create_placeholder_qpixmap(QColor(*gray_color), "StonePFail")
         new_statue.image = get_mirrored_pixmap_if_needed(placeholder_stone, should_mirror_statue_visuals)
         new_statue.initial_image_frames = [new_statue.image.copy()]
     
@@ -143,14 +141,17 @@ def petrify_player(player: 'PlayerClass_TYPE', game_elements: Dict[str, Any]):
         dark_gray_color = getattr(C, 'DARK_GRAY', (50, 50, 50))
         placeholder_smashed = player._create_placeholder_qpixmap(QColor(*dark_gray_color), "SmashPFail")
         new_statue.smashed_frames = [get_mirrored_pixmap_if_needed(placeholder_smashed, should_mirror_statue_visuals)]
-    # --- MODIFICATION END ---
+    # --- End Mirroring Logic ---
 
-    new_statue._update_rect_from_image_and_pos() # Call after image and frames are correctly set
+    new_statue._update_rect_from_image_and_pos() # Ensure statue's collision rectangle is set.
 
     if not new_statue._valid_init:
-        error(f"PlayerStatusEffects (P{player_id_log}): Failed to initialize Statue for petrified player. Player not fully removed.")
-        return
+        error(f"PlayerStatusEffects (P{player_id_log}): Failed to initialize Statue for petrified player. Player state might be inconsistent.")
+        # Player is already set to 'petrified', but statue creation failed.
+        # player.kill() will still be called below.
+        return # Potentially skip adding a faulty statue to lists.
 
+    # Add the newly created statue to relevant game element lists.
     statue_objects_list = game_elements.get("statue_objects")
     if statue_objects_list is not None:
         statue_objects_list.append(new_statue)
@@ -161,8 +162,9 @@ def petrify_player(player: 'PlayerClass_TYPE', game_elements: Dict[str, Any]):
     if all_renderables_list is not None:
         all_renderables_list.append(new_statue)
     else:
-        warning(f"PlayerStatusEffects (P{player_id_log}): 'all_renderable_objects' list not found in game_elements.")
+        warning(f"PlayerStatusEffects (P{player_id_log}): 'all_renderable_objects' list not found in game_elements. Statue may not be drawn.")
 
+    # If the statue is not immediately smashed, it should act as a platform.
     if not new_statue.is_smashed:
         platforms_list_ref = game_elements.get("platforms_list")
         if platforms_list_ref is not None:
@@ -171,10 +173,13 @@ def petrify_player(player: 'PlayerClass_TYPE', game_elements: Dict[str, Any]):
         else:
             warning(f"PlayerStatusEffects (P{player_id_log}): 'platforms_list' not found in game_elements. Statue will not be solid.")
 
-    player.kill()
-    info(f"PlayerStatusEffects (P{player_id_log}): Player petrified, new Statue ID {new_statue.statue_id} created.")
+    # Finalize the player's state: mark them as inactive.
+    player.kill() # This typically sets an internal flag like `_alive = False`.
+    info(f"PlayerStatusEffects (P{player_id_log}): Player petrified, new Statue ID {new_statue.statue_id} created and player marked as killed.")
 
 
+# The rest of player_status_effects.py (like update_player_status_effects) remains unchanged by this specific fix.
+# update_player_status_effects function from v2.0.6:
 def update_player_status_effects(player: 'PlayerClass_TYPE', current_time_ms: int) -> bool:
     player_id_log = f"P{player.player_id}"
 

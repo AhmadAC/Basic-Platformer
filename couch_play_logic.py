@@ -365,31 +365,31 @@ def run_couch_play_mode(
     game_elements_ref["all_renderable_objects"] = new_all_renderables_couch
     log_debug(f"COUCH_PLAY: Assembled renderables. Count: {len(game_elements_ref['all_renderable_objects'])}")
 
-    # --- Game Over Check ---
-    # ... (existing game over check logic remains the same) ...
-    def is_player_truly_gone_couch(p_instance_couch):
-        if not p_instance_couch or not hasattr(p_instance_couch, '_valid_init') or not p_instance_couch._valid_init: return True
-        if hasattr(p_instance_couch, 'alive') and p_instance_couch.alive():
-            if getattr(p_instance_couch, 'is_dead', False):
-                if getattr(p_instance_couch, 'is_petrified', False) and not getattr(p_instance_couch, 'is_stone_smashed', False): return False
-                elif not getattr(p_instance_couch, 'death_animation_finished', True): return False
-            else: return False
-        return True
-    num_players_for_mode = game_elements_ref.get('num_active_players_for_mode', 2)
-    active_player_instances_in_map_couch = [p for p_idx, p in enumerate([player1,player2,player3,player4]) if p_idx < num_players_for_mode and p and hasattr(p, '_valid_init') and p._valid_init]
-    if not active_player_instances_in_map_couch:
-        log_info(f"Couch Play: No active player instances for this mode ({num_players_for_mode} players). Game Over by default.")
-        if show_status_message_callback: show_status_message_callback(f"Game Over! No active players.")
-        run_couch_play_mode._platform_debug_printed_couch = False
-        return False
-    all_active_players_are_gone_couch = True
-    for p_active_inst_couch in active_player_instances_in_map_couch:
-        if not is_player_truly_gone_couch(p_active_inst_couch): all_active_players_are_gone_couch = False; break
-    if all_active_players_are_gone_couch:
-        log_info(f"Couch Play: All {len(active_player_instances_in_map_couch)} active players are gone. Game Over.")
-        if show_status_message_callback: show_status_message_callback(f"Game Over! All {len(active_player_instances_in_map_couch)} players defeated.")
-        process_qt_events_callback(); time.sleep(1.5); run_couch_play_mode._platform_debug_printed_couch = False
-        return False
+    # # --- Game Over Check ---
+    # # ... (existing game over check logic remains the same) ...
+    # def is_player_truly_gone_couch(p_instance_couch):
+    #     if not p_instance_couch or not hasattr(p_instance_couch, '_valid_init') or not p_instance_couch._valid_init: return True
+    #     if hasattr(p_instance_couch, 'alive') and p_instance_couch.alive():
+    #         if getattr(p_instance_couch, 'is_dead', False):
+    #             if getattr(p_instance_couch, 'is_petrified', False) and not getattr(p_instance_couch, 'is_stone_smashed', False): return False
+    #             elif not getattr(p_instance_couch, 'death_animation_finished', True): return False
+    #         else: return False
+    #     return True
+    # num_players_for_mode = game_elements_ref.get('num_active_players_for_mode', 2)
+    # active_player_instances_in_map_couch = [p for p_idx, p in enumerate([player1,player2,player3,player4]) if p_idx < num_players_for_mode and p and hasattr(p, '_valid_init') and p._valid_init]
+    # if not active_player_instances_in_map_couch:
+    #     log_info(f"Couch Play: No active player instances for this mode ({num_players_for_mode} players). Game Over by default.")
+    #     if show_status_message_callback: show_status_message_callback(f"Game Over! No active players.")
+    #     run_couch_play_mode._platform_debug_printed_couch = False
+    #     return False
+    # all_active_players_are_gone_couch = True
+    # for p_active_inst_couch in active_player_instances_in_map_couch:
+    #     if not is_player_truly_gone_couch(p_active_inst_couch): all_active_players_are_gone_couch = False; break
+    # if all_active_players_are_gone_couch:
+    #     log_info(f"Couch Play: All {len(active_player_instances_in_map_couch)} active players are gone. Game Over.")
+    #     if show_status_message_callback: show_status_message_callback(f"Game Over! All {len(active_player_instances_in_map_couch)} players defeated.")
+    #     process_qt_events_callback(); time.sleep(1.5); run_couch_play_mode._platform_debug_printed_couch = False
+    #     return False
 
     log_debug(f"COUCH_PLAY: --- End of frame {get_current_ticks_monotonic()} ---")
     return True

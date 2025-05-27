@@ -431,8 +431,8 @@ def set_network_game_state(
     # --- Finalize all_renderable_objects for this frame ---
     game_elements["all_renderable_objects"] = new_all_renderables
     
-    # Sync game over state
-    game_elements['game_over_server_state'] = network_state_data.get('game_over', False)
+    # # Sync game over state
+    # game_elements['game_over_server_state'] = network_state_data.get('game_over', False)
 
     # --- Handle Camera Update for Client if Map Dimensions Changed ---
     server_map_name = network_state_data.get('map_name')

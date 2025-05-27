@@ -299,8 +299,8 @@ class GameSceneWidget(QWidget):
                     dialog_title_text = "File Transfer"
                 elif "Loading" in self.download_status_message:
                     dialog_title_text = "Loading Level"
-                elif "Game Over" in self.download_status_message:
-                    dialog_title_text = "Game Over"
+                # elif "Game Over" in self.download_status_message:
+                #     dialog_title_text = "Game Over"
 
             painter.setFont(title_font); title_text_rect = dialog_rect.adjusted(10,10,-10,-10)
             painter.drawText(title_text_rect, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop, dialog_title_text)
