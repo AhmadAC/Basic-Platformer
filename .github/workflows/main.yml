@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-windows:
-    name: Platformer by Ahmad Cooper
+    name: Platformer by Ahmad Cooper (One-File Windows Build)
     runs-on: windows-latest
 
     steps:
@@ -25,6 +25,12 @@ jobs:
         cache: 'pip'
         cache-dependency-path: requirements.txt
 
+    - name: Display Python and PyInstaller versions
+      run: |
+        python -V
+        pip show pyinstaller
+      shell: pwsh
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -36,13 +42,13 @@ jobs:
         }
       shell: pwsh
 
-    - name: Generate Platformer.spec
+    - name: Generate Platformer.spec (for One-File) # Use the updated spec generation from above
       shell: bash
       run: |
         echo "# -*- mode: python ; coding: utf-8 -*-" > Platformer.spec
         echo "block_cipher = None" >> Platformer.spec
         echo "a = Analysis(" >> Platformer.spec
-        echo "    ['app_core.py']," >> Platformer.spec  # <--- UPDATED TO app_core.py .
+        echo "    ['app_core.py']," >> Platformer.spec
         echo "    pathex=['.']," >> Platformer.spec
         echo "    binaries=[]," >> Platformer.spec
         echo "    datas=[" >> Platformer.spec
@@ -85,34 +91,26 @@ jobs:
         echo "    win_private_assemblies=False," >> Platformer.spec
         echo "    cipher=block_cipher," >> Platformer.spec
         echo "    noarchive=False," >> Platformer.spec
-        echo "    optimize=0" >> Platformer.spec
+        echo "    optimize=0" >> Platformer.spec # You can try optimize=1 or 2 for smaller files, but test thoroughly
         echo ")" >> Platformer.spec
         echo "pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)" >> Platformer.spec
         echo "exe = EXE(" >> Platformer.spec
         echo "    pyz," >> Platformer.spec
         echo "    a.scripts," >> Platformer.spec
-        echo "    []," >> Platformer.spec
+        echo "    a.binaries," >> Platformer.spec   # Corrected to include binaries
         echo "    a.zipfiles," >> Platformer.spec
         echo "    a.datas," >> Platformer.spec
         echo "    name='Platformer'," >> Platformer.spec
-        echo "    debug=False," >> Platformer.spec
+        echo "    debug=False," >> Platformer.spec # Set to True for more bootloader debug info if needed
         echo "    bootloader_ignore_signals=False," >> Platformer.spec
         echo "    strip=False," >> Platformer.spec
-        echo "    upx=True," >> Platformer.spec
+        echo "    upx=False," >> Platformer.spec     # Changed to False
         echo "    upx_exclude=[]," >> Platformer.spec
-        echo "    runtime_tmpdir=None," >> Platformer.spec
-        echo "    console=False," >> Platformer.spec
+        echo "    runtime_tmpdir=None," >> Platformer.spec # Or set to a specific path for debugging extraction
+        echo "    console=False," >> Platformer.spec # Set to True to see bootloader messages if app crashes early
+        echo "    onefile=True" >> Platformer.spec
         echo ")" >> Platformer.spec
-        echo "coll = COLLECT(" >> Platformer.spec
-        echo "    exe," >> Platformer.spec
-        echo "    a.binaries," >> Platformer.spec
-        echo "    a.zipfiles," >> Platformer.spec
-        echo "    a.datas," >> Platformer.spec
-        echo "    strip=False," >> Platformer.spec
-        echo "    upx=True," >> Platformer.spec
-        echo "    upx_exclude=[]," >> Platformer.spec
-        echo "    name='Platformer'" >> Platformer.spec
-        echo ")" >> Platformer.spec
+        # No COLLECT block
 
     - name: Display generated Platformer.spec
       if: always()
@@ -122,14 +120,14 @@ jobs:
         echo "-----------------------------------------"
       shell: pwsh
 
-    - name: Platformer
+    - name: Build Platformer (One-File)
       run: |
         pyinstaller --noconfirm --log-level INFO Platformer.spec
       shell: pwsh
 
-    - name: Upload Platformer Windows Build Artifact
+    - name: Upload Platformer Windows Build Artifact (OneFile)
       uses: actions/upload-artifact@v4
       with:
-        name: Platformer-Windows-Release
-        path: dist/Platformer/
+        name: Platformer-Windows-Release-OneFile
+        path: dist/Platformer.exe # Updated path for one-file
         if-no-files-found: error
