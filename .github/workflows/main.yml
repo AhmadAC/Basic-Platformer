@@ -42,7 +42,7 @@ jobs:
         echo "# -*- mode: python ; coding: utf-8 -*-" > Platformer.spec
         echo "block_cipher = None" >> Platformer.spec
         echo "a = Analysis(" >> Platformer.spec
-        echo "    ['app_core.py']," >> Platformer.spec  # <--- UPDATED TO app_core.py
+        echo "    ['app_core.py']," >> Platformer.spec  # <--- UPDATED TO app_core.py .
         echo "    pathex=['.']," >> Platformer.spec
         echo "    binaries=[]," >> Platformer.spec
         echo "    datas=[" >> Platformer.spec
