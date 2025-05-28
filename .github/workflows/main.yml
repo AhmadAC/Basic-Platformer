@@ -23,13 +23,7 @@ jobs:
       with:
         python-version: '3.11'
         cache: 'pip'
-        cache-dependency-path: requirements.txt
-
-    - name: Display Python and PyInstaller versions
-      run: |
-        python -V
-        pip show pyinstaller
-      shell: pwsh
+        cache-dependency-path: requirements.txt # If you have one
 
     - name: Install dependencies
       run: |
@@ -38,89 +32,123 @@ jobs:
             pip install -r requirements.txt
         } else {
             Write-Host "requirements.txt not found. Installing default PyInstaller dependencies."
+            # Ensure all direct dependencies are listed if not in requirements.txt
             pip install pyinstaller pygame PySide6 Pillow numpy 
         }
       shell: pwsh
 
-    - name: Generate Platformer.spec (for One-File) # Use the updated spec generation from above
-      shell: bash
+    - name: Display Python and PyInstaller versions # MOVED HERE
       run: |
-        echo "# -*- mode: python ; coding: utf-8 -*-" > Platformer.spec
-        echo "block_cipher = None" >> Platformer.spec
-        echo "a = Analysis(" >> Platformer.spec
-        echo "    ['app_core.py']," >> Platformer.spec
-        echo "    pathex=['.']," >> Platformer.spec
-        echo "    binaries=[]," >> Platformer.spec
-        echo "    datas=[" >> Platformer.spec
-        echo "        ('characters/assets', 'characters/assets')," >> Platformer.spec
-        echo "        ('characters/cactus', 'characters/cactus')," >> Platformer.spec
-        echo "        ('characters/gray', 'characters/gray')," >> Platformer.spec
-        echo "        ('characters/green', 'characters/green')," >> Platformer.spec
-        echo "        ('characters/items', 'characters/items')," >> Platformer.spec
-        echo "        ('characters/orange', 'characters/orange')," >> Platformer.spec
-        echo "        ('characters/pink', 'characters/pink')," >> Platformer.spec
-        echo "        ('characters/player1', 'characters/player1')," >> Platformer.spec
-        echo "        ('characters/player2', 'characters/player2')," >> Platformer.spec
-        echo "        ('characters/player3', 'characters/player3')," >> Platformer.spec
-        echo "        ('characters/player4', 'characters/player4')," >> Platformer.spec
-        echo "        ('characters/purple', 'characters/purple')," >> Platformer.spec
-        echo "        ('characters/Shadow', 'characters/Shadow')," >> Platformer.spec
-        echo "        ('characters/Stone', 'characters/Stone')," >> Platformer.spec
-        echo "        ('characters/truck', 'characters/truck')," >> Platformer.spec
-        echo "        ('characters/weapons', 'characters/weapons')," >> Platformer.spec
-        echo "        ('characters/yellow', 'characters/yellow')," >> Platformer.spec
-        echo "        ('maps', 'maps')," >> Platformer.spec
-        echo "        ('controller_settings', 'controller_settings')," >> Platformer.spec
-        echo "        ('3d models', '3d models')," >> Platformer.spec
-        echo "        ('game_config.json', '.')," >> Platformer.spec
-        echo "    ]," >> Platformer.spec
-        echo "    hiddenimports=[" >> Platformer.spec
-        echo "        'PIL'," >> Platformer.spec
-        echo "        'PIL.Image'," >> Platformer.spec
-        echo "        'numpy'," >> Platformer.spec
-        echo "        'PySide6.QtGui'," >> Platformer.spec
-        echo "        'PySide6.QtCore'," >> Platformer.spec
-        echo "        'PySide6.QtWidgets'," >> Platformer.spec
-        echo "        'pygame'," >> Platformer.spec
-        echo "    ]," >> Platformer.spec
-        echo "    hookspath=[]," >> Platformer.spec
-        echo "    hooksconfig={}," >> Platformer.spec
-        echo "    runtime_hooks=[]," >> Platformer.spec
-        echo "    excludes=[]," >> Platformer.spec
-        echo "    win_no_prefer_redirects=False," >> Platformer.spec
-        echo "    win_private_assemblies=False," >> Platformer.spec
-        echo "    cipher=block_cipher," >> Platformer.spec
-        echo "    noarchive=False," >> Platformer.spec
-        echo "    optimize=0" >> Platformer.spec # You can try optimize=1 or 2 for smaller files, but test thoroughly
-        echo ")" >> Platformer.spec
-        echo "pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)" >> Platformer.spec
-        echo "exe = EXE(" >> Platformer.spec
-        echo "    pyz," >> Platformer.spec
-        echo "    a.scripts," >> Platformer.spec
-        echo "    a.binaries," >> Platformer.spec   # Corrected to include binaries
-        echo "    a.zipfiles," >> Platformer.spec
-        echo "    a.datas," >> Platformer.spec
-        echo "    name='Platformer'," >> Platformer.spec
-        echo "    debug=False," >> Platformer.spec # Set to True for more bootloader debug info if needed
-        echo "    bootloader_ignore_signals=False," >> Platformer.spec
-        echo "    strip=False," >> Platformer.spec
-        echo "    upx=False," >> Platformer.spec     # Changed to False
-        echo "    upx_exclude=[]," >> Platformer.spec
-        echo "    runtime_tmpdir=None," >> Platformer.spec # Or set to a specific path for debugging extraction
-        echo "    console=False," >> Platformer.spec # Set to True to see bootloader messages if app crashes early
-        echo "    onefile=True" >> Platformer.spec
-        echo ")" >> Platformer.spec
-        # No COLLECT block
-
-    - name: Display generated Platformer.spec
-      if: always()
-      run: |
-        echo "--- Generated Platformer.spec content ---"
-        type Platformer.spec 
-        echo "-----------------------------------------"
+        python -V
+        pip show pyinstaller # This should now work
       shell: pwsh
 
-    - name: Build Platformer (One-File)
+    - name: Generate Platformer.spec (using heredoc)
+      shell: bash # Using bash for heredoc
+      run: |
+        echo "--- In Generate Platformer.spec step (heredoc) ---"
+        echo "Current directory (bash before generation): $(pwd)"
+        
+        cat <<EOF > Platformer.spec
+        # -*- mode: python ; coding: utf-8 -*-
+        block_cipher = None
+        a = Analysis(
+            ['app_core.py'],
+            pathex=['.'],
+            binaries=[], # PyInstaller populates a.binaries
+            datas=[
+                ('characters/assets', 'characters/assets'),
+                ('characters/cactus', 'characters/cactus'),
+                ('characters/gray', 'characters/gray'),
+                ('characters/green', 'characters/green'),
+                ('characters/items', 'characters/items'),
+                ('characters/orange', 'characters/orange'),
+                ('characters/pink', 'characters/pink'),
+                ('characters/player1', 'characters/player1'),
+                ('characters/player2', 'characters/player2'),
+                ('characters/player3', 'characters/player3'),
+                ('characters/player4', 'characters/player4'),
+                ('characters/purple', 'characters/purple'),
+                ('characters/Shadow', 'characters/Shadow'),
+                ('characters/Stone', 'characters/Stone'),
+                ('characters/truck', 'characters/truck'),
+                ('characters/weapons', 'characters/weapons'),
+                ('characters/yellow', 'characters/yellow'),
+                ('maps', 'maps'),
+                ('controller_settings', 'controller_settings'),
+                ('3d models', '3d models'),
+                ('game_config.json', '.'),
+            ],
+            hiddenimports=[
+                'PIL',
+                'PIL.Image',
+                'numpy',
+                'PySide6.QtGui',
+                'PySide6.QtCore',
+                'PySide6.QtWidgets',
+                'pygame',
+            ],
+            hookspath=[],
+            hooksconfig={},
+            runtime_hooks=[],
+            excludes=[],
+            win_no_prefer_redirects=False,
+            win_private_assemblies=False,
+            cipher=block_cipher,
+            noarchive=False,
+            optimize=0
+        )
+        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+        exe = EXE(
+            pyz,
+            a.scripts,
+            a.binaries, # Make sure PyInstaller adds necessary DLLs here
+            a.zipfiles,
+            a.datas,
+            name='Platformer',
+            debug=False, # Set to True for bootloader debug info if EXE fails later
+            bootloader_ignore_signals=False,
+            strip=False,
+            upx=False,     # UPX disabled as it can cause issues
+            upx_exclude=[],
+            runtime_tmpdir=None, # Or a specific path for debugging _MEI extraction
+            console=False, # Set to True to see console output/errors from the EXE
+            onefile=True
+        )
+        EOF
+
+        echo "Current directory (bash after generation): $(pwd)"
+        echo "Listing files in current directory (bash):"
+        ls -la
+        echo "Checking if Platformer.spec exists and its content (bash):"
+        if [ -f Platformer.spec ]; then
+            echo "Platformer.spec CREATED. Content:"
+            cat Platformer.spec
+        else
+            echo "Platformer.spec WAS NOT CREATED by bash heredoc method."
+        fi
+        echo "--- End of Generate Platformer.spec step ---"
+
+    - name: Display generated Platformer.spec (PowerShell)
+      if: always() # Run this step even if previous ones fail, for debugging
+      run: |
+        echo "--- In Display generated Platformer.spec step (PowerShell) ---"
+        echo "Current directory (pwsh): $(Get-Location | Select-Object -ExpandProperty Path)"
+        echo "Listing files in current directory (pwsh):"
+        Get-ChildItem
+        if (Test-Path Platformer.spec) {
+            echo "Platformer.spec FOUND by PowerShell. Content:"
+            type Platformer.spec
+        } else {
+            echo "Platformer.spec NOT FOUND by PowerShell."
+            # List files in parent directory too, just in case
+            echo "Listing files in parent directory (pwsh):"
+            Get-ChildItem ..\
+        }
+        echo "--- End of Display generated Platformer.spec step ---"
+      shell: pwsh
+
+    - name: Build Platformer Executable
       run: |
         pyinstaller --noconfirm --log-level INFO Platformer.spec
       shell: pwsh
@@ -129,5 +157,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Platformer-Windows-Release-OneFile
-        path: dist/Platformer.exe # Updated path for one-file
+        path: dist/Platformer.exe # Path to the single .exe file for one-file builds
         if-no-files-found: error
