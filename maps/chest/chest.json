@@ -3358,7 +3358,9 @@
             "properties": {
                 "item_type": "coin",
                 "item_quantity": 1,
-                "requires_key_id": ""
+                "requires_key_id": "",
+                "last_visible_opacity": 100,
+                "opacity": 100
             },
             "is_flipped_h": false,
             "rotation": 0,
@@ -3396,11 +3398,39 @@
             "rotation": 0,
             "editor_hidden": false,
             "editor_locked": false
+        },
+        {
+            "asset_editor_key": "custom_image_object",
+            "crop_rect": null,
+            "current_height": 961,
+            "current_width": 1575,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "game_type_id": "custom_image_object",
+            "is_flipped_h": false,
+            "layer_order": -1,
+            "original_height": 720,
+            "original_width": 1280,
+            "properties": {
+                "apply_gravity": false,
+                "destructible": false,
+                "health": 100,
+                "is_background": true,
+                "is_obstacle": false,
+                "opacity": 81,
+                "scroll_factor_x": 1.0,
+                "scroll_factor_y": 0.0,
+                "last_visible_opacity": 81
+            },
+            "rotation": 0,
+            "source_file_path": "Custom/BB1msOZ9.jpg",
+            "world_x": 12,
+            "world_y": 17
         }
     ],
-    "camera_offset_x": 127.0,
-    "camera_offset_y": -116.0,
-    "zoom_level": 1.0,
+    "camera_offset_x": 0.0,
+    "camera_offset_y": 0.0,
+    "zoom_level": 0.3348979766803842,
     "show_grid": true,
     "asset_specific_variables": {}
 }

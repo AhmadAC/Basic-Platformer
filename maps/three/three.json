@@ -4,9 +4,9 @@
     "map_height_tiles": 25,
     "grid_size": 40.0,
     "background_color": [
-        173,
-        216,
-        230
+        0,
+        0,
+        0
     ],
     "placed_objects": [
         {
@@ -5622,24 +5622,29 @@
         },
         {
             "asset_editor_key": "platform_wall_gray",
-            "world_x": 520,
-            "world_y": 560,
+            "editor_hidden": false,
+            "editor_locked": false,
             "game_type_id": "platform_wall_gray",
-            "layer_order": 0,
-            "properties": {
-                "destructible": true,
-                "health": 100,
-                "material_type": "stone"
-            },
             "is_flipped_h": false,
+            "layer_order": 0,
             "override_color": [
                 85,
                 170,
                 127
             ],
+            "properties": {
+                "corner_radius": 12,
+                "destructible": true,
+                "health": 1,
+                "material_type": "stone",
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "round_top_left": true,
+                "round_top_right": true
+            },
             "rotation": 0,
-            "editor_hidden": false,
-            "editor_locked": false
+            "world_x": 520,
+            "world_y": 560
         },
         {
             "asset_editor_key": "item_chest",
@@ -5672,11 +5677,176 @@
             "rotation": 0,
             "editor_hidden": false,
             "editor_locked": false
+        },
+        {
+            "asset_editor_key": "custom_image_object",
+            "crop_rect": null,
+            "current_height": 967,
+            "current_width": 1539,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "game_type_id": "custom_image_object",
+            "is_flipped_h": false,
+            "layer_order": -1,
+            "original_height": 1080,
+            "original_width": 1920,
+            "properties": {
+                "apply_gravity": false,
+                "destructible": false,
+                "health": 100,
+                "is_background": true,
+                "is_obstacle": false,
+                "opacity": 26,
+                "scroll_factor_x": 1.0,
+                "scroll_factor_y": 1.0
+            },
+            "rotation": 0,
+            "source_file_path": "Custom/R-C.jpg",
+            "world_x": 44,
+            "world_y": 24
+        },
+        {
+            "asset_editor_key": "platform_wall_gray_1_3_right",
+            "world_x": 1200,
+            "world_y": 880,
+            "game_type_id": "platform_wall_gray_1_3_right",
+            "layer_order": 0,
+            "properties": {
+                "destructible": false,
+                "health": 100,
+                "material_type": "stone",
+                "corner_radius": 0,
+                "round_top_left": true,
+                "round_top_right": true,
+                "round_bottom_left": true,
+                "round_bottom_right": true,
+                "is_boundary": false
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "override_color": [
+                170,
+                0,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 1360,
+            "world_y": 160,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "layer_order": 0,
+            "properties": {
+                "destructible": false,
+                "health": 20,
+                "is_breakable_by_heavy": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "override_color": [
+                170,
+                0,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 840,
+            "world_y": 200,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "layer_order": 0,
+            "properties": {
+                "destructible": false,
+                "health": 20,
+                "is_breakable_by_heavy": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "override_color": [
+                170,
+                0,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 760,
+            "world_y": 200,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "layer_order": 0,
+            "properties": {
+                "destructible": false,
+                "health": 20,
+                "is_breakable_by_heavy": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "override_color": [
+                170,
+                0,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "platform_ledge_green_one_fourth",
+            "world_x": 800,
+            "world_y": 200,
+            "game_type_id": "platform_ledge_green_one_fourth",
+            "layer_order": 0,
+            "properties": {
+                "destructible": false,
+                "health": 20,
+                "is_breakable_by_heavy": true
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "override_color": [
+                170,
+                0,
+                0
+            ]
+        },
+        {
+            "asset_editor_key": "trigger_square",
+            "current_height": 167,
+            "current_width": 109,
+            "editor_hidden": false,
+            "editor_locked": false,
+            "game_type_id": "trigger_square_link",
+            "is_flipped_h": false,
+            "layer_order": 0,
+            "properties": {
+                "activation_id": "",
+                "fill_color_rgba": [
+                    100,
+                    100,
+                    255,
+                    100
+                ],
+                "image_in_square": "Custom/OIP-C.jpg",
+                "linked_map_name": "big",
+                "one_time_trigger": true,
+                "trigger_event_type": "player_enter",
+                "visible": true
+            },
+            "rotation": 0,
+            "world_x": 960,
+            "world_y": 357
         }
     ],
-    "camera_offset_x": -316.0,
-    "camera_offset_y": 542.0,
-    "zoom_level": 0.3348979766803842,
+    "camera_offset_x": 0.0,
+    "camera_offset_y": 148.0,
+    "zoom_level": 0.6944444444444448,
     "show_grid": true,
     "asset_specific_variables": {}
 }
