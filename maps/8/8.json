@@ -3351,34 +3351,35 @@
         },
         {
             "asset_editor_key": "custom_image_object",
-            "game_type_id": "custom_image_object",
-            "world_x": 160,
-            "world_y": 600,
-            "source_file_path": "Custom/OIP-C.jpg",
-            "original_width": 474,
-            "original_height": 629,
-            "current_width": 175,
-            "current_height": 273,
             "crop_rect": {
+                "height": 629,
+                "width": 471,
                 "x": 0,
-                "y": 0,
-                "width": 474,
-                "height": 629
+                "y": 0
             },
-            "layer_order": 10,
-            "rotation": 0,
-            "is_flipped_h": false,
+            "current_height": 273,
+            "current_width": 175,
             "editor_hidden": false,
             "editor_locked": false,
+            "game_type_id": "custom_image_object",
+            "is_flipped_h": false,
+            "layer_order": 10,
+            "original_height": 629,
+            "original_width": 474,
             "properties": {
-                "is_background": false,
-                "is_obstacle": true,
+                "apply_gravity": true,
                 "destructible": false,
                 "health": 100,
+                "is_background": false,
+                "is_obstacle": true,
+                "opacity": 48,
                 "scroll_factor_x": 1.0,
-                "scroll_factor_y": 1.0,
-                "apply_gravity": false
-            }
+                "scroll_factor_y": 1.0
+            },
+            "rotation": 0,
+            "source_file_path": "Custom/OIP-C.jpg",
+            "world_x": 160,
+            "world_y": 600
         },
         {
             "asset_editor_key": "trigger_square",
