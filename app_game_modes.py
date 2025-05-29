@@ -7,8 +7,9 @@ Map paths now use map_name_folder/map_name_file.py structure.
 MODIFIED: Deferred import of initialize_game_elements.
 MODIFIED: Refined camera setup timing in prepare_and_start_game_logic.
 MODIFIED: Added more debug logs for camera state.
+MODIFIED: Ensures MainWindow.map_change_is_active is reset on various exit paths.
 """
-# version 2.1.3 (Enhanced camera debugging logs)
+# version 2.1.4 (Ensure map_change_is_active reset)
 
 import os
 import sys
@@ -105,12 +106,15 @@ def _initialize_game_entities(main_window: 'MainWindow', map_name_folder_stem: s
     if mode == "couch_play" and num_players_for_couch_coop is not None:
         main_window.game_elements['num_active_players_for_mode'] = num_players_for_couch_coop
     else:
-        main_window.game_elements['num_active_players_for_mode'] = 2
+        # For host mode, default to 2 players for camera setup and general logic,
+        # actual player count is handled by server/client sync.
+        main_window.game_elements['num_active_players_for_mode'] = 2 if mode != "join_ip" and mode != "join_lan" else 1
+
 
     success = initialize_game_elements(
         current_width=int(screen_w),
         current_height=int(screen_h),
-        game_elements_ref=main_window.game_elements, # Pass the main_window's dictionary
+        game_elements_ref=main_window.game_elements,
         for_game_mode=mode,
         map_module_name=map_name_folder_stem
     )
@@ -167,49 +171,46 @@ def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str,
                                  num_players_for_couch_coop: Optional[int] = None):
     info(f"GAME_MODES: Preparing game. Mode: {mode}, Map: {map_name_folder_stem}, Target: {target_ip_port}, CouchPlayers: {num_players_for_couch_coop}")
 
-    # Robust check for application shutdown state
     if not main_window or not hasattr(main_window, 'app_status') or not main_window.app_status.app_running:
         info(f"GAME_MODES: prepare_and_start_game_logic called but app is not running or main_window/app_status invalid (Mode: {mode}). Aborting preparation.")
-        # Simplified cleanup for this path as main window might be partially destroyed
         if hasattr(main_window, 'status_dialog') and main_window.status_dialog and main_window.status_dialog.isVisible():
             _close_status_dialog(main_window)
-        # Also attempt to reject known modal dialogs if they are active and this function was called
-        if hasattr(main_window, 'current_modal_dialog') and main_window.current_modal_dialog:
-            dialog_to_close = None
-            if main_window.current_modal_dialog == "ip_input" and hasattr(main_window, 'ip_input_dialog'):
-                dialog_to_close = main_window.ip_input_dialog
-            elif main_window.current_modal_dialog == "lan_search" and hasattr(main_window, 'lan_search_dialog'):
-                dialog_to_close = main_window.lan_search_dialog
-            elif main_window.current_modal_dialog == "couch_coop_player_select" and hasattr(main_window, '_couch_coop_player_select_dialog'):
-                dialog_to_close = main_window._couch_coop_player_select_dialog
-            
-            if dialog_to_close and hasattr(dialog_to_close, 'isVisible') and dialog_to_close.isVisible() and hasattr(dialog_to_close, 'reject'):
-                debug(f"GAME_MODES (Shutdown): Rejecting active dialog '{main_window.current_modal_dialog}'.")
-                dialog_to_close.reject()
+        if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
         return
-    # --- END ADDED CHECK ---
 
     main_window.current_game_mode = mode
     main_window.game_elements['current_game_mode'] = mode
-    
     game_initialized_successfully = False
 
     if mode == "couch_play":
-        if not map_name_folder_stem: error("Map name (folder/stem) required for couch_play."); main_window.show_view("menu"); return
+        if not map_name_folder_stem:
+            error("Map name (folder/stem) required for couch_play."); main_window.show_view("menu")
+            if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+            return
         _show_status_dialog(main_window, f"Starting Couch Co-op", f"Loading map: {map_name_folder_stem}...")
         if not _initialize_game_entities(main_window, map_name_folder_stem, mode, num_players_for_couch_coop=num_players_for_couch_coop):
-            _close_status_dialog(main_window); main_window.show_view("menu"); return
+            _close_status_dialog(main_window); main_window.show_view("menu")
+            if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+            return
         _update_status_dialog(main_window, message="Entities initialized successfully.", progress=50.0, title=f"Starting Couch Co-op")
         game_initialized_successfully = True
     elif mode == "host_game":
-        if not map_name_folder_stem: error("Map name (folder/stem) required for host_game."); main_window.show_view("menu"); return
+        if not map_name_folder_stem:
+            error("Map name (folder/stem) required for host_game."); main_window.show_view("menu")
+            if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+            return
         _show_status_dialog(main_window, f"Starting Host Game", f"Loading map: {map_name_folder_stem}...")
-        if not _initialize_game_entities(main_window, map_name_folder_stem, mode):
-            _close_status_dialog(main_window); main_window.show_view("menu"); return
+        if not _initialize_game_entities(main_window, map_name_folder_stem, mode): # num_players not needed, server handles P2 spawn
+            _close_status_dialog(main_window); main_window.show_view("menu")
+            if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+            return
         _update_status_dialog(main_window, message="Entities initialized successfully.", progress=50.0, title=f"Starting Host Game")
         game_initialized_successfully = True
     elif mode in ["join_ip", "join_lan"]:
-        if not target_ip_port: error("Target IP:Port required for join."); _close_status_dialog(main_window); main_window.show_view("menu"); return
+        if not target_ip_port:
+            error("Target IP:Port required for join."); _close_status_dialog(main_window); main_window.show_view("menu")
+            if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+            return
         _show_status_dialog(main_window, title=f"Joining Game ({mode.replace('_',' ').title()})", message=f"Connecting to {target_ip_port}...")
         main_window.game_elements.clear()
         main_window.game_elements['initialization_in_progress'] = True
@@ -223,13 +224,17 @@ def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str,
         )
         debug(f"GAME_MODES DEBUG (prepare_and_start for JOIN): Basic camera created for join mode. ID: {id(main_window.game_elements.get('camera'))}")
         main_window.game_elements['camera_level_dims_set'] = False
-        game_initialized_successfully = True
+        game_initialized_successfully = True # For join mode, success is provisional until map sync
     else:
-        error(f"Unknown game mode: {mode}"); main_window.show_view("menu"); return
+        error(f"Unknown game mode: {mode}"); main_window.show_view("menu")
+        if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+        return
 
     if not game_initialized_successfully:
         error(f"GAME_MODES: Game initialization failed for mode {mode} before camera setup block. Aborting.")
-        _close_status_dialog(main_window); main_window.show_view("menu"); return
+        _close_status_dialog(main_window); main_window.show_view("menu")
+        if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+        return
 
     debug(f"GAME_MODES DEBUG (prepare_and_start): Entering camera setup block. Current camera type: {type(main_window.game_elements.get('camera'))}, ID: {id(main_window.game_elements.get('camera'))}")
     camera = main_window.game_elements.get("camera")
@@ -237,10 +242,14 @@ def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str,
 
     if not camera:
         critical("GAME_MODES CRITICAL: Camera object not found in game_elements after entity initialization or basic setup for join mode!")
-        _close_status_dialog(main_window); main_window.show_view("menu"); return
+        _close_status_dialog(main_window); main_window.show_view("menu")
+        if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+        return
     if not game_scene_widget:
         critical("GAME_MODES CRITICAL: GameSceneWidget not found on main_window!")
-        _close_status_dialog(main_window); main_window.show_view("menu"); return
+        _close_status_dialog(main_window); main_window.show_view("menu")
+        if hasattr(main_window, 'map_change_is_active'): main_window.map_change_is_active = False
+        return
 
     actual_screen_w = float(game_scene_widget.width())
     actual_screen_h = float(game_scene_widget.height())
@@ -260,7 +269,7 @@ def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str,
                 level_min_y_abs=main_window.game_elements['level_min_y_absolute'],
                 level_max_y_abs=main_window.game_elements['level_max_y_absolute']
             )
-            main_window.game_elements['camera_level_dims_set'] = True # Mark as set for host/couch
+            main_window.game_elements['camera_level_dims_set'] = True
             player1_focus = main_window.game_elements.get("player1")
             if player1_focus and hasattr(player1_focus, 'alive') and player1_focus.alive():
                 camera.update(player1_focus)
@@ -280,6 +289,15 @@ def prepare_and_start_game_logic(main_window: 'MainWindow', mode: str,
     elif mode in ["join_ip", "join_lan"]:
         start_network_mode_logic(main_window, "join", target_ip_port)
 
+    # --- FINALIZATION AND FLAG RESET ---
+    if hasattr(main_window, 'map_change_is_active') and main_window.map_change_is_active:
+        if game_initialized_successfully and main_window.current_game_mode is not None :
+            log_msg_suffix = f"for mode '{main_window.current_game_mode}'"
+        else:
+            log_msg_suffix = "(game initialization failed or mode is None after setup attempt)"
+        debug(f"GAME_MODES (prepare_and_start): Resetting main_window.map_change_is_active flag {log_msg_suffix}.")
+        main_window.map_change_is_active = False
+
 def stop_current_game_mode_logic(main_window: 'MainWindow', show_menu: bool = True):
     current_mode_being_stopped = main_window.current_game_mode; info(f"GAME_MODES: Stopping current game mode: {current_mode_being_stopped}")
     if main_window.network_thread and main_window.network_thread.isRunning():
@@ -297,6 +315,13 @@ def stop_current_game_mode_logic(main_window: 'MainWindow', show_menu: bool = Tr
     if hasattr(main_window, 'lan_search_dialog') and main_window.lan_search_dialog and main_window.lan_search_dialog.isVisible(): main_window.lan_search_dialog.reject()
     if hasattr(main_window, 'game_scene_widget') and hasattr(main_window.game_scene_widget, 'clear_scene_for_new_game'): main_window.game_scene_widget.clear_scene_for_new_game()
     if show_menu: main_window.show_view("menu")
+
+    # If a map change was active and this stop is part of it, it should be reset by prepare_and_start.
+    # If this stop is for other reasons (e.g., manual pause, game over), and map_change_is_active was somehow still true, reset it.
+    if hasattr(main_window, 'map_change_is_active') and main_window.map_change_is_active:
+        debug(f"GAME_MODES (stop_current_game_mode): Resetting main_window.map_change_is_active flag because mode '{current_mode_being_stopped}' is stopping.")
+        main_window.map_change_is_active = False
+
     info(f"GAME_MODES: Game mode '{current_mode_being_stopped}' stopped and resources cleaned up.")
 
 def start_network_mode_logic(main_window: 'MainWindow', mode_name: str, target_ip_port: Optional[str] = None, map_to_host: Optional[str] = None):
