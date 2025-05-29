@@ -648,8 +648,10 @@ class MainWindow(QMainWindow):
                         if current_chest_server.rect.intersects(p1.rect):
                             # is_chest_falling_meaningfully_server = hasattr(current_chest_server, 'vel_y') and current_chest_server.vel_y > 1.0; # Velocity check removed
                             vertical_overlap_landing_server = current_chest_server.rect.bottom() >= p1.rect.top() and current_chest_server.rect.top() < p1.rect.bottom()
-                            is_landing_on_head_area_server = vertical_overlap_landing_server and current_chest_server.rect.bottom() <= p1.rect.top() + (p1.rect.height() * 0.6); min_h_overlap_crush_server = current_chest_server.rect.width() * 0.3
-                            actual_h_overlap_crush_server = min(current_chest_server.rect.right(), p1.rect.right()) - max(current_chest_server.rect.left(), p1.rect.left()); has_sufficient_h_overlap_server = actual_h_overlap_crush_server >= min_h_overlap_crush_server
+                            is_landing_on_head_area_server = vertical_overlap_landing_server and current_chest_server.rect.bottom() <= p1.rect.top() + (p1.rect.height() * 0.6) # type: ignore
+                            min_h_overlap_crush_server = current_chest_server.rect.width() * 0.3
+                            actual_h_overlap_crush_server = min(current_chest_server.rect.right(), p1.rect.right()) - max(current_chest_server.rect.left(), p1.rect.left()) # type: ignore
+                            has_sufficient_h_overlap_server = actual_h_overlap_crush_server >= min_h_overlap_crush_server
                             if is_landing_on_head_area_server and has_sufficient_h_overlap_server: # Removed is_chest_falling_meaningfully_server
                                 if hasattr(p1, 'insta_kill'): info(f"CRUSH AppCore(host_waiting): Chest landed on P1. Conditions met (velocity check removed). Insta-killing."); p1.insta_kill()
                                 else: warning(f"CRUSH_FAIL AppCore(host_waiting): P1 missing insta_kill(). Overkilling.");
@@ -686,6 +688,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent):
         info("MainWindow: Close event received. Shutting down application."); debug("closeEvent called.")
+        
         if self.actual_editor_module_instance:
             can_close_editor = True
             if isinstance(self.actual_editor_module_instance, QMainWindow):
@@ -705,31 +708,40 @@ class MainWindow(QMainWindow):
             if self.actual_controls_settings_instance.parent() is not None : self.actual_controls_settings_instance.setParent(None)
             self.actual_controls_settings_instance.deleteLater(); self.actual_controls_settings_instance = None; debug("Controls settings instance cleaned up.")
         
+        # --- MORE AGGRESSIVE DIALOG CLEANUP ---
+        # Set app_running to false *before* trying to reject dialogs,
+        # so their subsequent actions (if any) are more likely to see the app as not running.
+        if self.app_status.app_running: # Check to avoid redundant call if already quitting
+            self.app_status.quit_app() # This sets self.app_status.app_running = False
+
         # Explicitly try to manage dialogs to prevent signals after shutdown sequence starts
         # This is a more direct attempt to stop pending actions from dialogs.
-        if hasattr(self, 'ip_input_dialog') and self.ip_input_dialog:
-            try:
-                self.ip_input_dialog.accepted.disconnect()
-                self.ip_input_dialog.rejected.disconnect()
-                debug("AppCore CloseEvent: Disconnected ip_input_dialog signals.")
-            except RuntimeError: # Signals might have already been disconnected
-                debug("AppCore CloseEvent: ip_input_dialog signals already disconnected or error during disconnect.")
-                pass
-            if self.ip_input_dialog.isVisible():
-                debug("AppCore CloseEvent: Rejecting visible ip_input_dialog.")
-                self.ip_input_dialog.reject() # Try to close it if visible
-            # self.ip_input_dialog.deleteLater() # deleteLater might be too slow here
-            # self.ip_input_dialog = None
-        
-        if hasattr(self, 'lan_search_dialog') and self.lan_search_dialog and self.lan_search_dialog.isVisible():
-            debug("AppCore CloseEvent: Rejecting visible lan_search_dialog.")
-            self.lan_search_dialog.reject()
+        # Now check if app_status is truly false
+        if not self.app_status.app_running: # Double check, critical section
+            if hasattr(self, 'ip_input_dialog') and self.ip_input_dialog:
+                try:
+                    if self.ip_input_dialog: # Check if not None after hasattr
+                        self.ip_input_dialog.accepted.disconnect()
+                        self.ip_input_dialog.rejected.disconnect()
+                        debug("AppCore CloseEvent: Disconnected ip_input_dialog signals.")
+                except RuntimeError: # Signals might have already been disconnected
+                    debug("AppCore CloseEvent: ip_input_dialog signals already disconnected or error during disconnect.")
+                    pass
+                if self.ip_input_dialog and self.ip_input_dialog.isVisible(): # Check again if not None
+                    debug("AppCore CloseEvent: Rejecting visible ip_input_dialog.")
+                    self.ip_input_dialog.reject()
+            
+            if hasattr(self, 'lan_search_dialog') and self.lan_search_dialog and self.lan_search_dialog.isVisible():
+                debug("AppCore CloseEvent: Rejecting visible lan_search_dialog.")
+                self.lan_search_dialog.reject()
 
-        if hasattr(self, '_couch_coop_player_select_dialog') and self._couch_coop_player_select_dialog and self._couch_coop_player_select_dialog.isVisible():
-            debug("AppCore CloseEvent: Rejecting visible _couch_coop_player_select_dialog.")
-            self._couch_coop_player_select_dialog.reject()
+            if hasattr(self, '_couch_coop_player_select_dialog') and self._couch_coop_player_select_dialog and self._couch_coop_player_select_dialog.isVisible():
+                debug("AppCore CloseEvent: Rejecting visible _couch_coop_player_select_dialog.")
+                self._couch_coop_player_select_dialog.reject()
+        # --- END AGGRESSIVE DIALOG CLEANUP ---
 
-        self.app_status.quit_app(); app_game_modes.stop_current_game_mode_logic(self, show_menu=False)
+        # self.app_status.quit_app(); # Moved up
+        app_game_modes.stop_current_game_mode_logic(self, show_menu=False)
         if game_config._pygame_initialized_globally:
             if game_config._joystick_initialized_globally:
                 try:
