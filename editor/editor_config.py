@@ -1,8 +1,7 @@
-#################### START OF FILE: editor_config.py ####################
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.6 (Opacity Slider for Custom Images)
+## version 2.2.7 (Opacity Slider for Triggers)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added "Select Tool".
 - Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
@@ -11,6 +10,7 @@ Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added "is_crouched_variant" to stone object properties.
 - Added "apply_gravity" to custom image properties.
 - Added "opacity" slider (0-100) for custom images.
+- MODIFIED: Added "opacity" slider (0-100) for trigger squares.
 """
 import sys
 import os
@@ -40,7 +40,7 @@ except ImportError as e:
         EDITOR_SCREEN_INITIAL_WIDTH = 1000; EDITOR_SCREEN_INITIAL_HEIGHT = 800
         LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"; GAME_LEVEL_FILE_EXTENSION = ".py"
         PLAYER_MAX_HEALTH = 100; PLAYER_RUN_SPEED_LIMIT = 7.0; PLAYER_JUMP_STRENGTH = -15.0
-        ENEMY_RUN_SPEED_LIMIT = 3.0; ENEMY_MAX_HEALTH = 80; ENEMY_ATTACK_DAMAGE = 10 # Adjusted default enemy speed
+        ENEMY_RUN_SPEED_LIMIT = 3.0; ENEMY_MAX_HEALTH = 80; ENEMY_ATTACK_DAMAGE = 10
     C = FallbackConstants() # type: ignore
     print("CRITICAL editor_config.py: Using fallback constants.")
 except Exception as e_gen:
@@ -119,8 +119,8 @@ GAME_LEVEL_FILE_EXTENSION = getattr(C, "GAME_LEVEL_FILE_EXTENSION", ".py")
 
 # --- Custom Asset Identifiers ---
 CUSTOM_IMAGE_ASSET_KEY = "custom_image_object"
-TRIGGER_SQUARE_ASSET_KEY = "trigger_square"
-TRIGGER_SQUARE_GAME_TYPE_ID = "trigger_square_link"
+TRIGGER_SQUARE_ASSET_KEY = "trigger_square" # This is the palette key
+TRIGGER_SQUARE_GAME_TYPE_ID = "trigger_square_link" # This is used to key into EDITABLE_ASSET_VARIABLES
 CUSTOM_ASSET_PALETTE_PREFIX = "custom:"
 
 GRAY_COLOR = getattr(C, 'GRAY', (128,128,128))
@@ -163,6 +163,11 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "platform_wall_gray_1_3_right": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_right", "category": "tile", "name_in_palette": "Wall 1/3 Right"},
     "platform_wall_gray_1_3_bottom": {"surface_params": (TS, TS // 3, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_bottom", "category": "tile", "name_in_palette": "Wall 1/3 Bottom"},
     "platform_wall_gray_1_3_left": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_left", "category": "tile", "name_in_palette": "Wall 1/3 Left"},
+    "platform_wall_gray_1_4_top_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_left", "category": "tile", "name_in_palette": "Wall 1/4 TL"}, # Example smaller variant
+    "platform_wall_gray_1_4_top_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_right", "category": "tile", "name_in_palette": "Wall 1/4 TR"},
+    "platform_wall_gray_1_4_bottom_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_right", "category": "tile", "name_in_palette": "Wall 1/4 BR"},
+    "platform_wall_gray_1_4_bottom_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_left", "category": "tile", "name_in_palette": "Wall 1/4 BL"},
+
 
     "platform_ledge_green_full": {"surface_params": (TS, TS, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
     "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
@@ -174,10 +179,10 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "background_dark_fill": {"surface_params": (TS * 5, TS * 5, getattr(C, 'DARK_GRAY', (50, 50, 50))), "colorable": True, "game_type_id": "background_dark_fill", "category": "background_tile", "name_in_palette": "BG Dark Fill (5x5)"},
 
     # Logic
-    TRIGGER_SQUARE_ASSET_KEY: {
+    TRIGGER_SQUARE_ASSET_KEY: { # Palette key
         "icon_type": "generic_square_icon",
-        "base_color_tuple": (100, 100, 255, 150),
-        "game_type_id": TRIGGER_SQUARE_GAME_TYPE_ID,
+        "base_color_tuple": (100, 100, 255, 150), # RGBA for editor icon
+        "game_type_id": TRIGGER_SQUARE_GAME_TYPE_ID, # Used for EDITABLE_ASSET_VARIABLES
         "category": "logic",
         "name_in_palette": "Trigger Square"
     },
@@ -186,23 +191,25 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
 EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER = ["tool", "tile", "background_tile", "hazard", "item", "object", "enemy", "spawn", "logic", "Custom", "unknown"]
 
 # --- Wall Variant Cycling ---
-WALL_BASE_KEY = "platform_wall_gray"
-WALL_VARIANTS_CYCLE: List[str] = [
+WALL_BASE_KEY = "platform_wall_gray" # The primary key used in the palette to represent the cycle
+WALL_VARIANTS_CYCLE: List[str] = [ # Actual asset keys for each variant in cycle order
     "platform_wall_gray",
     "platform_wall_gray_1_3_top",
     "platform_wall_gray_1_3_right",
     "platform_wall_gray_1_3_bottom",
     "platform_wall_gray_1_3_left",
+    "platform_wall_gray_1_4_top_left",
+    "platform_wall_gray_1_4_top_right",
+    "platform_wall_gray_1_4_bottom_right",
+    "platform_wall_gray_1_4_bottom_left",
 ]
 
-# --- Asset Orientation Rules (New) ---
-# Asset keys that support 90-degree rotation (typically walls and their variants)
+# --- Asset Orientation Rules ---
 ROTATABLE_ASSET_KEYS: List[str] = [
     key for key in EDITOR_PALETTE_ASSETS
     if ("wall" in key.lower() or "ledge" in key.lower()) and EDITOR_PALETTE_ASSETS[key].get("category") == "tile"
 ]
-# Categories/keys that support horizontal flipping (most other placeable items)
-FLIPPABLE_ASSET_CATEGORIES: List[str] = ["object", "enemy", "spawn", "item", "hazard"] # Custom images and triggers also support flip via their properties
+FLIPPABLE_ASSET_CATEGORIES: List[str] = ["object", "enemy", "spawn", "item", "hazard"]
 
 
 _PLAYER_DEFAULT_PROPS_TEMPLATE = {
@@ -226,7 +233,7 @@ _BASE_WALL_PROPERTIES = {
     "round_top_right": {"type": "bool", "default": True, "label": "Round Top-Right"},
     "round_bottom_left": {"type": "bool", "default": True, "label": "Round Bottom-Left"},
     "round_bottom_right": {"type": "bool", "default": True, "label": "Round Bottom-Right"},
-    "is_boundary": {"type": "bool", "default": False, "label": "Is Map Boundary"}, # Added to base
+    "is_boundary": {"type": "bool", "default": False, "label": "Is Map Boundary"},
 }
 
 
@@ -242,72 +249,28 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "enemy_purple": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "teleport_range_tiles": {"type": "int", "default": 0, "min":0, "max":20, "label": "Teleport Range (Tiles)"}},
     "enemy_orange": _ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
     "enemy_yellow": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "is_invincible_while_charging": {"type": "bool", "default": False, "label": "Invincible Charge"}},
-    "enemy_cactus": {
-        **_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
-        "shoot_interval_ms": {"type": "int", "default": 2000, "min": 500, "max": 10000, "label": "Shoot Interval (ms)"},
-        "projectile_type": {"type": "str", "default": "thorn", "label": "Projectile", "options":["thorn", "fast_thorn"]}
-    },
-    "enemy_truck": {
-        **_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
-        "charge_speed_multiplier": {"type": "float", "default": 2.0, "min": 1.0, "max": 5.0, "label": "Charge Speed Multiplier"},
-        "charge_cooldown_ms": {"type": "int", "default": 3000, "min": 1000, "max": 10000, "label": "Charge Cooldown (ms)"}
-    },
+    "enemy_cactus": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "shoot_interval_ms": {"type": "int", "default": 2000, "min": 500, "max": 10000, "label": "Shoot Interval (ms)"}, "projectile_type": {"type": "str", "default": "thorn", "label": "Projectile", "options":["thorn", "fast_thorn"]}},
+    "enemy_truck": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "charge_speed_multiplier": {"type": "float", "default": 2.0, "min": 1.0, "max": 5.0, "label": "Charge Speed Multiplier"}, "charge_cooldown_ms": {"type": "int", "default": 3000, "min": 1000, "max": 10000, "label": "Charge Cooldown (ms)"}},
 
-    # Tiles
     "platform_wall_gray": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_3_top": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_3_right": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_3_bottom": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_3_left": _BASE_WALL_PROPERTIES.copy(),
-    # These were missing in the previous prompt, adding them back for completeness if they exist in your setup
     "platform_wall_gray_1_4_top_left": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_4_top_right": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_4_bottom_right": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_4_bottom_left": _BASE_WALL_PROPERTIES.copy(),
 
+    "platform_ledge_green": {"destructible": {"type": "bool", "default": False, "label": "Is Destructible"}, "health": {"type": "int", "default": 80, "min": 0, "max": 400, "label": "Health (if Dest.)"}, "is_slippery": {"type": "bool", "default": False, "label": "Is Slippery"}},
+    "platform_ledge_green_one_fourth": {"destructible": {"type": "bool", "default": False, "label": "Is Destructible"}, "health": {"type": "int", "default": 20, "min": 0, "max": 100, "label": "Health (if Dest.)"}, "is_breakable_by_heavy": {"type": "bool", "default": True, "label": "Breaks Under Heavy"}},
 
-    "platform_ledge_green": { # game_type_id for platform_ledge_green_full
-        "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 80, "min": 0, "max": 400, "label": "Health (if Dest.)"},
-        "is_slippery": {"type": "bool", "default": False, "label": "Is Slippery"}
-    },
-     "platform_ledge_green_one_fourth": { # game_type_id for platform_ledge_green_one_fourth
-        "destructible": {"type": "bool", "default": False, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 20, "min": 0, "max": 100, "label": "Health (if Dest.)"},
-        "is_breakable_by_heavy": {"type": "bool", "default": True, "label": "Breaks Under Heavy"}
-    },
+    "object_stone_idle": {"destructible": {"type": "bool", "default": True, "label": "Is Destructible"}, "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"}, "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"}, "push_resistance": {"type": "float", "default": 1.0, "min":0.1, "max": 10.0, "label": "Push Resistance"}, "drops_item_on_destroy": {"type": "str", "default": "", "label": "Drops Item (ID or empty)"}, "is_crouched_variant": {"type": "bool", "default": False, "label": "Is Crouched Stone Visual"}},
+    "object_stone_crouch": {"destructible": {"type": "bool", "default": True, "label": "Is Destructible"}, "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"}, "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"}, "is_heavy": {"type": "bool", "default": True, "label": "Is Heavy"}, "is_crouched_variant": {"type": "bool", "default": True, "label": "Is Crouched Stone Visual"}},
 
-    # Objects
-    "object_stone_idle": {
-        "destructible": {"type": "bool", "default": True, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
-        "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"},
-        "push_resistance": {"type": "float", "default": 1.0, "min":0.1, "max": 10.0, "label": "Push Resistance"},
-        "drops_item_on_destroy": {"type": "str", "default": "", "label": "Drops Item (ID or empty)"},
-        "is_crouched_variant": {"type": "bool", "default": False, "label": "Is Crouched Stone Visual"}
-    },
-    "object_stone_crouch": {
-        "destructible": {"type": "bool", "default": True, "label": "Is Destructible"},
-        "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"},
-        "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"},
-        "is_heavy": {"type": "bool", "default": True, "label": "Is Heavy"},
-        "is_crouched_variant": {"type": "bool", "default": True, "label": "Is Crouched Stone Visual"}
-    },
+    "chest": {"item_type": {"type": "str", "default": "coin", "label": "Item Type", "options": ["coin", "health_potion", "key", "weapon_upgrade", "star_fragment"]}, "item_quantity": {"type": "int", "default": 1, "min": 1, "max": 10, "label": "Item Quantity"}, "requires_key_id": {"type": "str", "default": "", "label": "Requires Key ID (empty if none)"}},
+    "hazard_lava": {"damage_per_tick": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Damage Per Tick"}, "is_instant_death": {"type": "bool", "default": False, "label": "Instant Death"}},
 
-    # Items
-    "chest": {
-        "item_type": {"type": "str", "default": "coin", "label": "Item Type", "options": ["coin", "health_potion", "key", "weapon_upgrade", "star_fragment"]},
-        "item_quantity": {"type": "int", "default": 1, "min": 1, "max": 10, "label": "Item Quantity"},
-        "requires_key_id": {"type": "str", "default": "", "label": "Requires Key ID (empty if none)"}
-    },
-
-    # Hazards
-    "hazard_lava": { # game_type_id for hazard_lava_tile
-        "damage_per_tick": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Damage Per Tick"},
-        "is_instant_death": {"type": "bool", "default": False, "label": "Instant Death"}
-    },
-
-    # Custom Image Object
     CUSTOM_IMAGE_ASSET_KEY: {
         "is_background": {"type": "bool", "default": True, "label": "Is Background Image"},
         "is_obstacle": {"type": "bool", "default": False, "label": "Is Obstacle"},
@@ -318,11 +281,11 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "apply_gravity": {"type": "bool", "default": False, "label": "Apply Gravity"},
         "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Opacity (%)"},
     },
-    # Trigger Square
-    TRIGGER_SQUARE_GAME_TYPE_ID: { # Keyed by game_type_id
+    TRIGGER_SQUARE_GAME_TYPE_ID: {
         "visible": {"type": "bool", "default": True, "label": "Visible in Game"},
         "fill_color_rgba": {"type": "tuple_color_rgba", "default": (100, 100, 255, 100), "label": "Fill Color (RGBA)"},
         "image_in_square": {"type": "image_path_custom", "default": "", "label": "Image in Square"},
+        "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Opacity (%)"}, # ADDED for trigger
         "linked_map_name": {"type": "str", "default": "", "label": "Linked Map Name"},
         "trigger_event_type": {"type": "str", "default": "player_enter", "label": "Event Type", "options": ["player_enter", "player_use", "enemy_enter", "object_overlap", "projectile_hit"]},
         "one_time_trigger": {"type": "bool", "default": True, "label": "One-Time Trigger"},
@@ -337,27 +300,17 @@ def get_default_properties_for_asset(game_type_id: str) -> Dict[str, Any]:
             defaults[prop_name] = definition["default"]
     return defaults
 
-# --- Map Defaults ---
 DEFAULT_MAP_WIDTH_TILES = 40
 DEFAULT_MAP_HEIGHT_TILES = 25
 DEFAULT_BACKGROUND_COLOR_TUPLE: Tuple[int,int,int] = getattr(C, 'LIGHT_BLUE', (173,216,230))
-
-# --- Qt Font Configuration ---
 FONT_FAMILY_UI_DEFAULT = "Arial"
 FONT_SIZE_SMALL = 9; FONT_SIZE_MEDIUM = 10; FONT_SIZE_LARGE = 12
 FONT_CATEGORY_TITLE_SIZE = 11; FONT_CATEGORY_TITLE_BOLD = True
-
-# --- Color Presets ---
 COLOR_PICKER_PRESETS: Dict[str, Tuple[int,int,int]] = {
     "Light Blue": getattr(C, 'LIGHT_BLUE', (173,216,230)), "White": getattr(C, 'WHITE', (255,255,255)),
     "Magenta": getattr(C, 'MAGENTA', (255, 0, 255))
 }
-
 STATUS_BAR_MESSAGE_TIMEOUT = 3000
-
-# Logging configuration
 LOG_LEVEL = "DEBUG"
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log"
-
-#################### END OF FILE: editor_config.py ####################
