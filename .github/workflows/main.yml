@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 name: Build Python Game with Dynamic Spec
-=======
-name: Platformer
->>>>>>> e3197a0917f08ec4fd0bfc711674cc1ebdd5ad71
 
 on:
   push:
@@ -15,7 +11,7 @@ on:
 
 jobs:
   build-windows:
-    name: Platformer by Ahmad Cooper (One-File Windows Build)
+    name: Build Platformer for Windows
     runs-on: windows-latest
 
     steps:
@@ -27,11 +23,7 @@ jobs:
       with:
         python-version: '3.11'
         cache: 'pip'
-<<<<<<< HEAD
         cache-dependency-path: requirements.txt
-=======
-        cache-dependency-path: requirements.txt # If you have one
->>>>>>> e3197a0917f08ec4fd0bfc711674cc1ebdd5ad71
 
     - name: Install dependencies
       run: |
@@ -40,15 +32,10 @@ jobs:
             pip install -r requirements.txt
         } else {
             Write-Host "requirements.txt not found. Installing default PyInstaller dependencies."
-<<<<<<< HEAD
-=======
-            # Ensure all direct dependencies are listed if not in requirements.txt
->>>>>>> e3197a0917f08ec4fd0bfc711674cc1ebdd5ad71
             pip install pyinstaller pygame PySide6 Pillow numpy 
         }
       shell: pwsh
 
-<<<<<<< HEAD
     - name: Generate Platformer.spec
       shell: bash
       run: |
@@ -146,127 +133,3 @@ jobs:
         name: Platformer-Windows-Release
         path: dist/Platformer/
         if-no-files-found: error
-=======
-    - name: Display Python and PyInstaller versions # MOVED HERE
-      run: |
-        python -V
-        pip show pyinstaller # This should now work
-      shell: pwsh
-
-    - name: Generate Platformer.spec (using heredoc)
-      shell: bash # Using bash for heredoc
-      run: |
-        echo "--- In Generate Platformer.spec step (heredoc) ---"
-        echo "Current directory (bash before generation): $(pwd)"
-        
-        cat <<EOF > Platformer.spec
-        # -*- mode: python ; coding: utf-8 -*-
-        block_cipher = None
-        a = Analysis(
-            ['app_core.py'],
-            pathex=['.'],
-            binaries=[], # PyInstaller populates a.binaries
-            datas=[
-                ('characters/assets', 'characters/assets'),
-                ('characters/cactus', 'characters/cactus'),
-                ('characters/gray', 'characters/gray'),
-                ('characters/green', 'characters/green'),
-                ('characters/items', 'characters/items'),
-                ('characters/orange', 'characters/orange'),
-                ('characters/pink', 'characters/pink'),
-                ('characters/player1', 'characters/player1'),
-                ('characters/player2', 'characters/player2'),
-                ('characters/player3', 'characters/player3'),
-                ('characters/player4', 'characters/player4'),
-                ('characters/purple', 'characters/purple'),
-                ('characters/Shadow', 'characters/Shadow'),
-                ('characters/Stone', 'characters/Stone'),
-                ('characters/truck', 'characters/truck'),
-                ('characters/weapons', 'characters/weapons'),
-                ('characters/yellow', 'characters/yellow'),
-                ('maps', 'maps'),
-                ('controller_settings', 'controller_settings'),
-                ('3d models', '3d models'),
-                ('game_config.json', '.'),
-            ],
-            hiddenimports=[
-                'PIL',
-                'PIL.Image',
-                'numpy',
-                'PySide6.QtGui',
-                'PySide6.QtCore',
-                'PySide6.QtWidgets',
-                'pygame',
-            ],
-            hookspath=[],
-            hooksconfig={},
-            runtime_hooks=[],
-            excludes=[],
-            win_no_prefer_redirects=False,
-            win_private_assemblies=False,
-            cipher=block_cipher,
-            noarchive=False,
-            optimize=0
-        )
-        pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-        exe = EXE(
-            pyz,
-            a.scripts,
-            a.binaries, # Make sure PyInstaller adds necessary DLLs here
-            a.zipfiles,
-            a.datas,
-            name='Platformer',
-            debug=False, # Set to True for bootloader debug info if EXE fails later
-            bootloader_ignore_signals=False,
-            strip=False,
-            upx=False,     # UPX disabled as it can cause issues
-            upx_exclude=[],
-            runtime_tmpdir=None, # Or a specific path for debugging _MEI extraction
-            console=False, # Set to True to see console output/errors from the EXE
-            onefile=True
-        )
-        EOF
-
-        echo "Current directory (bash after generation): $(pwd)"
-        echo "Listing files in current directory (bash):"
-        ls -la
-        echo "Checking if Platformer.spec exists and its content (bash):"
-        if [ -f Platformer.spec ]; then
-            echo "Platformer.spec CREATED. Content:"
-            cat Platformer.spec
-        else
-            echo "Platformer.spec WAS NOT CREATED by bash heredoc method."
-        fi
-        echo "--- End of Generate Platformer.spec step ---"
-
-    - name: Display generated Platformer.spec (PowerShell)
-      if: always() # Run this step even if previous ones fail, for debugging
-      run: |
-        echo "--- In Display generated Platformer.spec step (PowerShell) ---"
-        echo "Current directory (pwsh): $(Get-Location | Select-Object -ExpandProperty Path)"
-        echo "Listing files in current directory (pwsh):"
-        Get-ChildItem
-        if (Test-Path Platformer.spec) {
-            echo "Platformer.spec FOUND by PowerShell. Content:"
-            type Platformer.spec
-        } else {
-            echo "Platformer.spec NOT FOUND by PowerShell."
-            # List files in parent directory too, just in case
-            echo "Listing files in parent directory (pwsh):"
-            Get-ChildItem ..\
-        }
-        echo "--- End of Display generated Platformer.spec step ---"
-      shell: pwsh
-
-    - name: Build Platformer Executable
-      run: |
-        pyinstaller --noconfirm --log-level INFO Platformer.spec
-      shell: pwsh
-
-    - name: Upload Platformer Windows Build Artifact (OneFile)
-      uses: actions/upload-artifact@v4
-      with:
-        name: Platformer-Windows-Release-OneFile
-        path: dist/Platformer.exe # Path to the single .exe file for one-file builds
-        if-no-files-found: error
->>>>>>> e3197a0917f08ec4fd0bfc711674cc1ebdd5ad71
