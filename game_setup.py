@@ -9,19 +9,18 @@ MODIFIED: Processes custom_images_list from map data for rendering.
 MODIFIED: Sorts all_renderable_objects by layer_order.
 MODIFIED: Enhanced logging for custom image processing and path handling.
 MODIFIED: Corrected call to add_to_renderables_if_new for custom images.
+MODIFIED: Added processing for images within trigger_squares.
 """
-# version 2.0.14 (Corrected add_to_renderables call)
+# version 2.0.16 (Process trigger square images for game rendering)
 import sys
 import os
-import importlib # For importlib.invalidate_caches()
-import gc # Garbage Collector
+import importlib
+import gc
 from typing import Dict, Optional, Any, Tuple, List
 
-# PySide6 imports for custom image processing
-from PySide6.QtGui import QImage, QPixmap, QTransform, QColor
+from PySide6.QtGui import QImage, QPixmap, QTransform, QColor,QBrush, QPainter
 from PySide6.QtCore import Qt, QRectF
 
-# Game-specific imports
 import constants as C
 from player import Player
 from enemy import Enemy
@@ -30,7 +29,6 @@ from statue import Statue
 from camera import Camera
 from level_loader import LevelLoader
 import config as game_config
-
 from tiles import Platform, Ladder, Lava, BackgroundTile
 
 DEFAULT_LEVEL_MODULE_NAME = "original"
@@ -64,22 +62,16 @@ def get_layer_order_key(item: Any) -> int:
     if isinstance(item, dict) and 'layer_order' in item:
         layer_val = int(item['layer_order'])
         layer_order_source = f"dict_key ({type(item).__name__})"
-    elif isinstance(item, Player):
-        layer_val = 100
-        layer_order_source = "Player_class"
+        if 'trigger_debug_type' in item: layer_order_source += "_trigger_visual" # Differentiate trigger visuals
+        elif 'source_file_path_debug' in item: layer_order_source += "_customimg"
+    elif isinstance(item, Player): layer_val = 100; layer_order_source = "Player_class"
     else:
         direct_layer_order = getattr(item, 'layer_order', None)
-        if direct_layer_order is not None:
-            layer_val = int(direct_layer_order)
-            layer_order_source = f"direct_attr ({type(item).__name__})"
+        if direct_layer_order is not None: layer_val = int(direct_layer_order); layer_order_source = f"direct_attr ({type(item).__name__})"
         else:
             properties_dict = getattr(item, 'properties', None)
-            if isinstance(properties_dict, dict):
-                layer_val = int(properties_dict.get('layer_order', 0))
-                layer_order_source = f"properties_dict ({type(item).__name__})"
-            elif hasattr(item, 'projectile_id'):
-                layer_val = 90
-                layer_order_source = "projectile_id_attr"
+            if isinstance(properties_dict, dict): layer_val = int(properties_dict.get('layer_order', 0)); layer_order_source = f"properties_dict ({type(item).__name__})"
+            elif hasattr(item, 'projectile_id'): layer_val = 90; layer_order_source = "projectile_id_attr"
             elif isinstance(item, Enemy): layer_val = 10; layer_order_source = "Enemy_class"
             elif isinstance(item, Statue): layer_val = 9; layer_order_source = "Statue_class"
             elif isinstance(item, Chest): layer_val = 8; layer_order_source = "Chest_class"
@@ -132,7 +124,7 @@ def initialize_game_elements(
         "enemy_list", "statue_objects", "collectible_list", "projectiles_list",
         "platforms_list", "ladders_list", "hazards_list", "background_tiles_list",
         "all_renderable_objects", "enemy_spawns_data_cache", "statue_spawns_data_cache",
-        "processed_custom_images_for_render"
+        "processed_custom_images_for_render", "processed_trigger_visuals_for_render"
     ]
     for key in list_keys_to_reinitialize:
         game_elements_ref[key] = []
@@ -144,21 +136,13 @@ def initialize_game_elements(
 
     level_data: Optional[Dict[str, Any]] = None
     loader = LevelLoader()
-
     debug(f"GameSetup DEBUG: Attempting to load map '{current_map_to_load}' using base maps directory '{maps_base_dir_abs}'.")
     level_data = loader.load_map(str(current_map_to_load), maps_base_dir_abs)
-
     if not level_data or not isinstance(level_data, dict):
         critical(f"GameSetup FATAL: Failed to load/reload map data for '{current_map_to_load}' from base '{maps_base_dir_abs}'. Initialization aborted.")
-        game_elements_ref["loaded_map_name"] = None
-        game_elements_ref['initialization_in_progress'] = False
-        return False
-
-    game_elements_ref["level_data"] = level_data
-    game_elements_ref["loaded_map_name"] = current_map_to_load
-    game_elements_ref["map_name"] = current_map_to_load
+        game_elements_ref["loaded_map_name"] = None; game_elements_ref['initialization_in_progress'] = False; return False
+    game_elements_ref["level_data"] = level_data; game_elements_ref["loaded_map_name"] = current_map_to_load; game_elements_ref["map_name"] = current_map_to_load
     info(f"GameSetup: Successfully reloaded pristine map data for '{current_map_to_load}'.")
-
     game_elements_ref["level_background_color"] = tuple(level_data.get('background_color', getattr(C, 'LIGHT_BLUE', (173, 216, 230))))
     game_elements_ref["level_pixel_width"] = float(level_data.get('level_pixel_width', float(current_width) * 2.0))
     game_elements_ref["level_min_x_absolute"] = float(level_data.get('level_min_x_absolute', 0.0))
@@ -166,121 +150,136 @@ def initialize_game_elements(
     game_elements_ref["level_max_y_absolute"] = float(level_data.get('level_max_y_absolute', float(current_height)))
     game_elements_ref["ground_level_y_ref"] = float(level_data.get('ground_level_y_ref', game_elements_ref["level_max_y_absolute"] - float(getattr(C, 'TILE_SIZE', 40.0))))
     game_elements_ref["ground_platform_height_ref"] = float(level_data.get('ground_platform_height_ref', float(getattr(C, 'TILE_SIZE', 40.0))))
-
-    game_elements_ref["enemy_spawns_data_cache"] = list(level_data.get('enemies_list', []))
-    game_elements_ref["statue_spawns_data_cache"] = list(level_data.get('statues_list', []))
-
+    game_elements_ref["enemy_spawns_data_cache"] = list(level_data.get('enemies_list', [])); game_elements_ref["statue_spawns_data_cache"] = list(level_data.get('statues_list', []))
     for p_data in level_data.get('platforms_list', []):
-        try:
-            rect_tuple = p_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4:
-                game_elements_ref["platforms_list"].append(Platform(
-                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
-                    color_tuple=tuple(p_data.get('color', getattr(C, 'GRAY', (128,128,128)))),
-                    platform_type=str(p_data.get('type', 'generic_platform')),
-                    properties=p_data.get('properties', {}) ))
+        try: rect_tuple = p_data.get('rect'); game_elements_ref["platforms_list"].append(Platform(x=float(rect_tuple[0]), y=float(rect_tuple[1]),width=float(rect_tuple[2]), height=float(rect_tuple[3]),color_tuple=tuple(p_data.get('color', getattr(C, 'GRAY', (128,128,128)))),platform_type=str(p_data.get('type', 'generic_platform')),properties=p_data.get('properties', {}) ))
         except Exception as e_plat: error(f"GameSetup: Error creating platform: {e_plat}", exc_info=True)
-
     for l_data in level_data.get('ladders_list', []):
-        try:
-            rect_tuple = l_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4:
-                game_elements_ref["ladders_list"].append(Ladder(
-                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                    width=float(rect_tuple[2]), height=float(rect_tuple[3]) ))
+        try: rect_tuple = l_data.get('rect'); game_elements_ref["ladders_list"].append(Ladder(x=float(rect_tuple[0]), y=float(rect_tuple[1]),width=float(rect_tuple[2]), height=float(rect_tuple[3]) ))
         except Exception as e_lad: error(f"GameSetup: Error creating ladder: {e_lad}", exc_info=True)
-
     for h_data in level_data.get('hazards_list', []):
-        try:
-            rect_tuple = h_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4 and \
-               (str(h_data.get('type', '')).lower() == 'lava' or "lava" in str(h_data.get('type', '')).lower()):
-                game_elements_ref["hazards_list"].append(Lava(
-                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
-                    color_tuple=tuple(h_data.get('color', getattr(C, 'ORANGE_RED', (255,69,0)))) ))
+        try: rect_tuple = h_data.get('rect'); game_elements_ref["hazards_list"].append(Lava(x=float(rect_tuple[0]), y=float(rect_tuple[1]),width=float(rect_tuple[2]), height=float(rect_tuple[3]),color_tuple=tuple(h_data.get('color', getattr(C, 'ORANGE_RED', (255,69,0)))), properties=h_data.get('properties', {}))) # Pass properties to Lava
         except Exception as e_haz: error(f"GameSetup: Error creating hazard: {e_haz}", exc_info=True)
-
     for bg_data in level_data.get('background_tiles_list', []):
-        try:
-            rect_tuple = bg_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4:
-                game_elements_ref["background_tiles_list"].append(BackgroundTile(
-                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
-                    color_tuple=tuple(bg_data.get('color', getattr(C, 'DARK_GRAY', (50,50,50)))),
-                    tile_type=str(bg_data.get('type', 'generic_background')),
-                    image_path=bg_data.get('image_path'),
-                    properties=bg_data.get('properties', {}) ))
+        try: rect_tuple = bg_data.get('rect'); game_elements_ref["background_tiles_list"].append(BackgroundTile(x=float(rect_tuple[0]), y=float(rect_tuple[1]),width=float(rect_tuple[2]), height=float(rect_tuple[3]),color_tuple=tuple(bg_data.get('color', getattr(C, 'DARK_GRAY', (50,50,50)))),tile_type=str(bg_data.get('type', 'generic_background')),image_path=bg_data.get('image_path'),properties=bg_data.get('properties', {}) ))
         except Exception as e_bg: error(f"GameSetup: Error creating background tile: {e_bg}", exc_info=True)
     info(f"GameSetup: Static tile-based elements re-created. Platforms: {len(game_elements_ref['platforms_list'])}")
 
     game_elements_ref["processed_custom_images_for_render"] = []
     custom_images_data_from_map = level_data.get("custom_images_list")
-    if custom_images_data_from_map is None:
-        info("GameSetup: 'custom_images_list' key NOT FOUND in level_data. No custom images will be loaded.")
-        debug("GameSetup DEBUG: custom_images_data_from_map is None.")
-    elif not isinstance(custom_images_data_from_map, list):
-        error(f"GameSetup ERROR: 'custom_images_list' in map data is not a list, but type {type(custom_images_data_from_map)}. Cannot process custom images.")
-    elif not custom_images_data_from_map:
-        info("GameSetup: 'custom_images_list' key FOUND in level_data, but the list is EMPTY.")
+    if custom_images_data_from_map is None: info("GameSetup: 'custom_images_list' key NOT FOUND in level_data.")
+    elif not isinstance(custom_images_data_from_map, list): error(f"GameSetup ERROR: 'custom_images_list' is not a list, type {type(custom_images_data_from_map)}.")
+    elif not custom_images_data_from_map: info("GameSetup: 'custom_images_list' is EMPTY.")
     else:
-        info(f"GameSetup: Found 'custom_images_list' with {len(custom_images_data_from_map)} entries. Processing them...")
+        info(f"GameSetup: Processing {len(custom_images_data_from_map)} custom image entries...")
         current_map_folder_path = os.path.join(maps_base_dir_abs, str(current_map_to_load))
-        debug(f"GameSetup DEBUG: Custom image base folder path: {current_map_folder_path}")
+        debug(f"GameSetup DEBUG: Custom image base folder path for map '{current_map_to_load}': {current_map_folder_path}")
         for img_idx, img_data_raw in enumerate(custom_images_data_from_map):
-            if not isinstance(img_data_raw, dict):
-                warning(f"GameSetup WARNING: Custom image data entry {img_idx} is not a dictionary. Skipping. Data: {img_data_raw}")
-                continue
+            if not isinstance(img_data_raw, dict): warning(f"GameSetup WARNING: Custom image entry {img_idx} is not a dict. Skipping."); continue
             try:
-                debug(f"GameSetup DEBUG: Processing custom image entry {img_idx}: {img_data_raw}")
-                rect_tuple = img_data_raw.get('rect')
-                rel_path = img_data_raw.get('source_file_path')
-                layer_order = int(img_data_raw.get('layer_order', 0))
-                is_flipped_h = img_data_raw.get('is_flipped_h', False)
-                rotation_angle = float(img_data_raw.get('rotation', 0))
-                opacity_percent = float(img_data_raw.get('properties', {}).get('opacity', 100.0))
+                rect_tuple = img_data_raw.get('rect'); rel_path = img_data_raw.get('source_file_path')
+                layer_order = int(img_data_raw.get('layer_order', 0)); is_flipped_h = img_data_raw.get('is_flipped_h', False)
+                rotation_angle = float(img_data_raw.get('rotation', 0)); opacity_percent = float(img_data_raw.get('properties', {}).get('opacity', 100.0))
                 opacity_float = max(0.0, min(1.0, opacity_percent / 100.0))
-                if not rect_tuple or not isinstance(rect_tuple, (list, tuple)) or len(rect_tuple) != 4:
-                    warning(f"GameSetup WARNING: Custom image data entry {img_idx} has invalid 'rect'. Skipping. Rect data: {rect_tuple}")
-                    continue
-                if not rel_path or not isinstance(rel_path, str):
-                    warning(f"GameSetup WARNING: Custom image data entry {img_idx} has invalid 'source_file_path'. Skipping. Path data: {rel_path}")
-                    continue
+                if not (rect_tuple and isinstance(rect_tuple, (list,tuple)) and len(rect_tuple) == 4): warning(f"GameSetup WARNING: Custom image entry {img_idx} invalid 'rect': {rect_tuple}. Skipping."); continue
+                if not (rel_path and isinstance(rel_path, str)): warning(f"GameSetup WARNING: Custom image entry {img_idx} invalid 'source_file_path': {rel_path}. Skipping."); continue
                 full_image_path = os.path.join(current_map_folder_path, rel_path)
-                debug(f"GameSetup DEBUG: Custom image {img_idx}. Relative path from map: '{rel_path}'. Full constructed path for loading: '{full_image_path}'")
-                if not os.path.exists(full_image_path): error(f"GameSetup ERROR: Custom image file NOT FOUND: {full_image_path}"); continue
+                if not os.path.exists(full_image_path): error(f"GameSetup ERROR: Custom image NOT FOUND: {full_image_path}"); continue
                 q_image_original = QImage(full_image_path)
-                if q_image_original.isNull(): error(f"GameSetup ERROR: Failed to load custom image (QImage isNull): {full_image_path}"); continue
-                debug(f"GameSetup DEBUG: Custom image {img_idx} loaded from disk. Original size: {q_image_original.size().width()}x{q_image_original.size().height()}")
-                target_w = float(rect_tuple[2]); target_h = float(rect_tuple[3])
-                if target_w <= 0 or target_h <= 0:
-                    warning(f"GameSetup WARNING: Invalid target dimensions ({target_w}x{target_h}) for custom image {rel_path}. Using original size.")
-                    target_w = float(q_image_original.width()); target_h = float(q_image_original.height())
-                debug(f"GameSetup DEBUG: Custom image {img_idx} target render size: {target_w}x{target_h}")
+                if q_image_original.isNull(): error(f"GameSetup ERROR: Failed to load custom QImage (isNull): {full_image_path}"); continue
+                target_w, target_h = float(rect_tuple[2]), float(rect_tuple[3])
+                if target_w <=0 or target_h <=0: target_w,target_h=float(q_image_original.width()),float(q_image_original.height()); warning(f"GameSetup WARNING: Invalid target dims for {rel_path}. Using original {target_w}x{target_h}.")
                 processed_image = q_image_original.scaled(int(target_w), int(target_h), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                if is_flipped_h: debug(f"GameSetup DEBUG: Custom image {img_idx} is flipped horizontally."); processed_image = processed_image.mirrored(True, False)
-                if rotation_angle != 0:
-                    debug(f"GameSetup DEBUG: Custom image {img_idx} is rotated by {rotation_angle} degrees.")
-                    transform = QTransform(); img_center_x = processed_image.width() / 2.0; img_center_y = processed_image.height() / 2.0
-                    transform.translate(img_center_x, img_center_y); transform.rotate(rotation_angle); transform.translate(-img_center_x, -img_center_y)
-                    processed_image = processed_image.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+                if is_flipped_h: processed_image = processed_image.mirrored(True, False)
+                if rotation_angle != 0: transform = QTransform();transform.translate(processed_image.width()/2.0, processed_image.height()/2.0);transform.rotate(rotation_angle);transform.translate(-processed_image.width()/2.0, -processed_image.height()/2.0);processed_image = processed_image.transformed(transform, Qt.TransformationMode.SmoothTransformation)
                 final_pixmap = QPixmap.fromImage(processed_image)
-                if final_pixmap.isNull(): error(f"GameSetup ERROR: Failed to create QPixmap from processed image for {full_image_path}"); continue
-                renderable_custom_image = { 'rect': QRectF(float(rect_tuple[0]), float(rect_tuple[1]), target_w, target_h), 'image': final_pixmap, 'layer_order': layer_order, 'source_file_path_debug': rel_path, 'opacity_float': opacity_float }
+                if final_pixmap.isNull(): error(f"GameSetup ERROR: QPixmap creation failed for {full_image_path}"); continue
+                renderable_custom_image = {'rect': QRectF(float(rect_tuple[0]), float(rect_tuple[1]), target_w, target_h), 'image': final_pixmap, 'layer_order': layer_order, 'source_file_path_debug': rel_path, 'opacity_float': opacity_float}
                 game_elements_ref["processed_custom_images_for_render"].append(renderable_custom_image)
-                debug(f"GameSetup DEBUG: Processed custom image '{rel_path}' for rendering. Layer: {layer_order}, Opacity: {opacity_float:.2f}, Final Pixmap Size: {final_pixmap.size().width()}x{final_pixmap.size().height()}")
-            except Exception as e_custom_img: error(f"GameSetup ERROR: Error processing custom image data entry {img_idx} ({img_data_raw}): {e_custom_img}", exc_info=True)
+                debug(f"GameSetup DEBUG: Processed custom image '{rel_path}' for render. Layer:{layer_order}, Opacity:{opacity_float:.2f}, Size:{final_pixmap.size().width()}x{final_pixmap.size().height()}")
+            except Exception as e_custom_img: error(f"GameSetup ERROR: Processing custom image entry {img_idx} ({img_data_raw}): {e_custom_img}", exc_info=True)
     info(f"GameSetup: Custom images processed: {len(game_elements_ref['processed_custom_images_for_render'])}")
 
-    active_player_count = 0
-    tile_sz = float(getattr(C, 'TILE_SIZE', 40.0))
-    player1_default_spawn_pos_tuple = (100.0, float(current_height) - (tile_sz * 2.0))
+    # --- Process Trigger Square Visuals (NEW) ---
+    game_elements_ref["processed_trigger_visuals_for_render"] = []
+    trigger_squares_data = level_data.get("trigger_squares_list", [])
+    if trigger_squares_data:
+        info(f"GameSetup: Processing {len(trigger_squares_data)} trigger square entries for visuals...")
+        current_map_folder_path = os.path.join(maps_base_dir_abs, str(current_map_to_load)) # Redundant if already set, but safe
+        for trig_idx, trig_data_raw in enumerate(trigger_squares_data):
+            if not isinstance(trig_data_raw, dict): warning(f"GameSetup WARNING: Trigger square entry {trig_idx} is not a dict. Skipping."); continue
+            try:
+                properties = trig_data_raw.get("properties", {})
+                if not properties.get("visible", True): # Skip if not visible in game
+                    debug(f"GameSetup DEBUG: Trigger square {trig_idx} is not visible in game. Skipping visual processing.")
+                    continue
+
+                rect_tuple = trig_data_raw.get('rect')
+                image_rel_path = properties.get('image_in_square') # Image path is in properties
+                layer_order = int(trig_data_raw.get('layer_order', 0)) # Layer order from main object
+                is_flipped_h = trig_data_raw.get('is_flipped_h', False) # Triggers can also be flipped/rotated
+                rotation_angle = float(trig_data_raw.get('rotation', 0))
+                opacity_percent = float(properties.get('opacity', 100.0)) # Opacity from properties
+                opacity_float = max(0.0, min(1.0, opacity_percent / 100.0))
+
+                if not (rect_tuple and isinstance(rect_tuple, (list, tuple)) and len(rect_tuple) == 4):
+                    warning(f"GameSetup WARNING: Trigger square entry {trig_idx} has invalid 'rect'. Skipping. Rect data: {rect_tuple}")
+                    continue
+                
+                target_w, target_h = float(rect_tuple[2]), float(rect_tuple[3])
+                final_pixmap_for_trigger: Optional[QPixmap] = None
+
+                if image_rel_path and isinstance(image_rel_path, str):
+                    full_trigger_image_path = os.path.join(current_map_folder_path, image_rel_path) # Assumes image_in_square path is like "Custom/..."
+                    debug(f"GameSetup DEBUG: Trigger square {trig_idx} has image: '{image_rel_path}'. Full path: '{full_trigger_image_path}'")
+                    if not os.path.exists(full_trigger_image_path): error(f"GameSetup ERROR: Trigger image NOT FOUND: {full_trigger_image_path}")
+                    else:
+                        q_img_trig = QImage(full_trigger_image_path)
+                        if q_img_trig.isNull(): error(f"GameSetup ERROR: Failed to load QImage for trigger: {full_trigger_image_path}")
+                        else:
+                            if target_w <=0 or target_h <=0: target_w,target_h=float(q_img_trig.width()),float(q_img_trig.height())
+                            processed_trig_img = q_img_trig.scaled(int(target_w), int(target_h), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            if is_flipped_h: processed_trig_img = processed_trig_img.mirrored(True, False)
+                            if rotation_angle != 0:
+                                transform_trig = QTransform(); tc_x,tc_y = processed_trig_img.width()/2.0, processed_trig_img.height()/2.0
+                                transform_trig.translate(tc_x,tc_y); transform_trig.rotate(rotation_angle); transform_trig.translate(-tc_x,-tc_y)
+                                processed_trig_img = processed_trig_img.transformed(transform_trig, Qt.TransformationMode.SmoothTransformation)
+                            final_pixmap_for_trigger = QPixmap.fromImage(processed_trig_img)
+                            if final_pixmap_for_trigger.isNull(): error(f"GameSetup ERROR: QPixmap for trigger image failed: {full_trigger_image_path}")
+                
+                if not final_pixmap_for_trigger: # Fallback to drawing the colored square if no image or image failed
+                    color_tuple_rgba = properties.get("fill_color_rgba", (100, 100, 255, 100)) # Default semi-transparent blue
+                    if not (isinstance(color_tuple_rgba, (list, tuple)) and len(color_tuple_rgba) == 4): color_tuple_rgba = (100, 100, 255, 100)
+                    q_color_trig = QColor(color_tuple_rgba[0], color_tuple_rgba[1], color_tuple_rgba[2], color_tuple_rgba[3])
+                    
+                    final_pixmap_for_trigger = QPixmap(int(max(1,target_w)), int(max(1,target_h)))
+                    if final_pixmap_for_trigger.isNull(): error(f"GameSetup ERROR: Fallback QPixmap for trigger {trig_idx} isNull."); continue
+                    final_pixmap_for_trigger.fill(Qt.GlobalColor.transparent) # Start with transparent
+                    painter = QPainter(final_pixmap_for_trigger)
+                    painter.setBrush(QBrush(q_color_trig))
+                    painter.setPen(Qt.PenStyle.NoPen) # No border for the fill
+                    painter.drawRect(QRectF(0,0,target_w,target_h))
+                    painter.end()
+                    debug(f"GameSetup DEBUG: Trigger square {trig_idx} has no valid image, will render as colored rect: {q_color_trig.name()}.")
+
+                if final_pixmap_for_trigger and not final_pixmap_for_trigger.isNull():
+                    renderable_trigger_visual = {
+                        'rect': QRectF(float(rect_tuple[0]), float(rect_tuple[1]), target_w, target_h),
+                        'image': final_pixmap_for_trigger,
+                        'layer_order': layer_order,
+                        'opacity_float': opacity_float,
+                        'trigger_debug_type': properties.get("trigger_event_type", "unknown_trigger") # For debug in sorting
+                    }
+                    game_elements_ref["processed_trigger_visuals_for_render"].append(renderable_trigger_visual)
+                    debug(f"GameSetup DEBUG: Processed trigger visual {trig_idx}. Layer:{layer_order}, Opacity:{opacity_float:.2f}")
+            except Exception as e_trig_img: error(f"GameSetup ERROR: Processing trigger visual entry {trig_idx} ({trig_data_raw}): {e_trig_img}", exc_info=True)
+    info(f"GameSetup: Trigger visuals processed: {len(game_elements_ref['processed_trigger_visuals_for_render'])}")
+    # --- End Trigger Square Visual Processing ---
+
+    active_player_count = 0; tile_sz = float(getattr(C, 'TILE_SIZE', 40.0)); player1_default_spawn_pos_tuple = (100.0, float(current_height) - (tile_sz * 2.0))
     for i in range(1, 5):
         player_key = f"player{i}"; spawn_pos_key = f"player_start_pos_p{i}"; spawn_props_key = f"player{i}_spawn_props"
-        player_spawn_pos_tuple_from_map = level_data.get(spawn_pos_key)
-        player_props_for_init_from_map = level_data.get(spawn_props_key, {})
+        player_spawn_pos_tuple_from_map = level_data.get(spawn_pos_key); player_props_for_init_from_map = level_data.get(spawn_props_key, {})
         game_elements_ref[spawn_pos_key] = player_spawn_pos_tuple_from_map; game_elements_ref[spawn_props_key] = player_props_for_init_from_map
         final_spawn_x, final_spawn_y = -1.0, -1.0
         if player_spawn_pos_tuple_from_map and isinstance(player_spawn_pos_tuple_from_map, (tuple, list)) and len(player_spawn_pos_tuple_from_map) == 2: final_spawn_x, final_spawn_y = float(player_spawn_pos_tuple_from_map[0]), float(player_spawn_pos_tuple_from_map[1])
@@ -292,11 +291,9 @@ def initialize_game_elements(
         if "joystick" in player_instance.control_scheme:
             try: player_instance.joystick_id_idx = int(player_instance.control_scheme.split('_')[-1])
             except (IndexError, ValueError): player_instance.joystick_id_idx = None
-        game_elements_ref[player_key] = player_instance
-        player_instance.set_projectile_group_references(game_elements_ref["projectiles_list"], game_elements_ref["all_renderable_objects"], game_elements_ref["platforms_list"])
+        game_elements_ref[player_key] = player_instance; player_instance.set_projectile_group_references(game_elements_ref["projectiles_list"], game_elements_ref["all_renderable_objects"], game_elements_ref["platforms_list"])
         active_player_count +=1; info(f"GameSetup: {player_key} RE-CREATED. Pos: ({final_spawn_x:.1f},{final_spawn_y:.1f}), Control: {player_instance.control_scheme}")
     info(f"GameSetup: Total active players RE-CREATED: {active_player_count}")
-
     authoritative_modes_for_spawn = ["couch_play", "host_game", "host", "host_waiting", "host_active"]
     if for_game_mode in authoritative_modes_for_spawn:
         debug(f"GameSetup DEBUG: Re-spawning dynamic entities for authoritative mode '{for_game_mode}'.")
@@ -352,11 +349,13 @@ def initialize_game_elements(
     new_all_renderables_setup_temp: List[Any] = []
     for static_key in ["background_tiles_list", "ladders_list", "hazards_list", "platforms_list"]:
         for item in game_elements_ref.get(static_key, []): add_to_renderables_if_new(item, new_all_renderables_setup_temp)
-    
-    # CORRECTED CALL
     for custom_img_dict in game_elements_ref.get("processed_custom_images_for_render", []):
         add_to_renderables_if_new(custom_img_dict, new_all_renderables_setup_temp)
         debug(f"GameSetup DEBUG: Added to renderables from processed_custom_images_for_render: {custom_img_dict.get('source_file_path_debug', 'Unknown Custom Image')}")
+    # ADD PROCESSED TRIGGER VISUALS TO RENDER LIST
+    for trigger_visual_dict in game_elements_ref.get("processed_trigger_visuals_for_render", []):
+        add_to_renderables_if_new(trigger_visual_dict, new_all_renderables_setup_temp)
+        debug(f"GameSetup DEBUG: Added to renderables from processed_trigger_visuals_for_render: ID {trigger_visual_dict.get('trigger_debug_type', 'Unknown Trigger')}")
 
     for dynamic_key in ["enemy_list", "statue_objects", "collectible_list", "projectiles_list"]:
         for item_dyn in game_elements_ref.get(dynamic_key, []): add_to_renderables_if_new(item_dyn, new_all_renderables_setup_temp)
