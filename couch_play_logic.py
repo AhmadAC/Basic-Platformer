@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Handles game logic for local couch co-op mode using PySide6.
-MODIFIED: Deferred import of get_layer_order_key.
+MODIFIED: Corrected add_to_renderables_couch_if_new to handle unhashable dicts.
 """
-# version 2.0.25 (Deferred get_layer_order_key import)
+# version 2.0.26 (Fixed unhashable dict in add_to_renderables)
 
 import time
 import math
@@ -17,18 +17,6 @@ from items import Chest
 from statue import Statue
 from tiles import Platform, Ladder, Lava, BackgroundTile
 from player import Player
-
-# REMOVE TOP-LEVEL IMPORT:
-# try:
-#     from game_setup import get_layer_order_key
-# except ImportError:
-#     print("COUCH_PLAY_LOGIC WARNING: Could not import get_layer_order_key from game_setup. Using fallback for sorting.")
-#     def get_layer_order_key(item: Any) -> int:
-#         if isinstance(item, dict) and 'layer_order' in item: return int(item['layer_order'])
-#         if hasattr(item, 'layer_order'): return int(getattr(item, 'layer_order', 0))
-#         if isinstance(item, Player): return 100
-#         if isinstance(item, BackgroundTile): return -10
-#         return 0
 
 _SCRIPT_LOGGING_ENABLED = True
 
@@ -73,25 +61,22 @@ def run_couch_play_mode(
     show_status_message_callback: Optional[callable] = None
     ) -> bool:
 
-    # --- LOCAL IMPORT for get_layer_order_key ---
     try:
         from game_setup import get_layer_order_key
     except ImportError:
         log_warning("COUCH_PLAY_LOGIC WARNING (run_couch_play_mode): Could not import get_layer_order_key from game_setup. Using fallback for sorting.")
-        def get_layer_order_key(item: Any) -> int: # Fallback
+        def get_layer_order_key(item: Any) -> int:
             if isinstance(item, dict) and 'layer_order' in item: return int(item['layer_order'])
             if hasattr(item, 'layer_order'): return int(getattr(item, 'layer_order', 0))
             if isinstance(item, Player): return 100
             if isinstance(item, BackgroundTile): return -10
             return 0
-    # --- END LOCAL IMPORT ---
-
 
     if not game_elements_ref.get('game_ready_for_logic', False) or \
        game_elements_ref.get('initialization_in_progress', True):
-        if _SCRIPT_LOGGING_ENABLED and (not hasattr(run_couch_play_mode, "_init_wait_logged_couch") or not run_couch_play_mode._init_wait_logged_couch): # type: ignore
+        if _SCRIPT_LOGGING_ENABLED and (not hasattr(run_couch_play_mode, "_init_wait_logged_couch") or not run_couch_play_mode._init_wait_logged_couch):
             log_debug("COUCH_PLAY DEBUG: Waiting for game elements initialization to complete...")
-            run_couch_play_mode._init_wait_logged_couch = True # type: ignore
+            run_couch_play_mode._init_wait_logged_couch = True
         return True
 
     if hasattr(run_couch_play_mode, "_init_wait_logged_couch"):
@@ -138,13 +123,13 @@ def run_couch_play_mode(
        p3_action_events.get("pause") or p4_action_events.get("pause"):
         log_info("Couch Play: Pause action detected. Signaling app to stop this game mode.")
         if show_status_message_callback: show_status_message_callback("Exiting Couch Play...")
-        run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
+        run_couch_play_mode._first_tick_debug_printed_couch = False
         return False
 
     if p1_action_events.get("reset") or p2_action_events.get("reset") or \
        p3_action_events.get("reset") or p4_action_events.get("reset"):
         log_info("Couch Play: Game state reset initiated by player action.")
-        reset_game_state(game_elements_ref) # This function itself defers its import of initialize_game_elements
+        reset_game_state(game_elements_ref)
         player1 = game_elements_ref.get("player1"); player2 = game_elements_ref.get("player2")
         player3 = game_elements_ref.get("player3"); player4 = game_elements_ref.get("player4")
         platforms_list_this_frame = game_elements_ref.get("platforms_list", [])
@@ -287,43 +272,42 @@ def run_couch_play_mode(
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Camera updated.")
 
     new_all_renderables_couch: List[Any] = []
-    current_renderables_set_couch = set() # To avoid adding the same instance multiple times
-    def add_to_renderables_couch_if_new(obj_to_add: Any):
-        if obj_to_add is not None and obj_to_add not in current_renderables_set_couch:
-            new_all_renderables_couch.append(obj_to_add)
-            current_renderables_set_couch.add(obj_to_add)
+    # --- MODIFIED add_to_renderables_couch_if_new to not use a set internally ---
+    def add_to_renderables_couch_if_new(obj_to_add: Any, render_list: List[Any]):
+        if obj_to_add is not None:
+            # Check by identity if already in the list
+            is_present = False
+            for item in render_list:
+                if item is obj_to_add:
+                    is_present = True
+                    break
+            if not is_present:
+                render_list.append(obj_to_add)
 
     for static_key_couch in ["background_tiles_list", "ladders_list", "hazards_list", "platforms_list"]:
         for item_couch_static in game_elements_ref.get(static_key_couch, []):
-            add_to_renderables_couch_if_new(item_couch_static)
+            add_to_renderables_couch_if_new(item_couch_static, new_all_renderables_couch)
 
     custom_image_added_count = 0
     for custom_img_dict_couch in processed_custom_images_for_render_couch:
-        add_to_renderables_couch_if_new(custom_img_dict_couch)
+        add_to_renderables_couch_if_new(custom_img_dict_couch, new_all_renderables_couch) # Pass the list
         custom_image_added_count += 1
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Added {custom_image_added_count} custom image dicts to renderables list from 'processed_custom_images_for_render_couch'.")
 
     for dynamic_key_couch in ["enemy_list", "statue_objects", "collectible_list", "projectiles_list"]:
         for item_couch_dyn in game_elements_ref.get(dynamic_key_couch, []):
-            add_to_renderables_couch_if_new(item_couch_dyn)
+            add_to_renderables_couch_if_new(item_couch_dyn, new_all_renderables_couch)
 
     for p_render_couch in player_instances_to_update:
         if p_render_couch:
-            if hasattr(p_render_couch, 'alive') and p_render_couch.alive(): add_to_renderables_couch_if_new(p_render_couch)
-            elif getattr(p_render_couch, 'is_dead', False) and not getattr(p_render_couch, 'death_animation_finished', True): add_to_renderables_couch_if_new(p_render_couch)
+            if hasattr(p_render_couch, 'alive') and p_render_couch.alive(): add_to_renderables_couch_if_new(p_render_couch, new_all_renderables_couch)
+            elif getattr(p_render_couch, 'is_dead', False) and not getattr(p_render_couch, 'death_animation_finished', True): add_to_renderables_couch_if_new(p_render_couch, new_all_renderables_couch)
 
     try:
-        # Access get_layer_order_key which is now locally defined (either imported or fallback)
         new_all_renderables_couch.sort(key=get_layer_order_key)
         if _SCRIPT_LOGGING_ENABLED:
             log_debug(f"COUCH_PLAY DEBUG: Sorted renderables. Final count: {len(new_all_renderables_couch)}")
-            # for idx_sorted, item_sorted_debug in enumerate(new_all_renderables_couch):
-            #     item_type_debug = type(item_sorted_debug).__name__
-            #     layer_debug = get_layer_order_key(item_sorted_debug)
-            #     source_debug = item_sorted_debug.get('source_file_path_debug', 'N/A') if isinstance(item_sorted_debug, dict) else 'N/A'
-            #     log_debug(f"  Sorted Renderable [{idx_sorted}]: Type={item_type_debug}, Layer={layer_debug}, Source(if_custom)='{source_debug}'")
-
-    except NameError as e_name: # Specifically catch if get_layer_order_key is not defined
+    except NameError as e_name:
         log_error(f"COUCH_PLAY ERROR: NameError during sort - get_layer_order_key not defined? {e_name}. Render order might be incorrect.")
     except Exception as e_sort:
         log_error(f"COUCH_PLAY ERROR: Error sorting renderables: {e_sort}. Render order might be incorrect.")
@@ -343,7 +327,7 @@ def run_couch_play_mode(
     if not active_player_instances_in_map_couch:
         log_info(f"Couch Play: No active player instances for this mode ({num_players_for_mode} players). Game Over by default.")
         if show_status_message_callback: show_status_message_callback(f"Game Over! No active players.")
-        run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
+        run_couch_play_mode._first_tick_debug_printed_couch = False
         return False
     all_active_players_are_gone_couch = True
     for p_active_inst_couch in active_player_instances_in_map_couch:
@@ -352,7 +336,7 @@ def run_couch_play_mode(
         log_info(f"Couch Play: All {len(active_player_instances_in_map_couch)} active players are gone. Game Over.")
         if show_status_message_callback: show_status_message_callback(f"Game Over! All {len(active_player_instances_in_map_couch)} players defeated.")
         process_qt_events_callback(); time.sleep(1.5)
-        run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
+        run_couch_play_mode._first_tick_debug_printed_couch = False
         return False
 
     if _SCRIPT_LOGGING_ENABLED:
