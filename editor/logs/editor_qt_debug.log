@@ -1,417 +1,154 @@
-2025-05-28 00:44:11,768 - INFO - editor_main_window.py:119 - <module> - Editor session started. Logging initialized. Imports via: Absolute (from editor.*)
-2025-05-28 00:44:11,769 - INFO - editor_main_window.py:929 - editor_main - Standalone mode: CWD set to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\editor
-2025-05-28 00:44:11,769 - INFO - editor_main_window.py:933 - editor_main - editor_main() called. Embed mode: False, Standalone context: True
-2025-05-28 00:44:11,795 - INFO - editor_main_window.py:139 - __init__ - Initializing EditorMainWindow... Embedded: False
-2025-05-28 00:44:11,795 - DEBUG - editor_state.py:20 - __init__ - Initializing EditorState for PySide6...
-2025-05-28 00:44:11,795 - DEBUG - editor_state.py:69 - __init__ - EditorState initialized.
-2025-05-28 00:44:11,795 - DEBUG - editor_main_window.py:218 - init_ui - Initializing UI components...
-2025-05-28 00:44:11,798 - DEBUG - map_view_widget.py:212 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-28 00:44:11,798 - DEBUG - map_view_widget.py:194 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-28 00:44:11,799 - DEBUG - map_view_widget.py:209 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-28 00:44:11,811 - DEBUG - map_view_widget.py:255 - draw_placed_objects - MapView: draw_placed_objects. Current live data IDs: set()
-2025-05-28 00:44:11,811 - DEBUG - map_view_widget.py:256 - draw_placed_objects - MapView: _map_object_items before sync: {}
-2025-05-28 00:44:11,811 - DEBUG - map_view_widget.py:309 - draw_placed_objects - MapView: _map_object_items AFTER sync: {}
-2025-05-28 00:44:11,811 - DEBUG - map_view_widget.py:111 - __init__ - MapViewWidget initialized.
-2025-05-28 00:44:11,838 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:11,838 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
-2025-05-28 00:44:11,838 - INFO - minimap_widget.py:51 - __init__ - MinimapWidget initialized. Update interval: 50ms.
-2025-05-28 00:44:11,839 - DEBUG - editor_main_window.py:286 - init_ui - UI components initialized.
-2025-05-28 00:44:11,839 - DEBUG - editor_main_window.py:615 - create_actions - Creating actions...
-2025-05-28 00:44:11,840 - DEBUG - editor_main_window.py:640 - create_actions - Actions created.
-2025-05-28 00:44:11,840 - DEBUG - editor_main_window.py:643 - create_menus - Creating menus...
-2025-05-28 00:44:11,841 - DEBUG - editor_main_window.py:669 - create_menus - Menus created.
-2025-05-28 00:44:11,841 - DEBUG - editor_main_window.py:672 - create_status_bar - Creating status bar...
-2025-05-28 00:44:11,842 - DEBUG - editor_main_window.py:679 - create_status_bar - Status bar created.
-2025-05-28 00:44:11,842 - INFO - editor_assets.py:334 - load_editor_palette_assets - Loading editor palette assets for Qt...
-2025-05-28 00:44:11,855 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-28 00:44:11,855 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-28 00:44:11,855 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-28 00:44:11,855 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-28 00:44:11,855 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-28 00:44:11,855 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-28 00:44:11,856 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-28 00:44:11,856 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-28 00:44:11,856 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-28 00:44:11,856 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-28 00:44:11,856 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-28 00:44:11,856 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-28 00:44:11,864 - INFO - editor_assets.py:465 - load_editor_palette_assets - Palette asset loading complete. Success: 29, Failed/Fallback: 0.
-2025-05-28 00:44:11,867 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-28 00:44:11,867 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-28 00:44:11,869 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-28 00:44:11,869 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-28 00:44:11,871 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:11,871 - INFO - editor_main_window.py:395 - _init_controller_system - Initializing controller system...
-2025-05-28 00:44:11,889 - INFO - editor_main_window.py:401 - _init_controller_system - No joysticks detected.
-2025-05-28 00:44:11,921 - DEBUG - editor_main_window.py:909 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
-2025-05-28 00:44:11,925 - INFO - minimap_widget.py:303 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(259, 161). Scheduling content redraw.
-2025-05-28 00:44:11,925 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:11,925 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 0.0, 15.8, 4.5)
-2025-05-28 00:44:12,001 - INFO - editor_main_window.py:206 - __init__ - EditorMainWindow initialized.
-2025-05-28 00:44:12,001 - INFO - editor_main_window.py:685 - show_status_message - Status: Editor started. Welcome!
-2025-05-28 00:44:12,029 - DEBUG - minimap_widget.py:96 - _render_map_content_to_pixmap - Minimap: Rendering map content. Widget size: PySide6.QtCore.QSize(259, 161)
-2025-05-28 00:44:12,030 - DEBUG - minimap_widget.py:182 - _render_map_content_to_pixmap - Minimap: Finished rendering map content to pixmap.
-2025-05-28 00:44:12,043 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, 0.0, 116.7, 93.5)
-2025-05-28 00:44:12,770 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (2.1, 0.0, 116.7, 93.5)
-2025-05-28 00:44:14,180 - INFO - editor_file_operations.py:100 - load_map_action - Load Map action triggered (folder selection mode).
-2025-05-28 00:44:16,687 - INFO - editor_file_operations.py:117 - load_map_action - Map folder selected by user: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/custom
-2025-05-28 00:44:16,687 - DEBUG - editor_file_operations.py:123 - load_map_action - Normalized selected folder: c:\users\ahmad\onedrive\computer files\programming\scripts\github\scripts\python scripts\canvas scripts\2024\python game\platformer\maps\custom
-2025-05-28 00:44:16,688 - DEBUG - editor_file_operations.py:124 - load_map_action - Normalized maps base dir: c:\users\ahmad\onedrive\computer files\programming\scripts\github\scripts\python scripts\canvas scripts\2024\python game\platformer\maps
-2025-05-28 00:44:16,688 - INFO - editor_file_operations.py:151 - load_map_action - Attempting to load map JSON: C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/custom\custom.json
-2025-05-28 00:44:16,702 - INFO - editor_history.py:136 - restore_map_from_snapshot - Map state restored from snapshot. Unsaved changes: True
-2025-05-28 00:44:16,702 - WARNING - editor_map_utils.py:366 - load_map_from_json - LoadMapJSON: Final JSON path ('c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\custom\custom.json') differs from the path it was loaded from ('C:/Users/ahmad/OneDrive/Computer Files/Programming/Scripts/Github/Scripts/Python Scripts/Canvas Scripts/2024/Python Game/Platformer/maps/custom\custom.json'). This is unusual after migration logic. Please check map file consistency.
-2025-05-28 00:44:16,702 - INFO - editor_map_utils.py:371 - load_map_from_json - Map 'custom' loaded from: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\custom\custom.json
-2025-05-28 00:44:16,702 - DEBUG - map_view_widget.py:212 - load_map_from_state - MapViewWidget: Loading map from editor_state...
-2025-05-28 00:44:16,703 - DEBUG - map_view_widget.py:194 - clear_scene - MapViewWidget: Clearing scene...
-2025-05-28 00:44:16,703 - DEBUG - map_view_widget.py:209 - clear_scene - MapViewWidget: Scene cleared.
-2025-05-28 00:44:16,703 - DEBUG - map_view_widget.py:255 - draw_placed_objects - MapView: draw_placed_objects. Current live data IDs: {1995929052160, 1995929052672, 1995929054208, 1995929094144, 1995929055744, 1995929092608, 1995929097216, 1995929057280, 1995929058816, 1995929095680, 1995929104512, 1995929102784, 1995929101056, 1995929106048, 1995929104320, 1995929057856, 1995929094720, 1995929096256, 1995929054784, 1995929050688, 1995929053248, 1995929056320, 1995929093184, 1995929097792, 1995929099328, 1995929102592, 1995929100864, 1995929099136, 1995929107584, 1995929097408, 1995929105856, 1995929108096, 1995929104128, 1995928930944, 1995929051776, 1995929053824, 1995929055360, 1995929092224, 1995929096832, 1995929056896, 1995929093760, 1995929058432, 1995929095296, 1995929102400, 1995929100672, 1995929098944, 1995929107392, 1995929105664, 1995929103936, 1995929102208, 1995929057472, 1995929094336, 1995929054400, 1995929059008, 1995929095872, 1995929051328, 1995929050816, 1995929052864, 1995929055936, 1995929092800, 1995929100480, 1995929098752, 1995929107200, 1995929105472, 1995929107712, 1995929103744, 1995929102016, 1995929053440, 1995929096448, 1995929056512, 1995929093376, 1995929097984, 1995929058048, 1995929094912, 1995929054976, 1995929099520, 1995929100288, 1995929098560, 1995929107008, 1995929105280, 1995929103552, 1995929101824, 1995929100096, 1995929058624, 1995929093952, 1995929095488, 1995929051968, 1995929052480, 1995929054016, 1995929055552, 1995929092416, 1995929097024, 1995929057088, 1995929098368, 1995929106816, 1995929105088, 1995929103360, 1995929101632, 1995929107840, 1995929099904, 1995929059200, 1995929051008, 1995929051520, 1995929053056, 1995929056128, 1995929092992, 1995929097600, 1995929096064, 1995929057664, 1995929094528, 1995929054592, 1995929106624, 1995929104896, 1995929103168, 1995929101440, 1995929058240, 1995929095104, 1995929055168, 1995929051584, 1995929053632, 1995929096640, 1995929056704, 1995929093568, 1995929098176, 1995929099712, 1995929106432, 1995929104704, 1995929102976, 1995929101248, 1995929107968, 1995929106240}
-2025-05-28 00:44:16,704 - DEBUG - map_view_widget.py:256 - draw_placed_objects - MapView: _map_object_items before sync: {}
-2025-05-28 00:44:16,704 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995928930944, asset_key: platform_wall_gray
-2025-05-28 00:44:16,704 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929050816, asset_key: platform_wall_gray
-2025-05-28 00:44:16,704 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929051008, asset_key: platform_wall_gray
-2025-05-28 00:44:16,704 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929050688, asset_key: platform_wall_gray
-2025-05-28 00:44:16,704 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929051328, asset_key: platform_wall_gray
-2025-05-28 00:44:16,704 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929051584, asset_key: platform_wall_gray
-2025-05-28 00:44:16,705 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929051776, asset_key: platform_wall_gray
-2025-05-28 00:44:16,705 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929051968, asset_key: platform_wall_gray
-2025-05-28 00:44:16,705 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929052160, asset_key: platform_wall_gray
-2025-05-28 00:44:16,705 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929051520, asset_key: platform_wall_gray
-2025-05-28 00:44:16,705 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929052480, asset_key: platform_wall_gray
-2025-05-28 00:44:16,705 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929052672, asset_key: platform_wall_gray
-2025-05-28 00:44:16,705 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929052864, asset_key: platform_wall_gray
-2025-05-28 00:44:16,705 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929053056, asset_key: platform_wall_gray
-2025-05-28 00:44:16,706 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929053248, asset_key: platform_wall_gray
-2025-05-28 00:44:16,706 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929053440, asset_key: platform_wall_gray
-2025-05-28 00:44:16,706 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929053632, asset_key: platform_wall_gray
-2025-05-28 00:44:16,706 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929053824, asset_key: platform_wall_gray
-2025-05-28 00:44:16,706 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929054016, asset_key: platform_wall_gray
-2025-05-28 00:44:16,706 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929054208, asset_key: platform_wall_gray
-2025-05-28 00:44:16,706 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929054400, asset_key: platform_wall_gray
-2025-05-28 00:44:16,706 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929054592, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929054784, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929054976, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929055168, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929055360, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929055552, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929055744, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929055936, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929056128, asset_key: platform_wall_gray
-2025-05-28 00:44:16,707 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929056320, asset_key: platform_wall_gray
-2025-05-28 00:44:16,708 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929056512, asset_key: platform_wall_gray
-2025-05-28 00:44:16,708 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929056704, asset_key: platform_wall_gray
-2025-05-28 00:44:16,708 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929056896, asset_key: platform_wall_gray
-2025-05-28 00:44:16,708 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929057088, asset_key: platform_wall_gray
-2025-05-28 00:44:16,708 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929057280, asset_key: platform_wall_gray
-2025-05-28 00:44:16,708 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929057472, asset_key: platform_wall_gray
-2025-05-28 00:44:16,708 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929057664, asset_key: platform_wall_gray
-2025-05-28 00:44:16,708 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929057856, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929058048, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929058240, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929058432, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929058624, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929058816, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929059008, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929059200, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929092224, asset_key: platform_wall_gray
-2025-05-28 00:44:16,709 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929092416, asset_key: platform_wall_gray
-2025-05-28 00:44:16,710 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929092608, asset_key: platform_wall_gray
-2025-05-28 00:44:16,710 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929092800, asset_key: platform_wall_gray
-2025-05-28 00:44:16,710 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929092992, asset_key: platform_wall_gray
-2025-05-28 00:44:16,710 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929093184, asset_key: platform_wall_gray
-2025-05-28 00:44:16,710 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929093376, asset_key: platform_wall_gray
-2025-05-28 00:44:16,710 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929093568, asset_key: platform_wall_gray
-2025-05-28 00:44:16,710 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929093760, asset_key: platform_wall_gray
-2025-05-28 00:44:16,710 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929093952, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929094144, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929094336, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929094528, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929094720, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929094912, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929095104, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929095296, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929095488, asset_key: platform_wall_gray
-2025-05-28 00:44:16,711 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929095680, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929095872, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929096064, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929096256, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929096448, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929096640, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929096832, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929097024, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929097216, asset_key: platform_wall_gray
-2025-05-28 00:44:16,712 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929097408, asset_key: platform_wall_gray
-2025-05-28 00:44:16,713 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929097600, asset_key: platform_wall_gray
-2025-05-28 00:44:16,713 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929097792, asset_key: platform_wall_gray
-2025-05-28 00:44:16,713 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929097984, asset_key: platform_wall_gray
-2025-05-28 00:44:16,714 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929098176, asset_key: platform_wall_gray
-2025-05-28 00:44:16,714 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929098368, asset_key: platform_wall_gray
-2025-05-28 00:44:16,714 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929098560, asset_key: platform_wall_gray
-2025-05-28 00:44:16,714 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929098752, asset_key: platform_wall_gray
-2025-05-28 00:44:16,714 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929098944, asset_key: platform_wall_gray
-2025-05-28 00:44:16,714 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929099136, asset_key: platform_wall_gray
-2025-05-28 00:44:16,714 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929099328, asset_key: platform_wall_gray
-2025-05-28 00:44:16,714 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929099520, asset_key: platform_wall_gray
-2025-05-28 00:44:16,715 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929099712, asset_key: platform_wall_gray
-2025-05-28 00:44:16,715 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929099904, asset_key: platform_wall_gray
-2025-05-28 00:44:16,715 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929100096, asset_key: platform_wall_gray
-2025-05-28 00:44:16,715 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929100288, asset_key: platform_wall_gray
-2025-05-28 00:44:16,715 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929100480, asset_key: platform_wall_gray
-2025-05-28 00:44:16,715 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929100672, asset_key: platform_wall_gray
-2025-05-28 00:44:16,715 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929100864, asset_key: platform_wall_gray
-2025-05-28 00:44:16,715 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929101056, asset_key: platform_wall_gray
-2025-05-28 00:44:16,716 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929101248, asset_key: platform_wall_gray
-2025-05-28 00:44:16,716 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929101440, asset_key: platform_wall_gray
-2025-05-28 00:44:16,716 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929101632, asset_key: platform_wall_gray
-2025-05-28 00:44:16,716 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929101824, asset_key: platform_wall_gray
-2025-05-28 00:44:16,716 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929102016, asset_key: platform_wall_gray
-2025-05-28 00:44:16,716 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929102208, asset_key: platform_wall_gray
-2025-05-28 00:44:16,716 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929102400, asset_key: platform_wall_gray
-2025-05-28 00:44:16,716 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929102592, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929102784, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929102976, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929103168, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929103360, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929103552, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929103744, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929103936, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929104128, asset_key: platform_wall_gray
-2025-05-28 00:44:16,717 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929104320, asset_key: platform_wall_gray
-2025-05-28 00:44:16,718 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929104512, asset_key: platform_wall_gray
-2025-05-28 00:44:16,718 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929104704, asset_key: platform_wall_gray
-2025-05-28 00:44:16,718 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929104896, asset_key: platform_wall_gray
-2025-05-28 00:44:16,718 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929105088, asset_key: platform_wall_gray
-2025-05-28 00:44:16,718 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929105280, asset_key: platform_wall_gray
-2025-05-28 00:44:16,718 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929105472, asset_key: platform_wall_gray
-2025-05-28 00:44:16,718 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929105664, asset_key: platform_wall_gray
-2025-05-28 00:44:16,718 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929105856, asset_key: platform_wall_gray
-2025-05-28 00:44:16,719 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929106048, asset_key: platform_wall_gray
-2025-05-28 00:44:16,719 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929106240, asset_key: platform_wall_gray
-2025-05-28 00:44:16,719 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929106432, asset_key: platform_wall_gray
-2025-05-28 00:44:16,719 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929106624, asset_key: platform_wall_gray
-2025-05-28 00:44:16,719 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929106816, asset_key: platform_wall_gray
-2025-05-28 00:44:16,719 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929107008, asset_key: platform_wall_gray
-2025-05-28 00:44:16,719 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929107200, asset_key: platform_wall_gray
-2025-05-28 00:44:16,719 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929107392, asset_key: platform_wall_gray
-2025-05-28 00:44:16,720 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929108096, asset_key: custom_image_object
-2025-05-28 00:44:16,725 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929107584, asset_key: player1_spawn
-2025-05-28 00:44:16,726 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929107712, asset_key: player2_spawn
-2025-05-28 00:44:16,727 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929107840, asset_key: player3_spawn
-2025-05-28 00:44:16,727 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 1995929107968, asset_key: player4_spawn
-2025-05-28 00:44:16,728 - DEBUG - map_view_widget.py:309 - draw_placed_objects - MapView: _map_object_items AFTER sync: {1995928930944: 1995928930944, 1995929050816: 1995929050816, 1995929051008: 1995929051008, 1995929050688: 1995929050688, 1995929051328: 1995929051328, 1995929051584: 1995929051584, 1995929051776: 1995929051776, 1995929051968: 1995929051968, 1995929052160: 1995929052160, 1995929051520: 1995929051520, 1995929052480: 1995929052480, 1995929052672: 1995929052672, 1995929052864: 1995929052864, 1995929053056: 1995929053056, 1995929053248: 1995929053248, 1995929053440: 1995929053440, 1995929053632: 1995929053632, 1995929053824: 1995929053824, 1995929054016: 1995929054016, 1995929054208: 1995929054208, 1995929054400: 1995929054400, 1995929054592: 1995929054592, 1995929054784: 1995929054784, 1995929054976: 1995929054976, 1995929055168: 1995929055168, 1995929055360: 1995929055360, 1995929055552: 1995929055552, 1995929055744: 1995929055744, 1995929055936: 1995929055936, 1995929056128: 1995929056128, 1995929056320: 1995929056320, 1995929056512: 1995929056512, 1995929056704: 1995929056704, 1995929056896: 1995929056896, 1995929057088: 1995929057088, 1995929057280: 1995929057280, 1995929057472: 1995929057472, 1995929057664: 1995929057664, 1995929057856: 1995929057856, 1995929058048: 1995929058048, 1995929058240: 1995929058240, 1995929058432: 1995929058432, 1995929058624: 1995929058624, 1995929058816: 1995929058816, 1995929059008: 1995929059008, 1995929059200: 1995929059200, 1995929092224: 1995929092224, 1995929092416: 1995929092416, 1995929092608: 1995929092608, 1995929092800: 1995929092800, 1995929092992: 1995929092992, 1995929093184: 1995929093184, 1995929093376: 1995929093376, 1995929093568: 1995929093568, 1995929093760: 1995929093760, 1995929093952: 1995929093952, 1995929094144: 1995929094144, 1995929094336: 1995929094336, 1995929094528: 1995929094528, 1995929094720: 1995929094720, 1995929094912: 1995929094912, 1995929095104: 1995929095104, 1995929095296: 1995929095296, 1995929095488: 1995929095488, 1995929095680: 1995929095680, 1995929095872: 1995929095872, 1995929096064: 1995929096064, 1995929096256: 1995929096256, 1995929096448: 1995929096448, 1995929096640: 1995929096640, 1995929096832: 1995929096832, 1995929097024: 1995929097024, 1995929097216: 1995929097216, 1995929097408: 1995929097408, 1995929097600: 1995929097600, 1995929097792: 1995929097792, 1995929097984: 1995929097984, 1995929098176: 1995929098176, 1995929098368: 1995929098368, 1995929098560: 1995929098560, 1995929098752: 1995929098752, 1995929098944: 1995929098944, 1995929099136: 1995929099136, 1995929099328: 1995929099328, 1995929099520: 1995929099520, 1995929099712: 1995929099712, 1995929099904: 1995929099904, 1995929100096: 1995929100096, 1995929100288: 1995929100288, 1995929100480: 1995929100480, 1995929100672: 1995929100672, 1995929100864: 1995929100864, 1995929101056: 1995929101056, 1995929101248: 1995929101248, 1995929101440: 1995929101440, 1995929101632: 1995929101632, 1995929101824: 1995929101824, 1995929102016: 1995929102016, 1995929102208: 1995929102208, 1995929102400: 1995929102400, 1995929102592: 1995929102592, 1995929102784: 1995929102784, 1995929102976: 1995929102976, 1995929103168: 1995929103168, 1995929103360: 1995929103360, 1995929103552: 1995929103552, 1995929103744: 1995929103744, 1995929103936: 1995929103936, 1995929104128: 1995929104128, 1995929104320: 1995929104320, 1995929104512: 1995929104512, 1995929104704: 1995929104704, 1995929104896: 1995929104896, 1995929105088: 1995929105088, 1995929105280: 1995929105280, 1995929105472: 1995929105472, 1995929105664: 1995929105664, 1995929105856: 1995929105856, 1995929106048: 1995929106048, 1995929106240: 1995929106240, 1995929106432: 1995929106432, 1995929106624: 1995929106624, 1995929106816: 1995929106816, 1995929107008: 1995929107008, 1995929107200: 1995929107200, 1995929107392: 1995929107392, 1995929108096: 1995929108096, 1995929107584: 1995929107584, 1995929107712: 1995929107712, 1995929107840: 1995929107840, 1995929107968: 1995929107968}
-2025-05-28 00:44:16,728 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, -18.0, 242.0, 194.0)
-2025-05-28 00:44:16,732 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-28 00:44:16,733 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-28 00:44:16,735 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-28 00:44:16,735 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-28 00:44:16,741 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
-2025-05-28 00:44:16,741 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
-2025-05-28 00:44:16,742 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
-2025-05-28 00:44:16,742 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
-2025-05-28 00:44:16,745 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:16,862 - INFO - editor_main_window.py:685 - show_status_message - Status: Map 'custom' loaded.
-2025-05-28 00:44:16,878 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 1
-2025-05-28 00:44:16,902 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.7, -18.0, 246.0, 194.0)
-2025-05-28 00:44:18,488 - DEBUG - map_view_widget.py:984 - on_scene_selection_changed - MapView: on_scene_selection_changed. Count: 1
-2025-05-28 00:44:18,490 - DEBUG - map_view_widget.py:998 - on_scene_selection_changed - MapView: Emitting map_object_selected_for_properties with data ID 1995929108096
-2025-05-28 00:44:18,490 - DEBUG - properties_editor_widget.py:93 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
-2025-05-28 00:44:18,511 - DEBUG - editor_selection_pane.py:315 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-28 00:44:22,033 - DEBUG - editor_selection_pane.py:272 - _on_item_widget_opacity_toggle - SelectionPane: Opacity button clicked for 'custom_image_object'. Current: 42, New Target: 0
-2025-05-28 00:44:22,033 - DEBUG - editor_main_window.py:352 - _handle_item_opacity_toggled - MainWin: Opacity toggle for obj ID 1995929108096 to target 0
-2025-05-28 00:44:22,039 - DEBUG - editor_history.py:152 - push_undo_state - Skipped pushing identical state to undo stack (JSON match).
-2025-05-28 00:44:22,039 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929108096. Opacity: 0
-2025-05-28 00:44:22,039 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929108096
-2025-05-28 00:44:22,044 - DEBUG - map_view_widget.py:984 - on_scene_selection_changed - MapView: on_scene_selection_changed. Count: 0
-2025-05-28 00:44:22,044 - DEBUG - map_view_widget.py:1007 - on_scene_selection_changed - MapView: 0 items selected. Emitting None for properties.
-2025-05-28 00:44:22,045 - DEBUG - properties_editor_widget.py:93 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'NoneType'>
-2025-05-28 00:44:22,046 - DEBUG - editor_selection_pane.py:315 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-28 00:44:22,048 - DEBUG - editor_main_window.py:695 - handle_map_content_changed - Map content changed, unsaved_changes: False -> True.
-2025-05-28 00:44:22,048 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:22,048 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:22,048 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:22,164 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:22,164 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:23,973 - DEBUG - editor_selection_pane.py:272 - _on_item_widget_opacity_toggle - SelectionPane: Opacity button clicked for 'custom_image_object'. Current: 0, New Target: 42
-2025-05-28 00:44:23,973 - DEBUG - editor_main_window.py:352 - _handle_item_opacity_toggled - MainWin: Opacity toggle for obj ID 1995929108096 to target 42
-2025-05-28 00:44:23,978 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 2
-2025-05-28 00:44:23,978 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929108096. Opacity: 42
-2025-05-28 00:44:23,978 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929108096
-2025-05-28 00:44:23,983 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:23,983 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:23,983 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:24,096 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:24,096 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:24,885 - DEBUG - editor_selection_pane.py:272 - _on_item_widget_opacity_toggle - SelectionPane: Opacity button clicked for 'custom_image_object'. Current: 42, New Target: 0
-2025-05-28 00:44:24,885 - DEBUG - editor_main_window.py:352 - _handle_item_opacity_toggled - MainWin: Opacity toggle for obj ID 1995929108096 to target 0
-2025-05-28 00:44:24,894 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 3
-2025-05-28 00:44:24,894 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929108096. Opacity: 0
-2025-05-28 00:44:24,894 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929108096
-2025-05-28 00:44:24,902 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:24,902 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:24,902 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:25,016 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:25,017 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:25,744 - DEBUG - editor_selection_pane.py:272 - _on_item_widget_opacity_toggle - SelectionPane: Opacity button clicked for 'custom_image_object'. Current: 0, New Target: 42
-2025-05-28 00:44:25,744 - DEBUG - editor_main_window.py:352 - _handle_item_opacity_toggled - MainWin: Opacity toggle for obj ID 1995929108096 to target 42
-2025-05-28 00:44:25,750 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 4
-2025-05-28 00:44:25,750 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929108096. Opacity: 42
-2025-05-28 00:44:25,750 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929108096
-2025-05-28 00:44:25,754 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:25,754 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:25,755 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:25,868 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:25,868 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:26,680 - DEBUG - editor_selection_pane.py:272 - _on_item_widget_opacity_toggle - SelectionPane: Opacity button clicked for 'custom_image_object'. Current: 42, New Target: 0
-2025-05-28 00:44:26,680 - DEBUG - editor_main_window.py:352 - _handle_item_opacity_toggled - MainWin: Opacity toggle for obj ID 1995929108096 to target 0
-2025-05-28 00:44:26,686 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 5
-2025-05-28 00:44:26,686 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929108096. Opacity: 0
-2025-05-28 00:44:26,686 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929108096
-2025-05-28 00:44:26,691 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:26,691 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:26,691 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:26,804 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:26,804 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:27,525 - DEBUG - editor_selection_pane.py:272 - _on_item_widget_opacity_toggle - SelectionPane: Opacity button clicked for 'custom_image_object'. Current: 0, New Target: 42
-2025-05-28 00:44:27,525 - DEBUG - editor_main_window.py:352 - _handle_item_opacity_toggled - MainWin: Opacity toggle for obj ID 1995929108096 to target 42
-2025-05-28 00:44:27,532 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 6
-2025-05-28 00:44:27,532 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929108096. Opacity: 42
-2025-05-28 00:44:27,532 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929108096
-2025-05-28 00:44:27,540 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:27,540 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:27,541 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:27,652 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:27,652 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:30,351 - DEBUG - map_view_widget.py:984 - on_scene_selection_changed - MapView: on_scene_selection_changed. Count: 1
-2025-05-28 00:44:30,351 - DEBUG - map_view_widget.py:998 - on_scene_selection_changed - MapView: Emitting map_object_selected_for_properties with data ID 1995929108096
-2025-05-28 00:44:30,352 - DEBUG - properties_editor_widget.py:93 - display_map_object_properties - PropertiesEditor: display_map_object_properties called with type: <class 'dict'>
-2025-05-28 00:44:30,362 - DEBUG - editor_selection_pane.py:315 - sync_selection_from_map - SelectionPane: Syncing selection from map.
-2025-05-28 00:44:34,713 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 7
-2025-05-28 00:44:34,713 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995929557376
-2025-05-28 00:44:34,714 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929557376. Opacity: 39
-2025-05-28 00:44:34,714 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995929557376 (opacity: 39) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:34,714 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995929108096. Received data ref ID 1995929557376.
-2025-05-28 00:44:34,714 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995929557376.
-2025-05-28 00:44:34,714 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995929557376.
-2025-05-28 00:44:34,714 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929557376
-2025-05-28 00:44:34,730 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:34,730 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:34,730 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:34,845 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:34,845 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '39'.
-2025-05-28 00:44:34,871 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 8
-2025-05-28 00:44:34,871 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995989219008
-2025-05-28 00:44:34,871 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995989219008. Opacity: 58
-2025-05-28 00:44:34,871 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995989219008 (opacity: 58) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:34,871 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995929557376. Received data ref ID 1995989219008.
-2025-05-28 00:44:34,871 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995989219008.
-2025-05-28 00:44:34,871 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995989219008.
-2025-05-28 00:44:34,871 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995989219008
-2025-05-28 00:44:34,875 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:34,875 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:34,875 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:34,984 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:34,984 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '58'.
-2025-05-28 00:44:35,004 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 9
-2025-05-28 00:44:35,004 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995989003136
-2025-05-28 00:44:35,005 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995989003136. Opacity: 81
-2025-05-28 00:44:35,005 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995989003136 (opacity: 81) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:35,005 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995989219008. Received data ref ID 1995989003136.
-2025-05-28 00:44:35,005 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995989003136.
-2025-05-28 00:44:35,005 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995989003136.
-2025-05-28 00:44:35,005 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995989003136
-2025-05-28 00:44:35,009 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:35,009 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:35,009 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:35,119 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:35,119 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '81'.
-2025-05-28 00:44:35,141 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 10
-2025-05-28 00:44:35,141 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995929565184
-2025-05-28 00:44:35,141 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929565184. Opacity: 84
-2025-05-28 00:44:35,141 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995929565184 (opacity: 84) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:35,141 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995989003136. Received data ref ID 1995929565184.
-2025-05-28 00:44:35,141 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995929565184.
-2025-05-28 00:44:35,141 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995929565184.
-2025-05-28 00:44:35,141 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929565184
-2025-05-28 00:44:35,147 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:35,147 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:35,147 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:35,256 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:35,256 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '84'.
-2025-05-28 00:44:35,612 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 11
-2025-05-28 00:44:35,612 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995986991744
-2025-05-28 00:44:35,613 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995986991744. Opacity: 81
-2025-05-28 00:44:35,613 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995986991744 (opacity: 81) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:35,613 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995929565184. Received data ref ID 1995986991744.
-2025-05-28 00:44:35,614 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995986991744.
-2025-05-28 00:44:35,614 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995986991744.
-2025-05-28 00:44:35,614 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995986991744
-2025-05-28 00:44:35,628 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:35,628 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:35,629 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:35,745 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:35,745 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '81'.
-2025-05-28 00:44:35,783 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 12
-2025-05-28 00:44:35,783 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995928985728
-2025-05-28 00:44:35,783 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995928985728. Opacity: 77
-2025-05-28 00:44:35,783 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995928985728 (opacity: 77) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:35,783 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995986991744. Received data ref ID 1995928985728.
-2025-05-28 00:44:35,783 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995928985728.
-2025-05-28 00:44:35,783 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995928985728.
-2025-05-28 00:44:35,783 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995928985728
-2025-05-28 00:44:35,788 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:35,788 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:35,788 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:35,898 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:35,899 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '77'.
-2025-05-28 00:44:35,921 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 13
-2025-05-28 00:44:35,921 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995929347904
-2025-05-28 00:44:35,921 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995929347904. Opacity: 71
-2025-05-28 00:44:35,921 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995929347904 (opacity: 71) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:35,921 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995928985728. Received data ref ID 1995929347904.
-2025-05-28 00:44:35,921 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995929347904.
-2025-05-28 00:44:35,921 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995929347904.
-2025-05-28 00:44:35,921 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995929347904
-2025-05-28 00:44:35,925 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:35,925 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:35,926 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:36,034 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:36,034 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '71'.
-2025-05-28 00:44:36,056 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 14
-2025-05-28 00:44:36,056 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995988996672
-2025-05-28 00:44:36,056 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995988996672. Opacity: 68
-2025-05-28 00:44:36,056 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995988996672 (opacity: 68) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:36,056 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995929347904. Received data ref ID 1995988996672.
-2025-05-28 00:44:36,056 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995988996672.
-2025-05-28 00:44:36,056 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995988996672.
-2025-05-28 00:44:36,056 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995988996672
-2025-05-28 00:44:36,061 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:36,061 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:36,061 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:36,172 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:36,172 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '68'.
-2025-05-28 00:44:36,192 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 15
-2025-05-28 00:44:36,192 - DEBUG - map_view_widget.py:978 - on_object_properties_changed - MapView: on_object_properties_changed for obj data ID: 1995987268864
-2025-05-28 00:44:36,192 - DEBUG - map_view_widget.py:315 - update_specific_object_visuals - MapView: update_specific_object_visuals for received data ID: 1995987268864. Opacity: 61
-2025-05-28 00:44:36,192 - WARNING - map_view_widget.py:328 - update_specific_object_visuals - MapView: update_specific_object_visuals - Item ID 1995987268864 (opacity: 61) NOT found in _map_object_items. Trying to find by selection...
-2025-05-28 00:44:36,192 - WARNING - map_view_widget.py:336 - update_specific_object_visuals - MapView: Fallback - Selected item has data_ref ID 1995988996672. Received data ref ID 1995987268864.
-2025-05-28 00:44:36,192 - INFO - map_view_widget.py:349 - update_specific_object_visuals - MapView: Fallback - Found old ref in editor_state at index 130. Replacing with new ref ID 1995987268864.
-2025-05-28 00:44:36,192 - INFO - map_view_widget.py:362 - update_specific_object_visuals - MapView: Fallback - Remapped item in _map_object_items to new ID 1995987268864.
-2025-05-28 00:44:36,192 - INFO - map_view_widget.py:373 - update_specific_object_visuals - MapView: Calling item's update_visuals_from_data for map_object_data_ref with ID 1995987268864
-2025-05-28 00:44:36,197 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
-2025-05-28 00:44:36,198 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
-2025-05-28 00:44:36,198 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:36,306 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
-2025-05-28 00:44:36,306 - DEBUG - properties_editor_widget.py:586 - _on_property_value_changed - Property 'opacity' changed to '61'.
-2025-05-28 00:44:37,949 - INFO - editor_file_operations.py:178 - save_map_action - Save Map (Unified JSON & PY) action triggered.
-2025-05-28 00:44:37,951 - DEBUG - editor_file_operations.py:31 - _internal_save_map_json - Internal Save Map (JSON) called.
-2025-05-28 00:44:37,972 - INFO - editor_map_utils.py:299 - save_map_to_json - Map editor data saved to: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\custom\custom.json
-2025-05-28 00:44:37,972 - INFO - editor_file_operations.py:33 - _internal_save_map_json - Editor data saved: custom.json.
-2025-05-28 00:44:37,972 - DEBUG - editor_file_operations.py:40 - _internal_export_map_py - Internal Export Map (PY) called.
-2025-05-28 00:44:37,972 - INFO - editor_map_utils.py:479 - export_map_to_game_python_script - Exporting map data. Map name: 'custom'
-2025-05-28 00:44:37,980 - INFO - editor_map_utils.py:676 - export_map_to_game_python_script - Map data exported to game script: custom.py
-2025-05-28 00:44:37,980 - INFO - editor_file_operations.py:45 - _internal_export_map_py - Map exported for game: custom.py.
-2025-05-28 00:44:37,980 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
-2025-05-28 00:44:38,090 - INFO - editor_main_window.py:685 - show_status_message - Status: Map 'custom' saved (JSON & PY).
-2025-05-28 00:44:39,618 - INFO - editor_main_window.py:880 - closeEvent - Close event triggered. Embedded: False
-2025-05-28 00:44:39,618 - DEBUG - editor_main_window.py:901 - save_geometry_and_state - Window geometry and dock state explicitly saved.
-2025-05-28 00:44:39,649 - INFO - editor_main_window.py:955 - editor_main - Editor session (standalone) ended.
-2025-05-28 00:44:39,687 - INFO - editor_main_window.py:958 - editor_main - Pygame quit globally at end of editor_main (standalone).
+2025-05-28 15:12:06,556 - INFO - editor_main_window.py:119 - <module> - Editor session started. Logging initialized. Imports via: Relative
+2025-05-28 15:12:06,577 - INFO - editor_main_window.py:933 - editor_main - editor_main() called. Embed mode: True, Standalone context: False
+2025-05-28 15:12:06,577 - INFO - editor_main_window.py:139 - __init__ - Initializing EditorMainWindow... Embedded: True
+2025-05-28 15:12:06,577 - DEBUG - editor_state.py:20 - __init__ - Initializing EditorState for PySide6...
+2025-05-28 15:12:06,577 - DEBUG - editor_state.py:69 - __init__ - EditorState initialized.
+2025-05-28 15:12:06,578 - DEBUG - editor_main_window.py:218 - init_ui - Initializing UI components...
+2025-05-28 15:12:06,584 - DEBUG - map_view_widget.py:212 - load_map_from_state - MapViewWidget: Loading map from editor_state...
+2025-05-28 15:12:06,584 - DEBUG - map_view_widget.py:194 - clear_scene - MapViewWidget: Clearing scene...
+2025-05-28 15:12:06,585 - DEBUG - map_view_widget.py:209 - clear_scene - MapViewWidget: Scene cleared.
+2025-05-28 15:12:06,604 - DEBUG - map_view_widget.py:255 - draw_placed_objects - MapView: draw_placed_objects. Current live data IDs: set()
+2025-05-28 15:12:06,606 - DEBUG - map_view_widget.py:256 - draw_placed_objects - MapView: _map_object_items before sync: {}
+2025-05-28 15:12:06,606 - DEBUG - map_view_widget.py:309 - draw_placed_objects - MapView: _map_object_items AFTER sync: {}
+2025-05-28 15:12:06,606 - DEBUG - map_view_widget.py:111 - __init__ - MapViewWidget initialized.
+2025-05-28 15:12:06,658 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-28 15:12:06,659 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 6.2, 6.1, 1.8)
+2025-05-28 15:12:06,659 - INFO - minimap_widget.py:51 - __init__ - MinimapWidget initialized. Update interval: 50ms.
+2025-05-28 15:12:06,661 - DEBUG - editor_main_window.py:286 - init_ui - UI components initialized.
+2025-05-28 15:12:06,661 - DEBUG - editor_main_window.py:615 - create_actions - Creating actions...
+2025-05-28 15:12:06,664 - DEBUG - editor_main_window.py:640 - create_actions - Actions created.
+2025-05-28 15:12:06,664 - DEBUG - editor_main_window.py:643 - create_menus - Creating menus...
+2025-05-28 15:12:06,668 - DEBUG - editor_main_window.py:669 - create_menus - Menus created.
+2025-05-28 15:12:06,668 - DEBUG - editor_main_window.py:672 - create_status_bar - Creating status bar...
+2025-05-28 15:12:06,670 - DEBUG - editor_main_window.py:679 - create_status_bar - Status bar created.
+2025-05-28 15:12:06,670 - INFO - editor_assets.py:334 - load_editor_palette_assets - Loading editor palette assets for Qt...
+2025-05-28 15:12:06,717 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:06,717 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:06,718 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:06,718 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:06,718 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:06,718 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:06,718 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:06,718 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:06,718 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:06,719 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:06,719 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:06,719 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:06,731 - INFO - editor_assets.py:465 - load_editor_palette_assets - Palette asset loading complete. Success: 29, Failed/Fallback: 0.
+2025-05-28 15:12:06,738 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:06,738 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:06,740 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:06,741 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:06,745 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:06,745 - INFO - editor_main_window.py:395 - _init_controller_system - Initializing controller system...
+2025-05-28 15:12:07,107 - INFO - editor_main_window.py:408 - _init_controller_system - Primary joystick: Nintendo Switch Pro Controller
+2025-05-28 15:12:07,107 - INFO - editor_main_window.py:419 - _init_controller_system - Controller input polling started.
+2025-05-28 15:12:07,107 - INFO - editor_main_window.py:196 - __init__ - Embedded mode: EditorMainWindow will not show itself. Parent is responsible.
+2025-05-28 15:12:07,121 - DEBUG - editor_main_window.py:909 - restore_geometry_and_state - Window geometry restored: True, state restored: True.
+2025-05-28 15:12:07,121 - INFO - editor_main_window.py:206 - __init__ - EditorMainWindow initialized.
+2025-05-28 15:12:07,121 - INFO - editor_main_window.py:685 - show_status_message - Status: Editor started. Welcome!
+2025-05-28 15:12:07,121 - INFO - editor_main_window.py:685 - show_status_message - Status: Controller Focus: Map View
+2025-05-28 15:12:07,121 - INFO - editor_main_window.py:601 - _set_panel_controller_focus - Controller focus set to: Map View (Index: 0)
+2025-05-28 15:12:07,121 - INFO - editor_main_window.py:961 - editor_main - EditorMainWindow instance created for embedding. Returning instance to caller.
+2025-05-28 15:12:07,165 - INFO - minimap_widget.py:303 - resizeEvent - Minimap: Resized to PySide6.QtCore.QSize(100, 161). Scheduling content redraw.
+2025-05-28 15:12:07,165 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-28 15:12:07,165 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 49.2, 6.1, 1.8)
+2025-05-28 15:12:07,175 - DEBUG - minimap_widget.py:211 - update_view_rect - Minimap: View rect updated to (0.0, 49.2, 44.1, 29.1)
+2025-05-28 15:12:08,853 - DEBUG - properties_editor_widget.py:184 - display_asset_properties - PropertiesEditor: display_asset_properties called with player2_spawn
+2025-05-28 15:12:08,855 - DEBUG - map_view_widget.py:874 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'player2_spawn', flipped: False, rotation: 0, wall_idx: 0
+2025-05-28 15:12:08,855 - INFO - editor_main_window.py:685 - show_status_message - Status: Asset for placement: Player 2 Spawn (Default Orientation)
+2025-05-28 15:12:08,859 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:08,859 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:08,860 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:08,861 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:09,114 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 1
+2025-05-28 15:12:09,114 - DEBUG - map_view_widget.py:255 - draw_placed_objects - MapView: draw_placed_objects. Current live data IDs: {2718566211008}
+2025-05-28 15:12:09,114 - DEBUG - map_view_widget.py:256 - draw_placed_objects - MapView: _map_object_items before sync: {}
+2025-05-28 15:12:09,114 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 2718566211008, asset_key: player2_spawn
+2025-05-28 15:12:09,115 - DEBUG - map_view_widget.py:309 - draw_placed_objects - MapView: _map_object_items AFTER sync: {2718566211008: 2718566211008}
+2025-05-28 15:12:09,115 - DEBUG - editor_main_window.py:695 - handle_map_content_changed - Map content changed, unsaved_changes: False -> True.
+2025-05-28 15:12:09,115 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-28 15:12:09,116 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-28 15:12:09,116 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:09,118 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-28 15:12:09,118 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:10,097 - DEBUG - properties_editor_widget.py:184 - display_asset_properties - PropertiesEditor: display_asset_properties called with enemy_gray
+2025-05-28 15:12:10,098 - DEBUG - map_view_widget.py:874 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'enemy_gray', flipped: False, rotation: 0, wall_idx: 0
+2025-05-28 15:12:10,098 - INFO - editor_main_window.py:685 - show_status_message - Status: Asset for placement: Enemy Gray (Default Orientation)
+2025-05-28 15:12:10,101 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:10,102 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:10,103 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:10,104 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:10,633 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 2
+2025-05-28 15:12:10,633 - DEBUG - map_view_widget.py:255 - draw_placed_objects - MapView: draw_placed_objects. Current live data IDs: {2718566211008, 2718566501888}
+2025-05-28 15:12:10,633 - DEBUG - map_view_widget.py:256 - draw_placed_objects - MapView: _map_object_items before sync: {2718566211008: 2718566211008}
+2025-05-28 15:12:10,633 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 2718566501888, asset_key: enemy_gray
+2025-05-28 15:12:10,635 - DEBUG - map_view_widget.py:309 - draw_placed_objects - MapView: _map_object_items AFTER sync: {2718566211008: 2718566211008, 2718566501888: 2718566501888}
+2025-05-28 15:12:10,635 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-28 15:12:10,635 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-28 15:12:10,635 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:10,637 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-28 15:12:10,638 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:12,659 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:12,659 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:12,662 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:12,662 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:13,497 - DEBUG - properties_editor_widget.py:184 - display_asset_properties - PropertiesEditor: display_asset_properties called with enemy_purple
+2025-05-28 15:12:13,498 - DEBUG - map_view_widget.py:874 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'enemy_purple', flipped: False, rotation: 0, wall_idx: 0
+2025-05-28 15:12:13,498 - INFO - editor_main_window.py:685 - show_status_message - Status: Asset for placement: Enemy Purple (Default Orientation)
+2025-05-28 15:12:13,499 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:13,499 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:13,500 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:13,500 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:13,940 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 3
+2025-05-28 15:12:13,940 - DEBUG - map_view_widget.py:255 - draw_placed_objects - MapView: draw_placed_objects. Current live data IDs: {2718566211008, 2718566501888, 2718566259840}
+2025-05-28 15:12:13,940 - DEBUG - map_view_widget.py:256 - draw_placed_objects - MapView: _map_object_items before sync: {2718566211008: 2718566211008, 2718566501888: 2718566501888}
+2025-05-28 15:12:13,941 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 2718566259840, asset_key: enemy_purple
+2025-05-28 15:12:13,941 - DEBUG - map_view_widget.py:309 - draw_placed_objects - MapView: _map_object_items AFTER sync: {2718566211008: 2718566211008, 2718566501888: 2718566501888, 2718566259840: 2718566259840}
+2025-05-28 15:12:13,941 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-28 15:12:13,941 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-28 15:12:13,941 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:13,944 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-28 15:12:13,944 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:15,323 - DEBUG - properties_editor_widget.py:184 - display_asset_properties - PropertiesEditor: display_asset_properties called with enemy_green
+2025-05-28 15:12:15,324 - DEBUG - map_view_widget.py:874 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'enemy_green', flipped: False, rotation: 0, wall_idx: 0
+2025-05-28 15:12:15,324 - INFO - editor_main_window.py:685 - show_status_message - Status: Asset for placement: Enemy Green (Default Orientation)
+2025-05-28 15:12:15,325 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:15,325 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:15,326 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:15,326 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:15,923 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 4
+2025-05-28 15:12:15,923 - DEBUG - map_view_widget.py:255 - draw_placed_objects - MapView: draw_placed_objects. Current live data IDs: {2718566211008, 2718566501888, 2718531470976, 2718566259840}
+2025-05-28 15:12:15,923 - DEBUG - map_view_widget.py:256 - draw_placed_objects - MapView: _map_object_items before sync: {2718566211008: 2718566211008, 2718566501888: 2718566501888, 2718566259840: 2718566259840}
+2025-05-28 15:12:15,923 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 2718531470976, asset_key: enemy_green
+2025-05-28 15:12:15,924 - DEBUG - map_view_widget.py:309 - draw_placed_objects - MapView: _map_object_items AFTER sync: {2718566211008: 2718566211008, 2718566501888: 2718566501888, 2718566259840: 2718566259840, 2718531470976: 2718531470976}
+2025-05-28 15:12:15,924 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-28 15:12:15,924 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-28 15:12:15,924 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:15,929 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-28 15:12:15,929 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:16,743 - DEBUG - properties_editor_widget.py:184 - display_asset_properties - PropertiesEditor: display_asset_properties called with enemy_yellow
+2025-05-28 15:12:16,743 - DEBUG - map_view_widget.py:874 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'enemy_yellow', flipped: False, rotation: 0, wall_idx: 0
+2025-05-28 15:12:16,743 - INFO - editor_main_window.py:685 - show_status_message - Status: Asset for placement: Enemy Yellow (Default Orientation)
+2025-05-28 15:12:16,745 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:16,745 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:16,746 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:16,747 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:17,163 - DEBUG - editor_history.py:164 - push_undo_state - Pushed state to undo stack. Size: 5
+2025-05-28 15:12:17,163 - DEBUG - map_view_widget.py:255 - draw_placed_objects - MapView: draw_placed_objects. Current live data IDs: {2718566211008, 2718566501888, 2718531470976, 2718566259840, 2718566499264}
+2025-05-28 15:12:17,163 - DEBUG - map_view_widget.py:256 - draw_placed_objects - MapView: _map_object_items before sync: {2718566211008: 2718566211008, 2718566501888: 2718566501888, 2718566259840: 2718566259840, 2718531470976: 2718531470976}
+2025-05-28 15:12:17,165 - DEBUG - map_view_widget.py:290 - draw_placed_objects - MapView: Creating new QGraphicsItem for obj_data with ID 2718566499264, asset_key: enemy_yellow
+2025-05-28 15:12:17,165 - DEBUG - map_view_widget.py:309 - draw_placed_objects - MapView: _map_object_items AFTER sync: {2718566211008: 2718566211008, 2718566501888: 2718566501888, 2718566259840: 2718566259840, 2718531470976: 2718531470976, 2718566499264: 2718566499264}
+2025-05-28 15:12:17,165 - DEBUG - editor_main_window.py:700 - handle_map_content_changed - Notifying minimap to redraw content due to map change.
+2025-05-28 15:12:17,165 - DEBUG - minimap_widget.py:58 - schedule_map_content_redraw - Minimap: Map content redraw scheduled (invalidating content pixmap).
+2025-05-28 15:12:17,165 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:17,169 - DEBUG - editor_main_window.py:703 - handle_map_content_changed - handle_map_content_changed done. Unsaved: True
+2025-05-28 15:12:17,169 - DEBUG - editor_selection_pane.py:207 - populate_items - SelectionPane: Populating items.
+2025-05-28 15:12:18,766 - DEBUG - properties_editor_widget.py:184 - display_asset_properties - PropertiesEditor: display_asset_properties called with enemy_gray
+2025-05-28 15:12:18,767 - DEBUG - map_view_widget.py:874 - on_asset_selected_for_placement - MapView: on_asset_selected_for_placement key: 'enemy_gray', flipped: False, rotation: 0, wall_idx: 0
+2025-05-28 15:12:18,767 - INFO - editor_main_window.py:685 - show_status_message - Status: Asset for placement: Enemy Gray (Default Orientation)
+2025-05-28 15:12:18,768 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\cactus\Cactus_Idle.png' for asset 'enemy_cactus'
+2025-05-28 15:12:18,768 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_cactus' failed or is null. Creating RED fallback.
+2025-05-28 15:12:18,770 - ERROR - editor_assets.py:178 - get_asset_pixmap - File NOT FOUND: 'c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\characters\truck\Truck_Idle.png' for asset 'enemy_truck'
+2025-05-28 15:12:18,770 - WARNING - editor_assets.py:222 - get_asset_pixmap - Native pixmap for 'enemy_truck' failed or is null. Creating RED fallback.
+2025-05-28 15:12:22,866 - DEBUG - editor_main_window.py:901 - save_geometry_and_state - Window geometry and dock state explicitly saved.
