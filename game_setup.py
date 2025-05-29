@@ -1,434 +1,359 @@
-# game_setup.py
+# couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
-Handles initialization and FULL RE-INITIALIZATION (reset) of game elements,
-levels, and entities. Employs aggressive cache busting for map reloading.
-Map paths now use map_name_folder/map_name_file.py structure.
-MODIFIED: Adds map-defined Statues to platforms_list (only if not smashed).
-MODIFIED: Processes custom_images_list from map data for rendering.
-MODIFIED: Sorts all_renderable_objects by layer_order.
-MODIFIED: Enhanced logging for custom image processing and path handling.
+Handles game logic for local couch co-op mode using PySide6.
+UI rendering and input capture are handled by the main Qt application.
+MODIFIED: Statue physics and lifecycle management in game loop.
+MODIFIED: Chest can insta-kill player if it lands from sufficient height.
+MODIFIED: Chest interaction rect is slightly expanded.
+MODIFIED: Custom images are now correctly included in the render list and sorted by layer.
+MODIFIED: Added extensive debug logging.
+MODIFIED: Ensures statues are included in hittable targets for player attacks.
 """
-# version 2.0.11 (Enhanced logging for custom image processing and path handling)
-import sys
-import os
-import importlib # For importlib.invalidate_caches()
-import gc # Garbage Collector
-from typing import Dict, Optional, Any, Tuple, List
+# version 2.0.24 (Enhanced Renderables Assembly Logging)
 
-# PySide6 imports for custom image processing
-from PySide6.QtGui import QImage, QPixmap, QTransform, QColor
-from PySide6.QtCore import Qt, QRectF
-
-# Game-specific imports
+import time
+import math
+from typing import Dict, List, Any, Optional
+from PySide6.QtCore import QRectF
 import constants as C
-from player import Player
+from game_state_manager import reset_game_state
 from enemy import Enemy
 from items import Chest
 from statue import Statue
-from camera import Camera
-from level_loader import LevelLoader
-import config as game_config
-
 from tiles import Platform, Ladder, Lava, BackgroundTile
-
-DEFAULT_LEVEL_MODULE_NAME = "original" # Or your preferred default map name
+from player import Player
 
 try:
-    from logger import info, debug, warning, critical, error
+    from game_setup import get_layer_order_key
 except ImportError:
-    import logging
-    logging.basicConfig(level=logging.DEBUG, format='GAME_SETUP (Fallback): %(levelname)s - %(message)s')
-    _fallback_logger_gs = logging.getLogger(__name__ + "_fallback_gs")
-    def info(msg, *args, **kwargs): _fallback_logger_gs.info(msg, *args, **kwargs)
-    def debug(msg, *args, **kwargs): _fallback_logger_gs.debug(msg, *args, **kwargs)
-    def warning(msg, *args, **kwargs): _fallback_logger_gs.warning(msg, *args, **kwargs)
-    def critical(msg, *args, **kwargs): _fallback_logger_gs.critical(msg, *args, **kwargs)
-    def error(msg, *args, **kwargs): _fallback_logger_gs.error(msg, *args, **kwargs)
-    critical("GameSetup: Failed to import project's logger. Using isolated fallback.")
+    print("COUCH_PLAY_LOGIC WARNING: Could not import get_layer_order_key from game_setup. Using fallback for sorting.")
+    def get_layer_order_key(item: Any) -> int:
+        if isinstance(item, dict) and 'layer_order' in item: return int(item['layer_order'])
+        if hasattr(item, 'layer_order'): return int(getattr(item, 'layer_order', 0))
+        if isinstance(item, Player): return 100
+        if isinstance(item, BackgroundTile): return -10
+        return 0
 
-def add_to_renderables_if_new(obj_to_add: Any, renderables_list_ref: List[Any]):
-    """Helper to prevent duplicates in all_renderable_objects list."""
-    if obj_to_add is not None and obj_to_add not in renderables_list_ref:
-        renderables_list_ref.append(obj_to_add)
+_SCRIPT_LOGGING_ENABLED = True
 
-def get_layer_order_key(item: Any) -> int:
-    """
-    Key function for sorting renderable objects by layer_order.
-    Higher values are drawn on top.
-    """
-    if isinstance(item, dict) and 'layer_order' in item:
-        return item['layer_order']
-    if isinstance(item, Player):
-        return 100
-    direct_layer_order = getattr(item, 'layer_order', None)
-    if direct_layer_order is not None:
-        return int(direct_layer_order)
-    properties_dict = getattr(item, 'properties', None)
-    if isinstance(properties_dict, dict):
-        return int(properties_dict.get('layer_order', 0))
-    if hasattr(item, 'projectile_id'): return 90
-    if isinstance(item, Enemy): return 10
-    if isinstance(item, Statue): return 9
-    if isinstance(item, Chest): return 8
-    if isinstance(item, Platform): return -5
-    if isinstance(item, Ladder): return -6
-    if isinstance(item, Lava): return -7
-    if isinstance(item, BackgroundTile): return -10
-    return 0
+import logging
+logger_couch = logging.getLogger(__name__)
+def log_info(msg, *args, **kwargs): logger_couch.info(msg, *args, **kwargs)
+def log_debug(msg, *args, **kwargs): logger_couch.debug(msg, *args, **kwargs)
+def log_warning(msg, *args, **kwargs): logger_couch.warning(msg, *args, **kwargs)
+def log_error(msg, *args, **kwargs): logger_couch.error(msg, *args, **kwargs)
+def log_critical(msg, *args, **kwargs): logger_couch.critical(msg, *args, **kwargs)
+try:
+    from logger import info as project_info, debug as project_debug, \
+                       warning as project_warning, error as project_error, \
+                       critical as project_critical
+    log_info = project_info; log_debug = project_debug; log_warning = project_warning;
+    log_error = project_error; log_critical = project_critical
+    if _SCRIPT_LOGGING_ENABLED: log_debug("CouchPlayLogic: Successfully aliased project's logger functions.")
+except ImportError:
+    if not logger_couch.hasHandlers() and not logging.getLogger().hasHandlers():
+        _couch_fallback_handler_specific = logging.StreamHandler()
+        _couch_fallback_formatter_specific = logging.Formatter('COUCH_PLAY (ImportFallbackConsole - specific): %(levelname)s - %(module)s:%(lineno)d - %(message)s')
+        _couch_fallback_handler_specific.setFormatter(_couch_fallback_formatter_specific)
+        logger_couch.addHandler(_couch_fallback_handler_specific)
+        logger_couch.setLevel(logging.DEBUG)
+        logger_couch.propagate = False
+    if _SCRIPT_LOGGING_ENABLED: log_critical("CouchPlayLogic: Failed to import project's logger. Using isolated fallback for couch_play_logic.py.")
+
+_start_time_couch_play_monotonic = time.monotonic()
+def get_current_ticks_monotonic() -> int:
+    return int((time.monotonic() - _start_time_couch_play_monotonic) * 1000)
 
 
-def initialize_game_elements(
-    current_width: int,
-    current_height: int,
+def run_couch_play_mode(
     game_elements_ref: Dict[str, Any],
-    for_game_mode: str = "unknown",
-    map_module_name: Optional[str] = None
-) -> bool:
-    current_map_to_load = map_module_name
-    if not current_map_to_load:
-        current_map_to_load = game_elements_ref.get("map_name", game_elements_ref.get("loaded_map_name"))
-        if not current_map_to_load:
-            current_map_to_load = DEFAULT_LEVEL_MODULE_NAME
-            info(f"GameSetup: No specific map name for (re)load, defaulting to '{DEFAULT_LEVEL_MODULE_NAME}'.")
+    app_status_obj: Any,
+    get_p1_input_callback: callable,
+    get_p2_input_callback: callable,
+    get_p3_input_callback: callable,
+    get_p4_input_callback: callable,
+    process_qt_events_callback: callable,
+    dt_sec_provider: callable,
+    show_status_message_callback: Optional[callable] = None
+    ) -> bool:
 
-    info(f"GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---")
-    info(f"GameSetup: Mode: '{for_game_mode}', Screen: {current_width}x{current_height}, Target Map Folder/Stem: '{current_map_to_load}'")
+    if not game_elements_ref.get('game_ready_for_logic', False) or \
+       game_elements_ref.get('initialization_in_progress', True):
+        if _SCRIPT_LOGGING_ENABLED and (not hasattr(run_couch_play_mode, "_init_wait_logged_couch") or not run_couch_play_mode._init_wait_logged_couch): # type: ignore
+            log_debug("COUCH_PLAY DEBUG: Waiting for game elements initialization to complete...")
+            run_couch_play_mode._init_wait_logged_couch = True # type: ignore
+        return True
 
-    # --- Determine absolute path to the base "maps" directory ---
-    maps_base_dir_abs = str(getattr(C, "MAPS_DIR", "maps"))
-    if not os.path.isabs(maps_base_dir_abs):
-        # If C.PROJECT_ROOT is not set or empty, derive from this file's location (assuming specific project structure)
-        project_root_from_constants = getattr(C, 'PROJECT_ROOT', None)
-        if not project_root_from_constants: # Fallback if C.PROJECT_ROOT is empty or not set
-            project_root_from_constants = os.path.dirname(os.path.abspath(__file__)) # Assumes game_setup.py is in project root
-            # If game_setup.py is in a subfolder (e.g., 'game_logic'), adjust this:
-            # project_root_from_constants = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            warning(f"GameSetup: C.PROJECT_ROOT not found or empty. Guessed project root for maps: {project_root_from_constants}")
+    if hasattr(run_couch_play_mode, "_init_wait_logged_couch"):
+        delattr(run_couch_play_mode, "_init_wait_logged_couch")
 
-        maps_base_dir_abs = os.path.join(project_root_from_constants, maps_base_dir_abs)
-    maps_base_dir_abs = os.path.normpath(maps_base_dir_abs) # Normalize path
-    debug(f"GameSetup: Resolved absolute base maps directory to: {maps_base_dir_abs}")
-    # --- End Base Maps Directory Determination ---
+    if _SCRIPT_LOGGING_ENABLED:
+        log_debug(f"COUCH_PLAY DEBUG: --- Start of frame {get_current_ticks_monotonic()} ---")
 
-    debug("GameSetup: Clearing all existing game elements from game_elements_ref...")
-    for i in range(1, 5):
-        player_key = f"player{i}"
-        if player_key in game_elements_ref:
-            if isinstance(game_elements_ref[player_key], Player) and hasattr(game_elements_ref[player_key], 'reset_for_new_game_or_round'):
-                game_elements_ref[player_key].reset_for_new_game_or_round()
-            game_elements_ref[player_key] = None
-    game_elements_ref["camera"] = None
-    game_elements_ref["current_chest"] = None
-    game_elements_ref["level_data"] = None
-    list_keys_to_reinitialize = [
-        "enemy_list", "statue_objects", "collectible_list", "projectiles_list",
-        "platforms_list", "ladders_list", "hazards_list", "background_tiles_list",
-        "all_renderable_objects", "enemy_spawns_data_cache", "statue_spawns_data_cache",
-        "processed_custom_images_for_render"
-    ]
-    for key in list_keys_to_reinitialize:
-        game_elements_ref[key] = []
-    game_elements_ref['initialization_in_progress'] = True
-    game_elements_ref['game_ready_for_logic'] = False
-    game_elements_ref['camera_level_dims_set'] = False
-    gc.collect()
-    debug("GameSetup: Existing game elements cleared and lists re-initialized.")
+    player1: Optional[Player] = game_elements_ref.get("player1")
+    player2: Optional[Player] = game_elements_ref.get("player2")
+    player3: Optional[Player] = game_elements_ref.get("player3")
+    player4: Optional[Player] = game_elements_ref.get("player4")
+    platforms_list_this_frame: List[Any] = game_elements_ref.get("platforms_list", [])
+    ladders_list: List[Ladder] = game_elements_ref.get("ladders_list", [])
+    hazards_list: List[Lava] = game_elements_ref.get("hazards_list", [])
+    current_enemies_list_ref: List[Enemy] = game_elements_ref.get("enemy_list", [])
+    statue_objects_list_ref: List[Statue] = game_elements_ref.get("statue_objects", [])
+    projectiles_list: List[Any] = game_elements_ref.get("projectiles_list", [])
+    collectible_items_list_ref: List[Any] = game_elements_ref.get("collectible_list", [])
+    current_chest: Optional[Chest] = game_elements_ref.get("current_chest")
+    camera_obj: Optional[Any] = game_elements_ref.get("camera")
+    processed_custom_images_for_render_couch: List[Dict[str,Any]] = game_elements_ref.get("processed_custom_images_for_render", [])
 
-    level_data: Optional[Dict[str, Any]] = None
-    loader = LevelLoader()
+    if _SCRIPT_LOGGING_ENABLED:
+        if (not hasattr(run_couch_play_mode, "_first_tick_debug_printed_couch") or not run_couch_play_mode._first_tick_debug_printed_couch): # type: ignore
+            log_debug(f"COUCH_PLAY DEBUG: First valid tick. Platforms (inc statues): {len(platforms_list_this_frame)}, "
+                      f"Ladders: {len(ladders_list)}, Hazards: {len(hazards_list)}, Chest: {'Present' if current_chest else 'None'}, "
+                      f"CustomImages for Render: {len(processed_custom_images_for_render_couch)}")
+            run_couch_play_mode._first_tick_debug_printed_couch = True # type: ignore
 
-    debug(f"GameSetup: Attempting to load map '{current_map_to_load}' using base maps directory '{maps_base_dir_abs}'.")
-    level_data = loader.load_map(str(current_map_to_load), maps_base_dir_abs)
+    dt_sec = dt_sec_provider()
+    current_game_time_ms = get_current_ticks_monotonic()
 
-    if not level_data or not isinstance(level_data, dict):
-        critical(f"GameSetup FATAL: Failed to load/reload map data for '{current_map_to_load}' from base '{maps_base_dir_abs}'. Initialization aborted.")
-        game_elements_ref["loaded_map_name"] = None
-        game_elements_ref['initialization_in_progress'] = False
+    p1_action_events: Dict[str, bool] = {}
+    if player1 and hasattr(player1, '_valid_init') and player1._valid_init: p1_action_events = get_p1_input_callback(player1)
+    p2_action_events: Dict[str, bool] = {}
+    if player2 and hasattr(player2, '_valid_init') and player2._valid_init: p2_action_events = get_p2_input_callback(player2)
+    p3_action_events: Dict[str, bool] = {}
+    if player3 and hasattr(player3, '_valid_init') and player3._valid_init: p3_action_events = get_p3_input_callback(player3)
+    p4_action_events: Dict[str, bool] = {}
+    if player4 and hasattr(player4, '_valid_init') and player4._valid_init: p4_action_events = get_p4_input_callback(player4)
+
+    if p1_action_events.get("pause") or p2_action_events.get("pause") or \
+       p3_action_events.get("pause") or p4_action_events.get("pause"):
+        log_info("Couch Play: Pause action detected. Signaling app to stop this game mode.")
+        if show_status_message_callback: show_status_message_callback("Exiting Couch Play...")
+        run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
         return False
 
-    game_elements_ref["level_data"] = level_data
-    game_elements_ref["loaded_map_name"] = current_map_to_load
-    game_elements_ref["map_name"] = current_map_to_load # Ensure map_name is also set for consistency
-    info(f"GameSetup: Successfully reloaded pristine map data for '{current_map_to_load}'.")
+    if p1_action_events.get("reset") or p2_action_events.get("reset") or \
+       p3_action_events.get("reset") or p4_action_events.get("reset"):
+        log_info("Couch Play: Game state reset initiated by player action.")
+        reset_game_state(game_elements_ref)
+        player1 = game_elements_ref.get("player1"); player2 = game_elements_ref.get("player2")
+        player3 = game_elements_ref.get("player3"); player4 = game_elements_ref.get("player4")
+        platforms_list_this_frame = game_elements_ref.get("platforms_list", [])
+        ladders_list = game_elements_ref.get("ladders_list", [])
+        hazards_list = game_elements_ref.get("hazards_list", [])
+        current_enemies_list_ref = game_elements_ref.get("enemy_list", [])
+        statue_objects_list_ref = game_elements_ref.get("statue_objects", [])
+        projectiles_list = game_elements_ref.get("projectiles_list", [])
+        collectible_items_list_ref = game_elements_ref.get("collectible_list", [])
+        current_chest = game_elements_ref.get("current_chest")
+        processed_custom_images_for_render_couch = game_elements_ref.get("processed_custom_images_for_render", [])
+        if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG (Reset): Enemies={len(current_enemies_list_ref)}, Statues={len(statue_objects_list_ref)}, CustomImages: {len(processed_custom_images_for_render_couch)}")
 
-    # Extract level properties from loaded data
-    game_elements_ref["level_background_color"] = tuple(level_data.get('background_color', getattr(C, 'LIGHT_BLUE', (173, 216, 230))))
-    game_elements_ref["level_pixel_width"] = float(level_data.get('level_pixel_width', float(current_width) * 2.0))
-    game_elements_ref["level_min_x_absolute"] = float(level_data.get('level_min_x_absolute', 0.0))
-    game_elements_ref["level_min_y_absolute"] = float(level_data.get('level_min_y_absolute', 0.0))
-    game_elements_ref["level_max_y_absolute"] = float(level_data.get('level_max_y_absolute', float(current_height)))
-    game_elements_ref["ground_level_y_ref"] = float(level_data.get('ground_level_y_ref', game_elements_ref["level_max_y_absolute"] - float(getattr(C, 'TILE_SIZE', 40.0))))
-    game_elements_ref["ground_platform_height_ref"] = float(level_data.get('ground_platform_height_ref', float(getattr(C, 'TILE_SIZE', 40.0))))
+    if current_chest and isinstance(current_chest, Chest) and current_chest.alive():
+        current_chest.apply_physics_step(dt_sec)
+        chest_landed_on_player_and_killed = False
+        if not current_chest.is_collected_flag_internal and current_chest.state == 'closed':
+            player_instances_for_chest_check = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init and hasattr(p, 'alive') and p.alive() and not getattr(p, 'is_dead', True) and not getattr(p, 'is_petrified', False)]
+            for p_instance_crush_check in player_instances_for_chest_check:
+                if not (hasattr(current_chest, 'rect') and isinstance(current_chest.rect, QRectF) and hasattr(p_instance_crush_check, 'rect') and isinstance(p_instance_crush_check.rect, QRectF)): continue
+                if current_chest.rect.intersects(p_instance_crush_check.rect):
+                    is_chest_falling_meaningfully = hasattr(current_chest, 'vel_y') and current_chest.vel_y > 1.0
+                    vertical_overlap_landing = current_chest.rect.bottom() >= p_instance_crush_check.rect.top() and current_chest.rect.top() < p_instance_crush_check.rect.bottom()
+                    is_landing_on_head_area = vertical_overlap_landing and current_chest.rect.bottom() <= p_instance_crush_check.rect.top() + (p_instance_crush_check.rect.height() * 0.6)
+                    min_horizontal_overlap_for_crush = current_chest.rect.width() * 0.3
+                    actual_horizontal_overlap_for_crush = min(current_chest.rect.right(), p_instance_crush_check.rect.right()) - max(current_chest.rect.left(), p_instance_crush_check.rect.left())
+                    has_sufficient_horizontal_overlap = actual_horizontal_overlap_for_crush >= min_horizontal_overlap_for_crush
+                    if is_chest_falling_meaningfully and is_landing_on_head_area and has_sufficient_horizontal_overlap:
+                        player_height_for_calc = getattr(p_instance_crush_check, 'standing_collision_height', float(C.TILE_SIZE) * 1.5);                        
+                        if player_height_for_calc <= 0: player_height_for_calc = 60.0
+                        required_fall_distance = 2.0 * player_height_for_calc
+                        try: gravity_val = float(C.PLAYER_GRAVITY); min_vel_y_for_kill_sq = 2 * gravity_val * required_fall_distance; vel_y_for_kill_threshold = math.sqrt(min_vel_y_for_kill_sq) if min_vel_y_for_kill_sq > 0 else 0.0
+                        except ValueError: vel_y_for_kill_threshold = 10.0
+                        if current_chest.vel_y >= vel_y_for_kill_threshold:
+                            if hasattr(p_instance_crush_check, 'insta_kill'): p_instance_crush_check.insta_kill()
+                            else: p_instance_crush_check.take_damage(p_instance_crush_check.max_health * 10)
+                            current_chest.rect.moveBottom(p_instance_crush_check.rect.top())
+                            if hasattr(current_chest, 'pos_midbottom'): current_chest.pos_midbottom.setY(current_chest.rect.bottom())
+                            current_chest.vel_y = 0.0; current_chest.on_ground = True; chest_landed_on_player_and_killed = True
+                            if hasattr(current_chest, '_update_rect_from_image_and_pos'): current_chest._update_rect_from_image_and_pos()
+                            break
+        current_chest.on_ground = False
+        if chest_landed_on_player_and_killed: current_chest.on_ground = True
+        if not chest_landed_on_player_and_killed and not current_chest.is_collected_flag_internal and current_chest.state == 'closed':
+            for platform_collidable in platforms_list_this_frame:
+                if isinstance(platform_collidable, Statue) and platform_collidable.is_smashed: continue
+                if not hasattr(platform_collidable, 'rect') or not isinstance(platform_collidable.rect, QRectF): continue
+                if current_chest.rect.intersects(platform_collidable.rect):
+                    previous_chest_bottom_y_estimate = current_chest.rect.bottom() - (current_chest.vel_y * dt_sec * C.FPS if current_chest.vel_y > 0 else 0)
+                    if current_chest.vel_y >= 0 and current_chest.rect.bottom() >= platform_collidable.rect.top() and previous_chest_bottom_y_estimate <= platform_collidable.rect.top() + C.GROUND_SNAP_THRESHOLD :
+                        min_overlap_ratio_chest = 0.1; min_horizontal_overlap_chest = current_chest.rect.width() * min_overlap_ratio_chest
+                        actual_overlap_width_chest = min(current_chest.rect.right(), platform_collidable.rect.right()) - max(current_chest.rect.left(), platform_collidable.rect.left())
+                        if actual_overlap_width_chest >= min_horizontal_overlap_chest:
+                            current_chest.rect.moveBottom(platform_collidable.rect.top())
+                            if hasattr(current_chest, 'pos_midbottom'): current_chest.pos_midbottom.setY(current_chest.rect.bottom())
+                            current_chest.vel_y = 0.0; current_chest.on_ground = True; break
+            if hasattr(current_chest, '_update_rect_from_image_and_pos'): current_chest._update_rect_from_image_and_pos()
+        current_chest.update(dt_sec)
+        if current_chest.state == 'closed' and not current_chest.is_collected_flag_internal:
+            player_interacted_chest: Optional[Player] = None
+            player_action_pairs = [(player1, p1_action_events), (player2, p2_action_events), (player3, p3_action_events), (player4, p4_action_events)]
+            interaction_chest_rect_couch = QRectF(current_chest.rect).adjusted(-5, -5, 5, 5)
+            for p_instance_chest, p_actions_chest in player_action_pairs:
+                if p_instance_chest and hasattr(p_instance_chest, 'alive') and p_instance_chest.alive() and not getattr(p_instance_chest, 'is_dead', True) and not getattr(p_instance_chest,'is_petrified',False) and hasattr(p_instance_chest, 'rect') and p_instance_chest.rect.intersects(interaction_chest_rect_couch) and p_actions_chest.get("interact", False):
+                    player_interacted_chest = p_instance_chest; break
+            if player_interacted_chest:
+                current_chest.collect(player_interacted_chest)
 
-    # Cache spawn data (used if server/authoritative mode)
-    game_elements_ref["enemy_spawns_data_cache"] = list(level_data.get('enemies_list', []))
-    game_elements_ref["statue_spawns_data_cache"] = list(level_data.get('statues_list', []))
+    active_players_for_collision_check = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init and hasattr(p, 'alive') and p.alive()]
+    player_instances_to_update = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init]
+    hittable_targets_for_player_melee: List[Any] = []
+    hittable_targets_for_player_melee.extend([e for e in current_enemies_list_ref if hasattr(e, 'alive') and e.alive()])
+    hittable_targets_for_player_melee.extend([s for s in statue_objects_list_ref if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
 
-    # Create NEW Static Tile Instances (Platforms, Ladders, Hazards, BackgroundTiles)
-    for p_data in level_data.get('platforms_list', []):
-        try:
-            rect_tuple = p_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4:
-                game_elements_ref["platforms_list"].append(Platform(
-                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
-                    color_tuple=tuple(p_data.get('color', getattr(C, 'GRAY', (128,128,128)))),
-                    platform_type=str(p_data.get('type', 'generic_platform')),
-                    properties=p_data.get('properties', {}) ))
-        except Exception as e_plat: error(f"GameSetup: Error creating platform: {e_plat}", exc_info=True)
+    for p_instance in player_instances_to_update:
+        all_others_for_this_player = [other_p for other_p in active_players_for_collision_check if other_p is not p_instance]
+        if current_chest and current_chest.alive() and current_chest.state == 'closed': all_others_for_this_player.append(current_chest)
+        p_instance.game_elements_ref_for_projectiles = game_elements_ref
+        p_instance.update(dt_sec, platforms_list_this_frame, ladders_list, hazards_list, all_others_for_this_player, hittable_targets_for_player_melee)
+    if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Players updated.")
 
-    for l_data in level_data.get('ladders_list', []):
-        try:
-            rect_tuple = l_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4:
-                game_elements_ref["ladders_list"].append(Ladder(
-                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                    width=float(rect_tuple[2]), height=float(rect_tuple[3]) ))
-        except Exception as e_lad: error(f"GameSetup: Error creating ladder: {e_lad}", exc_info=True)
+    active_players_for_ai = [p for p in player_instances_to_update if not getattr(p, 'is_dead', True) and hasattr(p, 'alive') and p.alive()]
+    enemies_to_keep_this_frame = []
+    for enemy_instance in list(current_enemies_list_ref):
+        if hasattr(enemy_instance, '_valid_init') and enemy_instance._valid_init:
+            enemy_instance.update(dt_sec, active_players_for_ai, platforms_list_this_frame, hazards_list, current_enemies_list_ref)
+            if hasattr(enemy_instance, 'alive') and enemy_instance.alive(): enemies_to_keep_this_frame.append(enemy_instance)
+    game_elements_ref["enemy_list"] = enemies_to_keep_this_frame
+    if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Enemies updated. Count: {len(enemies_to_keep_this_frame)}")
 
-    for h_data in level_data.get('hazards_list', []):
-        try:
-            rect_tuple = h_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4 and \
-               (str(h_data.get('type', '')).lower() == 'lava' or "lava" in str(h_data.get('type', '')).lower()):
-                game_elements_ref["hazards_list"].append(Lava(
-                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
-                    color_tuple=tuple(h_data.get('color', getattr(C, 'ORANGE_RED', (255,69,0)))) ))
-        except Exception as e_haz: error(f"GameSetup: Error creating hazard: {e_haz}", exc_info=True)
+    statues_to_keep_this_frame_couch = []
+    statues_killed_this_frame_couch = []
+    for statue_instance_couch in list(statue_objects_list_ref):
+        if hasattr(statue_instance_couch, 'alive') and statue_instance_couch.alive():
+            if hasattr(statue_instance_couch, 'apply_physics_step') and not statue_instance_couch.is_smashed:
+                statue_instance_couch.apply_physics_step(dt_sec, platforms_list_this_frame)
+            if hasattr(statue_instance_couch, 'update'): statue_instance_couch.update(dt_sec)
+            if statue_instance_couch.alive(): statues_to_keep_this_frame_couch.append(statue_instance_couch)
+            else: statues_killed_this_frame_couch.append(statue_instance_couch)
+    game_elements_ref["statue_objects"] = statues_to_keep_this_frame_couch
+    if statues_killed_this_frame_couch:
+        current_main_platforms = game_elements_ref.get("platforms_list", [])
+        new_main_platforms_list = [p for p in current_main_platforms if not (isinstance(p, Statue) and p in statues_killed_this_frame_couch)]
+        if len(new_main_platforms_list) != len(current_main_platforms):
+            game_elements_ref["platforms_list"] = new_main_platforms_list
+            platforms_list_this_frame = new_main_platforms_list
+    if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Statues updated. Count: {len(statues_to_keep_this_frame_couch)}")
 
-    for bg_data in level_data.get('background_tiles_list', []):
-        try:
-            rect_tuple = bg_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4:
-                game_elements_ref["background_tiles_list"].append(BackgroundTile(
-                    x=float(rect_tuple[0]), y=float(rect_tuple[1]),
-                    width=float(rect_tuple[2]), height=float(rect_tuple[3]),
-                    color_tuple=tuple(bg_data.get('color', getattr(C, 'DARK_GRAY', (50,50,50)))),
-                    tile_type=str(bg_data.get('type', 'generic_background')),
-                    image_path=bg_data.get('image_path'),
-                    properties=bg_data.get('properties', {}) ))
-        except Exception as e_bg: error(f"GameSetup: Error creating background tile: {e_bg}", exc_info=True)
-    info(f"GameSetup: Static tile-based elements re-created. Platforms: {len(game_elements_ref['platforms_list'])}")
+    hittable_targets_for_projectiles: List[Any] = []
+    for p_target in player_instances_to_update:
+        if hasattr(p_target, 'alive') and p_target.alive() and not getattr(p_target, 'is_petrified', False): hittable_targets_for_projectiles.append(p_target)
+    for enemy_target in game_elements_ref.get("enemy_list",[]):
+        if hasattr(enemy_target, 'alive') and enemy_target.alive() and not getattr(enemy_target, 'is_petrified', False): hittable_targets_for_projectiles.append(enemy_target)
+    for statue_target in game_elements_ref.get("statue_objects", []):
+        if hasattr(statue_target, 'alive') and statue_target.alive() and not getattr(statue_target, 'is_smashed', False): hittable_targets_for_projectiles.append(statue_target)
+    projectiles_to_keep_this_frame = []
+    for proj_instance in list(projectiles_list):
+        if hasattr(proj_instance, 'update') and hasattr(proj_instance, 'alive') and proj_instance.alive():
+            proj_instance.update(dt_sec, platforms_list_this_frame, hittable_targets_for_projectiles)
+        if hasattr(proj_instance, 'alive') and proj_instance.alive(): projectiles_to_keep_this_frame.append(proj_instance)
+    game_elements_ref["projectiles_list"] = projectiles_to_keep_this_frame
+    if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Projectiles updated. Count: {len(projectiles_to_keep_this_frame)}")
 
-    # --- Custom Image Processing (with Enhanced Logging) ---
-    game_elements_ref["processed_custom_images_for_render"] = []
-    custom_images_data_from_map = level_data.get("custom_images_list")
-    if custom_images_data_from_map is None:
-        info("GameSetup: 'custom_images_list' key NOT FOUND in level_data. No custom images will be loaded.")
-    elif not custom_images_data_from_map: # It was found, but it's an empty list
-        info("GameSetup: 'custom_images_list' key FOUND in level_data, but the list is EMPTY.")
-    else:
-        info(f"GameSetup: Found 'custom_images_list' with {len(custom_images_data_from_map)} entries. Processing them...")
-        # `current_map_to_load` is the folder/stem name (e.g., "chest")
-        current_map_folder_path = os.path.join(maps_base_dir_abs, str(current_map_to_load))
-        debug(f"GameSetup: Custom image base folder path: {current_map_folder_path}")
+    collectibles_to_keep = []
+    if current_chest and current_chest.alive(): collectibles_to_keep.append(current_chest)
+    game_elements_ref["collectible_list"] = collectibles_to_keep
+    if not (current_chest and current_chest.alive()): game_elements_ref["current_chest"] = None
+    if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Collectibles updated. Chest present: {bool(game_elements_ref.get('current_chest'))}")
 
-        for img_idx, img_data_raw in enumerate(custom_images_data_from_map):
-            try:
-                rect_tuple = img_data_raw.get('rect')
-                rel_path = img_data_raw.get('source_file_path') # This path is relative to current_map_folder_path
-                layer_order = img_data_raw.get('layer_order', 0)
-                is_flipped_h = img_data_raw.get('is_flipped_h', False)
-                rotation_angle = float(img_data_raw.get('rotation', 0))
+    if camera_obj:
+        focus_targets_alive_couch = [p for p in player_instances_to_update if p and hasattr(p, 'alive') and p.alive() and not getattr(p, 'is_dead', True) and not getattr(p, 'is_petrified', False)]
+        if focus_targets_alive_couch:
+            focus_target_for_camera_couch = focus_targets_alive_couch[0]
+            for p_idx_focus_couch in range(len(focus_targets_alive_couch)):
+                current_p_for_cam_focus = focus_targets_alive_couch[p_idx_focus_couch]
+                if current_p_for_cam_focus.player_id == 1: focus_target_for_camera_couch = current_p_for_cam_focus; break
+                if current_p_for_cam_focus.player_id == 2 and focus_target_for_camera_couch.player_id != 1: focus_target_for_camera_couch = current_p_for_cam_focus
+                elif current_p_for_cam_focus.player_id == 3 and focus_target_for_camera_couch.player_id not in [1,2]: focus_target_for_camera_couch = current_p_for_cam_focus
+                elif current_p_for_cam_focus.player_id == 4 and focus_target_for_camera_couch.player_id not in [1,2,3]: focus_target_for_camera_couch = current_p_for_cam_focus
+            camera_obj.update(focus_target_for_camera_couch)
+        else: camera_obj.static_update()
+    if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Camera updated.")
 
-                if not rect_tuple or not rel_path:
-                    warning(f"GameSetup: Custom image data entry {img_idx} missing rect or source_file_path: {img_data_raw}")
-                    continue
+    new_all_renderables_couch: List[Any] = []
+    current_renderables_set_couch = set()
+    def add_to_renderables_couch_if_new(obj_to_add: Any):
+        if obj_to_add is not None and obj_to_add not in current_renderables_set_couch:
+            new_all_renderables_couch.append(obj_to_add)
+            current_renderables_set_couch.add(obj_to_add)
 
-                full_image_path = os.path.join(current_map_folder_path, rel_path)
-                debug(f"GameSetup: Checking custom image {img_idx}. Relative path from map: '{rel_path}'. Full constructed path for loading: '{full_image_path}'")
+    # Static elements
+    for static_key_couch in ["background_tiles_list", "ladders_list", "hazards_list", "platforms_list"]:
+        for item_couch_static in game_elements_ref.get(static_key_couch, []):
+            add_to_renderables_couch_if_new(item_couch_static)
 
-                if not os.path.exists(full_image_path):
-                    error(f"GameSetup: Custom image file NOT FOUND: {full_image_path}") # More prominent error
-                    continue
+    # Custom images
+    custom_image_added_count = 0
+    for custom_img_dict_couch in processed_custom_images_for_render_couch:
+        add_to_renderables_couch_if_new(custom_img_dict_couch)
+        custom_image_added_count += 1
+    if _SCRIPT_LOGGING_ENABLED:
+        log_debug(f"COUCH_PLAY DEBUG: Added {custom_image_added_count} custom image dicts to renderables list from 'processed_custom_images_for_render_couch'.")
 
-                q_image_original = QImage(full_image_path)
-                if q_image_original.isNull():
-                    error(f"GameSetup: Failed to load custom image (QImage isNull): {full_image_path}")
-                    continue
+    # Dynamic elements
+    for dynamic_key_couch in ["enemy_list", "statue_objects", "collectible_list", "projectiles_list"]:
+        for item_couch_dyn in game_elements_ref.get(dynamic_key_couch, []):
+            add_to_renderables_couch_if_new(item_couch_dyn)
 
-                target_w = float(rect_tuple[2]); target_h = float(rect_tuple[3])
-                if target_w <= 0 or target_h <= 0:
-                    warning(f"GameSetup: Invalid target dimensions ({target_w}x{target_h}) for custom image {rel_path}. Using original size.")
-                    target_w = float(q_image_original.width()); target_h = float(q_image_original.height())
+    # Players
+    for p_render_couch in player_instances_to_update:
+        if p_render_couch:
+            if hasattr(p_render_couch, 'alive') and p_render_couch.alive():
+                add_to_renderables_couch_if_new(p_render_couch)
+            elif getattr(p_render_couch, 'is_dead', False) and \
+                 not getattr(p_render_couch, 'death_animation_finished', True):
+                add_to_renderables_couch_if_new(p_render_couch)
 
-                processed_image = q_image_original.scaled(int(target_w), int(target_h),
-                                                          Qt.AspectRatioMode.IgnoreAspectRatio,
-                                                          Qt.TransformationMode.SmoothTransformation)
-                if is_flipped_h: processed_image = processed_image.mirrored(True, False)
-                if rotation_angle != 0:
-                    transform = QTransform()
-                    img_center_x = processed_image.width() / 2.0; img_center_y = processed_image.height() / 2.0
-                    transform.translate(img_center_x, img_center_y); transform.rotate(rotation_angle); transform.translate(-img_center_x, -img_center_y)
-                    processed_image = processed_image.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+    try:
+        new_all_renderables_couch.sort(key=get_layer_order_key)
+        if _SCRIPT_LOGGING_ENABLED:
+            log_debug(f"COUCH_PLAY DEBUG: Sorted renderables. Final count: {len(new_all_renderables_couch)}")
+            # Verbose log for sorted items (can be disabled if too noisy)
+            # for idx_sorted, item_sorted_debug in enumerate(new_all_renderables_couch):
+            #     item_type_debug = type(item_sorted_debug).__name__
+            #     layer_debug = get_layer_order_key(item_sorted_debug)
+            #     source_debug = item_sorted_debug.get('source_file_path_debug', 'N/A') if isinstance(item_sorted_debug, dict) else 'N/A'
+            #     log_debug(f"  Sorted Renderable [{idx_sorted}]: Type={item_type_debug}, Layer={layer_debug}, Source(if_custom)='{source_debug}'")
+    except Exception as e_sort:
+        log_error(f"COUCH_PLAY ERROR: Error sorting renderables: {e_sort}. Render order might be incorrect.")
+    game_elements_ref["all_renderable_objects"] = new_all_renderables_couch
+    if _SCRIPT_LOGGING_ENABLED:
+        log_debug(f"COUCH_PLAY DEBUG: Assembled and sorted renderables. Final count: {len(game_elements_ref['all_renderable_objects'])}")
 
-                final_pixmap = QPixmap.fromImage(processed_image)
-                if final_pixmap.isNull():
-                    error(f"GameSetup: Failed to create QPixmap from processed image for {full_image_path}")
-                    continue
+    def is_player_truly_gone_couch(p_instance_couch):
+        if not p_instance_couch or not hasattr(p_instance_couch, '_valid_init') or not p_instance_couch._valid_init: return True
+        if hasattr(p_instance_couch, 'alive') and p_instance_couch.alive():
+            if getattr(p_instance_couch, 'is_dead', False):
+                if getattr(p_instance_couch, 'is_petrified', False) and not getattr(p_instance_couch, 'is_stone_smashed', False): return False
+                elif not getattr(p_instance_couch, 'death_animation_finished', True): return False
+            else: return False
+        return True
+    num_players_for_mode = game_elements_ref.get('num_active_players_for_mode', 2)
+    active_player_instances_in_map_couch = [p for p_idx, p in enumerate([player1,player2,player3,player4]) if p_idx < num_players_for_mode and p and hasattr(p, '_valid_init') and p._valid_init]
+    if not active_player_instances_in_map_couch:
+        log_info(f"Couch Play: No active player instances for this mode ({num_players_for_mode} players). Game Over by default.")
+        if show_status_message_callback: show_status_message_callback(f"Game Over! No active players.")
+        run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
+        return False
+    all_active_players_are_gone_couch = True
+    for p_active_inst_couch in active_player_instances_in_map_couch:
+        if not is_player_truly_gone_couch(p_active_inst_couch): all_active_players_are_gone_couch = False; break
+    if all_active_players_are_gone_couch:
+        log_info(f"Couch Play: All {len(active_player_instances_in_map_couch)} active players are gone. Game Over.")
+        if show_status_message_callback: show_status_message_callback(f"Game Over! All {len(active_player_instances_in_map_couch)} players defeated.")
+        process_qt_events_callback(); time.sleep(1.5)
+        run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
+        return False
 
-                renderable_custom_image = {
-                    'rect': QRectF(float(rect_tuple[0]), float(rect_tuple[1]), target_w, target_h),
-                    'image': final_pixmap, 'layer_order': layer_order, 'source_file_path_debug': rel_path
-                }
-                game_elements_ref["processed_custom_images_for_render"].append(renderable_custom_image)
-                debug(f"GameSetup: Processed custom image '{rel_path}' for rendering. Layer: {layer_order}")
-            except Exception as e_custom_img:
-                error(f"GameSetup: Error processing custom image data entry {img_idx} ({img_data_raw}): {e_custom_img}", exc_info=True)
-    info(f"GameSetup: Custom images processed: {len(game_elements_ref['processed_custom_images_for_render'])}")
-    # --- End Custom Image Processing ---
-
-    # Create NEW Player Instances
-    active_player_count = 0
-    tile_sz = float(getattr(C, 'TILE_SIZE', 40.0))
-    player1_default_spawn_pos_tuple = (100.0, float(current_height) - (tile_sz * 2.0))
-
-    for i in range(1, 5):
-        player_key = f"player{i}"
-        spawn_pos_key = f"player_start_pos_p{i}"
-        spawn_props_key = f"player{i}_spawn_props"
-
-        player_spawn_pos_tuple_from_map = level_data.get(spawn_pos_key)
-        player_props_for_init_from_map = level_data.get(spawn_props_key, {})
-
-        game_elements_ref[spawn_pos_key] = player_spawn_pos_tuple_from_map
-        game_elements_ref[spawn_props_key] = player_props_for_init_from_map
-
-        final_spawn_x, final_spawn_y = -1.0, -1.0
-
-        if player_spawn_pos_tuple_from_map and isinstance(player_spawn_pos_tuple_from_map, (tuple, list)) and len(player_spawn_pos_tuple_from_map) == 2:
-            final_spawn_x, final_spawn_y = float(player_spawn_pos_tuple_from_map[0]), float(player_spawn_pos_tuple_from_map[1])
-        elif i == 1 :
-            final_spawn_x, final_spawn_y = player1_default_spawn_pos_tuple[0], player1_default_spawn_pos_tuple[1]
-            game_elements_ref[spawn_pos_key] = (final_spawn_x, final_spawn_y)
-            debug(f"GameSetup: {spawn_pos_key} not in map data. Using fallback default for P1: ({final_spawn_x:.1f},{final_spawn_y:.1f})")
-        else:
-            game_elements_ref[player_key] = None
-            continue
-
-        player_instance = Player(final_spawn_x, final_spawn_y, player_id=i, initial_properties=player_props_for_init_from_map)
-        if not player_instance._valid_init:
-            critical(f"GameSetup CRITICAL: {player_key} initialization FAILED! Map: '{current_map_to_load}'");
-            game_elements_ref[player_key] = None; continue
-
-        player_instance.control_scheme = getattr(game_config, f"CURRENT_P{i}_INPUT_DEVICE", game_config.UNASSIGNED_DEVICE_ID)
-        if "joystick" in player_instance.control_scheme:
-            try: player_instance.joystick_id_idx = int(player_instance.control_scheme.split('_')[-1])
-            except (IndexError, ValueError): player_instance.joystick_id_idx = None
-
-        game_elements_ref[player_key] = player_instance
-        player_instance.set_projectile_group_references(
-            game_elements_ref["projectiles_list"],
-            game_elements_ref["all_renderable_objects"],
-            game_elements_ref["platforms_list"]
-        )
-        active_player_count +=1
-        info(f"GameSetup: {player_key} RE-CREATED. Pos: ({final_spawn_x:.1f},{final_spawn_y:.1f}), Control: {player_instance.control_scheme}")
-    info(f"GameSetup: Total active players RE-CREATED: {active_player_count}")
-
-    authoritative_modes_for_spawn = ["couch_play", "host_game", "host", "host_waiting", "host_active"]
-    if for_game_mode in authoritative_modes_for_spawn:
-        debug(f"GameSetup: Re-spawning dynamic entities for authoritative mode '{for_game_mode}'.")
-
-        for i_enemy, spawn_info in enumerate(game_elements_ref["enemy_spawns_data_cache"]):
-            try:
-                patrol_raw = spawn_info.get('patrol_rect_data'); patrol_qrectf: Optional[QRectF] = None
-                if isinstance(patrol_raw, dict) and all(k in patrol_raw for k in ['x','y','width','height']):
-                    patrol_qrectf = QRectF(float(patrol_raw['x']), float(patrol_raw['y']), float(patrol_raw['width']), float(patrol_raw['height']))
-
-                enemy_color_name = str(spawn_info.get('type', 'enemy_green'))
-                start_pos_tuple = tuple(map(float, spawn_info.get('start_pos', (100.0, 100.0))))
-                enemy_props = spawn_info.get('properties', {})
-
-                new_enemy = Enemy(start_x=start_pos_tuple[0], start_y=start_pos_tuple[1],
-                                  patrol_area=patrol_qrectf, enemy_id=i_enemy,
-                                  color_name=enemy_color_name, properties=enemy_props)
-                if new_enemy._valid_init:
-                    game_elements_ref["enemy_list"].append(new_enemy)
-                else: warning(f"GameSetup: Failed to initialize enemy {i_enemy} (type: {enemy_color_name}) during reset.")
-            except Exception as e_enemy_create: error(f"GameSetup: Error creating enemy {i_enemy} during reset: {e_enemy_create}", exc_info=True)
-        info(f"GameSetup: Enemies re-created: {len(game_elements_ref['enemy_list'])}")
-
-        for i_statue, statue_data in enumerate(game_elements_ref["statue_spawns_data_cache"]):
-            try:
-                s_id = statue_data.get('id', f"map_statue_rs_{i_statue}")
-                s_pos_tuple = tuple(map(float, statue_data.get('pos', (200.0, 200.0))))
-                s_props = statue_data.get('properties', {})
-
-                new_statue = Statue(center_x=s_pos_tuple[0], center_y=s_pos_tuple[1],
-                                    statue_id=s_id, properties=s_props)
-                if new_statue._valid_init:
-                    game_elements_ref["statue_objects"].append(new_statue)
-                    if not new_statue.is_smashed:
-                        game_elements_ref["platforms_list"].append(new_statue)
-                else: warning(f"GameSetup: Failed to initialize statue {i_statue} (id: {s_id}) during reset.")
-            except Exception as e_statue_create: error(f"GameSetup: Error creating statue {i_statue} during reset: {e_statue_create}", exc_info=True)
-        info(f"GameSetup: Statues re-created: {len(game_elements_ref['statue_objects'])}")
-
-        new_chest_instance: Optional[Chest] = None
-        items_from_fresh_map_data = level_data.get('items_list', [])
-        for item_data_fresh in items_from_fresh_map_data:
-            if item_data_fresh.get('type', '').lower() == 'chest':
-                try:
-                    chest_pos_fresh = tuple(map(float, item_data_fresh.get('pos', (300.0, 300.0))))
-                    new_chest_instance = Chest(x=chest_pos_fresh[0], y=chest_pos_fresh[1])
-                    if new_chest_instance._valid_init:
-                        game_elements_ref["collectible_list"].append(new_chest_instance)
-                        info(f"GameSetup (Reset): Chest RE-CREATED at {chest_pos_fresh} from fresh map data.")
-                    else: warning("GameSetup (Reset): NEW Chest instance from map data failed to initialize.")
-                    break
-                except Exception as e_chest_create: error(f"GameSetup: Error creating NEW Chest instance during reset: {e_chest_create}", exc_info=True)
-        game_elements_ref["current_chest"] = new_chest_instance
-    else:
-        debug(f"GameSetup: Dynamic entities not re-spawned by client for mode '{for_game_mode}'. Server state will dictate.")
-        game_elements_ref["current_chest"] = None
-
-    camera_instance = Camera(
-        initial_level_width=game_elements_ref.get("level_pixel_width", float(current_width) * 2.0),
-        initial_world_start_x=game_elements_ref.get("level_min_x_absolute", 0.0),
-        initial_world_start_y=game_elements_ref.get("level_min_y_absolute", 0.0),
-        initial_level_bottom_y_abs=game_elements_ref.get("level_max_y_absolute", float(current_height)),
-        screen_width=float(current_width),
-        screen_height=float(current_height)
-    )
-    game_elements_ref["camera"] = camera_instance
-    game_elements_ref["camera_level_dims_set"] = True
-
-    p1_for_cam = game_elements_ref.get("player1")
-    if p1_for_cam and p1_for_cam._valid_init and p1_for_cam.alive():
-        camera_instance.update(p1_for_cam)
-    else:
-        first_active_player_for_cam = None
-        for i_p_cam in range(1,5):
-            p_check_cam = game_elements_ref.get(f"player{i_p_cam}")
-            if p_check_cam and p_check_cam._valid_init and p_check_cam.alive():
-                first_active_player_for_cam = p_check_cam; break
-        if first_active_player_for_cam: camera_instance.update(first_active_player_for_cam)
-        else: camera_instance.static_update()
-    info("GameSetup: Camera re-initialized and focused.")
-
-    new_all_renderables_setup_temp: List[Any] = []
-    for static_key in ["background_tiles_list", "ladders_list", "hazards_list", "platforms_list"]:
-        for item in game_elements_ref.get(static_key, []):
-            add_to_renderables_if_new(item, new_all_renderables_setup_temp)
-    for custom_img_dict in game_elements_ref.get("processed_custom_images_for_render", []):
-        add_to_renderables_if_new(custom_img_dict, new_all_renderables_setup_temp)
-    for dynamic_key in ["enemy_list", "statue_objects", "collectible_list", "projectiles_list"]:
-        for item_dyn in game_elements_ref.get(dynamic_key, []):
-            add_to_renderables_if_new(item_dyn, new_all_renderables_setup_temp)
-    for i_p_render in range(1, 5):
-        p_to_render = game_elements_ref.get(f"player{i_p_render}")
-        if p_to_render:
-            add_to_renderables_if_new(p_to_render, new_all_renderables_setup_temp)
-
-    new_all_renderables_setup_temp.sort(key=get_layer_order_key)
-    game_elements_ref["all_renderable_objects"] = new_all_renderables_setup_temp
-    debug(f"GameSetup: Assembled and sorted all_renderable_objects. Count: {len(game_elements_ref['all_renderable_objects'])}")
-
-    game_elements_ref["game_ready_for_logic"] = True
-    game_elements_ref["initialization_in_progress"] = False
-
-    info(f"GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map '{current_map_to_load}' ---")
+    if _SCRIPT_LOGGING_ENABLED:
+        log_debug(f"COUCH_PLAY DEBUG: --- End of frame {get_current_ticks_monotonic()} ---")
     return True
