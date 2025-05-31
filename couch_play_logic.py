@@ -87,8 +87,6 @@ def run_couch_play_mode(
     if hasattr(run_couch_play_mode, "_init_wait_logged_couch"):
         delattr(run_couch_play_mode, "_init_wait_logged_couch")
 
-    if _SCRIPT_LOGGING_ENABLED:
-        log_debug(f"COUCH_PLAY DEBUG: --- Start of frame {get_current_ticks_monotonic()} ---")
 
     player1: Optional[Player] = game_elements_ref.get("player1")
     player2: Optional[Player] = game_elements_ref.get("player2")

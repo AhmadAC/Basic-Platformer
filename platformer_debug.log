@@ -1,20 +1,196 @@
-[2025-05-30 23:29:07.123] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
-[2025-05-30 23:29:07.123] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
-[2025-05-30 23:29:07.455] DEBUG   logger.py:143 (_log_wrapper): GameUI: Successfully aliased project's logger functions.
-[2025-05-30 23:29:07.525] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
-[2025-05-30 23:29:07.553] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 0.
-[2025-05-30 23:29:07.554] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
-[2025-05-30 23:29:07.568] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
-[2025-05-30 23:29:07.569] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
-[2025-05-30 23:29:09.275] INFO    logger.py:143 (_log_wrapper): MainWindow: Close event received. Shutting down application.
-[2025-05-30 23:29:09.275] DEBUG   logger.py:143 (_log_wrapper): closeEvent called.
-[2025-05-30 23:29:09.275] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
-[2025-05-30 23:29:09.275] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: None
-[2025-05-30 23:29:09.277] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
-[2025-05-30 23:29:09.277] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
-[2025-05-30 23:29:09.277] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'None' stopped and resources cleaned up.
-[2025-05-30 23:29:09.279] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame Joystick system quit.
-[2025-05-30 23:29:09.317] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame system quit.
-[2025-05-30 23:29:09.317] INFO    logger.py:143 (_log_wrapper): MainWindow: Application shutdown sequence complete.
-[2025-05-30 23:29:09.351] INFO    logger.py:143 (_log_wrapper): QApplication event loop finished. Exit code: 0
-[2025-05-30 23:29:09.351] INFO    logger.py:143 (_log_wrapper): Application fully terminated.
+[2025-05-31 16:33:34.809] INFO    logger.py:106 (<module>): File logging initialized. Level: DEBUG. Output: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\platformer_debug.log
+[2025-05-31 16:33:34.809] INFO    logger.py:108 (<module>): Console logging initialized. Level: INFO.
+[2025-05-31 16:33:35.163] CRITICAL logger.py:143 (_log_wrapper): ENEMY_AI_HANDLER: Failed to import set_enemy_state from enemy_state_handler.
+[2025-05-31 16:33:35.181] CRITICAL logger.py:143 (_log_wrapper): ENEMY (Main) CRITICAL: Failed to import one or more handler modules: cannot import name 'Enemy' from partially initialized module 'enemy' (most likely due to a circular import) (c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\enemy.py)
+[2025-05-31 16:33:35.217] DEBUG   logger.py:143 (_log_wrapper): GameUI: Successfully aliased project's logger functions.
+[2025-05-31 16:33:35.328] INFO    logger.py:143 (_log_wrapper): Application starting via app_core.main()...
+[2025-05-31 16:33:35.402] INFO    logger.py:143 (_log_wrapper): AppCore: UI Joystick list (for UI nav) refreshed. Count: 0.
+[2025-05-31 16:33:35.402] INFO    logger.py:143 (_log_wrapper): AppCore: prev_button_state list (for game input) size: 16 (to handle max instance ID).
+[2025-05-31 16:33:35.462] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: menu
+[2025-05-31 16:33:35.479] INFO    logger.py:143 (_log_wrapper): MainWindow initialization complete.
+[2025-05-31 16:33:51.478] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating Player Selection for Couch Co-op.
+[2025-05-31 16:33:52.492] INFO    logger.py:143 (_log_wrapper): Couch Co-op: 2 players selected.
+[2025-05-31 16:33:52.492] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Initiating map selection for Couch Co-op (2 players).
+[2025-05-31 16:33:52.493] DEBUG   logger.py:143 (_log_wrapper): Populating map list from base directory: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps
+[2025-05-31 16:33:52.495] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-31 16:33:52.495] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.8.8'
+[2025-05-31 16:33:52.502] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for '8' (from folder '8') loaded successfully via function 'load_map_8'.
+[2025-05-31 16:33:52.503] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.back.back'
+[2025-05-31 16:33:52.508] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'back' (from folder 'back') loaded successfully via function 'load_map_back'.
+[2025-05-31 16:33:52.509] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.big.big'
+[2025-05-31 16:33:52.513] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'big' (from folder 'big') loaded successfully via function 'load_map_big'.
+[2025-05-31 16:33:52.513] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.chest.chest'
+[2025-05-31 16:33:52.519] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'chest' (from folder 'chest') loaded successfully via function 'load_map_chest'.
+[2025-05-31 16:33:52.519] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.custom.custom'
+[2025-05-31 16:33:52.523] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'custom' (from folder 'custom') loaded successfully via function 'load_map_custom'.
+[2025-05-31 16:33:52.523] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.three.three'
+[2025-05-31 16:33:52.530] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'three' (from folder 'three') loaded successfully via function 'load_map_three'.
+[2025-05-31 16:33:52.531] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: map_select
+[2025-05-31 16:33:53.370] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Starting Couch Co-op with map 'big' for 2 players.
+[2025-05-31 16:33:53.370] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Preparing game. Mode: couch_play, Map: big, Target: None, CouchPlayers: 2
+[2025-05-31 16:33:53.396] INFO    logger.py:143 (_log_wrapper): GAME_MODES (_initialize_game_entities): Delegating to game_setup.initialize_game_elements for map 'big', mode 'couch_play', couch_players: 2.
+[2025-05-31 16:33:53.410] INFO    logger.py:143 (_log_wrapper): GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---
+[2025-05-31 16:33:53.410] INFO    logger.py:143 (_log_wrapper): GameSetup: Mode: 'couch_play', Screen: 100x30, Target Map Folder/Stem: 'big'
+[2025-05-31 16:33:53.423] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-31 16:33:53.424] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.big.big'
+[2025-05-31 16:33:53.426] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'big' (from folder 'big') loaded successfully via function 'load_map_big'.
+[2025-05-31 16:33:53.426] INFO    logger.py:143 (_log_wrapper): GameSetup: Successfully reloaded pristine map data for 'big'.
+[2025-05-31 16:33:53.427] INFO    logger.py:143 (_log_wrapper): GameSetup: Static tile-based elements re-created. Platforms: 7
+[2025-05-31 16:33:53.427] INFO    logger.py:143 (_log_wrapper): GameSetup: 'custom_images_list' key FOUND in level_data, but the list is EMPTY.
+[2025-05-31 16:33:53.427] INFO    logger.py:143 (_log_wrapper): GameSetup: Custom images processed: 0
+[2025-05-31 16:33:53.427] INFO    logger.py:143 (_log_wrapper): GameSetup: No 'trigger_squares_list' in map_data or list is empty for visual processing.
+[2025-05-31 16:33:53.641] DEBUG   logger.py:143 (_log_wrapper): Player 1 initialized. Valid: True. CollisionRect: W10.5 H32.3
+[2025-05-31 16:33:53.641] INFO    logger.py:143 (_log_wrapper): GameSetup: player1 RE-CREATED. Pos: (90.5,1918.0), Control: keyboard_p1
+[2025-05-31 16:33:53.822] INFO    logger.py:143 (_log_wrapper): GameSetup: player2 RE-CREATED. Pos: (170.5,1918.0), Control: keyboard_p2
+[2025-05-31 16:33:53.822] INFO    logger.py:143 (_log_wrapper): GameSetup: Total active players RE-CREATED: 2
+[2025-05-31 16:33:53.892] WARNING logger.py:143 (_log_wrapper): Enemy (ID: 0): One or more critical handlers failed to import. Enemy functionality will be limited.
+[2025-05-31 16:33:53.892] WARNING logger.py:143 (_log_wrapper): EnemyBase Warning (ID: 1): Processed color 'knight_type_specific' (from input 'knight_type_specific') not in ['green', 'pink', 'purple', 'gray', 'yellow', 'orange']. Using random.
+[2025-05-31 16:33:53.965] WARNING logger.py:143 (_log_wrapper): Enemy (ID: 1): One or more critical handlers failed to import. Enemy functionality will be limited.
+[2025-05-31 16:33:53.980] INFO    logger.py:143 (_log_wrapper): EnemyKnight (ID: 1) fully initialized. Valid: True, Health: 150/150
+[2025-05-31 16:33:53.980] INFO    logger.py:143 (_log_wrapper): GameSetup: Enemies re-created: 2
+[2025-05-31 16:33:53.980] INFO    logger.py:143 (_log_wrapper): GameSetup: Statues re-created: 0
+[2025-05-31 16:33:53.993] INFO    logger.py:143 (_log_wrapper): GameSetup (Reset): Chest RE-CREATED at (341.0, 1905.0) from fresh map data.
+[2025-05-31 16:33:53.993] INFO    logger.py:143 (_log_wrapper): Camera initialized: Viewport(100.0x30.0), WorldBounds(X: 0.0 to 4000.0, Y: 0.0 to 2000.0)
+[2025-05-31 16:33:53.993] INFO    logger.py:143 (_log_wrapper): GameSetup: Camera re-initialized and focused.
+[2025-05-31 16:33:53.994] INFO    logger.py:143 (_log_wrapper): GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map 'big' ---
+[2025-05-31 16:33:53.994] INFO    logger.py:143 (_log_wrapper): GAME_MODES: game_setup.initialize_game_elements SUCCEEDED for map 'big', mode 'couch_play'.
+[2025-05-31 16:33:54.003] INFO    logger.py:143 (_log_wrapper): Camera Level Dims Set: Width=4000.0, StartX=0.0, TopY=0.0, BottomY=2000.0, EffectiveHeight=2000.0
+[2025-05-31 16:33:54.004] INFO    logger.py:143 (_log_wrapper): Camera Level Dims Set: Width=4000.0, StartX=0.0, TopY=0.0, BottomY=2000.0, EffectiveHeight=2000.0
+[2025-05-31 16:33:54.004] INFO    logger.py:143 (_log_wrapper): MainWindow: Switching UI view to: game_scene
+[2025-05-31 16:33:54.005] INFO    logger.py:143 (_log_wrapper): GameSceneWidget resizeEvent to: 1280.0x649.0
+[2025-05-31 16:33:54.006] INFO    logger.py:143 (_log_wrapper): Camera Screen Dims Set: 1280.0x649.0
+[2025-05-31 16:33:54.021] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Couch play ready.
+[2025-05-31 16:33:54.632] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 19359 ---
+[2025-05-31 16:33:55.638] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 20359 ---
+[2025-05-31 16:33:56.631] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 21359 ---
+[2025-05-31 16:33:57.638] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 22359 ---
+[2025-05-31 16:33:58.631] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 23359 ---
+[2025-05-31 16:33:59.639] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 24359 ---
+[2025-05-31 16:34:00.630] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 25359 ---
+[2025-05-31 16:34:01.638] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 26359 ---
+[2025-05-31 16:34:02.631] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 27359 ---
+[2025-05-31 16:34:03.639] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 28359 ---
+[2025-05-31 16:34:04.632] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 29359 ---
+[2025-05-31 16:34:05.638] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 30359 ---
+[2025-05-31 16:34:06.631] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 31359 ---
+[2025-05-31 16:34:07.639] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 32359 ---
+[2025-05-31 16:34:08.632] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 33359 ---
+[2025-05-31 16:34:09.639] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 34359 ---
+[2025-05-31 16:34:10.631] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 35359 ---
+[2025-05-31 16:34:11.639] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 36359 ---
+[2025-05-31 16:34:12.631] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 37359 ---
+[2025-05-31 16:34:13.639] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 38359 ---
+[2025-05-31 16:34:14.632] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 39359 ---
+[2025-05-31 16:34:15.639] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 40359 ---
+[2025-05-31 16:34:16.631] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 41359 ---
+[2025-05-31 16:34:17.639] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 42359 ---
+[2025-05-31 16:34:18.630] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 43359 ---
+[2025-05-31 16:34:19.591] INFO    logger.py:143 (_log_wrapper): Couch Play: Game state reset initiated by player action.
+[2025-05-31 16:34:19.592] INFO    logger.py:143 (_log_wrapper): GameStateManager: reset_game_state called. Deferring to game_setup.initialize_game_elements for full reset.
+[2025-05-31 16:34:19.592] INFO    logger.py:143 (_log_wrapper): GameSetup: --- FULL MAP (RE)LOAD & ENTITY RE-INITIALIZATION ---
+[2025-05-31 16:34:19.593] INFO    logger.py:143 (_log_wrapper): GameSetup: Mode: 'couch_play', Screen: 1280x649, Target Map Folder/Stem: 'big'
+[2025-05-31 16:34:19.623] INFO    logger.py:143 (_log_wrapper): LevelLoader initialized (for .py map modules within named folders, with cache busting).
+[2025-05-31 16:34:19.627] INFO    logger.py:143 (_log_wrapper): LevelLoader: Attempting to load map module 'maps.big.big'
+[2025-05-31 16:34:19.630] DEBUG   logger.py:143 (_log_wrapper): LevelLoader: Successfully imported module: maps.big.big (Path: c:\Users\ahmad\OneDrive\Computer Files\Programming\Scripts\Github\Scripts\Python Scripts\Canvas Scripts\2024\Python Game\Platformer\maps\big\big.py)
+[2025-05-31 16:34:19.631] INFO    logger.py:143 (_log_wrapper): LevelLoader: Map data for 'big' (from folder 'big') loaded successfully via function 'load_map_big'.
+[2025-05-31 16:34:19.632] INFO    logger.py:143 (_log_wrapper): GameSetup: Successfully reloaded pristine map data for 'big'.
+[2025-05-31 16:34:19.633] INFO    logger.py:143 (_log_wrapper): GameSetup: Static tile-based elements re-created. Platforms: 7
+[2025-05-31 16:34:19.633] INFO    logger.py:143 (_log_wrapper): GameSetup: 'custom_images_list' key FOUND in level_data, but the list is EMPTY.
+[2025-05-31 16:34:19.635] INFO    logger.py:143 (_log_wrapper): GameSetup: Custom images processed: 0
+[2025-05-31 16:34:19.637] INFO    logger.py:143 (_log_wrapper): GameSetup: No 'trigger_squares_list' in map_data or list is empty for visual processing.
+[2025-05-31 16:34:19.931] INFO    logger.py:143 (_log_wrapper): GameSetup: player1 RE-CREATED. Pos: (90.5,1918.0), Control: keyboard_p1
+[2025-05-31 16:34:20.219] INFO    logger.py:143 (_log_wrapper): GameSetup: player2 RE-CREATED. Pos: (170.5,1918.0), Control: keyboard_p2
+[2025-05-31 16:34:20.221] INFO    logger.py:143 (_log_wrapper): GameSetup: Total active players RE-CREATED: 2
+[2025-05-31 16:34:20.357] WARNING logger.py:143 (_log_wrapper): Enemy (ID: 0): One or more critical handlers failed to import. Enemy functionality will be limited.
+[2025-05-31 16:34:20.359] WARNING logger.py:143 (_log_wrapper): EnemyBase Warning (ID: 1): Processed color 'knight_type_specific' (from input 'knight_type_specific') not in ['green', 'pink', 'purple', 'gray', 'yellow', 'orange']. Using random.
+[2025-05-31 16:34:20.510] WARNING logger.py:143 (_log_wrapper): Enemy (ID: 1): One or more critical handlers failed to import. Enemy functionality will be limited.
+[2025-05-31 16:34:20.523] INFO    logger.py:143 (_log_wrapper): EnemyKnight (ID: 1) fully initialized. Valid: True, Health: 150/150
+[2025-05-31 16:34:20.523] INFO    logger.py:143 (_log_wrapper): GameSetup: Enemies re-created: 2
+[2025-05-31 16:34:20.523] INFO    logger.py:143 (_log_wrapper): GameSetup: Statues re-created: 0
+[2025-05-31 16:34:20.543] INFO    logger.py:143 (_log_wrapper): GameSetup (Reset): Chest RE-CREATED at (341.0, 1905.0) from fresh map data.
+[2025-05-31 16:34:20.543] INFO    logger.py:143 (_log_wrapper): Camera initialized: Viewport(1280.0x649.0), WorldBounds(X: 0.0 to 4000.0, Y: 0.0 to 2000.0)
+[2025-05-31 16:34:20.545] INFO    logger.py:143 (_log_wrapper): GameSetup: Camera re-initialized and focused.
+[2025-05-31 16:34:20.546] INFO    logger.py:143 (_log_wrapper): GameSetup: --- Full Map (Re)Load & Entity Re-Initialization COMPLETE for map 'big' ---
+[2025-05-31 16:34:20.546] INFO    logger.py:143 (_log_wrapper): GameStateManager: reset_game_state completed successfully via initialize_game_elements.
+[2025-05-31 16:34:20.632] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 45359 ---
+[2025-05-31 16:34:21.640] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 46359 ---
+[2025-05-31 16:34:22.631] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 47359 ---
+[2025-05-31 16:34:23.640] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 48359 ---
+[2025-05-31 16:34:24.630] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 49359 ---
+[2025-05-31 16:34:25.638] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 50359 ---
+[2025-05-31 16:34:26.650] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 51375 ---
+[2025-05-31 16:34:27.656] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 52375 ---
+[2025-05-31 16:34:28.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 53375 ---
+[2025-05-31 16:34:29.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 54375 ---
+[2025-05-31 16:34:30.646] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 55375 ---
+[2025-05-31 16:34:31.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 56375 ---
+[2025-05-31 16:34:32.648] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 57375 ---
+[2025-05-31 16:34:33.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 58375 ---
+[2025-05-31 16:34:34.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 59375 ---
+[2025-05-31 16:34:35.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 60375 ---
+[2025-05-31 16:34:36.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 61375 ---
+[2025-05-31 16:34:37.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 62375 ---
+[2025-05-31 16:34:38.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 63375 ---
+[2025-05-31 16:34:39.656] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 64375 ---
+[2025-05-31 16:34:40.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 65375 ---
+[2025-05-31 16:34:41.656] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 66375 ---
+[2025-05-31 16:34:42.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 67375 ---
+[2025-05-31 16:34:43.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 68375 ---
+[2025-05-31 16:34:44.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 69375 ---
+[2025-05-31 16:34:45.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 70375 ---
+[2025-05-31 16:34:46.646] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 71375 ---
+[2025-05-31 16:34:47.656] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 72375 ---
+[2025-05-31 16:34:48.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 73375 ---
+[2025-05-31 16:34:49.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 74375 ---
+[2025-05-31 16:34:50.646] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 75375 ---
+[2025-05-31 16:34:51.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 76375 ---
+[2025-05-31 16:34:52.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 77375 ---
+[2025-05-31 16:34:53.656] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 78375 ---
+[2025-05-31 16:34:54.648] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 79375 ---
+[2025-05-31 16:34:55.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 80375 ---
+[2025-05-31 16:34:56.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 81375 ---
+[2025-05-31 16:34:57.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 82375 ---
+[2025-05-31 16:34:58.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 83375 ---
+[2025-05-31 16:34:59.656] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 84375 ---
+[2025-05-31 16:35:00.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 85375 ---
+[2025-05-31 16:35:01.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 86375 ---
+[2025-05-31 16:35:02.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 87375 ---
+[2025-05-31 16:35:03.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 88375 ---
+[2025-05-31 16:35:04.647] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 89375 ---
+[2025-05-31 16:35:05.655] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 90375 ---
+[2025-05-31 16:35:06.690] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 91405 ---
+[2025-05-31 16:35:07.687] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 92405 ---
+[2025-05-31 16:35:08.679] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 93405 ---
+[2025-05-31 16:35:09.687] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 94405 ---
+[2025-05-31 16:35:10.678] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 95405 ---
+[2025-05-31 16:35:11.687] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 96405 ---
+[2025-05-31 16:35:12.678] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 97405 ---
+[2025-05-31 16:35:13.687] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 98405 ---
+[2025-05-31 16:35:14.678] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 99405 ---
+[2025-05-31 16:35:15.687] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 100405 ---
+[2025-05-31 16:35:16.679] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 101405 ---
+[2025-05-31 16:35:17.687] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 102405 ---
+[2025-05-31 16:35:18.678] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 103405 ---
+[2025-05-31 16:35:19.686] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 104405 ---
+[2025-05-31 16:35:20.679] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 105405 ---
+[2025-05-31 16:35:21.686] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 106405 ---
+[2025-05-31 16:35:22.679] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 107405 ---
+[2025-05-31 16:35:23.686] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 108405 ---
+[2025-05-31 16:35:24.679] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 109405 ---
+[2025-05-31 16:35:25.686] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 110405 ---
+[2025-05-31 16:35:26.679] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 111405 ---
+[2025-05-31 16:35:27.686] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 112405 ---
+[2025-05-31 16:35:28.679] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 113405 ---
+[2025-05-31 16:35:29.687] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 114405 ---
+[2025-05-31 16:35:30.678] DEBUG   logger.py:143 (_log_wrapper): COUCH_PLAY DEBUG: --- Start of frame 115405 ---
+[2025-05-31 16:35:31.637] INFO    logger.py:143 (_log_wrapper): MainWindow: Close event received. Shutting down application.
+[2025-05-31 16:35:31.638] INFO    logger.py:143 (_log_wrapper): APP_STATUS: quit_app() called.
+[2025-05-31 16:35:31.638] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Stopping current game mode: couch_play
+[2025-05-31 16:35:31.648] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Cleared all game_elements.
+[2025-05-31 16:35:31.648] INFO    logger.py:143 (_log_wrapper): GameSceneWidget: Clearing visual state for new game (download messages).
+[2025-05-31 16:35:31.648] INFO    logger.py:143 (_log_wrapper): GAME_MODES: Game mode 'couch_play' stopped and resources cleaned up.
+[2025-05-31 16:35:31.649] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame Joystick system quit.
+[2025-05-31 16:35:31.682] INFO    logger.py:143 (_log_wrapper): MainWindow: Pygame system quit.
+[2025-05-31 16:35:31.683] INFO    logger.py:143 (_log_wrapper): MainWindow: Application shutdown sequence complete.
+[2025-05-31 16:35:31.699] INFO    logger.py:143 (_log_wrapper): QApplication event loop finished. Exit code: 0
+[2025-05-31 16:35:31.699] INFO    logger.py:143 (_log_wrapper): Application fully terminated.

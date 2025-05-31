@@ -11,7 +11,7 @@ def load_map_big():
         'ladders_list': [],
         'hazards_list': [],
         'background_tiles_list': [],
-        'enemies_list': [{'start_pos': (2130.5, 1918.0), 'type': 'enemy_green', 'properties': {'max_health': 10, 'move_speed': 68.0, 'attack_damage': 5, 'patrol_range_tiles': 5, 'patrol_behavior': 'turn_at_range_limit', 'can_fly': False}, 'is_flipped_h': False, 'rotation': 0}],
+        'enemies_list': [{'start_pos': (2130.5, 1918.0), 'type': 'enemy_green', 'properties': {'max_health': 10, 'move_speed': 68.0, 'attack_damage': 5, 'patrol_range_tiles': 5, 'patrol_behavior': 'turn_at_range_limit', 'can_fly': False}, 'is_flipped_h': False, 'rotation': 0}, {'start_pos': (974.0, 1920.0), 'type': 'enemy_knight', 'properties': {'max_health': 150, 'move_speed': 187.5, 'jump_strength': -585.0, 'patrol_jump_chance': 0.015, 'patrol_jump_cooldown_ms': 2500, 'attack1_damage': 15, 'attack2_damage': 20, 'attack3_damage': 25, 'run_attack_damage': 12, 'attack_cooldown_ms': 1800, 'attack_range_px': 60.0, 'detection_range_px': 250.0, 'patrol_range_tiles': 5, 'patrol_behavior': 'knight_patrol_with_jump'}, 'is_flipped_h': False, 'rotation': 0}],
         'items_list': [{'pos': (341.0, 1905.0), 'type': 'chest', 'properties': {'item_type': 'coin', 'item_quantity': 1, 'requires_key_id': ''}, 'is_flipped_h': False, 'rotation': 0}],
         'statues_list': [],
         'custom_images_list': [],

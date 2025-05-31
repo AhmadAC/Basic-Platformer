@@ -8013,10 +8013,37 @@
             "rotation": 0,
             "editor_hidden": false,
             "editor_locked": false
+        },
+        {
+            "asset_editor_key": "enemy_knight",
+            "world_x": 960,
+            "world_y": 1880,
+            "game_type_id": "enemy_knight",
+            "layer_order": 0,
+            "properties": {
+                "max_health": 150,
+                "move_speed": 187.5,
+                "jump_strength": -585.0,
+                "patrol_jump_chance": 0.015,
+                "patrol_jump_cooldown_ms": 2500,
+                "attack1_damage": 15,
+                "attack2_damage": 20,
+                "attack3_damage": 25,
+                "run_attack_damage": 12,
+                "attack_cooldown_ms": 1800,
+                "attack_range_px": 60.0,
+                "detection_range_px": 250.0,
+                "patrol_range_tiles": 5,
+                "patrol_behavior": "knight_patrol_with_jump"
+            },
+            "is_flipped_h": false,
+            "rotation": 0,
+            "editor_hidden": false,
+            "editor_locked": false
         }
     ],
-    "camera_offset_x": -1578.0,
-    "camera_offset_y": -878.0,
+    "camera_offset_x": 1912.0,
+    "camera_offset_y": 1535.0,
     "zoom_level": 0.6191736422399998,
     "show_grid": true,
     "asset_specific_variables": {}

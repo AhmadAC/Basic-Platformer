@@ -1,13 +1,14 @@
-#################### START OF FILE: enemy_physics_handler.py ####################
-
 # enemy_physics_handler.py
 # -*- coding: utf-8 -*-
 """
 Handles enemy physics, movement, and collisions for PySide6.
 Ensures robust platform (wall/floor/ceiling) collision resolution.
 MODIFIED: Enemies respect statue solidity (ignore smashed statues).
+MODIFIED: Corrected gravity application logic by not nullifying acc.y on landing.
+MODIFIED: Standardized position updates to be based on velocity per frame,
+          assuming dt_sec passed to main update is effectively 1/FPS.
 """
-# version 2.0.6 (Enemy respects statue solidity)
+# version 2.0.8 (Position updates standardized to units/frame)
 
 import time
 from typing import List, Any, Optional, TYPE_CHECKING
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
 try:
     from enemy_ai_handler import set_enemy_new_patrol_target
 except ImportError:
-    def set_enemy_new_patrol_target(enemy):
+    def set_enemy_new_patrol_target(enemy: Any):
         enemy_id_log = getattr(enemy, 'enemy_id', 'N/A')
         print(f"WARNING ENEMY_PHYSICS: enemy_ai_handler.set_enemy_new_patrol_target not found for Enemy ID {enemy_id_log}")
 
@@ -43,7 +44,8 @@ def get_current_ticks_monotonic() -> int:
     return int((time.monotonic() - _start_time_enemy_phys_monotonic) * 1000)
 
 
-def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, platforms_list: List[Any], dt_sec: float):
+def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, platforms_list: List[Any]):
+    # dt_sec parameter removed as velocity is now assumed units/frame
     if not (hasattr(enemy, 'rect') and isinstance(enemy.rect, QRectF) and \
             hasattr(enemy, 'vel') and isinstance(enemy.vel, QPointF)):
         warning(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')}: Missing essential attributes for platform collision. Skipping.")
@@ -54,12 +56,8 @@ def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, p
             warning(f"Enemy Collision: Platform object {platform_obj} missing valid rect. Skipping.")
             continue
 
-        # --- MODIFIED: Ignore smashed statues as platforms ---
         if isinstance(platform_obj, Statue) and platform_obj.is_smashed:
-            # Optional: Add a debug log here if needed
-            # debug(f"Enemy {getattr(enemy, 'enemy_id', 'N/A')} collision check: Ignoring smashed statue {platform_obj.statue_id} as platform.")
             continue
-        # --- END MODIFICATION ---
 
         if not enemy.rect.intersects(platform_obj.rect):
             continue
@@ -67,12 +65,12 @@ def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, p
         original_vel_x_for_ai_reaction = enemy.vel.x()
 
         if direction == 'x':
-            if enemy.vel.x() > 0:
+            if enemy.vel.x() > 0: # Moving right, collided with left side of platform
                 overlap_x = enemy.rect.right() - platform_obj.rect.left()
                 if overlap_x > 0:
                     enemy.rect.translate(-overlap_x, 0)
                     enemy.vel.setX(0.0)
-            elif enemy.vel.x() < 0:
+            elif enemy.vel.x() < 0: # Moving left, collided with right side of platform
                 overlap_x = platform_obj.rect.right() - enemy.rect.left()
                 if overlap_x > 0:
                     enemy.rect.translate(overlap_x, 0)
@@ -86,30 +84,33 @@ def _check_enemy_platform_collisions(enemy: 'EnemyClass_TYPE', direction: str, p
                     set_enemy_new_patrol_target(enemy)
 
         elif direction == 'y':
-            if enemy.vel.y() >= 0:
+            if enemy.vel.y() >= 0: # Moving down or landed
                 overlap_y = enemy.rect.bottom() - platform_obj.rect.top()
                 if overlap_y > 0:
-                    min_h_overlap_ratio = 0.1
+                    min_h_overlap_ratio = float(getattr(C, 'MIN_PLATFORM_OVERLAP_RATIO_FOR_LANDING', 0.15))
                     min_h_overlap_pixels = enemy.rect.width() * min_h_overlap_ratio
                     actual_h_overlap = min(enemy.rect.right(), platform_obj.rect.right()) - \
                                        max(enemy.rect.left(), platform_obj.rect.left())
+
                     if actual_h_overlap >= min_h_overlap_pixels:
-                        displacement_y_this_frame = enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0)
+                        # displacement_y_this_frame is now just enemy.vel.y() because vel.y is units/frame
+                        displacement_y_this_frame = enemy.vel.y()
                         previous_enemy_bottom_y_estimate = enemy.rect.bottom() - displacement_y_this_frame
                         was_above_or_at_surface_epsilon = 1.0
                         was_truly_above_or_at_surface = previous_enemy_bottom_y_estimate <= platform_obj.rect.top() + was_above_or_at_surface_epsilon
+
                         can_snap_down_from_current = enemy.rect.bottom() > platform_obj.rect.top() and \
-                                                     enemy.rect.bottom() <= platform_obj.rect.top() + getattr(C, 'GROUND_SNAP_THRESHOLD', 5.0)
+                                                     enemy.rect.bottom() <= platform_obj.rect.top() + float(getattr(C, 'GROUND_SNAP_THRESHOLD', 5.0))
 
                         if was_truly_above_or_at_surface or (getattr(enemy, 'on_ground', False) and can_snap_down_from_current):
                             enemy.rect.translate(0, -overlap_y)
                             setattr(enemy, 'on_ground', True)
                             enemy.vel.setY(0.0)
-                            if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setY'): enemy.acc.setY(0.0)
-            elif enemy.vel.y() < 0:
+                            # Gravity (enemy.acc.y) remains active.
+            elif enemy.vel.y() < 0: # Moving up, collided with bottom of platform
                 overlap_y = platform_obj.rect.bottom() - enemy.rect.top()
                 if overlap_y > 0:
-                    min_h_overlap_ratio_ceil = 0.1
+                    min_h_overlap_ratio_ceil = float(getattr(C, 'MIN_PLATFORM_OVERLAP_RATIO_FOR_CEILING', 0.15))
                     min_h_overlap_pixels_ceil = enemy.rect.width() * min_h_overlap_ratio_ceil
                     actual_h_overlap_ceil = min(enemy.rect.right(), platform_obj.rect.right()) - \
                                             max(enemy.rect.left(), platform_obj.rect.left())
@@ -227,16 +228,17 @@ def _check_enemy_hazard_collisions(enemy: 'EnemyClass_TYPE', hazards_list: List[
 
 def update_enemy_physics_and_collisions(enemy: 'EnemyClass_TYPE', dt_sec: float, platforms_list: List[Any],
                                         hazards_list: List[Any], all_other_characters_list: List[Any]):
+    # dt_sec is kept for now, though core movement is frame-based. It might be used by future time-dependent effects.
     if not getattr(enemy, '_valid_init', False) or \
        not (hasattr(enemy, 'alive') and enemy.alive()):
         if (getattr(enemy, 'is_dead', False) and not getattr(enemy, 'death_animation_finished', True)) or \
            (getattr(enemy, 'is_stone_smashed', False) and not getattr(enemy, 'death_animation_finished', True) ):
             if not getattr(enemy, 'on_ground', True) and hasattr(enemy, 'vel') and hasattr(enemy, 'acc') and hasattr(enemy, 'pos') and hasattr(enemy, 'rect'):
-                enemy.vel.setY(enemy.vel.y() + enemy.acc.y())
-                enemy.vel.setY(min(enemy.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
-                enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0))
+                enemy.vel.setY(enemy.vel.y() + enemy.acc.y()) # acc.y is gravity (units/frame^2)
+                enemy.vel.setY(min(enemy.vel.y(), float(getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))) # vel.y is units/frame
+                enemy.pos.setY(enemy.pos.y() + enemy.vel.y()) # pos.y += vel.y (units/frame)
                 if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
-                _check_enemy_platform_collisions(enemy, 'y', platforms_list, dt_sec)
+                _check_enemy_platform_collisions(enemy, 'y', platforms_list) # dt_sec removed
                 if hasattr(enemy, 'pos'): enemy.pos.setY(enemy.rect.bottom())
         return
 
@@ -262,28 +264,28 @@ def update_enemy_physics_and_collisions(enemy: 'EnemyClass_TYPE', dt_sec: float,
 
     if getattr(enemy, 'on_ground', False) and abs(enemy.acc.x()) < 1e-6:
         friction_coeff = float(getattr(C, 'ENEMY_FRICTION', -0.12))
-        friction_force = enemy.vel.x() * friction_coeff
+        friction_force = enemy.vel.x() * friction_coeff # This is change in velocity per frame
         if abs(enemy.vel.x()) > 0.1: enemy.vel.setX(enemy.vel.x() + friction_force)
         else: enemy.vel.setX(0.0)
 
-    speed_limit = float(getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0))
+    speed_limit = float(getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0)) # This is units/frame
     if getattr(enemy, 'is_aflame', False): speed_limit *= float(getattr(C, 'ENEMY_AFLAME_SPEED_MULTIPLIER', 1.3))
     elif getattr(enemy, 'is_deflaming', False): speed_limit *= float(getattr(C, 'ENEMY_DEFLAME_SPEED_MULTIPLIER', 1.2))
 
     enemy.vel.setX(max(-speed_limit, min(speed_limit, enemy.vel.x())))
-    enemy.vel.setY(min(enemy.vel.y(), float(getattr(C, 'TERMINAL_VELOCITY_Y', 18.0))))
+    enemy.vel.setY(min(enemy.vel.y(), float(getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))) # Terminal velocity still units/frame
 
     setattr(enemy, 'on_ground', False)
 
-    enemy.pos.setX(enemy.pos.x() + enemy.vel.x() * dt_sec * getattr(C, 'FPS', 60.0))
+    enemy.pos.setX(enemy.pos.x() + enemy.vel.x()) # pos += vel (units/frame)
     if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
-    _check_enemy_platform_collisions(enemy, 'x', platforms_list, dt_sec)
+    _check_enemy_platform_collisions(enemy, 'x', platforms_list) # dt_sec removed
     _check_enemy_character_collision(enemy, 'x', all_other_characters_list)
     if hasattr(enemy, 'pos') and hasattr(enemy.rect, 'center'): enemy.pos.setX(enemy.rect.center().x())
 
-    enemy.pos.setY(enemy.pos.y() + enemy.vel.y() * dt_sec * getattr(C, 'FPS', 60.0))
+    enemy.pos.setY(enemy.pos.y() + enemy.vel.y()) # pos += vel (units/frame)
     if hasattr(enemy, '_update_rect_from_image_and_pos'): enemy._update_rect_from_image_and_pos()
-    _check_enemy_platform_collisions(enemy, 'y', platforms_list, dt_sec)
+    _check_enemy_platform_collisions(enemy, 'y', platforms_list) # dt_sec removed
     _check_enemy_character_collision(enemy, 'y', all_other_characters_list)
     if hasattr(enemy, 'pos') and hasattr(enemy.rect, 'bottom'): enemy.pos.setY(enemy.rect.bottom())
 
