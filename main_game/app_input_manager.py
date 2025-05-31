@@ -16,7 +16,7 @@ if _project_root_app_input not in sys.path:
 
 import main_game.config as game_config
 import main_game.constants as C
-from player_input_handler import process_player_input_logic 
+from player.player_input_handler import process_player_input_logic 
 from logger import warning, debug, error 
 from utils import PrintLimiter
 

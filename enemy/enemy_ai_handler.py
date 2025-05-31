@@ -1,42 +1,83 @@
-# enemy_ai_handler.py
+#################### START OF FILE: enemy\enemy_ai_handler.py ####################
+# enemy/enemy_ai_handler.py
 # -*- coding: utf-8 -*-
 """
-Handles AI logic for enemies using PySide6 types.
+Handles AI logic for generic enemies using PySide6 types.
+EnemyKnight uses its own specific AI in enemy_knight.py.
 MODIFIED: Passes current_time_ms to set_enemy_state.
 MODIFIED: Simplifies aflame/deflame AI state checks, relying more on enemy_status_effects for transitions.
 MODIFIED: Default attack range/detection and accel from C constants, not hardcoded.
-MODIFIED: Removed direct setting of enemy.attack_type (int) as Knight uses string keys.
-          The set_enemy_state with an attack key (e.g., 'attack1') should handle it.
+MODIFIED: Consistent use of attack_type="none" (string) when not attacking or after an attack.
+          The set_enemy_state with an attack key (e.g., 'attack' for generic enemy) should handle it.
+MODIFIED: Corrected logger import path.
 """
-# version 2.0.4 (Standardized constants usage, attack_type handling refined)
+# version 2.0.5 (Standardized attack_type="none", logger import path)
 
 import random
 import math
 import time # For monotonic timer
-from typing import Optional, Any # Added Any
+from typing import Optional, Any
 
 # PySide6 imports
 from PySide6.QtCore import QPointF, QRectF
+
+# --- Project Root Setup ---
+import os
+import sys
+_ENEMY_AI_HANDLER_PY_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT_FOR_ENEMY_AI_HANDLER = os.path.dirname(_ENEMY_AI_HANDLER_PY_FILE_DIR) # Up one level to 'enemy'
+if _PROJECT_ROOT_FOR_ENEMY_AI_HANDLER not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT_FOR_ENEMY_AI_HANDLER) # Add 'enemy' package's parent
+_PROJECT_ROOT_GRANDPARENT = os.path.dirname(_PROJECT_ROOT_FOR_ENEMY_AI_HANDLER) # Up two levels to project root
+if _PROJECT_ROOT_GRANDPARENT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT_GRANDPARENT) # Add actual project root
+# --- End Project Root Setup ---
 
 # Game imports
 import main_game.constants as C
 
 # Logger
-try:
-    from logger import info, debug, warning, error, critical
-except ImportError:
-    print("CRITICAL ENEMY_AI_HANDLER: logger.py not found. Falling back to print statements for logging.")
-    def info(msg, *args, **kwargs): print(f"INFO: {msg}")
-    def debug(msg, *args, **kwargs): print(f"DEBUG: {msg}")
-    def warning(msg, *args, **kwargs): print(f"WARNING: {msg}")
-    def error(msg, *args, **kwargs): print(f"ERROR: {msg}")
-    def critical(msg, *args, **kwargs): print(f"CRITICAL: {msg}")
+# --- Logger Setup ---
+import logging
+_enemy_ai_logger_instance = logging.getLogger(__name__ + "_enemy_ai_internal_fallback")
+if not _enemy_ai_logger_instance.hasHandlers():
+    _handler_eai_fb = logging.StreamHandler(sys.stdout)
+    _formatter_eai_fb = logging.Formatter('ENEMY_AI (InternalFallback): %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
+    _handler_eai_fb.setFormatter(_formatter_eai_fb)
+    _enemy_ai_logger_instance.addHandler(_handler_eai_fb)
+    _enemy_ai_logger_instance.setLevel(logging.DEBUG)
+    _enemy_ai_logger_instance.propagate = False
 
-# Ensure set_enemy_state is imported
+def _fallback_log_info(msg, *args, **kwargs): _enemy_ai_logger_instance.info(msg, *args, **kwargs)
+def _fallback_log_debug(msg, *args, **kwargs): _enemy_ai_logger_instance.debug(msg, *args, **kwargs)
+def _fallback_log_warning(msg, *args, **kwargs): _enemy_ai_logger_instance.warning(msg, *args, **kwargs)
+def _fallback_log_error(msg, *args, **kwargs): _enemy_ai_logger_instance.error(msg, *args, **kwargs)
+def _fallback_log_critical(msg, *args, **kwargs): _enemy_ai_logger_instance.critical(msg, *args, **kwargs)
+
+info = _fallback_log_info; debug = _fallback_log_debug; warning = _fallback_log_warning;
+error = _fallback_log_error; critical = _fallback_log_critical
+
 try:
-    from enemy_state_handler import set_enemy_state
+    from main_game.logger import info as project_info, debug as project_debug, \
+                               warning as project_warning, error as project_error, \
+                               critical as project_critical
+    info = project_info; debug = project_debug; warning = project_warning;
+    error = project_error; critical = project_critical
+    debug("EnemyAIHandler: Successfully aliased project's logger.")
 except ImportError:
-    critical("ENEMY_AI_HANDLER: Failed to import set_enemy_state from enemy_state_handler.")
+    critical("CRITICAL ENEMY_AI_HANDLER: Failed to import logger from main_game.logger. Using internal fallback.")
+except Exception as e_logger_init_eai:
+    critical(f"CRITICAL ENEMY_AI_HANDLER: Unexpected error during logger setup from main_game.logger: {e_logger_init_eai}. Using internal fallback.")
+# --- End Logger Setup ---
+
+
+# Ensure set_enemy_state is imported correctly (relative from within enemy package)
+_ESH_AVAILABLE = True
+try:
+    from .enemy_state_handler import set_enemy_state # Relative import
+except ImportError as e_esh_import:
+    critical(f"ENEMY_AI_HANDLER: Failed to import set_enemy_state from .enemy_state_handler: {e_esh_import}")
+    _ESH_AVAILABLE = False
     def set_enemy_state(enemy: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):
         if hasattr(enemy, 'state'): enemy.state = new_state
         warning(f"ENEMY_AI_HANDLER: Fallback set_enemy_state used for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')} to '{new_state}'")
@@ -45,7 +86,7 @@ _start_time_enemy_ai_monotonic = time.monotonic()
 def get_current_ticks_monotonic() -> int:
     return int((time.monotonic() - _start_time_enemy_ai_monotonic) * 1000)
 
-ENABLE_ENEMY_AI_DEBUG_PRINTS = False 
+ENABLE_ENEMY_AI_DEBUG_PRINTS = False
 
 def log_enemy_state(enemy: Any, message: str, current_time_ms: int):
     if ENABLE_ENEMY_AI_DEBUG_PRINTS:
@@ -76,16 +117,25 @@ def set_enemy_new_patrol_target(enemy: Any):
          else:
              enemy.patrol_target_x = enemy.patrol_area.center().x()
     else:
+        patrol_range_from_props = float(enemy.properties.get("patrol_range_tiles", 5) * C.TILE_SIZE) if hasattr(enemy, 'properties') and isinstance(enemy.properties, dict) else float(getattr(C, 'ENEMY_PATROL_DIST', 150.0))
         patrol_direction = 1 if random.random() > 0.5 else -1
-        enemy.patrol_target_x = current_x + patrol_direction * float(getattr(C, 'ENEMY_PATROL_DIST', 150.0))
+        enemy.patrol_target_x = current_x + patrol_direction * patrol_range_from_props
+
     if not hasattr(enemy, 'patrol_target_x') or enemy.patrol_target_x is None:
         enemy.patrol_target_x = current_x
+    if ENABLE_ENEMY_AI_DEBUG_PRINTS:
+        debug(f"EnemyAI (ID {getattr(enemy, 'enemy_id', 'N/A')}): New patrol target X: {enemy.patrol_target_x:.1f}")
 
 def enemy_ai_update(enemy: Any, players_list_for_ai: list):
     # This function is now primarily for generic enemies.
     # EnemyKnight will use its own _knight_ai_update method.
     if enemy.__class__.__name__ == 'EnemyKnight':
         # Knight handles its own AI via its update method calling _knight_ai_update
+        return
+
+    if not _ESH_AVAILABLE: # Critical check if set_enemy_state is not available
+        critical("ENEMY_AI_HANDLER: set_enemy_state function is not available. AI cannot function correctly.")
+        if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
         return
 
     current_time_ms = get_current_ticks_monotonic()
@@ -122,12 +172,18 @@ def enemy_ai_update(enemy: Any, players_list_for_ai: list):
             if squared_dist < min_squared_distance_to_player: min_squared_distance_to_player = squared_dist; closest_target_player = player_candidate
 
     distance_to_target_player = math.sqrt(min_squared_distance_to_player) if closest_target_player else float('inf')
-    
+
     # Use properties if available, else constants
-    enemy_attack_range = getattr(enemy, 'attack_range', float(getattr(C, 'ENEMY_ATTACK_RANGE', 60.0)))
-    enemy_detection_range = getattr(enemy, 'detection_range', float(getattr(C, 'ENEMY_DETECTION_RANGE', 200.0)))
-    # Generic enemy acceleration, might be overridden by properties if enemy.base_speed is used to derive it
-    enemy_standard_acceleration = getattr(C, 'ENEMY_ACCEL', 0.4) 
+    enemy_properties = getattr(enemy, 'properties', {})
+    enemy_attack_range = float(enemy_properties.get("attack_range_px", float(getattr(C, 'ENEMY_ATTACK_RANGE', 60.0))))
+    enemy_detection_range = float(enemy_properties.get("detection_range_px", float(getattr(C, 'ENEMY_DETECTION_RANGE', 200.0))))
+    enemy_base_speed = float(enemy_properties.get("move_speed", float(getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0)) * 50 )) # Speed is units/sec
+    # Generic enemy acceleration derived from base_speed and a constant time-to-max-speed factor
+    # accel = speed / time_to_reach_speed_from_rest (where time is in frames)
+    # Assume time_to_reach_speed_from_rest is roughly 0.25 seconds (e.g., 15 frames at 60fps)
+    time_to_max_speed_frames = 0.25 * C.FPS
+    enemy_standard_acceleration = (enemy_base_speed / C.FPS) / time_to_max_speed_frames if time_to_max_speed_frames > 0 else getattr(C, 'ENEMY_ACCEL', 0.4)
+
 
     vertical_distance_to_player = float('inf')
     enemy_rect_height = enemy.rect.height() if hasattr(enemy, 'rect') and hasattr(enemy.rect, 'height') else getattr(C,'TILE_SIZE', 40.0) * 1.5
@@ -140,7 +196,6 @@ def enemy_ai_update(enemy: Any, players_list_for_ai: list):
 
     # Aflame/Deflame movement logic (transitions handled by status_effects)
     if hasattr(enemy, 'is_aflame') and enemy.is_aflame:
-        # ... (aflame logic as before) ...
         log_enemy_state(enemy, "AFLAME movement logic active.", current_time_ms)
         aflame_speed_mod = float(getattr(C, 'ENEMY_AFLAME_SPEED_MULTIPLIER', 1.3))
         current_accel_x = 0.0
@@ -149,17 +204,16 @@ def enemy_ai_update(enemy: Any, players_list_for_ai: list):
             should_face_right = (closest_target_player.pos.x() > enemy.pos.x())
             current_accel_x = enemy_standard_acceleration * aflame_speed_mod * (1 if should_face_right else -1)
             if enemy.facing_right != should_face_right: enemy.facing_right = should_face_right
-        else: 
+        else:
             enemy.ai_state = 'patrolling_aflame'
             if not hasattr(enemy, 'patrol_target_x') or enemy.patrol_target_x is None or abs(enemy.pos.x() - enemy.patrol_target_x) < 10:
                 set_enemy_new_patrol_target(enemy)
             should_face_right = (enemy.patrol_target_x > enemy.pos.x())
-            current_accel_x = enemy_standard_acceleration * 0.7 * aflame_speed_mod * (1 if should_face_right else -1)
+            current_accel_x = enemy_standard_acceleration * 0.7 * aflame_speed_mod * (1 if should_face_right else -1) # Slower patrol when aflame
             if enemy.facing_right != should_face_right: enemy.facing_right = should_face_right
         if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(current_accel_x)
-        return
+        return # Aflame movement overrides other AI for this tick
     elif hasattr(enemy, 'is_deflaming') and enemy.is_deflaming:
-        # ... (deflame logic as before) ...
         log_enemy_state(enemy, "DEFLAME movement logic active.", current_time_ms)
         deflame_speed_mod = float(getattr(C, 'ENEMY_DEFLAME_SPEED_MULTIPLIER', 1.2))
         current_accel_x = 0.0
@@ -168,7 +222,7 @@ def enemy_ai_update(enemy: Any, players_list_for_ai: list):
             should_face_right = (closest_target_player.pos.x() > enemy.pos.x())
             current_accel_x = enemy_standard_acceleration * deflame_speed_mod * (1 if should_face_right else -1)
             if enemy.facing_right != should_face_right: enemy.facing_right = should_face_right
-        else: 
+        else:
             enemy.ai_state = 'patrolling_deflaming'
             if not hasattr(enemy, 'patrol_target_x') or enemy.patrol_target_x is None or abs(enemy.pos.x() - enemy.patrol_target_x) < 10:
                 set_enemy_new_patrol_target(enemy)
@@ -188,23 +242,21 @@ def enemy_ai_update(enemy: Any, players_list_for_ai: list):
 
     # Attack completion
     if hasattr(enemy, 'is_attacking') and enemy.is_attacking:
-        # Generic enemy attack duration might be from EnemyBase or properties
-        # Knight's attack_duration is set by its state handler from its attack_duration_map
         current_attack_duration = getattr(enemy, 'attack_duration', getattr(C, 'ENEMY_ATTACK_STATE_DURATION', 500))
-        if not (hasattr(enemy, 'attack_timer')): # Safety check
-            enemy.is_attacking = False; setattr(enemy, 'attack_type', 0) # Use 0 for generic attack type
+        if not (hasattr(enemy, 'attack_timer')):
+            enemy.is_attacking = False; setattr(enemy, 'attack_type', "none") # Reset to "none" string
             if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
             log_enemy_state(enemy, "ATTACKING: Missing timer. Failsafe.", current_time_ms); return
         if current_time_ms - enemy.attack_timer >= current_attack_duration:
             enemy.is_attacking = False
-            setattr(enemy, 'attack_type', 0) # Reset generic attack type
+            setattr(enemy, 'attack_type', "none") # Reset to "none" string
             enemy.attack_cooldown_timer = current_time_ms
             enemy.post_attack_pause_timer = current_time_ms + post_attack_pause_duration
             set_enemy_state(enemy, 'idle', current_time_ms)
             if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
             log_enemy_state(enemy, "ATTACKING: Finished. Transition to idle.", current_time_ms); return
         else:
-            if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0) # No movement during attack
+            if hasattr(enemy, 'acc') and hasattr(enemy.acc, 'setX'): enemy.acc.setX(0.0)
             log_enemy_state(enemy, "ATTACKING: In progress.", current_time_ms); return
 
     # Initialize patrol target if needed
@@ -221,7 +273,7 @@ def enemy_ai_update(enemy: Any, players_list_for_ai: list):
     # Generic Enemy AI State Machine
     if not closest_target_player: # Patrol if no player
         enemy.ai_state = 'patrolling'
-        if enemy.state not in ['run', 'idle']: set_enemy_state(enemy, 'idle', current_time_ms) # Start patrol idle
+        if enemy.state not in ['run', 'idle']: set_enemy_state(enemy, 'idle', current_time_ms)
         if abs(enemy.pos.x() - enemy.patrol_target_x) < 10:
             set_enemy_new_patrol_target(enemy)
             if enemy.state == 'run': set_enemy_state(enemy, 'idle', current_time_ms)
@@ -237,9 +289,9 @@ def enemy_ai_update(enemy: Any, players_list_for_ai: list):
                                          hasattr(enemy, 'vel') and hasattr(enemy.vel, 'x') and abs(enemy.vel.x()) < enemy_standard_acceleration * 1.5) \
                                       else 'attack'
         set_enemy_state(enemy, attack_anim_key, current_time_ms)
-        # For generic enemy, attack_type might be an int (e.g., 1 for standard attack)
-        # This is set by set_enemy_state if new_state starts with 'attack'
-        # Or could be set explicitly here if needed: setattr(enemy, 'attack_type', 1)
+        # attack_type for generic enemy will be set to "attack" (or similar) by set_enemy_state if the new_state starts with "attack"
+        # If set_enemy_state doesn't handle this, you might need:
+        # setattr(enemy, 'attack_type', "standard_attack") # or a specific string key
 
     elif is_player_in_detection_range: # Chase
         enemy.ai_state = 'chasing'
@@ -265,3 +317,5 @@ def enemy_ai_update(enemy: Any, players_list_for_ai: list):
          enemy.facing_right = target_facing_right
 
     log_enemy_state(enemy, "End of AI (Generic Enemy).", current_time_ms)
+
+#################### END OF FILE: enemy/enemy_ai_handler.py ####################

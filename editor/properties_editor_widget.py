@@ -1,10 +1,8 @@
-#################### START OF FILE: properties_editor_widget.py ####################
 # editor/properties_editor_widget.py
 # -*- coding: utf-8 -*-
 """
 Properties Editor Widget for the Platformer Level Editor.
-Version 2.2.13 (Refined slider max fallback)
-- Slider max value now correctly taken from definition, with a more general fallback.
+Version 2.2.14 (Refined slider max fallback, improved slider controller nav target)
 """
 import logging
 import os
@@ -19,7 +17,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon, QPalette, QColor, QPixmap, QPainter, QImage
 from PySide6.QtCore import Qt, Signal, Slot, QSize
 
-# Corrected relative imports
 from . import editor_config as ED_CONFIG
 from .editor_state import EditorState
 from . import editor_history
@@ -41,7 +38,7 @@ class PropertiesEditorDockWidget(QWidget):
         self.parent_window = parent
         self.current_object_data_ref: Optional[Dict[str, Any]] = None
         self.current_asset_type_for_defaults: Optional[str] = None
-        self.input_widgets: Dict[str, QWidget] = {}
+        self.input_widgets: Dict[str, QWidget] = {} # Stores the primary interactive widget for a property
         
         self._controller_has_focus = False
         self._controller_property_widgets_ordered: List[Tuple[str, QWidget, Optional[QLabel]]] = []
@@ -50,7 +47,6 @@ class PropertiesEditorDockWidget(QWidget):
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(5,5,5,5)
 
-        # Placeholder widget - managed by main_layout
         self.no_selection_label = QLabel("Select an object or asset to see properties.")
         self.no_selection_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.no_selection_label.setWordWrap(True)
@@ -60,11 +56,10 @@ class PropertiesEditorDockWidget(QWidget):
         no_sel_layout.addStretch()
         self.main_layout.addWidget(self.no_selection_widget_container)
 
-        # ScrollArea for dynamic properties - managed by main_layout
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_widget_for_form = QWidget()
-        self.form_layout = QFormLayout() # This is the layout FOR self.scroll_widget_for_form
+        self.form_layout = QFormLayout()
         self.scroll_widget_for_form.setLayout(self.form_layout)
         
         self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -74,18 +69,15 @@ class PropertiesEditorDockWidget(QWidget):
         self.scroll_area.setWidget(self.scroll_widget_for_form)
         self.main_layout.addWidget(self.scroll_area)
         
-        self.clear_display() # Initial state: show "no selection" message
+        self.clear_display()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def _clear_dynamic_widgets_from_form(self):
         self.input_widgets.clear()
         self._controller_property_widgets_ordered.clear()
         self._controller_focused_property_index = -1
-
-        # Remove all rows from the form_layout that holds the dynamic properties
         while self.form_layout.rowCount() > 0:
-            self.form_layout.removeRow(0) # This also deletes widgets in the row
-        
+            self.form_layout.removeRow(0)
         self._update_focused_property_visuals()
 
     @Slot(object)
@@ -96,7 +88,7 @@ class PropertiesEditorDockWidget(QWidget):
         self.current_asset_type_for_defaults = None
 
         if not map_object_data_ref or not isinstance(map_object_data_ref, dict):
-            self.clear_display() # This will show the no_selection_widget_container
+            self.clear_display()
             self.no_selection_label.setText("Select an object on the map to edit its properties.")
             return
         
@@ -124,10 +116,8 @@ class PropertiesEditorDockWidget(QWidget):
         
         title_label = QLabel(f"Object: {display_name_for_title}")
         font_title = title_label.font(); font_title.setBold(True); font_title.setPointSize(ED_CONFIG.FONT_SIZE_MEDIUM); title_label.setFont(font_title)
-        self.form_layout.addRow(title_label) # Add to the dynamic form layout
-
-        # Use a local counter for inserting rows into self.form_layout
-        current_form_row = 1 
+        self.form_layout.addRow(title_label)
+        current_form_row = 1
 
         if not is_custom_image_type and not is_trigger_square_type:
             asset_key_label_text = QLabel("Asset Key:"); asset_key_value_label = QLabel(asset_editor_key)
@@ -149,7 +139,7 @@ class PropertiesEditorDockWidget(QWidget):
         asset_palette_data = self.editor_state.assets_palette.get(asset_editor_key)
         if asset_palette_data and asset_palette_data.get("colorable") and not is_custom_image_type and not is_trigger_square_type:
             color_label_text = QLabel("Color:"); color_button = QPushButton()
-            self.input_widgets["_color_button"] = color_button
+            self.input_widgets["_color_button"] = color_button # Store button itself
             self._update_color_button_visuals(color_button, map_object_data_ref)
             color_button.clicked.connect(lambda _checked=False, obj_ref=map_object_data_ref: self._change_object_color(obj_ref))
             self.form_layout.insertRow(current_form_row, color_label_text, color_button); current_form_row +=1
@@ -163,16 +153,16 @@ class PropertiesEditorDockWidget(QWidget):
             prop_definitions = ED_CONFIG.EDITABLE_ASSET_VARIABLES[editable_vars_config_key]
             if prop_definitions:
                 props_group = QGroupBox("Object Properties"); props_group.setFlat(False)
-                props_layout_internal = QFormLayout(props_group) # Inner layout for the group box
+                props_layout_internal = QFormLayout(props_group)
                 props_layout_internal.setContentsMargins(6, 10, 6, 6); props_layout_internal.setSpacing(6)
                 props_layout_internal.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
                 props_layout_internal.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
                 group_row_idx = 0
                 for var_name, definition in prop_definitions.items():
                     current_value = object_custom_props.get(var_name, definition["default"])
-                    group_row_idx = self._create_property_field(var_name, definition, current_value, props_layout_internal, group_row_idx) # Add to group's layout
-                self.form_layout.insertRow(current_form_row, props_group); current_form_row +=1 # Add group box to main form
-        elif not is_custom_image_type and not is_trigger_square_type:
+                    group_row_idx = self._create_property_field(var_name, definition, current_value, props_layout_internal, group_row_idx)
+                self.form_layout.insertRow(current_form_row, props_group); current_form_row +=1
+        elif not is_custom_image_type and not is_trigger_square_type: # Custom types have their own "Object Properties" section
             no_props_label = QLabel("No custom properties for this object type.")
             self.form_layout.insertRow(current_form_row, no_props_label); current_form_row +=1
         
@@ -193,7 +183,6 @@ class PropertiesEditorDockWidget(QWidget):
         
         self.no_selection_widget_container.setVisible(False)
         self.scroll_area.setVisible(True)
-        
         current_form_row = 0
         asset_data: Optional[Dict] = None; display_name_for_title = asset_key_or_custom_id
         game_type_id_for_props: Optional[str] = None
@@ -219,7 +208,7 @@ class PropertiesEditorDockWidget(QWidget):
             default_color_val = asset_data.get("base_color_tuple")
             if not default_color_val:
                 _sp = asset_data.get("surface_params")
-                if _sp and isinstance(_sp, tuple) and len(_sp) == 3: default_color_val = _sp[2] # type: ignore
+                if _sp and isinstance(_sp, tuple) and len(_sp) == 3: default_color_val = _sp[2]
             if default_color_val:
                 default_color_label_text = QLabel("Default Asset Color:"); default_color_value_label = QLabel(str(default_color_val))
                 self.form_layout.insertRow(current_form_row, default_color_label_text, default_color_value_label); current_form_row +=1
@@ -244,89 +233,86 @@ class PropertiesEditorDockWidget(QWidget):
         self.scroll_widget_for_form.adjustSize()
         if self._controller_has_focus: self._set_controller_focused_property(0)
 
-    def display_custom_asset_palette_info(self, custom_asset_id: str):
-        self.display_asset_properties(custom_asset_id)
-
     def clear_display(self):
-        self._clear_dynamic_widgets_from_form() # Empties self.form_layout
+        self._clear_dynamic_widgets_from_form()
         self.current_object_data_ref = None
         self.current_asset_type_for_defaults = None
-        
         self.no_selection_label.setText("Select an object on the map or an asset type from the palette to see its properties.")
-        self.no_selection_widget_container.setVisible(True) # Show the placeholder
-        self.scroll_area.setVisible(False) # Hide the (now empty) scroll area for properties
-        
-        self.adjustSize() # May help the parent dock widget adjust
+        self.no_selection_widget_container.setVisible(True)
+        self.scroll_area.setVisible(False)
+        self.adjustSize()
 
     def _update_color_button_visuals(self, button: QPushButton, object_data_ref: Optional[Dict[str, Any]]):
         if not object_data_ref: return
         color_tuple = object_data_ref.get("override_color"); is_overridden = bool(color_tuple)
-        _sp = None
         if not color_tuple:
             asset_key = object_data_ref.get("asset_editor_key"); asset_palette_data = self.editor_state.assets_palette.get(str(asset_key))
             if asset_palette_data:
                 color_tuple = asset_palette_data.get("base_color_tuple")
-                if not color_tuple: _sp = asset_palette_data.get("surface_params")
-                if _sp and isinstance(_sp, tuple) and len(_sp) == 3: color_tuple = _sp[2] # type: ignore
-            if not color_tuple: color_tuple = (128,128,128)
+                if not color_tuple: _sp = asset_palette_data.get("surface_params");
+                if _sp and isinstance(_sp, tuple) and len(_sp) == 3: color_tuple = _sp[2]
+            if not color_tuple: color_tuple = (128,128,128) # Default gray
+        
         button_text = f"RGB: {color_tuple}"; button.setText(button_text + (" (Default)" if not is_overridden else ""))
-        if color_tuple:
-            q_color = QColor(*color_tuple); palette = button.palette() # type: ignore
-            palette.setColor(QPalette.ColorRole.Button, q_color)
-            luma = 0.299 * color_tuple[0] + 0.587 * color_tuple[1] + 0.114 * color_tuple[2] # type: ignore
-            text_q_color = QColor(Qt.GlobalColor.black) if luma > 128 else QColor(Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorRole.ButtonText, text_q_color); button.setPalette(palette); button.setAutoFillBackground(True)
-            border_style = "1px solid black"
-            if self._controller_has_focus and self._controller_focused_property_index >= 0 and self._controller_focused_property_index < len(self._controller_property_widgets_ordered) and self._controller_property_widgets_ordered[self._controller_focused_property_index][1] is button:
-                border_style = ED_CONFIG.PROPERTIES_EDITOR_CONTROLLER_FOCUS_BORDER
-            button.setStyleSheet(f"QPushButton {{ border: {border_style}; min-height: 20px; padding: 2px; }}"); button.update()
+        q_color = QColor(*color_tuple); palette = button.palette()
+        palette.setColor(QPalette.ColorRole.Button, q_color)
+        luma = 0.299 * color_tuple[0] + 0.587 * color_tuple[1] + 0.114 * color_tuple[2]
+        text_q_color = QColor(Qt.GlobalColor.black) if luma > 128 else QColor(Qt.GlobalColor.white)
+        palette.setColor(QPalette.ColorRole.ButtonText, text_q_color); button.setPalette(palette); button.setAutoFillBackground(True)
+        
+        border_style = "1px solid black"
+        if self._controller_has_focus and self._controller_focused_property_index >= 0 and \
+           self._controller_focused_property_index < len(self._controller_property_widgets_ordered) and \
+           self._controller_property_widgets_ordered[self._controller_focused_property_index][1] is button:
+            border_style = ED_CONFIG.PROPERTIES_EDITOR_CONTROLLER_FOCUS_BORDER
+        button.setStyleSheet(f"QPushButton {{ border: {border_style}; min-height: 20px; padding: 2px; }}"); button.update()
 
     def _create_property_field(self, var_name: str, definition: Dict[str, Any], current_value: Any, layout: QFormLayout, insert_at_row: int = -1) -> int:
         label_text_for_field = definition.get("label", var_name.replace('_', ' ').title())
         property_name_label = QLabel(label_text_for_field + ":")
         property_name_label.setWordWrap(True)
         widget: Optional[QWidget] = None
+        primary_interactive_widget: Optional[QWidget] = None # For self.input_widgets and controller nav
         prop_type = definition["type"]
         
         if prop_type == "slider":
             slider_layout = QHBoxLayout()
-            slider = QSlider(Qt.Orientation.Horizontal)
+            slider = QSlider(Qt.Orientation.Horizontal); primary_interactive_widget = slider
             slider.setMinimum(definition.get("min", 0))
-            slider.setMaximum(definition.get("max", 100 if var_name != "corner_radius" else ED_CONFIG.TS // 2)) # Refined fallback
-            
+            # Corrected fallback for slider max: use definition's max, then a general fallback.
+            slider.setMaximum(definition.get("max", 100)) 
+            if var_name == "corner_radius": # Specific case for corner_radius
+                 slider.setMaximum(ED_CONFIG.TS // 2)
+
             spin_box = QSpinBox()
             spin_box.setMinimum(definition.get("min", 0))
-            spin_box.setMaximum(definition.get("max", 100 if var_name != "corner_radius" else ED_CONFIG.TS // 2)) # Refined fallback
+            spin_box.setMaximum(definition.get("max", 100))
+            if var_name == "corner_radius": spin_box.setMaximum(ED_CONFIG.TS // 2)
 
-            try: 
-                initial_val = int(current_value)
-                slider.setValue(initial_val)
-                spin_box.setValue(initial_val)
-            except (ValueError, TypeError): 
-                default_val = int(definition["default"])
-                slider.setValue(default_val)
-                spin_box.setValue(default_val)
+            try: initial_val = int(current_value); slider.setValue(initial_val); spin_box.setValue(initial_val)
+            except (ValueError, TypeError): default_val = int(definition["default"]); slider.setValue(default_val); spin_box.setValue(default_val)
 
             slider.valueChanged.connect(lambda val, sb=spin_box: sb.setValue(val))
             slider.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
             spin_box.valueChanged.connect(lambda val, sl=slider: sl.setValue(val))
             spin_box.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
             
-            slider_layout.addWidget(slider, 2)
-            slider_layout.addWidget(spin_box, 1)
-            container_widget = QWidget()
-            container_widget.setLayout(slider_layout)
+            slider_layout.addWidget(slider, 2); slider_layout.addWidget(spin_box, 1)
+            container_widget = QWidget(); container_widget.setLayout(slider_layout)
             widget = container_widget
-            self.input_widgets[var_name + "_slider_widget"] = slider
-            self.input_widgets[var_name + "_spinbox_widget"] = spin_box
+            # Store individual slider and spinbox for update_property_field_value if needed
+            self.input_widgets[var_name + "_slider"] = slider
+            self.input_widgets[var_name + "_spinbox"] = spin_box
         elif prop_type == "int":
-            spinner = QSpinBox(); widget = spinner; spinner.setMinimum(definition.get("min", -2147483648)); spinner.setMaximum(definition.get("max", 2147483647))
+            spinner = QSpinBox(); widget = spinner; primary_interactive_widget = spinner
+            spinner.setMinimum(definition.get("min", -2147483648)); spinner.setMaximum(definition.get("max", 2147483647))
             if "step" in definition: spinner.setSingleStep(definition["step"])
             try: spinner.setValue(int(current_value))
             except (ValueError, TypeError): spinner.setValue(int(definition["default"]))
             spinner.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
         elif prop_type == "float":
-            double_spinner = QDoubleSpinBox(); widget = double_spinner; double_spinner.setMinimum(definition.get("min", -1.79e+308)); double_spinner.setMaximum(definition.get("max", 1.79e+308))
+            double_spinner = QDoubleSpinBox(); widget = double_spinner; primary_interactive_widget = double_spinner
+            double_spinner.setMinimum(definition.get("min", -1.79e+308)); double_spinner.setMaximum(definition.get("max", 1.79e+308))
             try: double_spinner.setValue(float(current_value))
             except (ValueError, TypeError): double_spinner.setValue(float(definition["default"]))
             double_spinner.setDecimals(definition.get("decimals", 2)); double_spinner.valueChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
@@ -337,60 +323,64 @@ class PropertiesEditorDockWidget(QWidget):
                 browse_button = QPushButton("..."); browse_button.setToolTip("Browse for map folder"); browse_button.setFixedWidth(browse_button.fontMetrics().horizontalAdvance(" ... ") + 10)
                 browse_button.clicked.connect(lambda _ch, vn=var_name, le=line_edit: self._browse_for_linked_map(vn, le))
                 hbox.addWidget(line_edit, 1); hbox.addWidget(browse_button); container_widget = QWidget(); container_widget.setLayout(hbox); widget = container_widget
-                self.input_widgets[f"{var_name}_lineedit"] = line_edit
+                primary_interactive_widget = line_edit # Focus on line_edit
+                self.input_widgets[var_name + "_lineedit"] = line_edit # Store specifically
             elif "options" in definition and isinstance(definition["options"], list):
-                combo = QComboBox(); widget = combo; combo.addItems(definition["options"])
+                combo = QComboBox(); widget = combo; primary_interactive_widget = combo
+                combo.addItems(definition["options"])
                 try: combo.setCurrentIndex(definition["options"].index(str(current_value)))
                 except ValueError: 
                     if str(definition["default"]) in definition["options"]: combo.setCurrentText(str(definition["default"]))
                     elif definition["options"]: combo.setCurrentIndex(0)
                 combo.currentTextChanged.connect(lambda val, vn=var_name: self._on_property_value_changed(vn, val))
             else:
-                line_edit = QLineEdit(str(current_value)); widget = line_edit
+                line_edit = QLineEdit(str(current_value)); widget = line_edit; primary_interactive_widget = line_edit
                 line_edit.editingFinished.connect(lambda le=line_edit, vn=var_name: self._on_line_edit_finished(vn, le.text()))
         elif prop_type == "bool":
-            checkbox = QCheckBox(label_text_for_field); widget = checkbox
+            checkbox = QCheckBox(label_text_for_field); widget = checkbox; primary_interactive_widget = checkbox
             try: checkbox.setChecked(bool(current_value))
             except (ValueError, TypeError): checkbox.setChecked(bool(definition["default"]))
             checkbox.stateChanged.connect(lambda state_int, vn=var_name: self._on_property_value_changed(vn, state_int == Qt.CheckState.Checked.value))
         elif prop_type == "tuple_color_rgba":
             color_val_prop = current_value if isinstance(current_value, (list,tuple)) and len(current_value) == 4 else definition["default"]
             color_button = QPushButton(str(color_val_prop)); self._update_rgba_color_button_style(color_button, color_val_prop)
-            color_button.clicked.connect(lambda _ch, vn=var_name, btn=color_button: self._change_rgba_color_property(vn, btn)); widget = color_button
+            color_button.clicked.connect(lambda _ch, vn=var_name, btn=color_button: self._change_rgba_color_property(vn, btn)); widget = color_button; primary_interactive_widget = color_button
         elif prop_type == "image_path_custom":
             hbox = QHBoxLayout(); line_edit = QLineEdit(str(current_value)); line_edit.setReadOnly(True)
             browse_button = QPushButton("Browse..."); browse_button.clicked.connect(lambda _ch, vn=var_name: self._browse_for_trigger_image(vn))
             clear_button = QPushButton("Clear"); clear_button.clicked.connect(lambda _ch, vn=var_name: self._clear_trigger_image(vn))
             hbox.addWidget(line_edit, 1); hbox.addWidget(browse_button); hbox.addWidget(clear_button)
             container_widget = QWidget(); container_widget.setLayout(hbox); widget = container_widget
-            self.input_widgets[f"{var_name}_lineedit"] = line_edit
+            primary_interactive_widget = browse_button # Focus on browse button
+            self.input_widgets[var_name + "_lineedit"] = line_edit # Store for updates
         
         next_row_index = insert_at_row
         if widget:
-            widget.setObjectName(f"prop_widget_{var_name}")
-            if not isinstance(widget, QCheckBox):
+            widget.setObjectName(f"prop_widget_{var_name}") # The container widget
+            if not isinstance(widget, QCheckBox): # QCheckBox handles its own label
                 widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
                 layout.insertRow(insert_at_row, property_name_label, widget)
             else:
-                layout.insertRow(insert_at_row, widget) # QCheckBox includes its label
+                layout.insertRow(insert_at_row, widget)
             
-            self._controller_property_widgets_ordered.append((var_name, widget, property_name_label if not isinstance(widget, QCheckBox) else None))
+            # For controller navigation, use primary_interactive_widget if set, else the main widget container
+            widget_for_controller_nav = primary_interactive_widget if primary_interactive_widget else widget
+            self._controller_property_widgets_ordered.append((var_name, widget_for_controller_nav, property_name_label if not isinstance(widget, QCheckBox) else None))
             
-            # Store references for external updates if needed
-            if var_name not in self.input_widgets or \
-               prop_type=="slider" or \
-               (prop_type=="str" and var_name=="linked_map_name") or \
-               (prop_type=="image_path_custom"):
-                 if not ((prop_type=="str" and var_name=="linked_map_name") or \
-                         (prop_type=="image_path_custom") or \
-                         prop_type=="slider"): # Avoid double-storing container for these
-                     self.input_widgets[var_name] = widget
+            # Store the primary interactive widget in self.input_widgets for direct access
+            if primary_interactive_widget:
+                self.input_widgets[var_name] = primary_interactive_widget
+            elif var_name not in self.input_widgets: # Avoid overwriting specific sub-widgets like _slider, _spinbox
+                 self.input_widgets[var_name] = widget
+
             next_row_index = insert_at_row + 1
-        else:
+        else: # Fallback for unsupported type
             layout.insertRow(insert_at_row, property_name_label, QLabel(f"Unsupported type: {prop_type}"))
             next_row_index = insert_at_row + 1
         return next_row_index
 
+    # ... (other methods like _create_dimension_fields, _on_crop_value_changed, etc., remain the same,
+    #      but ensure they use the refined self.input_widgets for slider/spinbox access if needed)
 
     def _create_dimension_fields(self, obj_data_ref: Dict[str, Any], layout: QFormLayout, start_row_index: int) -> int:
         current_row = start_row_index
@@ -412,17 +402,19 @@ class PropertiesEditorDockWidget(QWidget):
         if isinstance(current_crop, dict): crop_x_val = current_crop.get("x", 0); crop_y_val = current_crop.get("y", 0); crop_w_val = current_crop.get("width", original_w); crop_h_val = current_crop.get("height", original_h)
         
         group_row_idx_crop = 0
-        crop_x_label = QLabel("Crop X:"); crop_x_spinner = QSpinBox(); crop_x_spinner.setMinimum(0); crop_x_spinner.setMaximum(max(0, original_w -1)); crop_x_spinner.setValue(crop_x_val); crop_x_spinner.valueChanged.connect(self._on_crop_value_changed)
-        crop_layout.insertRow(group_row_idx_crop, crop_x_label, crop_x_spinner); self.input_widgets["crop_x"] = crop_x_spinner; self._controller_property_widgets_ordered.append(("crop_x", crop_x_spinner, crop_x_label)); group_row_idx_crop +=1
-        
-        crop_y_label = QLabel("Crop Y:"); crop_y_spinner = QSpinBox(); crop_y_spinner.setMinimum(0); crop_y_spinner.setMaximum(max(0, original_h - 1)); crop_y_spinner.setValue(crop_y_val); crop_y_spinner.valueChanged.connect(self._on_crop_value_changed)
-        crop_layout.insertRow(group_row_idx_crop, crop_y_label, crop_y_spinner); self.input_widgets["crop_y"] = crop_y_spinner; self._controller_property_widgets_ordered.append(("crop_y", crop_y_spinner, crop_y_label)); group_row_idx_crop +=1
-        
-        crop_w_label = QLabel("Crop Width:"); crop_w_spinner = QSpinBox(); crop_w_spinner.setMinimum(1); crop_w_spinner.setMaximum(max(1, original_w)); crop_w_spinner.setValue(crop_w_val); crop_w_spinner.valueChanged.connect(self._on_crop_value_changed)
-        crop_layout.insertRow(group_row_idx_crop, crop_w_label, crop_w_spinner); self.input_widgets["crop_width"] = crop_w_spinner; self._controller_property_widgets_ordered.append(("crop_width", crop_w_spinner, crop_w_label)); group_row_idx_crop +=1
-        
-        crop_h_label = QLabel("Crop Height:"); crop_h_spinner = QSpinBox(); crop_h_spinner.setMinimum(1); crop_h_spinner.setMaximum(max(1, original_h)); crop_h_spinner.setValue(crop_h_val); crop_h_spinner.valueChanged.connect(self._on_crop_value_changed)
-        crop_layout.insertRow(group_row_idx_crop, crop_h_label, crop_h_spinner); self.input_widgets["crop_height"] = crop_h_spinner; self._controller_property_widgets_ordered.append(("crop_height", crop_h_spinner, crop_h_label)); group_row_idx_crop +=1
+        # Helper to add crop fields
+        def add_crop_spinner(prop_name: str, label_str: str, val: int, max_val: int, parent_grp_layout: QFormLayout, row_idx: int) -> int:
+            lbl = QLabel(label_str); spin = QSpinBox(); spin.setMinimum(0 if "X" in label_str or "Y" in label_str else 1)
+            spin.setMaximum(max(0 if "X" in label_str or "Y" in label_str else 1, max_val))
+            spin.setValue(val); spin.valueChanged.connect(self._on_crop_value_changed)
+            parent_grp_layout.insertRow(row_idx, lbl, spin); self.input_widgets[prop_name] = spin
+            self._controller_property_widgets_ordered.append((prop_name, spin, lbl))
+            return row_idx + 1
+
+        group_row_idx_crop = add_crop_spinner("crop_x", "Crop X:", crop_x_val, max(0, original_w -1), crop_layout, group_row_idx_crop)
+        group_row_idx_crop = add_crop_spinner("crop_y", "Crop Y:", crop_y_val, max(0, original_h - 1), crop_layout, group_row_idx_crop)
+        group_row_idx_crop = add_crop_spinner("crop_width", "Crop Width:", crop_w_val, max(1, original_w), crop_layout, group_row_idx_crop)
+        group_row_idx_crop = add_crop_spinner("crop_height", "Crop Height:", crop_h_val, max(1, original_h), crop_layout, group_row_idx_crop)
         
         reset_crop_button = QPushButton("Reset Crop to Full Image"); reset_crop_button.clicked.connect(self._on_reset_crop)
         crop_layout.insertRow(group_row_idx_crop, reset_crop_button); self.input_widgets["reset_crop"] = reset_crop_button; self._controller_property_widgets_ordered.append(("reset_crop", reset_crop_button, None)); group_row_idx_crop +=1
@@ -430,8 +422,7 @@ class PropertiesEditorDockWidget(QWidget):
         parent_layout.insertRow(current_row, crop_group); current_row +=1
         return current_row
 
-    # ... (the rest of the methods should be correctly indented and unchanged from the previous version)
-    def _on_crop_value_changed(self):
+    def _on_crop_value_changed(self): # No changes needed here
         if not self.current_object_data_ref: return
         cx_spin = self.input_widgets.get("crop_x"); cy_spin = self.input_widgets.get("crop_y")
         cw_spin = self.input_widgets.get("crop_width"); ch_spin = self.input_widgets.get("crop_height")
@@ -446,7 +437,7 @@ class PropertiesEditorDockWidget(QWidget):
             editor_history.push_undo_state(self.editor_state); self.current_object_data_ref["crop_rect"] = new_crop_rect
             self.properties_changed.emit(self.current_object_data_ref); logger.debug(f"Crop rect changed to: {new_crop_rect}")
 
-    def _on_reset_crop(self):
+    def _on_reset_crop(self): # No changes needed here
         if not self.current_object_data_ref: return
         if self.current_object_data_ref.get("crop_rect") is not None:
             editor_history.push_undo_state(self.editor_state); self.current_object_data_ref["crop_rect"] = None
@@ -459,14 +450,14 @@ class PropertiesEditorDockWidget(QWidget):
             if isinstance(ch_spin, QSpinBox): ch_spin.setValue(original_h)
             self.properties_changed.emit(self.current_object_data_ref); logger.debug("Crop rect reset to None (full image).")
 
-    def _on_dimension_changed(self, dimension_key: str, new_value: int):
+    def _on_dimension_changed(self, dimension_key: str, new_value: int): # No changes needed here
         if not self.current_object_data_ref: return
         if self.current_object_data_ref.get(dimension_key) != new_value:
             editor_history.push_undo_state(self.editor_state) 
             self.current_object_data_ref[dimension_key] = new_value
             self.properties_changed.emit(self.current_object_data_ref)
 
-    def _update_rgba_color_button_style(self, button: QPushButton, color_tuple_rgba: Tuple[int,int,int,int]):
+    def _update_rgba_color_button_style(self, button: QPushButton, color_tuple_rgba: Tuple[int,int,int,int]): # No changes needed here
         if not color_tuple_rgba or len(color_tuple_rgba) != 4: button.setText("Invalid Color"); button.setIcon(QIcon()); return
         button.setText(f"RGBA: {color_tuple_rgba}"); q_color = QColor(*color_tuple_rgba)
         btn_width = max(60, button.width()); btn_height = max(20, button.height())
@@ -484,23 +475,22 @@ class PropertiesEditorDockWidget(QWidget):
         button.setStyleSheet(f"QPushButton {{ color: {text_q_color.name()}; text-align: left; padding-left: 5px; }}")
 
 
-    def _change_rgba_color_property(self, var_name: str, button_ref: QPushButton):
+    def _change_rgba_color_property(self, var_name: str, button_ref: QPushButton): # No changes needed here
         if not self.current_object_data_ref: return
         props = self.current_object_data_ref.get("properties", {}); current_color_val = props.get(var_name, (0,0,0,255))
         dialog = QColorDialog(self); dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True); dialog.setCurrentColor(QColor(*current_color_val))
         if dialog.exec():
-            new_q_color = dialog.selectedColor(); new_color_tuple_rgba = new_q_color.getRgb()
+            new_q_color = dialog.selectedColor(); new_color_tuple_rgba = new_q_color.getRgb() # type: ignore
             if props.get(var_name) != new_color_tuple_rgba: 
                 editor_history.push_undo_state(self.editor_state); props[var_name] = new_color_tuple_rgba 
                 self._update_rgba_color_button_style(button_ref, new_color_tuple_rgba) 
                 self.properties_changed.emit(self.current_object_data_ref)
 
-
-    def _browse_for_trigger_image(self, var_name: str):
+    def _browse_for_trigger_image(self, var_name: str): # No changes needed here
         if not self.current_object_data_ref: return
         self.upload_image_for_trigger_requested.emit(self.current_object_data_ref)
 
-    def _clear_trigger_image(self, var_name: str):
+    def _clear_trigger_image(self, var_name: str): # No changes needed here
         if not self.current_object_data_ref: return
         props = self.current_object_data_ref.get("properties", {})
         if props.get(var_name, "") != "":
@@ -509,32 +499,52 @@ class PropertiesEditorDockWidget(QWidget):
             self.properties_changed.emit(self.current_object_data_ref)
 
     def update_property_field_value(self, obj_data_ref: Dict[str, Any], prop_name: str, new_value: Any):
-        if self.current_object_data_ref is not obj_data_ref: logger.warning(f"PropsEditor: update_prop_field_value for non-current object. Ignoring for '{prop_name}'."); return
-        widget_key_for_lineedit = f"{prop_name}_lineedit"; slider_widget = self.input_widgets.get(prop_name + "_slider_widget"); spinbox_widget = self.input_widgets.get(prop_name + "_spinbox_widget")
-        widget = self.input_widgets.get(prop_name) 
-        if not widget: widget = self.input_widgets.get(widget_key_for_lineedit)
-        if isinstance(slider_widget, QSlider) and isinstance(spinbox_widget, QSpinBox) and prop_name == "corner_radius":
-            try: int_val = int(new_value); slider_widget.setValue(int_val); spinbox_widget.setValue(int_val)
-            except (ValueError, TypeError): pass
-        elif isinstance(widget, QLineEdit): widget.setText(str(new_value))
-        elif isinstance(widget, QSpinBox): 
-            try: widget.setValue(int(new_value)) 
-            except (ValueError, TypeError): pass
-        elif isinstance(widget, QDoubleSpinBox): 
-            try: widget.setValue(float(new_value)) 
-            except (ValueError, TypeError): pass
-        elif isinstance(widget, QCheckBox): 
-            try: widget.setChecked(bool(new_value)) 
-            except (ValueError, TypeError): pass
-        elif isinstance(widget, QComboBox): widget.setCurrentText(str(new_value))
-        elif isinstance(widget, QPushButton) and prop_name.endswith("_color_rgba"):
-             if isinstance(new_value, (tuple, list)) and len(new_value) == 4: self._update_rgba_color_button_style(widget, new_value) # type: ignore
-        if logger: logger.debug(f"PropertiesEditor: Externally updated field '{prop_name}' to '{new_value}'")
+        if self.current_object_data_ref is not obj_data_ref:
+            logger.warning(f"PropsEditor: update_prop_field_value for non-current object. Ignoring for '{prop_name}'.")
+            return
 
-    def _on_line_edit_finished(self, var_name: str, text_value: str):
+        # Handle composite widgets like sliders
+        slider_widget = self.input_widgets.get(prop_name + "_slider")
+        spinbox_widget = self.input_widgets.get(prop_name + "_spinbox")
+        if isinstance(slider_widget, QSlider) and isinstance(spinbox_widget, QSpinBox):
+            try:
+                int_val = int(new_value)
+                slider_widget.blockSignals(True); slider_widget.setValue(int_val); slider_widget.blockSignals(False)
+                spinbox_widget.blockSignals(True); spinbox_widget.setValue(int_val); spinbox_widget.blockSignals(False)
+            except (ValueError, TypeError): logger.warning(f"Failed to set slider/spinbox for '{prop_name}' to '{new_value}'")
+            logger.debug(f"PropertiesEditor: Externally updated slider '{prop_name}' to '{new_value}'")
+            return
+
+        widget = self.input_widgets.get(prop_name)
+        if not widget: # Fallback for specific sub-widget naming conventions
+            widget = self.input_widgets.get(f"{prop_name}_lineedit") # For linked_map or trigger_image
+
+        if isinstance(widget, QLineEdit): widget.setText(str(new_value))
+        elif isinstance(widget, QSpinBox):
+            try: widget.setValue(int(new_value))
+            except (ValueError, TypeError): logger.warning(f"Failed to set QSpinBox for '{prop_name}' to '{new_value}'")
+        elif isinstance(widget, QDoubleSpinBox):
+            try: widget.setValue(float(new_value))
+            except (ValueError, TypeError): logger.warning(f"Failed to set QDoubleSpinBox for '{prop_name}' to '{new_value}'")
+        elif isinstance(widget, QCheckBox):
+            try: widget.setChecked(bool(new_value))
+            except (ValueError, TypeError): logger.warning(f"Failed to set QCheckBox for '{prop_name}' to '{new_value}'")
+        elif isinstance(widget, QComboBox): widget.setCurrentText(str(new_value))
+        elif isinstance(widget, QPushButton) and prop_name.endswith("_color_rgba"): # For RGBA color button
+             if isinstance(new_value, (tuple, list)) and len(new_value) == 4:
+                 self._update_rgba_color_button_style(widget, new_value) # type: ignore
+        elif widget: # If widget exists but isn't one of the above, log it.
+            logger.warning(f"PropertiesEditor: update_property_field_value - Unhandled widget type '{type(widget).__name__}' for property '{prop_name}'.")
+        else:
+            logger.warning(f"PropertiesEditor: update_property_field_value - No input widget found for property '{prop_name}'.")
+        
+        if widget: logger.debug(f"PropertiesEditor: Externally updated field '{prop_name}' to '{new_value}' for widget type '{type(widget).__name__}'")
+
+
+    def _on_line_edit_finished(self, var_name: str, text_value: str): # No changes needed here
         self._on_property_value_changed(var_name, text_value)
 
-    def _on_property_value_changed(self, var_name: str, new_value: Any):
+    def _on_property_value_changed(self, var_name: str, new_value: Any): # No changes needed here
         if not self.current_object_data_ref: return
         target_dict_for_prop = self.current_object_data_ref; is_sub_property = False 
         if var_name in ["layer_order", "current_width", "current_height", "is_flipped_h", "rotation"]: target_dict_for_prop = self.current_object_data_ref; is_sub_property = False
@@ -550,7 +560,7 @@ class PropertiesEditorDockWidget(QWidget):
         else: 
             if game_type_id in ED_CONFIG.EDITABLE_ASSET_VARIABLES: definition = ED_CONFIG.EDITABLE_ASSET_VARIABLES[game_type_id].get(var_name)
         if not definition:
-            if logger: logger.warning(f"No definition for prop '{var_name}' (GameID: '{game_type_id}'). Cannot process change.")
+            logger.warning(f"No definition for prop '{var_name}' (GameID: '{game_type_id}'). Cannot process change.")
             return
         prop_type = definition["type"]; current_stored_value = target_dict_for_prop.get(var_name, definition["default"]); typed_new_value = new_value
         try:
@@ -562,10 +572,10 @@ class PropertiesEditorDockWidget(QWidget):
                 if not (isinstance(new_value, (list, tuple)) and len(new_value) == 4): raise ValueError("Invalid RGBA tuple")
             elif prop_type == "image_path_custom": typed_new_value = str(new_value)
         except (ValueError, TypeError) as e:
-            if logger: logger.warning(f"Casting error for '{var_name}': '{new_value}' to {prop_type}. Error: {e}")
+            logger.warning(f"Casting error for '{var_name}': '{new_value}' to {prop_type}. Error: {e}")
             widget_to_revert = self.input_widgets.get(var_name)
             if prop_type == "slider": 
-                slider_w = self.input_widgets.get(var_name + "_slider_widget"); spinbox_w = self.input_widgets.get(var_name + "_spinbox_widget")
+                slider_w = self.input_widgets.get(var_name + "_slider"); spinbox_w = self.input_widgets.get(var_name + "_spinbox")
                 if isinstance(slider_w, QSlider): slider_w.setValue(int(current_stored_value))
                 if isinstance(spinbox_w, QSpinBox): spinbox_w.setValue(int(current_stored_value))
             elif isinstance(widget_to_revert, QSpinBox): widget_to_revert.setValue(int(current_stored_value))
@@ -576,16 +586,16 @@ class PropertiesEditorDockWidget(QWidget):
         if current_stored_value != typed_new_value:
             editor_history.push_undo_state(self.editor_state); target_dict_for_prop[var_name] = typed_new_value
             if var_name == "corner_radius" and is_sub_property:
-                props_dict = target_dict_for_prop; should_round_all = typed_new_value > 0 # type: ignore
+                props_dict = target_dict_for_prop; should_round_all = typed_new_value > 0
                 corner_bool_props = ["round_top_left", "round_top_right", "round_bottom_left", "round_bottom_right"]
                 for corner_prop_name in corner_bool_props:
                     if props_dict.get(corner_prop_name) != should_round_all:
                         props_dict[corner_prop_name] = should_round_all; checkbox_widget = self.input_widgets.get(corner_prop_name)
                         if isinstance(checkbox_widget, QCheckBox): checkbox_widget.blockSignals(True); checkbox_widget.setChecked(should_round_all); checkbox_widget.blockSignals(False)
             self.properties_changed.emit(self.current_object_data_ref)
-            if logger: logger.debug(f"Property '{var_name}' changed to '{typed_new_value}'.")
+            logger.debug(f"Property '{var_name}' changed to '{typed_new_value}'.")
 
-    def _change_object_color(self, map_object_data_ref: Optional[Dict[str, Any]]):
+    def _change_object_color(self, map_object_data_ref: Optional[Dict[str, Any]]): # No changes needed here
         if not map_object_data_ref: return
         current_color_tuple = map_object_data_ref.get("override_color"); _sp = None
         if not current_color_tuple:
@@ -593,9 +603,9 @@ class PropertiesEditorDockWidget(QWidget):
             if asset_palette_data:
                 current_color_tuple = asset_palette_data.get("base_color_tuple")
                 if not current_color_tuple: _sp = asset_palette_data.get("surface_params")
-                if _sp and isinstance(_sp, tuple) and len(_sp) == 3: current_color_tuple = _sp[2] # type: ignore
+                if _sp and isinstance(_sp, tuple) and len(_sp) == 3: current_color_tuple = _sp[2]
             if not current_color_tuple: current_color_tuple = (128,128,128)
-        q_current_color = QColor(*current_color_tuple) # type: ignore
+        q_current_color = QColor(*current_color_tuple)
         new_q_color = QColorDialog.getColor(q_current_color, self, "Select Object Color")
         if new_q_color.isValid():
             new_color_tuple = new_q_color.getRgb()[:3]
@@ -604,16 +614,14 @@ class PropertiesEditorDockWidget(QWidget):
                 self.properties_changed.emit(map_object_data_ref); color_button = self.input_widgets.get("_color_button")
                 if isinstance(color_button, QPushButton): self._update_color_button_visuals(color_button, map_object_data_ref)
     
-    def _browse_for_linked_map(self, var_name: str, line_edit_ref: QLineEdit):
+    def _browse_for_linked_map(self, var_name: str, line_edit_ref: QLineEdit): # No changes needed here
         maps_base_dir = editor_map_utils.get_maps_base_directory()
         if not editor_map_utils.ensure_maps_directory_exists():
             QMessageBox.critical(self, "Error", f"Cannot access or create base maps directory: {maps_base_dir}")
             return
-        
         selected_dir = QFileDialog.getExistingDirectory(self, "Select Map Folder", maps_base_dir, QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks)
         if selected_dir:
             map_folder_name = os.path.basename(selected_dir)
-            # Basic validation: check if a .json file with the same name as folder exists inside
             expected_json_file = os.path.join(selected_dir, map_folder_name + ED_CONFIG.LEVEL_EDITOR_SAVE_FORMAT_EXTENSION)
             if os.path.exists(expected_json_file):
                 line_edit_ref.setText(map_folder_name)
@@ -621,8 +629,7 @@ class PropertiesEditorDockWidget(QWidget):
             else:
                 QMessageBox.warning(self, "Invalid Map Folder", f"Selected folder '{map_folder_name}' does not appear to be a valid map folder (missing {os.path.basename(expected_json_file)}).")
         
-    # --- Controller Navigation Methods ---
-    def _update_focused_property_visuals(self):
+    def _update_focused_property_visuals(self): # No changes needed here
         for var_name, widget_container, label_widget in self._controller_property_widgets_ordered:
             widget_to_style = widget_container
             if isinstance(widget_container, QWidget) and widget_container.layout() is not None:
@@ -643,13 +650,13 @@ class PropertiesEditorDockWidget(QWidget):
             var_name_focused, widget_container_focused, label_widget_focused = self._controller_property_widgets_ordered[self._controller_focused_property_index]
             focus_style_str = str(ED_CONFIG.PROPERTIES_EDITOR_CONTROLLER_FOCUS_BORDER)
             widget_to_style_focused = widget_container_focused
-            if isinstance(widget_container_focused, QWidget) and widget_container_focused.layout() is not None:
+            if isinstance(widget_container_focused, QWidget) and widget_container_focused.layout() is not None: # Container widget
                 le = widget_container_focused.findChild(QLineEdit); cb = widget_container_focused.findChild(QComboBox); sb = widget_container_focused.findChild(QSpinBox); dsb = widget_container_focused.findChild(QDoubleSpinBox); sl = widget_container_focused.findChild(QSlider)
                 if le: widget_to_style_focused = le; 
                 elif cb: widget_to_style_focused = cb; 
                 elif sb: widget_to_style_focused = sb; 
                 elif dsb: widget_to_style_focused = dsb; 
-                elif sl: widget_to_style_focused = sl
+                elif sl: widget_to_style_focused = sl # Primary focus for slider container is the slider itself
             is_color_btn_focused = (widget_container_focused is self.input_widgets.get("_color_button")); is_rgba_color_btn_focused = False; definition_type_focused = ""
             if self.current_object_data_ref:
                 game_type_id_focused = self.current_object_data_ref.get("game_type_id", "")
@@ -659,27 +666,23 @@ class PropertiesEditorDockWidget(QWidget):
             if not is_color_btn_focused and not is_rgba_color_btn_focused and isinstance(widget_to_style_focused, QWidget) and not isinstance(widget_to_style_focused, (QLabel, QCheckBox)): widget_to_style_focused.setStyleSheet(f"border: {focus_style_str};")
             if label_widget_focused: label_widget_focused.setStyleSheet("QLabel { color: " + focus_style_str.split(' ')[-1] + "; font-weight: bold; }")
             if isinstance(widget_to_style_focused, QWidget) and not isinstance(widget_to_style_focused, QLabel):
-                target_focus_widget = widget_to_style_focused
-                if definition_type_focused == "slider":
-                    slider_sub_widget = self.input_widgets.get(var_name_focused + "_slider_widget")
-                    if slider_sub_widget: target_focus_widget = slider_sub_widget
-                target_focus_widget.setFocus(Qt.FocusReason.OtherFocusReason); self.scroll_area.ensureWidgetVisible(target_focus_widget, 10, 10)
+                widget_to_style_focused.setFocus(Qt.FocusReason.OtherFocusReason); self.scroll_area.ensureWidgetVisible(widget_to_style_focused, 10, 10)
 
-    def _set_controller_focused_property(self, index: int):
+    def _set_controller_focused_property(self, index: int): # No changes needed here
         if not self._controller_property_widgets_ordered: self._controller_focused_property_index = -1; return
         new_index = max(0, min(index, len(self._controller_property_widgets_ordered) - 1))
         if self._controller_focused_property_index == new_index and self._controller_has_focus: return
         self._controller_focused_property_index = new_index; self._update_focused_property_visuals()
-        if logger: logger.debug(f"PropertiesEditor: Controller focus on property index {new_index}")
+        logger.debug(f"PropertiesEditor: Controller focus on property index {new_index}")
 
-    def on_controller_focus_gained(self):
+    def on_controller_focus_gained(self): # No changes needed here
         self._controller_has_focus = True
         if self._controller_property_widgets_ordered: self._set_controller_focused_property(0)
         else: self._controller_focused_property_index = -1
         self._update_focused_property_visuals()
-        if logger: logger.debug("PropertiesEditor: Controller focus gained.")
+        logger.debug("PropertiesEditor: Controller focus gained.")
 
-    def on_controller_focus_lost(self):
+    def on_controller_focus_lost(self): # No changes needed here
         self._controller_has_focus = False
         if self._controller_focused_property_index >= 0 and self._controller_focused_property_index < len(self._controller_property_widgets_ordered):
             var_name, widget_container, label_widget = self._controller_property_widgets_ordered[self._controller_focused_property_index]
@@ -699,7 +702,7 @@ class PropertiesEditorDockWidget(QWidget):
                 if definition and definition.get("type") == "tuple_color_rgba":
                      props = self.current_object_data_ref.get("properties",{}); self._update_rgba_color_button_style(widget_container, props.get(var_name, definition["default"]))
         self._controller_focused_property_index = -1
-        if logger: logger.debug("PropertiesEditor: Controller focus lost.")
+        logger.debug("PropertiesEditor: Controller focus lost.")
 
     def handle_controller_action(self, action: str, value: Any):
         if not self._controller_has_focus or not self._controller_property_widgets_ordered:
@@ -709,22 +712,28 @@ class PropertiesEditorDockWidget(QWidget):
         if not (0 <= current_idx < len(self._controller_property_widgets_ordered)):
             if self._controller_property_widgets_ordered: self._set_controller_focused_property(0)
             return
-        var_name, widget_container, _ = self._controller_property_widgets_ordered[current_idx]; widget_to_act_on = widget_container
+        
+        var_name, widget_to_act_on_raw, _ = self._controller_property_widgets_ordered[current_idx]
+        widget_to_act_on = widget_to_act_on_raw # This is now the primary interactive widget
+
         prop_def = None
         if self.current_object_data_ref:
             game_type_id = self.current_object_data_ref.get("game_type_id", "")
-            if var_name not in ["layer_order", "current_width", "current_height", "is_flipped_h", "rotation"]:
+            # Get definition for the property if it's a custom property
+            if var_name not in ["layer_order", "current_width", "current_height", "is_flipped_h", "rotation",
+                                "crop_x", "crop_y", "crop_width", "crop_height", "reset_crop", "_color_button"]:
                 prop_def = ED_CONFIG.EDITABLE_ASSET_VARIABLES.get(game_type_id, {}).get(var_name)
-            elif var_name == "corner_radius": prop_def = ED_CONFIG.EDITABLE_ASSET_VARIABLES.get(game_type_id, {}).get(var_name)
-        if prop_def and prop_def.get("type") == "slider":
-             slider_w = self.input_widgets.get(var_name + "_slider_widget")
-             if isinstance(slider_w, QSlider): widget_to_act_on = slider_w
-        elif isinstance(widget_container, QWidget) and widget_container.layout() is not None:
-             le = widget_container.findChild(QLineEdit); cb = widget_container.findChild(QComboBox)
-             if le: widget_to_act_on = le; 
-             elif cb: widget_to_act_on = cb
+            elif var_name == "corner_radius": # Special handling for corner_radius as it IS in EDITABLE_ASSET_VARIABLES
+                prop_def = ED_CONFIG.EDITABLE_ASSET_VARIABLES.get(game_type_id, {}).get(var_name)
         
-        new_combo_idx: int # Define new_combo_idx here for broader scope if needed
+        # Refined logic for slider interaction
+        if prop_def and prop_def.get("type") == "slider":
+            # Ensure widget_to_act_on is the QSlider for left/right actions
+            slider_actual_widget = self.input_widgets.get(var_name + "_slider")
+            if isinstance(slider_actual_widget, QSlider):
+                widget_to_act_on = slider_actual_widget
+            # If ACTION_UI_ACCEPT, it might still target the container to "click" the spinbox or something,
+            # but left/right should definitely control the QSlider.
 
         if action == ACTION_UI_UP: self._set_controller_focused_property(current_idx - 1)
         elif action == ACTION_UI_DOWN: self._set_controller_focused_property(current_idx + 1)
@@ -732,14 +741,18 @@ class PropertiesEditorDockWidget(QWidget):
             if isinstance(widget_to_act_on, QPushButton): widget_to_act_on.click()
             elif isinstance(widget_to_act_on, QCheckBox): widget_to_act_on.toggle()
             elif isinstance(widget_to_act_on, QComboBox): widget_to_act_on.showPopup()
-            elif isinstance(widget_to_act_on, QWidget) and widget_to_act_on.layout() is not None:
+            # If it's a QSlider (or its container was focused), ACTION_UI_ACCEPT might not do much directly.
+            # Focus should already be on the QSlider if it's a slider property, allowing left/right.
+            elif isinstance(widget_to_act_on_raw, QWidget) and widget_to_act_on_raw.layout() is not None: # Original container
+                 # For composite widgets like "linked_map_name" or "image_path_custom"
                  if var_name == "linked_map_name" or (prop_def and prop_def.get("type") == "image_path_custom"):
                      browse_button = None
-                     for child_widget in widget_to_act_on.findChildren(QPushButton):
+                     for child_widget in widget_to_act_on_raw.findChildren(QPushButton):
                          if child_widget.text() == "..." or child_widget.text() == "Browse...": browse_button = child_widget; break
                      if browse_button: browse_button.click()
-                 else: children_buttons = widget_to_act_on.findChildren(QPushButton);
-                 if children_buttons: children_buttons[0].click()
+                 else: # Generic attempt to click first button in a composite
+                    children_buttons = widget_to_act_on_raw.findChildren(QPushButton);
+                    if children_buttons: children_buttons[0].click()
         elif action == ACTION_UI_LEFT or action == ACTION_UI_RIGHT:
             step = 1 if action == ACTION_UI_RIGHT else -1
             if isinstance(widget_to_act_on, QSpinBox):
@@ -749,8 +762,8 @@ class PropertiesEditorDockWidget(QWidget):
                 new_val = widget_to_act_on.value() + step * widget_to_act_on.singleStep()
                 if new_val >= widget_to_act_on.minimum() and new_val <= widget_to_act_on.maximum(): widget_to_act_on.setValue(new_val)
             elif isinstance(widget_to_act_on, QComboBox):
-                new_combo_idx = widget_to_act_on.currentIndex() + step # now defined before use
+                new_combo_idx = widget_to_act_on.currentIndex() + step
                 if 0 <= new_combo_idx < widget_to_act_on.count(): widget_to_act_on.setCurrentIndex(new_combo_idx)
-            elif isinstance(widget_to_act_on, QSlider): widget_to_act_on.setValue(widget_to_act_on.value() + step * widget_to_act_on.singleStep())
+            elif isinstance(widget_to_act_on, QSlider): # Now correctly targets QSlider
+                widget_to_act_on.setValue(widget_to_act_on.value() + step * widget_to_act_on.singleStep())
         elif action == ACTION_UI_TAB_NEXT or action == ACTION_UI_TAB_PREV: self.controller_focus_requested_elsewhere.emit()
-#################### END OF FILE: properties_editor_widget.py ####################

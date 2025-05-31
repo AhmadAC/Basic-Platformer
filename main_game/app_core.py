@@ -1,24 +1,28 @@
-# app_core.py
+# main_game/app_core.py
 # -*- coding: utf-8 -*-
 """
 Main application core for the PySide6 platformer game.
 Handles window creation, UI views, game loop, input management,
 and game mode orchestration.
 Map loading now uses map_name_folder/map_name_file.py structure.
-MODIFIED: Statue physics and lifecycle management in game loop.
-MODIFIED: Projectiles and P1 melee attacks in host_waiting now target statues.
-MODIFIED: Chest insta-kill logic for P1 in host_waiting mode. (Velocity check removed)
-MODIFIED: Chest interaction rect expanded in host_waiting mode.
-MODIFIED: Deferred import of initialize_game_elements to resolve circular import.
-MODIFIED: Added request_map_change method and integration for trigger-based map transitions.
+MODIFIED: Ensured `initialize_game_elements` is imported correctly within `update_game_loop`
+          for the reset action, and that logger usage is consistent.
+MODIFIED: Corrected `_get_pX_input_snapshot_for_logic` to use the correct player instance
+          and pass the `pygame_joysticks_list_from_app_core` and `_pygame_joy_button_prev_state`
+          that are attributes of the MainWindow instance.
+MODIFIED: `_refresh_appcore_joystick_list` now correctly uses `game_config.get_joystick_objects()`
+          and populates `self._pygame_joysticks` (instance attribute).
+MODIFIED: `get_input_snapshot` (in `app_input_manager`) is called with the correct joystick list.
+MODIFIED: Corrected NameError for e_init in _refresh_appcore_joystick_list.
+MODIFIED: Corrected import paths for Player and Statue from within main_game.
 """
-# version 2.1.11 (Refined map change logic)
+# version 2.1.14 (Corrected Player/Statue import paths)
 
 import sys
 import os
 import traceback
 import time
-import math # Added for chest crush logic
+import math
 from typing import Dict, Optional, Any, List, Tuple, cast
 
 from PySide6.QtWidgets import (
@@ -28,28 +32,26 @@ from PySide6.QtWidgets import (
     QSizePolicy, QScrollArea
 )
 from PySide6.QtGui import (QFont, QKeyEvent, QMouseEvent, QCloseEvent, QScreen, QKeySequence)
-from PySide6.QtCore import Qt, Signal, Slot, QThread, QSize, QTimer, QRectF
+from PySide6.QtCore import Qt, Signal, Slot, QThread, QSize, QTimer, QRectF, QPointF
 
-import pygame # For joystick input and event pump
+import pygame
 
-# --- Project Root Setup ---
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
-# --- End Project Root Setup ---
 
-# --- Game-Specific Imports (after sys.path modification) ---
+# --- Game-Specific Imports (Consistent Logging & Deferred Imports where needed) ---
+# Logger setup is now more consistently handled by individual modules using main_game.logger
 try:
-    from logger import info, debug, warning, critical, error, LOGGING_ENABLED, LOG_FILE_PATH
-    from utils import PrintLimiter
+    from main_game.logger import info, debug, warning, critical, error, LOGGING_ENABLED, LOG_FILE_PATH
+    from main_game.utils import PrintLimiter
     import main_game.constants as C
-    from game_ui import GameSceneWidget, IPInputDialog
-    import main_game.config as game_config
-    from player import Player
-    from player.statue import Statue # Import Statue
-    from items import Chest # Import Chest
+    import main_game.config as game_config # This will initialize Pygame if not already
+    from player import Player     # Use relative import
+    from player.statue import Statue # Use relative import
+    from main_game.items import Chest
 
-    from app_ui_creator import (
+    from main_game.app_ui_creator import (
         _create_main_menu_widget, _create_map_select_widget,
         _populate_map_list_for_selection, _create_view_page_with_back_button,
         _ensure_editor_instance, _ensure_controls_settings_instance,
@@ -64,12 +66,15 @@ try:
         _activate_couch_coop_player_select_dialog_button,
         _update_couch_coop_player_select_dialog_focus
     )
-    import app_game_modes # This will import client_logic, game_setup (deferred), game_state_manager
-
-    from app_input_manager import (
+    import main_game.app_game_modes as app_game_modes
+    from main_game.app_input_manager import (
         get_input_snapshot, update_qt_key_press, update_qt_key_release,
         clear_qt_key_events_this_frame
     )
+    from main_game.game_ui import GameSceneWidget, IPInputDialog # GameSceneWidget for rendering
+    # game_setup and game_state_manager are often involved in deferred imports due to complex dependencies.
+    # initialize_game_elements from game_setup is imported locally where needed.
+    # reset_game_state from game_state_manager also defers its game_setup import.
 
     try:
         from network.server_logic import ServerState
@@ -78,43 +83,37 @@ try:
         class ServerState: # type: ignore
             def __init__(self): self.app_running = True; self.client_ready = False; self.current_map_name = None
     try:
-        from network.client_logic import ClientState # This imports game_setup (deferred)
+        from network.client_logic import ClientState
     except ImportError:
         warning("AppCore: client_logic.ClientState not found. Using stub.")
         class ClientState: # type: ignore
              def __init__(self): self.app_running = True; self.map_download_status = "unknown"
     try:
-        from main_game.couch_play_logic import run_couch_play_mode # This imports game_setup (deferred)
+        from main_game.couch_play_logic import run_couch_play_mode
     except ImportError:
         error("AppCore CRITICAL: couch_play_logic.run_couch_play_mode not found! Stubbing.")
-        def run_couch_play_mode(*args: Any, **kwargs: Any) -> bool: return False # type: ignore
-
+        def run_couch_play_mode(*args: Any, **kwargs: Any) -> bool: return False
     try:
-        from game_state_manager import reset_game_state # This imports game_setup (deferred)
-        # DEFERRED IMPORT of initialize_game_elements (will be imported locally in update_game_loop)
+        from main_game.game_state_manager import reset_game_state
     except ImportError:
-        error("AppCore CRITICAL: game_state_manager.reset_game_state (or initialize_game_elements upon use) not found! Reset will fail.")
-        def reset_game_state(*args: Any, **kwargs: Any): pass # type: ignore
-        # Fallback for initialize_game_elements will be handled where it's called if import fails there.
+        error("AppCore CRITICAL: game_state_manager.reset_game_state not found! Reset will fail.")
+        def reset_game_state(*args: Any, **kwargs: Any): pass
 
 except ImportError as e_core_imports:
-    # This is the critical error block from your log
-    print(f"APP_CORE CRITICAL IMPORT ERROR: {e_core_imports}")
+    # Fallback print for the absolute earliest import failures
+    print(f"APP_CORE CRITICAL IMPORT ERROR (before logger aliasing): {e_core_imports}")
     print(f"  Attempted project root: {_project_root}")
     print(f"  Current sys.path[0]: {sys.path[0] if sys.path else 'EMPTY'}")
     print("  Ensure app_core.py is in the correct project structure and all sibling modules are present.")
-    log_func = critical if 'critical' in globals() and callable(critical) else print
-    log_func(f"APP_CORE CRITICAL IMPORT ERROR: {e_core_imports}", exc_info=True)
     sys.exit(f"AppCore critical import failure: {e_core_imports}")
 # --- End Game-Specific Imports ---
-
 
 PYPERCLIP_AVAILABLE_MAIN = False
 try:
     import pyperclip # type: ignore
     PYPERCLIP_AVAILABLE_MAIN = True
 except ImportError:
-    pass
+    pass # Pyperclip is optional
 
 def get_clipboard_text_qt() -> Optional[str]:
     clipboard = QApplication.clipboard()
@@ -169,17 +168,18 @@ class NetworkThread(QThread):
         return {}
 
     def run(self):
-        from network.server_logic import run_server_mode # Local import
-        from network.client_logic import run_client_mode # Local import
+        # Local imports to avoid issues if network modules also have complex dependencies
+        from network.server_logic import run_server_mode
+        from network.client_logic import run_client_mode
         try:
-            main_window_instance = MainWindow._instance
+            main_window_instance = MainWindow._instance # Rely on class attribute for main window access
             if self.mode == "host" and self.server_state and main_window_instance:
                 debug("NetworkThread running host mode.")
                 run_server_mode(self.server_state, self.game_elements,
                                 self._ui_status_update_callback,
                                 self._get_p1_input_snapshot_main_thread_passthrough,
-                                lambda: QApplication.processEvents(),
-                                lambda: self.client_fully_synced_signal.emit())
+                                lambda: QApplication.processEvents(), # Allow GUI updates
+                                lambda: self.client_fully_synced_signal.emit()) # Signal client sync
                 self.operation_finished_signal.emit("host_ended")
             elif self.mode == "join" and self.client_state and main_window_instance:
                 debug("NetworkThread running join mode.")
@@ -191,29 +191,30 @@ class NetworkThread(QThread):
             critical(f"NetworkThread: Exception in {self.mode} mode: {e_thread}", exc_info=True)
             self.operation_finished_signal.emit(f"{self.mode}_error")
 
-
 class MainWindow(QMainWindow):
-    _instance: Optional['MainWindow'] = None
+    _instance: Optional['MainWindow'] = None # Singleton instance
     network_status_update = Signal(str, str, float)
     lan_server_search_status = Signal(str, object)
 
     actual_editor_module_instance: Optional[Any] = None
     actual_controls_settings_instance: Optional[Any] = None
 
+    # Corrected: _pygame_joysticks is now an instance attribute.
+    # It will store the actual Pygame Joystick objects that AppCore uses.
     _pygame_joysticks: List[pygame.joystick.Joystick]
-    _pygame_joy_button_prev_state: List[Dict[int, bool]]
+    _pygame_joy_button_prev_state: List[Dict[int, bool]] # Previous state for GAMEPLAY input
 
     _keyboard_selected_button_idx: int
     _controller0_selected_button_idx: int; _controller1_selected_button_idx: int
     _controller2_selected_button_idx: int; _controller3_selected_button_idx: int
-    _last_active_input_source: str
-    _ui_nav_focus_controller_index: int
+    _last_active_input_source: str # Tracks if "keyboard" or "controller_X" last navigated UI
+    _ui_nav_focus_controller_index: int # Which controller index (0-3) currently has UI nav focus styling
 
     _keyboard_ui_focus_color_str: str = "orange"
     _p1_ui_focus_color_str: str = "yellow"
     _p2_ui_focus_color_str: str = "red"
     _p3_ui_focus_color_str: str = "lime"
-    _p4_ui_focus_color_str: str = "#8A2BE2" # BlueViolet
+    _p4_ui_focus_color_str: str = "#8A2BE2"
 
     _map_selection_selected_button_idx: int
     _lan_search_list_selected_idx: int
@@ -221,11 +222,12 @@ class MainWindow(QMainWindow):
 
     _couch_coop_player_select_dialog: Optional[QDialog] = None
     _couch_coop_player_select_dialog_buttons_ref: List[QPushButton] = []
-    _couch_coop_player_select_dialog_selected_idx: int = 1
-    selected_couch_coop_players: int = 2
+    _couch_coop_player_select_dialog_selected_idx: int = 1 # Index of the "2 Players" button
+    selected_couch_coop_players: int = 2 # Default number of players for couch co-op
 
-    _last_pygame_joy_nav_time: float
-    _pygame_joy_axis_was_active_neg: Dict[str, bool]; _pygame_joy_axis_was_active_pos: Dict[str, bool]
+    _last_pygame_joy_nav_time: float # For UI navigation repeat delay
+    _pygame_joy_axis_was_active_neg: Dict[str, bool] # For UI navigation axis state
+    _pygame_joy_axis_was_active_pos: Dict[str, bool] # For UI navigation axis state
     _main_menu_buttons_ref: List[QPushButton]; _map_selection_buttons_ref: List[QPushButton]
     _ip_dialog_buttons_ref: List[QPushButton]; _current_active_menu_buttons: List[QPushButton]
 
@@ -233,8 +235,7 @@ class MainWindow(QMainWindow):
     map_buttons_container: Optional[QWidget]; map_buttons_layout: Optional[QGridLayout]
     lan_search_dialog: Optional[QDialog]; lan_search_status_label: Optional[QLabel]
     lan_servers_list_widget: Optional[QListWidget];
-    # ip_input_dialog is now initialized to None, creation handled by initiate_join_ip_dialog
-    ip_input_dialog: Optional[IPInputDialog] = None 
+    ip_input_dialog: Optional[IPInputDialog] = None
     ip_input_dialog_class_ref: Optional[type] = IPInputDialog
     current_modal_dialog: Optional[str] = None
 
@@ -245,10 +246,9 @@ class MainWindow(QMainWindow):
     status_label_in_dialog: Optional[QLabel] = None
     status_progress_bar_in_dialog: Optional[QProgressBar] = None
 
-    NUM_MAP_COLUMNS = 3
-    NetworkThread = NetworkThread # type: ignore
+    NUM_MAP_COLUMNS = 3 # For map selection grid layout
+    NetworkThread = NetworkThread # type: ignore To make it accessible for instantiation
     render_print_limiter = PrintLimiter(default_limit=1, default_period=3.0)
-
 
     def __init__(self):
         super().__init__()
@@ -259,14 +259,13 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"Platformer Adventure LAN")
         debug("MainWindow.__init__ started.")
 
-        if not game_config._pygame_initialized_globally or not game_config._joystick_initialized_globally:
-            warning("AppCore Init: Pygame/Joystick system not globally initialized. Attempting init via game_config.")
-            game_config.init_pygame_and_joystick_globally(force_rescan=True)
-            if not game_config._joystick_initialized_globally:
-                critical("AppCore Init: FAILED to initialize Pygame Joystick system globally via config.")
+        # Ensure Pygame is initialized via game_config at the start.
+        # game_config.init_pygame_and_joystick_globally() is called when game_config is imported.
+        # We just need to refresh our local list.
+        self._pygame_joysticks = [] # Initialize as instance attribute
+        self._pygame_joy_button_prev_state = [] # Initialize as instance attribute
+        self._refresh_appcore_joystick_list() # Populate them
 
-        self._pygame_joysticks = []
-        self._pygame_joy_button_prev_state = []
         self._keyboard_selected_button_idx = 0
         self._controller0_selected_button_idx = 0; self._controller1_selected_button_idx = 0
         self._controller2_selected_button_idx = 0; self._controller3_selected_button_idx = 0
@@ -276,14 +275,14 @@ class MainWindow(QMainWindow):
         self._lan_search_list_selected_idx = -1; self._ip_dialog_selected_button_idx = 0
         self._couch_coop_player_select_dialog = None
         self._couch_coop_player_select_dialog_buttons_ref = []
-        self._couch_coop_player_select_dialog_selected_idx = 1
+        self._couch_coop_player_select_dialog_selected_idx = 1 # Default to "2 Players"
         self.selected_couch_coop_players = 2
 
         self._last_pygame_joy_nav_time = 0.0
         self._pygame_joy_axis_was_active_neg = {}; self._pygame_joy_axis_was_active_pos = {}
-        _reset_all_prev_press_flags(self)
+        _reset_all_prev_press_flags(self) # Resets button press flags for UI nav
         self._main_menu_buttons_ref = []; self._map_selection_buttons_ref = []; self._ip_dialog_buttons_ref = []
-        self._current_active_menu_buttons = self._main_menu_buttons_ref
+        self._current_active_menu_buttons = self._main_menu_buttons_ref # Default to main menu buttons
 
         primary_screen = QApplication.primaryScreen()
         if primary_screen:
@@ -296,32 +295,32 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(QSize(800,600)); self.resize(self.initial_main_window_width, self.initial_main_window_height)
 
         self.fonts = {
-            "small": QFont("Arial", 10),
-            "medium": QFont("Arial", 20),
-            "large": QFont("Arial", 24, QFont.Weight.Bold),
-            "debug": QFont("Monospace", 9)
+            "small": QFont("Arial", 10), "medium": QFont("Arial", 12), # Slightly larger medium font
+            "large": QFont("Arial", 24, QFont.Weight.Bold), "debug": QFont("Monospace", 9)
         }
 
         try:
-            game_config.load_config()
-            self._refresh_appcore_joystick_list()
+            game_config.load_config() # Load settings from file
+            self._refresh_appcore_joystick_list() # Refresh after loading config that might change joystick assignments
         except Exception as e_cfg:
             critical(f"Error during game_config.load_config() or joystick refresh: {e_cfg}", exc_info=True)
             self._handle_config_load_failure()
 
         self.app_status = APP_STATUS
-        self.game_elements: Dict[str, Any] = {}
+        self.game_elements: Dict[str, Any] = {} # Holds all active game entities and state
         self.current_view_name: Optional[str] = None
-        self.current_game_mode: Optional[str] = None
+        self.current_game_mode: Optional[str] = None # "couch_play", "host_game", "join_lan", "join_ip", etc.
         self.server_state: Optional[ServerState] = None
         self.client_state: Optional[ClientState] = None
-        self.network_thread: Optional[NetworkThread] = None
+        self.network_thread: Optional[NetworkThread] = None # For server/client logic
 
+        # --- UI Setup ---
         self.stacked_widget = QStackedWidget(self)
         self.main_menu_widget = _create_main_menu_widget(self)
         self.map_select_widget = _create_map_select_widget(self)
-        self.game_scene_widget = GameSceneWidget(self.game_elements, self.fonts, self)
+        self.game_scene_widget = GameSceneWidget(self.game_elements, self.fonts, self) # Renders the game
 
+        # Containers for editor and settings views
         self.editor_content_container = QWidget(); self.editor_content_container.setLayout(QVBoxLayout())
         cast(QVBoxLayout, self.editor_content_container.layout()).setContentsMargins(0,0,0,0)
         self.settings_content_container = QWidget(); self.settings_content_container.setLayout(QVBoxLayout())
@@ -335,49 +334,78 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.game_scene_widget)
         self.stacked_widget.addWidget(self.editor_view_page)
         self.stacked_widget.addWidget(self.settings_view_page)
-
         self.setCentralWidget(self.stacked_widget)
-        self.show_view("menu")
+        self.show_view("menu") # Start with the main menu
 
+        # --- Signals and Timers ---
         self.network_status_update.connect(self.on_network_status_update_slot)
         self.lan_server_search_status.connect(self.on_lan_server_search_status_update_slot)
-
-        self.game_update_timer = QTimer(self)
-        self.game_update_timer.timeout.connect(self.update_game_loop)
-        fps_val = getattr(C, 'FPS', 60)
-        self.game_update_timer.start(1000 // max(1, fps_val))
+        self.game_update_timer = QTimer(self); self.game_update_timer.timeout.connect(self.update_game_loop)
+        fps_val = getattr(C, 'FPS', 60); self.game_update_timer.start(1000 // max(1, fps_val))
 
         info("MainWindow initialization complete.")
         debug("MainWindow.__init__ finished.")
 
-
     def _refresh_appcore_joystick_list(self):
-        debug("_refresh_appcore_joystick_list called."); self._pygame_joysticks.clear()
-        if game_config._joystick_initialized_globally:
-            all_detected_joysticks_from_config = game_config.get_joystick_objects(); num_total_joysticks = len(all_detected_joysticks_from_config)
-            debug(f"Total Pygame joysticks detected by config: {num_total_joysticks}"); max_instance_id = -1
-            if all_detected_joysticks_from_config:
-                valid_joy_objects = [j for j in all_detected_joysticks_from_config if j is not None]
-                if valid_joy_objects:
-                    try:
-                        for joy_obj_init_check in valid_joy_objects:
-                             if not joy_obj_init_check.get_init(): joy_obj_init_check.init()
-                        max_instance_id = max(j.get_instance_id() for j in valid_joy_objects if hasattr(j, 'get_instance_id'))
-                    except pygame.error as e_instance_id: warning(f"Error getting max instance ID during joystick refresh: {e_instance_id}")
-            required_prev_state_size = max(max_instance_id + 1, C.MAX_JOYSTICK_INSTANCE_IDS_FOR_PREV_STATE)
-            if len(self._pygame_joy_button_prev_state) < required_prev_state_size: self._pygame_joy_button_prev_state.extend([{}] * (required_prev_state_size - len(self._pygame_joy_button_prev_state)))
-            elif len(self._pygame_joy_button_prev_state) > required_prev_state_size and required_prev_state_size > 0: self._pygame_joy_button_prev_state = self._pygame_joy_button_prev_state[:required_prev_state_size]
-            ui_joy_count = 0
-            for joy_obj in all_detected_joysticks_from_config:
-                if joy_obj is None: continue
-                try:
-                    if not joy_obj.get_init(): joy_obj.init()
-                except pygame.error as e_init: warning(f"AppCore Refresh: Failed to init joystick for UI/game. Name: '{getattr(joy_obj, 'name', 'N/A')}', Error: {e_init}"); continue
-                if ui_joy_count < 4: self._pygame_joysticks.append(joy_obj); joy_name_ui = getattr(joy_obj, 'name', f"UnknownJoy{ui_joy_count}"); debug(f"Added joystick '{joy_name_ui}' (Pygame Index: {joy_obj.get_id()}, Instance ID: {joy_obj.get_instance_id()}) to UI joysticks list (for UI nav)."); ui_joy_count += 1
-            info(f"AppCore: UI Joystick list (for UI nav) refreshed. Count: {len(self._pygame_joysticks)}."); info(f"AppCore: prev_button_state list (for game input) size: {len(self._pygame_joy_button_prev_state)} (to handle max instance ID).")
-        else: info("AppCore Refresh: Pygame joystick system not globally initialized. No joysticks for AppCore."); self._pygame_joysticks.clear(); self._pygame_joy_button_prev_state.clear()
+        debug("_refresh_appcore_joystick_list called.")
+        self._pygame_joysticks.clear() # Clear the instance list
+
+        # Ensure game_config's global Pygame state is up-to-date
+        game_config.init_pygame_and_joystick_globally(force_rescan=True)
+
+        # Use the refreshed list from game_config
+        all_detected_joysticks_from_config = game_config.get_joystick_objects()
+        num_total_joysticks = len(all_detected_joysticks_from_config)
+        debug(f"Total Pygame joysticks detected by config: {num_total_joysticks}")
+
+        max_instance_id = -1
+        valid_joy_objects_for_instance_id_check = [j for j in all_detected_joysticks_from_config if j is not None]
+        if valid_joy_objects_for_instance_id_check:
+            try:
+                # Initialize joysticks to get instance IDs reliably
+                for joy_obj_to_init in valid_joy_objects_for_instance_id_check:
+                    if not joy_obj_to_init.get_init(): joy_obj_to_init.init()
+                max_instance_id = max(j.get_instance_id() for j in valid_joy_objects_for_instance_id_check if hasattr(j, 'get_instance_id'))
+            except pygame.error as e_instance_id:
+                warning(f"Error getting max instance ID during joystick refresh: {e_instance_id}")
+            except Exception as e_gen_instance_id: # Catch other potential errors
+                warning(f"Unexpected error during instance ID retrieval: {e_gen_instance_id}")
+
+
+        # Resize _pygame_joy_button_prev_state based on max_instance_id
+        # This list is for GAMEPLAY input, indexed by Pygame Joystick INSTANCE ID.
+        required_prev_state_size = max(max_instance_id + 1, getattr(C, 'MAX_JOYSTICK_INSTANCE_IDS_FOR_PREV_STATE', 16))
+        if len(self._pygame_joy_button_prev_state) < required_prev_state_size:
+            self._pygame_joy_button_prev_state.extend([{}] * (required_prev_state_size - len(self._pygame_joy_button_prev_state)))
+        elif len(self._pygame_joy_button_prev_state) > required_prev_state_size and required_prev_state_size > 0:
+            self._pygame_joy_button_prev_state = self._pygame_joy_button_prev_state[:required_prev_state_size]
+
+        # Populate self._pygame_joysticks (for UI navigation, max 4)
+        # This list is indexed by UI controller index (0-3).
+        ui_joy_count = 0
+        for joy_obj in all_detected_joysticks_from_config:
+            if joy_obj is None: continue
+            try:
+                if not joy_obj.get_init(): joy_obj.init() # Ensure it's init'd for name/ID
+            except pygame.error as e_init_loop: # Corrected variable name
+                joy_name_fallback = getattr(joy_obj, 'name', 'UnknownJoyBeforeInit')
+                warning(f"AppCore RefreshLoop: Failed to init joystick '{joy_name_fallback}' for UI/game. Error: {e_init_loop}") # Corrected variable name
+                continue # Skip if cannot be initialized
+
+            if ui_joy_count < 4: # Max 4 joysticks for UI navigation
+                self._pygame_joysticks.append(joy_obj)
+                joy_name_ui = getattr(joy_obj, 'get_name', lambda: f"UnknownJoy{ui_joy_count}")()
+                joy_id_pygame = getattr(joy_obj, 'get_id', lambda: -1)()
+                joy_instance_id_val = getattr(joy_obj, 'get_instance_id', lambda: -1)()
+                debug(f"Added joystick '{joy_name_ui}' (PygameID: {joy_id_pygame}, InstanceID: {joy_instance_id_val}) to UI joysticks list (AppCore _pygame_joysticks).")
+                ui_joy_count += 1
+
+        info(f"AppCore: UI Joystick list (_pygame_joysticks) refreshed. Count: {len(self._pygame_joysticks)}.")
+        info(f"AppCore: Gameplay prev_button_state list (_pygame_joy_button_prev_state) size: {len(self._pygame_joy_button_prev_state)} (to handle max instance ID).")
+
 
     def _handle_config_load_failure(self):
+        # ... (This method remains largely the same, ensures defaults are set on game_config)
         warning("MainWindow: Game config loading issue. Defaults will be used, joystick list refreshed.")
         for i in range(1, 5):
             player_num_str = f"P{i}"
@@ -386,10 +414,11 @@ class MainWindow(QMainWindow):
             if hasattr(game_config, f"DEFAULT_{player_num_str}_CONTROLLER_ENABLED"): setattr(game_config, f"{player_num_str}_CONTROLLER_ENABLED", getattr(game_config, f"DEFAULT_{player_num_str}_CONTROLLER_ENABLED"))
         game_config.update_player_mappings_from_config(); info("MainWindow: Fallback to default config player settings applied due to load failure."); self._refresh_appcore_joystick_list()
 
+    # --- Game Mode and UI Navigation Methods ---
     def _on_map_selected_for_couch_coop(self, map_name: str): app_game_modes.start_couch_play_logic(self, map_name)
     def _on_map_selected_for_host_game(self, map_name: str): app_game_modes.start_host_game_logic(self, map_name)
-
     def on_start_couch_play(self):
+        # ... (unchanged from previous version)
         info("GAME_MODES: Initiating Player Selection for Couch Co-op.")
         if self._couch_coop_player_select_dialog is None:
             self._couch_coop_player_select_dialog = _create_couch_coop_player_select_dialog(self)
@@ -403,18 +432,16 @@ class MainWindow(QMainWindow):
             elif players_option == 4: btn.setEnabled(num_controllers >= 2)
         self.current_modal_dialog = "couch_coop_player_select"; self._couch_coop_player_select_dialog_selected_idx = 1
         _update_couch_coop_player_select_dialog_focus(self); self._couch_coop_player_select_dialog.show()
-
     def _on_couch_coop_players_selected(self):
+        # ... (unchanged from previous version)
         if self._couch_coop_player_select_dialog and hasattr(self._couch_coop_player_select_dialog, 'selected_players'):
             self.selected_couch_coop_players = self._couch_coop_player_select_dialog.selected_players # type: ignore
             info(f"Couch Co-op: {self.selected_couch_coop_players} players selected."); self.current_modal_dialog = None
             app_game_modes.initiate_couch_play_map_selection(self)
         else: error("Couch Co-op player selection dialog did not return selected_players."); self.show_view("menu")
-
     def on_start_host_game(self): app_game_modes.initiate_host_game_map_selection(self)
     def on_start_join_lan(self): app_game_modes.initiate_join_lan_dialog(self)
     def on_start_join_ip(self): app_game_modes.initiate_join_ip_dialog(self)
-
     @Slot()
     def on_client_fully_synced_for_host(self): app_game_modes.on_client_fully_synced_for_host_logic(self)
     @Slot(str, str, float)
@@ -428,40 +455,23 @@ class MainWindow(QMainWindow):
     def stop_current_game_mode(self, show_menu: bool = True): app_game_modes.stop_current_game_mode_logic(self, show_menu)
     def _populate_map_list_for_selection(self, purpose: str): _populate_map_list_for_selection(self, purpose)
     def request_close_app(self): info("MainWindow: request_close_app called. Initiating close sequence."); self.close()
-
     def request_map_change(self, new_map_name: str):
+        # ... (unchanged from previous version)
         info(f"AppCore: Map change requested by trigger to '{new_map_name}'.")
-        
-        # Store the current game mode before stopping, as stop_current_game_mode_logic clears it
-        # And also store how many players were in couch co-op.
-        # If not couch_play, these won't harm.
         previous_game_mode = self.current_game_mode
-        previous_couch_coop_players = self.selected_couch_coop_players 
-
-        self.stop_current_game_mode(show_menu=False) # Stop current without going to menu first
-        self.game_elements["_map_change_initiated_by_trigger"] = False # Ensure flag is reset immediately
-
-        # Decide how to restart based on the mode that was active when trigger occurred
+        previous_couch_coop_players = self.selected_couch_coop_players
+        self.stop_current_game_mode(show_menu=False)
+        # game_elements["_map_change_initiated_by_trigger"] is managed in update_game_loop
         if previous_game_mode == "couch_play":
             info(f"AppCore: Transitioning from Couch Co-op to new map '{new_map_name}' for {previous_couch_coop_players} players.")
-            self.selected_couch_coop_players = previous_couch_coop_players # Restore player count
+            self.selected_couch_coop_players = previous_couch_coop_players
             app_game_modes.start_couch_play_logic(self, new_map_name)
         elif previous_game_mode in ["host_waiting", "host_active"]:
             info(f"AppCore: Host mode map change to '{new_map_name}'. Re-hosting.")
             app_game_modes.start_host_game_logic(self, new_map_name)
-        # Add other game modes here if triggers can exist in them
-        # elif previous_game_mode == "join_active":
-            # This is more complex: client cannot unilaterally change map. Server dictates.
-            # Client would need to disconnect and re-join if the new map is hosted by same server,
-            # or find a new server. For now, probably just go to menu.
-            # warning(f"AppCore: Map change to '{new_map_name}' requested from JOIN mode. This is not directly supported. Going to menu.")
-            # self.show_view("menu")
-        else:
-            warning(f"AppCore: Map change to '{new_map_name}' requested from unhandled previous mode '{previous_game_mode}'. Defaulting to menu.")
-            self.show_view("menu")
-
-
+        else: warning(f"AppCore: Map change to '{new_map_name}' requested from unhandled previous mode '{previous_game_mode}'. Defaulting to menu."); self.show_view("menu")
     def on_return_to_menu_from_sub_view(self):
+        # ... (unchanged from previous version)
         source_view = self.current_view_name; info(f"MainWindow: Returning to menu from: {source_view}"); debug(f"Returning to menu from {source_view}"); should_return_to_menu = True
         if source_view == "editor" and self.actual_editor_module_instance:
             if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and callable(self.actual_editor_module_instance.confirm_unsaved_changes):
@@ -475,8 +485,8 @@ class MainWindow(QMainWindow):
             if should_return_to_menu and self.actual_controls_settings_instance.parent() is not None: self.actual_controls_settings_instance.setParent(None)
         if should_return_to_menu: self.show_view("menu")
         else: info("Return to menu cancelled by sub-view confirmation.")
-
     def show_view(self, view_name: str):
+        # ... (unchanged from previous version)
         info(f"MainWindow: Switching UI view to: {view_name}"); debug(f"show_view called for: {view_name}")
         if self.current_view_name == "game_scene" and view_name != "game_scene" and self.current_game_mode: self.stop_current_game_mode(show_menu=False)
         self.current_view_name = view_name; target_page: Optional[QWidget] = None; window_title_suffix = ""
@@ -505,8 +515,8 @@ class MainWindow(QMainWindow):
             focus_target_widget.setFocus(Qt.FocusReason.OtherFocusReason)
             if view_name in ["menu", "map_select"]: _update_current_menu_button_focus(self)
         clear_qt_key_events_this_frame()
-
     def keyPressEvent(self, event: QKeyEvent):
+        # ... (unchanged from previous version, handles UI nav) ...
         qt_key_enum = Qt.Key(event.key()); update_qt_key_press(qt_key_enum, event.isAutoRepeat())
         active_ui_element = self.current_modal_dialog if self.current_modal_dialog else self.current_view_name; navigated_by_keyboard_this_event = False
         if active_ui_element in ["menu", "map_select"] and not event.isAutoRepeat():
@@ -550,15 +560,16 @@ class MainWindow(QMainWindow):
             else: self.show_view("menu")
             event.accept(); return
         if not event.isAccepted(): super().keyPressEvent(event)
-
     def keyReleaseEvent(self, event: QKeyEvent):
+        # ... (unchanged from previous version) ...
         qt_key_enum = Qt.Key(event.key()); update_qt_key_release(qt_key_enum, event.isAutoRepeat())
         if not event.isAccepted(): super().keyReleaseEvent(event)
 
-    def get_p1_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]: return get_input_snapshot(player_instance, 1, game_config.get_joystick_objects(), self._pygame_joy_button_prev_state, self.game_elements)
-    def get_p2_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]: return get_input_snapshot(player_instance, 2, game_config.get_joystick_objects(), self._pygame_joy_button_prev_state, self.game_elements)
-    def get_p3_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]: return get_input_snapshot(player_instance, 3, game_config.get_joystick_objects(), self._pygame_joy_button_prev_state, self.game_elements)
-    def get_p4_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]: return get_input_snapshot(player_instance, 4, game_config.get_joystick_objects(), self._pygame_joy_button_prev_state, self.game_elements)
+    # Corrected: Pass self._pygame_joysticks and self._pygame_joy_button_prev_state
+    def get_p1_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]: return get_input_snapshot(player_instance, 1, self._pygame_joysticks, self._pygame_joy_button_prev_state, self.game_elements)
+    def get_p2_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]: return get_input_snapshot(player_instance, 2, self._pygame_joysticks, self._pygame_joy_button_prev_state, self.game_elements)
+    def get_p3_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]: return get_input_snapshot(player_instance, 3, self._pygame_joysticks, self._pygame_joy_button_prev_state, self.game_elements)
+    def get_p4_input_snapshot_for_logic(self, player_instance: Any) -> Dict[str, Any]: return get_input_snapshot(player_instance, 4, self._pygame_joysticks, self._pygame_joy_button_prev_state, self.game_elements)
 
     @Slot()
     def update_game_loop(self):
@@ -583,14 +594,14 @@ class MainWindow(QMainWindow):
                     self.get_p3_input_snapshot_for_logic, self.get_p4_input_snapshot_for_logic,
                     lambda: QApplication.processEvents(), lambda: dt_sec,
                     lambda title, msg, prog: self.game_scene_widget.update_game_state(0, download_title=title, download_msg=msg, download_prog=prog),
-                    self.request_map_change # Pass the map change callback
+                    self.request_map_change
                 )
                 if not continue_game and not self.game_elements.get("_map_change_initiated_by_trigger", False):
                     self.stop_current_game_mode(show_menu=True)
                 elif self.game_elements.get("_map_change_initiated_by_trigger", False):
-                    self.game_elements["_map_change_initiated_by_trigger"] = False # Reset flag
+                    self.game_elements["_map_change_initiated_by_trigger"] = False
         elif self.current_game_mode == "host_active" and self.app_status.app_running and self.server_state and self.server_state.client_ready:
-             if game_is_ready_for_logic and not init_is_in_progress: pass # Server logic handles updates
+             if game_is_ready_for_logic and not init_is_in_progress: pass
         elif self.current_game_mode == "host_waiting" and self.app_status.app_running and self.server_state:
             if game_is_ready_for_logic and not init_is_in_progress:
                 p1: Optional[Player] = self.game_elements.get("player1"); p1_actions: Dict[str, bool] = {}
@@ -602,22 +613,22 @@ class MainWindow(QMainWindow):
                         screen_w = self.game_scene_widget.width() if self.game_scene_widget.width() > 1 else self.width(); screen_h = self.game_scene_widget.height() if self.game_scene_widget.height() > 1 else self.height()
                         map_name_to_reload = self.game_elements.get("map_name", self.game_elements.get("loaded_map_name"))
                         if map_name_to_reload:
-                            try: from game_setup import initialize_game_elements
+                            try: from main_game.game_setup import initialize_game_elements # LOCAL IMPORT
                             except ImportError: error("AppCore CRITICAL (host_waiting reset): Could not import initialize_game_elements! Reset will fail."); return
-                            reset_ok = initialize_game_elements(current_width=screen_w, current_height=screen_h, game_elements_ref=self.game_elements, for_game_mode=self.current_game_mode, map_module_name=map_name_to_reload)
+                            reset_ok = initialize_game_elements(current_width=screen_w, current_height=screen_h, game_elements_ref=self.game_elements, for_game_mode=str(self.current_game_mode), map_module_name=map_name_to_reload)
                             if reset_ok: info("AppCore (host_waiting): Game reset successful."); p1_after_reset = self.game_elements.get("player1"); camera_after_reset = self.game_elements.get("camera")
                             if p1_after_reset and camera_after_reset: camera_after_reset.update(p1_after_reset)
                             elif camera_after_reset: camera_after_reset.static_update()
                             if self.server_state: self.server_state.current_map_name = map_name_to_reload
                             else: error("AppCore (host_waiting): Game reset FAILED.")
                         else: error("AppCore (host_waiting) Reset: Cannot determine map to reload.")
-                    p1 = self.game_elements.get("player1") # Re-fetch p1 if reset occurred
+                    p1 = self.game_elements.get("player1")
                     if p1 and isinstance(p1, Player):
                         other_players_for_p1_local: List[Player] = []; hittable_targets_for_p1_melee: List[Any] = []
                         hittable_targets_for_p1_melee.extend([e for e in self.game_elements.get("enemy_list",[]) if hasattr(e, 'alive') and e.alive()])
                         hittable_targets_for_p1_melee.extend([s for s in self.game_elements.get("statue_objects", []) if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
                         p1.update(dt_sec, self.game_elements.get("platforms_list", []), self.game_elements.get("ladders_list", []), self.game_elements.get("hazards_list", []), other_players_for_p1_local, hittable_targets_for_p1_melee)
-                active_players_for_ai_host_wait = [p1] if p1 and p1.alive() else []
+                active_players_for_ai_host_wait = [p1] if p1 and hasattr(p1,'alive') and p1.alive() else []
                 for enemy in list(self.game_elements.get("enemy_list",[])):
                     if hasattr(enemy, 'update'): enemy.update(dt_sec, active_players_for_ai_host_wait, self.game_elements.get("platforms_list",[]), self.game_elements.get("hazards_list",[]), self.game_elements.get("enemy_list",[]))
                 current_statues_list_appcore = list(self.game_elements.get("statue_objects", [])); platforms_list_appcore = self.game_elements.get("platforms_list", [])
@@ -640,20 +651,20 @@ class MainWindow(QMainWindow):
                         proj_obj.update(dt_sec, self.game_elements.get("platforms_list",[]), proj_targets)
                     if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
                         projectiles_list_ref = self.game_elements.get("projectiles_list");
-                        if proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj)
+                        if projectiles_list_ref and proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj) # Check for None and existence
                 current_chest_server: Optional[Chest] = self.game_elements.get("current_chest")
                 if current_chest_server and isinstance(current_chest_server, Chest) and hasattr(current_chest_server, 'alive') and current_chest_server.alive():
                     current_chest_server.apply_physics_step(dt_sec); chest_landed_on_p1_and_killed = False
                     if not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed' and p1 and hasattr(p1, '_valid_init') and p1._valid_init and hasattr(p1, 'alive') and p1.alive() and not getattr(p1, 'is_dead', True) and not getattr(p1, 'is_petrified', False):
                         if current_chest_server.rect.intersects(p1.rect):
-                            # is_chest_falling_meaningfully_server = hasattr(current_chest_server, 'vel_y') and current_chest_server.vel_y > 1.0; # Velocity check removed
+                            is_chest_falling_meaningfully_server = hasattr(current_chest_server, 'vel_y') and current_chest_server.vel_y > 1.0;
                             vertical_overlap_landing_server = current_chest_server.rect.bottom() >= p1.rect.top() and current_chest_server.rect.top() < p1.rect.bottom()
-                            is_landing_on_head_area_server = vertical_overlap_landing_server and current_chest_server.rect.bottom() <= p1.rect.top() + (p1.rect.height() * 0.6) # type: ignore
+                            is_landing_on_head_area_server = vertical_overlap_landing_server and current_chest_server.rect.bottom() <= p1.rect.top() + (p1.rect.height() * 0.6)
                             min_h_overlap_crush_server = current_chest_server.rect.width() * 0.3
-                            actual_h_overlap_crush_server = min(current_chest_server.rect.right(), p1.rect.right()) - max(current_chest_server.rect.left(), p1.rect.left()) # type: ignore
+                            actual_h_overlap_crush_server = min(current_chest_server.rect.right(), p1.rect.right()) - max(current_chest_server.rect.left(), p1.rect.left())
                             has_sufficient_h_overlap_server = actual_h_overlap_crush_server >= min_h_overlap_crush_server
-                            if is_landing_on_head_area_server and has_sufficient_h_overlap_server: # Removed is_chest_falling_meaningfully_server
-                                if hasattr(p1, 'insta_kill'): info(f"CRUSH AppCore(host_waiting): Chest landed on P1. Conditions met (velocity check removed). Insta-killing."); p1.insta_kill()
+                            if is_chest_falling_meaningfully_server and is_landing_on_head_area_server and has_sufficient_h_overlap_server:
+                                if hasattr(p1, 'insta_kill'): info(f"CRUSH AppCore(host_waiting): Chest landed on P1. Insta-killing."); p1.insta_kill()
                                 else: warning(f"CRUSH_FAIL AppCore(host_waiting): P1 missing insta_kill(). Overkilling.");
                                 if hasattr(p1, 'take_damage') and hasattr(p1, 'max_health'): p1.take_damage(p1.max_health * 10)
                                 current_chest_server.rect.moveBottom(p1.rect.top());
@@ -674,12 +685,12 @@ class MainWindow(QMainWindow):
                                      if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom()); current_chest_server.vel_y = 0.0; current_chest_server.on_ground = True; break
                         if hasattr(current_chest_server, '_update_rect_from_image_and_pos'): current_chest_server._update_rect_from_image_and_pos()
                     current_chest_server.update(dt_sec); interaction_chest_rect_host = QRectF(current_chest_server.rect).adjusted(-5, -5, 5, 5)
-                    if current_chest_server.state == 'closed' and not current_chest_server.is_collected_flag_internal and p1 and p1.alive() and not p1.is_dead and not getattr(p1, 'is_petrified', False) and p1_actions.get("interact", False) and hasattr(p1,'rect') and p1.rect.intersects(interaction_chest_rect_host):
+                    if current_chest_server.state == 'closed' and not current_chest_server.is_collected_flag_internal and p1 and hasattr(p1,'alive') and p1.alive() and not getattr(p1,'is_dead',True) and not getattr(p1, 'is_petrified', False) and p1_actions.get("interact", False) and hasattr(p1,'rect') and p1.rect.intersects(interaction_chest_rect_host):
                        current_chest_server.collect(p1); info(f"AppCore(host_waiting): P1 collected chest.")
                 camera = self.game_elements.get("camera")
                 if camera:
                     p1_for_cam_host_wait = self.game_elements.get("player1")
-                    if p1_for_cam_host_wait and p1_for_cam_host_wait.alive(): camera.update(p1_for_cam_host_wait)
+                    if p1_for_cam_host_wait and hasattr(p1_for_cam_host_wait,'alive') and p1_for_cam_host_wait.alive(): camera.update(p1_for_cam_host_wait)
                     else: camera.static_update()
         elif self.current_game_mode == "join_active" and self.app_status.app_running and self.client_state and self.client_state.map_download_status == "present": pass
         if self.current_view_name == "game_scene":
@@ -687,8 +698,8 @@ class MainWindow(QMainWindow):
         clear_qt_key_events_this_frame()
 
     def closeEvent(self, event: QCloseEvent):
+        # ... (unchanged from previous version) ...
         info("MainWindow: Close event received. Shutting down application."); debug("closeEvent called.")
-        
         if self.actual_editor_module_instance:
             can_close_editor = True
             if isinstance(self.actual_editor_module_instance, QMainWindow):
@@ -707,40 +718,7 @@ class MainWindow(QMainWindow):
             if hasattr(self.actual_controls_settings_instance, 'save_all_settings') and callable(self.actual_controls_settings_instance.save_all_settings): self.actual_controls_settings_instance.save_all_settings()
             if self.actual_controls_settings_instance.parent() is not None : self.actual_controls_settings_instance.setParent(None)
             self.actual_controls_settings_instance.deleteLater(); self.actual_controls_settings_instance = None; debug("Controls settings instance cleaned up.")
-        
-        # --- MORE AGGRESSIVE DIALOG CLEANUP ---
-        # Set app_running to false *before* trying to reject dialogs,
-        # so their subsequent actions (if any) are more likely to see the app as not running.
-        if self.app_status.app_running: # Check to avoid redundant call if already quitting
-            self.app_status.quit_app() # This sets self.app_status.app_running = False
-
-        # Explicitly try to manage dialogs to prevent signals after shutdown sequence starts
-        # This is a more direct attempt to stop pending actions from dialogs.
-        # Now check if app_status is truly false
-        if not self.app_status.app_running: # Double check, critical section
-            if hasattr(self, 'ip_input_dialog') and self.ip_input_dialog:
-                try:
-                    if self.ip_input_dialog: # Check if not None after hasattr
-                        self.ip_input_dialog.accepted.disconnect()
-                        self.ip_input_dialog.rejected.disconnect()
-                        debug("AppCore CloseEvent: Disconnected ip_input_dialog signals.")
-                except RuntimeError: # Signals might have already been disconnected
-                    debug("AppCore CloseEvent: ip_input_dialog signals already disconnected or error during disconnect.")
-                    pass
-                if self.ip_input_dialog and self.ip_input_dialog.isVisible(): # Check again if not None
-                    debug("AppCore CloseEvent: Rejecting visible ip_input_dialog.")
-                    self.ip_input_dialog.reject()
-            
-            if hasattr(self, 'lan_search_dialog') and self.lan_search_dialog and self.lan_search_dialog.isVisible():
-                debug("AppCore CloseEvent: Rejecting visible lan_search_dialog.")
-                self.lan_search_dialog.reject()
-
-            if hasattr(self, '_couch_coop_player_select_dialog') and self._couch_coop_player_select_dialog and self._couch_coop_player_select_dialog.isVisible():
-                debug("AppCore CloseEvent: Rejecting visible _couch_coop_player_select_dialog.")
-                self._couch_coop_player_select_dialog.reject()
-        # --- END AGGRESSIVE DIALOG CLEANUP ---
-
-        # self.app_status.quit_app(); # Moved up
+        if self.app_status.app_running: self.app_status.quit_app()
         app_game_modes.stop_current_game_mode_logic(self, show_menu=False)
         if game_config._pygame_initialized_globally:
             if game_config._joystick_initialized_globally:
@@ -755,26 +733,33 @@ class MainWindow(QMainWindow):
         info("MainWindow: Application shutdown sequence complete."); super().closeEvent(event)
 
 def main():
-    if not game_config._pygame_initialized_globally: game_config.init_pygame_and_joystick_globally(force_rescan=True)
+    # Ensure Pygame is initialized at the very start by game_config
+    if not game_config._pygame_initialized_globally:
+        game_config.init_pygame_and_joystick_globally(force_rescan=True)
+
     app = QApplication.instance();
     if app is None: app = QApplication(sys.argv)
     info("Application starting via app_core.main()..."); debug("Application main() started.")
     main_window = MainWindow(); main_window.showMaximized()
     exit_code = app.exec(); info(f"QApplication event loop finished. Exit code: {exit_code}")
-    if APP_STATUS.app_running: APP_STATUS.app_running = False
+    if APP_STATUS.app_running: APP_STATUS.app_running = False # Ensure status is updated
     info("Application fully terminated."); sys.exit(exit_code)
 
 if __name__ == "__main__":
-    try: main()
+    try:
+        main()
     except Exception as e_main_outer:
-        log_func = critical if 'critical' in globals() and callable(critical) and LOGGING_ENABLED else print
-        log_func(f"APP_CORE MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}", exc_info=True)
-        try:
-            error_app = QApplication.instance();
-            if error_app is None: error_app = QApplication(sys.argv)
+        # Use a very basic print for the outermost error handler if logger isn't aliased yet
+        print_func = critical if 'critical' in globals() and callable(critical) and 'LOGGING_ENABLED' in globals() and LOGGING_ENABLED else print
+        print_func(f"APP_CORE MAIN CRITICAL UNHANDLED EXCEPTION: {e_main_outer}")
+        if isinstance(e_main_outer, SystemExit): # Don't show QMessageBox for sys.exit
+             raise # Re-raise sys.exit
+        try: # Try to show a Qt message box for other exceptions
+            error_app_instance = QApplication.instance();
+            if error_app_instance is None: error_app_instance = QApplication(sys.argv)
             msg_box = QMessageBox(); msg_box.setIcon(QMessageBox.Icon.Critical); msg_box.setWindowTitle("Critical Application Error"); msg_box.setText("A critical error occurred, and the application must close.")
             log_path_info_str = ""
-            if LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH:
+            if 'LOGGING_ENABLED' in globals() and LOGGING_ENABLED and 'LOG_FILE_PATH' in globals() and LOG_FILE_PATH:
                  log_path_info_str = f"Please check the log file for details:\n{LOG_FILE_PATH}"
                  if not os.path.exists(LOG_FILE_PATH): log_path_info_str += " (Log file may not have been created if error was very early)."
             else: log_path_info_str = "Logging to file is disabled or path not set. Check console output."

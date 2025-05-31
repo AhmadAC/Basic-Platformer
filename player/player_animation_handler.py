@@ -19,18 +19,14 @@ from PySide6.QtCore import QPointF, QRectF, Qt, QSize
 
 # Game imports
 import main_game.constants as C
-from utils import PrintLimiter
-
+from main_game.utils import PrintLimiter
+import logging
+from logging import ENABLE_DETAILED_PHYSICS_LOGS, log_player_physics, debug, info, warning
 # Logger
-try:
-    from logger import debug, warning, critical
-    # DO NOT import player_state_handler at the top level here
-except ImportError:
-    # This print statement indicates the logger itself failed to import, which is a separate issue.
-    print("CRITICAL PLAYER_ANIM_HANDLER: Failed to import logger.") 
-    def debug(msg, *args, **kwargs): print(f"DEBUG_PANIM: {msg}")
-    def warning(msg, *args, **kwargs): print(f"WARNING_PANIM: {msg}")
-    def critical(msg, *args, **kwargs): print(f"CRITICAL_PANIM: {msg}")
+
+def debug(msg, *args, **kwargs): print(f"DEBUG_PANIM: {msg}")
+def warning(msg, *args, **kwargs): print(f"WARNING_PANIM: {msg}")
+def critical(msg, *args, **kwargs): print(f"CRITICAL_PANIM: {msg}")
 
 
 _start_time_player_anim_monotonic = time.monotonic()

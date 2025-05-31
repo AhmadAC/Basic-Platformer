@@ -1,4 +1,5 @@
-# enemy.py
+#################### START OF FILE: enemy\enemy.py ####################
+# enemy/enemy.py
 # -*- coding: utf-8 -*-
 """
 Defines the main Enemy class, which coordinates various handlers for AI,
@@ -7,39 +8,80 @@ Inherits core attributes and methods from EnemyBase.
 MODIFIED: Ensured all handler imports are correct and guarded.
 MODIFIED: Corrected physics logic in the dead state within update().
 MODIFIED: attack_type for generic enemy is now consistently "none" (string) when not attacking.
+          This aligns with EnemyKnight and simplifies logic that might check attack_type.
+MODIFIED: set_state now correctly calls self.set_state to ensure proper method dispatch
+          if overridden in subclasses (though EnemyBase has the primary set_state).
+MODIFIED: Logger fallback improved for clarity if main logger fails.
 """
-# version 2.0.7 (Refined dead state, attack_type consistency)
+# version 2.0.8 (Consistent "none" attack_type, self.set_state usage, logger fallback)
 
 import time # For monotonic timer
 from typing import Optional, List, Any, Dict
+
+# --- Project Root Setup ---
+import os
+import sys
+_ENEMY_PY_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT_FOR_ENEMY_PY = os.path.dirname(_ENEMY_PY_FILE_DIR)
+if _PROJECT_ROOT_FOR_ENEMY_PY not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT_FOR_ENEMY_PY)
+# --- End Project Root Setup ---
 
 # Game constants
 import main_game.constants as C
 
 # --- Import Base Class ---
-from enemy_base import EnemyBase
+try:
+    from .enemy_base import EnemyBase # Relative import if enemy_base is in the same package
+except ImportError:
+    # Fallback if running standalone or structure is different
+    from enemy_base import EnemyBase # type: ignore
+
+# --- Logger Setup ---
+# Use a local fallback logger first, then try to alias the project's logger.
+import logging
+_enemy_logger_instance = logging.getLogger(__name__ + "_enemy_internal_fallback")
+if not _enemy_logger_instance.hasHandlers():
+    _handler_enemy_fb = logging.StreamHandler(sys.stdout)
+    _formatter_enemy_fb = logging.Formatter('ENEMY (InternalFallback): %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
+    _handler_enemy_fb.setFormatter(_formatter_enemy_fb)
+    _enemy_logger_instance.addHandler(_handler_enemy_fb)
+    _enemy_logger_instance.setLevel(logging.DEBUG)
+    _enemy_logger_instance.propagate = False
+
+def _fallback_log_info(msg, *args, **kwargs): _enemy_logger_instance.info(msg, *args, **kwargs)
+def _fallback_log_debug(msg, *args, **kwargs): _enemy_logger_instance.debug(msg, *args, **kwargs)
+def _fallback_log_warning(msg, *args, **kwargs): _enemy_logger_instance.warning(msg, *args, **kwargs)
+def _fallback_log_error(msg, *args, **kwargs): _enemy_logger_instance.error(msg, *args, **kwargs)
+def _fallback_log_critical(msg, *args, **kwargs): _enemy_logger_instance.critical(msg, *args, **kwargs)
+
+info = _fallback_log_info; debug = _fallback_log_debug; warning = _fallback_log_warning;
+error = _fallback_log_error; critical = _fallback_log_critical
+
+try:
+    from main_game.logger import info as project_info, debug as project_debug, \
+                               warning as project_warning, error as project_error, \
+                               critical as project_critical
+    info = project_info; debug = project_debug; warning = project_warning;
+    error = project_error; critical = project_critical
+    debug("Enemy (Main): Successfully aliased project's logger.")
+except ImportError:
+    critical("CRITICAL ENEMY (Main): Failed to import logger from main_game.logger. Using internal fallback.")
+except Exception as e_logger_init_enemy:
+    critical(f"CRITICAL ENEMY (Main): Unexpected error during logger setup from main_game.logger: {e_logger_init_enemy}. Using internal fallback.")
+# --- End Logger Setup ---
+
 
 # --- Import Handler Modules ---
-# These are crucial for the Enemy class to function.
-# Fallbacks are defined below if imports fail.
-try:
-    from logger import info, debug, warning, error, critical
-except ImportError:
-    print("CRITICAL ENEMY (Main): logger.py not found. Falling back to print statements for logging.")
-    def info(msg, *args, **kwargs): print(f"INFO: {msg}")
-    def debug(msg, *args, **kwargs): print(f"DEBUG: {msg}")
-    def warning(msg, *args, **kwargs): print(f"WARNING: {msg}")
-    def error(msg, *args, **kwargs): print(f"ERROR: {msg}")
-    def critical(msg, *args, **kwargs): print(f"CRITICAL: {msg}")
-
 _handlers_imported_successfully = True
 try:
-    from enemy_ai_handler import enemy_ai_update, set_enemy_new_patrol_target
-    from enemy_combat_handler import check_enemy_attack_collisions, enemy_take_damage
-    from enemy_network_handler import get_enemy_network_data, set_enemy_network_data
-    import enemy_state_handler # For qualified call: enemy_state_handler.set_enemy_state
-    from enemy_animation_handler import update_enemy_animation
-    from enemy_status_effects import (
+    # Assuming handlers are in the same 'enemy' package
+    from .enemy_ai_handler import enemy_ai_update, set_enemy_new_patrol_target
+    from .enemy_combat_handler import check_enemy_attack_collisions, enemy_take_damage
+    from .enemy_network_handler import get_enemy_network_data, set_enemy_network_data
+    from . import enemy_state_handler # For qualified call: enemy_state_handler.set_enemy_state
+    from .enemy_animation_handler import update_enemy_animation
+    from .enemy_status_effects import (
         update_enemy_status_effects,
         apply_aflame_effect as apply_aflame_to_enemy,
         apply_freeze_effect as apply_freeze_to_enemy,
@@ -48,9 +90,9 @@ try:
         stomp_kill_enemy as stomp_kill_this_enemy,
         smash_petrified_enemy as smash_this_petrified_enemy
     )
-    from enemy_physics_handler import update_enemy_physics_and_collisions
+    from .enemy_physics_handler import update_enemy_physics_and_collisions
 except ImportError as e:
-    critical(f"ENEMY (Main) CRITICAL: Failed to import one or more handler modules: {e}")
+    critical(f"ENEMY (Main) CRITICAL: Failed to import one or more handler modules (likely from .enemy package): {e}")
     _handlers_imported_successfully = False
     # Define stubs for missing handlers to prevent immediate crashes
     def enemy_ai_update(*_args, **_kwargs): warning("Enemy AI update stub called.")
@@ -64,7 +106,8 @@ except ImportError as e:
         def set_enemy_state(enemy_obj, state_str, time_ms=None):
             warning(f"Set enemy state STUB called for {getattr(enemy_obj, 'enemy_id', 'N/A')} to '{state_str}'.")
             if hasattr(enemy_obj, 'state'): setattr(enemy_obj, 'state', state_str)
-    if 'enemy_state_handler' not in globals(): enemy_state_handler = EnemyStateHandlerDummy() # type: ignore
+    if 'enemy_state_handler' not in globals() or enemy_state_handler is None: # Check if it was defined
+        enemy_state_handler = EnemyStateHandlerDummy() # type: ignore
     def update_enemy_animation(*_args, **_kwargs): warning("Update enemy animation stub called.")
     def update_enemy_status_effects(*_args, **_kwargs): warning("Update status effects stub called."); return False
     def apply_aflame_to_enemy(*_args, **_kwargs): warning("Apply aflame stub called.")
@@ -97,15 +140,15 @@ class Enemy(EnemyBase):
         if hasattr(self, 'pos') and hasattr(self, 'rect'):
             try:
                 set_enemy_new_patrol_target(self)
-            except NameError: # Should be caught by _handlers_imported_successfully, but as a safeguard
+            except NameError:
                 warning(f"Enemy (ID: {self.enemy_id}): set_enemy_new_patrol_target is not available.")
         else:
             warning(f"Enemy (ID: {self.enemy_id}): pos or rect not fully initialized by EnemyBase. Patrol target not set initially.")
 
-        # Ensure attack_type is initialized (generic enemies might use 0, Knight uses strings)
-        # EnemyBase already initializes attack_type to 0.
-        # If this specific Enemy class should default to "none", set it here.
-        # self.attack_type = "none" # Or keep as 0 from EnemyBase if that's the generic default
+        # Generic enemies will use string "none" for attack_type when not actively attacking.
+        # Specific attack types (like "attack1" for Knight) will be set by state transitions.
+        # This makes it consistent with how EnemyKnight handles its attack_type.
+        self.attack_type: str = "none"
 
         debug(f"Enemy (ID: {self.enemy_id}, Color: {getattr(self, 'color_name', 'N/A')}) main class instance initialized.")
 
@@ -140,12 +183,22 @@ class Enemy(EnemyBase):
         except NameError: warning(f"Enemy {self.enemy_id}: set_enemy_network_data not available.")
 
     def set_state(self, new_state: str):
-        # This method is called by Enemy and its subclasses (like EnemyKnight)
+        """
+        Centralized method to set the enemy's state.
+        This calls the set_enemy_state function from the enemy_state_handler module.
+        Subclasses (like EnemyKnight) might override this if they have very specific
+        state pre-processing, but generally, they should also call super().set_state()
+        or directly call the handler function.
+        """
         try:
-            enemy_state_handler.set_enemy_state(self, new_state, get_current_ticks_monotonic())
-        except (NameError, AttributeError): # Catch if enemy_state_handler itself or its method is missing
-            warning(f"Enemy {self.enemy_id}: enemy_state_handler.set_enemy_state not available. Direct state set: {new_state}")
-            if hasattr(self, 'state'): self.state = new_state # Fallback
+            # Ensure enemy_state_handler is the actual module, not the dummy
+            if hasattr(enemy_state_handler, 'set_enemy_state') and callable(enemy_state_handler.set_enemy_state):
+                enemy_state_handler.set_enemy_state(self, new_state, get_current_ticks_monotonic())
+            else: # Fallback if the method within the (potentially dummy) handler is missing
+                raise NameError("enemy_state_handler.set_enemy_state not callable")
+        except (NameError, AttributeError) as e_set_state_call:
+            warning(f"Enemy {self.enemy_id}: Error calling enemy_state_handler.set_enemy_state: {e_set_state_call}. Direct state set: {new_state}")
+            if hasattr(self, 'state'): self.state = new_state # Direct fallback
 
     def animate(self):
         try: update_enemy_animation(self)
@@ -155,7 +208,7 @@ class Enemy(EnemyBase):
                platforms_list: list,
                hazards_list: list,
                all_enemies_list: list):
-        if not self._valid_init or not self._alive:
+        if not self._valid_init or not self._alive: # Use _alive from EnemyBase
             return
 
         current_time_ms = get_current_ticks_monotonic()
@@ -164,29 +217,26 @@ class Enemy(EnemyBase):
         if status_overrode_update:
             self.animate()
             if getattr(self, 'is_dead', False) and getattr(self, 'death_animation_finished', False) and self.alive():
-                self.kill()
+                self.kill() # Calls EnemyBase.kill() which sets _alive = False
             return
 
         if getattr(self, 'is_dead', False):
-            # If is_dead is true, _alive might still be true if death animation is playing.
-            # update_enemy_physics_and_collisions handles falling for dead entities if !self.alive().
-            # This block ensures animation plays and kill() is called eventually.
-            self.animate()
-            if getattr(self, 'death_animation_finished', False) and self.alive():
-                self.kill()
-            # The physics handler will take care of movement for entities where self.alive() is false
-            # but death_animation_finished is also false.
+            # Logic for when the enemy is marked as 'is_dead' but might still be animating or falling.
+            # The main physics update handles movement if self.alive() is false.
             update_enemy_physics_and_collisions(self, dt_sec, platforms_list, hazards_list, [])
+            self.animate() # Continue playing death animation
+            if getattr(self, 'death_animation_finished', False) and self.alive():
+                self.kill() # Mark as no longer active
             return
 
         # --- AI Update ---
-        # If this is an EnemyKnight instance, its overridden update method will call its own AI.
         # This generic AI is for non-Knight Enemy instances.
-        if self.__class__.__name__ == 'Enemy': # Only run generic AI if it's a base Enemy
-            try:
-                enemy_ai_update(self, players_list_for_logic)
+        # EnemyKnight will have its own update method that calls its specific AI.
+        if self.__class__.__name__ == 'Enemy':
+            try: enemy_ai_update(self, players_list_for_logic)
             except NameError: warning(f"Enemy {self.enemy_id}: enemy_ai_update not available.")
-        # If it's an EnemyKnight, its own update method has already called its specific AI.
+        # Note: If this is an EnemyKnight instance, its overridden `update` method
+        # should have already called its specific AI logic.
 
         # --- Physics and Collisions ---
         try:
@@ -198,8 +248,7 @@ class Enemy(EnemyBase):
 
         # --- Attack Collision Check ---
         if getattr(self, 'is_attacking', False):
-            try:
-                check_enemy_attack_collisions(self, players_list_for_logic)
+            try: check_enemy_attack_collisions(self, players_list_for_logic)
             except NameError: warning(f"Enemy {self.enemy_id}: check_enemy_attack_collisions not available.")
 
         # --- Animation ---
@@ -215,17 +264,16 @@ class Enemy(EnemyBase):
             if hasattr(self, 'pos') and hasattr(self, 'rect'):
                  try: set_enemy_new_patrol_target(self)
                  except NameError: warning(f"Enemy {self.enemy_id}: set_enemy_new_patrol_target not available during reset.")
-            try:
-                # Use self.set_state to ensure it goes through the proper channels
-                self.set_state('idle') # Time will be handled by self.set_state
-            except Exception as e_reset_state:
-                error(f"Enemy {self.enemy_id}: Error calling self.set_state during reset: {e_reset_state}")
-                if hasattr(self, 'state'): self.state = 'idle' # Direct fallback
 
-            # Reset attack_type for generic enemy. Knight might handle its own in its reset or init.
+            # Use self.set_state to ensure it goes through the proper channels (and its own potential override)
+            self.set_state('idle')
+
+            # Reset attack_type. Generic enemy uses "none", Knight might set its own in its reset.
             if self.__class__.__name__ == 'Enemy':
-                setattr(self, 'attack_type', 0) # Generic enemy uses int, 0 for no specific attack
+                self.attack_type = "none" # Standardize to string "none"
 
-            debug(f"Enemy (ID: {self.enemy_id}, Color: {getattr(self, 'color_name', 'N/A')}) fully reset.")
+            debug(f"Enemy (ID: {self.enemy_id}, Color: {getattr(self, 'color_name', 'N/A')}) main class instance fully reset.")
         else:
             warning(f"Enemy (ID: {self.enemy_id}, Color: {getattr(self, 'color_name', 'N/A')}): Reset called, but _valid_init is False.")
+
+#################### END OF FILE: enemy/enemy.py ####################

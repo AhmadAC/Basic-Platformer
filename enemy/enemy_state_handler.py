@@ -14,11 +14,11 @@ from typing import Any, Optional
 
 # Game imports
 import main_game.constants as C
-from utils import PrintLimiter
+from main_game.utils import PrintLimiter
 
 # Logger
 try:
-    from logger import info, debug, warning, error, critical
+    from main_game.logger import info, debug, warning, error, critical
 except ImportError:
     print("CRITICAL ENEMY_STATE_HANDLER: logger.py not found. Using fallback print.")
     def info(msg, *args, **kwargs): print(f"INFO: {msg}")

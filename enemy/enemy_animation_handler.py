@@ -20,7 +20,7 @@ import main_game.constants as C
 
 # Logger
 try:
-    from logger import debug, warning, critical
+    from main_game.logger import debug, warning, critical
 except ImportError:
     print("CRITICAL ENEMY_ANIM_HANDLER: Failed to import logger.")
     def debug(msg, *args, **kwargs): print(f"DEBUG_EANIM: {msg}")

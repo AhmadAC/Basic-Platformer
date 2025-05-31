@@ -1,47 +1,132 @@
-# player_movement_physics.py
+#################### START OF FILE: player\player_movement_physics.py ####################
+# player/player_movement_physics.py
 # -*- coding: utf-8 -*-
 """
 Handles core movement physics, state timers, and collision orchestration for the Player using PySide6 types.
 MODIFIED: Ensures gravity is applied to a dead player while their death animation is playing.
 MODIFIED: Added logic for player "tipping" off ledges (with gap check).
+MODIFIED: Corrected import paths for logger and relative imports for other player handlers.
 """
-# version 2.0.10 (Refined Tipping with Gap Check)
+# version 2.0.11 (Corrected import paths)
 
 from typing import List, Any, Optional, TYPE_CHECKING
 import time
 import math
-from items import Chest
+
+# PySide6 imports
 from PySide6.QtCore import QPointF, QRectF
+
+# --- Project Root Setup ---
+import os
+import sys
+_PLAYER_MOVEMENT_PHYSICS_PY_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT_FOR_PLAYER_MOVEMENT_PHYSICS = os.path.dirname(_PLAYER_MOVEMENT_PHYSICS_PY_FILE_DIR) # Up one level to 'player'
+if _PROJECT_ROOT_FOR_PLAYER_MOVEMENT_PHYSICS not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT_FOR_PLAYER_MOVEMENT_PHYSICS) # Add 'player' package's parent
+_PROJECT_ROOT_GRANDPARENT_MOVEMENT = os.path.dirname(_PROJECT_ROOT_FOR_PLAYER_MOVEMENT_PHYSICS) # Up two levels to project root
+if _PROJECT_ROOT_GRANDPARENT_MOVEMENT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT_GRANDPARENT_MOVEMENT) # Add actual project root
+# --- End Project Root Setup ---
+
+# Game imports
 import main_game.constants as C
-from player.statue import Statue
-from player_collision_handler import (
-    check_player_platform_collisions,
-    check_player_ladder_collisions,
-    check_player_character_collisions,
-    check_player_hazard_collisions
-)
-from player_state_handler import set_player_state
-import logger as app_logger
-from logger import ENABLE_DETAILED_PHYSICS_LOGS, RateLimiter
+from main_game.items import Chest # Assuming items.py is in main_game
+from player.statue import Statue  # Assuming statue.py is in player.statue
+
+# --- Handler Imports (relative within 'player' package) ---
+_HANDLERS_PHYSICS_AVAILABLE = True
+try:
+    from .player_collision_handler import (
+        check_player_platform_collisions,
+        check_player_ladder_collisions,
+        check_player_character_collisions,
+        check_player_hazard_collisions
+    )
+    from .player_state_handler import set_player_state
+except ImportError as e_handler_phys_import:
+    print(f"CRITICAL PLAYER_MOVEMENT_PHYSICS: Failed to import one or more player handlers: {e_handler_phys_import}")
+    _HANDLERS_PHYSICS_AVAILABLE = False
+    # Define stubs for critical missing handlers
+    def check_player_platform_collisions(*_args, **_kwargs): pass
+    def check_player_ladder_collisions(*_args, **_kwargs): pass
+    def check_player_character_collisions(*_args, **_kwargs): return False
+    def check_player_hazard_collisions(*_args, **_kwargs): pass
+    def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):
+        if hasattr(player, 'state'): player.state = new_state
+        print(f"WARNING PLAYER_MOVEMENT_PHYSICS (Fallback): set_player_state used for P{getattr(player, 'player_id', 'N/A')} to '{new_state}'")
+# --- End Handler Imports ---
+
+
+# --- Logger Setup ---
+import logging
+_player_movement_logger_instance = logging.getLogger(__name__ + "_player_movement_internal_fallback")
+if not _player_movement_logger_instance.hasHandlers():
+    _handler_pm_fb = logging.StreamHandler(sys.stdout)
+    _formatter_pm_fb = logging.Formatter('PLAYER_MOVEMENT (InternalFallback): %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
+    _handler_pm_fb.setFormatter(_formatter_pm_fb)
+    _player_movement_logger_instance.addHandler(_handler_pm_fb)
+    _player_movement_logger_instance.setLevel(logging.DEBUG)
+    _player_movement_logger_instance.propagate = False
+
+def _fallback_log_info(msg, *args, **kwargs): _player_movement_logger_instance.info(msg, *args, **kwargs)
+def _fallback_log_debug(msg, *args, **kwargs): _player_movement_logger_instance.debug(msg, *args, **kwargs)
+def _fallback_log_warning(msg, *args, **kwargs): _player_movement_logger_instance.warning(msg, *args, **kwargs)
+def _fallback_log_error(msg, *args, **kwargs): _player_movement_logger_instance.error(msg, *args, **kwargs)
+def _fallback_log_critical(msg, *args, **kwargs): _player_movement_logger_instance.critical(msg, *args, **kwargs)
+
+info = _fallback_log_info; debug = _fallback_log_debug; warning = _fallback_log_warning;
+error = _fallback_log_error; critical = _fallback_log_critical
+
+_ENABLE_DETAILED_PHYSICS_LOGS_HERE = False # Local toggle for this file's physics logging
+_PHYSICS_FILE_LOG_PLAYER_PHYSICS_FUNC = None
+
+try:
+    from main_game.logger import info as project_info, debug as project_debug, \
+                               warning as project_warning, error as project_error, \
+                               critical as project_critical, \
+                               ENABLE_DETAILED_PHYSICS_LOGS as _PROJECT_LOG_PHYSICS_ENABLED, \
+                               log_player_physics as _PROJECT_LOG_PLAYER_PHYSICS_FUNC
+    info = project_info; debug = project_debug; warning = project_warning;
+    error = project_error; critical = project_critical
+    _ENABLE_DETAILED_PHYSICS_LOGS_HERE = _PROJECT_LOG_PHYSICS_ENABLED
+    _PHYSICS_FILE_LOG_PLAYER_PHYSICS_FUNC = _PROJECT_LOG_PLAYER_PHYSICS_FUNC
+    debug("PlayerMovementPhysics: Successfully aliased project's logger and physics log settings.")
+except ImportError:
+    critical("CRITICAL PLAYER_MOVEMENT_PHYSICS: Failed to import logger from main_game.logger. Using internal fallback.")
+except Exception as e_logger_init_pm:
+    critical(f"CRITICAL PLAYER_MOVEMENT_PHYSICS: Unexpected error during logger setup from main_game.logger: {e_logger_init_pm}. Using internal fallback.")
+
+# --- End Logger Setup ---
 
 if TYPE_CHECKING:
-    from player import Player as PlayerClass_TYPE
+    from .player import Player as PlayerClass_TYPE # Relative import for Player type hint
 
-_physics_file_rate_limiter = RateLimiter(default_period_sec=1.0)
-_PHYSICS_FILE_LOG_KEY = "player_movement_physics_log_tick_v5"
 
-def _can_log_from_this_file_internal() -> bool: return _physics_file_rate_limiter.can_proceed(_PHYSICS_FILE_LOG_KEY, period_sec=1.0)
+_physics_file_rate_limiter = time.monotonic() # Simplified rate limiter for file-level logs
+_PHYSICS_FILE_LOG_INTERVAL = 1.0
+
+def _can_log_from_this_file_internal() -> bool:
+    global _physics_file_rate_limiter
+    now = time.monotonic()
+    if now - _physics_file_rate_limiter >= _PHYSICS_FILE_LOG_INTERVAL:
+        _physics_file_rate_limiter = now
+        return True
+    return False
+
 def _file_debug(message: str, *args: Any, **kwargs: Any):
-    if _can_log_from_this_file_internal(): app_logger.debug(message, *args, **kwargs)
+    if _can_log_from_this_file_internal(): debug(message, *args, **kwargs)
 def _file_info(message: str, *args: Any, **kwargs: Any):
-    if _can_log_from_this_file_internal(): app_logger.info(message, *args, **kwargs)
+    if _can_log_from_this_file_internal(): info(message, *args, **kwargs)
 def _file_log_player_physics(player: Any, message_tag: str, extra_info: Any = ""):
-    if ENABLE_DETAILED_PHYSICS_LOGS and _can_log_from_this_file_internal(): app_logger.log_player_physics(player, message_tag, extra_info)
+    if _ENABLE_DETAILED_PHYSICS_LOGS_HERE and _PHYSICS_FILE_LOG_PLAYER_PHYSICS_FUNC and _can_log_from_this_file_internal():
+        _PHYSICS_FILE_LOG_PLAYER_PHYSICS_FUNC(player, message_tag, extra_info)
+
 
 _start_time_player_physics = time.monotonic()
 def get_current_ticks() -> int: return int((time.monotonic() - _start_time_player_physics) * 1000)
 
 def manage_player_state_timers_and_cooldowns(player: 'PlayerClass_TYPE'):
+    if not _HANDLERS_PHYSICS_AVAILABLE: return # Skip if state handler is missing
     current_time_ms = get_current_ticks()
     player_id_str = f"P{player.player_id}"
     if player.is_dashing and current_time_ms - player.dash_timer > player.dash_duration:
@@ -63,6 +148,7 @@ def manage_player_state_timers_and_cooldowns(player: 'PlayerClass_TYPE'):
         if player.state == 'hit' and not player.is_dead: set_player_state(player, 'idle' if player.on_ground else 'fall', current_time_ms)
 
 def apply_player_movement_and_physics(player: 'PlayerClass_TYPE', platforms_list: List[Any]):
+    if not _HANDLERS_PHYSICS_AVAILABLE: return # Skip if state handler or others are missing
     player_id_str = f"P{player.player_id}"
     if player.is_tipping:
         tipping_angle_increment = 2.0; max_tipping_angle = 35.0; horizontal_nudge_per_frame = 0.7
@@ -130,6 +216,7 @@ def apply_player_movement_and_physics(player: 'PlayerClass_TYPE', platforms_list
     if player.vel.y() > 0 and not player.on_ladder: player.vel.setY(min(player.vel.y(), getattr(C, 'TERMINAL_VELOCITY_Y', 18.0)))
 
 def check_and_initiate_tipping(player: 'PlayerClass_TYPE', platforms_list: List[Any]):
+    if not _HANDLERS_PHYSICS_AVAILABLE: return False # Skip if state handler is missing
     if not player.on_ground or player.is_tipping or player.on_ladder or \
        player.is_frozen or player.is_petrified or player.is_dead or \
        player.is_dashing or player.is_rolling or player.is_sliding:
@@ -162,16 +249,16 @@ def check_and_initiate_tipping(player: 'PlayerClass_TYPE', platforms_list: List[
     player_half_width_for_tip_check = player.rect.width() * 0.55
     tip_direction = 0; pivot_x = 0.0
 
-    if player.rect.left() < support_left_edge and player.rect.right() < support_right_edge: # Player is hanging off the left
+    if player.rect.left() < support_left_edge and player.rect.right() < support_right_edge:
         amount_hanging_off_left = support_left_edge - player.rect.left()
         if amount_hanging_off_left > player_half_width_for_tip_check: tip_direction = -1; pivot_x = support_left_edge
-    elif player.rect.right() > support_right_edge and player.rect.left() > support_left_edge: # Player is hanging off the right
+    elif player.rect.right() > support_right_edge and player.rect.left() > support_left_edge:
         amount_hanging_off_right = player.rect.right() - support_right_edge
         if amount_hanging_off_right > player_half_width_for_tip_check: tip_direction = 1; pivot_x = support_right_edge
-            
+
     if tip_direction != 0:
         is_gap_present = True
-        gap_check_rect_width = player.rect.width() * 0.5; gap_check_rect_height = player.rect.height() * 0.5 
+        gap_check_rect_width = player.rect.width() * 0.5; gap_check_rect_height = player.rect.height() * 0.5
         gap_check_rect_y = supporting_platform.rect.top() - gap_check_rect_height
         gap_check_rect_x = pivot_x - gap_check_rect_width if tip_direction == -1 else pivot_x
         potential_landing_rect = QRectF(gap_check_rect_x, gap_check_rect_y, gap_check_rect_width, gap_check_rect_height)
@@ -194,9 +281,14 @@ def check_and_initiate_tipping(player: 'PlayerClass_TYPE', platforms_list: List[
 
 
 def update_player_core_logic(player: 'PlayerClass_TYPE', dt_sec: float, platforms_list: List[Any], ladders_list: List[Any],
-                             hazards_list: List[Any], other_players_list: List[Any], enemies_list: List[Any]): # Changed last param to enemies_list
+                             hazards_list: List[Any], other_players_list: List[Any], enemies_list: List[Any]):
     player_id_str = f"P{player.player_id}"
     if not player._valid_init: _file_debug(f"{player_id_str} CoreLogic: Update skipped due to _valid_init={player._valid_init}."); return
+    if not _HANDLERS_PHYSICS_AVAILABLE:
+        if _can_log_from_this_file_internal():
+            warning(f"{player_id_str} CoreLogic: Update skipped due to missing handlers (collision, state).")
+        return
+
     _file_log_player_physics(player, "UPDATE_START")
 
     is_dying_with_anim = player.is_dead and not player.is_petrified and not player.death_animation_finished
@@ -209,12 +301,14 @@ def update_player_core_logic(player: 'PlayerClass_TYPE', dt_sec: float, platform
 
     if is_dying_with_anim or is_petrified_airborne_or_smashed_falling:
         _file_log_player_physics(player, "DYING/PETRI_PHYSICS_START")
-        apply_player_movement_and_physics(player, platforms_list)
-        scaled_vel_y_dying = player.vel.y() * dt_sec * C.FPS
+        apply_player_movement_and_physics(player, platforms_list) # Applies gravity, updates vel from acc
+        # Position update based on velocity (dt_sec effectively scales this to units/frame if vel is units/sec)
+        # If vel is already units/frame, dt_sec * C.FPS = 1.0
+        scaled_vel_y_dying = player.vel.y() #* dt_sec * C.FPS;
         player.pos.setY(player.pos.y() + scaled_vel_y_dying)
         if hasattr(player, '_update_rect_from_image_and_pos'): player._update_rect_from_image_and_pos()
         check_player_platform_collisions(player, 'y', platforms_list)
-        player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
+        player.pos = QPointF(player.rect.center().x(), player.rect.bottom()) # Sync pos from rect
         if hasattr(player, 'animate'): player.animate()
         _file_log_player_physics(player, "UPDATE_END_LIMITED_PHYSICS", f"State: {player.state}"); return
 
@@ -224,49 +318,61 @@ def update_player_core_logic(player: 'PlayerClass_TYPE', dt_sec: float, platform
         player.on_ladder = False; set_player_state(player, 'fall' if not player.on_ground else 'idle', get_current_ticks())
     if player.on_ground and not player.is_tipping: check_and_initiate_tipping(player, platforms_list)
     apply_player_movement_and_physics(player, platforms_list)
-    player.touching_wall = 0; player.on_ground = False
-    scaled_vel_x = player.vel.x() * dt_sec * C.FPS; scaled_vel_y = player.vel.y() * dt_sec * C.FPS
+    player.touching_wall = 0; player.on_ground = False # Reset before collision checks
+
+    # --- X-axis Movement and Collision ---
+    scaled_vel_x = player.vel.x() #* dt_sec * C.FPS;
     player.pos.setX(player.pos.x() + scaled_vel_x)
     if hasattr(player, '_update_rect_from_image_and_pos'): player._update_rect_from_image_and_pos()
     _file_log_player_physics(player, "X_MOVE_APPLIED")
     check_player_platform_collisions(player, 'x', platforms_list)
     _file_log_player_physics(player, "X_PLAT_COLL_DONE")
-    
+
     all_other_char_sprites = [p for p in other_players_list if p and p._valid_init and p.alive() and p is not player] + \
                              [e for e in enemies_list if e and e._valid_init and e.alive()]
     if player.game_elements_ref_for_projectiles:
         for item in player.game_elements_ref_for_projectiles.get("collectible_list", []):
             if isinstance(item, Chest) and item.alive() and item.state == 'closed': all_other_char_sprites.append(item)
-        # Do NOT add solid statues here, they are handled by platform collisions.
-        # Only add potentially "character-like" statues if they are non-solid (e.g., smashed and just visual)
-        # However, check_player_character_collisions already skips solid statues.
 
     collided_horizontally_char = check_player_character_collisions(player, 'x', all_other_char_sprites)
     if collided_horizontally_char:
         _file_log_player_physics(player, "X_CHAR_COLL_POST")
-        player.pos.setX(player.rect.center().x())
-        check_player_platform_collisions(player, 'x', platforms_list)
+        player.pos.setX(player.rect.center().x()) # Sync pos from resolved rect
+        check_player_platform_collisions(player, 'x', platforms_list) # Re-check platform after char push
         _file_log_player_physics(player, "X_PLAT_RECHECK_POST_CHAR")
+
+    # --- Y-axis Movement and Collision ---
+    scaled_vel_y = player.vel.y() #* dt_sec * C.FPS;
     player.pos.setY(player.pos.y() + scaled_vel_y)
     if hasattr(player, '_update_rect_from_image_and_pos'): player._update_rect_from_image_and_pos()
     _file_log_player_physics(player, "Y_MOVE_APPLIED")
     check_player_platform_collisions(player, 'y', platforms_list)
     _file_log_player_physics(player, "Y_PLAT_COLL_DONE")
-    if not collided_horizontally_char:
+    if not collided_horizontally_char: # Only do Y char collision if no X char collision occurred (to avoid double processing complex interactions)
         collided_vertically_char = check_player_character_collisions(player, 'y', all_other_char_sprites)
         if collided_vertically_char:
             _file_log_player_physics(player, "Y_CHAR_COLL_POST")
-            player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
-            check_player_platform_collisions(player, 'y', platforms_list)
+            player.pos = QPointF(player.rect.center().x(), player.rect.bottom()) # Sync pos from resolved rect
+            check_player_platform_collisions(player, 'y', platforms_list) # Re-check platform
             _file_log_player_physics(player, "Y_PLAT_RECHECK_POST_CHAR")
-    player.pos = QPointF(player.rect.center().x(), player.rect.bottom())
+
+    player.pos = QPointF(player.rect.center().x(), player.rect.bottom()) # Final pos sync from rect
     _file_log_player_physics(player, "FINAL_POS_SYNC")
+
     check_player_hazard_collisions(player, hazards_list)
+
+    # Attack if player is alive, not dead, and attacking
     if player.alive() and not player.is_dead and player.is_attacking:
         targets_for_player_attack = [p for p in other_players_list if p and p._valid_init and p.alive() and p is not player] + \
                                     [e for e in enemies_list if e and e._valid_init and e.alive()]
+        # Add statues to the list of hittable targets for player melee
         statues_list_for_attack = player.game_elements_ref_for_projectiles.get("statue_objects", []) if player.game_elements_ref_for_projectiles else []
         targets_for_player_attack.extend([s for s in statues_list_for_attack if isinstance(s, Statue) and s.alive()]) # Statues are hittable
-        if hasattr(player, 'check_attack_collisions'): player.check_attack_collisions(targets_for_player_attack)
+
+        if hasattr(player, 'check_attack_collisions'):
+            player.check_attack_collisions(targets_for_player_attack)
+
     if hasattr(player, 'animate'): player.animate()
     _file_log_player_physics(player, "UPDATE_END")
+
+#################### END OF FILE: player/player_movement_physics.py ####################

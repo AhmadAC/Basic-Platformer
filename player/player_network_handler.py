@@ -17,13 +17,7 @@ from PySide6.QtCore import QPointF
 # Game imports
 import main_game.constants as C
 # from player_state_handler import set_player_state # Import only where needed or ensure no circularity
-
-# Logger
-try:
-    from logger import debug
-except ImportError:
-    def debug(msg): print(f"DEBUG_PNET: {msg}")
-
+import logging
 _start_time_player_net = time.monotonic()
 def get_current_ticks():
     """

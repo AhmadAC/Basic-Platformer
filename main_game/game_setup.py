@@ -1,431 +1,404 @@
-import pyperclip
-from pathlib import Path
-# os was mentioned as potentially used by an external 'controller.py',
-# but is not used in this script. Pathlib handles path operations.
+#################### START OF FILE: main_game/game_setup.py ####################
+# main_game/game_setup.py
+# -*- coding: utf-8 -*-
+"""
+Handles the initialization of all game elements for a given map and game mode.
+This includes loading map data, creating players, enemies, tiles, items, statues,
+custom images, trigger squares, and setting up the camera.
+Map paths are expected in the format: maps_base_dir/map_name_folder/map_name_file.py
+MODIFIED: Corrected imports for sibling packages (player, enemy).
+MODIFIED: Player spawn assignment now more robustly handles missing P3/P4 spawns
+          for 2-player modes, ensuring P1 and P2 are prioritized.
+MODIFIED: Enemy creation now uses properties directly from spawn_data.
+MODIFIED: Chest creation ensures properties are passed if defined in map data.
+MODIFIED: Statue creation also uses properties from spawn_data.
+MODIFIED: Camera focus logic prioritizes P1, then P2, then any active player for initial view.
+MODIFIED: Trigger squares and custom images are processed even if their lists are empty in map_data.
+MODIFIED: Added enemy_spawns_data_cache and statue_spawns_data_cache for client-side entity recreation.
+"""
+# version 2.2.9 (Corrected imports for sibling packages)
 
-# --- Configuration ---
-# Set to False to only process .py files in the root of the target_folder (Folder Mode).
-# Set to True to include .py files in subdirectories as well (Folder Mode).
-INCLUDE_SUBDIRECTORIES = True
+import os
+import sys
+import random
+from typing import Dict, Optional, Any, List, Tuple, cast
 
-# Add names of subdirectories to ignore (Folder Mode). Case-sensitive.
-# If a .py file or an image file is found within any of these subdirectories (relative to target_folder),
-# it will be skipped. This applies if INCLUDE_SUBDIRECTORIES is True.
-# Example: ["venv", ".venv", "__pycache__", "node_modules", ".git", "build", "dist", "docs_old"]
-EXCLUDED_SUBDIRECTORIES = ["venv", ".venv", "__pycache__", "tests_to_ignore", "maps", ".git", "node_modules"]
-# --- End Configuration ---
+from PySide6.QtCore import QRectF, QPointF, QSize, Qt
+from PySide6.QtGui import QPixmap, QImage, QTransform
 
-# --- Constants ---
-# MERGED_OUTPUT_FILENAME = "merged.txt" # No longer writing to a file
-TEMP_CODERUNNER_FILENAME_LOWER = "tempcoderunnerfile.py"
-FILE_CONTENT_SEPARATOR = "=" * 80
-FILE_START_MARKER_CHAR = "#"
-FILE_START_MARKER_COUNT = 20
-ERROR_MARKER_CHAR = "!"
-ERROR_MARKER_COUNT = 20
-IMAGE_EXTENSIONS_LOWERCASE = {".png", ".jpg", ".jpeg", ".gif"}
-# --- End Constants ---
+# --- Project Root Setup (if needed, assuming this file is in main_game/) ---
+_GAME_SETUP_PY_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT_FOR_GAME_SETUP = os.path.dirname(_GAME_SETUP_PY_FILE_DIR)
+if _PROJECT_ROOT_FOR_GAME_SETUP not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT_FOR_GAME_SETUP)
+# --- End Project Root Setup ---
 
-# --- Helper Functions (General Purpose) ---
-def _clean_path_str(s: str) -> str:
-    """Removes leading/trailing whitespace and surrounding quotes from a string."""
-    s = s.strip()
-    if (s.startswith('"') and s.endswith('"')) or \
-       (s.startswith("'") and s.endswith("'")):
-        s = s[1:-1]
-    return s
+try:
+    # Modules within the 'main_game' package (use relative imports)
+    from .logger import info, debug, warning, error, critical
+    from . import constants as C
+    from . import config as game_config
+    from .level_loader import LevelLoader
+    from .tiles import Platform, Ladder, Lava, BackgroundTile
+    from .items import Chest
+    from .camera import Camera
+    from .assets import resource_path
 
-def get_display_path(file_path: Path, base_path: Path) -> str:
+    # Modules from sibling packages (use absolute imports from project root)
+    from player import Player
+    from enemy import Enemy
+    from enemy.enemy_knight import EnemyKnight # Assuming EnemyKnight is in enemy/enemy_knight.py
+    from player.statue import Statue    # Assuming Statue is in player/statue.py
+
+except ImportError as e_gs_imp:
+    # Fallback logger for critical import errors
+    import logging
+    _gs_fallback_logger = logging.getLogger(__name__ + "_gs_fallback")
+    if not _gs_fallback_logger.hasHandlers():
+        _gs_fallback_handler = logging.StreamHandler(sys.stdout)
+        _gs_fallback_formatter = logging.Formatter('GAME_SETUP (ImportErrorFallback): %(levelname)s - %(message)s')
+        _gs_fallback_handler.setFormatter(_gs_fallback_formatter)
+        _gs_fallback_logger.addHandler(_gs_fallback_handler)
+        _gs_fallback_logger.setLevel(logging.DEBUG)
+    _gs_fallback_logger.critical(f"CRITICAL GameSetup Import Error: {e_gs_imp}. Game setup will fail.", exc_info=True)
+    raise # Re-raise to halt if critical components are missing
+
+def get_layer_order_key(item: Any) -> int:
     """
-    Generates a display string for a file path.
-    Tries to make it relative to base_path, otherwise returns the absolute path.
+    Determines the rendering layer order for a game object.
+    Lower numbers are drawn first (further back).
     """
-    try:
-        return str(file_path.relative_to(base_path))
-    except ValueError:
-        return str(file_path.resolve()) # Absolute path if not relative
+    if isinstance(item, dict): # For custom images/triggers passed as dicts
+        return int(item.get('layer_order', 0))
+    elif hasattr(item, 'layer_order'):
+        return int(getattr(item, 'layer_order', 0))
+    # Default layering for common types if 'layer_order' is not explicit
+    elif isinstance(item, BackgroundTile): return -10
+    elif isinstance(item, Platform): return 0
+    elif isinstance(item, Ladder): return 1
+    elif isinstance(item, Lava): return 2
+    elif isinstance(item, Chest): return 5
+    elif isinstance(item, Statue): return 8 # Statues might be behind enemies/players
+    elif isinstance(item, Enemy): return 10
+    elif isinstance(item, Player): return 20 # Players usually on top of most things
+    elif hasattr(item, 'owner_player'): return 30 # Projectiles on top
+    return 0 # Default layer
 
-# --- Helper Functions (Core Logic for File Collection) ---
-def _collect_files_from_folder(
-    folder_path: Path, include_subdirs: bool, excluded_subdirs_list: list[str]
-) -> list[Path]:
-    """
-    Scans a folder for .py files, applying exclusions.
-    This is used for "Folder Mode".
-    """
-    files_found_in_folder = []
-    print(f"Searching for .py files in {folder_path}...")
-    if include_subdirs:
-        file_iterator = folder_path.rglob("*.py")
-        print("  (Including subdirectories for .py files)")
-    else:
-        file_iterator = folder_path.glob("*.py")
-        print("  (Root directory only for .py files)")
+def _create_player_instance(player_id: int, spawn_pos_tuple: Optional[Tuple[float,float]],
+                            default_spawn_pos: Tuple[float,float],
+                            initial_props: Optional[Dict[str, Any]] = None) -> Player:
+    pos_to_use = spawn_pos_tuple if spawn_pos_tuple else default_spawn_pos
+    player_instance = Player(pos_to_use[0], pos_to_use[1], player_id, initial_properties=initial_props)
 
-    for py_file in file_iterator:
-        if not py_file.is_file():
-            continue
-            
+    # Assign control scheme based on game_config
+    device_id_str = getattr(game_config, f"CURRENT_P{player_id}_INPUT_DEVICE", game_config.UNASSIGNED_DEVICE_ID)
+    player_instance.control_scheme = device_id_str
+
+    if device_id_str.startswith("joystick_pygame_"):
         try:
-            # Path relative to the scan root (folder_path)
-            relative_file_path = py_file.relative_to(folder_path)
-        except ValueError:
-            print(f"  Warning: File {py_file} could not be made relative to {folder_path}. Skipping.")
-            continue
+            idx_part = device_id_str.split('_')[-1]
+            if idx_part.isdigit():
+                player_instance.joystick_id_idx = int(idx_part)
+        except (ValueError, IndexError):
+            warning(f"GameSetup: Could not parse joystick index from '{device_id_str}' for P{player_id}.")
+            player_instance.joystick_id_idx = None
 
-        # Exclusion 1: Folders starting with '0'
-        # This checks any parent directory component in the relative path.
-        if any(part.startswith('0') for part in relative_file_path.parent.parts):
-            print(
-                f"  Skipping .py (in subdir starting with '0'): {relative_file_path}"
-            )
-            continue
+    debug(f"GameSetup: Created Player {player_id}. Spawn: {pos_to_use}, Device: '{device_id_str}', JoystickIdx: {player_instance.joystick_id_idx}, Props: {initial_props is not None}")
+    return player_instance
 
-        # Exclusion 2: EXCLUDED_SUBDIRECTORIES
-        if include_subdirs and excluded_subdirs_list:
-            is_in_excluded_dir = False
-            # EXCLUDED_SUBDIRECTORIES are names of directory components relative to folder_path.
-            for dir_component in relative_file_path.parent.parts:
-                if dir_component in excluded_subdirs_list:
-                    print(
-                        f"  Skipping .py (in excluded subdir '{dir_component}'): {relative_file_path}"
-                    )
-                    is_in_excluded_dir = True
-                    break
-            if is_in_excluded_dir:
-                continue
+def _create_enemy_instance(spawn_data: Dict[str, Any], enemy_idx: int) -> Optional[Enemy]:
+    start_pos = spawn_data.get('start_pos')
+    enemy_type_str = spawn_data.get('type') # This is the color for generic, or "enemy_knight"
+    patrol_rect_data = spawn_data.get('patrol_rect_data')
+    properties = spawn_data.get('properties', {}) # Ensure properties are passed
 
-        if py_file.name.lower() == TEMP_CODERUNNER_FILENAME_LOWER:
-            print(f"  Skipping .py (excluded by name): {relative_file_path}")
-            continue
-        
-        files_found_in_folder.append(py_file)
-    return files_found_in_folder
-
-def _collect_image_files(
-    scan_root_path: Path, 
-    include_subdirs: bool, 
-    excluded_subdirs_list: list[str],
-    base_path_for_display: Path # Used for consistent display paths in messages
-) -> list[Path]:
-    """
-    Scans for image files (png, jpg, jpeg, gif) applying exclusions.
-    Exclusions (like EXCLUDED_SUBDIRECTORIES and '0' prefix folders) are relative
-    to the scan_root_path.
-    """
-    image_files_found = []
-    print(f"\nSearching for image files ({', '.join(sorted(list(IMAGE_EXTENSIONS_LOWERCASE)))}) in {scan_root_path}...")
-    
-    if include_subdirs:
-        file_iterator = scan_root_path.rglob("*")
-        print("  (Including subdirectories for images)")
-    else:
-        file_iterator = scan_root_path.glob("*")
-        print("  (Root directory only for images)")
-
-    for file_path in file_iterator:
-        if not file_path.is_file():
-            continue
-        
-        if file_path.suffix.lower() not in IMAGE_EXTENSIONS_LOWERCASE:
-            continue
-
-        try:
-            # Path relative to the current scan root (scan_root_path)
-            path_relative_to_scan_root = file_path.relative_to(scan_root_path)
-        except ValueError:
-            # Should not happen if file_path is from scan_root_path.glob/rglob
-            print(f"  Warning: Image file {get_display_path(file_path, base_path_for_display)} could not be made relative to scan root {scan_root_path}. Skipping.")
-            continue
-            
-        # Exclusion 1: Folders starting with '0'
-        # This checks any parent directory component in path_relative_to_scan_root.
-        if any(part.startswith('0') for part in path_relative_to_scan_root.parent.parts):
-            display_path_for_skip_msg = get_display_path(file_path, base_path_for_display)
-            print(
-                f"  Skipping image (in subdir starting with '0'): {display_path_for_skip_msg}"
-            )
-            continue
-        
-        # Exclusion 2: EXCLUDED_SUBDIRECTORIES
-        # These are also checked against parts of path_relative_to_scan_root.
-        if include_subdirs and excluded_subdirs_list:
-            is_in_excluded_dir = False
-            for dir_component in path_relative_to_scan_root.parent.parts: 
-                if dir_component in excluded_subdirs_list:
-                    display_path_for_skip_msg = get_display_path(file_path, base_path_for_display)
-                    print(
-                        f"  Skipping image (in excluded subdir '{dir_component}'): {display_path_for_skip_msg}"
-                    )
-                    is_in_excluded_dir = True
-                    break
-            if is_in_excluded_dir:
-                continue
-        
-        image_files_found.append(file_path)
-    
-    return sorted(list(set(image_files_found))) # Deduplicate and sort
-
-# --- Helper Functions (Main Workflow Steps) ---
-def _get_raw_paths_from_clipboard() -> list[str] | None:
-    """Reads and cleans potential path strings from the clipboard."""
-    try:
-        clipboard_content = pyperclip.paste()
-        if not clipboard_content:
-            print("Error: Clipboard is empty.")
-            return None
-        print(f"Read from clipboard:\n---\n{clipboard_content}\n---")
-    except pyperclip.PyperclipException as e:
-        print(f"Error: pyperclip could not access the clipboard: {e}")
-        print("Please ensure a copy/paste mechanism is installed (e.g., xclip, xsel on Linux).")
-        return None
-    except Exception as e: # pylint: disable=broad-except
-        print(f"An unexpected error occurred with pyperclip (paste): {e}")
+    if not start_pos or not enemy_type_str:
+        error(f"GameSetup: Invalid enemy spawn data (missing start_pos or type): {spawn_data}")
         return None
 
-    lines = clipboard_content.strip().splitlines()
-    potential_path_strs = [_clean_path_str(line) for line in lines if _clean_path_str(line)]
-
-    if not potential_path_strs:
-        print("Error: Clipboard contained no parsable paths after cleaning.")
-        return None
-    return potential_path_strs
-
-def _determine_files_and_display_base_path(
-    potential_path_strs: list[str]
-) -> tuple[list[Path] | None, list[Path] | None, Path | None, str | None]:
-    """
-    Determines the processing mode, collects .py files and image files, 
-    and sets the display base path.
-    The display_base_path is used to generate relative paths in the output content
-    and as the root for image scanning.
-    Returns (list_of_py_files, list_of_image_files, display_base_path, mode_name) 
-    or (None, None, None, None) on critical error.
-    """
-    py_files_to_process: list[Path] = []
-    image_files_to_list: list[Path] = []
-    display_base_path: Path | None = None
-    processing_mode_name: str = "unknown"
-
-    if len(potential_path_strs) == 1:
-        single_path_str = potential_path_strs[0]
-        p = Path(single_path_str)
-        if not p.exists():
-            print(f"Error: Path '{single_path_str}' does not exist.")
-            return None, None, None, None
-
-        if p.is_dir():
-            processing_mode_name = "folder"
-            target_folder = p.resolve() # Resolve to absolute path for consistency
-            display_base_path = target_folder
-            print(f"\nProcessing Mode: Folder ({target_folder})")
-            print(f"Configuration: Include subdirectories = {INCLUDE_SUBDIRECTORIES}")
-            if EXCLUDED_SUBDIRECTORIES:
-                print(f"Configuration: Ignoring subdirectories named = {', '.join(EXCLUDED_SUBDIRECTORIES)}")
-            else:
-                print("Configuration: No subdirectories explicitly configured for exclusion.")
-            print("Configuration: Also ignoring any subdirectory whose name starts with '0'.")
-            
-            py_files_to_process = _collect_files_from_folder(
-                target_folder, INCLUDE_SUBDIRECTORIES, EXCLUDED_SUBDIRECTORIES
-            )
-            # Image scan is always from the display_base_path
-            image_files_to_list = _collect_image_files(
-                display_base_path, INCLUDE_SUBDIRECTORIES, EXCLUDED_SUBDIRECTORIES, display_base_path
-            )
-
-        elif p.is_file() and p.suffix.lower() == ".py":
-            processing_mode_name = "files"
-            py_files_to_process = [p.resolve()]
-            display_base_path = p.resolve().parent
-            print(f"\nProcessing Mode: Single File ({p})")
-            # Image scan from the parent directory of the .py file
-            image_files_to_list = _collect_image_files(
-                display_base_path, INCLUDE_SUBDIRECTORIES, EXCLUDED_SUBDIRECTORIES, display_base_path
-            )
-        else:
-            print(f"Error: Clipboard item '{single_path_str}' is not a valid "
-                  "directory or an existing .py file.")
-            return None, None, None, None
-    else:  # Multiple lines/paths from clipboard
-        processing_mode_name = "files"
-        print(f"\nProcessing Mode: Multiple Files (found {len(potential_path_strs)} potential paths)")
-        temp_files_list = []
-        for path_str in potential_path_strs:
-            p_candidate = Path(path_str).resolve()
-            if p_candidate.is_file() and p_candidate.suffix.lower() == ".py":
-                temp_files_list.append(p_candidate)
-                print(f"  Will process: {p_candidate}")
-            else:
-                if not p_candidate.exists():
-                    print(f"  Skipping: '{path_str}' (path does not exist)")
-                elif not p_candidate.is_file():
-                     print(f"  Skipping: '{path_str}' (not a file)")
-                elif p_candidate.suffix.lower() != ".py":
-                     print(f"  Skipping: '{path_str}' (not a .py file)")
-                else:
-                     print(f"  Skipping: '{path_str}' (unknown reason, not a valid .py file)")
-
-        if not temp_files_list:
-            print("Error: No valid existing .py files found among the clipboard paths.")
-            return None, None, None, None
-        
-        py_files_to_process = temp_files_list
-        if py_files_to_process: # Should always be true if temp_files_list was not empty
-            # Base path for display and image scanning is the parent of the first .py file
-            display_base_path = py_files_to_process[0].parent 
-            image_files_to_list = _collect_image_files(
-                display_base_path, INCLUDE_SUBDIRECTORIES, EXCLUDED_SUBDIRECTORIES, display_base_path
-            )
-
-
-    if display_base_path is None: # Should be set if any valid path was processed
-        print("Critical Error: Display base path for relative paths could not be determined.")
-        return None, None, None, None
-
-    if not py_files_to_process:
-        print("\nNo Python files found matching the criteria to merge.")
-        # Still return image list if any, and base path for context
-        return [], image_files_to_list, display_base_path, processing_mode_name
-    
-    py_files_to_process.sort()
-    # image_files_to_list is already sorted by _collect_image_files
-    return py_files_to_process, image_files_to_list, display_base_path, processing_mode_name
-
-
-def _build_merged_content_string(
-    py_files_to_process: list[Path], 
-    image_files_to_list: list[Path],
-    display_base_path: Path
-) -> str:
-    """Reads content from .py files and merges them into a single string with headers,
-       also including a list of found image files."""
-    
-    summary_header_parts = []
-
-    if py_files_to_process:
-        print(f"\nFound {len(py_files_to_process)} Python file(s) to merge:")
-        for py_file in py_files_to_process:
-            print(f"  - {get_display_path(py_file, display_base_path)}")
-        
-        summary_header_parts.append(
-            f"Total Python files compiled: {len(py_files_to_process)}\n"
+    patrol_area_qrectf: Optional[QRectF] = None
+    if isinstance(patrol_rect_data, dict):
+        patrol_area_qrectf = QRectF(
+            float(patrol_rect_data.get('x', 0)), float(patrol_rect_data.get('y', 0)),
+            float(patrol_rect_data.get('width', 100)), float(patrol_rect_data.get('height', 50))
         )
-        summary_header_parts.append("List of compiled .py files (in order of appearance in this content):\n")
-        for py_file in py_files_to_process:
-            summary_header_parts.append(f"- {get_display_path(py_file, display_base_path)}\n")
+
+    unique_enemy_id = spawn_data.get('id', f"enemy_{enemy_type_str}_{enemy_idx}")
+
+    if enemy_type_str == "enemy_knight":
+        return EnemyKnight(float(start_pos[0]), float(start_pos[1]), patrol_area_qrectf, unique_enemy_id, properties=properties)
+    else: # Generic Enemy (soldier types by color)
+        color_name_for_generic = enemy_type_str.replace("enemy_", "", 1) if enemy_type_str.startswith("enemy_") else enemy_type_str
+        return Enemy(float(start_pos[0]), float(start_pos[1]), patrol_area_qrectf, unique_enemy_id, color_name=color_name_for_generic, properties=properties)
+
+def _create_platform_data_list_from_map(map_platforms: List[Dict[str, Any]]) -> List[Platform]:
+    platforms_list: List[Platform] = []
+    for p_data in map_platforms:
+        rect_coords = p_data.get('rect')
+        color_tuple = tuple(p_data.get('color', C.GRAY)) # Ensure tuple
+        p_type = p_data.get('type', "generic_platform")
+        props = p_data.get('properties') # This can be None
+        if rect_coords and len(rect_coords) == 4:
+            platforms_list.append(Platform(rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3], color_tuple, p_type, props)) # type: ignore
+    return platforms_list
+
+def _create_ladder_data_list_from_map(map_ladders: List[Dict[str, Any]]) -> List[Ladder]:
+    ladders_list: List[Ladder] = []
+    for l_data in map_ladders:
+        rect_coords = l_data.get('rect')
+        if rect_coords and len(rect_coords) == 4:
+            ladders_list.append(Ladder(rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3]))
+    return ladders_list
+
+def _create_hazard_data_list_from_map(map_hazards: List[Dict[str, Any]]) -> List[Lava]:
+    hazards_list: List[Lava] = []
+    for h_data in map_hazards:
+        rect_coords = h_data.get('rect')
+        h_type = h_data.get('type', 'unknown_hazard')
+        color_tuple = tuple(h_data.get('color', C.ORANGE_RED)) # Ensure tuple
+        props = h_data.get('properties') # This can be None
+        if h_type == "hazard_lava" and rect_coords and len(rect_coords) == 4:
+            hazards_list.append(Lava(rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3], color_tuple, props))
+    return hazards_list
+
+def _create_background_tile_list_from_map(map_bg_tiles: List[Dict[str, Any]]) -> List[BackgroundTile]:
+    background_tiles_list: List[BackgroundTile] = []
+    for bg_data in map_bg_tiles:
+        rect_coords = bg_data.get('rect')
+        color_tuple = tuple(bg_data.get('color', C.DARK_GRAY)) # Ensure tuple
+        bg_type = bg_data.get('type', "generic_background_tile")
+        image_path_rel_to_project = bg_data.get('image_path') # Path like "assets/environment/some_bg.png"
+        props = bg_data.get('properties')
+
+        if rect_coords and len(rect_coords) == 4:
+            background_tiles_list.append(BackgroundTile(
+                rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3],
+                color_tuple, bg_type, image_path_rel_to_project, props
+            ))
+    return background_tiles_list
+
+def _create_item_list_from_map(map_items: List[Dict[str, Any]]) -> List[Chest]: # Assuming only chests for now
+    items_list: List[Chest] = []
+    for item_data in map_items:
+        pos_tuple = item_data.get('pos')
+        item_type = item_data.get('type')
+        props = item_data.get('properties') # Ensure properties are passed
+        if item_type == "chest" and pos_tuple and len(pos_tuple) == 2:
+            new_chest = Chest(pos_tuple[0], pos_tuple[1]) # Chest constructor doesn't take properties yet
+            if props: new_chest.properties = props # Manually assign if needed
+            items_list.append(new_chest)
+    return items_list
+
+def _create_statue_list_from_map(map_statues: List[Dict[str, Any]]) -> List[Statue]:
+    statue_list: List[Statue] = []
+    for statue_data in map_statues:
+        pos_tuple = statue_data.get('pos')
+        statue_id = statue_data.get('id')
+        props = statue_data.get('properties', {}) # Pass properties to Statue constructor
+        if pos_tuple and len(pos_tuple) == 2 and statue_id:
+            statue_list.append(Statue(pos_tuple[0], pos_tuple[1], statue_id, properties=props))
+    return statue_list
+
+def _process_custom_images(map_custom_images: List[Dict[str, Any]], base_map_folder_for_custom_assets: str) -> List[Dict[str, Any]]:
+    processed_images: List[Dict[str, Any]] = []
+    if not base_map_folder_for_custom_assets:
+        warning("GameSetup: Base map folder path for custom assets is not provided. Cannot load custom images.")
+        return processed_images
+
+    for img_data in map_custom_images:
+        rel_path_from_map_folder = img_data.get("source_file_path") # e.g., "Custom/my_image.png"
+        if not rel_path_from_map_folder: continue
+
+        full_abs_path = os.path.normpath(os.path.join(base_map_folder_for_custom_assets, rel_path_from_map_folder))
+
+        qimage = QImage(full_abs_path)
+        if qimage.isNull():
+            warning(f"GameSetup: Failed to load custom image from '{full_abs_path}' (original relative: '{rel_path_from_map_folder}'). Skipping.")
+            continue
+
+        pixmap = QPixmap.fromImage(qimage)
+        if pixmap.isNull():
+            warning(f"GameSetup: Failed to convert QImage to QPixmap for '{full_abs_path}'. Skipping.")
+            continue
+
+        # Apply transformations if needed (flip, rotation) - assuming data matches editor
+        is_flipped_h = img_data.get("is_flipped_h", False)
+        rotation_deg = img_data.get("rotation", 0)
+
+        if is_flipped_h:
+            pixmap = pixmap.transformed(QTransform().scale(-1, 1))
+        if rotation_deg != 0:
+            # Rotation pivot should be center
+            img_center = QPointF(pixmap.width() / 2.0, pixmap.height() / 2.0)
+            transform = QTransform().translate(img_center.x(), img_center.y()).rotate(float(rotation_deg)).translate(-img_center.x(), -img_center.y())
+            pixmap = pixmap.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+
+        opacity_percent = img_data.get("properties", {}).get("opacity", 100)
+        opacity_float = max(0.0, min(1.0, float(opacity_percent) / 100.0))
+
+        processed_images.append({
+            'rect': QRectF(float(img_data.get("rect")[0]), float(img_data.get("rect")[1]),
+                           float(img_data.get("rect")[2]), float(img_data.get("rect")[3])),
+            'image': pixmap,
+            'layer_order': int(img_data.get("layer_order", 0)),
+            'scroll_factor_x': float(img_data.get("properties", {}).get("scroll_factor_x", 1.0)),
+            'scroll_factor_y': float(img_data.get("properties", {}).get("scroll_factor_y", 1.0)),
+            'is_obstacle': bool(img_data.get("properties", {}).get("is_obstacle", False)),
+            'opacity_float': opacity_float
+        })
+    return processed_images
+
+def _process_trigger_squares(map_trigger_squares: List[Dict[str, Any]], base_map_folder_for_custom_assets: str) -> List[Dict[str, Any]]:
+    processed_triggers: List[Dict[str, Any]] = []
+    for trig_data in map_trigger_squares:
+        rect_data = trig_data.get("rect")
+        if not rect_data or len(rect_data) != 4: continue
+
+        processed_trig = trig_data.copy() # Start with a copy
+        processed_trig['rect'] = QRectF(float(rect_data[0]), float(rect_data[1]),
+                                        float(rect_data[2]), float(rect_data[3]))
+
+        # Load image for trigger if specified
+        image_path_in_props = trig_data.get("properties", {}).get("image_in_square", "")
+        if image_path_in_props and base_map_folder_for_custom_assets:
+            full_abs_path_trigger_img = os.path.normpath(os.path.join(base_map_folder_for_custom_assets, image_path_in_props))
+            qimage_trig = QImage(full_abs_path_trigger_img)
+            if not qimage_trig.isNull():
+                pixmap_trig = QPixmap.fromImage(qimage_trig)
+                if not pixmap_trig.isNull():
+                    processed_trig['image_pixmap'] = pixmap_trig # Store loaded QPixmap
+            else:
+                warning(f"GameSetup: Failed to load image '{image_path_in_props}' for trigger square. Path: {full_abs_path_trigger_img}")
+
+        processed_triggers.append(processed_trig)
+    return processed_triggers
+
+
+def initialize_game_elements(current_width: int, current_height: int,
+                             game_elements_ref: Dict[str, Any],
+                             for_game_mode: str,
+                             map_module_name: str) -> bool:
+    info(f"GameSetup: Initializing game elements for map '{map_module_name}', mode '{for_game_mode}'. Screen: {current_width}x{current_height}")
+    game_elements_ref.clear()
+    game_elements_ref['game_ready_for_logic'] = False
+    game_elements_ref['initialization_in_progress'] = True
+    game_elements_ref['num_active_players_for_mode'] = game_elements_ref.get('num_active_players_for_mode', 1 if for_game_mode != "couch_play" else 2)
+    game_elements_ref['current_game_mode'] = for_game_mode
+
+    # --- Load Map Data ---
+    level_loader = LevelLoader()
+    maps_base_dir_abs_for_loader = str(getattr(C, "MAPS_DIR", "maps"))
+    if not os.path.isabs(maps_base_dir_abs_for_loader):
+        project_root_from_constants_loader = getattr(C, 'PROJECT_ROOT', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        maps_base_dir_abs_for_loader = os.path.join(project_root_from_constants_loader, maps_base_dir_abs_for_loader)
+
+    map_data = level_loader.load_map(map_module_name, maps_base_dir_abs_for_loader)
+    if map_data is None:
+        error(f"GameSetup FATAL: Failed to load map data for '{map_module_name}' from loader. Cannot proceed.")
+        game_elements_ref['initialization_in_progress'] = False
+        return False
+
+    game_elements_ref['loaded_map_name'] = map_module_name # Store the stem
+    game_elements_ref['map_name'] = map_data.get("level_name", map_module_name)
+    game_elements_ref['level_background_color'] = map_data.get("background_color", C.LIGHT_BLUE)
+    game_elements_ref['level_pixel_width'] = float(map_data.get("level_pixel_width", current_width * 2.0))
+    game_elements_ref['level_min_x_absolute'] = float(map_data.get("level_min_x_absolute", 0.0))
+    game_elements_ref['level_min_y_absolute'] = float(map_data.get("level_min_y_absolute", 0.0))
+    game_elements_ref['level_max_y_absolute'] = float(map_data.get("level_max_y_absolute", current_height))
+    game_elements_ref['ground_level_y_ref'] = float(map_data.get("ground_level_y_ref", current_height - C.TILE_SIZE))
+    game_elements_ref['ground_platform_height_ref'] = float(map_data.get("ground_platform_height_ref", C.TILE_SIZE))
+
+    # Store the absolute path to this specific map's folder for custom asset loading
+    game_elements_ref['map_folder_path'] = os.path.join(maps_base_dir_abs_for_loader, map_module_name)
+
+    game_elements_ref["platforms_list"] = _create_platform_data_list_from_map(map_data.get("platforms_list", []))
+    game_elements_ref["ladders_list"] = _create_ladder_data_list_from_map(map_data.get("ladders_list", []))
+    game_elements_ref["hazards_list"] = _create_hazard_data_list_from_map(map_data.get("hazards_list", []))
+    game_elements_ref["background_tiles_list"] = _create_background_tile_list_from_map(map_data.get("background_tiles_list", []))
+    game_elements_ref["trigger_squares_list"] = _process_trigger_squares(map_data.get("trigger_squares_list", []), game_elements_ref['map_folder_path'])
+    game_elements_ref["processed_custom_images_for_render"] = _process_custom_images(map_data.get("custom_images_list", []), game_elements_ref['map_folder_path'])
+
+    # --- Player Initialization ---
+    num_players_expected = game_elements_ref.get('num_active_players_for_mode', 1)
+    player_spawn_positions = [map_data.get(f"player_start_pos_p{i+1}") for i in range(4)]
+    player_spawn_props_from_map = [map_data.get(f"player{i+1}_spawn_props", {}) for i in range(4)]
+
+    default_p1_spawn = (C.TILE_SIZE * 2.0, game_elements_ref['ground_level_y_ref'] - 1.0)
+    player_instances: List[Optional[Player]] = [None, None, None, None]
+
+    player_assignment_order = [0, 1, 2, 3] # Indices for P1, P2, P3, P4
+    if num_players_expected == 1: player_assignment_order = [0]
+    elif num_players_expected == 2: player_assignment_order = [0, 1]
+    elif num_players_expected == 3: player_assignment_order = [0, 1, 2]
+
+    players_created_count = 0
+    for p_idx_zero_based in player_assignment_order:
+        if players_created_count >= num_players_expected: break
+
+        player_id_one_based = p_idx_zero_based + 1
+        spawn_pos_for_this_player = player_spawn_positions[p_idx_zero_based]
+        fallback_spawn_for_this_player = (default_p1_spawn[0] + p_idx_zero_based * C.TILE_SIZE * 2.5, default_p1_spawn[1])
+
+        initial_props_for_player = player_spawn_props_from_map[p_idx_zero_based]
+        if not initial_props_for_player:
+            config_props_key = f"P{player_id_one_based}_PROPERTIES"
+            if hasattr(game_config, config_props_key):
+                initial_props_for_player = getattr(game_config, config_props_key).copy()
+            else:
+                initial_props_for_player = {
+                    "max_health": C.PLAYER_MAX_HEALTH,
+                    "move_speed": C.PLAYER_RUN_SPEED_LIMIT * 50,
+                    "jump_strength": C.PLAYER_JUMP_STRENGTH * 60
+                }
+
+        player_instance = _create_player_instance(player_id_one_based, spawn_pos_for_this_player, fallback_spawn_for_this_player, initial_props_for_player)
+        player_instances[p_idx_zero_based] = player_instance
+        game_elements_ref[f"player{player_id_one_based}"] = player_instance
+        players_created_count += 1
+        if player_instance and hasattr(player_instance, 'reset_for_new_game_or_round'):
+            player_instance.reset_for_new_game_or_round()
+
+    # --- Enemy Initialization ---
+    map_enemies_spawn_data = map_data.get("enemies_list", [])
+    game_elements_ref["enemy_list"] = [_create_enemy_instance(e_data, idx) for idx, e_data in enumerate(map_enemies_spawn_data) if _create_enemy_instance(e_data, idx) is not None]
+    game_elements_ref["enemy_spawns_data_cache"] = list(map_enemies_spawn_data) # Store raw spawn data for client
+
+    # --- Item and Statue Initialization ---
+    map_items_data = map_data.get("items_list", [])
+    items_list_temp = _create_item_list_from_map(map_items_data)
+    game_elements_ref["collectible_list"] = items_list_temp
+    game_elements_ref["current_chest"] = items_list_temp[0] if items_list_temp and isinstance(items_list_temp[0], Chest) else None
+
+    map_statues_data = map_data.get("statues_list", [])
+    game_elements_ref["statue_objects"] = _create_statue_list_from_map(map_statues_data)
+    game_elements_ref["statue_spawns_data_cache"] = list(map_statues_data) # Store raw spawn data
+
+    # --- Camera Initialization ---
+    camera = Camera(game_elements_ref['level_pixel_width'],
+                    game_elements_ref['level_min_x_absolute'],
+                    game_elements_ref['level_min_y_absolute'],
+                    game_elements_ref['level_max_y_absolute'],
+                    float(current_width), float(current_height))
+    game_elements_ref["camera"] = camera
+
+    # Initial camera focus
+    focus_target_for_camera: Optional[Player] = None
+    player_focus_priority = [0, 1, 2, 3] # P1, P2, P3, P4 (0-indexed)
+    for p_idx_focus in player_focus_priority:
+        if player_instances[p_idx_focus] and player_instances[p_idx_focus].alive(): # type: ignore
+            focus_target_for_camera = player_instances[p_idx_focus]
+            break
+
+    if focus_target_for_camera:
+        debug(f"GameSetup: Camera initial focus on Player {focus_target_for_camera.player_id}")
+        camera.update(focus_target_for_camera)
     else:
-        summary_header_parts.append("No Python files were processed.\n")
+        debug("GameSetup: Camera initial static update (no valid player focus target).")
+        camera.static_update() # Default view if no player to focus on
 
-
-    if image_files_to_list:
-        print(f"\nFound {len(image_files_to_list)} image file(s):")
-        for img_file in image_files_to_list:
-            print(f"  - {get_display_path(img_file, display_base_path)}")
-
-        summary_header_parts.append("\n") # Add a separator line
-        summary_header_parts.append(f"Total image files found ({', '.join(sorted(list(IMAGE_EXTENSIONS_LOWERCASE)))}): {len(image_files_to_list)}\n")
-        summary_header_parts.append(f"List of found image files (relative to: {display_base_path}):\n")
-        for img_file in image_files_to_list:
-            summary_header_parts.append(f"- {get_display_path(img_file, display_base_path)}\n")
-    else:
-        summary_header_parts.append(f"\nNo image files ({', '.join(sorted(list(IMAGE_EXTENSIONS_LOWERCASE)))}) found matching criteria in or under {display_base_path}.\n")
-
-    summary_header_parts.append("\n" + FILE_CONTENT_SEPARATOR + "\n")
-    file_summary_header = "".join(summary_header_parts)
-
-    all_content_parts = [file_summary_header]
-
-    if not py_files_to_process: # If no .py files, only summary is returned.
-        return "".join(all_content_parts)
-
-    for py_file in py_files_to_process:
-        display_name = get_display_path(py_file, display_base_path)
-        try:
-            with open(py_file, "r", encoding="utf-8", errors="replace") as f:
-                content = f.read()
-            header = (
-                f"\n\n{FILE_START_MARKER_CHAR * FILE_START_MARKER_COUNT}"
-                f" START OF FILE: {display_name} "
-                f"{FILE_START_MARKER_CHAR * FILE_START_MARKER_COUNT}\n\n"
-            )
-            all_content_parts.append(header)
-            all_content_parts.append(content)
-        except (IOError, OSError) as e:
-            error_msg_content = (
-                f"\n\n{ERROR_MARKER_CHAR * ERROR_MARKER_COUNT}"
-                f" ERROR READING FILE: {display_name} - {e} "
-                f"{ERROR_MARKER_CHAR * ERROR_MARKER_COUNT}\n\n"
-            )
-            print(f"  Error reading {display_name}: {e}")
-            all_content_parts.append(error_msg_content)
-        except Exception as e: # pylint: disable=broad-except
-            error_msg_content = (
-                f"\n\n{ERROR_MARKER_CHAR * ERROR_MARKER_COUNT}"
-                f" UNEXPECTED ERROR PROCESSING FILE: {display_name} - {e} "
-                f"{ERROR_MARKER_CHAR * ERROR_MARKER_COUNT}\n\n"
-            )
-            print(f"  Unexpected error for {display_name}: {e}")
-            all_content_parts.append(error_msg_content)
-
-    return "".join(all_content_parts)
-
-def _copy_content_to_clipboard(content: str) -> None:
-    """Copies the merged content to the clipboard."""
-    try:
-        pyperclip.copy(content)
-        print("\nSuccessfully copied content to clipboard.")
-    except pyperclip.PyperclipException as e:
-        print(f"Error: Could not copy content to clipboard: {e}")
-        print("Ensure pyperclip is installed and a copy/paste mechanism (e.g., xclip or xsel on Linux, or a VNC/RDP clipboard manager) is available.")
-    except Exception as e: # pylint: disable=broad-except
-        print(f"An unexpected error occurred while copying content to clipboard: {e}")
-
-# --- Main Public Function ---
-def merge_python_content():
-    """
-    Main orchestrator: Reads path(s) from clipboard, finds .py files and image files,
-    merges .py files' content, lists images, and copies the result to the clipboard.
-    """
-    print("--- Python Code Merger & Image Lister (Clipboard Output Only) ---")
-    raw_paths = _get_raw_paths_from_clipboard()
-    if raw_paths is None:
-        return
-
-    py_files, image_files, base_path, mode_name = _determine_files_and_display_base_path(raw_paths)
-
-    if py_files is None or image_files is None or base_path is None or mode_name is None:
-        # This case indicates a critical error during path determination (e.g., clipboard path doesn't exist)
-        print("Aborting due to critical error in path processing or base path determination.")
-        return
-    
-    # If no .py files were found BUT it was a valid path processing (e.g., folder mode, just no .py files)
-    # We might still have image files to report.
-    # The script's primary function is merging .py, so if none, we still inform.
-    if not py_files and mode_name != "unknown": # mode_name is "unknown" on some errors
-        print("No Python files were selected or found to merge.")
-        # If there are image files, we can still proceed to list them.
-        # If user wants to exit if no .py files, uncomment the following:
-        # if not image_files:
-        #     print("No image files found either. Exiting.")
-        #     return
-        # print("Proceeding to list image files only.")
-    
-    # At this point, we always build content, even if it's just the summary of images.
-    # _build_merged_content_string handles empty py_files list gracefully.
-    merged_content_str = _build_merged_content_string(py_files, image_files, base_path)
-    
-    if not py_files and not image_files:
-        print("No Python files and no image files found to report. Nothing to copy.")
-    else:
-        _copy_content_to_clipboard(merged_content_str)
-        
-    print("--- Process complete ---")
-
-# --- Alias for external compatibility (if script is named ReadCode.py) ---
-merge_python_files_from_clipboard_path = merge_python_content
-
-# --- Script Execution ---
-if __name__ == "__main__":
-    merge_python_content()
-    # input("\nPress Enter to exit...") # Uncomment if running from a terminal that closes immediately
+    game_elements_ref['camera_level_dims_set'] = True # Mark that camera world bounds are now set
+    game_elements_ref['initialization_in_progress'] = False
+    game_elements_ref['game_ready_for_logic'] = True
+    info(f"GameSetup: Initialization for map '{map_module_name}' completed. Game ready for mode '{for_game_mode}'.")
+    return True
+#################### END OF FILE: main_game/game_setup.py ####################

@@ -16,24 +16,18 @@ import time
 from PySide6.QtCore import QRectF, QPointF
 
 import main_game.constants as C
-from tiles import Lava
+from main_game.tiles import Lava
 from enemy import Enemy
 from player.statue import Statue
-from items import Chest
+from main_game.items import Chest
 
 if TYPE_CHECKING:
     from player import Player as PlayerClass_TYPE
 
 _SCRIPT_LOGGING_ENABLED = True
+import logging
+from logging import ENABLE_DETAILED_PHYSICS_LOGS, log_player_physics, debug, info, warning
 
-try:
-    from logger import ENABLE_DETAILED_PHYSICS_LOGS, log_player_physics, debug, info, warning
-except ImportError:
-    def debug(msg, *args, **kwargs): print(f"DEBUG_PCOLLISION: {msg}")
-    def info(msg, *args, **kwargs): print(f"INFO_PCOLLISION: {msg}")
-    def warning(msg, *args, **kwargs): print(f"WARNING_PCOLLISION: {msg}")
-    ENABLE_DETAILED_PHYSICS_LOGS = False
-    def log_player_physics(player, tag, extra=""): pass
 
 
 _start_time_pcollision = time.monotonic()

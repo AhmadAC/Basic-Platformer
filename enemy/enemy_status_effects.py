@@ -35,7 +35,7 @@ except ImportError:
         else: print(f"CRITICAL ENEMY_STATUS_EFFECTS (Fallback): Cannot set state for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')}.")
 
 try:
-    from logger import info, debug, warning, error, critical
+    from main_game.logger import info, debug, warning, error, critical
 except ImportError:
     print("CRITICAL ENEMY_STATUS_EFFECTS: logger.py not found. Falling back to print statements for logging.")
     def info(msg, *args, **kwargs): print(f"INFO: {msg}")

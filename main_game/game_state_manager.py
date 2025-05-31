@@ -1,4 +1,5 @@
-# game_state_manager.py
+#################### START OF FILE: main_game\game_state_manager.py ####################
+# main_game/game_state_manager.py
 # -*- coding: utf-8 -*-
 """
 Manages game state, including reset and network synchronization for PySide6.
@@ -9,8 +10,10 @@ based on server data.
 MODIFIED: Deferred import of initialize_game_elements in reset_game_state.
 MODIFIED: Corrected player key in get_network_game_state.
 MODIFIED: EnemyKnight instantiation from network data.
+MODIFIED: Corrected import paths for logger and projectile classes.
 """
-# version 2.2.2 (EnemyKnight instantiation)
+# version 2.2.3 (Corrected import paths for logger/projectiles)
+
 import os
 import sys
 import gc
@@ -19,67 +22,94 @@ from typing import Optional, List, Dict, Any, Tuple
 from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtGui import QColor
 
-from enemy import Enemy
-from enemy_knight import EnemyKnight # <<< ADDED IMPORT
-from items import Chest
-from player.statue import Statue
-from player import Player
-from tiles import Platform, Ladder, Lava, BackgroundTile
-from camera import Camera
-import main_game.constants as C
-import main_game.config as game_config
-# REMOVED: from game_setup import initialize_game_elements
+# --- Project Root Setup ---
+_GAME_STATE_MANAGER_PY_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT_FOR_GAME_STATE_MANAGER = os.path.dirname(_GAME_STATE_MANAGER_PY_FILE_DIR) # Up one level to 'main_game'
+if _PROJECT_ROOT_FOR_GAME_STATE_MANAGER not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT_FOR_GAME_STATE_MANAGER) # Add 'main_game' package's parent
+# --- End Project Root Setup ---
 
+# --- Corrected Imports ---
 try:
-    from player.projectiles import (
+    # Modules within main_game package (use relative if this file is also in main_game)
+    # If game_state_manager.py is at the root of main_game, then:
+    from . import constants as C
+    from . import config as game_config
+    from .logger import info, debug, warning, error, critical
+    from .camera import Camera # Assuming camera.py is in main_game
+    # from .game_setup import initialize_game_elements # DEFERRED IMPORT
+
+    # Modules from sibling packages (absolute imports from project root)
+    from enemy import Enemy
+    from enemy.enemy_knight import EnemyKnight
+    from items import Chest # Assuming items.py is in main_game package
+    from player.statue import Statue
+    from player import Player
+    from tiles import Platform, Ladder, Lava, BackgroundTile # Assuming tiles.py is in main_game package
+
+    from player.projectiles import ( # Assuming projectiles.py is in player package
         Fireball, PoisonShot, BoltProjectile, BloodShot,
         IceShard, ShadowProjectile, GreyProjectile
     )
     PROJECTILES_MODULE_AVAILABLE = True
-except ImportError:
-    PROJECTILES_MODULE_AVAILABLE = False
-    class Fireball: pass #type: ignore
-    class PoisonShot: pass #type: ignore
-    class BoltProjectile: pass #type: ignore
-    class BloodShot: pass #type: ignore
-    class IceShard: pass #type: ignore
-    class ShadowProjectile: pass #type: ignore
-    class GreyProjectile: pass #type: ignore
-
-try:
-    from logger import info, debug, warning, error, critical
-    from player_state_handler import set_player_state
-except ImportError:
+except ImportError as e_gsm_imp:
+    # Fallback logger for critical import errors
     import logging
-    logging.basicConfig(level=logging.DEBUG, format='GSM (Fallback): %(levelname)s - %(message)s')
-    _fallback_logger_gsm = logging.getLogger(__name__ + "_fallback_gsm")
-    def info(msg, *args, **kwargs): _fallback_logger_gsm.info(msg, *args, **kwargs)
-    def debug(msg, *args, **kwargs): _fallback_logger_gsm.debug(msg, *args, **kwargs)
-    def warning(msg, *args, **kwargs): _fallback_logger_gsm.warning(msg, *args, **kwargs)
-    def error(msg, *args, **kwargs): _fallback_logger_gsm.error(msg, *args, **kwargs)
-    def critical(msg, *args, **kwargs): _fallback_logger_gsm.critical(msg, *args, **kwargs)
-    def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Optional[int] = None): # Added param
-        if hasattr(player, 'state'): player.state = new_state
-        warning(f"Fallback set_player_state used for P{getattr(player, 'player_id', '?')} to '{new_state}'")
-    critical("GameStateManager: Failed to import project's logger or player_state_handler. Using isolated fallbacks.")
+    _gsm_fallback_logger = logging.getLogger(__name__ + "_gsm_fallback")
+    if not _gsm_fallback_logger.hasHandlers():
+        _gsm_fallback_handler = logging.StreamHandler(sys.stdout)
+        _gsm_fallback_formatter = logging.Formatter('GAME_STATE_MANAGER (ImportErrorFallback): %(levelname)s - %(message)s')
+        _gsm_fallback_handler.setFormatter(_gsm_fallback_formatter)
+        _gsm_fallback_logger.addHandler(_gsm_fallback_handler)
+        _gsm_fallback_logger.setLevel(logging.DEBUG)
+    _gsm_fallback_logger.critical(f"CRITICAL GameStateManager Import Error: {e_gsm_imp}. Game state management will fail.", exc_info=True)
+    # Define stubs for critical missing classes/functions if necessary for script to parse
+    class C: pass; 
+    class game_config: pass; 
+    class Camera: pass; 
+    class Enemy: pass; 
+    class EnemyKnight: pass;
+    class Chest: pass; 
+    class Statue: pass; 
+    class Player: pass; 
+    class Platform: pass; 
+    class Ladder: pass;
+    class Lava: pass; 
+    class BackgroundTile: pass;
+    def info(m,*a,**k): print(f"INFO_GSM: {m}"); 
+    def debug(m,*a,**k): print(f"DEBUG_GSM: {m}");
+    def warning(m,*a,**k): print(f"WARNING_GSM: {m}"); 
+    def error(m,*a,**k): print(f"ERROR_GSM: {m}");
+    def critical(m,*a,**k): print(f"CRITICAL_GSM: {m}");
+    PROJECTILES_MODULE_AVAILABLE = False
+    class Fireball: pass; 
+    class PoisonShot: pass; 
+    class BoltProjectile: pass; 
+    class BloodShot: pass;
+    class IceShard: pass; 
+    class ShadowProjectile: pass; 
+    class GreyProjectile: pass;
+# --- End Corrected Imports ---
+
 
 projectile_class_map: Dict[str, Optional[type]] = {
-    "Fireball": getattr(sys.modules.get("projectiles"), "Fireball", None) if PROJECTILES_MODULE_AVAILABLE else None,
-    "PoisonShot": getattr(sys.modules.get("projectiles"), "PoisonShot", None) if PROJECTILES_MODULE_AVAILABLE else None,
-    "BoltProjectile": getattr(sys.modules.get("projectiles"), "BoltProjectile", None) if PROJECTILES_MODULE_AVAILABLE else None,
-    "BloodShot": getattr(sys.modules.get("projectiles"), "BloodShot", None) if PROJECTILES_MODULE_AVAILABLE else None,
-    "IceShard": getattr(sys.modules.get("projectiles"), "IceShard", None) if PROJECTILES_MODULE_AVAILABLE else None,
-    "ShadowProjectile": getattr(sys.modules.get("projectiles"), "ShadowProjectile", None) if PROJECTILES_MODULE_AVAILABLE else None,
-    "GreyProjectile": getattr(sys.modules.get("projectiles"), "GreyProjectile", None) if PROJECTILES_MODULE_AVAILABLE else None,
+    "Fireball": Fireball if PROJECTILES_MODULE_AVAILABLE else None,
+    "PoisonShot": PoisonShot if PROJECTILES_MODULE_AVAILABLE else None,
+    "BoltProjectile": BoltProjectile if PROJECTILES_MODULE_AVAILABLE else None,
+    "BloodShot": BloodShot if PROJECTILES_MODULE_AVAILABLE else None,
+    "IceShard": IceShard if PROJECTILES_MODULE_AVAILABLE else None,
+    "ShadowProjectile": ShadowProjectile if PROJECTILES_MODULE_AVAILABLE else None,
+    "GreyProjectile": GreyProjectile if PROJECTILES_MODULE_AVAILABLE else None,
 }
 if not PROJECTILES_MODULE_AVAILABLE:
-    warning("GameStateManager: Projectiles module not available. Projectile net sync will be non-functional.")
+    warning("GameStateManager: Projectiles module not fully available due to import errors. Projectile net sync will be non-functional.")
 
 
 def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
     info("GameStateManager: reset_game_state called. Deferring to game_setup.initialize_game_elements for full reset.")
     try:
-        from game_setup import initialize_game_elements
+        # --- DEFERRED IMPORT ---
+        from .game_setup import initialize_game_elements # Relative import assuming game_setup is in main_game
     except ImportError:
         error("GameStateManager CRITICAL (reset_game_state): Failed to import initialize_game_elements! Reset cannot proceed.")
         return game_elements.get("current_chest")
@@ -118,7 +148,7 @@ def get_network_game_state(game_elements: Dict[str, Any]) -> Dict[str, Any]:
 
     for i in range(1, 5):
         player_game_elements_key = f"player{i}"
-        player_network_key = f"p{i}"
+        player_network_key = f"p{i}" # Corrected key for network state
         player_instance = game_elements.get(player_game_elements_key)
         if player_instance and hasattr(player_instance, '_valid_init') and player_instance._valid_init and \
            hasattr(player_instance, 'get_network_data'):
@@ -132,7 +162,7 @@ def get_network_game_state(game_elements: Dict[str, Any]) -> Dict[str, Any]:
            hasattr(enemy, 'get_network_data'):
             is_enemy_net_relevant = ( (hasattr(enemy, 'alive') and enemy.alive()) or (getattr(enemy, 'is_dead', False) and not getattr(enemy, 'death_animation_finished', True)) or getattr(enemy, 'is_petrified', False) )
             if is_enemy_net_relevant:
-                state['enemies'][str(enemy.enemy_id)] = enemy.get_network_data() # get_network_data in enemy_network_handler now includes class_type
+                state['enemies'][str(enemy.enemy_id)] = enemy.get_network_data()
 
     statue_list: List[Statue] = game_elements.get("statue_objects", [])
     for statue_obj in statue_list:
@@ -176,12 +206,30 @@ def set_network_game_state(
 
     debug(f"GSM Client: Processing received network state. Client Player ID: {client_player_id}")
     new_all_renderables: List[Any] = []
-    current_all_renderables_set = set()
+    current_all_renderables_set = set() # To avoid duplicates if item is in multiple source lists
+
     def add_to_renderables_if_new(obj: Any):
-        if obj is not None and obj not in current_all_renderables_set:
-            new_all_renderables.append(obj); current_all_renderables_set.add(obj)
-    for static_list_key in ["platforms_list", "ladders_list", "hazards_list", "background_tiles_list"]:
+        if obj is not None:
+            # Using object identity for set check
+            is_present = False
+            for item in new_all_renderables:
+                if item is obj: # Check object identity
+                    is_present = True
+                    break
+            if not is_present:
+                new_all_renderables.append(obj)
+                current_all_renderables_set.add(id(obj)) # Store id to track presence by identity
+
+    # Static elements (platforms, ladders, hazards, background_tiles, custom_images, triggers)
+    # These are typically loaded once from map data and don't change state via network (unless map changes)
+    # If map changes, initialize_game_elements will reload them.
+    # Here, we just ensure they are in the render list if they exist.
+    for static_list_key in ["platforms_list", "ladders_list", "hazards_list", "background_tiles_list", "trigger_squares_list"]:
         for static_item in game_elements.get(static_list_key, []): add_to_renderables_if_new(static_item)
+    for custom_img_dict in game_elements.get("processed_custom_images_for_render", []):
+        add_to_renderables_if_new(custom_img_dict)
+
+
     enemy_spawns_data_cache: List[Dict[str, Any]] = game_elements.get("enemy_spawns_data_cache", [])
     statue_spawns_data_cache: List[Dict[str, Any]] = game_elements.get("statue_spawns_data_cache", [])
 
@@ -203,23 +251,22 @@ def set_network_game_state(
             if hasattr(player_instance_local, 'alive') and player_instance_local.alive() and hasattr(player_instance_local, 'kill'): player_instance_local.kill()
             game_elements[player_key_local] = None
 
-    new_enemy_list_for_client: List[Any] = [] # List of Enemy or EnemyKnight
+    new_enemy_list_for_client: List[Any] = []
     current_client_enemies_map: Dict[str, Any] = {str(enemy.enemy_id): enemy for enemy in game_elements.get("enemy_list", []) if hasattr(enemy, 'enemy_id')}
     server_enemy_data_map = network_state_data.get('enemies', {})
     if isinstance(server_enemy_data_map, dict):
         for enemy_id_str, enemy_data_from_server in server_enemy_data_map.items():
             try: enemy_id_int = int(enemy_id_str)
             except ValueError: error(f"GSM Client: Invalid enemy_id '{enemy_id_str}' from server. Skipping."); continue
-            
+
             client_enemy_instance: Optional[Any] = current_client_enemies_map.get(enemy_id_str)
-            server_enemy_class_type = enemy_data_from_server.get('class_type', 'Enemy') # Default to generic Enemy
+            server_enemy_class_type = enemy_data_from_server.get('class_type', 'Enemy')
 
             if enemy_data_from_server.get('_valid_init', False):
-                # If client instance doesn't exist, or its class type doesn't match server, or it's not validly initialized, create a new one.
                 if not client_enemy_instance or \
                    client_enemy_instance.__class__.__name__ != server_enemy_class_type or \
                    not getattr(client_enemy_instance, '_valid_init', False):
-                    
+
                     original_spawn_info_for_enemy = enemy_spawns_data_cache[enemy_id_int] if enemy_spawns_data_cache and 0 <= enemy_id_int < len(enemy_spawns_data_cache) else None
                     spawn_pos_e_tuple = enemy_data_from_server.get('pos', original_spawn_info_for_enemy.get('start_pos') if original_spawn_info_for_enemy else (100.0,100.0))
                     patrol_area_e_qrectf: Optional[QRectF] = None
@@ -227,11 +274,11 @@ def set_network_game_state(
                         pr_d = original_spawn_info_for_enemy['patrol_rect_data']
                         patrol_area_e_qrectf = QRectF(float(pr_d.get('x',0)), float(pr_d.get('y',0)), float(pr_d.get('width',100)), float(pr_d.get('height',50)))
                     e_props_dict = enemy_data_from_server.get('properties', original_spawn_info_for_enemy.get('properties', {}) if original_spawn_info_for_enemy else {})
-                    
+
                     if server_enemy_class_type == 'EnemyKnight':
                         client_enemy_instance = EnemyKnight(start_x=float(spawn_pos_e_tuple[0]), start_y=float(spawn_pos_e_tuple[1]), patrol_area=patrol_area_e_qrectf, enemy_id=enemy_id_int, properties=e_props_dict)
                         debug(f"GSM Client: Created new EnemyKnight instance for ID {enemy_id_str}.")
-                    else: # Default to generic Enemy
+                    else:
                         e_color_name = enemy_data_from_server.get('color_name', original_spawn_info_for_enemy.get('type') if original_spawn_info_for_enemy else 'enemy_green')
                         client_enemy_instance = Enemy(start_x=float(spawn_pos_e_tuple[0]), start_y=float(spawn_pos_e_tuple[1]), patrol_area=patrol_area_e_qrectf, enemy_id=enemy_id_int, color_name=e_color_name, properties=e_props_dict)
                         debug(f"GSM Client: Created new generic Enemy instance for ID {enemy_id_str}, color/type: {e_color_name}.")
@@ -317,7 +364,14 @@ def set_network_game_state(
                     new_projectiles_list_for_client.append(client_proj_instance)
                     add_to_renderables_if_new(client_proj_instance)
     game_elements["projectiles_list"] = new_projectiles_list_for_client
+
+    # Ensure renderables are sorted by layer order
+    if 'get_layer_order_key' in globals() and callable(globals()['get_layer_order_key']):
+        new_all_renderables.sort(key=globals()['get_layer_order_key'])
+    else:
+        warning("GSM Client: get_layer_order_key not found. Render order might be incorrect.")
     game_elements["all_renderable_objects"] = new_all_renderables
+
     server_map_name = network_state_data.get('map_name')
     camera_instance_client: Optional[Camera] = game_elements.get('camera')
     if server_map_name and camera_instance_client and \
@@ -335,3 +389,5 @@ def set_network_game_state(
             warning(f"GSM Client: Server map '{server_map_name}' but client's level_data is for "
                     f"'{game_elements.get('loaded_map_name')}' or missing. Camera dimensions may be incorrect.")
     debug(f"GSM Client set_network_game_state END: Renderables count: {len(game_elements['all_renderable_objects'])}")
+
+#################### END OF FILE: main_game/game_state_manager.py ####################

@@ -27,8 +27,7 @@ if TYPE_CHECKING:
     from enemy_knight import EnemyKnight # For isinstance checks or specific attribute access
 # --- END MODIFICATION ---
 
-try:
-    from logger import debug, error, warning
+try: from main_game.logger import debug, error, warning
 except ImportError:
     def debug(msg, *args, **kwargs): print(f"DEBUG_ENET: {msg}")
     def error(msg, *args, **kwargs): print(f"ERROR_ENET: {msg}")
