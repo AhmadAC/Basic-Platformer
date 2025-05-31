@@ -1,4 +1,4 @@
-#################### START OF FILE: editor\editor_custom_items.py ####################
+#################### START OF FILE: editor_custom_items.py ####################
 
 # editor/editor_custom_items.py
 # -*- coding: utf-8 -*-
@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import (
     QPixmap, QImage, QPainter, QColor, QPen, QBrush, QCursor, QHoverEvent,
-    QPainterPath, QTransform
+    QPainterPath, QTransform, QFont # Added QFont
 )
 from PySide6.QtCore import Qt, QRectF, QPointF, QSize, QRect
 
@@ -48,8 +48,14 @@ except ImportError as e_cust_imp:
     # Define minimal fallbacks for ED_CONFIG if needed for standalone testing/basic functionality
     class ED_CONFIG_FALLBACK_CUST:
         BASE_GRID_SIZE = 40
+        TS = 40 # Added for InvisibleWallMapItem defaults consistency
         CUSTOM_IMAGE_ASSET_KEY = "custom_image_object"
         TRIGGER_SQUARE_ASSET_KEY = "trigger_square"
+        INVISIBLE_WALL_ASSET_KEY_PALETTE = "invisible_wall_tool" # For type check in map_view_widget if needed
+        DEFAULT_INVISIBLE_WALL_FILL_COLOR_RGBA = (255,0,0,100)
+        SEMI_TRANSPARENT_RED = (255,0,0,100)
+
+
     ED_CONFIG = ED_CONFIG_FALLBACK_CUST() # type: ignore
     class EditorState: pass # Dummy for type hint
 
@@ -435,12 +441,19 @@ class CustomImageMapItem(BaseResizableMapItem):
         if self.scene(): self.scene().update(self.mapToScene(self.boundingRect()).boundingRect())
 
 
-class TriggerSquareMapItem(BaseResizableMapItem): # Inherits from BaseResizable to get handles, common logic
-    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState, parent: Optional[QGraphicsItem] = None):
-        # For trigger squares, the "pixmap" is just a transparent placeholder.
+class BaseShapeMapItem(BaseResizableMapItem):
+    """
+    Common base for resizable items that are primarily defined by a shape
+    drawn in their paint method (e.g., TriggerSquare, InvisibleWall).
+    Their pixmap is a transparent placeholder.
+    """
+    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState,
+                 default_size_multiplier: int = 2, parent: Optional[QGraphicsItem] = None):
+        # For these items, the "pixmap" is just a transparent placeholder.
         # The actual drawing happens in the paint method.
-        current_w = map_object_data_ref.get("current_width", ED_CONFIG.BASE_GRID_SIZE * 2)
-        current_h = map_object_data_ref.get("current_height", ED_CONFIG.BASE_GRID_SIZE * 2)
+        default_dim = ED_CONFIG.BASE_GRID_SIZE * default_size_multiplier
+        current_w = map_object_data_ref.get("current_width", default_dim)
+        current_h = map_object_data_ref.get("current_height", default_dim)
         display_w = int(max(1, current_w))
         display_h = int(max(1, current_h))
         transparent_pixmap = QPixmap(display_w, display_h)
@@ -451,26 +464,9 @@ class TriggerSquareMapItem(BaseResizableMapItem): # Inherits from BaseResizable 
         # Ensure current_width/height are in data_ref if not already (BaseResizable uses them)
         self.map_object_data_ref["current_width"] = current_w
         self.map_object_data_ref["current_height"] = current_h
-        # self.update_visuals_from_data(editor_state) # Called by BaseResizableMapItem init
-        
-class InvisibleWallMapItem(BaseResizableMapItem): # Inherits from BaseResizable to get handles, common logic
-    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState, parent: Optional[QGraphicsItem] = None):
-        # For trigger squares, the "pixmap" is just a transparent placeholder.
-        # The actual drawing happens in the paint method.
-        current_w = map_object_data_ref.get("current_width", ED_CONFIG.BASE_GRID_SIZE * 2)
-        current_h = map_object_data_ref.get("current_height", ED_CONFIG.BASE_GRID_SIZE * 2)
-        display_w = int(max(1, current_w))
-        display_h = int(max(1, current_h))
-        transparent_pixmap = QPixmap(display_w, display_h)
-        transparent_pixmap.fill(Qt.GlobalColor.transparent)
-
-        super().__init__(map_object_data_ref, transparent_pixmap, parent)
-        self.editor_state_ref = editor_state
-        # Ensure current_width/height are in data_ref if not already (BaseResizable uses them)
-        self.map_object_data_ref["current_width"] = current_w
-        self.map_object_data_ref["current_height"] = current_h
-        # self.update_visuals_from_data(editor_state) # Called by BaseResizableMapItem init
-
+        # update_visuals_from_data is called by BaseResizableMapItem's __init__
+        # which in turn calls _apply_orientation_transform and setVisible.
+        # If further specific updates are needed immediately for BaseShapeMapItem, they can be done here.
 
     def boundingRect(self) -> QRectF:
         # Bounding rect is based on current_width/height from data_ref, in local coords
@@ -482,6 +478,52 @@ class InvisibleWallMapItem(BaseResizableMapItem): # Inherits from BaseResizable 
         path = QPainterPath()
         path.addRect(self.boundingRect())
         return path
+
+    def update_visuals_from_data(self, editor_state: EditorState):
+        # Determine default dimension based on a common understanding (e.g., multiplier 2)
+        # This part should ideally not need to know the 'default_size_multiplier' again,
+        # as current_width/height should already be in map_object_data_ref.
+        # If they are missing, it implies an issue with initial data setup.
+        default_dim_fallback = ED_CONFIG.BASE_GRID_SIZE * 2 # Fallback default size
+        current_w = self.map_object_data_ref.get("current_width", default_dim_fallback)
+        current_h = self.map_object_data_ref.get("current_height", default_dim_fallback)
+        
+        # Ensure data_ref has these, as BaseResizableMapItem might use them internally
+        # or other parts of the system might expect them after an update.
+        self.map_object_data_ref["current_width"] = current_w
+        self.map_object_data_ref["current_height"] = current_h
+
+        # The "pixmap" for these items is just a transparent placeholder.
+        # Its size needs to match current_width/height for BaseResizableMapItem's handle logic.
+        display_w = int(max(1, current_w))
+        display_h = int(max(1, current_h))
+
+        current_pixmap = self.pixmap()
+        if current_pixmap.width() != display_w or current_pixmap.height() != display_h:
+            self.prepareGeometryChange() # Crucial before changing effective bounds
+            new_transparent_pixmap = QPixmap(display_w, display_h)
+            new_transparent_pixmap.fill(Qt.GlobalColor.transparent)
+            self.setPixmap(new_transparent_pixmap)
+            # prepareGeometryChange was called, so scene will update bounding rect.
+
+        super().update_visuals_from_data(editor_state) # Handles pos, Z, lock, handles, visibility, transform
+        self.update() # Request repaint for paint() method to redraw content
+
+    def set_interaction_mode(self, mode: str):
+        # These items generally only support resize mode, not crop.
+        if mode == "resize":
+            super().set_interaction_mode(mode)
+        else: # If trying to set to crop or other, default to resize.
+            if self.current_interaction_mode != "resize":
+                super().set_interaction_mode("resize")
+                logger.debug(f"{type(self).__name__} (ID: {id(self.map_object_data_ref)}): Interaction mode forced to 'resize' as '{mode}' is not supported.")
+
+
+class TriggerSquareMapItem(BaseShapeMapItem):
+    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState, parent: Optional[QGraphicsItem] = None):
+        super().__init__(map_object_data_ref, editor_state, default_size_multiplier=2, parent=parent)
+        # Specific initialization for TriggerSquareMapItem, if any, can go here.
+        # Example: self.setToolTip("Trigger Square") if needed
 
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
         props = self.map_object_data_ref.get("properties", {})
@@ -570,36 +612,73 @@ class InvisibleWallMapItem(BaseResizableMapItem): # Inherits from BaseResizable 
         painter.restore() # Restore opacity and other painter states
 
 
-    def update_visuals_from_data(self, editor_state: EditorState):
-        # Update internal dimensions based on data_ref, which might affect boundingRect
-        current_w = self.map_object_data_ref.get("current_width", ED_CONFIG.BASE_GRID_SIZE * 2)
-        current_h = self.map_object_data_ref.get("current_height", ED_CONFIG.BASE_GRID_SIZE * 2)
-        self.map_object_data_ref["current_width"] = current_w
-        self.map_object_data_ref["current_height"] = current_h
+class InvisibleWallMapItem(BaseShapeMapItem):
+    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState, parent: Optional[QGraphicsItem] = None):
+        super().__init__(map_object_data_ref, editor_state, default_size_multiplier=2, parent=parent)
+        self.setToolTip("Invisible Wall")
 
-        # The "pixmap" for TriggerSquare is just a transparent placeholder.
-        # Its size needs to match current_width/height for BaseResizableMapItem's handle logic.
-        display_w = int(max(1, current_w))
-        display_h = int(max(1, current_h))
+    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
+        props = self.map_object_data_ref.get("properties", {})
+        rect_to_draw_local = self.boundingRect()
 
-        current_pixmap = self.pixmap()
-        if current_pixmap.width() != display_w or current_pixmap.height() != display_h:
-            self.prepareGeometryChange() # Crucial before changing effective bounds
-            new_transparent_pixmap = QPixmap(display_w, display_h)
-            new_transparent_pixmap.fill(Qt.GlobalColor.transparent)
-            self.setPixmap(new_transparent_pixmap)
-            # prepareGeometryChange was called, so scene will update bounding rect.
+        is_editor_preview = False
+        if self.scene() and self.scene().parent() and hasattr(self.scene().parent(), 'editor_state'):
+             parent_map_view = self.scene().parent()
+             if hasattr(parent_map_view, 'editor_state'): is_editor_preview = parent_map_view.editor_state.is_game_preview_mode
 
-        super().update_visuals_from_data(editor_state) # Handles pos, Z, lock, handles, visibility, transform
-        self.update() # Request repaint for paint() method to redraw content
+        item_opacity_percent = props.get("opacity", 100) 
+        if not isinstance(item_opacity_percent, (int, float)): item_opacity_percent = 100
+        item_opacity_float = max(0.0, min(1.0, float(item_opacity_percent) / 100.0))
+        
+        if not props.get("visible_in_game", False) and is_editor_preview: return 
+        if item_opacity_float < 0.01 and not is_editor_preview: return # If in editor and opacity is ~0, don't draw
 
-    def set_interaction_mode(self, mode: str):
-        # Trigger squares only support resize mode, not crop.
-        if mode == "resize":
-            super().set_interaction_mode(mode)
-        else: # If trying to set to crop or other, default to resize.
-            if self.current_interaction_mode != "resize":
-                super().set_interaction_mode("resize")
-                logger.debug(f"TriggerSquareMapItem (ID: {id(self.map_object_data_ref)}): Interaction mode forced to 'resize' as '{mode}' is not supported.")
+        painter.save()
+        # When in editor (not preview), use the item_opacity_float.
+        # When in preview AND visible_in_game is true, draw fully opaque (or based on a potential game-time opacity if that existed).
+        effective_paint_opacity = item_opacity_float if not is_editor_preview else 1.0 
+        
+        # Use DEFAULT_INVISIBLE_WALL_FILL_COLOR_RGBA from ED_CONFIG
+        fill_color_rgba_prop = ED_CONFIG.DEFAULT_INVISIBLE_WALL_FILL_COLOR_RGBA 
+        base_q_color: QColor
+        if fill_color_rgba_prop and isinstance(fill_color_rgba_prop, (list,tuple)) and len(fill_color_rgba_prop) == 4:
+            r,g,b,a_config = fill_color_rgba_prop
+            # The config alpha is the base; effective_paint_opacity modulates this
+            final_alpha = int(a_config * effective_paint_opacity) 
+            base_q_color = QColor(r,g,b, final_alpha) 
+        else: # Fallback if config is somehow invalid
+            r,g,b,a_default = ED_CONFIG.SEMI_TRANSPARENT_RED # Fallback
+            base_q_color = QColor(r,g,b, int(a_default * effective_paint_opacity))
+        
+        painter.setBrush(base_q_color)
+        
+        # Solid border, slightly darker than fill
+        border_color = base_q_color.darker(130)
+        border_color.setAlpha(min(255, base_q_color.alpha() + 75)) # Make border more opaque
+        pen_width = 1.0 # Thinner solid border
+        painter.setPen(QPen(border_color, pen_width, Qt.PenStyle.SolidLine))
+        painter.drawRect(rect_to_draw_local)
+
+        # Text "INV" only in editor if reasonably opaque
+        if not is_editor_preview and item_opacity_float > 0.1 : 
+            text_alpha = int(200 * item_opacity_float) # Modulated by overall item opacity
+            text_color_val = QColor(0,0,0, text_alpha) if base_q_color.lightnessF() > 0.6 else QColor(255,255,255, text_alpha)
+            painter.setPen(text_color_val)
+            font = painter.font(); 
+            # Dynamic font size based on item height/width, with min/max
+            font_size_px = max(8, min(rect_to_draw_local.height() * 0.25, rect_to_draw_local.width() * 0.2))
+            font.setPixelSize(int(font_size_px)) # Use setPixelSize for more consistent sizing
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(rect_to_draw_local, Qt.AlignmentFlag.AlignCenter, "INV") # Changed to INV
+
+        if option.state & QStyle.StateFlag.State_Selected: # type: ignore
+            selection_pen_alpha = 255 # Always fully opaque selection highlight
+            pen = QPen(QColor(255, 255, 0, selection_pen_alpha), 2, Qt.PenStyle.SolidLine)
+            pen.setCosmetic(True) # Ensure consistent line width regardless of zoom
+            painter.setPen(pen); painter.setBrush(Qt.BrushStyle.NoBrush)
+            # Adjust for pen width to draw inside the bounding rect for selection
+            painter.drawRect(rect_to_draw_local.adjusted(pen.widthF()/2.0, pen.widthF()/2.0, -pen.widthF()/2.0, -pen.widthF()/2.0))
+        painter.restore()
 
 #################### END OF FILE: editor_custom_items.py ####################

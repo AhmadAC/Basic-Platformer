@@ -1,3 +1,5 @@
+#################### START OF FILE: map_object_items.py ####################
+
 # editor/map_object_items.py
 # -*- coding: utf-8 -*-
 """
@@ -16,7 +18,8 @@ from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF, QSize
 from editor import editor_config as ED_CONFIG
 from editor.editor_state import EditorState 
 from editor.editor_assets import get_asset_pixmap, _create_colored_pixmap 
-from editor.editor_custom_items import BaseResizableMapItem 
+# BaseResizableMapItem is now imported in editor_custom_items where InvisibleWallMapItem is
+# from editor.editor_custom_items import BaseResizableMapItem 
 
 logger = logging.getLogger(__name__)
 
@@ -271,104 +274,7 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
         new_pos_y = float(self.map_object_data_ref.get("world_y", 0))
         if self.pos() != QPointF(new_pos_x, new_pos_y): self.setPos(new_pos_x, new_pos_y)
 
-class InvisibleWallMapItem(BaseResizableMapItem):
-    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState, parent: Optional[QGraphicsItem] = None):
-        current_w = map_object_data_ref.get("current_width", ED_CONFIG.TS * 2) 
-        current_h = map_object_data_ref.get("current_height", ED_CONFIG.TS * 2)
-        display_w = int(max(1, current_w)); display_h = int(max(1, current_h))
-        
-        transparent_pixmap = QPixmap(display_w, display_h)
-        transparent_pixmap.fill(Qt.GlobalColor.transparent)
+# InvisibleWallMapItem is now moved to editor_custom_items.py
+# This file (map_object_items.py) will now only contain StandardMapObjectItem.
 
-        super().__init__(map_object_data_ref, transparent_pixmap, parent)
-        self.editor_state_ref = editor_state
-        
-        self.map_object_data_ref["current_width"] = current_w 
-        self.map_object_data_ref["current_height"] = current_h
-        self.setToolTip("Invisible Wall")
-
-    def boundingRect(self) -> QRectF:
-        w = self.map_object_data_ref.get("current_width", 0.0)
-        h = self.map_object_data_ref.get("current_height", 0.0)
-        return QRectF(0, 0, float(w), float(h))
-
-    def shape(self) -> QPainterPath:
-        path = QPainterPath(); path.addRect(self.boundingRect()); return path
-
-    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
-        props = self.map_object_data_ref.get("properties", {})
-        rect_to_draw_local = self.boundingRect()
-
-        is_editor_preview = False
-        if self.scene() and self.scene().parent() and hasattr(self.scene().parent(), 'editor_state'):
-             parent_map_view = self.scene().parent()
-             if hasattr(parent_map_view, 'editor_state'): is_editor_preview = parent_map_view.editor_state.is_game_preview_mode
-
-        item_opacity_percent = props.get("opacity", 100) 
-        if not isinstance(item_opacity_percent, (int, float)): item_opacity_percent = 100
-        item_opacity_float = max(0.0, min(1.0, float(item_opacity_percent) / 100.0))
-        
-        if not props.get("visible_in_game", False) and is_editor_preview: return 
-        if item_opacity_float < 0.01 and not is_editor_preview: return 
-
-        painter.save()
-        effective_paint_opacity = item_opacity_float if not is_editor_preview else 1.0 
-        
-        fill_color_rgba_prop = ED_CONFIG.DEFAULT_INVISIBLE_WALL_FILL_COLOR_RGBA 
-        base_q_color: QColor
-        if fill_color_rgba_prop and isinstance(fill_color_rgba_prop, (list,tuple)) and len(fill_color_rgba_prop) == 4:
-            r,g,b,a_config = fill_color_rgba_prop
-            final_alpha = int(a_config * effective_paint_opacity) 
-            base_q_color = QColor(r,g,b, final_alpha) 
-        else: 
-            r,g,b,a_default = ED_CONFIG.SEMI_TRANSPARENT_RED
-            base_q_color = QColor(r,g,b, int(a_default * effective_paint_opacity))
-        
-        painter.setBrush(base_q_color)
-        
-        # Solid border, slightly darker than fill
-        border_color = base_q_color.darker(130)
-        border_color.setAlpha(min(255, base_q_color.alpha() + 75)) # Make border more opaque
-        pen_width = 1.0 # Thinner solid border
-        painter.setPen(QPen(border_color, pen_width, Qt.PenStyle.SolidLine))
-        painter.drawRect(rect_to_draw_local)
-
-        if not is_editor_preview and item_opacity_float > 0.1 : 
-            text_alpha = int(200 * item_opacity_float)
-            text_color_val = QColor(0,0,0, text_alpha) if base_q_color.lightnessF() > 0.6 else QColor(255,255,255, text_alpha)
-            painter.setPen(text_color_val)
-            font = painter.font(); 
-            font_size_px = max(8, min(rect_to_draw_local.height() * 0.25, rect_to_draw_local.width() * 0.2))
-            font.setPixelSize(int(font_size_px)) # Use setPixelSize for more consistent sizing
-            font.setBold(True)
-            painter.setFont(font)
-            painter.drawText(rect_to_draw_local, Qt.AlignmentFlag.AlignCenter, "INV") # Changed to INV
-
-        if option.state & QStyle.StateFlag.State_Selected: # Corrected
-            selection_pen_alpha = 255 
-            pen = QPen(QColor(255, 255, 0, selection_pen_alpha), 2, Qt.PenStyle.SolidLine)
-            pen.setCosmetic(True) 
-            painter.setPen(pen); painter.setBrush(Qt.BrushStyle.NoBrush)
-            # Adjust for pen width to draw inside the bounding rect for selection
-            painter.drawRect(rect_to_draw_local.adjusted(pen.widthF()/2.0, pen.widthF()/2.0, -pen.widthF()/2.0, -pen.widthF()/2.0))
-        painter.restore()
-
-    def update_visuals_from_data(self, editor_state: EditorState):
-        current_w = self.map_object_data_ref.get("current_width", ED_CONFIG.TS * 2)
-        current_h = self.map_object_data_ref.get("current_height", ED_CONFIG.TS * 2)
-        display_w = int(max(1, current_w)); display_h = int(max(1, current_h))
-        
-        current_pm = self.pixmap()
-        if current_pm.width() != display_w or current_pm.height() != display_h:
-            self.prepareGeometryChange() 
-            new_transparent_pixmap = QPixmap(display_w, display_h)
-            new_transparent_pixmap.fill(Qt.GlobalColor.transparent)
-            self.setPixmap(new_transparent_pixmap)
-        
-        super().update_visuals_from_data(editor_state) 
-        self.update() 
-
-    def set_interaction_mode(self, mode: str): 
-        if mode == "resize": super().set_interaction_mode(mode)
-        else:
-            if self.current_interaction_mode != "resize": super().set_interaction_mode("resize")
+#################### END OF FILE: map_object_items.py ####################

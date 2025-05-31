@@ -1,4 +1,3 @@
-#################### START OF FILE: editor/map_view_widget.py ####################
 # editor/map_view_widget.py
 # -*- coding: utf-8 -*-
 """
@@ -29,10 +28,12 @@ from editor.editor_assets import get_asset_pixmap
 from editor import editor_map_utils
 
 from editor.map_object_items import StandardMapObjectItem
-from editor.editor_custom_items import BaseResizableMapItem, CustomImageMapItem, TriggerSquareMapItem, \
-                                 HANDLE_TOP_LEFT, HANDLE_TOP_MIDDLE, HANDLE_TOP_RIGHT, \
-                                 HANDLE_MIDDLE_LEFT, HANDLE_MIDDLE_RIGHT, \
-                                 HANDLE_BOTTOM_LEFT, HANDLE_BOTTOM_MIDDLE, HANDLE_BOTTOM_RIGHT
+from editor.editor_custom_items import ( # Updated import
+    BaseResizableMapItem, CustomImageMapItem, TriggerSquareMapItem, InvisibleWallMapItem,
+    HANDLE_TOP_LEFT, HANDLE_TOP_MIDDLE, HANDLE_TOP_RIGHT,
+    HANDLE_MIDDLE_LEFT, HANDLE_MIDDLE_RIGHT,
+    HANDLE_BOTTOM_LEFT, HANDLE_BOTTOM_MIDDLE, HANDLE_BOTTOM_RIGHT
+)
 
 from editor import map_view_actions as MVActions
 
@@ -134,7 +135,7 @@ class MapViewWidget(QGraphicsView):
         found_item_to_select: Optional[QGraphicsItem] = None
         highest_z_found = -float('inf')
         for item in items_at_cursor:
-            if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)):
+            if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)): # BaseResizableMapItem covers CustomImage, Trigger, InvisibleWall
                 if hasattr(item, 'map_object_data_ref') and not item.map_object_data_ref.get("editor_locked", False): # type: ignore
                     item_z = item.zValue()
                     if item_z > highest_z_found:
@@ -338,6 +339,8 @@ class MapViewWidget(QGraphicsView):
                     map_scene_item = CustomImageMapItem(obj_data, self.editor_state)
                 elif asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY:
                     map_scene_item = TriggerSquareMapItem(obj_data, self.editor_state)
+                elif asset_key == ED_CONFIG.INVISIBLE_WALL_ASSET_KEY_PALETTE: # Check for invisible wall
+                    map_scene_item = InvisibleWallMapItem(obj_data, self.editor_state)
                 else:
                     map_scene_item = StandardMapObjectItem(asset_key, str(obj_data.get("game_type_id")),
                                                            int(world_x), int(world_y), obj_data, self.editor_state)
@@ -349,7 +352,7 @@ class MapViewWidget(QGraphicsView):
                 is_editor_hidden = obj_data.get("editor_hidden", False)
                 opacity_prop = obj_data.get("properties", {}).get("opacity", 100)
                 is_visible_by_opacity = True
-                if isinstance(map_scene_item, (CustomImageMapItem, TriggerSquareMapItem)):
+                if isinstance(map_scene_item, (CustomImageMapItem, TriggerSquareMapItem, InvisibleWallMapItem)): # Added InvisibleWallMapItem
                     is_visible_by_opacity = opacity_prop > 0
                 map_scene_item.setVisible(not is_editor_hidden and is_visible_by_opacity)
 
@@ -701,7 +704,8 @@ class MapViewWidget(QGraphicsView):
             data_ref = getattr(item_under_mouse, 'map_object_data_ref', None)
             if data_ref:
                 asset_key = data_ref.get("asset_editor_key")
-                if asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY or asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY:
+                # Allow context menu for TriggerSquare, CustomImage, and now InvisibleWall
+                if asset_key in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY, ED_CONFIG.INVISIBLE_WALL_ASSET_KEY_PALETTE]:
                     self.context_menu_requested_for_item.emit(data_ref, event.globalPos()); event.accept(); return
         if not event.isAccepted(): super().contextMenuEvent(event)
 
@@ -788,7 +792,7 @@ class MapViewWidget(QGraphicsView):
                 if not is_currently_selected and map_obj_item_generic.current_interaction_mode == "crop": map_obj_item_generic.set_interaction_mode("resize")
         if len(selected_qt_items) == 1:
             selected_item_generic = selected_qt_items[0]
-            if isinstance(selected_item_generic, (StandardMapObjectItem, BaseResizableMapItem)):
+            if isinstance(selected_item_generic, (StandardMapObjectItem, BaseResizableMapItem)): # BaseResizableMapItem covers CustomImage, Trigger, InvisibleWall
                 data_ref = getattr(selected_item_generic, 'map_object_data_ref', None)
                 if data_ref: self.map_object_selected_for_properties.emit(data_ref)
                 else: self.map_object_selected_for_properties.emit(None)
@@ -818,4 +822,3 @@ class MapViewWidget(QGraphicsView):
             logger.warning(f"MapView: Attempted to remove visual item for data ID {item_id_to_remove}, but it was not found in _map_object_items.")
         
         self.viewport().update()
-#################### END OF FILE: editor/map_view_widget.py ####################
