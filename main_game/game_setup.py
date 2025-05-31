@@ -16,8 +16,9 @@ MODIFIED: Trigger squares and custom images are processed even if their lists ar
 MODIFIED: Added enemy_spawns_data_cache and statue_spawns_data_cache for client-side entity recreation.
 MODIFIED: Ensured player.animations is checked to be a dictionary before using it.
 MODIFIED: Removed assignment to a single 'current_chest', now relies on 'collectible_list' for all chests.
+MODIFIED: Corrected _process_trigger_squares to handle QRectF directly for 'rect' property.
 """
-# version 2.2.11 (Multiple chests support: removed single current_chest assignment)
+# version 2.2.12 (Handle QRectF in _process_trigger_squares)
 
 import os
 import sys
@@ -25,7 +26,7 @@ import random
 from typing import Dict, Optional, Any, List, Tuple, cast
 
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
-from PySide6.QtGui import QPixmap, QImage, QTransform
+from PySide6.QtGui import QPixmap, QImage, QTransform # Added QTransform
 
 _GAME_SETUP_PY_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT_FOR_GAME_SETUP = os.path.dirname(_GAME_SETUP_PY_FILE_DIR)
@@ -72,7 +73,7 @@ def get_layer_order_key(item: Any) -> int:
     elif isinstance(item, Statue): return 8
     elif isinstance(item, Enemy): return 10
     elif isinstance(item, Player): return 20
-    elif hasattr(item, 'owner_player'): return 30
+    elif hasattr(item, 'owner_player'): return 30 # Projectiles higher
     return 0
 
 def _create_player_instance(player_id: int, spawn_pos_tuple: Optional[Tuple[float,float]],
@@ -97,7 +98,7 @@ def _create_enemy_instance(spawn_data: Dict[str, Any], enemy_idx: int) -> Option
     start_pos = spawn_data.get('start_pos')
     enemy_type_str = spawn_data.get('type')
     patrol_rect_data = spawn_data.get('patrol_rect_data')
-    properties = spawn_data.get('properties', {})
+    properties = spawn_data.get('properties', {}) # Use properties from spawn_data
     if not start_pos or not enemy_type_str:
         error(f"GameSetup: Invalid enemy spawn data (missing start_pos or type): {spawn_data}")
         return None
@@ -150,7 +151,7 @@ def _create_background_tile_list_from_map(map_bg_tiles: List[Dict[str, Any]]) ->
         rect_coords = bg_data.get('rect')
         color_tuple = tuple(bg_data.get('color', C.DARK_GRAY)) # type: ignore
         bg_type = bg_data.get('type', "generic_background_tile")
-        image_path_rel_to_project = bg_data.get('image_path')
+        image_path_rel_to_project = bg_data.get('image_path') # Path from ED_CONFIG.EDITOR_PALETTE_ASSETS (e.g., "assets/...")
         props = bg_data.get('properties')
         if rect_coords and len(rect_coords) == 4:
             background_tiles_list.append(BackgroundTile(
@@ -164,7 +165,7 @@ def _create_item_list_from_map(map_items: List[Dict[str, Any]]) -> List[Chest]:
     for item_data in map_items:
         pos_tuple = item_data.get('pos')
         item_type = item_data.get('type')
-        props = item_data.get('properties')
+        props = item_data.get('properties') # Get properties for chest
         if item_type == "chest" and pos_tuple and len(pos_tuple) == 2:
             new_chest = Chest(pos_tuple[0], pos_tuple[1])
             if props: new_chest.properties = props # Assign properties if they exist
@@ -176,7 +177,7 @@ def _create_statue_list_from_map(map_statues: List[Dict[str, Any]]) -> List[Stat
     for statue_data in map_statues:
         pos_tuple = statue_data.get('pos')
         statue_id = statue_data.get('id')
-        props = statue_data.get('properties', {})
+        props = statue_data.get('properties', {}) # Use properties from spawn_data
         if pos_tuple and len(pos_tuple) == 2 and statue_id:
             statue_list.append(Statue(pos_tuple[0], pos_tuple[1], statue_id, properties=props))
     return statue_list
@@ -223,11 +224,29 @@ def _process_custom_images(map_custom_images: List[Dict[str, Any]], base_map_fol
 def _process_trigger_squares(map_trigger_squares: List[Dict[str, Any]], base_map_folder_for_custom_assets: str) -> List[Dict[str, Any]]:
     processed_triggers: List[Dict[str, Any]] = []
     for trig_data in map_trigger_squares:
-        rect_data = trig_data.get("rect")
-        if not rect_data or len(rect_data) != 4: continue
+        rect_data_from_map = trig_data.get("rect")
+        current_rect: Optional[QRectF] = None
+
+        if isinstance(rect_data_from_map, QRectF):
+            current_rect = rect_data_from_map # Already a QRectF from editor JSON
+        elif isinstance(rect_data_from_map, (list, tuple)) and len(rect_data_from_map) == 4:
+            try: # Attempt to parse from tuple (older format or direct definition)
+                current_rect = QRectF(float(rect_data_from_map[0]), float(rect_data_from_map[1]),
+                                      float(rect_data_from_map[2]), float(rect_data_from_map[3]))
+            except (TypeError, ValueError) as e_rect_parse:
+                error(f"GameSetup: Error parsing trigger rect tuple {rect_data_from_map}: {e_rect_parse}")
+                continue
+        else: # Invalid rect data format
+            warning(f"GameSetup: Trigger square has invalid rect data: {rect_data_from_map}. Skipping.")
+            continue
+
+        if current_rect is None or current_rect.isNull() or not current_rect.isValid():
+            warning(f"GameSetup: Trigger square rect is null or invalid after processing: {trig_data}. Skipping.")
+            continue
+            
         processed_trig = trig_data.copy()
-        processed_trig['rect'] = QRectF(float(rect_data[0]), float(rect_data[1]),
-                                        float(rect_data[2]), float(rect_data[3]))
+        processed_trig['rect'] = current_rect # Store the QRectF object
+
         image_path_in_props = trig_data.get("properties", {}).get("image_in_square", "")
         if image_path_in_props and base_map_folder_for_custom_assets:
             full_abs_path_trigger_img = os.path.normpath(os.path.join(base_map_folder_for_custom_assets, image_path_in_props))
@@ -265,8 +284,8 @@ def initialize_game_elements(current_width: int, current_height: int,
         game_elements_ref['initialization_in_progress'] = False
         return False
 
-    game_elements_ref['loaded_map_name'] = map_module_name
-    game_elements_ref['map_name'] = map_data.get("level_name", map_module_name)
+    game_elements_ref['loaded_map_name'] = map_module_name # Store the stem name for reloads
+    game_elements_ref['map_name'] = map_data.get("level_name", map_module_name) # The display/logical name
     game_elements_ref['level_background_color'] = map_data.get("background_color", C.LIGHT_BLUE)
     game_elements_ref['level_pixel_width'] = float(map_data.get("level_pixel_width", current_width * 2.0))
     game_elements_ref['level_min_x_absolute'] = float(map_data.get("level_min_x_absolute", 0.0))
@@ -274,6 +293,7 @@ def initialize_game_elements(current_width: int, current_height: int,
     game_elements_ref['level_max_y_absolute'] = float(map_data.get("level_max_y_absolute", current_height))
     game_elements_ref['ground_level_y_ref'] = float(map_data.get("ground_level_y_ref", current_height - C.TILE_SIZE))
     game_elements_ref['ground_platform_height_ref'] = float(map_data.get("ground_platform_height_ref", C.TILE_SIZE))
+    # Store absolute path to the specific map's folder (e.g., .../maps/map_name_folder/)
     game_elements_ref['map_folder_path'] = os.path.join(maps_base_dir_abs_for_loader, map_module_name)
 
     game_elements_ref["platforms_list"] = _create_platform_data_list_from_map(map_data.get("platforms_list", []))
@@ -290,28 +310,32 @@ def initialize_game_elements(current_width: int, current_height: int,
     default_p1_spawn = (C.TILE_SIZE * 2.0, game_elements_ref['ground_level_y_ref'] - 1.0)
     player_instances: List[Optional[Player]] = [None, None, None, None]
 
-    player_assignment_order = [0, 1, 2, 3]
+    player_assignment_order = [0, 1, 2, 3] # 0-indexed for lists
     if num_players_expected == 1: player_assignment_order = [0]
     elif num_players_expected == 2: player_assignment_order = [0, 1]
     elif num_players_expected == 3: player_assignment_order = [0, 1, 2]
+    # For 4 players, default order is fine
 
     players_created_count = 0
     for p_idx_zero_based in player_assignment_order:
-        if players_created_count >= num_players_expected: break
+        if players_created_count >= num_players_expected: break # Stop if we've created enough players for the mode
+
         player_id_one_based = p_idx_zero_based + 1
         spawn_pos_for_this_player = player_spawn_positions[p_idx_zero_based]
         fallback_spawn_for_this_player = (default_p1_spawn[0] + p_idx_zero_based * C.TILE_SIZE * 2.5, default_p1_spawn[1])
+        
         initial_props_for_player = player_spawn_props_from_map[p_idx_zero_based]
-        if not initial_props_for_player:
-            config_props_key = f"P{player_id_one_based}_PROPERTIES"
+        if not initial_props_for_player: # If no props from map, get from game_config or hardcoded defaults
+            config_props_key = f"P{player_id_one_based}_PROPERTIES" # Check game_config for P1_PROPERTIES etc.
             if hasattr(game_config, config_props_key):
                 initial_props_for_player = getattr(game_config, config_props_key).copy()
-            else:
+            else: # Absolute fallback if not in map or config
                 initial_props_for_player = {
                     "max_health": C.PLAYER_MAX_HEALTH,
-                    "move_speed": C.PLAYER_RUN_SPEED_LIMIT * 50,
-                    "jump_strength": C.PLAYER_JUMP_STRENGTH * 60
+                    "move_speed": C.PLAYER_RUN_SPEED_LIMIT * 50, # Convert to units/sec for consistency
+                    "jump_strength": C.PLAYER_JUMP_STRENGTH * 60 # Convert to units/sec for consistency
                 }
+
         player_instance = _create_player_instance(player_id_one_based, spawn_pos_for_this_player, fallback_spawn_for_this_player, initial_props_for_player)
         player_instances[p_idx_zero_based] = player_instance
         game_elements_ref[f"player{player_id_one_based}"] = player_instance
@@ -319,20 +343,21 @@ def initialize_game_elements(current_width: int, current_height: int,
         if player_instance and hasattr(player_instance, 'reset_for_new_game_or_round'):
             player_instance.reset_for_new_game_or_round()
 
+
     map_enemies_spawn_data = map_data.get("enemies_list", [])
     game_elements_ref["enemy_list"] = [_create_enemy_instance(e_data, idx) for idx, e_data in enumerate(map_enemies_spawn_data) if _create_enemy_instance(e_data, idx) is not None]
-    game_elements_ref["enemy_spawns_data_cache"] = list(map_enemies_spawn_data)
+    game_elements_ref["enemy_spawns_data_cache"] = list(map_enemies_spawn_data) # Store raw spawn data
 
     map_items_data = map_data.get("items_list", [])
     items_list_temp = _create_item_list_from_map(map_items_data)
-    game_elements_ref["collectible_list"] = items_list_temp # This now correctly holds all chests
-    # No longer assign to game_elements_ref["current_chest"]
-    # game_elements_ref["current_chest"] = items_list_temp[0] if items_list_temp and isinstance(items_list_temp[0], Chest) else None # REMOVED
+    game_elements_ref["collectible_list"] = items_list_temp # Store all chests (and potentially other items)
+    # Removed: game_elements_ref["current_chest"] assignment
 
     map_statues_data = map_data.get("statues_list", [])
     game_elements_ref["statue_objects"] = _create_statue_list_from_map(map_statues_data)
-    game_elements_ref["statue_spawns_data_cache"] = list(map_statues_data)
+    game_elements_ref["statue_spawns_data_cache"] = list(map_statues_data) # Store raw spawn data
 
+    # Camera initialization (ensure dimensions are floats)
     camera = Camera(game_elements_ref['level_pixel_width'],
                     game_elements_ref['level_min_x_absolute'],
                     game_elements_ref['level_min_y_absolute'],
@@ -340,13 +365,15 @@ def initialize_game_elements(current_width: int, current_height: int,
                     float(current_width), float(current_height))
     game_elements_ref["camera"] = camera
 
+    # Initial camera focus logic
     focus_target_for_camera: Optional[Player] = None
-    player_focus_priority = [0, 1, 2, 3]
+    player_focus_priority = [0, 1, 2, 3] # Prioritize P1 (index 0), then P2, etc.
     for p_idx_focus in player_focus_priority:
         p_instance_focus = player_instances[p_idx_focus]
+        # Check if player exists, is valid, alive, and not dead/petrified
         if p_instance_focus and isinstance(p_instance_focus.animations, dict) and p_instance_focus.animations and p_instance_focus.alive():
             focus_target_for_camera = p_instance_focus
-            break
+            break # Found a valid player to focus on
 
     if focus_target_for_camera:
         debug(f"GameSetup: Camera initial focus on Player {focus_target_for_camera.player_id}")
@@ -355,7 +382,7 @@ def initialize_game_elements(current_width: int, current_height: int,
         debug("GameSetup: Camera initial static update (no valid player focus target).")
         camera.static_update()
 
-    game_elements_ref['camera_level_dims_set'] = True
+    game_elements_ref['camera_level_dims_set'] = True # Flag that camera knows level bounds
     game_elements_ref['initialization_in_progress'] = False
     game_elements_ref['game_ready_for_logic'] = True
     info(f"GameSetup: Initialization for map '{map_module_name}' completed. Game ready for mode '{for_game_mode}'.")

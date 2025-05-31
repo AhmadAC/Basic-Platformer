@@ -8,8 +8,9 @@ MODIFIED: Implemented map change via callback for trigger squares.
 MODIFIED: Removed local trigger flag, relying on MainWindow.map_change_is_active.
 MODIFIED: Ensured player.animations is checked to be a dictionary before using it.
 MODIFIED: Updated to handle multiple chests by iterating through 'collectible_list'.
+MODIFIED: Fixed trigger rect processing to correctly handle QRectF objects.
 """
-# version 2.0.30 (Multiple chests support)
+# version 2.0.31 (Fixed trigger rect TypeError)
 
 import time
 import math
@@ -24,31 +25,49 @@ from player.statue import Statue
 from main_game.tiles import Platform, Ladder, Lava, BackgroundTile
 from player.player import Player
 
-_SCRIPT_LOGGING_ENABLED = True
+_SCRIPT_LOGGING_ENABLED = True # Set to False for release builds if desired
 
+# --- Logger Setup ---
 import logging
-logger_couch = logging.getLogger(__name__)
-def log_info(msg, *args, **kwargs): logger_couch.info(msg, *args, **kwargs)
-def log_debug(msg, *args, **kwargs): logger_couch.debug(msg, *args, **kwargs)
-def log_warning(msg, *args, **kwargs): logger_couch.warning(msg, *args, **kwargs)
-def log_error(msg, *args, **kwargs): logger_couch.error(msg, *args, **kwargs)
-def log_critical(msg, *args, **kwargs): logger_couch.critical(msg, *args, **kwargs)
+logger_couch = logging.getLogger(__name__) # Get a logger specific to this module
+
+# Define fallback log functions FIRST
+def _fallback_log_info(msg, *args, **kwargs): logger_couch.info(msg, *args, **kwargs)
+def _fallback_log_debug(msg, *args, **kwargs): logger_couch.debug(msg, *args, **kwargs)
+def _fallback_log_warning(msg, *args, **kwargs): logger_couch.warning(msg, *args, **kwargs)
+def _fallback_log_error(msg, *args, **kwargs): logger_couch.error(msg, *args, **kwargs)
+def _fallback_log_critical(msg, *args, **kwargs): logger_couch.critical(msg, *args, **kwargs)
+
+# Assign fallbacks, then try to override with project logger
+log_info = _fallback_log_info
+log_debug = _fallback_log_debug
+log_warning = _fallback_log_warning
+log_error = _fallback_log_error
+log_critical = _fallback_log_critical
+
 try:
     from main_game.logger import info as project_info, debug as project_debug, \
                        warning as project_warning, error as project_error, \
                        critical as project_critical
-    log_info = project_info; log_debug = project_debug; log_warning = project_warning;
-    log_error = project_error; log_critical = project_critical
+    # Re-assign if project logger is successfully imported
+    log_info = project_info
+    log_debug = project_debug
+    log_warning = project_warning
+    log_error = project_error
+    log_critical = project_critical
     if _SCRIPT_LOGGING_ENABLED: log_debug("CouchPlayLogic: Successfully aliased project's logger functions.")
 except ImportError:
-    if not logger_couch.hasHandlers() and not logging.getLogger().hasHandlers():
-        _couch_fallback_handler_specific = logging.StreamHandler()
+    # If project logger fails, ensure the fallback logger is configured if it wasn't already
+    if not logger_couch.hasHandlers() and not logging.getLogger().hasHandlers(): # Check root too
+        import sys # Import sys only if needed for fallback handler
+        _couch_fallback_handler_specific = logging.StreamHandler(sys.stdout)
         _couch_fallback_formatter_specific = logging.Formatter('COUCH_PLAY (ImportFallbackConsole - specific): %(levelname)s - %(module)s:%(lineno)d - %(message)s')
         _couch_fallback_handler_specific.setFormatter(_couch_fallback_formatter_specific)
         logger_couch.addHandler(_couch_fallback_handler_specific)
-        logger_couch.setLevel(logging.DEBUG)
-        logger_couch.propagate = False
+        logger_couch.setLevel(logging.DEBUG) # Set level for fallback
+        logger_couch.propagate = False # Don't pass to root if we set up our own handler
     if _SCRIPT_LOGGING_ENABLED: log_critical("CouchPlayLogic: Failed to import project's logger. Using isolated fallback for couch_play_logic.py.")
+# --- End Logger Setup ---
 
 _start_time_couch_play_monotonic = time.monotonic()
 def get_current_ticks_monotonic() -> int:
@@ -57,34 +76,34 @@ def get_current_ticks_monotonic() -> int:
 
 def run_couch_play_mode(
     game_elements_ref: Dict[str, Any],
-    app_status_obj: Any,
+    app_status_obj: Any, # Typically an instance of AppStatus from app_core
     get_p1_input_callback: callable,
     get_p2_input_callback: callable,
     get_p3_input_callback: callable,
     get_p4_input_callback: callable,
     process_qt_events_callback: callable,
-    dt_sec_provider: callable,
-    show_status_message_callback: Optional[callable] = None,
-    request_map_change_callback: Optional[callable] = None
-    ) -> bool:
+    dt_sec_provider: callable, # Provides dt_sec for the current frame
+    show_status_message_callback: Optional[callable] = None, # Optional UI callback
+    request_map_change_callback: Optional[callable] = None # Callback to request map change
+    ) -> bool: # Returns True to continue game, False to stop
 
     try:
         from main_game.game_setup import get_layer_order_key
     except ImportError:
         log_warning("COUCH_PLAY_LOGIC WARNING (run_couch_play_mode): Could not import get_layer_order_key from game_setup. Using fallback for sorting.")
-        def get_layer_order_key(item: Any) -> int:
+        def get_layer_order_key(item: Any) -> int: 
             if isinstance(item, dict) and 'layer_order' in item: return int(item['layer_order'])
             if hasattr(item, 'layer_order'): return int(getattr(item, 'layer_order', 0))
-            if isinstance(item, Player): return 100
-            if isinstance(item, BackgroundTile): return -10
-            return 0
+            if isinstance(item, Player): return 100 
+            if isinstance(item, BackgroundTile): return -10 
+            return 0 
 
     if not game_elements_ref.get('game_ready_for_logic', False) or \
        game_elements_ref.get('initialization_in_progress', True):
         if _SCRIPT_LOGGING_ENABLED and (not hasattr(run_couch_play_mode, "_init_wait_logged_couch") or not run_couch_play_mode._init_wait_logged_couch): # type: ignore
             log_debug("COUCH_PLAY DEBUG: Waiting for game elements initialization to complete...")
             run_couch_play_mode._init_wait_logged_couch = True # type: ignore
-        return True
+        return True 
 
     if hasattr(run_couch_play_mode, "_init_wait_logged_couch"):
         delattr(run_couch_play_mode, "_init_wait_logged_couch")
@@ -96,12 +115,11 @@ def run_couch_play_mode(
     player4: Optional[Player] = game_elements_ref.get("player4")
     platforms_list_this_frame: List[Any] = game_elements_ref.get("platforms_list", [])
     ladders_list: List[Ladder] = game_elements_ref.get("ladders_list", [])
-    hazards_list: List[Lava] = game_elements_ref.get("hazards_list", [])
+    hazards_list: List[Lava] = game_elements_ref.get("hazards_list", []) # Correctly named hazards_list
     current_enemies_list_ref: List[Enemy] = game_elements_ref.get("enemy_list", [])
     statue_objects_list_ref: List[Statue] = game_elements_ref.get("statue_objects", [])
     projectiles_list: List[Any] = game_elements_ref.get("projectiles_list", [])
-    # collectible_items_list_ref is now the primary source for chests
-    collectible_items_list_ref: List[Any] = game_elements_ref.get("collectible_list", [])
+    collectible_items_list_ref: List[Any] = game_elements_ref.get("collectible_list", []) 
     camera_obj: Optional[Any] = game_elements_ref.get("camera")
     processed_custom_images_for_render_couch: List[Dict[str,Any]] = game_elements_ref.get("processed_custom_images_for_render", [])
     trigger_squares: List[Dict[str, Any]] = game_elements_ref.get("trigger_squares_list", [])
@@ -114,7 +132,7 @@ def run_couch_play_mode(
             run_couch_play_mode._first_tick_debug_printed_couch = True # type: ignore
 
     dt_sec = dt_sec_provider()
-    current_game_time_ms = get_current_ticks_monotonic()
+    current_game_time_ms = get_current_ticks_monotonic() 
 
     p1_action_events: Dict[str, bool] = {}
     if player1 and hasattr(player1, '_valid_init') and player1._valid_init: p1_action_events = get_p1_input_callback(player1)
@@ -130,12 +148,12 @@ def run_couch_play_mode(
         log_info("Couch Play: Pause action detected. Signaling app to stop this game mode.")
         if show_status_message_callback: show_status_message_callback("Exiting Couch Play...")
         run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
-        return False
+        return False 
 
     if p1_action_events.get("reset") or p2_action_events.get("reset") or \
        p3_action_events.get("reset") or p4_action_events.get("reset"):
         log_info("Couch Play: Game state reset initiated by player action.")
-        reset_game_state(game_elements_ref)
+        reset_game_state(game_elements_ref) 
         player1 = game_elements_ref.get("player1"); player2 = game_elements_ref.get("player2")
         player3 = game_elements_ref.get("player3"); player4 = game_elements_ref.get("player4")
         platforms_list_this_frame = game_elements_ref.get("platforms_list", [])
@@ -150,7 +168,6 @@ def run_couch_play_mode(
         if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG (Reset): Enemies={len(current_enemies_list_ref)}, Statues={len(statue_objects_list_ref)}, CustomImages: {len(processed_custom_images_for_render_couch)}")
 
 
-    # --- Chest Logic (Modified for multiple chests) ---
     all_chests_from_collectibles: List[Chest] = [
         item for item in collectible_items_list_ref
         if isinstance(item, Chest)
@@ -159,14 +176,12 @@ def run_couch_play_mode(
 
     for chest_instance in all_chests_from_collectibles:
         if not chest_instance.alive():
-            continue
+            continue 
 
-        # Apply physics if it's a dynamic chest and not yet collected or still in an active state
         if chest_instance.state == 'closed' and not chest_instance.is_collected_flag_internal:
             chest_instance.apply_physics_step(dt_sec)
             
             chest_landed_on_player_and_killed_this_chest = False
-            # Player crush logic for this chest_instance
             player_instances_for_chest_check = [
                 p for p in [player1, player2, player3, player4] 
                 if p and hasattr(p, '_valid_init') and p._valid_init and 
@@ -190,10 +205,11 @@ def run_couch_play_mode(
 
                         if is_chest_falling_meaningfully and is_landing_on_head_area and has_sufficient_horizontal_overlap:
                             player_height_for_calc = getattr(p_instance_crush_check, 'standing_collision_height', float(C.TILE_SIZE) * 1.5);
-                            if player_height_for_calc <= 0: player_height_for_calc = 60.0
-                            required_fall_distance = 2.0 * player_height_for_calc
+                            if player_height_for_calc <= 0: player_height_for_calc = 60.0 
+                            required_fall_distance = 2.0 * player_height_for_calc 
                             try: gravity_val = float(C.PLAYER_GRAVITY); min_vel_y_for_kill_sq = 2 * gravity_val * required_fall_distance; vel_y_for_kill_threshold = math.sqrt(min_vel_y_for_kill_sq) if min_vel_y_for_kill_sq > 0 else 0.0
-                            except ValueError: vel_y_for_kill_threshold = 10.0
+                            except ValueError: vel_y_for_kill_threshold = 10.0 
+                            
                             if chest_instance.vel_y >= vel_y_for_kill_threshold:
                                 if hasattr(p_instance_crush_check, 'insta_kill'): p_instance_crush_check.insta_kill()
                                 else: p_instance_crush_check.take_damage(p_instance_crush_check.max_health * 10)
@@ -205,7 +221,6 @@ def run_couch_play_mode(
                                 if hasattr(chest_instance, '_update_rect_from_image_and_pos'): chest_instance._update_rect_from_image_and_pos()
                                 break 
 
-            # Platform collision logic for this chest_instance
             chest_instance.on_ground = False 
             if chest_landed_on_player_and_killed_this_chest:
                 chest_instance.on_ground = True
@@ -214,8 +229,9 @@ def run_couch_play_mode(
                not chest_instance.is_collected_flag_internal and \
                chest_instance.state == 'closed':
                 for platform_collidable in platforms_list_this_frame:
-                    if isinstance(platform_collidable, Statue) and platform_collidable.is_smashed: continue
+                    if isinstance(platform_collidable, Statue) and platform_collidable.is_smashed: continue 
                     if not hasattr(platform_collidable, 'rect') or not isinstance(platform_collidable.rect, QRectF): continue
+
                     if chest_instance.rect.intersects(platform_collidable.rect):
                         previous_chest_bottom_y_estimate = chest_instance.rect.bottom() - (chest_instance.vel_y * dt_sec * C.FPS if chest_instance.vel_y > 0 else 0)
                         if chest_instance.vel_y >= 0 and chest_instance.rect.bottom() >= platform_collidable.rect.top() and \
@@ -233,15 +249,13 @@ def run_couch_play_mode(
                 if hasattr(chest_instance, '_update_rect_from_image_and_pos'):
                     chest_instance._update_rect_from_image_and_pos()
 
-        # Update chest animation/state
         chest_instance.update(dt_sec)
 
-        # Interaction logic for this chest_instance
         if chest_instance.state == 'closed' and not chest_instance.is_collected_flag_internal:
             player_interacted_this_chest: Optional[Player] = None
             player_action_pairs = [(player1, p1_action_events), (player2, p2_action_events), 
                                    (player3, p3_action_events), (player4, p4_action_events)]
-            interaction_chest_rect_couch = QRectF(chest_instance.rect).adjusted(-5, -5, 5, 5)
+            interaction_chest_rect_couch = QRectF(chest_instance.rect).adjusted(-5, -5, 5, 5) 
             for p_instance_chest_interact, p_actions_chest_interact in player_action_pairs:
                 if p_instance_chest_interact and \
                    hasattr(p_instance_chest_interact, 'alive') and p_instance_chest_interact.alive() and \
@@ -252,6 +266,7 @@ def run_couch_play_mode(
                    p_actions_chest_interact.get("interact", False):
                     player_interacted_this_chest = p_instance_chest_interact
                     break 
+            
             if player_interacted_this_chest:
                 chest_instance.collect(player_interacted_this_chest)
                 log_info(f"COUCH_PLAY: Player {player_interacted_this_chest.player_id} collected chest (obj: {id(chest_instance)}).")
@@ -259,37 +274,35 @@ def run_couch_play_mode(
         if chest_instance.alive(): 
             chests_to_keep_after_this_frame.append(chest_instance)
 
-    # Update the collectible_list in game_elements_ref
     other_collectibles_in_list = [
         item for item in collectible_items_list_ref
-        if not isinstance(item, Chest)
+        if not isinstance(item, Chest) 
     ]
     game_elements_ref["collectible_list"] = other_collectibles_in_list + chests_to_keep_after_this_frame
     
-    # Remove the old single 'current_chest' key if it's still present
     if "current_chest" in game_elements_ref:
         del game_elements_ref["current_chest"]
 
     if _SCRIPT_LOGGING_ENABLED:
         log_debug(f"COUCH_PLAY DEBUG: Chests processed. Kept: {len(chests_to_keep_after_this_frame)}, "
-                  f"Total in collectible_list: {len(game_elements_ref['collectible_list'])}")
-    # --- End Chest Logic ---
+                  f"Total in collectible_list: {len(game_elements_ref.get('collectible_list',[]))}")
 
 
     active_players_for_collision_check = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init and hasattr(p, 'alive') and p.alive()]
-    player_instances_to_update = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init]
+    player_instances_to_update = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init] 
     hittable_targets_for_player_melee: List[Any] = []
     hittable_targets_for_player_melee.extend([e for e in current_enemies_list_ref if hasattr(e, 'alive') and e.alive()])
     hittable_targets_for_player_melee.extend([s for s in statue_objects_list_ref if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
+
     for p_instance in player_instances_to_update:
         all_others_for_this_player = [other_p for other_p in active_players_for_collision_check if other_p is not p_instance]
         
-        # Add closed, uncollected chests to the list of things players can collide with
-        for chest_for_player_coll in chests_to_keep_after_this_frame: # Use the updated list
+        for chest_for_player_coll in chests_to_keep_after_this_frame: 
             if chest_for_player_coll.state == 'closed' and not chest_for_player_coll.is_collected_flag_internal:
                 all_others_for_this_player.append(chest_for_player_coll)
 
         p_instance.game_elements_ref_for_projectiles = game_elements_ref
+        
         if isinstance(p_instance.animations, dict) and p_instance.animations:
             p_instance.update(dt_sec, platforms_list_this_frame, ladders_list, hazards_list, all_others_for_this_player, hittable_targets_for_player_melee)
         elif _SCRIPT_LOGGING_ENABLED:
@@ -299,59 +312,78 @@ def run_couch_play_mode(
 
     active_players_for_ai = [p for p in player_instances_to_update if not getattr(p,'is_dead',True) and hasattr(p,'alive') and p.alive()]
     enemies_to_keep_this_frame = []
-    for enemy_instance in list(current_enemies_list_ref):
+    for enemy_instance in list(current_enemies_list_ref): 
         if hasattr(enemy_instance, '_valid_init') and enemy_instance._valid_init:
-            enemy_instance.update(dt_sec, active_players_for_ai, platforms_list_this_frame, hazards_list, current_enemies_list_ref)
-            if hasattr(enemy_instance, 'alive') and enemy_instance.alive(): enemies_to_keep_this_frame.append(enemy_instance)
+            enemy_instance.update(dt_sec, active_players_for_ai, platforms_list_this_frame, hazards_list, current_enemies_list_ref) 
+            if hasattr(enemy_instance, 'alive') and enemy_instance.alive():
+                enemies_to_keep_this_frame.append(enemy_instance)
     game_elements_ref["enemy_list"] = enemies_to_keep_this_frame
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Enemies updated. Count: {len(enemies_to_keep_this_frame)}")
 
     statues_to_keep_this_frame_couch = []
-    statues_killed_this_frame_couch = []
-    for statue_instance_couch in list(statue_objects_list_ref):
+    statues_killed_this_frame_couch = [] 
+    for statue_instance_couch in list(statue_objects_list_ref): 
         if hasattr(statue_instance_couch, 'alive') and statue_instance_couch.alive():
-            if hasattr(statue_instance_couch, 'apply_physics_step') and not statue_instance_couch.is_smashed:
+            if hasattr(statue_instance_couch, 'apply_physics_step') and \
+               (not statue_instance_couch.is_smashed or (statue_instance_couch.is_smashed and not statue_instance_couch.death_animation_finished)):
                 statue_instance_couch.apply_physics_step(dt_sec, platforms_list_this_frame)
-            if hasattr(statue_instance_couch, 'update'): statue_instance_couch.update(dt_sec)
-            if statue_instance_couch.alive(): statues_to_keep_this_frame_couch.append(statue_instance_couch)
-            else: statues_killed_this_frame_couch.append(statue_instance_couch)
-    game_elements_ref["statue_objects"] = statues_to_keep_this_frame_couch
+            
+            if hasattr(statue_instance_couch, 'update'): statue_instance_couch.update(dt_sec) 
+            
+            if statue_instance_couch.alive(): 
+                statues_to_keep_this_frame_couch.append(statue_instance_couch)
+            else:
+                statues_killed_this_frame_couch.append(statue_instance_couch)
+    
+    game_elements_ref["statue_objects"] = statues_to_keep_this_frame_couch 
+    
     if statues_killed_this_frame_couch:
         current_main_platforms = game_elements_ref.get("platforms_list", [])
-        new_main_platforms_list = [p for p in current_main_platforms if not (isinstance(p, Statue) and p in statues_killed_this_frame_couch)]
+        new_main_platforms_list = [
+            p for p in current_main_platforms 
+            if not (isinstance(p, Statue) and p in statues_killed_this_frame_couch)
+        ]
         if len(new_main_platforms_list) != len(current_main_platforms):
             game_elements_ref["platforms_list"] = new_main_platforms_list
-            platforms_list_this_frame = new_main_platforms_list
+            platforms_list_this_frame = new_main_platforms_list 
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Statues updated. Count: {len(statues_to_keep_this_frame_couch)}")
 
     hittable_targets_for_projectiles: List[Any] = []
-    for p_target in player_instances_to_update:
-        if hasattr(p_target, 'alive') and p_target.alive() and not getattr(p_target, 'is_petrified', False): hittable_targets_for_projectiles.append(p_target)
-    for enemy_target in game_elements_ref.get("enemy_list",[]):
-        if hasattr(enemy_target, 'alive') and enemy_target.alive() and not getattr(enemy_target, 'is_petrified', False): hittable_targets_for_projectiles.append(enemy_target)
-    for statue_target in game_elements_ref.get("statue_objects", []):
-        if hasattr(statue_target, 'alive') and statue_target.alive() and not getattr(statue_target, 'is_smashed', False): hittable_targets_for_projectiles.append(statue_target)
+    for p_target in player_instances_to_update: 
+        if hasattr(p_target, 'alive') and p_target.alive() and not getattr(p_target,'is_petrified',False):
+            hittable_targets_for_projectiles.append(p_target)
+    for enemy_target in game_elements_ref.get("enemy_list",[]): 
+        if hasattr(enemy_target, 'alive') and enemy_target.alive() and not getattr(enemy_target,'is_petrified',False):
+            hittable_targets_for_projectiles.append(enemy_target)
+    for statue_target in game_elements_ref.get("statue_objects", []): 
+        if hasattr(statue_target, 'alive') and statue_target.alive() and not getattr(statue_target,'is_smashed',False) :
+            hittable_targets_for_projectiles.append(statue_target)
+    
     projectiles_to_keep_this_frame = []
-    for proj_instance in list(projectiles_list):
+    for proj_instance in list(projectiles_list): 
         if hasattr(proj_instance, 'update') and hasattr(proj_instance, 'alive') and proj_instance.alive():
             proj_instance.update(dt_sec, platforms_list_this_frame, hittable_targets_for_projectiles)
-        if hasattr(proj_instance, 'alive') and proj_instance.alive(): projectiles_to_keep_this_frame.append(proj_instance)
+        if hasattr(proj_instance, 'alive') and proj_instance.alive(): 
+            projectiles_to_keep_this_frame.append(proj_instance)
     game_elements_ref["projectiles_list"] = projectiles_to_keep_this_frame
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Projectiles updated. Count: {len(projectiles_to_keep_this_frame)}")
 
-    # No separate `current_chest` to manage here; `collectible_list` handles it.
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Collectibles (including chests) updated via loop. Total in list: {len(game_elements_ref.get('collectible_list',[]))}")
 
 
     active_players_for_trigger = [p for p in [player1, player2, player3, player4] if p and p.alive() and not p.is_dead and not getattr(p,'is_petrified',False)]
     for trigger_data in trigger_squares:
-        trigger_rect_tuple = trigger_data.get('rect')
-        if not trigger_rect_tuple or len(trigger_rect_tuple) != 4:
-            log_warning(f"COUCH_PLAY WARNING: Trigger square has invalid rect data: {trigger_data}")
+        trigger_rect_obj: Optional[QRectF] = trigger_data.get('rect')
+        
+        # **FIX APPLIED HERE for TypeError with QRectF**
+        if not isinstance(trigger_rect_obj, QRectF) or trigger_rect_obj.isNull() or not trigger_rect_obj.isValid():
+            log_warning(f"COUCH_PLAY WARNING: Trigger square has invalid rect data (not QRectF or null/invalid): {trigger_data}")
             continue
-        trigger_rect = QRectF(trigger_rect_tuple[0], trigger_rect_tuple[1], trigger_rect_tuple[2], trigger_rect_tuple[3])
+        
+        trigger_rect = trigger_rect_obj 
+
         for p_trigger_check in active_players_for_trigger:
-            if p_trigger_check.rect.intersects(trigger_rect):
+            if hasattr(p_trigger_check, 'rect') and p_trigger_check.rect.intersects(trigger_rect):
                 trigger_properties = trigger_data.get("properties", {})
                 linked_map = trigger_properties.get("linked_map_name")
                 activation_id = trigger_properties.get("activation_id", "")
@@ -359,28 +391,33 @@ def run_couch_play_mode(
                 one_time = trigger_properties.get("one_time_trigger", True)
                 trigger_unique_id = trigger_data.get('id', f"trigger_pos_{trigger_rect.x()}_{trigger_rect.y()}")
                 trigger_already_fired_key = f"trigger_{trigger_unique_id}_fired"
+
                 if event_type == "player_enter":
                     if one_time and game_elements_ref.get(trigger_already_fired_key, False):
-                        continue
+                        continue 
+                    
                     log_info(f"COUCH_PLAY: Player {p_trigger_check.player_id} entered trigger (Activation ID: '{activation_id}', Linked Map: '{linked_map}')")
-                    if linked_map:
+                    
+                    if linked_map: 
                         log_info(f"COUCH_PLAY: Requesting map change to '{linked_map}'.")
                         if request_map_change_callback:
                             request_map_change_callback(linked_map)
-                            return False # End current game loop update as map is changing
+                            return False 
                         else:
                             log_warning("COUCH_PLAY WARNING: request_map_change_callback not provided. Cannot change map via trigger.")
+                    
                     if one_time:
                         game_elements_ref[trigger_already_fired_key] = True
-                    break # One player activated it, stop checking other players for this trigger
-            else:
-                continue # Player didn't intersect this trigger, check next player
-            break # Trigger was activated by a player, move to next trigger
+                    
+                    break 
+            else: 
+                continue 
+            break 
 
     if camera_obj:
         focus_targets_alive_couch = [p for p in player_instances_to_update if p and hasattr(p, 'alive') and p.alive() and not getattr(p, 'is_dead', True) and not getattr(p, 'is_petrified', False)]
         if focus_targets_alive_couch:
-            focus_target_for_camera_couch = focus_targets_alive_couch[0]
+            focus_target_for_camera_couch = focus_targets_alive_couch[0] 
             for p_idx_focus_couch in range(len(focus_targets_alive_couch)):
                 current_p_for_cam_focus = focus_targets_alive_couch[p_idx_focus_couch]
                 if current_p_for_cam_focus.player_id == 1: focus_target_for_camera_couch = current_p_for_cam_focus; break
@@ -388,63 +425,87 @@ def run_couch_play_mode(
                 elif current_p_for_cam_focus.player_id == 3 and focus_target_for_camera_couch.player_id not in [1,2]: focus_target_for_camera_couch = current_p_for_cam_focus
                 elif current_p_for_cam_focus.player_id == 4 and focus_target_for_camera_couch.player_id not in [1,2,3]: focus_target_for_camera_couch = current_p_for_cam_focus
             camera_obj.update(focus_target_for_camera_couch)
-        else: camera_obj.static_update()
+        else:
+            camera_obj.static_update() 
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Camera updated.")
 
     new_all_renderables_couch: List[Any] = []
+    _added_renderable_ids_couch = set()
+
     def add_to_renderables_couch_if_new(obj_to_add: Any, render_list: List[Any]):
         if obj_to_add is not None:
-            is_present = False
-            for item in render_list:
-                if item is obj_to_add: is_present = True; break
-            if not is_present: render_list.append(obj_to_add)
+            obj_id_for_check = id(obj_to_add)
+            if obj_id_for_check not in _added_renderable_ids_couch:
+                render_list.append(obj_to_add)
+                _added_renderable_ids_couch.add(obj_id_for_check)
 
     for static_key_couch in ["background_tiles_list", "ladders_list", "hazards_list", "platforms_list"]:
-        for item_couch_static in game_elements_ref.get(static_key_couch, []): add_to_renderables_couch_if_new(item_couch_static, new_all_renderables_couch)
+        for item_couch_static in game_elements_ref.get(static_key_couch, []):
+            add_to_renderables_couch_if_new(item_couch_static, new_all_renderables_couch)
+    
     custom_image_added_count = 0
-    for custom_img_dict_couch in processed_custom_images_for_render_couch: add_to_renderables_couch_if_new(custom_img_dict_couch, new_all_renderables_couch); custom_image_added_count += 1
+    for custom_img_dict_couch in processed_custom_images_for_render_couch:
+        add_to_renderables_couch_if_new(custom_img_dict_couch, new_all_renderables_couch)
+        custom_image_added_count +=1
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Added {custom_image_added_count} custom image dicts to renderables list from 'processed_custom_images_for_render_couch'.")
+
     for dynamic_key_couch in ["enemy_list", "statue_objects", "collectible_list", "projectiles_list", "trigger_squares_list"]:
-        for item_couch_dyn in game_elements_ref.get(dynamic_key_couch, []): add_to_renderables_couch_if_new(item_couch_dyn, new_all_renderables_couch)
+        for item_couch_dyn in game_elements_ref.get(dynamic_key_couch, []):
+            add_to_renderables_couch_if_new(item_couch_dyn, new_all_renderables_couch)
+
     for p_render_couch in player_instances_to_update:
         if p_render_couch:
-            if hasattr(p_render_couch, 'alive') and p_render_couch.alive(): add_to_renderables_couch_if_new(p_render_couch, new_all_renderables_couch)
-            elif getattr(p_render_couch, 'is_dead', False) and not getattr(p_render_couch, 'death_animation_finished', True): add_to_renderables_couch_if_new(p_render_couch, new_all_renderables_couch)
+            if hasattr(p_render_couch, 'alive') and p_render_couch.alive():
+                add_to_renderables_couch_if_new(p_render_couch, new_all_renderables_couch)
+            elif getattr(p_render_couch, 'is_dead', False) and not getattr(p_render_couch, 'death_animation_finished', True):
+                add_to_renderables_couch_if_new(p_render_couch, new_all_renderables_couch) 
 
     try:
         new_all_renderables_couch.sort(key=get_layer_order_key)
         if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Sorted renderables. Final count: {len(new_all_renderables_couch)}")
     except NameError as e_name: log_error(f"COUCH_PLAY ERROR: NameError during sort - get_layer_order_key not defined? {e_name}. Render order might be incorrect.")
     except Exception as e_sort: log_error(f"COUCH_PLAY ERROR: Error sorting renderables: {e_sort}. Render order might be incorrect.")
+
     game_elements_ref["all_renderable_objects"] = new_all_renderables_couch
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Assembled and sorted renderables. Final count: {len(game_elements_ref['all_renderable_objects'])}")
 
     def is_player_truly_gone_couch(p_instance_couch: Optional[Player]):
         if not p_instance_couch or not hasattr(p_instance_couch, '_valid_init') or not p_instance_couch._valid_init: return True
         if hasattr(p_instance_couch, 'alive') and p_instance_couch.alive():
-            if getattr(p_instance_couch, 'is_dead', False):
-                if getattr(p_instance_couch, 'is_petrified', False) and not getattr(p_instance_couch, 'is_stone_smashed', False): return False
-                elif not getattr(p_instance_couch, 'death_animation_finished', True): return False
-            else: return False
-        return True
+            if getattr(p_instance_couch, 'is_petrified', False) and not getattr(p_instance_couch, 'is_stone_smashed', False):
+                return False 
+            return False 
+        if getattr(p_instance_couch, 'is_dead', False):
+            if getattr(p_instance_couch, 'is_petrified', False) and not getattr(p_instance_couch, 'is_stone_smashed', False):
+                return False 
+            elif getattr(p_instance_couch, 'is_stone_smashed', False) and not getattr(p_instance_couch, 'death_animation_finished', True):
+                return False 
+            elif not getattr(p_instance_couch, 'death_animation_finished', True): 
+                return False
+        return True 
+
     num_players_for_mode = game_elements_ref.get('num_active_players_for_mode', 2)
     active_player_instances_in_map_couch = [p for p_idx, p in enumerate([player1,player2,player3,player4]) if p_idx < num_players_for_mode and p and hasattr(p, '_valid_init') and p._valid_init]
+
     if not active_player_instances_in_map_couch and num_players_for_mode > 0 :
         log_info(f"Couch Play: No valid active player instances for this mode ({num_players_for_mode} players expected). Game Over by default.")
         if show_status_message_callback: show_status_message_callback(f"Game Over! No active players.")
         run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
         return False
+
     all_active_players_are_gone_couch = True
-    if not active_player_instances_in_map_couch and num_players_for_mode == 0:
+    if not active_player_instances_in_map_couch and num_players_for_mode == 0: 
         all_active_players_are_gone_couch = False
     elif active_player_instances_in_map_couch:
         for p_active_inst_couch in active_player_instances_in_map_couch:
-            if not is_player_truly_gone_couch(p_active_inst_couch): all_active_players_are_gone_couch = False; break
+            if not is_player_truly_gone_couch(p_active_inst_couch):
+                all_active_players_are_gone_couch = False; break
+    
     if all_active_players_are_gone_couch and num_players_for_mode > 0:
         log_info(f"Couch Play: All {len(active_player_instances_in_map_couch)} active players are gone. Game Over.")
         if show_status_message_callback: show_status_message_callback(f"Game Over! All {len(active_player_instances_in_map_couch)} players defeated.")
-        process_qt_events_callback(); time.sleep(1.5)
+        process_qt_events_callback(); time.sleep(1.5) 
         run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
-        return False
+        return False 
 
-    return True
+    return True 

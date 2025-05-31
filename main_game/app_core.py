@@ -1,4 +1,3 @@
-#################### START OF FILE: main_game\app_core.py ####################
 # main_game/app_core.py
 # -*- coding: utf-8 -*-
 """
@@ -17,8 +16,9 @@ MODIFIED: `get_input_snapshot` (in `app_input_manager`) is called with the corre
 MODIFIED: Corrected NameError for e_init in _refresh_appcore_joystick_list.
 MODIFIED: Corrected import paths for Player and Statue from within main_game.
 MODIFIED: `player.animations` is now checked to be a dictionary before using it in `update_game_loop`.
+MODIFIED: Fixed NameError for hazards_list_this_frame in host_waiting update.
 """
-# version 2.1.15 (Robust player.animations check)
+# version 2.1.16 (Fixed NameError for hazards_list_this_frame)
 
 import sys
 import os
@@ -372,7 +372,7 @@ class MainWindow(QMainWindow):
             if joy_obj is None: continue
             try:
                 if not joy_obj.get_init(): joy_obj.init()
-            except pygame.error as e_init_loop: # Corrected variable name here from original if it was 'e_init'
+            except pygame.error as e_init_loop:
                 joy_name_fallback = getattr(joy_obj, 'name', 'UnknownJoyBeforeInit')
                 warning(f"AppCore RefreshLoop: Failed to init joystick '{joy_name_fallback}' for UI/game. Error: {e_init_loop}")
                 continue
@@ -596,16 +596,26 @@ class MainWindow(QMainWindow):
                             if self.server_state: self.server_state.current_map_name = map_name_to_reload
                             else: error("AppCore (host_waiting): Game reset FAILED.")
                         else: error("AppCore (host_waiting) Reset: Cannot determine map to reload.")
+                    
                     p1 = self.game_elements.get("player1") # Re-fetch p1
-                    # MODIFIED: Added check for p1.animations being a dict before update
+                    
+                    # **FIX APPLIED HERE**
+                    platforms_list_this_frame = self.game_elements.get("platforms_list", [])
+                    ladders_list_this_frame = self.game_elements.get("ladders_list", [])
+                    hazards_list_this_frame = self.game_elements.get("hazards_list", []) 
+
                     if p1 and isinstance(p1, Player) and isinstance(p1.animations, dict) and p1.animations:
-                        other_players_for_p1_local: List[Player] = []; hittable_targets_for_p1_melee: List[Any] = []
+                        other_players_for_p1_local: List[Player] = []
+                        hittable_targets_for_p1_melee: List[Any] = []
                         hittable_targets_for_p1_melee.extend([e for e in self.game_elements.get("enemy_list",[]) if hasattr(e, 'alive') and e.alive()])
                         hittable_targets_for_p1_melee.extend([s for s in self.game_elements.get("statue_objects", []) if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
-                        p1.update(dt_sec, self.game_elements.get("platforms_list", []), self.game_elements.get("ladders_list", []), self.game_elements.get("hazards_list", []), other_players_for_p1_local, hittable_targets_for_p1_melee)
+                        
+                        p1.update(dt_sec, platforms_list_this_frame, ladders_list_this_frame, hazards_list_this_frame, other_players_for_p1_local, hittable_targets_for_p1_melee)
+
                 active_players_for_ai_host_wait = [p1] if p1 and hasattr(p1,'alive') and p1.alive() else []
                 for enemy in list(self.game_elements.get("enemy_list",[])):
                     if hasattr(enemy, 'update'): enemy.update(dt_sec, active_players_for_ai_host_wait, self.game_elements.get("platforms_list",[]), self.game_elements.get("hazards_list",[]), self.game_elements.get("enemy_list",[]))
+                
                 current_statues_list_appcore = list(self.game_elements.get("statue_objects", [])); platforms_list_appcore = self.game_elements.get("platforms_list", [])
                 statues_to_keep_appcore = []; statues_killed_this_frame_appcore = []
                 for statue_instance_ac in current_statues_list_appcore:
@@ -618,6 +628,7 @@ class MainWindow(QMainWindow):
                 if statues_killed_this_frame_appcore:
                     current_platforms = self.game_elements.get("platforms_list", []); new_platforms_list_ac = [p_plat for p_plat in current_platforms if not (isinstance(p_plat, Statue) and p_plat in statues_killed_this_frame_appcore)]
                     if len(new_platforms_list_ac) != len(current_platforms): self.game_elements["platforms_list"] = new_platforms_list_ac; debug(f"AppCore (host_waiting): Updated platforms_list after statue removal. New count: {len(new_platforms_list_ac)}")
+                
                 projectiles_current_list = self.game_elements.get("projectiles_list", [])
                 for proj_obj in list(projectiles_current_list):
                     if hasattr(proj_obj, 'update'):
@@ -627,49 +638,66 @@ class MainWindow(QMainWindow):
                     if not (hasattr(proj_obj, 'alive') and proj_obj.alive()):
                         projectiles_list_ref = self.game_elements.get("projectiles_list");
                         if projectiles_list_ref and proj_obj in projectiles_list_ref: projectiles_list_ref.remove(proj_obj)
-                current_chest_server: Optional[Chest] = self.game_elements.get("current_chest")
-                if current_chest_server and isinstance(current_chest_server, Chest) and hasattr(current_chest_server, 'alive') and current_chest_server.alive():
-                    current_chest_server.apply_physics_step(dt_sec); chest_landed_on_p1_and_killed = False
-                    if not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed' and p1 and hasattr(p1, '_valid_init') and p1._valid_init and hasattr(p1, 'alive') and p1.alive() and not getattr(p1, 'is_dead', True) and not getattr(p1, 'is_petrified', False):
-                        if current_chest_server.rect.intersects(p1.rect):
-                            is_chest_falling_meaningfully_server = hasattr(current_chest_server, 'vel_y') and current_chest_server.vel_y > 1.0;
-                            vertical_overlap_landing_server = current_chest_server.rect.bottom() >= p1.rect.top() and current_chest_server.rect.top() < p1.rect.bottom()
-                            is_landing_on_head_area_server = vertical_overlap_landing_server and current_chest_server.rect.bottom() <= p1.rect.top() + (p1.rect.height() * 0.6)
-                            min_h_overlap_crush_server = current_chest_server.rect.width() * 0.3
-                            actual_h_overlap_crush_server = min(current_chest_server.rect.right(), p1.rect.right()) - max(current_chest_server.rect.left(), p1.rect.left())
-                            has_sufficient_h_overlap_server = actual_h_overlap_crush_server >= min_h_overlap_crush_server
-                            if is_chest_falling_meaningfully_server and is_landing_on_head_area_server and has_sufficient_h_overlap_server:
-                                if hasattr(p1, 'insta_kill'): info(f"CRUSH AppCore(host_waiting): Chest landed on P1. Insta-killing."); p1.insta_kill()
-                                else: warning(f"CRUSH_FAIL AppCore(host_waiting): P1 missing insta_kill(). Overkilling.");
-                                if hasattr(p1, 'take_damage') and hasattr(p1, 'max_health'): p1.take_damage(p1.max_health * 10)
-                                current_chest_server.rect.moveBottom(p1.rect.top());
-                                if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom())
-                                current_chest_server.vel_y = 0.0; current_chest_server.on_ground = True; chest_landed_on_p1_and_killed = True
-                                if hasattr(current_chest_server, '_update_rect_from_image_and_pos'): current_chest_server._update_rect_from_image_and_pos()
-                    current_chest_server.on_ground = False
-                    if chest_landed_on_p1_and_killed: current_chest_server.on_ground = True
-                    if not chest_landed_on_p1_and_killed and not current_chest_server.is_collected_flag_internal and current_chest_server.state == 'closed':
-                        for plat_chest in self.game_elements.get("platforms_list", []):
-                            if isinstance(plat_chest, Statue) and plat_chest.is_smashed: continue
-                            if hasattr(plat_chest, 'rect') and current_chest_server.rect.intersects(plat_chest.rect):
-                                 scaled_vel_y_chest = current_chest_server.vel_y * dt_sec * C.FPS; previous_chest_bottom_y_estimate = current_chest_server.rect.bottom() - scaled_vel_y_chest
-                                 if current_chest_server.vel_y >=0 and current_chest_server.rect.bottom() >= plat_chest.rect.top() and previous_chest_bottom_y_estimate <= plat_chest.rect.top() + C.GROUND_SNAP_THRESHOLD :
-                                     min_overlap_ratio_chest = 0.1; min_horizontal_overlap_chest = current_chest_server.rect.width() * min_overlap_ratio_chest
-                                     actual_overlap_width_chest = min(current_chest_server.rect.right(), plat_chest.rect.right()) - max(current_chest_server.rect.left(), plat_chest.rect.left())
-                                     if actual_overlap_width_chest >= min_horizontal_overlap_chest: current_chest_server.rect.moveBottom(plat_chest.rect.top());
-                                     if hasattr(current_chest_server, 'pos_midbottom'): current_chest_server.pos_midbottom.setY(current_chest_server.rect.bottom()); current_chest_server.vel_y = 0.0; current_chest_server.on_ground = True; break
-                        if hasattr(current_chest_server, '_update_rect_from_image_and_pos'): current_chest_server._update_rect_from_image_and_pos()
-                    current_chest_server.update(dt_sec); interaction_chest_rect_host = QRectF(current_chest_server.rect).adjusted(-5, -5, 5, 5)
-                    if current_chest_server.state == 'closed' and not current_chest_server.is_collected_flag_internal and p1 and hasattr(p1,'alive') and p1.alive() and not getattr(p1,'is_dead',True) and not getattr(p1, 'is_petrified', False) and p1_actions.get("interact", False) and hasattr(p1,'rect') and p1.rect.intersects(interaction_chest_rect_host):
-                       current_chest_server.collect(p1); info(f"AppCore(host_waiting): P1 collected chest.")
+                
+                current_chest_server: Optional[Chest] = self.game_elements.get("current_chest") # This key might be removed if using collectible_list for chests
+                # Fallback or preferred: iterate collectible_list for chests
+                all_chests_in_game = [item for item in self.game_elements.get("collectible_list", []) if isinstance(item, Chest)]
+                
+                for chest_instance_logic in all_chests_in_game: # Process all chests
+                    if chest_instance_logic and chest_instance_logic.alive():
+                        chest_instance_logic.apply_physics_step(dt_sec)
+                        chest_landed_on_p1_and_killed = False
+                        if not chest_instance_logic.is_collected_flag_internal and chest_instance_logic.state == 'closed' and \
+                           p1 and p1._valid_init and p1.alive() and not p1.is_dead and not getattr(p1, 'is_petrified', False):
+                            if chest_instance_logic.rect.intersects(p1.rect):
+                                # ... (chest crush logic as before, for each chest_instance_logic) ...
+                                is_chest_falling_meaningfully_server = hasattr(chest_instance_logic, 'vel_y') and chest_instance_logic.vel_y > 1.0;
+                                vertical_overlap_landing_server = chest_instance_logic.rect.bottom() >= p1.rect.top() and chest_instance_logic.rect.top() < p1.rect.bottom()
+                                is_landing_on_head_area_server = vertical_overlap_landing_server and chest_instance_logic.rect.bottom() <= p1.rect.top() + (p1.rect.height() * 0.6)
+                                min_h_overlap_crush_server = chest_instance_logic.rect.width() * 0.3
+                                actual_h_overlap_crush_server = min(chest_instance_logic.rect.right(), p1.rect.right()) - max(chest_instance_logic.rect.left(), p1.rect.left())
+                                has_sufficient_h_overlap_server = actual_h_overlap_crush_server >= min_h_overlap_crush_server
+                                if is_chest_falling_meaningfully_server and is_landing_on_head_area_server and has_sufficient_h_overlap_server:
+                                    if hasattr(p1, 'insta_kill'): info(f"CRUSH AppCore(host_waiting): Chest landed on P1. Insta-killing."); p1.insta_kill()
+                                    else: warning(f"CRUSH_FAIL AppCore(host_waiting): P1 missing insta_kill(). Overkilling.");
+                                    if hasattr(p1, 'take_damage') and hasattr(p1, 'max_health'): p1.take_damage(p1.max_health * 10)
+                                    chest_instance_logic.rect.moveBottom(p1.rect.top());
+                                    if hasattr(chest_instance_logic, 'pos_midbottom'): chest_instance_logic.pos_midbottom.setY(chest_instance_logic.rect.bottom())
+                                    chest_instance_logic.vel_y = 0.0; chest_instance_logic.on_ground = True; chest_landed_on_p1_and_killed = True
+                                    if hasattr(chest_instance_logic, '_update_rect_from_image_and_pos'): chest_instance_logic._update_rect_from_image_and_pos()
+                        
+                        chest_instance_logic.on_ground = False
+                        if chest_landed_on_p1_and_killed: chest_instance_logic.on_ground = True
+                        if not chest_landed_on_p1_and_killed and not chest_instance_logic.is_collected_flag_internal and chest_instance_logic.state == 'closed':
+                            for plat_chest in self.game_elements.get("platforms_list", []):
+                                if isinstance(plat_chest, Statue) and plat_chest.is_smashed: continue
+                                if hasattr(plat_chest, 'rect') and chest_instance_logic.rect.intersects(plat_chest.rect):
+                                     # ... (chest platform collision as before for each chest_instance_logic) ...
+                                     scaled_vel_y_chest = chest_instance_logic.vel_y * dt_sec * C.FPS; previous_chest_bottom_y_estimate = chest_instance_logic.rect.bottom() - scaled_vel_y_chest
+                                     if chest_instance_logic.vel_y >=0 and chest_instance_logic.rect.bottom() >= plat_chest.rect.top() and previous_chest_bottom_y_estimate <= plat_chest.rect.top() + C.GROUND_SNAP_THRESHOLD :
+                                         min_overlap_ratio_chest = 0.1; min_horizontal_overlap_chest = chest_instance_logic.rect.width() * min_overlap_ratio_chest
+                                         actual_overlap_width_chest = min(chest_instance_logic.rect.right(), plat_chest.rect.right()) - max(chest_instance_logic.rect.left(), plat_chest.rect.left())
+                                         if actual_overlap_width_chest >= min_horizontal_overlap_chest: chest_instance_logic.rect.moveBottom(plat_chest.rect.top());
+                                         if hasattr(chest_instance_logic, 'pos_midbottom'): chest_instance_logic.pos_midbottom.setY(chest_instance_logic.rect.bottom()); chest_instance_logic.vel_y = 0.0; chest_instance_logic.on_ground = True; break
+                            if hasattr(chest_instance_logic, '_update_rect_from_image_and_pos'): chest_instance_logic._update_rect_from_image_and_pos()
+                        
+                        chest_instance_logic.update(dt_sec)
+                        interaction_chest_rect_host = QRectF(chest_instance_logic.rect).adjusted(-5, -5, 5, 5)
+                        if chest_instance_logic.state == 'closed' and not chest_instance_logic.is_collected_flag_internal and \
+                           p1 and p1.alive() and p1._valid_init and not p1.is_dead and not getattr(p1, 'is_petrified', False) and \
+                           p1_actions.get("interact", False) and hasattr(p1,'rect') and p1.rect.intersects(interaction_chest_rect_host):
+                           chest_instance_logic.collect(p1); info(f"AppCore(host_waiting): P1 collected chest ID {id(chest_instance_logic)}.")
+
                 camera = self.game_elements.get("camera")
                 if camera:
                     p1_for_cam_host_wait = self.game_elements.get("player1")
                     if p1_for_cam_host_wait and hasattr(p1_for_cam_host_wait,'alive') and p1_for_cam_host_wait.alive(): camera.update(p1_for_cam_host_wait)
                     else: camera.static_update()
         elif self.current_game_mode == "join_active" and self.app_status.app_running and self.client_state and self.client_state.map_download_status == "present": pass
+        
         if self.current_view_name == "game_scene":
             if self.game_elements: self.game_scene_widget.update_game_state(0)
+        
         clear_qt_key_events_this_frame()
 
     def closeEvent(self, event: QCloseEvent):
