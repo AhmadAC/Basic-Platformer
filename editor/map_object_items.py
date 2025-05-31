@@ -1,25 +1,25 @@
-#################### START OF FILE: map_object_items.py ####################
-
 # editor/map_object_items.py
 # -*- coding: utf-8 -*-
 """
 Contains QGraphicsItem representations for standard map objects.
+MODIFIED: StandardMapObjectItem now handles 'render_as_rotated_segment'.
+ADDED: InvisibleWallMapItem.
 """
 import logging
 from typing import Optional, Dict, Any, Tuple
 
 from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsItem, QStyleOptionGraphicsItem, QWidget
-from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QTransform, QImage, QPainterPath
+from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QTransform, QImage, QPainterPath, QFont
 from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF, QSize
 
 from editor import editor_config as ED_CONFIG
-from editor.editor_state import EditorState # Forward declaration for type hint
-from editor.editor_assets import get_asset_pixmap
-from editor.editor_custom_items import BaseResizableMapItem # If BaseResizable isn't moved here
+from editor.editor_state import EditorState 
+from editor.editor_assets import get_asset_pixmap, _create_colored_pixmap # For segment base
+from editor.editor_custom_items import BaseResizableMapItem 
 
 logger = logging.getLogger(__name__)
 
-class StandardMapObjectItem(QGraphicsPixmapItem): # Or BaseResizableMapItem if we move it
+class StandardMapObjectItem(QGraphicsPixmapItem):
     def __init__(self, editor_key: str, game_type_id: str,
                  world_x: int, world_y: int, map_object_data_ref: Dict[str, Any],
                  editor_state_ref: EditorState,
@@ -31,69 +31,90 @@ class StandardMapObjectItem(QGraphicsPixmapItem): # Or BaseResizableMapItem if w
         self.editor_state_ref = editor_state_ref 
 
         self.is_procedural_tile = False
+        self.is_render_as_rotated_segment = False 
         self.procedural_color_tuple: Optional[Tuple[int,int,int]] = None 
-        self.procedural_width: float = float(ED_CONFIG.TS) # type: ignore
-        self.procedural_height: float = float(ED_CONFIG.TS) # type: ignore
+        self.procedural_width: float = float(ED_CONFIG.TS) 
+        self.procedural_height: float = float(ED_CONFIG.TS) 
+        self.segment_base_width: float = float(ED_CONFIG.TS)
+        self.segment_base_height: float = float(ED_CONFIG.TS) // 4
+
 
         asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
-        initial_pixmap = QPixmap() 
+        initial_pixmap_for_super = QPixmap() 
 
-        if asset_info and asset_info.get("surface_params") and \
-           asset_info.get("category") == "tile" and not asset_info.get("source_file"):
-            self.is_procedural_tile = True
-            params = asset_info["surface_params"]
-            self.procedural_width = float(params[0])
-            self.procedural_height = float(params[1])
-            if "override_color" not in self.map_object_data_ref:
-                self.procedural_color_tuple = params[2]
-            else:
-                self.procedural_color_tuple = self.map_object_data_ref["override_color"]
-            
-            transparent_pm_size = QSize(int(self.procedural_width), int(self.procedural_height))
-            if transparent_pm_size.isEmpty(): transparent_pm_size = QSize(1,1) 
-            transparent_pm = QPixmap(transparent_pm_size)
-            transparent_pm.fill(Qt.GlobalColor.transparent)
-            super().__init__(transparent_pm, parent) 
-        else:
-            self.is_procedural_tile = False
-            if asset_info:
-                original_w, original_h = asset_info.get("original_size_pixels", (ED_CONFIG.BASE_GRID_SIZE, ED_CONFIG.BASE_GRID_SIZE)) # type: ignore
+        if asset_info:
+            self.is_render_as_rotated_segment = asset_info.get("render_as_rotated_segment", False)
+            if self.is_render_as_rotated_segment:
+                self.is_procedural_tile = True 
+                self.procedural_width = float(ED_CONFIG.TS) # Item itself is cell-sized
+                self.procedural_height = float(ED_CONFIG.TS)
+                
+                seg_params = asset_info.get("surface_params")
+                if seg_params and isinstance(seg_params, tuple) and len(seg_params) >= 2:
+                    self.segment_base_width = float(seg_params[0])
+                    self.segment_base_height = float(seg_params[1])
+                else: # Fallback if surface_params somehow missing for segment type
+                    self.segment_base_width = float(ED_CONFIG.TS)
+                    self.segment_base_height = float(ED_CONFIG.TS) // 4
+                    logger.warning(f"Segment asset {editor_key} missing valid surface_params, using defaults.")
+
+                transparent_pm_size = QSize(int(self.procedural_width), int(self.procedural_height))
+                if transparent_pm_size.isEmpty(): transparent_pm_size = QSize(1,1) 
+                initial_pixmap_for_super = QPixmap(transparent_pm_size)
+                initial_pixmap_for_super.fill(Qt.GlobalColor.transparent)
+
+            elif asset_info.get("surface_params") and \
+                 asset_info.get("category") == "tile" and not asset_info.get("source_file"):
+                self.is_procedural_tile = True
+                params = asset_info["surface_params"]
+                self.procedural_width = float(params[0])
+                self.procedural_height = float(params[1])
+                transparent_pm_size = QSize(int(self.procedural_width), int(self.procedural_height))
+                if transparent_pm_size.isEmpty(): transparent_pm_size = QSize(1,1) 
+                initial_pixmap_for_super = QPixmap(transparent_pm_size)
+                initial_pixmap_for_super.fill(Qt.GlobalColor.transparent)
+            else: # Image-based asset
+                self.is_procedural_tile = False
+                original_w, original_h = asset_info.get("original_size_pixels", (ED_CONFIG.BASE_GRID_SIZE, ED_CONFIG.BASE_GRID_SIZE))
                 pixmap = get_asset_pixmap(self.editor_key, asset_info, QSizeF(int(original_w), int(original_h)),
                                           self.map_object_data_ref.get("override_color"), 
                                           get_native_size_only=True,
                                           is_flipped_h=False, rotation=0) 
-                if pixmap and not pixmap.isNull():
-                    initial_pixmap = pixmap
+                if pixmap and not pixmap.isNull(): initial_pixmap_for_super = pixmap
                 else:
-                    logger.warning(f"StandardMapObjectItem: Null pixmap for {self.editor_key}")
-                    initial_pixmap = QPixmap(int(original_w), int(original_h))
-                    initial_pixmap.fill(Qt.GlobalColor.magenta)
-            else: 
-                initial_pixmap = QPixmap(ED_CONFIG.TS, ED_CONFIG.TS) # type: ignore
-                initial_pixmap.fill(Qt.GlobalColor.cyan)
-            super().__init__(initial_pixmap, parent)
+                    initial_pixmap_for_super = QPixmap(int(original_w), int(original_h))
+                    initial_pixmap_for_super.fill(Qt.GlobalColor.magenta)
+        else: 
+            initial_pixmap_for_super = QPixmap(ED_CONFIG.TS, ED_CONFIG.TS) 
+            initial_pixmap_for_super.fill(Qt.GlobalColor.cyan)
         
-        self.setPos(QPointF(float(world_x), float(world_y)))
+        super().__init__(initial_pixmap_for_super, parent)
+        
+        self.setPos(QPointF(float(world_x), float(world_y))) # This sets the top-left of the item's bounding rect
         
         is_locked = self.map_object_data_ref.get("editor_locked", False)
         current_flags = QGraphicsItem.GraphicsItemFlag.ItemIsSelectable | QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
-        if not is_locked:
-            current_flags |= QGraphicsItem.GraphicsItemFlag.ItemIsMovable
+        if not is_locked: current_flags |= QGraphicsItem.GraphicsItemFlag.ItemIsMovable
         self.setFlags(current_flags)
         
         self.setZValue(map_object_data_ref.get("layer_order", 0))
         self.setVisible(not map_object_data_ref.get("editor_hidden", False))
         
-        self._apply_orientation_transform()
+        if not self.is_render_as_rotated_segment:
+            self._apply_orientation_transform()
 
 
     def boundingRect(self) -> QRectF:
-        if self.is_procedural_tile:
-            return QRectF(0, 0, self.procedural_width, self.procedural_height)
-        else:
-            if self.pixmap() and not self.pixmap().isNull():
-                return super().boundingRect()
-            return QRectF(0,0, ED_CONFIG.TS, ED_CONFIG.TS) # type: ignore
+        if self.is_procedural_tile: # Includes render_as_rotated_segment
+            return QRectF(0, 0, self.procedural_width, self.procedural_height) # TSxTS for segments
+        else: # Image-based
+            # The pixmap for image assets is already rotated/flipped by _apply_orientation_transform
+            # super().boundingRect() should give the transformed bounding box.
+            # However, for consistency, let's ensure it's based on the *current* pixmap.
+            pm = self.pixmap()
+            if pm and not pm.isNull():
+                return QRectF(0,0, float(pm.width()), float(pm.height()))
+            return QRectF(0,0, ED_CONFIG.TS, ED_CONFIG.TS) 
 
     def shape(self) -> QPainterPath:
         path = QPainterPath()
@@ -101,109 +122,107 @@ class StandardMapObjectItem(QGraphicsPixmapItem): # Or BaseResizableMapItem if w
         return path
 
     def _apply_orientation_transform(self):
+        if self.is_render_as_rotated_segment:
+            self.setTransform(QTransform()) # Ensure no external transform for segments
+            return
+
         item_should_be_flipped = self.map_object_data_ref.get("is_flipped_h", False)
         rotation_angle = float(self.map_object_data_ref.get("rotation", 0))
-
         current_transform = QTransform() 
-        
         rect = self.boundingRect() 
-        center_x = rect.width() / 2.0
-        center_y = rect.height() / 2.0
-
+        center_x = rect.width() / 2.0; center_y = rect.height() / 2.0
         current_transform.translate(center_x, center_y)
-        if item_should_be_flipped:
-            current_transform.scale(-1, 1)
-        if rotation_angle != 0:
-            current_transform.rotate(rotation_angle)
+        if item_should_be_flipped: current_transform.scale(-1, 1)
+        if rotation_angle != 0: current_transform.rotate(rotation_angle)
         current_transform.translate(-center_x, -center_y)
-        
         self.setTransform(current_transform)
 
 
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
-        if self.is_procedural_tile:
+        if self.is_render_as_rotated_segment:
             painter.save()
+            asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
+            if not asset_info: painter.restore(); return
 
+            color_tuple_seg = self.map_object_data_ref.get("override_color")
+            seg_params = asset_info.get("surface_params")
+            if not color_tuple_seg:
+                 if seg_params and len(seg_params) == 3: color_tuple_seg = seg_params[2]
+                 else: color_tuple_seg = getattr(ED_CONFIG.C, "MAGENTA", (255,0,255))
+            
+            base_segment_pm = _create_colored_pixmap(int(self.segment_base_width), int(self.segment_base_height), color_tuple_seg)
+            rotation = self.map_object_data_ref.get("rotation", 0)
+            rotated_segment_pm = base_segment_pm
+            if rotation != 0:
+                img = base_segment_pm.toImage()
+                center = QPointF(img.width() / 2.0, img.height() / 2.0)
+                transform = QTransform().translate(center.x(), center.y()).rotate(float(rotation)).translate(-center.x(), -center.y())
+                rotated_img = img.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+                if not rotated_img.isNull(): rotated_segment_pm = QPixmap.fromImage(rotated_img)
+
+            rsw, rsh = float(rotated_segment_pm.width()), float(rotated_segment_pm.height())
+            canvas_w_float, canvas_h_float = self.procedural_width, self.procedural_height # TS x TS
+            paint_x, paint_y = 0.0, 0.0
+
+            if rotation == 0: paint_x = (canvas_w_float - rsw) / 2.0; paint_y = 0.0
+            elif rotation == 90: paint_x = canvas_w_float - rsw; paint_y = (canvas_h_float - rsh) / 2.0
+            elif rotation == 180: paint_x = (canvas_w_float - rsw) / 2.0; paint_y = canvas_h_float - rsh
+            elif rotation == 270: paint_x = 0.0; paint_y = (canvas_h_float - rsh) / 2.0
+            
+            painter.drawPixmap(QPointF(paint_x, paint_y), rotated_segment_pm)
+            
+            if option.state & QStyleOptionGraphicsItem.StyleState.State_Selected:
+                pen = QPen(QColor(*ED_CONFIG.MAP_VIEW_SELECTION_RECT_COLOR_TUPLE), 2, Qt.PenStyle.SolidLine); pen.setCosmetic(True)
+                painter.setPen(pen); painter.setBrush(Qt.BrushStyle.NoBrush); painter.drawRect(self.boundingRect().adjusted(0.5,0.5,-0.5,-0.5))
+            painter.restore()
+            return 
+
+        elif self.is_procedural_tile:
+            painter.save()
             color_to_use = self.map_object_data_ref.get("override_color", self.procedural_color_tuple)
+            asset_info_paint = self.editor_state_ref.assets_palette.get(self.editor_key)
             if not color_to_use: 
-                 asset_info = self.editor_state_ref.assets_palette.get(self.editor_key)
-                 if asset_info and asset_info.get("surface_params"):
-                     color_to_use = asset_info["surface_params"][2]
-                 else:
-                     color_to_use = ED_CONFIG.C.MAGENTA # type: ignore
-            
-            brush_color = QColor(*color_to_use) # type: ignore
+                 if asset_info_paint and asset_info_paint.get("surface_params"): color_to_use = asset_info_paint["surface_params"][2]
+                 else: color_to_use = getattr(ED_CONFIG.C, "MAGENTA", (255,0,255))
+            brush_color = QColor(*color_to_use) 
             painter.setBrush(brush_color)
-            
             pen_color = brush_color.darker(130) if brush_color.alpha() == 255 else Qt.GlobalColor.transparent
             painter.setPen(QPen(pen_color, 0.5)) 
-
-            props = self.map_object_data_ref.get("properties", {})
-            radius = float(props.get("corner_radius", 0))
-            rect = self.boundingRect()
-
+            props = self.map_object_data_ref.get("properties", {}); radius = float(props.get("corner_radius", 0)); rect = self.boundingRect()
             if radius > 1: 
                 path = QPainterPath()
-                if props.get("round_top_left", False): 
-                    path.moveTo(rect.topLeft() + QPointF(radius, 0))
-                    path.arcTo(QRectF(rect.topLeft(), QSizeF(radius * 2, radius * 2)), 180, -90)
-                else:
-                    path.moveTo(rect.topLeft())
-                
+                if props.get("round_top_left", False): path.moveTo(rect.topLeft() + QPointF(radius, 0)); path.arcTo(QRectF(rect.topLeft(), QSizeF(radius * 2, radius * 2)), 180, -90)
+                else: path.moveTo(rect.topLeft())
                 path.lineTo(rect.topRight() - QPointF(radius if props.get("round_top_right", False) else 0, 0))
-                if props.get("round_top_right", False):
-                    path.arcTo(QRectF(rect.topRight() - QPointF(radius*2,0), QSizeF(radius * 2, radius * 2)), 90, -90)
-                else:
-                    path.lineTo(rect.topRight())
-
+                if props.get("round_top_right", False): path.arcTo(QRectF(rect.topRight() - QPointF(radius*2,0), QSizeF(radius * 2, radius * 2)), 90, -90)
+                else: path.lineTo(rect.topRight())
                 path.lineTo(rect.bottomRight() - QPointF(0, radius if props.get("round_bottom_right", False) else 0))
-                if props.get("round_bottom_right", False):
-                    path.arcTo(QRectF(rect.bottomRight() - QPointF(radius*2,radius*2), QSizeF(radius * 2, radius * 2)), 0, -90)
-                else:
-                    path.lineTo(rect.bottomRight())
-
+                if props.get("round_bottom_right", False): path.arcTo(QRectF(rect.bottomRight() - QPointF(radius*2,radius*2), QSizeF(radius * 2, radius * 2)), 0, -90)
+                else: path.lineTo(rect.bottomRight())
                 path.lineTo(rect.bottomLeft() + QPointF(radius if props.get("round_bottom_left", False) else 0, 0))
-                if props.get("round_bottom_left", False):
-                     path.arcTo(QRectF(rect.bottomLeft() - QPointF(0,radius*2) , QSizeF(radius * 2, radius * 2)), -90, -90)
-                else:
-                    path.lineTo(rect.bottomLeft())
-                path.closeSubpath()
-                painter.drawPath(path)
-            else:
-                painter.drawRect(rect)
-            
+                if props.get("round_bottom_left", False): path.arcTo(QRectF(rect.bottomLeft() - QPointF(0,radius*2) , QSizeF(radius * 2, radius * 2)), -90, -90)
+                else: path.lineTo(rect.bottomLeft())
+                path.closeSubpath(); painter.drawPath(path)
+            else: painter.drawRect(rect)
             painter.restore() 
-        else:
+        else: # Image-based tiles
             super().paint(painter, option, widget)
 
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
         is_locked = self.map_object_data_ref.get("editor_locked", False)
-        
-        if is_locked and change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
-            return self.pos() 
-        
+        if is_locked and change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged: return self.pos() 
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged and self.scene() and self.isSelected():
-            if self.scene().property("is_actively_transforming_item") is True: 
-                 return super().itemChange(change, value)
-
+            if self.scene().property("is_actively_transforming_item") is True: return super().itemChange(change, value)
             new_pos: QPointF = value 
             grid_size = self.scene().property("grid_size") 
-            grid_size = grid_size if isinstance(grid_size, (int, float)) and grid_size > 0 else ED_CONFIG.BASE_GRID_SIZE # type: ignore
-
-            snapped_x = round(new_pos.x() / grid_size) * grid_size
-            snapped_y = round(new_pos.y() / grid_size) * grid_size
-
-            if int(snapped_x) != self.map_object_data_ref.get('world_x') or \
-               int(snapped_y) != self.map_object_data_ref.get('world_y'):
-                self.map_object_data_ref['world_x'] = int(snapped_x)
-                self.map_object_data_ref['world_y'] = int(snapped_y)
+            grid_size = grid_size if isinstance(grid_size, (int, float)) and grid_size > 0 else ED_CONFIG.BASE_GRID_SIZE
+            snapped_x = round(new_pos.x() / grid_size) * grid_size; snapped_y = round(new_pos.y() / grid_size) * grid_size
+            if int(snapped_x) != self.map_object_data_ref.get('world_x') or int(snapped_y) != self.map_object_data_ref.get('world_y'):
+                self.map_object_data_ref['world_x'] = int(snapped_x); self.map_object_data_ref['world_y'] = int(snapped_y)
                 map_view = self.scene().parent() 
-                if hasattr(map_view, 'object_graphically_moved_signal'):
-                    map_view.object_graphically_moved_signal.emit(self.map_object_data_ref) 
-
-            if abs(new_pos.x() - snapped_x) > 1e-3 or abs(new_pos.y() - snapped_y) > 1e-3:
-                return QPointF(float(snapped_x), float(snapped_y))
+                if hasattr(map_view, 'object_graphically_moved_signal'): map_view.object_graphically_moved_signal.emit(self.map_object_data_ref) 
+            if abs(new_pos.x() - snapped_x) > 1e-3 or abs(new_pos.y() - snapped_y) > 1e-3: return QPointF(float(snapped_x), float(snapped_y))
             return new_pos
         return super().itemChange(change, value)
 
@@ -215,8 +234,12 @@ class StandardMapObjectItem(QGraphicsPixmapItem): # Or BaseResizableMapItem if w
         is_locked = self.map_object_data_ref.get("editor_locked", False)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not is_locked)
 
-        if not self.is_procedural_tile:
+        if self.is_render_as_rotated_segment:
+            # BoundingRect is fixed TSxTS, only repaint needed for color/rotation changes
+            self.update() # Trigger repaint
+        elif not self.is_procedural_tile: # Image based
             original_w, original_h = asset_info.get("original_size_pixels", (self.pixmap().width(), self.pixmap().height()))
+            # Get base pixmap (untransformed)
             new_pixmap = get_asset_pixmap(self.editor_key, asset_info,
                                           QSizeF(int(original_w), int(original_h)),
                                           self.map_object_data_ref.get("override_color"),
@@ -224,42 +247,139 @@ class StandardMapObjectItem(QGraphicsPixmapItem): # Or BaseResizableMapItem if w
                                           is_flipped_h=False, rotation=0) 
             if new_pixmap and not new_pixmap.isNull():
                 if self.pixmap().cacheKey() != new_pixmap.cacheKey(): 
-                    self.prepareGeometryChange() 
-                    self.setPixmap(new_pixmap)
+                    self.prepareGeometryChange(); self.setPixmap(new_pixmap)
             else: 
-                fallback_pm = QPixmap(int(original_w), int(original_h))
-                fallback_pm.fill(Qt.GlobalColor.magenta)
-                self.prepareGeometryChange()
-                self.setPixmap(fallback_pm)
-        else:
+                fallback_pm = QPixmap(int(original_w), int(original_h)); fallback_pm.fill(Qt.GlobalColor.magenta)
+                self.prepareGeometryChange(); self.setPixmap(fallback_pm)
+            self._apply_orientation_transform() # Apply flip/rotation to the item for images
+        else: # Standard procedural tile (not segment)
             new_color = self.map_object_data_ref.get("override_color")
-            if not new_color and asset_info.get("surface_params"):
-                new_color = asset_info["surface_params"][2]
-            
+            asset_info_paint = self.editor_state_ref.assets_palette.get(self.editor_key) # Re-fetch for safety
+            if not new_color and asset_info_paint and asset_info_paint.get("surface_params"): new_color = asset_info_paint["surface_params"][2]
             needs_geom_change = False
-            if asset_info.get("surface_params"):
-                params = asset_info["surface_params"]
-                new_pw = float(params[0])
-                new_ph = float(params[1])
+            if asset_info_paint and asset_info_paint.get("surface_params"):
+                params = asset_info_paint["surface_params"]
+                new_pw, new_ph = float(params[0]), float(params[1])
                 if abs(self.procedural_width - new_pw) > 1e-3 or abs(self.procedural_height - new_ph) > 1e-3:
-                    self.procedural_width = new_pw
-                    self.procedural_height = new_ph
+                    self.procedural_width = new_pw; self.procedural_height = new_ph
                     needs_geom_change = True
-            
+            # Check if color actually changed or geometry changed to trigger update
+            # Storing self.procedural_color_tuple might be unnecessary if paint always re-evaluates
             if self.procedural_color_tuple != new_color or needs_geom_change:
-                self.procedural_color_tuple = new_color
+                self.procedural_color_tuple = new_color # Update stored color if used by paint directly
                 if needs_geom_change: self.prepareGeometryChange()
                 self.update() 
 
-        self._apply_orientation_transform() 
-
         new_z = self.map_object_data_ref.get("layer_order", 0)
-        if self.zValue() != new_z:
-            self.setZValue(new_z)
-
+        if self.zValue() != new_z: self.setZValue(new_z)
         new_pos_x = float(self.map_object_data_ref.get("world_x", 0))
         new_pos_y = float(self.map_object_data_ref.get("world_y", 0))
-        if self.pos() != QPointF(new_pos_x, new_pos_y):
-            self.setPos(new_pos_x, new_pos_y)
+        if self.pos() != QPointF(new_pos_x, new_pos_y): self.setPos(new_pos_x, new_pos_y)
 
-#################### END OF FILE: map_object_items.py ####################
+class InvisibleWallMapItem(BaseResizableMapItem):
+    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState, parent: Optional[QGraphicsItem] = None):
+        current_w = map_object_data_ref.get("current_width", ED_CONFIG.TS * 2) # Default to 2x2 grid cells
+        current_h = map_object_data_ref.get("current_height", ED_CONFIG.TS * 2)
+        display_w = int(max(1, current_w)); display_h = int(max(1, current_h))
+        
+        # BaseResizableMapItem needs a pixmap, its size must match current_width/height for handles.
+        # This pixmap is not visually rendered by InvisibleWallMapItem's paint method.
+        transparent_pixmap = QPixmap(display_w, display_h)
+        transparent_pixmap.fill(Qt.GlobalColor.transparent)
+
+        super().__init__(map_object_data_ref, transparent_pixmap, parent)
+        self.editor_state_ref = editor_state
+        
+        # Ensure data_ref has these fields for BaseResizableMapItem logic
+        self.map_object_data_ref["current_width"] = current_w 
+        self.map_object_data_ref["current_height"] = current_h
+        self.setToolTip("Invisible Wall")
+        # BaseResizableMapItem's constructor calls update_visuals_from_data, which includes _apply_orientation_transform
+
+    def boundingRect(self) -> QRectF:
+        w = self.map_object_data_ref.get("current_width", 0.0)
+        h = self.map_object_data_ref.get("current_height", 0.0)
+        return QRectF(0, 0, float(w), float(h))
+
+    def shape(self) -> QPainterPath:
+        path = QPainterPath(); path.addRect(self.boundingRect()); return path
+
+    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
+        props = self.map_object_data_ref.get("properties", {})
+        rect_to_draw_local = self.boundingRect() # This is in local coordinates (0,0, width, height)
+
+        is_editor_preview = False
+        if self.scene() and self.scene().parent() and hasattr(self.scene().parent(), 'editor_state'):
+             parent_map_view = self.scene().parent()
+             if hasattr(parent_map_view, 'editor_state'): is_editor_preview = parent_map_view.editor_state.is_game_preview_mode # type: ignore
+
+        item_opacity_percent = props.get("opacity", 100) 
+        if not isinstance(item_opacity_percent, (int, float)): item_opacity_percent = 100
+        item_opacity_float = max(0.0, min(1.0, float(item_opacity_percent) / 100.0))
+        
+        if not props.get("visible_in_game", False) and is_editor_preview: return 
+        if item_opacity_float < 0.01 and not is_editor_preview: return # Editor hidden by opacity
+
+        painter.save()
+        effective_paint_opacity = item_opacity_float if not is_editor_preview else 1.0 
+        # For invisible walls, visible_in_game makes them fully opaque red in preview if true.
+        # Otherwise, editor opacity applies in editor.
+        
+        fill_color_rgba_prop = props.get("fill_color_rgba", ED_CONFIG.SEMI_TRANSPARENT_RED)
+        base_q_color: QColor
+        if fill_color_rgba_prop and isinstance(fill_color_rgba_prop, (list,tuple)) and len(fill_color_rgba_prop) == 4:
+            r,g,b,a = fill_color_rgba_prop
+            base_q_color = QColor(r,g,b, int(a * effective_paint_opacity)) # Modulate alpha by overall opacity
+        else:
+            r,g,b,a_default = ED_CONFIG.SEMI_TRANSPARENT_RED
+            base_q_color = QColor(r,g,b, int(a_default * effective_paint_opacity))
+        
+        painter.setBrush(base_q_color)
+        
+        # Border: slightly darker than fill, dashed
+        border_color = base_q_color.darker(120)
+        border_color.setAlpha(min(255, base_q_color.alpha() + 50)) # Make border slightly more opaque
+        painter.setPen(QPen(border_color, 1.5, Qt.PenStyle.DashLine))
+        painter.drawRect(rect_to_draw_local)
+
+        # Text "WALL" in editor view only
+        if not is_editor_preview and item_opacity_float > 0.1 : # Only draw text if item is somewhat visible
+            text_alpha = int(200 * item_opacity_float)
+            text_color_val = QColor(0,0,0, text_alpha) if base_q_color.lightnessF() > 0.6 else QColor(255,255,255, text_alpha)
+            painter.setPen(text_color_val)
+            font = painter.font(); 
+            font_size_px = max(8, min(rect_to_draw_local.height() * 0.25, rect_to_draw_local.width() * 0.2))
+            font.setPixelSize(int(font_size_px))
+            painter.setFont(font)
+            painter.drawText(rect_to_draw_local, Qt.AlignmentFlag.AlignCenter, "WALL")
+
+        if option.state & QStyleOptionGraphicsItem.StyleState.State_Selected: 
+            selection_pen_alpha = 255 # Always fully opaque selection border
+            pen = QPen(QColor(255, 255, 0, selection_pen_alpha), 2, Qt.PenStyle.SolidLine)
+            pen.setCosmetic(True) # Ensure border is always 2px screen regardless of zoom
+            painter.setPen(pen); painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRect(rect_to_draw_local.adjusted(pen.widthF()/2.0, pen.widthF()/2.0, -pen.widthF()/2.0, -pen.widthF()/2.0))
+        painter.restore()
+
+    def update_visuals_from_data(self, editor_state: EditorState):
+        # BaseResizableMapItem's pixmap (which is transparent for this item)
+        # needs to be resized to match current_width/height for handle positioning.
+        current_w = self.map_object_data_ref.get("current_width", ED_CONFIG.TS * 2)
+        current_h = self.map_object_data_ref.get("current_height", ED_CONFIG.TS * 2)
+        display_w = int(max(1, current_w)); display_h = int(max(1, current_h))
+        
+        current_pm = self.pixmap()
+        if current_pm.width() != display_w or current_pm.height() != display_h:
+            self.prepareGeometryChange() # Signal that geometry might change
+            new_transparent_pixmap = QPixmap(display_w, display_h)
+            new_transparent_pixmap.fill(Qt.GlobalColor.transparent)
+            self.setPixmap(new_transparent_pixmap)
+            # BaseResizableMapItem.update_handle_positions will be called by super().update_visuals_from_data
+        
+        super().update_visuals_from_data(editor_state) # Handles pos, Z, lock, handles, visibility, transform
+        self.update() # Request repaint for paint() method to redraw content
+
+    def set_interaction_mode(self, mode: str): # Invisible walls only support resize
+        if mode == "resize": super().set_interaction_mode(mode)
+        else:
+            if self.current_interaction_mode != "resize": super().set_interaction_mode("resize")

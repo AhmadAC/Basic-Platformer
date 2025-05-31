@@ -1,7 +1,7 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.12 (Added render_as_rotated_segment flag)
+## version 2.2.13 (Removed fill_color_rgba from trigger/invisible wall properties)
 C
 """
 import sys
@@ -93,10 +93,10 @@ MINIMAP_CATEGORY_COLORS: Dict[str, QColor] = {
     "tile": QColor(150, 150, 150, 200),
     "background_tile": QColor(100, 100, 120, 150),
     "custom_image": QColor(0, 150, 150, 180),
-    "trigger": QColor(200, 0, 200, 150),
-    "trigger_image": QColor(180, 50, 180, 170),
-    "logic": QColor(128, 0, 128, 150), # Color for logic items like triggers and invisible walls
-    "boundary": QColor(0, 128, 128, 150), # Alternative category color
+    "trigger": QColor(200, 0, 200, 150), # Default Trigger color if no image
+    "trigger_image": QColor(180, 50, 180, 170), # If trigger has an image
+    "logic": QColor(128, 0, 128, 150), 
+    "boundary": QColor(0, 128, 128, 150), 
     "unknown": QColor(255, 0, 255, 150)
 }
 
@@ -114,15 +114,17 @@ GAME_LEVEL_FILE_EXTENSION = getattr(C, "GAME_LEVEL_FILE_EXTENSION", ".py")
 
 # --- Custom Asset Identifiers ---
 CUSTOM_IMAGE_ASSET_KEY = "custom_image_object"
-TRIGGER_SQUARE_ASSET_KEY = "trigger_square" # This is the palette key
-TRIGGER_SQUARE_GAME_TYPE_ID = "trigger_square_link" # This is used to key into EDITABLE_ASSET_VARIABLES
+TRIGGER_SQUARE_ASSET_KEY = "trigger_square" 
+TRIGGER_SQUARE_GAME_TYPE_ID = "trigger_square_link" 
 CUSTOM_ASSET_PALETTE_PREFIX = "custom:"
-INVISIBLE_WALL_ASSET_KEY_PALETTE = "invisible_wall_tool" # Key for palette
-INVISIBLE_WALL_GAME_TYPE_ID = "invisible_wall_boundary" # Key for properties & game
+INVISIBLE_WALL_ASSET_KEY_PALETTE = "invisible_wall_tool" 
+INVISIBLE_WALL_GAME_TYPE_ID = "invisible_wall_boundary" 
 
 GRAY_COLOR = getattr(C, 'GRAY', (128,128,128))
 DARK_GREEN_COLOR = getattr(C, 'DARK_GREEN', (0,100,0))
 SEMI_TRANSPARENT_RED = (255, 0, 0, 100) # RGBA
+DEFAULT_TRIGGER_FILL_COLOR_RGBA = (100, 100, 255, 100) # Default for TriggerItem paint
+DEFAULT_INVISIBLE_WALL_FILL_COLOR_RGBA = SEMI_TRANSPARENT_RED # Default for InvisibleWallItem paint
 
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Tools
@@ -144,8 +146,6 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "enemy_purple": {"source_file": "assets/enemy_characters/soldier/purple/__Idle.gif", "game_type_id": "enemy_purple", "category": "enemy", "name_in_palette": "Enemy Purple"},
     "enemy_orange": {"source_file": "assets/enemy_characters/soldier/orange/__Idle.gif", "game_type_id": "enemy_orange", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"},
     "enemy_yellow": {"source_file": "assets/enemy_characters/soldier/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
-    # "enemy_cactus": {"source_file": "assets/enemy_characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"},
-    # "enemy_truck": {"source_file": "assets/enemy_characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"},
     "enemy_knight": {
         "source_file": "assets/enemy_characters/knight/idle.gif",
         "game_type_id": "enemy_knight",
@@ -162,15 +162,14 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
 
     # Tiles (procedural)
     "platform_wall_gray": {"surface_params": (TS, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
-    "platform_wall_gray_1_4_top": {
-        "surface_params": (TS, TS // 4, GRAY_COLOR),
+    "platform_wall_gray_1_4_top": { 
+        "surface_params": (TS, TS // 4, GRAY_COLOR), 
         "colorable": True,
-        "game_type_id": "platform_wall_gray_1_4_top",
+        "game_type_id": "platform_wall_gray_1_4_top", 
         "category": "tile",
-        "name_in_palette": "Wall 1/4 Top",
-        "render_as_rotated_segment": True # Flag for special rendering
+        "name_in_palette": "Wall 1/4 Segment", 
+        "render_as_rotated_segment": True 
     },
-
 
     # Tiles (from images) - Environment
     "env_brick_wall1": {"source_file": "assets/environment/brick_wall1.png", "game_type_id": "env_brick_wall1", "category": "tile", "name_in_palette": "Brick Wall 1"},
@@ -188,41 +187,32 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Logic
     TRIGGER_SQUARE_ASSET_KEY: {
         "icon_type": "generic_square_icon",
-        "base_color_tuple": (100, 100, 255, 150), # Bluish for palette icon
+        "base_color_tuple": DEFAULT_TRIGGER_FILL_COLOR_RGBA, 
         "game_type_id": TRIGGER_SQUARE_GAME_TYPE_ID,
         "category": "logic",
         "name_in_palette": "Trigger Square"
     },
-    INVISIBLE_WALL_ASSET_KEY_PALETTE: { # Key for the palette
-        "icon_type": "generic_square_icon", # Will be colored by base_color_tuple
-        "base_color_tuple": SEMI_TRANSPARENT_RED, # Semi-transparent red for palette icon
-        "game_type_id": INVISIBLE_WALL_GAME_TYPE_ID, # Actual type ID for properties and game
-        "category": "logic", # Or a new "boundary" category if preferred
+    INVISIBLE_WALL_ASSET_KEY_PALETTE: { 
+        "icon_type": "generic_square_icon", 
+        "base_color_tuple": DEFAULT_INVISIBLE_WALL_FILL_COLOR_RGBA, 
+        "game_type_id": INVISIBLE_WALL_GAME_TYPE_ID, 
+        "category": "logic", 
         "name_in_palette": "Invisible Wall"
     },
 }
 
 EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER = ["tool", "tile", "background_tile", "hazard", "item", "object", "enemy", "spawn", "logic", "Custom", "unknown"]
 
-# --- Wall Variant Cycling ---
-WALL_BASE_KEY = "platform_wall_gray" # The primary key used in the palette to represent the cycle
-# For the "platform_wall_gray_1_4_top" and its rotations, the actual asset key in the cycle
-# should remain "platform_wall_gray_1_4_top". The rotation parameter will handle its visual orientation.
-# The `render_as_rotated_segment` flag tells the asset loader how to present it in the palette/cursor
-# based on the current rotation.
-WALL_VARIANTS_CYCLE: List[str] = [ # Actual asset keys for each variant in cycle order
-    "platform_wall_gray", # Full wall
-    "platform_wall_gray_1_4_top", # This single entry will represent all 4 rotations of the 1/4 segment
-                                   # The AssetPaletteWidget and MapViewWidget will use the rotation state
-                                   # to get the correct visual from get_asset_pixmap.
+WALL_BASE_KEY = "platform_wall_gray"
+WALL_VARIANTS_CYCLE: List[str] = [
+    "platform_wall_gray",           
+    "platform_wall_gray_1_4_top",   
 ]
-# NOTE: If you had separate assets for each 1/4 wall (e.g., platform_wall_gray_1_4_right),
-# then you would list them here. But with `render_as_rotated_segment`, one asset key + rotation is enough.
 
-# --- Asset Orientation Rules ---
 ROTATABLE_ASSET_KEYS: List[str] = [
-    key for key in EDITOR_PALETTE_ASSETS
-    if ("wall" in key.lower() or "ledge" in key.lower()) and EDITOR_PALETTE_ASSETS[key].get("category") == "tile"
+    key for key, data in EDITOR_PALETTE_ASSETS.items()
+    if (("wall" in key.lower() or "ledge" in key.lower()) and data.get("category") == "tile") or \
+       data.get("render_as_rotated_segment") 
 ]
 FLIPPABLE_ASSET_CATEGORIES: List[str] = ["object", "enemy", "spawn", "item", "hazard"]
 
@@ -235,7 +225,7 @@ _PLAYER_DEFAULT_PROPS_TEMPLATE = {
 _ENEMY_DEFAULT_PROPS_TEMPLATE = {
     "max_health": {"type": "int", "default": getattr(C, 'ENEMY_MAX_HEALTH', 80), "min": 1, "max": 500, "label": "Max Health"},
     "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 3.0) * 50, "min": 10.0, "max": 500.0, "label": "Move Speed (units/s)"},
-    "attack_damage": {"type": "int", "default": getattr(C, 'ENEMY_ATTACK_DAMAGE', 10), "min": 0, "max": 100, "label": "Base Attack Damage"}, # Generic
+    "attack_damage": {"type": "int", "default": getattr(C, 'ENEMY_ATTACK_DAMAGE', 10), "min": 0, "max": 100, "label": "Base Attack Damage"}, 
     "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"},
     "patrol_behavior": {"type": "str", "default": "turn_on_edge", "label": "Patrol Behavior", "options": ["turn_on_edge", "turn_at_range_limit", "stationary", "follow_player"]}
 }
@@ -264,8 +254,6 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "enemy_purple": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "teleport_range_tiles": {"type": "int", "default": 0, "min":0, "max":20, "label": "Teleport Range (Tiles)"}},
     "enemy_orange": _ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
     "enemy_yellow": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "is_invincible_while_charging": {"type": "bool", "default": False, "label": "Invincible Charge"}},
-    # "enemy_cactus": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "shoot_interval_ms": {"type": "int", "default": 2000, "min": 500, "max": 10000, "label": "Shoot Interval (ms)"}, "projectile_type": {"type": "str", "default": "thorn", "label": "Projectile", "options":["thorn", "fast_thorn"]}},
-    # "enemy_truck": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "charge_speed_multiplier": {"type": "float", "default": 2.0, "min": 1.0, "max": 5.0, "label": "Charge Speed Multiplier"}, "charge_cooldown_ms": {"type": "int", "default": 3000, "min": 1000, "max": 10000, "label": "Charge Cooldown (ms)"}},
     "enemy_knight": {
         "max_health": {"type": "int", "default": 150, "min": 1, "max": 999, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0) * 0.75 * 50, "min": 10.0, "max": 700.0, "label": "Move Speed (units/s)"},
@@ -284,9 +272,8 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     },
 
     "platform_wall_gray": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_4_top": _BASE_WALL_PROPERTIES.copy(), # Segment walls can also have these properties
+    "platform_wall_gray_1_4_top": _BASE_WALL_PROPERTIES.copy(), 
  
-    # Default properties for new environment image tiles (can be expanded)
     "env_brick_wall1": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health"}},
     "env_brick_wall2": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health"}},
     "env_ledge_img": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 50, "min": 0, "max": 200, "label": "Health"}},
@@ -310,8 +297,7 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Opacity (%)"},
     },
     TRIGGER_SQUARE_GAME_TYPE_ID: {
-        "visible": {"type": "bool", "default": True, "label": "Visible in Game"}, # Editor visibility controlled by "editor_hidden"
-        "fill_color_rgba": {"type": "tuple_color_rgba", "default": (100, 100, 255, 100), "label": "Fill Color (RGBA)"},
+        "visible": {"type": "bool", "default": True, "label": "Visible in Game"}, 
         "image_in_square": {"type": "image_path_custom", "default": "", "label": "Image in Square"},
         "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Editor Opacity (%)"},
         "linked_map_name": {"type": "str", "default": "", "label": "Linked Map Name"},
@@ -325,7 +311,6 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "blocks_projectiles_enemy": {"type": "bool", "default": True, "label": "Blocks Enemy Projectiles"},
         "blocks_projectiles_player": {"type": "bool", "default": False, "label": "Blocks Player Projectiles"},
         "visible_in_game": {"type": "bool", "default": False, "label": "Visible In-Game (Debug Only)"},
-        "fill_color_rgba": {"type": "tuple_color_rgba", "default": SEMI_TRANSPARENT_RED, "label": "Editor Fill Color (RGBA)"},
         "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Editor Opacity (%)"},
     },
 }

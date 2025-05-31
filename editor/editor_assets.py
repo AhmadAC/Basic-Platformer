@@ -1,7 +1,7 @@
 # editor/editor_assets.py
 # -*- coding: utf-8 -*-
 """
-## version 2.1.7 (Refined render_as_rotated_segment placement)
+## version 2.1.10 (Fixed asset_editor_key not defined in _create_icon_pixmap)
 Handles loading and managing assets for the editor's palette using PySide6.
 - Verified compatibility with refactored asset paths (e.g., "assets/category/file.ext")
   provided by ED_CONFIG, resolved via resource_path.
@@ -15,9 +15,9 @@ Handles loading and managing assets for the editor's palette using PySide6.
 import os
 import sys
 import logging
-from typing import Optional, Dict, Any, Tuple, List, Union # Added Union
+from typing import Optional, Dict, Any, Tuple, List, Union
 
-from PySide6.QtGui import QPixmap, QImage, QPainter, QColor, QPen, QImageReader, QBrush, QTransform,QPainterPath, QFont # Added QFont
+from PySide6.QtGui import QPixmap, QImage, QPainter, QColor, QPen, QImageReader, QBrush, QTransform,QPainterPath, QFont
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt, QSizeF
 from PySide6.QtWidgets import QApplication
 
@@ -77,7 +77,8 @@ def _create_half_tile_pixmap(base_size: int, half_type: str, color_tuple: Tuple[
         painter.end()
     return pixmap
 
-def _create_icon_pixmap(base_size: int, icon_type: str, color_tuple_rgba: Tuple[int,int,int, Optional[int]]) -> QPixmap:
+# Modified signature to include asset_editor_key
+def _create_icon_pixmap(base_size: int, icon_type: str, color_tuple_rgba: Tuple[int,int,int, Optional[int]], asset_editor_key_for_icon: str) -> QPixmap:
     safe_base_size = max(1, base_size)
     pixmap = QPixmap(safe_base_size, safe_base_size)
     if pixmap.isNull():
@@ -98,8 +99,7 @@ def _create_icon_pixmap(base_size: int, icon_type: str, color_tuple_rgba: Tuple[
         border_qcolor = QColor(Qt.GlobalColor.black)
 
         if icon_type == "select_cursor_icon":
-            painter.setPen(QPen(icon_qcolor, 2)) 
-            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setPen(QPen(icon_qcolor, 2)); painter.setBrush(Qt.BrushStyle.NoBrush)
             path = QPainterPath()
             path.moveTo(s * 0.2, s * 0.2); path.lineTo(s * 0.2, s * 0.8); path.lineTo(s * 0.4, s * 0.65)
             path.lineTo(s * 0.65, s * 0.9); path.lineTo(s * 0.75, s * 0.8); path.lineTo(s * 0.55, s * 0.6)
@@ -108,33 +108,32 @@ def _create_icon_pixmap(base_size: int, icon_type: str, color_tuple_rgba: Tuple[
         elif icon_type == "2x2_placer":
             rect_size = s * 0.35; gap = s * 0.1
             painter.setBrush(icon_qcolor); painter.setPen(border_qcolor)
-            painter.drawRect(QRectF(gap, gap, rect_size, rect_size))
-            painter.drawRect(QRectF(s - gap - rect_size, gap, rect_size, rect_size))
-            painter.drawRect(QRectF(gap, s - gap - rect_size, rect_size, rect_size))
-            painter.drawRect(QRectF(s - gap - rect_size, s - gap - rect_size, rect_size, rect_size))
+            painter.drawRect(QRectF(gap, gap, rect_size, rect_size)); painter.drawRect(QRectF(s - gap - rect_size, gap, rect_size, rect_size))
+            painter.drawRect(QRectF(gap, s - gap - rect_size, rect_size, rect_size)); painter.drawRect(QRectF(s - gap - rect_size, s - gap - rect_size, rect_size, rect_size))
         elif icon_type == "eraser":
             painter.setBrush(icon_qcolor); painter.setPen(border_qcolor)
             painter.drawRect(QRectF(s * 0.1, s * 0.3, s * 0.8, s * 0.4))
             pen = QPen(border_qcolor, 2); pen.setCapStyle(Qt.PenCapStyle.RoundCap); painter.setPen(pen)
-            painter.drawLine(QPointF(s*0.25, s*0.25), QPointF(s*0.75, s*0.75))
-            painter.drawLine(QPointF(s*0.25, s*0.75), QPointF(s*0.75, s*0.25))
+            painter.drawLine(QPointF(s*0.25, s*0.25), QPointF(s*0.75, s*0.75)); painter.drawLine(QPointF(s*0.25, s*0.75), QPointF(s*0.75, s*0.25))
         elif icon_type == "color_swatch":
-            painter.setBrush(icon_qcolor); painter.setPen(border_qcolor)
-            painter.drawRect(QRectF(s*0.1, s*0.1, s*0.8, s*0.8))
+            painter.setBrush(icon_qcolor); painter.setPen(border_qcolor); painter.drawRect(QRectF(s*0.1, s*0.1, s*0.8, s*0.8))
         elif icon_type == "generic_square_icon":
-            painter.setBrush(QBrush(icon_qcolor))
-            painter.setPen(QPen(border_qcolor, 1))
-            inner_rect = QRectF(s * 0.15, s * 0.15, s * 0.7, s * 0.7)
-            painter.drawRect(inner_rect)
+            painter.setBrush(QBrush(icon_qcolor)); painter.setPen(QPen(border_qcolor, 1))
+            inner_rect = QRectF(s * 0.15, s * 0.15, s * 0.7, s * 0.7); painter.drawRect(inner_rect)
             text_color = Qt.GlobalColor.black if icon_qcolor.lightnessF() > 0.5 else Qt.GlobalColor.white
             if icon_qcolor.alphaF() < 0.3: text_color = Qt.GlobalColor.black
-            painter.setPen(text_color)
-            font = painter.font(); font.setPointSize(int(s * 0.35)); font.setBold(True); painter.setFont(font)
-            painter.drawText(inner_rect, Qt.AlignmentFlag.AlignCenter, "TRG")
+            painter.setPen(text_color); font = painter.font(); font.setPointSize(int(s * 0.35)); font.setBold(True); painter.setFont(font)
+            
+            text_to_draw = "TRG" # Default
+            if asset_editor_key_for_icon == ED_CONFIG.INVISIBLE_WALL_ASSET_KEY_PALETTE: # Use passed key
+                text_to_draw = "INV"
+            elif asset_editor_key_for_icon == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY: # Use passed key
+                text_to_draw = "TRG"
+            # Add other conditions if needed for different text on generic icons
+            painter.drawText(inner_rect, Qt.AlignmentFlag.AlignCenter, text_to_draw)
         else:
             logger.warning(f"_create_icon_pixmap: Unknown icon_type '{icon_type}'. Drawing '?'")
-            painter.setPen(icon_qcolor)
-            font = painter.font(); font.setPointSize(int(s * 0.6)); font.setBold(True); painter.setFont(font)
+            painter.setPen(icon_qcolor); font = painter.font(); font.setPointSize(int(s * 0.6)); font.setBold(True); painter.setFont(font)
             painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "?")
     finally:
         painter.end()
@@ -164,15 +163,13 @@ def get_asset_pixmap(asset_editor_key: str,
     if source_file_path:
         full_path_resolved = resource_path(source_file_path) if not os.path.isabs(source_file_path) else source_file_path
         full_path_norm = os.path.normpath(full_path_resolved)
-        if not os.path.exists(full_path_norm):
-            logger.error(f"File NOT FOUND: '{full_path_norm}' for asset '{asset_editor_key}'")
+        if not os.path.exists(full_path_norm): logger.error(f"File NOT FOUND: '{full_path_norm}' for asset '{asset_editor_key}'")
         else:
             reader = QImageReader(full_path_norm)
             if source_file_path.lower().endswith(".gif"): reader.setFormat(b"gif")
             if reader.canRead():
                 image_from_reader: QImage = reader.read()
-                if not image_from_reader.isNull():
-                    initial_native_pixmap = QPixmap.fromImage(image_from_reader)
+                if not image_from_reader.isNull(): initial_native_pixmap = QPixmap.fromImage(image_from_reader)
                 else: logger.error(f"QImageReader.read() returned null for '{full_path_norm}'. Reader error: {reader.errorString()}")
             else: logger.error(f"QImageReader cannot read '{full_path_norm}'. Reader error: {reader.errorString()}")
             if initial_native_pixmap and not initial_native_pixmap.isNull() and color_to_use_tuple and asset_data_entry.get("colorable"):
@@ -181,16 +178,14 @@ def get_asset_pixmap(asset_editor_key: str,
                     painter = QPainter();
                     if painter.begin(temp_image):
                         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
-                        painter.fillRect(temp_image.rect(), QColor(*color_to_use_tuple))
-                        painter.end()
+                        painter.fillRect(temp_image.rect(), QColor(*color_to_use_tuple)); painter.end()
                         initial_native_pixmap = QPixmap.fromImage(temp_image)
                     else: logger.error(f"Failed to begin painter for colorizing '{asset_editor_key}'")
                 except Exception as e_colorize: logger.error(f"Error colorizing '{asset_editor_key}': {e_colorize}", exc_info=True)
     elif "surface_params" in asset_data_entry and asset_data_entry.get("render_mode") is None and asset_data_entry.get("icon_type") is None:
         params = asset_data_entry["surface_params"]
         if params and isinstance(params, tuple) and len(params) == 3:
-            w_int, h_int = int(params[0]), int(params[1])
-            default_color_tuple = params[2]
+            w_int, h_int = int(params[0]), int(params[1]); default_color_tuple = params[2]
             initial_native_pixmap = _create_colored_pixmap(w_int, h_int, color_to_use_tuple or default_color_tuple)
     elif "render_mode" in asset_data_entry and asset_data_entry["render_mode"] == "half_tile":
         half_type = asset_data_entry.get("half_type", "left")
@@ -198,99 +193,65 @@ def get_asset_pixmap(asset_editor_key: str,
         initial_native_pixmap = _create_half_tile_pixmap(int(ts), half_type, color_to_use_tuple or default_color_proc)
     elif "icon_type" in asset_data_entry:
         icon_type_str = asset_data_entry["icon_type"]
-        default_color_icon_with_alpha_rgba = asset_data_entry.get("base_color_tuple", (*getattr(ED_CONFIG.C, 'YELLOW', (255,255,0)), 255) )
-        effective_color_for_icon_rgba: Tuple[int,int,int,Optional[int]] = (*color_to_use_tuple, default_color_icon_with_alpha_rgba[3]) if color_to_use_tuple else default_color_icon_with_alpha_rgba
-        initial_native_pixmap = _create_icon_pixmap(int(ts), icon_type_str, effective_color_for_icon_rgba)
-
-    target_qsize_for_fallback: QSize = requested_target_size.toSize() if isinstance(requested_target_size, QSizeF) else requested_target_size
-
-    if not initial_native_pixmap or initial_native_pixmap.isNull():
-        logger.warning(f"Initial native pixmap for '{asset_editor_key}' failed or is null. Creating RED fallback.")
-        fb_w = target_qsize_for_fallback.width() if target_qsize_for_fallback.width() > 0 else int(ED_CONFIG.ASSET_THUMBNAIL_SIZE)
-        fb_h = target_qsize_for_fallback.height() if target_qsize_for_fallback.height() > 0 else int(ED_CONFIG.ASSET_THUMBNAIL_SIZE)
-        fallback_pixmap = QPixmap(max(1, fb_w), max(1, fb_h))
-        if fallback_pixmap.isNull(): logger.error(f"Fallback pixmap for '{asset_editor_key}' is ALSO NULL. Size: {fb_w}x{fb_h}"); return QPixmap()
-        fallback_pixmap.fill(QColor(*getattr(ED_CONFIG.C, 'RED', (255,0,0))))
-        painter = QPainter()
-        if painter.begin(fallback_pixmap):
-            try: painter.setPen(QColor(Qt.GlobalColor.black)); painter.drawLine(0,0, fallback_pixmap.width()-1, fallback_pixmap.height()-1); painter.drawLine(0,fallback_pixmap.height()-1, fallback_pixmap.width()-1, 0)
-            finally: painter.end()
-        else: logger.error(f"Failed to begin painter on fallback pixmap for {asset_editor_key}")
-        initial_native_pixmap = fallback_pixmap
+        default_color_icon_rgba = asset_data_entry.get("base_color_tuple", (*getattr(ED_CONFIG.C, 'YELLOW', (255,255,0)), 255) )
+        effective_color_rgba: Tuple[int,int,int,Optional[int]] = (*color_to_use_tuple, default_color_icon_rgba[3]) if color_to_use_tuple else default_color_icon_rgba
+        initial_native_pixmap = _create_icon_pixmap(int(ts), icon_type_str, effective_color_rgba, asset_editor_key) # Pass asset_editor_key
     
-    transformed_segment_pixmap = initial_native_pixmap
+    target_qsize_fallback: QSize = requested_target_size.toSize() if isinstance(requested_target_size, QSizeF) else requested_target_size
+    if not initial_native_pixmap or initial_native_pixmap.isNull():
+        fb_w = target_qsize_fallback.width() if target_qsize_fallback.width() > 0 else int(ED_CONFIG.ASSET_THUMBNAIL_SIZE)
+        fb_h = target_qsize_fallback.height() if target_qsize_fallback.height() > 0 else int(ED_CONFIG.ASSET_THUMBNAIL_SIZE)
+        fb_pm = QPixmap(max(1, fb_w), max(1, fb_h))
+        if fb_pm.isNull(): logger.error(f"Fallback pixmap for '{asset_editor_key}' ALSO NULL. Size: {fb_w}x{fb_h}"); return QPixmap()
+        fb_pm.fill(QColor(*getattr(ED_CONFIG.C, 'RED', (255,0,0))))
+        painter_fb = QPainter()
+        if painter_fb.begin(fb_pm):
+            try: painter_fb.setPen(QColor(Qt.GlobalColor.black)); painter_fb.drawLine(0,0, fb_pm.width()-1, fb_pm.height()-1); painter_fb.drawLine(0,fb_pm.height()-1, fb_pm.width()-1, 0)
+            finally: painter_fb.end()
+        else: logger.error(f"Failed painter on fallback for {asset_editor_key}")
+        initial_native_pixmap = fb_pm
+    
+    transformed_pixmap = initial_native_pixmap 
     if (is_flipped_h or rotation != 0) and initial_native_pixmap and not initial_native_pixmap.isNull():
-        temp_img = initial_native_pixmap.toImage()
-        if not temp_img.isNull():
-            if is_flipped_h:
-                temp_img = temp_img.mirrored(True, False)
-                if temp_img.isNull(): logger.error(f"Failed to mirror image for '{asset_editor_key}'")
-            if rotation != 0 and not temp_img.isNull():
-                img_center = QPointF(temp_img.width() / 2.0, temp_img.height() / 2.0)
-                transform = QTransform().translate(img_center.x(), img_center.y()).rotate(float(rotation)).translate(-img_center.x(), -img_center.y())
-                rotated_img = temp_img.transformed(transform, Qt.TransformationMode.SmoothTransformation)
-                if not rotated_img.isNull(): temp_img = rotated_img
-                else: logger.error(f"Failed to rotate image for '{asset_editor_key}'")
-            if not temp_img.isNull(): transformed_segment_pixmap = QPixmap.fromImage(temp_img)
-            else: logger.error(f"Image became null after transformations for '{asset_editor_key}'")
-        else: logger.error(f"Failed to convert pixmap to image for transformations for '{asset_editor_key}'")
+        img_to_transform = initial_native_pixmap.toImage()
+        if not img_to_transform.isNull():
+            if is_flipped_h: img_to_transform = img_to_transform.mirrored(True, False)
+            if rotation != 0 and not img_to_transform.isNull():
+                center_pt = QPointF(img_to_transform.width() / 2.0, img_to_transform.height() / 2.0)
+                xform = QTransform().translate(center_pt.x(), center_pt.y()).rotate(float(rotation)).translate(-center_pt.x(), -center_pt.y())
+                img_to_transform = img_to_transform.transformed(xform, Qt.TransformationMode.SmoothTransformation)
+            if not img_to_transform.isNull(): transformed_pixmap = QPixmap.fromImage(img_to_transform)
+            else: logger.error(f"Image became null after transform for '{asset_editor_key}'")
+        else: logger.error(f"Failed to convert to image for transform: '{asset_editor_key}'")
 
     if get_native_size_only:
-        if asset_data_entry.get("render_as_rotated_segment"): return transformed_segment_pixmap
-        orig_size_data = asset_data_entry.get("original_size_pixels")
-        if orig_size_data and isinstance(orig_size_data, tuple) and len(orig_size_data) == 2 and transformed_segment_pixmap:
-            target_native_w_float, target_native_h_float = float(orig_size_data[0]), float(orig_size_data[1])
-            effective_target_w_float, effective_target_h_float = (target_native_h_float, target_native_w_float) if rotation % 180 != 0 else (target_native_w_float, target_native_h_float)
-            if abs(transformed_segment_pixmap.width() - effective_target_w_float) > 1e-3 or abs(transformed_segment_pixmap.height() - effective_target_h_float) > 1e-3:
-                 if effective_target_w_float > 0 and effective_target_h_float > 0:
-                    return transformed_segment_pixmap.scaled(int(effective_target_w_float), int(effective_target_h_float), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        return transformed_segment_pixmap
+        return transformed_pixmap 
 
-    pixmap_to_return = transformed_segment_pixmap
-    target_qsize_for_scaling: QSize = requested_target_size.toSize() if isinstance(requested_target_size, QSizeF) else requested_target_size
+    final_pixmap_for_display = transformed_pixmap
+    target_display_qsize: QSize = requested_target_size.toSize() if isinstance(requested_target_size, QSizeF) else requested_target_size
 
-    if asset_data_entry.get("render_as_rotated_segment") and transformed_segment_pixmap and not transformed_segment_pixmap.isNull():
-        # For segments, the canvas is always the requested_target_size (e.g., palette thumbnail size)
-        canvas_qsize = QSize(target_qsize_for_scaling) # Make a copy
+    if asset_data_entry.get("render_as_rotated_segment") and transformed_pixmap and not transformed_pixmap.isNull():
+        canvas_qsize = QSize(target_display_qsize) 
         if canvas_qsize.width() <= 0 or canvas_qsize.height() <= 0:
-            logger.warning(f"render_as_rotated_segment: Invalid canvas_qsize {canvas_qsize}. Using default {ED_CONFIG.ASSET_THUMBNAIL_SIZE}x{ED_CONFIG.ASSET_THUMBNAIL_SIZE}.")
             canvas_qsize = QSize(ED_CONFIG.ASSET_THUMBNAIL_SIZE, ED_CONFIG.ASSET_THUMBNAIL_SIZE)
-
         composed_canvas = QPixmap(canvas_qsize)
         composed_canvas.fill(Qt.GlobalColor.transparent)
         painter = QPainter(composed_canvas)
-        
-        rsw = float(transformed_segment_pixmap.width()) # This is already rotated (e.g. 10 for 40x10 rotated 90 deg)
-        rsh = float(transformed_segment_pixmap.height())# This is already rotated (e.g. 40 for 40x10 rotated 90 deg)
-        
-        paint_x, paint_y = 0.0, 0.0
-        canvas_w_float = float(canvas_qsize.width())
-        canvas_h_float = float(canvas_qsize.height())
-
-        if rotation == 0: # Top segment
-            paint_x = (canvas_w_float - rsw) / 2.0 
-            paint_y = 0.0
-        elif rotation == 90: # Right segment
-            paint_x = canvas_w_float - rsw 
-            paint_y = (canvas_h_float - rsh) / 2.0
-        elif rotation == 180: # Bottom segment
-            paint_x = (canvas_w_float - rsw) / 2.0
-            paint_y = canvas_h_float - rsh
-        elif rotation == 270: # Left segment
-            paint_x = 0.0
-            paint_y = (canvas_h_float - rsh) / 2.0
-        
-        painter.drawPixmap(QPointF(paint_x, paint_y), transformed_segment_pixmap)
-        painter.end()
-        pixmap_to_return = composed_canvas
+        seg_w, seg_h = float(transformed_pixmap.width()), float(transformed_pixmap.height())
+        can_w, can_h = float(canvas_qsize.width()), float(canvas_qsize.height())
+        px, py = 0.0, 0.0
+        if rotation == 0: px = (can_w - seg_w) / 2.0; py = 0.0                           
+        elif rotation == 90: px = can_w - seg_w; py = (can_h - seg_h) / 2.0             
+        elif rotation == 180: px = (can_w - seg_w) / 2.0; py = can_h - seg_h            
+        elif rotation == 270: px = 0.0; py = (can_h - seg_h) / 2.0                      
+        painter.drawPixmap(QPointF(px, py), transformed_pixmap); painter.end()
+        final_pixmap_for_display = composed_canvas
     
-    # Final check for scaling for non-segment assets, or if segment canvas wasn't exactly target size
-    if pixmap_to_return and pixmap_to_return.size() != target_qsize_for_scaling and \
-       target_qsize_for_scaling.isValid() and target_qsize_for_scaling.width() > 0 and target_qsize_for_scaling.height() > 0 :
-        scaled_pixmap = pixmap_to_return.scaled(target_qsize_for_scaling, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        return scaled_pixmap
-    else:
-        return pixmap_to_return
+    if final_pixmap_for_display and final_pixmap_for_display.size() != target_display_qsize and \
+       target_display_qsize.isValid() and target_display_qsize.width() > 0 and target_display_qsize.height() > 0:
+        return final_pixmap_for_display.scaled(target_display_qsize, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+    
+    return final_pixmap_for_display
 
 
 def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optional[Any] = None):
@@ -323,7 +284,7 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
         original_w_float, original_h_float = ts_float, ts_float
         native_pixmap_for_size_determination = get_asset_pixmap(
             asset_key, asset_data_entry, QSize(1, 1), override_color=None, 
-            get_native_size_only=True, is_flipped_h=False, rotation=0
+            get_native_size_only=True, is_flipped_h=False, rotation=0 
         )
         if native_pixmap_for_size_determination and not native_pixmap_for_size_determination.isNull():
             original_w_float = float(native_pixmap_for_size_determination.width())
@@ -366,45 +327,29 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
                 img_for_cursor_alpha = cursor_base_pixmap_native.toImage().convertToFormat(QImage.Format.Format_ARGB32_Premultiplied)
                 if img_for_cursor_alpha.isNull() or img_for_cursor_alpha.width() == 0 or img_for_cursor_alpha.height() == 0:
                     cursor_fb_w, cursor_fb_h = int(max(1.0, original_w_float)), int(max(1.0, original_h_float))
-                    pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h)
-                    if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
-                    else: pixmap_for_cursor = QPixmap()
+                    pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h); pixmap_for_cursor.fill(fallback_qcolor_blue)
                 else:
                     cursor_image_with_alpha = QImage(img_for_cursor_alpha.size(), QImage.Format.Format_ARGB32_Premultiplied)
-                    if cursor_image_with_alpha.isNull():
-                        cursor_fb_w, cursor_fb_h = int(max(1.0, original_w_float)), int(max(1.0, original_h_float))
-                        pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h)
-                        if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
-                        else: pixmap_for_cursor = QPixmap()
-                    else:
-                        cursor_image_with_alpha.fill(Qt.GlobalColor.transparent)
-                        painter = QPainter();
-                        if painter.begin(cursor_image_with_alpha):
-                            try: painter.setOpacity(float(ED_CONFIG.CURSOR_ASSET_ALPHA) / 255.0); painter.drawImage(0, 0, img_for_cursor_alpha)
-                            finally: painter.end()
-                            pixmap_for_cursor = QPixmap.fromImage(cursor_image_with_alpha)
-                            if pixmap_for_cursor.isNull():
-                                cursor_fb_w, cursor_fb_h = int(max(1.0, original_w_float)), int(max(1.0, original_h_float))
-                                pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h)
-                                if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
-                                else: pixmap_for_cursor = QPixmap()
-                        else:
+                    cursor_image_with_alpha.fill(Qt.GlobalColor.transparent)
+                    painter_cursor = QPainter();
+                    if painter_cursor.begin(cursor_image_with_alpha):
+                        try: painter_cursor.setOpacity(float(ED_CONFIG.CURSOR_ASSET_ALPHA) / 255.0); painter_cursor.drawImage(0, 0, img_for_cursor_alpha)
+                        finally: painter_cursor.end()
+                        pixmap_for_cursor = QPixmap.fromImage(cursor_image_with_alpha)
+                        if pixmap_for_cursor.isNull():
                             cursor_fb_w, cursor_fb_h = int(max(1.0, original_w_float)), int(max(1.0, original_h_float))
-                            pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h)
-                            if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
-                            else: pixmap_for_cursor = QPixmap()
+                            pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h); pixmap_for_cursor.fill(fallback_qcolor_blue)
+                    else: 
+                        cursor_fb_w, cursor_fb_h = int(max(1.0, original_w_float)), int(max(1.0, original_h_float))
+                        pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h); pixmap_for_cursor.fill(fallback_qcolor_blue)
             except Exception as e_cursor_alpha:
                 logger.error(f"Error applying alpha to cursor for '{asset_key}': {e_cursor_alpha}", exc_info=True)
                 cursor_fb_w, cursor_fb_h = int(max(1.0, original_w_float)), int(max(1.0, original_h_float))
-                pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h)
-                if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
-                else: pixmap_for_cursor = QPixmap()
+                pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h); pixmap_for_cursor.fill(fallback_qcolor_blue)
         else: 
             cursor_fb_w, cursor_fb_h = int(max(1.0, original_w_float)), int(max(1.0, original_h_float))
-            pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h)
-            if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
-            else: pixmap_for_cursor = QPixmap()
-        asset_data_entry["q_pixmap_cursor"] = pixmap_for_cursor
+            pixmap_for_cursor = QPixmap(cursor_fb_w, cursor_fb_h); pixmap_for_cursor.fill(fallback_qcolor_blue)
+        asset_data_entry["q_pixmap_cursor"] = pixmap_for_cursor if pixmap_for_cursor else QPixmap()
         
         editor_state.assets_palette[asset_key] = asset_data_entry
         if intended_pixmap_created_successfully: successful_loads += 1
