@@ -33,11 +33,10 @@ if _PROJECT_ROOT_FOR_GAME_STATE_MANAGER not in sys.path:
 try:
     # Modules within main_game package (use relative if this file is also in main_game)
     # If game_state_manager.py is at the root of main_game, then:
-    from . import constants as C
-    from . import config as game_config
-    from .logger import info, debug, warning, error, critical
-    from .camera import Camera # Assuming camera.py is in main_game
-    # from .game_setup import initialize_game_elements # DEFERRED IMPORT
+    import main_game.constants as C
+    import main_game.config as game_config
+    from main_game.logger import info, debug, warning, error, critical
+    from main_game.camera import Camera
 
     # Modules from sibling packages (absolute imports from project root)
     from enemy import Enemy
