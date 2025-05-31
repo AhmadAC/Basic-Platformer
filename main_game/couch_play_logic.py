@@ -1,5 +1,4 @@
-#################### START OF FILE: main_game\couch_play_logic.py ####################
-# couch_play_logic.py
+# main_game/couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
 Handles game logic for local couch co-op mode using PySide6.
@@ -7,9 +6,10 @@ MODIFIED: Deferred import of get_layer_order_key.
 MODIFIED: Corrected add_to_renderables_couch_if_new to handle unhashable dicts.
 MODIFIED: Implemented map change via callback for trigger squares.
 MODIFIED: Removed local trigger flag, relying on MainWindow.map_change_is_active.
-MODIFIED: Ensured player.animations is checked to be a dictionary before `.get()` in player update loop.
+MODIFIED: Ensured player.animations is checked to be a dictionary before using it.
+MODIFIED: Updated to handle multiple chests by iterating through 'collectible_list'.
 """
-# version 2.0.29 (Robust player.animations check in update loop)
+# version 2.0.30 (Multiple chests support)
 
 import time
 import math
@@ -100,8 +100,8 @@ def run_couch_play_mode(
     current_enemies_list_ref: List[Enemy] = game_elements_ref.get("enemy_list", [])
     statue_objects_list_ref: List[Statue] = game_elements_ref.get("statue_objects", [])
     projectiles_list: List[Any] = game_elements_ref.get("projectiles_list", [])
+    # collectible_items_list_ref is now the primary source for chests
     collectible_items_list_ref: List[Any] = game_elements_ref.get("collectible_list", [])
-    current_chest: Optional[Chest] = game_elements_ref.get("current_chest")
     camera_obj: Optional[Any] = game_elements_ref.get("camera")
     processed_custom_images_for_render_couch: List[Dict[str,Any]] = game_elements_ref.get("processed_custom_images_for_render", [])
     trigger_squares: List[Dict[str, Any]] = game_elements_ref.get("trigger_squares_list", [])
@@ -110,6 +110,7 @@ def run_couch_play_mode(
         if (not hasattr(run_couch_play_mode, "_first_tick_debug_printed_couch") or not run_couch_play_mode._first_tick_debug_printed_couch): # type: ignore
             log_debug(f"COUCH_PLAY DEBUG: First valid tick. Platforms: {len(platforms_list_this_frame)}, "
                       f"CustomImages: {len(processed_custom_images_for_render_couch)}, Triggers: {len(trigger_squares)}")
+            log_debug(f"  Chests in collectible_list: {len([item for item in collectible_items_list_ref if isinstance(item, Chest)])}")
             run_couch_play_mode._first_tick_debug_printed_couch = True # type: ignore
 
     dt_sec = dt_sec_provider()
@@ -144,64 +145,136 @@ def run_couch_play_mode(
         statue_objects_list_ref = game_elements_ref.get("statue_objects", [])
         projectiles_list = game_elements_ref.get("projectiles_list", [])
         collectible_items_list_ref = game_elements_ref.get("collectible_list", [])
-        current_chest = game_elements_ref.get("current_chest")
         processed_custom_images_for_render_couch = game_elements_ref.get("processed_custom_images_for_render", [])
         trigger_squares = game_elements_ref.get("trigger_squares_list", [])
         if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG (Reset): Enemies={len(current_enemies_list_ref)}, Statues={len(statue_objects_list_ref)}, CustomImages: {len(processed_custom_images_for_render_couch)}")
 
-    if current_chest and isinstance(current_chest, Chest) and current_chest.alive():
-        current_chest.apply_physics_step(dt_sec)
-        chest_landed_on_player_and_killed = False
-        if not current_chest.is_collected_flag_internal and current_chest.state == 'closed':
-            player_instances_for_chest_check = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init and hasattr(p, 'alive') and p.alive() and not getattr(p, 'is_dead', True) and not getattr(p, 'is_petrified', False)]
+
+    # --- Chest Logic (Modified for multiple chests) ---
+    all_chests_from_collectibles: List[Chest] = [
+        item for item in collectible_items_list_ref
+        if isinstance(item, Chest)
+    ]
+    chests_to_keep_after_this_frame: List[Chest] = []
+
+    for chest_instance in all_chests_from_collectibles:
+        if not chest_instance.alive():
+            continue
+
+        # Apply physics if it's a dynamic chest and not yet collected or still in an active state
+        if chest_instance.state == 'closed' and not chest_instance.is_collected_flag_internal:
+            chest_instance.apply_physics_step(dt_sec)
+            
+            chest_landed_on_player_and_killed_this_chest = False
+            # Player crush logic for this chest_instance
+            player_instances_for_chest_check = [
+                p for p in [player1, player2, player3, player4] 
+                if p and hasattr(p, '_valid_init') and p._valid_init and 
+                   hasattr(p, 'alive') and p.alive() and 
+                   not getattr(p, 'is_dead', True) and 
+                   not getattr(p, 'is_petrified', False)
+            ]
             for p_instance_crush_check in player_instances_for_chest_check:
-                if not (hasattr(current_chest, 'rect') and isinstance(current_chest.rect, QRectF) and hasattr(p_instance_crush_check, 'rect') and isinstance(p_instance_crush_check.rect, QRectF)): continue
-                if current_chest.rect.intersects(p_instance_crush_check.rect):
-                    is_chest_falling_meaningfully = hasattr(current_chest, 'vel_y') and current_chest.vel_y > 1.0
-                    vertical_overlap_landing = current_chest.rect.bottom() >= p_instance_crush_check.rect.top() and current_chest.rect.top() < p_instance_crush_check.rect.bottom()
-                    is_landing_on_head_area = vertical_overlap_landing and current_chest.rect.bottom() <= p_instance_crush_check.rect.top() + (p_instance_crush_check.rect.height() * 0.6)
-                    min_horizontal_overlap_for_crush = current_chest.rect.width() * 0.3
-                    actual_horizontal_overlap_for_crush = min(current_chest.rect.right(), p_instance_crush_check.rect.right()) - max(current_chest.rect.left(), p_instance_crush_check.rect.left())
-                    has_sufficient_horizontal_overlap = actual_horizontal_overlap_for_crush >= min_horizontal_overlap_for_crush
-                    if is_chest_falling_meaningfully and is_landing_on_head_area and has_sufficient_horizontal_overlap:
-                        player_height_for_calc = getattr(p_instance_crush_check, 'standing_collision_height', float(C.TILE_SIZE) * 1.5);
-                        if player_height_for_calc <= 0: player_height_for_calc = 60.0
-                        required_fall_distance = 2.0 * player_height_for_calc
-                        try: gravity_val = float(C.PLAYER_GRAVITY); min_vel_y_for_kill_sq = 2 * gravity_val * required_fall_distance; vel_y_for_kill_threshold = math.sqrt(min_vel_y_for_kill_sq) if min_vel_y_for_kill_sq > 0 else 0.0
-                        except ValueError: vel_y_for_kill_threshold = 10.0
-                        if current_chest.vel_y >= vel_y_for_kill_threshold:
-                            if hasattr(p_instance_crush_check, 'insta_kill'): p_instance_crush_check.insta_kill()
-                            else: p_instance_crush_check.take_damage(p_instance_crush_check.max_health * 10)
-                            current_chest.rect.moveBottom(p_instance_crush_check.rect.top())
-                            if hasattr(current_chest, 'pos_midbottom'): current_chest.pos_midbottom.setY(current_chest.rect.bottom())
-                            current_chest.vel_y = 0.0; current_chest.on_ground = True; chest_landed_on_player_and_killed = True
-                            if hasattr(current_chest, '_update_rect_from_image_and_pos'): current_chest._update_rect_from_image_and_pos()
-                            break
-        current_chest.on_ground = False
-        if chest_landed_on_player_and_killed: current_chest.on_ground = True
-        if not chest_landed_on_player_and_killed and not current_chest.is_collected_flag_internal and current_chest.state == 'closed':
-            for platform_collidable in platforms_list_this_frame:
-                if isinstance(platform_collidable, Statue) and platform_collidable.is_smashed: continue
-                if not hasattr(platform_collidable, 'rect') or not isinstance(platform_collidable.rect, QRectF): continue
-                if current_chest.rect.intersects(platform_collidable.rect):
-                    previous_chest_bottom_y_estimate = current_chest.rect.bottom() - (current_chest.vel_y * dt_sec * C.FPS if current_chest.vel_y > 0 else 0)
-                    if current_chest.vel_y >= 0 and current_chest.rect.bottom() >= platform_collidable.rect.top() and previous_chest_bottom_y_estimate <= platform_collidable.rect.top() + C.GROUND_SNAP_THRESHOLD :
-                        min_overlap_ratio_chest = 0.1; min_horizontal_overlap_chest = current_chest.rect.width() * min_overlap_ratio_chest
-                        actual_overlap_width_chest = min(current_chest.rect.right(), platform_collidable.rect.right()) - max(current_chest.rect.left(), platform_collidable.rect.left())
-                        if actual_overlap_width_chest >= min_horizontal_overlap_chest:
-                            current_chest.rect.moveBottom(platform_collidable.rect.top())
-                            if hasattr(current_chest, 'pos_midbottom'): current_chest.pos_midbottom.setY(current_chest.rect.bottom())
-                            current_chest.vel_y = 0.0; current_chest.on_ground = True; break
-            if hasattr(current_chest, '_update_rect_from_image_and_pos'): current_chest._update_rect_from_image_and_pos()
-        current_chest.update(dt_sec)
-        if current_chest.state == 'closed' and not current_chest.is_collected_flag_internal:
-            player_interacted_chest: Optional[Player] = None
-            player_action_pairs = [(player1, p1_action_events), (player2, p2_action_events), (player3, p3_action_events), (player4, p4_action_events)]
-            interaction_chest_rect_couch = QRectF(current_chest.rect).adjusted(-5, -5, 5, 5)
-            for p_instance_chest, p_actions_chest in player_action_pairs:
-                if p_instance_chest and hasattr(p_instance_chest, 'alive') and p_instance_chest.alive() and not getattr(p_instance_chest, 'is_dead', True) and not getattr(p_instance_chest,'is_petrified',False) and hasattr(p_instance_chest, 'rect') and p_instance_chest.rect.intersects(interaction_chest_rect_couch) and p_actions_chest.get("interact", False):
-                    player_interacted_chest = p_instance_chest; break
-            if player_interacted_chest: current_chest.collect(player_interacted_chest)
+                if hasattr(chest_instance, 'rect') and isinstance(chest_instance.rect, QRectF) and \
+                   hasattr(p_instance_crush_check, 'rect') and isinstance(p_instance_crush_check.rect, QRectF):
+                    if chest_instance.rect.intersects(p_instance_crush_check.rect):
+                        is_chest_falling_meaningfully = hasattr(chest_instance, 'vel_y') and chest_instance.vel_y > 1.0
+                        vertical_overlap_landing = chest_instance.rect.bottom() >= p_instance_crush_check.rect.top() and \
+                                                   chest_instance.rect.top() < p_instance_crush_check.rect.bottom()
+                        is_landing_on_head_area = vertical_overlap_landing and \
+                                                  chest_instance.rect.bottom() <= p_instance_crush_check.rect.top() + (p_instance_crush_check.rect.height() * 0.6)
+                        min_horizontal_overlap_for_crush = chest_instance.rect.width() * 0.3
+                        actual_horizontal_overlap_for_crush = min(chest_instance.rect.right(), p_instance_crush_check.rect.right()) - \
+                                                              max(chest_instance.rect.left(), p_instance_crush_check.rect.left())
+                        has_sufficient_horizontal_overlap = actual_horizontal_overlap_for_crush >= min_horizontal_overlap_for_crush
+
+                        if is_chest_falling_meaningfully and is_landing_on_head_area and has_sufficient_horizontal_overlap:
+                            player_height_for_calc = getattr(p_instance_crush_check, 'standing_collision_height', float(C.TILE_SIZE) * 1.5);
+                            if player_height_for_calc <= 0: player_height_for_calc = 60.0
+                            required_fall_distance = 2.0 * player_height_for_calc
+                            try: gravity_val = float(C.PLAYER_GRAVITY); min_vel_y_for_kill_sq = 2 * gravity_val * required_fall_distance; vel_y_for_kill_threshold = math.sqrt(min_vel_y_for_kill_sq) if min_vel_y_for_kill_sq > 0 else 0.0
+                            except ValueError: vel_y_for_kill_threshold = 10.0
+                            if chest_instance.vel_y >= vel_y_for_kill_threshold:
+                                if hasattr(p_instance_crush_check, 'insta_kill'): p_instance_crush_check.insta_kill()
+                                else: p_instance_crush_check.take_damage(p_instance_crush_check.max_health * 10)
+                                chest_instance.rect.moveBottom(p_instance_crush_check.rect.top())
+                                if hasattr(chest_instance, 'pos_midbottom'): chest_instance.pos_midbottom.setY(chest_instance.rect.bottom())
+                                chest_instance.vel_y = 0.0
+                                chest_instance.on_ground = True
+                                chest_landed_on_player_and_killed_this_chest = True
+                                if hasattr(chest_instance, '_update_rect_from_image_and_pos'): chest_instance._update_rect_from_image_and_pos()
+                                break 
+
+            # Platform collision logic for this chest_instance
+            chest_instance.on_ground = False 
+            if chest_landed_on_player_and_killed_this_chest:
+                chest_instance.on_ground = True
+            
+            if not chest_landed_on_player_and_killed_this_chest and \
+               not chest_instance.is_collected_flag_internal and \
+               chest_instance.state == 'closed':
+                for platform_collidable in platforms_list_this_frame:
+                    if isinstance(platform_collidable, Statue) and platform_collidable.is_smashed: continue
+                    if not hasattr(platform_collidable, 'rect') or not isinstance(platform_collidable.rect, QRectF): continue
+                    if chest_instance.rect.intersects(platform_collidable.rect):
+                        previous_chest_bottom_y_estimate = chest_instance.rect.bottom() - (chest_instance.vel_y * dt_sec * C.FPS if chest_instance.vel_y > 0 else 0)
+                        if chest_instance.vel_y >= 0 and chest_instance.rect.bottom() >= platform_collidable.rect.top() and \
+                           previous_chest_bottom_y_estimate <= platform_collidable.rect.top() + C.GROUND_SNAP_THRESHOLD:
+                            min_overlap_ratio_chest = 0.1
+                            min_horizontal_overlap_chest = chest_instance.rect.width() * min_overlap_ratio_chest
+                            actual_overlap_width_chest = min(chest_instance.rect.right(), platform_collidable.rect.right()) - \
+                                                         max(chest_instance.rect.left(), platform_collidable.rect.left())
+                            if actual_overlap_width_chest >= min_horizontal_overlap_chest:
+                                chest_instance.rect.moveBottom(platform_collidable.rect.top())
+                                if hasattr(chest_instance, 'pos_midbottom'): chest_instance.pos_midbottom.setY(chest_instance.rect.bottom())
+                                chest_instance.vel_y = 0.0
+                                chest_instance.on_ground = True
+                                break 
+                if hasattr(chest_instance, '_update_rect_from_image_and_pos'):
+                    chest_instance._update_rect_from_image_and_pos()
+
+        # Update chest animation/state
+        chest_instance.update(dt_sec)
+
+        # Interaction logic for this chest_instance
+        if chest_instance.state == 'closed' and not chest_instance.is_collected_flag_internal:
+            player_interacted_this_chest: Optional[Player] = None
+            player_action_pairs = [(player1, p1_action_events), (player2, p2_action_events), 
+                                   (player3, p3_action_events), (player4, p4_action_events)]
+            interaction_chest_rect_couch = QRectF(chest_instance.rect).adjusted(-5, -5, 5, 5)
+            for p_instance_chest_interact, p_actions_chest_interact in player_action_pairs:
+                if p_instance_chest_interact and \
+                   hasattr(p_instance_chest_interact, 'alive') and p_instance_chest_interact.alive() and \
+                   not getattr(p_instance_chest_interact, 'is_dead', True) and \
+                   not getattr(p_instance_chest_interact, 'is_petrified', False) and \
+                   hasattr(p_instance_chest_interact, 'rect') and \
+                   p_instance_chest_interact.rect.intersects(interaction_chest_rect_couch) and \
+                   p_actions_chest_interact.get("interact", False):
+                    player_interacted_this_chest = p_instance_chest_interact
+                    break 
+            if player_interacted_this_chest:
+                chest_instance.collect(player_interacted_this_chest)
+                log_info(f"COUCH_PLAY: Player {player_interacted_this_chest.player_id} collected chest (obj: {id(chest_instance)}).")
+        
+        if chest_instance.alive(): 
+            chests_to_keep_after_this_frame.append(chest_instance)
+
+    # Update the collectible_list in game_elements_ref
+    other_collectibles_in_list = [
+        item for item in collectible_items_list_ref
+        if not isinstance(item, Chest)
+    ]
+    game_elements_ref["collectible_list"] = other_collectibles_in_list + chests_to_keep_after_this_frame
+    
+    # Remove the old single 'current_chest' key if it's still present
+    if "current_chest" in game_elements_ref:
+        del game_elements_ref["current_chest"]
+
+    if _SCRIPT_LOGGING_ENABLED:
+        log_debug(f"COUCH_PLAY DEBUG: Chests processed. Kept: {len(chests_to_keep_after_this_frame)}, "
+                  f"Total in collectible_list: {len(game_elements_ref['collectible_list'])}")
+    # --- End Chest Logic ---
+
 
     active_players_for_collision_check = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init and hasattr(p, 'alive') and p.alive()]
     player_instances_to_update = [p for p in [player1, player2, player3, player4] if p and hasattr(p, '_valid_init') and p._valid_init]
@@ -210,9 +283,13 @@ def run_couch_play_mode(
     hittable_targets_for_player_melee.extend([s for s in statue_objects_list_ref if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])
     for p_instance in player_instances_to_update:
         all_others_for_this_player = [other_p for other_p in active_players_for_collision_check if other_p is not p_instance]
-        if current_chest and current_chest.alive() and current_chest.state == 'closed': all_others_for_this_player.append(current_chest)
+        
+        # Add closed, uncollected chests to the list of things players can collide with
+        for chest_for_player_coll in chests_to_keep_after_this_frame: # Use the updated list
+            if chest_for_player_coll.state == 'closed' and not chest_for_player_coll.is_collected_flag_internal:
+                all_others_for_this_player.append(chest_for_player_coll)
+
         p_instance.game_elements_ref_for_projectiles = game_elements_ref
-        # MODIFIED: Check if p_instance.animations is a dict before calling update
         if isinstance(p_instance.animations, dict) and p_instance.animations:
             p_instance.update(dt_sec, platforms_list_this_frame, ladders_list, hazards_list, all_others_for_this_player, hittable_targets_for_player_melee)
         elif _SCRIPT_LOGGING_ENABLED:
@@ -262,11 +339,9 @@ def run_couch_play_mode(
     game_elements_ref["projectiles_list"] = projectiles_to_keep_this_frame
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Projectiles updated. Count: {len(projectiles_to_keep_this_frame)}")
 
-    collectibles_to_keep = []
-    if current_chest and current_chest.alive(): collectibles_to_keep.append(current_chest)
-    game_elements_ref["collectible_list"] = collectibles_to_keep
-    if not (current_chest and current_chest.alive()): game_elements_ref["current_chest"] = None
-    if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Collectibles updated. Chest present: {bool(game_elements_ref.get('current_chest'))}")
+    # No separate `current_chest` to manage here; `collectible_list` handles it.
+    if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Collectibles (including chests) updated via loop. Total in list: {len(game_elements_ref.get('collectible_list',[]))}")
+
 
     active_players_for_trigger = [p for p in [player1, player2, player3, player4] if p and p.alive() and not p.is_dead and not getattr(p,'is_petrified',False)]
     for trigger_data in trigger_squares:
@@ -292,15 +367,15 @@ def run_couch_play_mode(
                         log_info(f"COUCH_PLAY: Requesting map change to '{linked_map}'.")
                         if request_map_change_callback:
                             request_map_change_callback(linked_map)
-                            return False
+                            return False # End current game loop update as map is changing
                         else:
                             log_warning("COUCH_PLAY WARNING: request_map_change_callback not provided. Cannot change map via trigger.")
                     if one_time:
                         game_elements_ref[trigger_already_fired_key] = True
-                    break
+                    break # One player activated it, stop checking other players for this trigger
             else:
-                continue
-            break
+                continue # Player didn't intersect this trigger, check next player
+            break # Trigger was activated by a player, move to next trigger
 
     if camera_obj:
         focus_targets_alive_couch = [p for p in player_instances_to_update if p and hasattr(p, 'alive') and p.alive() and not getattr(p, 'is_dead', True) and not getattr(p, 'is_petrified', False)]
@@ -373,5 +448,3 @@ def run_couch_play_mode(
         return False
 
     return True
-
-#################### END OF FILE: main_game/couch_play_logic.py ####################
