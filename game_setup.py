@@ -10,8 +10,9 @@ MODIFIED: Sorts all_renderable_objects by layer_order.
 MODIFIED: Enhanced logging for custom image processing and path handling.
 MODIFIED: Corrected call to add_to_renderables_if_new for custom images.
 MODIFIED: Added check for camera_instance being None.
+MODIFIED: Added EnemyKnight instantiation.
 """
-# version 2.0.15 (Camera None check)
+# version 2.0.16 (EnemyKnight Instantiation)
 import sys
 import os
 import importlib # For importlib.invalidate_caches()
@@ -26,6 +27,7 @@ from PySide6.QtCore import Qt, QRectF
 import constants as C
 from player import Player
 from enemy import Enemy
+from enemy_knight import EnemyKnight # <<< ADDED IMPORT
 from items import Chest
 from statue import Statue
 from camera import Camera
@@ -72,7 +74,7 @@ def get_layer_order_key(item: Any) -> int:
             properties_dict = getattr(item, 'properties', None)
             if isinstance(properties_dict, dict): layer_val = int(properties_dict.get('layer_order', 0)); layer_order_source = f"properties_dict ({type(item).__name__})"
             elif hasattr(item, 'projectile_id'): layer_val = 90; layer_order_source = "projectile_id_attr"
-            elif isinstance(item, Enemy): layer_val = 10; layer_order_source = "Enemy_class"
+            elif isinstance(item, Enemy): layer_val = 10; layer_order_source = "Enemy_class" # Includes EnemyKnight
             elif isinstance(item, Statue): layer_val = 9; layer_order_source = "Statue_class"
             elif isinstance(item, Chest): layer_val = 8; layer_order_source = "Chest_class"
             elif isinstance(item, Platform): layer_val = -5; layer_order_source = "Platform_class"
@@ -117,14 +119,14 @@ def initialize_game_elements(
             if isinstance(game_elements_ref[player_key], Player) and hasattr(game_elements_ref[player_key], 'reset_for_new_game_or_round'):
                 game_elements_ref[player_key].reset_for_new_game_or_round()
             game_elements_ref[player_key] = None
-    game_elements_ref["camera"] = None # Explicitly set to None before re-creation attempt
+    game_elements_ref["camera"] = None
     game_elements_ref["current_chest"] = None
     game_elements_ref["level_data"] = None
     list_keys_to_reinitialize = [
         "enemy_list", "statue_objects", "collectible_list", "projectiles_list",
         "platforms_list", "ladders_list", "hazards_list", "background_tiles_list",
         "all_renderable_objects", "enemy_spawns_data_cache", "statue_spawns_data_cache",
-        "processed_custom_images_for_render"
+        "processed_custom_images_for_render", "trigger_squares_list" # Ensure trigger_squares_list is also reset
     ]
     for key in list_keys_to_reinitialize: game_elements_ref[key] = []
     game_elements_ref['initialization_in_progress'] = True
@@ -152,6 +154,7 @@ def initialize_game_elements(
     game_elements_ref["ground_platform_height_ref"] = float(level_data.get('ground_platform_height_ref', float(getattr(C, 'TILE_SIZE', 40.0))))
     game_elements_ref["enemy_spawns_data_cache"] = list(level_data.get('enemies_list', []))
     game_elements_ref["statue_spawns_data_cache"] = list(level_data.get('statues_list', []))
+    game_elements_ref["trigger_squares_list"] = list(level_data.get('trigger_squares_list', [])) # Load trigger squares
 
     for p_data in level_data.get('platforms_list', []):
         try:
@@ -166,7 +169,7 @@ def initialize_game_elements(
     for h_data in level_data.get('hazards_list', []):
         try:
             rect_tuple = h_data.get('rect')
-            if rect_tuple and len(rect_tuple) == 4 and (str(h_data.get('type', '')).lower() == 'lava' or "lava" in str(h_data.get('type', '')).lower()): game_elements_ref["hazards_list"].append(Lava(x=float(rect_tuple[0]), y=float(rect_tuple[1]), width=float(rect_tuple[2]), height=float(rect_tuple[3]), color_tuple=tuple(h_data.get('color', getattr(C, 'ORANGE_RED', (255,69,0)))) ))
+            if rect_tuple and len(rect_tuple) == 4 and (str(h_data.get('type', '')).lower() == 'lava' or "lava" in str(h_data.get('type', '')).lower()): game_elements_ref["hazards_list"].append(Lava(x=float(rect_tuple[0]), y=float(rect_tuple[1]), width=float(rect_tuple[2]), height=float(rect_tuple[3]), color_tuple=tuple(h_data.get('color', getattr(C, 'ORANGE_RED', (255,69,0)))), properties=h_data.get('properties', {}) ))
         except Exception as e_haz: error(f"GameSetup: Error creating hazard: {e_haz}", exc_info=True)
     for bg_data in level_data.get('background_tiles_list', []):
         try:
@@ -215,29 +218,23 @@ def initialize_game_elements(
     info(f"GameSetup: Custom images processed: {len(game_elements_ref['processed_custom_images_for_render'])}")
 
     # Process Trigger Squares for visuals (if they are stored with visual properties)
-    trigger_squares_data = level_data.get("trigger_squares_list", [])
-    game_elements_ref["trigger_squares_list"] = [] # Ensure it's a list for game logic
+    trigger_squares_data_gs = game_elements_ref.get("trigger_squares_list", []) # This was already loaded
     processed_trigger_visuals_count = 0
-    if trigger_squares_data:
-        info(f"GameSetup: Processing {len(trigger_squares_data)} trigger square entries for visuals...")
-        for trig_idx, trig_data_raw in enumerate(trigger_squares_data):
-            if not isinstance(trig_data_raw, dict): warning(f"GameSetup WARNING: Trigger square entry {trig_idx} is not a dict. Skipping."); continue
+    if trigger_squares_data_gs:
+        info(f"GameSetup: Processing {len(trigger_squares_data_gs)} trigger square entries for potential visuals...")
+        for trig_idx, trig_data_raw in enumerate(trigger_squares_data_gs):
+            if not isinstance(trig_data_raw, dict): warning(f"GameSetup WARNING: Trigger square entry {trig_idx} is not a dict (from trigger_squares_list). Skipping visual processing."); continue
             try:
-                rect_tuple = trig_data_raw.get('rect')
-                if not rect_tuple or not isinstance(rect_tuple, (list, tuple)) or len(rect_tuple) != 4: warning(f"GameSetup WARNING: Trigger square {trig_idx} has invalid 'rect'. Skipping. Data: {rect_tuple}"); continue
-                
-                # Add the trigger data directly to game_elements for game logic
-                game_elements_ref["trigger_squares_list"].append(trig_data_raw)
-
-                # If triggers have a visual representation to be rendered like custom images:
                 props = trig_data_raw.get("properties", {})
                 if props.get("visible", False): # Only process for rendering if visible
+                    rect_tuple = trig_data_raw.get('rect')
+                    if not rect_tuple or not isinstance(rect_tuple, (list, tuple)) or len(rect_tuple) != 4: continue # Already logged if rect is bad
                     q_img_trig: Optional[QImage] = None
                     trig_img_rel_path = props.get("image_in_square")
                     if trig_img_rel_path and isinstance(trig_img_rel_path, str):
-                        full_trig_img_path = os.path.join(current_map_folder_path, trig_img_rel_path) # Assumes relative to map folder (e.g. in Custom/)
+                        full_trig_img_path = os.path.join(current_map_folder_path, trig_img_rel_path)
                         if os.path.exists(full_trig_img_path): q_img_trig = QImage(full_trig_img_path)
-                        else: warning(f"GameSetup WARNING: Trigger image not found: {full_trig_img_path}")
+                        else: warning(f"GameSetup WARNING: Trigger image not found for visual: {full_trig_img_path}")
                     
                     fill_color_rgba = props.get("fill_color_rgba")
                     target_w_trig = float(rect_tuple[2]); target_h_trig = float(rect_tuple[3])
@@ -245,13 +242,13 @@ def initialize_game_elements(
                     if target_w_trig <=0 or target_h_trig <=0: continue
 
                     trig_pixmap = QPixmap(int(target_w_trig), int(target_h_trig))
-                    trig_pixmap.fill(Qt.GlobalColor.transparent) # Start with transparent
+                    trig_pixmap.fill(Qt.GlobalColor.transparent)
                     painter = QPainter(trig_pixmap)
                     if q_img_trig and not q_img_trig.isNull():
                         painter.drawImage(0,0, q_img_trig.scaled(int(target_w_trig), int(target_h_trig), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation))
                     elif fill_color_rgba and isinstance(fill_color_rgba, (list,tuple)) and len(fill_color_rgba)==4:
                         painter.fillRect(trig_pixmap.rect(), QColor(fill_color_rgba[0], fill_color_rgba[1], fill_color_rgba[2], fill_color_rgba[3]))
-                    else: # Default fallback visual for visible triggers without image/color
+                    else:
                         painter.fillRect(trig_pixmap.rect(), QColor(100, 100, 255, 70))
                         painter.setPen(QColor(50,50,150,150)); painter.drawRect(trig_pixmap.rect().adjusted(0,0,-1,-1))
                     painter.end()
@@ -259,15 +256,15 @@ def initialize_game_elements(
                     renderable_trigger_visual = {
                         'rect': QRectF(float(rect_tuple[0]), float(rect_tuple[1]), target_w_trig, target_h_trig),
                         'image': trig_pixmap,
-                        'layer_order': trig_data_raw.get("layer_order", -1), # Behind most things by default if visible
-                        'source_file_path_debug': f"Trigger: {trig_data_raw.get('id', trig_idx)}",
-                        'opacity_float': 1.0 # Triggers usually fully visible or fully invisible
+                        'layer_order': trig_data_raw.get("layer_order", -1),
+                        'source_file_path_debug': f"TriggerVisual: {trig_data_raw.get('id', trig_idx)}",
+                        'opacity_float': 1.0
                     }
                     game_elements_ref["processed_custom_images_for_render"].append(renderable_trigger_visual)
                     processed_trigger_visuals_count += 1
-            except Exception as e_trig_vis: error(f"GameSetup ERROR: Processing trigger visual {trig_idx} ({trig_data_raw}): {e_trig_vis}", exc_info=True)
-        info(f"GameSetup: Trigger visuals processed: {processed_trigger_visuals_count}")
-    else: info("GameSetup: No 'trigger_squares_list' in map_data or list is empty.")
+            except Exception as e_trig_vis_gs: error(f"GameSetup ERROR: Processing trigger visual {trig_idx} ({trig_data_raw}): {e_trig_vis_gs}", exc_info=True)
+        info(f"GameSetup: Trigger visuals processed and added to render list: {processed_trigger_visuals_count}")
+    else: info("GameSetup: No 'trigger_squares_list' in map_data or list is empty for visual processing.")
 
 
     active_player_count = 0
@@ -300,10 +297,19 @@ def initialize_game_elements(
             try:
                 patrol_raw = spawn_info.get('patrol_rect_data'); patrol_qrectf: Optional[QRectF] = None
                 if isinstance(patrol_raw, dict) and all(k in patrol_raw for k in ['x','y','width','height']): patrol_qrectf = QRectF(float(patrol_raw['x']), float(patrol_raw['y']), float(patrol_raw['width']), float(patrol_raw['height']))
-                enemy_color_name = str(spawn_info.get('type', 'enemy_green')); start_pos_tuple = tuple(map(float, spawn_info.get('start_pos', (100.0, 100.0)))); enemy_props = spawn_info.get('properties', {})
-                new_enemy = Enemy(start_x=start_pos_tuple[0], start_y=start_pos_tuple[1], patrol_area=patrol_qrectf, enemy_id=i_enemy, color_name=enemy_color_name, properties=enemy_props)
-                if new_enemy._valid_init: game_elements_ref["enemy_list"].append(new_enemy)
-                else: warning(f"GameSetup WARNING: Failed to initialize enemy {i_enemy} (type: {enemy_color_name}) during reset.")
+                
+                enemy_type_from_data = str(spawn_info.get('type', 'enemy_green')) # This is the game_type_id
+                start_pos_tuple = tuple(map(float, spawn_info.get('start_pos', (100.0, 100.0))))
+                enemy_props = spawn_info.get('properties', {})
+                new_enemy: Optional[Any] = None # Any to accommodate both Enemy and EnemyKnight
+
+                if enemy_type_from_data == "enemy_knight": # <<< CHECK FOR KNIGHT
+                    new_enemy = EnemyKnight(start_x=start_pos_tuple[0], start_y=start_pos_tuple[1], patrol_area=patrol_qrectf, enemy_id=i_enemy, properties=enemy_props)
+                else: # Fallback to generic Enemy or other types
+                    new_enemy = Enemy(start_x=start_pos_tuple[0], start_y=start_pos_tuple[1], patrol_area=patrol_qrectf, enemy_id=i_enemy, color_name=enemy_type_from_data, properties=enemy_props)
+                
+                if new_enemy and new_enemy._valid_init: game_elements_ref["enemy_list"].append(new_enemy)
+                else: warning(f"GameSetup WARNING: Failed to initialize enemy {i_enemy} (type: {enemy_type_from_data}) during reset.")
             except Exception as e_enemy_create: error(f"GameSetup ERROR: Error creating enemy {i_enemy} during reset: {e_enemy_create}", exc_info=True)
         info(f"GameSetup: Enemies re-created: {len(game_elements_ref['enemy_list'])}")
         for i_statue, statue_data in enumerate(game_elements_ref["statue_spawns_data_cache"]):
@@ -333,7 +339,7 @@ def initialize_game_elements(
         game_elements_ref["current_chest"] = None
 
     camera_instance = Camera(initial_level_width=game_elements_ref.get("level_pixel_width", float(current_width) * 2.0), initial_world_start_x=game_elements_ref.get("level_min_x_absolute", 0.0), initial_world_start_y=game_elements_ref.get("level_min_y_absolute", 0.0), initial_level_bottom_y_abs=game_elements_ref.get("level_max_y_absolute", float(current_height)), screen_width=float(current_width), screen_height=float(current_height))
-    if camera_instance is None: critical("GameSetup CRITICAL: Camera instance became None immediately after Camera() call!") # New Check
+    if camera_instance is None: critical("GameSetup CRITICAL: Camera instance became None immediately after Camera() call!")
     game_elements_ref["camera"] = camera_instance
     debug(f"GameSetup DEBUG: Directly after assignment, type of game_elements_ref['camera']: {type(game_elements_ref.get('camera'))}, ID: {id(game_elements_ref.get('camera'))}")
     game_elements_ref["camera_level_dims_set"] = True
@@ -356,9 +362,6 @@ def initialize_game_elements(
         debug(f"GameSetup DEBUG: Added to renderables from processed_custom_images_for_render: {custom_img_dict.get('source_file_path_debug', 'Unknown Custom Image')}")
     for dynamic_key in ["enemy_list", "statue_objects", "collectible_list", "projectiles_list"]:
         for item_dyn in game_elements_ref.get(dynamic_key, []): add_to_renderables_if_new(item_dyn, new_all_renderables_setup_temp)
-    # Add trigger squares to renderables only if they have visual representation (e.g., are visible)
-    # This was already handled in the "Trigger visuals processed" section if they become part of "processed_custom_images_for_render"
-    # If they are separate and need to be drawn from trigger_squares_list, that logic would be in GameSceneWidget.
 
     for i_p_render in range(1, 5):
         p_to_render = game_elements_ref.get(f"player{i_p_render}")

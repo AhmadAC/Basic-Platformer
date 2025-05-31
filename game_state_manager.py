@@ -8,8 +8,9 @@ Network state synchronization handles creating/updating entities on the client
 based on server data.
 MODIFIED: Deferred import of initialize_game_elements in reset_game_state.
 MODIFIED: Corrected player key in get_network_game_state.
+MODIFIED: EnemyKnight instantiation from network data.
 """
-# version 2.2.1 (Corrected player key in get_network_game_state)
+# version 2.2.2 (EnemyKnight instantiation)
 import os
 import sys
 import gc
@@ -19,6 +20,7 @@ from PySide6.QtCore import QRectF, QPointF
 from PySide6.QtGui import QColor
 
 from enemy import Enemy
+from enemy_knight import EnemyKnight # <<< ADDED IMPORT
 from items import Chest
 from statue import Statue
 from player import Player
@@ -36,13 +38,13 @@ try:
     PROJECTILES_MODULE_AVAILABLE = True
 except ImportError:
     PROJECTILES_MODULE_AVAILABLE = False
-    class Fireball: pass; 
-    class PoisonShot: pass; 
-    class BoltProjectile: pass
-    class BloodShot: pass; 
-    class IceShard: pass; 
-    class ShadowProjectile: pass
-    class GreyProjectile: pass
+    class Fireball: pass #type: ignore
+    class PoisonShot: pass #type: ignore
+    class BoltProjectile: pass #type: ignore
+    class BloodShot: pass #type: ignore
+    class IceShard: pass #type: ignore
+    class ShadowProjectile: pass #type: ignore
+    class GreyProjectile: pass #type: ignore
 
 try:
     from logger import info, debug, warning, error, critical
@@ -105,7 +107,7 @@ def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
 
 def get_network_game_state(game_elements: Dict[str, Any]) -> Dict[str, Any]:
     state: Dict[str, Any] = {
-        'p1': None, 'p2': None, 'p3': None, 'p4': None, # Initialize all player keys
+        'p1': None, 'p2': None, 'p3': None, 'p4': None,
         'enemies': {},
         'chest': None,
         'statues': [],
@@ -115,15 +117,14 @@ def get_network_game_state(game_elements: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     for i in range(1, 5):
-        player_game_elements_key = f"player{i}" # Key used in game_elements (e.g., "player1")
-        player_network_key = f"p{i}"           # Key for the network state dict (e.g., "p1")
+        player_game_elements_key = f"player{i}"
+        player_network_key = f"p{i}"
         player_instance = game_elements.get(player_game_elements_key)
-
         if player_instance and hasattr(player_instance, '_valid_init') and player_instance._valid_init and \
            hasattr(player_instance, 'get_network_data'):
             state[player_network_key] = player_instance.get_network_data()
         else:
-            state[player_network_key] = None # Ensure key exists even if player is None or invalid
+            state[player_network_key] = None
 
     enemy_list: List[Enemy] = game_elements.get("enemy_list", [])
     for enemy in enemy_list:
@@ -131,7 +132,7 @@ def get_network_game_state(game_elements: Dict[str, Any]) -> Dict[str, Any]:
            hasattr(enemy, 'get_network_data'):
             is_enemy_net_relevant = ( (hasattr(enemy, 'alive') and enemy.alive()) or (getattr(enemy, 'is_dead', False) and not getattr(enemy, 'death_animation_finished', True)) or getattr(enemy, 'is_petrified', False) )
             if is_enemy_net_relevant:
-                state['enemies'][str(enemy.enemy_id)] = enemy.get_network_data()
+                state['enemies'][str(enemy.enemy_id)] = enemy.get_network_data() # get_network_data in enemy_network_handler now includes class_type
 
     statue_list: List[Statue] = game_elements.get("statue_objects", [])
     for statue_obj in statue_list:
@@ -169,7 +170,6 @@ def set_network_game_state(
     game_elements: Dict[str, Any],
     client_player_id: Optional[int] = None
 ):
-    # ... (this function remains the same, no changes needed for the player_key issue here)
     if not network_state_data:
         warning("GSM set_network_game_state: Received empty network_state_data. No changes made.")
         return
@@ -203,29 +203,45 @@ def set_network_game_state(
             if hasattr(player_instance_local, 'alive') and player_instance_local.alive() and hasattr(player_instance_local, 'kill'): player_instance_local.kill()
             game_elements[player_key_local] = None
 
-    new_enemy_list_for_client: List[Enemy] = []
-    current_client_enemies_map = {str(enemy.enemy_id): enemy for enemy in game_elements.get("enemy_list", []) if hasattr(enemy, 'enemy_id')}
+    new_enemy_list_for_client: List[Any] = [] # List of Enemy or EnemyKnight
+    current_client_enemies_map: Dict[str, Any] = {str(enemy.enemy_id): enemy for enemy in game_elements.get("enemy_list", []) if hasattr(enemy, 'enemy_id')}
     server_enemy_data_map = network_state_data.get('enemies', {})
     if isinstance(server_enemy_data_map, dict):
         for enemy_id_str, enemy_data_from_server in server_enemy_data_map.items():
             try: enemy_id_int = int(enemy_id_str)
             except ValueError: error(f"GSM Client: Invalid enemy_id '{enemy_id_str}' from server. Skipping."); continue
-            client_enemy_instance: Optional[Enemy] = current_client_enemies_map.get(enemy_id_str)
+            
+            client_enemy_instance: Optional[Any] = current_client_enemies_map.get(enemy_id_str)
+            server_enemy_class_type = enemy_data_from_server.get('class_type', 'Enemy') # Default to generic Enemy
+
             if enemy_data_from_server.get('_valid_init', False):
-                if not client_enemy_instance or not getattr(client_enemy_instance, '_valid_init', False):
+                # If client instance doesn't exist, or its class type doesn't match server, or it's not validly initialized, create a new one.
+                if not client_enemy_instance or \
+                   client_enemy_instance.__class__.__name__ != server_enemy_class_type or \
+                   not getattr(client_enemy_instance, '_valid_init', False):
+                    
                     original_spawn_info_for_enemy = enemy_spawns_data_cache[enemy_id_int] if enemy_spawns_data_cache and 0 <= enemy_id_int < len(enemy_spawns_data_cache) else None
                     spawn_pos_e_tuple = enemy_data_from_server.get('pos', original_spawn_info_for_enemy.get('start_pos') if original_spawn_info_for_enemy else (100.0,100.0))
                     patrol_area_e_qrectf: Optional[QRectF] = None
                     if original_spawn_info_for_enemy and 'patrol_rect_data' in original_spawn_info_for_enemy and isinstance(original_spawn_info_for_enemy['patrol_rect_data'], dict):
                         pr_d = original_spawn_info_for_enemy['patrol_rect_data']
                         patrol_area_e_qrectf = QRectF(float(pr_d.get('x',0)), float(pr_d.get('y',0)), float(pr_d.get('width',100)), float(pr_d.get('height',50)))
-                    e_color_name = enemy_data_from_server.get('color_name', original_spawn_info_for_enemy.get('type') if original_spawn_info_for_enemy else 'enemy_green')
                     e_props_dict = enemy_data_from_server.get('properties', original_spawn_info_for_enemy.get('properties', {}) if original_spawn_info_for_enemy else {})
-                    client_enemy_instance = Enemy(start_x=float(spawn_pos_e_tuple[0]), start_y=float(spawn_pos_e_tuple[1]), patrol_area=patrol_area_e_qrectf, enemy_id=enemy_id_int, color_name=e_color_name, properties=e_props_dict)
+                    
+                    if server_enemy_class_type == 'EnemyKnight':
+                        client_enemy_instance = EnemyKnight(start_x=float(spawn_pos_e_tuple[0]), start_y=float(spawn_pos_e_tuple[1]), patrol_area=patrol_area_e_qrectf, enemy_id=enemy_id_int, properties=e_props_dict)
+                        debug(f"GSM Client: Created new EnemyKnight instance for ID {enemy_id_str}.")
+                    else: # Default to generic Enemy
+                        e_color_name = enemy_data_from_server.get('color_name', original_spawn_info_for_enemy.get('type') if original_spawn_info_for_enemy else 'enemy_green')
+                        client_enemy_instance = Enemy(start_x=float(spawn_pos_e_tuple[0]), start_y=float(spawn_pos_e_tuple[1]), patrol_area=patrol_area_e_qrectf, enemy_id=enemy_id_int, color_name=e_color_name, properties=e_props_dict)
+                        debug(f"GSM Client: Created new generic Enemy instance for ID {enemy_id_str}, color/type: {e_color_name}.")
+
                 if client_enemy_instance and getattr(client_enemy_instance, '_valid_init', False):
                     if hasattr(client_enemy_instance, 'set_network_data'): client_enemy_instance.set_network_data(enemy_data_from_server)
                     new_enemy_list_for_client.append(client_enemy_instance)
-                    if (hasattr(client_enemy_instance, 'alive') and client_enemy_instance.alive()) or (getattr(client_enemy_instance, 'is_dead', False) and not getattr(client_enemy_instance, 'death_animation_finished', True) and not getattr(client_enemy_instance, 'is_petrified', False)) or getattr(client_enemy_instance, 'is_petrified', False):
+                    if (hasattr(client_enemy_instance, 'alive') and client_enemy_instance.alive()) or \
+                       (getattr(client_enemy_instance, 'is_dead', False) and not getattr(client_enemy_instance, 'death_animation_finished', True) and not getattr(client_enemy_instance, 'is_petrified', False)) or \
+                       getattr(client_enemy_instance, 'is_petrified', False):
                         add_to_renderables_if_new(client_enemy_instance)
     game_elements["enemy_list"] = new_enemy_list_for_client
 

@@ -5723,8 +5723,9 @@
                 "image_in_square": "Custom/OIP-C.jpg",
                 "linked_map_name": "big",
                 "one_time_trigger": true,
-                "trigger_event_type": "player_use",
-                "visible": false
+                "opacity": 22,
+                "trigger_event_type": "player_enter",
+                "visible": true
             },
             "rotation": 0,
             "world_x": 960,

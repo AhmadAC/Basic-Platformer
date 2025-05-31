@@ -1,7 +1,7 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.7 (Opacity Slider for Triggers)
+## version 2.2.8 (EnemyKnight Editor Integration)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added "Select Tool".
 - Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
@@ -9,8 +9,8 @@ Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Uncommented wall corner rounding properties for slider implementation.
 - Added "is_crouched_variant" to stone object properties.
 - Added "apply_gravity" to custom image properties.
-- Added "opacity" slider (0-100) for custom images.
-- MODIFIED: Added "opacity" slider (0-100) for trigger squares.
+- Added "opacity" slider (0-100) for custom images and trigger squares.
+- MODIFIED: Added EnemyKnight to editor palette and properties.
 """
 import sys
 import os
@@ -41,6 +41,7 @@ except ImportError as e:
         LEVEL_EDITOR_SAVE_FORMAT_EXTENSION = ".json"; GAME_LEVEL_FILE_EXTENSION = ".py"
         PLAYER_MAX_HEALTH = 100; PLAYER_RUN_SPEED_LIMIT = 7.0; PLAYER_JUMP_STRENGTH = -15.0
         ENEMY_RUN_SPEED_LIMIT = 3.0; ENEMY_MAX_HEALTH = 80; ENEMY_ATTACK_DAMAGE = 10
+        ENEMY_ATTACK_RANGE = 60.0; ENEMY_DETECTION_RANGE = 200.0 # Added for knight props
     C = FallbackConstants() # type: ignore
     print("CRITICAL editor_config.py: Using fallback constants.")
 except Exception as e_gen:
@@ -148,7 +149,12 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "enemy_yellow": {"source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
     "enemy_cactus": {"source_file": "characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"},
     "enemy_truck": {"source_file": "characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"},
-
+    "enemy_knight": { # <<< NEW KNIGHT ENEMY PALETTE ENTRY
+        "source_file": "characters/Knight_1/idle.gif",
+        "game_type_id": "enemy_knight",
+        "category": "enemy",
+        "name_in_palette": "Knight Enemy"
+    },
 
     # Items
     "item_chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "category": "item", "name_in_palette": "Chest"},
@@ -220,7 +226,7 @@ _PLAYER_DEFAULT_PROPS_TEMPLATE = {
 _ENEMY_DEFAULT_PROPS_TEMPLATE = {
     "max_health": {"type": "int", "default": getattr(C, 'ENEMY_MAX_HEALTH', 80), "min": 1, "max": 500, "label": "Max Health"},
     "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 3.0) * 50, "min": 10.0, "max": 500.0, "label": "Move Speed (units/s)"},
-    "attack_damage": {"type": "int", "default": getattr(C, 'ENEMY_ATTACK_DAMAGE', 10), "min": 0, "max": 100, "label": "Attack Damage"},
+    "attack_damage": {"type": "int", "default": getattr(C, 'ENEMY_ATTACK_DAMAGE', 10), "min": 0, "max": 100, "label": "Base Attack Damage"}, # Generic
     "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"},
     "patrol_behavior": {"type": "str", "default": "turn_on_edge", "label": "Patrol Behavior", "options": ["turn_on_edge", "turn_at_range_limit", "stationary", "follow_player"]}
 }
@@ -251,6 +257,22 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "enemy_yellow": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "is_invincible_while_charging": {"type": "bool", "default": False, "label": "Invincible Charge"}},
     "enemy_cactus": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "shoot_interval_ms": {"type": "int", "default": 2000, "min": 500, "max": 10000, "label": "Shoot Interval (ms)"}, "projectile_type": {"type": "str", "default": "thorn", "label": "Projectile", "options":["thorn", "fast_thorn"]}},
     "enemy_truck": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "charge_speed_multiplier": {"type": "float", "default": 2.0, "min": 1.0, "max": 5.0, "label": "Charge Speed Multiplier"}, "charge_cooldown_ms": {"type": "int", "default": 3000, "min": 1000, "max": 10000, "label": "Charge Cooldown (ms)"}},
+    "enemy_knight": { # <<< NEW KNIGHT ENEMY PROPERTIES
+        "max_health": {"type": "int", "default": 150, "min": 1, "max": 999, "label": "Max Health"},
+        "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0) * 0.75 * 50, "min": 10.0, "max": 700.0, "label": "Move Speed (units/s)"},
+        "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 0.65 * 60, "min": -1500.0, "max": -100.0, "label": "Jump Strength (units/s, negative for up)"},
+        "patrol_jump_chance": {"type": "float", "default": 0.015, "min": 0.0, "max": 1.0, "label": "Patrol Jump Chance (0-1)"},
+        "patrol_jump_cooldown_ms": {"type": "int", "default": 2500, "min": 500, "max": 20000, "label": "Patrol Jump Cooldown (ms)"},
+        "attack1_damage": {"type": "int", "default": 15, "min": 0, "max": 100, "label": "Attack 1 Damage"},
+        "attack2_damage": {"type": "int", "default": 20, "min": 0, "max": 100, "label": "Attack 2 Damage"},
+        "attack3_damage": {"type": "int", "default": 25, "min": 0, "max": 100, "label": "Attack 3 Damage"},
+        "run_attack_damage": {"type": "int", "default": 12, "min": 0, "max": 100, "label": "Run Attack Damage"},
+        "attack_cooldown_ms": {"type": "int", "default": 1800, "min": 100, "max": 10000, "label": "Attack Cooldown (ms)"},
+        "attack_range_px": {"type": "float", "default": getattr(C, 'ENEMY_ATTACK_RANGE', 60.0) * 1.2, "min": 10.0, "max": 500.0, "label": "Attack Range (px)"},
+        "detection_range_px": {"type": "float", "default": getattr(C, 'ENEMY_DETECTION_RANGE', 200.0), "min": 50.0, "max": 1000.0, "label": "Detection Range (px)"},
+        "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"}, # Default from _ENEMY_DEFAULT_PROPS_TEMPLATE
+        "patrol_behavior": {"type": "str", "default": "knight_patrol_with_jump", "label": "Patrol Behavior", "options": ["turn_on_edge", "turn_at_range_limit", "stationary", "follow_player", "knight_patrol_with_jump"]} # Knight might have specific behavior. Note: Knight's actual AI is in its class methods.
+    },
 
     "platform_wall_gray": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_3_top": _BASE_WALL_PROPERTIES.copy(),
@@ -285,7 +307,7 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "visible": {"type": "bool", "default": True, "label": "Visible in Game"},
         "fill_color_rgba": {"type": "tuple_color_rgba", "default": (100, 100, 255, 100), "label": "Fill Color (RGBA)"},
         "image_in_square": {"type": "image_path_custom", "default": "", "label": "Image in Square"},
-        "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Opacity (%)"}, # ADDED for trigger
+        "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Opacity (%)"},
         "linked_map_name": {"type": "str", "default": "", "label": "Linked Map Name"},
         "trigger_event_type": {"type": "str", "default": "player_enter", "label": "Event Type", "options": ["player_enter", "player_use", "enemy_enter", "object_overlap", "projectile_hit"]},
         "one_time_trigger": {"type": "bool", "default": True, "label": "One-Time Trigger"},
