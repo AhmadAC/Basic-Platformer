@@ -1,4 +1,3 @@
-#################### START OF FILE: main_game\game_setup.py ####################
 # main_game/game_setup.py
 # -*- coding: utf-8 -*-
 """
@@ -15,9 +14,10 @@ MODIFIED: Statue creation also uses properties from spawn_data.
 MODIFIED: Camera focus logic prioritizes P1, then P2, then any active player for initial view.
 MODIFIED: Trigger squares and custom images are processed even if their lists are empty in map_data.
 MODIFIED: Added enemy_spawns_data_cache and statue_spawns_data_cache for client-side entity recreation.
-MODIFIED: Ensures player.animations is checked to be a dictionary before using it.
+MODIFIED: Ensured player.animations is checked to be a dictionary before using it.
+MODIFIED: Removed assignment to a single 'current_chest', now relies on 'collectible_list' for all chests.
 """
-# version 2.2.10 (Robust player.animations check)
+# version 2.2.11 (Multiple chests support: removed single current_chest assignment)
 
 import os
 import sys
@@ -118,7 +118,7 @@ def _create_platform_data_list_from_map(map_platforms: List[Dict[str, Any]]) -> 
     platforms_list: List[Platform] = []
     for p_data in map_platforms:
         rect_coords = p_data.get('rect')
-        color_tuple = tuple(p_data.get('color', C.GRAY))
+        color_tuple = tuple(p_data.get('color', C.GRAY)) # type: ignore
         p_type = p_data.get('type', "generic_platform")
         props = p_data.get('properties')
         if rect_coords and len(rect_coords) == 4:
@@ -138,36 +138,36 @@ def _create_hazard_data_list_from_map(map_hazards: List[Dict[str, Any]]) -> List
     for h_data in map_hazards:
         rect_coords = h_data.get('rect')
         h_type = h_data.get('type', 'unknown_hazard')
-        color_tuple = tuple(h_data.get('color', C.ORANGE_RED))
+        color_tuple = tuple(h_data.get('color', C.ORANGE_RED)) # type: ignore
         props = h_data.get('properties')
         if h_type == "hazard_lava" and rect_coords and len(rect_coords) == 4:
-            hazards_list.append(Lava(rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3], color_tuple, props))
+            hazards_list.append(Lava(rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3], color_tuple, props)) # type: ignore
     return hazards_list
 
 def _create_background_tile_list_from_map(map_bg_tiles: List[Dict[str, Any]]) -> List[BackgroundTile]:
     background_tiles_list: List[BackgroundTile] = []
     for bg_data in map_bg_tiles:
         rect_coords = bg_data.get('rect')
-        color_tuple = tuple(bg_data.get('color', C.DARK_GRAY))
+        color_tuple = tuple(bg_data.get('color', C.DARK_GRAY)) # type: ignore
         bg_type = bg_data.get('type', "generic_background_tile")
         image_path_rel_to_project = bg_data.get('image_path')
         props = bg_data.get('properties')
         if rect_coords and len(rect_coords) == 4:
             background_tiles_list.append(BackgroundTile(
                 rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3],
-                color_tuple, bg_type, image_path_rel_to_project, props
+                color_tuple, bg_type, image_path_rel_to_project, props # type: ignore
             ))
     return background_tiles_list
 
 def _create_item_list_from_map(map_items: List[Dict[str, Any]]) -> List[Chest]:
-    items_list: List[Chest] = []
+    items_list: List[Chest] = [] # Changed type hint to List[Chest] for clarity
     for item_data in map_items:
         pos_tuple = item_data.get('pos')
         item_type = item_data.get('type')
         props = item_data.get('properties')
         if item_type == "chest" and pos_tuple and len(pos_tuple) == 2:
             new_chest = Chest(pos_tuple[0], pos_tuple[1])
-            if props: new_chest.properties = props
+            if props: new_chest.properties = props # Assign properties if they exist
             items_list.append(new_chest)
     return items_list
 
@@ -209,8 +209,8 @@ def _process_custom_images(map_custom_images: List[Dict[str, Any]], base_map_fol
         opacity_percent = img_data.get("properties", {}).get("opacity", 100)
         opacity_float = max(0.0, min(1.0, float(opacity_percent) / 100.0))
         processed_images.append({
-            'rect': QRectF(float(img_data.get("rect")[0]), float(img_data.get("rect")[1]),
-                           float(img_data.get("rect")[2]), float(img_data.get("rect")[3])),
+            'rect': QRectF(float(img_data.get("rect")[0]), float(img_data.get("rect")[1]), # type: ignore
+                           float(img_data.get("rect")[2]), float(img_data.get("rect")[3])), # type: ignore
             'image': pixmap,
             'layer_order': int(img_data.get("layer_order", 0)),
             'scroll_factor_x': float(img_data.get("properties", {}).get("scroll_factor_x", 1.0)),
@@ -318,15 +318,16 @@ def initialize_game_elements(current_width: int, current_height: int,
         players_created_count += 1
         if player_instance and hasattr(player_instance, 'reset_for_new_game_or_round'):
             player_instance.reset_for_new_game_or_round()
-    
+
     map_enemies_spawn_data = map_data.get("enemies_list", [])
     game_elements_ref["enemy_list"] = [_create_enemy_instance(e_data, idx) for idx, e_data in enumerate(map_enemies_spawn_data) if _create_enemy_instance(e_data, idx) is not None]
     game_elements_ref["enemy_spawns_data_cache"] = list(map_enemies_spawn_data)
 
     map_items_data = map_data.get("items_list", [])
     items_list_temp = _create_item_list_from_map(map_items_data)
-    game_elements_ref["collectible_list"] = items_list_temp
-    game_elements_ref["current_chest"] = items_list_temp[0] if items_list_temp and isinstance(items_list_temp[0], Chest) else None
+    game_elements_ref["collectible_list"] = items_list_temp # This now correctly holds all chests
+    # No longer assign to game_elements_ref["current_chest"]
+    # game_elements_ref["current_chest"] = items_list_temp[0] if items_list_temp and isinstance(items_list_temp[0], Chest) else None # REMOVED
 
     map_statues_data = map_data.get("statues_list", [])
     game_elements_ref["statue_objects"] = _create_statue_list_from_map(map_statues_data)
@@ -343,7 +344,7 @@ def initialize_game_elements(current_width: int, current_height: int,
     player_focus_priority = [0, 1, 2, 3]
     for p_idx_focus in player_focus_priority:
         p_instance_focus = player_instances[p_idx_focus]
-        if p_instance_focus and isinstance(p_instance_focus.animations, dict) and p_instance_focus.animations and p_instance_focus.alive(): # MODIFIED: Check animations is dict
+        if p_instance_focus and isinstance(p_instance_focus.animations, dict) and p_instance_focus.animations and p_instance_focus.alive():
             focus_target_for_camera = p_instance_focus
             break
 
@@ -359,5 +360,3 @@ def initialize_game_elements(current_width: int, current_height: int,
     game_elements_ref['game_ready_for_logic'] = True
     info(f"GameSetup: Initialization for map '{map_module_name}' completed. Game ready for mode '{for_game_mode}'.")
     return True
-
-#################### END OF FILE: main_game/game_setup.py ####################

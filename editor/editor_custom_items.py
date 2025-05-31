@@ -452,6 +452,25 @@ class TriggerSquareMapItem(BaseResizableMapItem): # Inherits from BaseResizable 
         self.map_object_data_ref["current_width"] = current_w
         self.map_object_data_ref["current_height"] = current_h
         # self.update_visuals_from_data(editor_state) # Called by BaseResizableMapItem init
+        
+class InvisibleWallMapItem(BaseResizableMapItem): # Inherits from BaseResizable to get handles, common logic
+    def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState, parent: Optional[QGraphicsItem] = None):
+        # For trigger squares, the "pixmap" is just a transparent placeholder.
+        # The actual drawing happens in the paint method.
+        current_w = map_object_data_ref.get("current_width", ED_CONFIG.BASE_GRID_SIZE * 2)
+        current_h = map_object_data_ref.get("current_height", ED_CONFIG.BASE_GRID_SIZE * 2)
+        display_w = int(max(1, current_w))
+        display_h = int(max(1, current_h))
+        transparent_pixmap = QPixmap(display_w, display_h)
+        transparent_pixmap.fill(Qt.GlobalColor.transparent)
+
+        super().__init__(map_object_data_ref, transparent_pixmap, parent)
+        self.editor_state_ref = editor_state
+        # Ensure current_width/height are in data_ref if not already (BaseResizable uses them)
+        self.map_object_data_ref["current_width"] = current_w
+        self.map_object_data_ref["current_height"] = current_h
+        # self.update_visuals_from_data(editor_state) # Called by BaseResizableMapItem init
+
 
     def boundingRect(self) -> QRectF:
         # Bounding rect is based on current_width/height from data_ref, in local coords

@@ -3,18 +3,19 @@
 """
 Contains QGraphicsItem representations for standard map objects.
 MODIFIED: StandardMapObjectItem now handles 'render_as_rotated_segment'.
-ADDED: InvisibleWallMapItem.
+ADDED: InvisibleWallMapItem, made resizable and visually similar to TriggerSquare (red).
+FIXED: QStyleOptionGraphicsItem.StyleState access to QStyle.StateFlag.
 """
 import logging
 from typing import Optional, Dict, Any, Tuple
 
-from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsItem, QStyleOptionGraphicsItem, QWidget
+from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsItem, QStyleOptionGraphicsItem, QWidget, QStyle # Import QStyle
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QTransform, QImage, QPainterPath, QFont
 from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF, QSize
 
 from editor import editor_config as ED_CONFIG
 from editor.editor_state import EditorState 
-from editor.editor_assets import get_asset_pixmap, _create_colored_pixmap # For segment base
+from editor.editor_assets import get_asset_pixmap, _create_colored_pixmap 
 from editor.editor_custom_items import BaseResizableMapItem 
 
 logger = logging.getLogger(__name__)
@@ -46,14 +47,14 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
             self.is_render_as_rotated_segment = asset_info.get("render_as_rotated_segment", False)
             if self.is_render_as_rotated_segment:
                 self.is_procedural_tile = True 
-                self.procedural_width = float(ED_CONFIG.TS) # Item itself is cell-sized
+                self.procedural_width = float(ED_CONFIG.TS) 
                 self.procedural_height = float(ED_CONFIG.TS)
                 
                 seg_params = asset_info.get("surface_params")
                 if seg_params and isinstance(seg_params, tuple) and len(seg_params) >= 2:
                     self.segment_base_width = float(seg_params[0])
                     self.segment_base_height = float(seg_params[1])
-                else: # Fallback if surface_params somehow missing for segment type
+                else: 
                     self.segment_base_width = float(ED_CONFIG.TS)
                     self.segment_base_height = float(ED_CONFIG.TS) // 4
                     logger.warning(f"Segment asset {editor_key} missing valid surface_params, using defaults.")
@@ -90,7 +91,7 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
         
         super().__init__(initial_pixmap_for_super, parent)
         
-        self.setPos(QPointF(float(world_x), float(world_y))) # This sets the top-left of the item's bounding rect
+        self.setPos(QPointF(float(world_x), float(world_y)))
         
         is_locked = self.map_object_data_ref.get("editor_locked", False)
         current_flags = QGraphicsItem.GraphicsItemFlag.ItemIsSelectable | QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
@@ -105,26 +106,20 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
 
 
     def boundingRect(self) -> QRectF:
-        if self.is_procedural_tile: # Includes render_as_rotated_segment
-            return QRectF(0, 0, self.procedural_width, self.procedural_height) # TSxTS for segments
-        else: # Image-based
-            # The pixmap for image assets is already rotated/flipped by _apply_orientation_transform
-            # super().boundingRect() should give the transformed bounding box.
-            # However, for consistency, let's ensure it's based on the *current* pixmap.
+        if self.is_procedural_tile: 
+            return QRectF(0, 0, self.procedural_width, self.procedural_height) 
+        else: 
             pm = self.pixmap()
             if pm and not pm.isNull():
                 return QRectF(0,0, float(pm.width()), float(pm.height()))
             return QRectF(0,0, ED_CONFIG.TS, ED_CONFIG.TS) 
 
     def shape(self) -> QPainterPath:
-        path = QPainterPath()
-        path.addRect(self.boundingRect())
-        return path
+        path = QPainterPath(); path.addRect(self.boundingRect()); return path
 
     def _apply_orientation_transform(self):
         if self.is_render_as_rotated_segment:
-            self.setTransform(QTransform()) # Ensure no external transform for segments
-            return
+            self.setTransform(QTransform()); return
 
         item_should_be_flipped = self.map_object_data_ref.get("is_flipped_h", False)
         rotation_angle = float(self.map_object_data_ref.get("rotation", 0))
@@ -161,7 +156,7 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
                 if not rotated_img.isNull(): rotated_segment_pm = QPixmap.fromImage(rotated_img)
 
             rsw, rsh = float(rotated_segment_pm.width()), float(rotated_segment_pm.height())
-            canvas_w_float, canvas_h_float = self.procedural_width, self.procedural_height # TS x TS
+            canvas_w_float, canvas_h_float = self.procedural_width, self.procedural_height 
             paint_x, paint_y = 0.0, 0.0
 
             if rotation == 0: paint_x = (canvas_w_float - rsw) / 2.0; paint_y = 0.0
@@ -171,7 +166,7 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
             
             painter.drawPixmap(QPointF(paint_x, paint_y), rotated_segment_pm)
             
-            if option.state & QStyleOptionGraphicsItem.StyleState.State_Selected:
+            if option.state & QStyle.StateFlag.State_Selected: # Corrected
                 pen = QPen(QColor(*ED_CONFIG.MAP_VIEW_SELECTION_RECT_COLOR_TUPLE), 2, Qt.PenStyle.SolidLine); pen.setCosmetic(True)
                 painter.setPen(pen); painter.setBrush(Qt.BrushStyle.NoBrush); painter.drawRect(self.boundingRect().adjusted(0.5,0.5,-0.5,-0.5))
             painter.restore()
@@ -204,9 +199,13 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
                 else: path.lineTo(rect.bottomLeft())
                 path.closeSubpath(); painter.drawPath(path)
             else: painter.drawRect(rect)
+            
+            if option.state & QStyle.StateFlag.State_Selected: # Corrected
+                pen = QPen(QColor(*ED_CONFIG.MAP_VIEW_SELECTION_RECT_COLOR_TUPLE), 2, Qt.PenStyle.SolidLine); pen.setCosmetic(True)
+                painter.setPen(pen); painter.setBrush(Qt.BrushStyle.NoBrush); painter.drawRect(self.boundingRect().adjusted(0.5,0.5,-0.5,-0.5))
             painter.restore() 
         else: # Image-based tiles
-            super().paint(painter, option, widget)
+            super().paint(painter, option, widget) # QGraphicsPixmapItem handles its own selection highlight
 
 
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
@@ -235,11 +234,9 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not is_locked)
 
         if self.is_render_as_rotated_segment:
-            # BoundingRect is fixed TSxTS, only repaint needed for color/rotation changes
-            self.update() # Trigger repaint
-        elif not self.is_procedural_tile: # Image based
+            self.update() 
+        elif not self.is_procedural_tile: 
             original_w, original_h = asset_info.get("original_size_pixels", (self.pixmap().width(), self.pixmap().height()))
-            # Get base pixmap (untransformed)
             new_pixmap = get_asset_pixmap(self.editor_key, asset_info,
                                           QSizeF(int(original_w), int(original_h)),
                                           self.map_object_data_ref.get("override_color"),
@@ -251,10 +248,10 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
             else: 
                 fallback_pm = QPixmap(int(original_w), int(original_h)); fallback_pm.fill(Qt.GlobalColor.magenta)
                 self.prepareGeometryChange(); self.setPixmap(fallback_pm)
-            self._apply_orientation_transform() # Apply flip/rotation to the item for images
-        else: # Standard procedural tile (not segment)
+            self._apply_orientation_transform() 
+        else: 
             new_color = self.map_object_data_ref.get("override_color")
-            asset_info_paint = self.editor_state_ref.assets_palette.get(self.editor_key) # Re-fetch for safety
+            asset_info_paint = self.editor_state_ref.assets_palette.get(self.editor_key) 
             if not new_color and asset_info_paint and asset_info_paint.get("surface_params"): new_color = asset_info_paint["surface_params"][2]
             needs_geom_change = False
             if asset_info_paint and asset_info_paint.get("surface_params"):
@@ -263,10 +260,8 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
                 if abs(self.procedural_width - new_pw) > 1e-3 or abs(self.procedural_height - new_ph) > 1e-3:
                     self.procedural_width = new_pw; self.procedural_height = new_ph
                     needs_geom_change = True
-            # Check if color actually changed or geometry changed to trigger update
-            # Storing self.procedural_color_tuple might be unnecessary if paint always re-evaluates
             if self.procedural_color_tuple != new_color or needs_geom_change:
-                self.procedural_color_tuple = new_color # Update stored color if used by paint directly
+                self.procedural_color_tuple = new_color 
                 if needs_geom_change: self.prepareGeometryChange()
                 self.update() 
 
@@ -278,23 +273,19 @@ class StandardMapObjectItem(QGraphicsPixmapItem):
 
 class InvisibleWallMapItem(BaseResizableMapItem):
     def __init__(self, map_object_data_ref: Dict[str, Any], editor_state: EditorState, parent: Optional[QGraphicsItem] = None):
-        current_w = map_object_data_ref.get("current_width", ED_CONFIG.TS * 2) # Default to 2x2 grid cells
+        current_w = map_object_data_ref.get("current_width", ED_CONFIG.TS * 2) 
         current_h = map_object_data_ref.get("current_height", ED_CONFIG.TS * 2)
         display_w = int(max(1, current_w)); display_h = int(max(1, current_h))
         
-        # BaseResizableMapItem needs a pixmap, its size must match current_width/height for handles.
-        # This pixmap is not visually rendered by InvisibleWallMapItem's paint method.
         transparent_pixmap = QPixmap(display_w, display_h)
         transparent_pixmap.fill(Qt.GlobalColor.transparent)
 
         super().__init__(map_object_data_ref, transparent_pixmap, parent)
         self.editor_state_ref = editor_state
         
-        # Ensure data_ref has these fields for BaseResizableMapItem logic
         self.map_object_data_ref["current_width"] = current_w 
         self.map_object_data_ref["current_height"] = current_h
         self.setToolTip("Invisible Wall")
-        # BaseResizableMapItem's constructor calls update_visuals_from_data, which includes _apply_orientation_transform
 
     def boundingRect(self) -> QRectF:
         w = self.map_object_data_ref.get("current_width", 0.0)
@@ -306,80 +297,78 @@ class InvisibleWallMapItem(BaseResizableMapItem):
 
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: Optional[QWidget] = None):
         props = self.map_object_data_ref.get("properties", {})
-        rect_to_draw_local = self.boundingRect() # This is in local coordinates (0,0, width, height)
+        rect_to_draw_local = self.boundingRect()
 
         is_editor_preview = False
         if self.scene() and self.scene().parent() and hasattr(self.scene().parent(), 'editor_state'):
              parent_map_view = self.scene().parent()
-             if hasattr(parent_map_view, 'editor_state'): is_editor_preview = parent_map_view.editor_state.is_game_preview_mode # type: ignore
+             if hasattr(parent_map_view, 'editor_state'): is_editor_preview = parent_map_view.editor_state.is_game_preview_mode
 
         item_opacity_percent = props.get("opacity", 100) 
         if not isinstance(item_opacity_percent, (int, float)): item_opacity_percent = 100
         item_opacity_float = max(0.0, min(1.0, float(item_opacity_percent) / 100.0))
         
         if not props.get("visible_in_game", False) and is_editor_preview: return 
-        if item_opacity_float < 0.01 and not is_editor_preview: return # Editor hidden by opacity
+        if item_opacity_float < 0.01 and not is_editor_preview: return 
 
         painter.save()
         effective_paint_opacity = item_opacity_float if not is_editor_preview else 1.0 
-        # For invisible walls, visible_in_game makes them fully opaque red in preview if true.
-        # Otherwise, editor opacity applies in editor.
         
-        fill_color_rgba_prop = props.get("fill_color_rgba", ED_CONFIG.SEMI_TRANSPARENT_RED)
+        fill_color_rgba_prop = ED_CONFIG.DEFAULT_INVISIBLE_WALL_FILL_COLOR_RGBA 
         base_q_color: QColor
         if fill_color_rgba_prop and isinstance(fill_color_rgba_prop, (list,tuple)) and len(fill_color_rgba_prop) == 4:
-            r,g,b,a = fill_color_rgba_prop
-            base_q_color = QColor(r,g,b, int(a * effective_paint_opacity)) # Modulate alpha by overall opacity
-        else:
+            r,g,b,a_config = fill_color_rgba_prop
+            final_alpha = int(a_config * effective_paint_opacity) 
+            base_q_color = QColor(r,g,b, final_alpha) 
+        else: 
             r,g,b,a_default = ED_CONFIG.SEMI_TRANSPARENT_RED
             base_q_color = QColor(r,g,b, int(a_default * effective_paint_opacity))
         
         painter.setBrush(base_q_color)
         
-        # Border: slightly darker than fill, dashed
-        border_color = base_q_color.darker(120)
-        border_color.setAlpha(min(255, base_q_color.alpha() + 50)) # Make border slightly more opaque
-        painter.setPen(QPen(border_color, 1.5, Qt.PenStyle.DashLine))
+        # Solid border, slightly darker than fill
+        border_color = base_q_color.darker(130)
+        border_color.setAlpha(min(255, base_q_color.alpha() + 75)) # Make border more opaque
+        pen_width = 1.0 # Thinner solid border
+        painter.setPen(QPen(border_color, pen_width, Qt.PenStyle.SolidLine))
         painter.drawRect(rect_to_draw_local)
 
-        # Text "WALL" in editor view only
-        if not is_editor_preview and item_opacity_float > 0.1 : # Only draw text if item is somewhat visible
+        if not is_editor_preview and item_opacity_float > 0.1 : 
             text_alpha = int(200 * item_opacity_float)
             text_color_val = QColor(0,0,0, text_alpha) if base_q_color.lightnessF() > 0.6 else QColor(255,255,255, text_alpha)
             painter.setPen(text_color_val)
             font = painter.font(); 
             font_size_px = max(8, min(rect_to_draw_local.height() * 0.25, rect_to_draw_local.width() * 0.2))
-            font.setPixelSize(int(font_size_px))
+            font.setPixelSize(int(font_size_px)) # Use setPixelSize for more consistent sizing
+            font.setBold(True)
             painter.setFont(font)
-            painter.drawText(rect_to_draw_local, Qt.AlignmentFlag.AlignCenter, "WALL")
+            painter.drawText(rect_to_draw_local, Qt.AlignmentFlag.AlignCenter, "INV") # Changed to INV
 
-        if option.state & QStyleOptionGraphicsItem.StyleState.State_Selected: 
-            selection_pen_alpha = 255 # Always fully opaque selection border
+        if option.state & QStyle.StateFlag.State_Selected: # Corrected
+            selection_pen_alpha = 255 
             pen = QPen(QColor(255, 255, 0, selection_pen_alpha), 2, Qt.PenStyle.SolidLine)
-            pen.setCosmetic(True) # Ensure border is always 2px screen regardless of zoom
+            pen.setCosmetic(True) 
             painter.setPen(pen); painter.setBrush(Qt.BrushStyle.NoBrush)
+            # Adjust for pen width to draw inside the bounding rect for selection
             painter.drawRect(rect_to_draw_local.adjusted(pen.widthF()/2.0, pen.widthF()/2.0, -pen.widthF()/2.0, -pen.widthF()/2.0))
         painter.restore()
 
     def update_visuals_from_data(self, editor_state: EditorState):
-        # BaseResizableMapItem's pixmap (which is transparent for this item)
-        # needs to be resized to match current_width/height for handle positioning.
         current_w = self.map_object_data_ref.get("current_width", ED_CONFIG.TS * 2)
         current_h = self.map_object_data_ref.get("current_height", ED_CONFIG.TS * 2)
         display_w = int(max(1, current_w)); display_h = int(max(1, current_h))
         
         current_pm = self.pixmap()
         if current_pm.width() != display_w or current_pm.height() != display_h:
-            self.prepareGeometryChange() # Signal that geometry might change
+            self.prepareGeometryChange() 
             new_transparent_pixmap = QPixmap(display_w, display_h)
             new_transparent_pixmap.fill(Qt.GlobalColor.transparent)
             self.setPixmap(new_transparent_pixmap)
-            # BaseResizableMapItem.update_handle_positions will be called by super().update_visuals_from_data
         
-        super().update_visuals_from_data(editor_state) # Handles pos, Z, lock, handles, visibility, transform
-        self.update() # Request repaint for paint() method to redraw content
+        super().update_visuals_from_data(editor_state) 
+        self.update() 
 
-    def set_interaction_mode(self, mode: str): # Invisible walls only support resize
+    def set_interaction_mode(self, mode: str): 
         if mode == "resize": super().set_interaction_mode(mode)
         else:
             if self.current_interaction_mode != "resize": super().set_interaction_mode("resize")

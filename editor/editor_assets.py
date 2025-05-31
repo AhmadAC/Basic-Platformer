@@ -1,7 +1,7 @@
 # editor/editor_assets.py
 # -*- coding: utf-8 -*-
 """
-## version 2.1.10 (Fixed asset_editor_key not defined in _create_icon_pixmap)
+## version 2.1.11 (Cursor fix for rotated segments - definitive)
 Handles loading and managing assets for the editor's palette using PySide6.
 - Verified compatibility with refactored asset paths (e.g., "assets/category/file.ext")
   provided by ED_CONFIG, resolved via resource_path.
@@ -77,7 +77,6 @@ def _create_half_tile_pixmap(base_size: int, half_type: str, color_tuple: Tuple[
         painter.end()
     return pixmap
 
-# Modified signature to include asset_editor_key
 def _create_icon_pixmap(base_size: int, icon_type: str, color_tuple_rgba: Tuple[int,int,int, Optional[int]], asset_editor_key_for_icon: str) -> QPixmap:
     safe_base_size = max(1, base_size)
     pixmap = QPixmap(safe_base_size, safe_base_size)
@@ -123,13 +122,9 @@ def _create_icon_pixmap(base_size: int, icon_type: str, color_tuple_rgba: Tuple[
             text_color = Qt.GlobalColor.black if icon_qcolor.lightnessF() > 0.5 else Qt.GlobalColor.white
             if icon_qcolor.alphaF() < 0.3: text_color = Qt.GlobalColor.black
             painter.setPen(text_color); font = painter.font(); font.setPointSize(int(s * 0.35)); font.setBold(True); painter.setFont(font)
-            
-            text_to_draw = "TRG" # Default
-            if asset_editor_key_for_icon == ED_CONFIG.INVISIBLE_WALL_ASSET_KEY_PALETTE: # Use passed key
-                text_to_draw = "INV"
-            elif asset_editor_key_for_icon == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY: # Use passed key
-                text_to_draw = "TRG"
-            # Add other conditions if needed for different text on generic icons
+            text_to_draw = "TRG" 
+            if asset_editor_key_for_icon == ED_CONFIG.INVISIBLE_WALL_ASSET_KEY_PALETTE: text_to_draw = "INV"
+            elif asset_editor_key_for_icon == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY: text_to_draw = "TRG"
             painter.drawText(inner_rect, Qt.AlignmentFlag.AlignCenter, text_to_draw)
         else:
             logger.warning(f"_create_icon_pixmap: Unknown icon_type '{icon_type}'. Drawing '?'")
@@ -195,7 +190,7 @@ def get_asset_pixmap(asset_editor_key: str,
         icon_type_str = asset_data_entry["icon_type"]
         default_color_icon_rgba = asset_data_entry.get("base_color_tuple", (*getattr(ED_CONFIG.C, 'YELLOW', (255,255,0)), 255) )
         effective_color_rgba: Tuple[int,int,int,Optional[int]] = (*color_to_use_tuple, default_color_icon_rgba[3]) if color_to_use_tuple else default_color_icon_rgba
-        initial_native_pixmap = _create_icon_pixmap(int(ts), icon_type_str, effective_color_rgba, asset_editor_key) # Pass asset_editor_key
+        initial_native_pixmap = _create_icon_pixmap(int(ts), icon_type_str, effective_color_rgba, asset_editor_key)
     
     target_qsize_fallback: QSize = requested_target_size.toSize() if isinstance(requested_target_size, QSizeF) else requested_target_size
     if not initial_native_pixmap or initial_native_pixmap.isNull():
@@ -211,6 +206,7 @@ def get_asset_pixmap(asset_editor_key: str,
         else: logger.error(f"Failed painter on fallback for {asset_editor_key}")
         initial_native_pixmap = fb_pm
     
+    # --- Apply flip and rotation to the base pixmap ---
     transformed_pixmap = initial_native_pixmap 
     if (is_flipped_h or rotation != 0) and initial_native_pixmap and not initial_native_pixmap.isNull():
         img_to_transform = initial_native_pixmap.toImage()
@@ -224,29 +220,50 @@ def get_asset_pixmap(asset_editor_key: str,
             else: logger.error(f"Image became null after transform for '{asset_editor_key}'")
         else: logger.error(f"Failed to convert to image for transform: '{asset_editor_key}'")
 
+    # --- Handle return based on get_native_size_only ---
     if get_native_size_only:
+        # For native size (e.g., cursor preview), return the transformed pixmap directly.
+        # This will be the segment itself, already rotated/flipped.
         return transformed_pixmap 
 
+    # --- For non-native display (e.g., palette icon) ---
     final_pixmap_for_display = transformed_pixmap
     target_display_qsize: QSize = requested_target_size.toSize() if isinstance(requested_target_size, QSizeF) else requested_target_size
 
     if asset_data_entry.get("render_as_rotated_segment") and transformed_pixmap and not transformed_pixmap.isNull():
+        # Create a canvas of the requested_target_size (e.g., 40x40 for palette)
         canvas_qsize = QSize(target_display_qsize) 
-        if canvas_qsize.width() <= 0 or canvas_qsize.height() <= 0:
+        if canvas_qsize.width() <= 0 or canvas_qsize.height() <= 0: # Safety check
             canvas_qsize = QSize(ED_CONFIG.ASSET_THUMBNAIL_SIZE, ED_CONFIG.ASSET_THUMBNAIL_SIZE)
+
         composed_canvas = QPixmap(canvas_qsize)
-        composed_canvas.fill(Qt.GlobalColor.transparent)
+        composed_canvas.fill(Qt.GlobalColor.transparent) # Transparent background for the canvas
         painter = QPainter(composed_canvas)
+        
+        # transformed_pixmap is the segment itself, already rotated (e.g., 10x40 or 40x10)
         seg_w, seg_h = float(transformed_pixmap.width()), float(transformed_pixmap.height())
         can_w, can_h = float(canvas_qsize.width()), float(canvas_qsize.height())
-        px, py = 0.0, 0.0
-        if rotation == 0: px = (can_w - seg_w) / 2.0; py = 0.0                           
-        elif rotation == 90: px = can_w - seg_w; py = (can_h - seg_h) / 2.0             
-        elif rotation == 180: px = (can_w - seg_w) / 2.0; py = can_h - seg_h            
-        elif rotation == 270: px = 0.0; py = (can_h - seg_h) / 2.0                      
-        painter.drawPixmap(QPointF(px, py), transformed_pixmap); painter.end()
-        final_pixmap_for_display = composed_canvas
+        px, py = 0.0, 0.0 # Top-left position to paint the segment on the canvas
+
+        # Position the segment on the edge of the canvas
+        if rotation == 0: # Top segment
+            px = (can_w - seg_w) / 2.0 
+            py = 0.0                           
+        elif rotation == 90: # Right segment
+            px = can_w - seg_w 
+            py = (can_h - seg_h) / 2.0              
+        elif rotation == 180: # Bottom segment
+            px = (can_w - seg_w) / 2.0 
+            py = can_h - seg_h             
+        elif rotation == 270: # Left segment
+            px = 0.0 
+            py = (can_h - seg_h) / 2.0                       
+        
+        painter.drawPixmap(QPointF(px, py), transformed_pixmap)
+        painter.end()
+        final_pixmap_for_display = composed_canvas # This is now the (e.g.) 40x40 pixmap with segment on edge
     
+    # Final scaling if the result (either transformed_pixmap or composed_canvas) isn't the target display size
     if final_pixmap_for_display and final_pixmap_for_display.size() != target_display_qsize and \
        target_display_qsize.isValid() and target_display_qsize.width() > 0 and target_display_qsize.height() > 0:
         return final_pixmap_for_display.scaled(target_display_qsize, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
