@@ -4,10 +4,12 @@
 Defines collectible items like Chests.
 Uses resource_path helper. Refactored for PySide6.
 Chest now has gravity applied by an external physics step.
+MODIFIED: Path for CHEST_CLOSED_SPRITE_PATH is now correctly handled via constants.py and resource_path.
+MODIFIED: Corrected logger fallback and import path.
 """
-# version 2.0.6 (Chest overhaul: physics, state machine, fade)
+# version 2.0.7 (Asset path refactor, Logger fix)
 import os
-import sys
+import sys # Added for logger fallback
 import random
 from typing import Dict, Optional, Any, List, Tuple
 import time
@@ -19,14 +21,46 @@ from PySide6.QtCore import QRectF, QSize, Qt, QPointF
 import main_game.constants as C
 from assets import load_gif_frames, resource_path
 
-try:
-    from logger import debug, info, warning
-except ImportError:
-    def debug(msg, *args, **kwargs): print(f"DEBUG_ITEMS: {msg}") # Added *args
-    def info(msg, *args, **kwargs): print(f"INFO_ITEMS: {msg}")   # Added *args
-    def warning(msg, *args, **kwargs): print(f"WARNING_ITEMS: {msg}") # Added *args
+# --- Logger Setup ---
+import logging
+_items_logger_instance = logging.getLogger(__name__ + "_items_internal_fallback")
+if not _items_logger_instance.hasHandlers():
+    _handler_items_fb = logging.StreamHandler(sys.stdout)
+    _formatter_items_fb = logging.Formatter('ITEMS (InternalFallback): %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
+    _handler_items_fb.setFormatter(_formatter_items_fb)
+    _items_logger_instance.addHandler(_handler_items_fb)
+    _items_logger_instance.setLevel(logging.DEBUG)
+    _items_logger_instance.propagate = False
 
-_SCRIPT_LOGGING_ENABLED = True # For per-script logging control
+def _fallback_log_info(msg, *args, **kwargs): _items_logger_instance.info(msg, *args, **kwargs)
+def _fallback_log_debug(msg, *args, **kwargs): _items_logger_instance.debug(msg, *args, **kwargs)
+def _fallback_log_warning(msg, *args, **kwargs): _items_logger_instance.warning(msg, *args, **kwargs)
+def _fallback_log_error(msg, *args, **kwargs): _items_logger_instance.error(msg, *args, **kwargs)
+def _fallback_log_critical(msg, *args, **kwargs): _items_logger_instance.critical(msg, *args, **kwargs)
+
+info = _fallback_log_info
+debug = _fallback_log_debug
+warning = _fallback_log_warning
+error = _fallback_log_error
+critical = _fallback_log_critical
+
+try:
+    from main_game.logger import info as project_info, debug as project_debug, \
+                               warning as project_warning, error as project_error, \
+                               critical as project_critical
+    info = project_info
+    debug = project_debug
+    warning = project_warning
+    error = project_error
+    critical = project_critical
+    debug("Items: Successfully aliased project's logger functions from main_game.logger.")
+except ImportError:
+    critical("CRITICAL ITEMS: Failed to import logger from main_game.logger. Using internal fallback print statements for logging.")
+except Exception as e_logger_init_items:
+    critical(f"CRITICAL ITEMS: Unexpected error during logger setup from main_game.logger: {e_logger_init_items}. Using internal fallback.")
+# --- End Logger Setup ---
+
+_SCRIPT_LOGGING_ENABLED = True
 
 _start_time_items = time.monotonic()
 def get_current_ticks_monotonic():
@@ -38,9 +72,15 @@ class Chest:
         self._valid_init = True
         self.all_frames: List[QPixmap] = []
 
-        full_chest_animation_path = resource_path(getattr(C, 'CHEST_CLOSED_SPRITE_PATH', "characters/items/chest.gif"))
+        # The path to chest.gif is now correctly prefixed with "assets/items/" in constants.py
+        # getattr will fetch this updated path. resource_path will resolve it.
+        chest_sprite_path_constant = getattr(C, 'CHEST_CLOSED_SPRITE_PATH', "assets/items/chest.gif") # Fallback if constant somehow missing
+        full_chest_animation_path = resource_path(chest_sprite_path_constant)
+        
+        if _SCRIPT_LOGGING_ENABLED: debug(f"Chest: Attempting to load animation from: '{full_chest_animation_path}' (resolved from constant: '{chest_sprite_path_constant}')")
+
         self.all_frames = load_gif_frames(full_chest_animation_path)
-        self.initial_image_frames = self.all_frames # Keep a reference
+        self.initial_image_frames = self.all_frames 
 
         self.num_opening_frames = 0
         if not self.all_frames or self._is_placeholder_qpixmap(self.all_frames[0]):
@@ -50,13 +90,13 @@ class Chest:
                 self._create_placeholder_qpixmap(QColor(*getattr(C, 'YELLOW', (255,255,0))), "ChestClosed"),
                 self._create_placeholder_qpixmap(QColor(*getattr(C, 'BLUE', (0,0,255))), "ChestOpen")
             ]
-            self.num_opening_frames = 1 # Placeholder has 2 frames, 1st is closed, 2nd is open
+            self.num_opening_frames = 1
         else:
             self.num_opening_frames = len(self.all_frames)
 
         self.state = 'closed'
-        self.is_collected_flag_internal = False # True when interaction starts
-        self.player_to_heal: Optional[Any] = None # Stores player who opened it
+        self.is_collected_flag_internal = False
+        self.player_to_heal: Optional[Any] = None
 
         self.image: QPixmap = self.all_frames[0]
 
@@ -71,19 +111,17 @@ class Chest:
         self.animation_timer = 0
         self._alive = True
 
-        # Physics attributes
         self.vel_x = 0.0
         self.vel_y = 0.0
-        self.acc_x = 0.0 # For when pushed
+        self.acc_x = 0.0
         self.on_ground = False
-        self._gravity = float(getattr(C, 'PLAYER_GRAVITY', 0.7)) # Using player gravity
+        self._gravity = float(getattr(C, 'PLAYER_GRAVITY', 0.7))
         self._friction = float(getattr(C, 'CHEST_FRICTION', -0.12))
         self._max_speed_x = float(getattr(C, 'CHEST_MAX_SPEED_X', 3.0))
 
-        # State-specific timers and attributes
-        self.alpha = 255 # 0-255
-        self.opened_visible_start_time = 0 # Time when 'opened_visible' state began
-        self.fading_start_time = 0         # Time when 'fading' state began
+        self.alpha = 255
+        self.opened_visible_start_time = 0
+        self.fading_start_time = 0
         self.fade_duration_ms = int(getattr(C, 'CHEST_FADE_OUT_DURATION_MS', 300))
         self.open_display_duration_ms = int(getattr(C, 'CHEST_OPEN_DISPLAY_DURATION_MS', 300))
 
@@ -94,8 +132,7 @@ class Chest:
 
     def _is_placeholder_qpixmap(self, pixmap: QPixmap) -> bool:
         if pixmap.isNull(): return True
-        # Simplified check, assumes placeholder might be small
-        if pixmap.width() <= 40 and pixmap.height() <= 60:
+        if pixmap.width() <= 40 and pixmap.height() <= 60: # Common placeholder size
             qimage = pixmap.toImage()
             if not qimage.isNull():
                 color_at_origin = qimage.pixelColor(0,0)
@@ -140,33 +177,31 @@ class Chest:
         if _SCRIPT_LOGGING_ENABLED: debug(f"Chest killed. State: {self.state}")
 
     def apply_physics_step(self, dt_sec: float):
-        if self.state == 'collected' or self.is_collected_flag_internal: # Don't apply physics if collected or in opening sequence
+        if self.state == 'collected' or self.is_collected_flag_internal:
             self.vel_x = 0.0
             self.acc_x = 0.0
-            if self.state not in ['opening', 'opened_visible', 'fading']: # Allow gravity if it was opening mid-air then landed
+            if self.state not in ['opening', 'opened_visible', 'fading']:
                 self.vel_y = 0.0
             return
 
-        # Horizontal movement (pushed)
-        self.vel_x += self.acc_x * dt_sec * C.FPS
-        if self.on_ground and self.acc_x == 0: # Apply friction
+        self.vel_x += self.acc_x # Assuming acc_x is change per frame
+        if self.on_ground and self.acc_x == 0:
             friction_force = self.vel_x * self._friction
             if abs(self.vel_x) > 0.1:
-                self.vel_x += friction_force * dt_sec * C.FPS
+                self.vel_x += friction_force
             else:
                 self.vel_x = 0.0
         self.vel_x = max(-self._max_speed_x, min(self._max_speed_x, self.vel_x))
-        self.pos_midbottom.setX(self.pos_midbottom.x() + self.vel_x * dt_sec * C.FPS)
-        self.acc_x = 0.0 # Reset horizontal acceleration each frame (applied by external push)
+        self.pos_midbottom.setX(self.pos_midbottom.x() + self.vel_x) # Assuming vel_x is units/frame
+        self.acc_x = 0.0
 
-        # Vertical movement (gravity)
         if not self.on_ground:
-            self.vel_y += self._gravity * dt_sec * C.FPS
+            self.vel_y += self._gravity # Assuming _gravity is change per frame
             self.vel_y = min(self.vel_y, getattr(C, 'TERMINAL_VELOCITY_Y', 18.0))
-        else: # If on_ground is true (set by external collision check), stop vertical velocity
+        else:
             self.vel_y = 0.0
 
-        self.pos_midbottom.setY(self.pos_midbottom.y() + self.vel_y * dt_sec * C.FPS)
+        self.pos_midbottom.setY(self.pos_midbottom.y() + self.vel_y) # Assuming vel_y is units/frame
         self._update_rect_from_image_and_pos()
 
     def update(self, dt_sec: float):
@@ -189,10 +224,9 @@ class Chest:
                     if self.player_to_heal and hasattr(self.player_to_heal, 'heal_to_full'):
                         self.player_to_heal.heal_to_full()
 
-                # Ensure current_frame_index is valid
                 self.current_frame_index = max(0, min(self.current_frame_index, len(self.all_frames) - 1))
                 
-                if self.all_frames: # Check if all_frames is not empty
+                if self.all_frames:
                     self.image = self.all_frames[self.current_frame_index]
                     self._update_rect_from_image_and_pos()
 
@@ -200,7 +234,7 @@ class Chest:
             if now - self.opened_visible_start_time > self.open_display_duration_ms:
                 self.state = 'fading'
                 self.fading_start_time = now
-                self.alpha = 255 # Start fade from full opacity
+                self.alpha = 255
                 if _SCRIPT_LOGGING_ENABLED: info("Chest display duration ended. Starting fade.")
 
         elif self.state == 'fading':
@@ -208,13 +242,12 @@ class Chest:
             if elapsed_fade_time >= self.fade_duration_ms:
                 self.alpha = 0
                 self.state = 'collected'
-                self.kill() # Mark as no longer active
+                self.kill()
                 if _SCRIPT_LOGGING_ENABLED: info("Chest fade complete. State: collected.")
             else:
                 self.alpha = int(255 * (1.0 - (elapsed_fade_time / self.fade_duration_ms)))
-                self.alpha = max(0, min(255, self.alpha)) # Clamp alpha
+                self.alpha = max(0, min(255, self.alpha))
 
-        # Ensure image is correct for non-animating states
         if self.state == 'closed':
             self.current_frame_index = 0
             if self.all_frames: self.image = self.all_frames[0]
@@ -223,7 +256,7 @@ class Chest:
              if self.all_frames and self.current_frame_index < len(self.all_frames):
                  self.image = self.all_frames[self.current_frame_index]
 
-        if self.state != 'opening': # Always update rect if not in opening animation (which handles it)
+        if self.state != 'opening':
             self._update_rect_from_image_and_pos()
 
 
@@ -234,8 +267,7 @@ class Chest:
         if _SCRIPT_LOGGING_ENABLED: info(f"Player {getattr(player, 'player_id', 'Unknown')} interacted with chest. State changing to 'opening'.")
         self.is_collected_flag_internal = True
         self.player_to_heal = player
-        # Chest becomes static once interacted with (gravity/pushing stops)
-        self.on_ground = True # Effectively
+        self.on_ground = True
         self.vel_x = 0.0
         self.vel_y = 0.0
         self.acc_x = 0.0
@@ -243,12 +275,11 @@ class Chest:
         self.state = 'opening'
         self.current_frame_index = 0
         self.animation_timer = get_current_ticks_monotonic()
-        # Image will be updated by the 'opening' state in update()
 
     def get_network_data(self) -> Dict[str, Any]:
         return {
             'pos_midbottom': (self.pos_midbottom.x(), self.pos_midbottom.y()),
-            'vel_x': self.vel_x, # Send velocity for client prediction if needed
+            'vel_x': self.vel_x,
             'vel_y': self.vel_y,
             'on_ground': self.on_ground,
             'is_collected_internal': self.is_collected_flag_internal,
@@ -258,17 +289,23 @@ class Chest:
             'fading_start_time': self.fading_start_time,
             'current_frame_index': self.current_frame_index,
             'alpha': self.alpha,
-            '_alive': self._alive
+            '_alive': self._alive,
+            '_valid_init': self._valid_init # Send validity in case client needs to create it
         }
 
     def set_network_data(self, data: Dict[str, Any]):
         server_chest_pos_midbottom_tuple = data.get('pos_midbottom')
         server_chest_state = data.get('chest_state')
 
+        self._valid_init = data.get('_valid_init', self._valid_init) # Sync validity
         self._alive = data.get('_alive', self._alive)
         if not self._alive:
-             self.state = 'collected' # Or some other inactive state
+             self.state = 'collected'
              return
+        if not self._valid_init: # If server says it's not valid, reflect that
+            self.image = self._create_placeholder_qpixmap(QColor(*getattr(C, 'YELLOW', (255,255,0))), "InvChest")
+            self._update_rect_from_image_and_pos()
+            return
 
         if server_chest_pos_midbottom_tuple:
              self.pos_midbottom.setX(float(server_chest_pos_midbottom_tuple[0]))
@@ -287,13 +324,12 @@ class Chest:
         self.fading_start_time = data.get('fading_start_time', self.fading_start_time)
         self.current_frame_index = data.get('current_frame_index', self.current_frame_index)
 
-        # Ensure frame index is valid and update image
-        if self.all_frames: # Only if frames are loaded
+        if self.all_frames:
             self.current_frame_index = max(0, min(self.current_frame_index, len(self.all_frames) -1))
             self.image = self.all_frames[self.current_frame_index]
-        elif self._valid_init: # If valid_init but no frames, this is an issue
+        elif self._valid_init:
             if _SCRIPT_LOGGING_ENABLED: warning("Chest.set_network_data: Valid init but no frames. This should not happen.")
-            self.image = self._create_placeholder_qpixmap(QColor(255,0,255), "NetErr") # Magenta error
+            self.image = self._create_placeholder_qpixmap(QColor(255,0,255), "NetErr")
 
         self._update_rect_from_image_and_pos()
 
@@ -307,6 +343,6 @@ class Chest:
                 current_opacity = painter.opacity()
                 painter.setOpacity(self.alpha / 255.0)
                 painter.drawPixmap(screen_rect.topLeft(), self.image)
-                painter.setOpacity(current_opacity) # Restore original opacity
+                painter.setOpacity(current_opacity)
             else:
                 painter.drawPixmap(screen_rect.topLeft(), self.image)
