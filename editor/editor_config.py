@@ -1,18 +1,10 @@
+#################### START OF FILE: editor_config.py ####################
+
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.10 (Verified Asset Paths)
-Configuration constants for the Platformer Level Editor (PySide6 Version).
-- Verified that source_file paths in EDITOR_PALETTE_ASSETS align with the new asset organization
-  (e.g., assets/category/subcategory/file.ext).
-- Added "Select Tool".
-- Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
-- Added WALL_VARIANTS_CYCLE list.
-- Uncommented wall corner rounding properties for slider implementation.
-- Added "is_crouched_variant" to stone object properties.
-- Added "apply_gravity" to custom image properties.
-- Added "opacity" slider (0-100) for custom images and trigger squares.
-- Added EnemyKnight to editor palette and properties.
+## version 2.2.11 (Added Invisible Wall Asset)
+C
 """
 import sys
 import os
@@ -105,6 +97,8 @@ MINIMAP_CATEGORY_COLORS: Dict[str, QColor] = {
     "custom_image": QColor(0, 150, 150, 180),
     "trigger": QColor(200, 0, 200, 150),
     "trigger_image": QColor(180, 50, 180, 170),
+    "logic": QColor(128, 0, 128, 150), # Color for logic items like triggers and invisible walls
+    "boundary": QColor(0, 128, 128, 150), # Alternative category color
     "unknown": QColor(255, 0, 255, 150)
 }
 
@@ -125,9 +119,12 @@ CUSTOM_IMAGE_ASSET_KEY = "custom_image_object"
 TRIGGER_SQUARE_ASSET_KEY = "trigger_square" # This is the palette key
 TRIGGER_SQUARE_GAME_TYPE_ID = "trigger_square_link" # This is used to key into EDITABLE_ASSET_VARIABLES
 CUSTOM_ASSET_PALETTE_PREFIX = "custom:"
+INVISIBLE_WALL_ASSET_KEY_PALETTE = "invisible_wall_tool" # Key for palette
+INVISIBLE_WALL_GAME_TYPE_ID = "invisible_wall_boundary" # Key for properties & game
 
 GRAY_COLOR = getattr(C, 'GRAY', (128,128,128))
 DARK_GREEN_COLOR = getattr(C, 'DARK_GREEN', (0,100,0))
+SEMI_TRANSPARENT_RED = (255, 0, 0, 100) # RGBA
 
 EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Tools
@@ -149,8 +146,8 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "enemy_purple": {"source_file": "assets/enemy_characters/soldier/purple/__Idle.gif", "game_type_id": "enemy_purple", "category": "enemy", "name_in_palette": "Enemy Purple"},
     "enemy_orange": {"source_file": "assets/enemy_characters/soldier/orange/__Idle.gif", "game_type_id": "enemy_orange", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"},
     "enemy_yellow": {"source_file": "assets/enemy_characters/soldier/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
-    "enemy_cactus": {"source_file": "assets/enemy_characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"},
-    "enemy_truck": {"source_file": "assets/enemy_characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"},
+    # "enemy_cactus": {"source_file": "assets/enemy_characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"},
+    # "enemy_truck": {"source_file": "assets/enemy_characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"},
     "enemy_knight": {
         "source_file": "assets/enemy_characters/knight/idle.gif",
         "game_type_id": "enemy_knight",
@@ -167,17 +164,9 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
 
     # Tiles (procedural)
     "platform_wall_gray": {"surface_params": (TS, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
-    "platform_wall_gray_1_3_top": {"surface_params": (TS, TS // 3, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_top", "category": "tile", "name_in_palette": "Wall 1/3 Top"},
-    "platform_wall_gray_1_3_right": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_right", "category": "tile", "name_in_palette": "Wall 1/3 Right"},
-    "platform_wall_gray_1_3_bottom": {"surface_params": (TS, TS // 3, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_bottom", "category": "tile", "name_in_palette": "Wall 1/3 Bottom"},
-    "platform_wall_gray_1_3_left": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_left", "category": "tile", "name_in_palette": "Wall 1/3 Left"},
-    "platform_wall_gray_1_4_top_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_left", "category": "tile", "name_in_palette": "Wall 1/4 TL"},
-    "platform_wall_gray_1_4_top_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_right", "category": "tile", "name_in_palette": "Wall 1/4 TR"},
-    "platform_wall_gray_1_4_bottom_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_right", "category": "tile", "name_in_palette": "Wall 1/4 BR"},
-    "platform_wall_gray_1_4_bottom_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_left", "category": "tile", "name_in_palette": "Wall 1/4 BL"},
+    "platform_wall_gray_1_4_top": {"surface_params": (TS, TS // 4, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top", "category": "tile", "name_in_palette": "Wall 1/4 Top"},
 
-    "platform_ledge_green_full": {"surface_params": (TS, TS, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
-    "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
+
 
     # Tiles (from images) - Environment
     "env_brick_wall1": {"source_file": "assets/environment/brick_wall1.png", "game_type_id": "env_brick_wall1", "category": "tile", "name_in_palette": "Brick Wall 1"},
@@ -195,10 +184,17 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     # Logic
     TRIGGER_SQUARE_ASSET_KEY: {
         "icon_type": "generic_square_icon",
-        "base_color_tuple": (100, 100, 255, 150),
+        "base_color_tuple": (100, 100, 255, 150), # Bluish for palette icon
         "game_type_id": TRIGGER_SQUARE_GAME_TYPE_ID,
         "category": "logic",
         "name_in_palette": "Trigger Square"
+    },
+    INVISIBLE_WALL_ASSET_KEY_PALETTE: { # Key for the palette
+        "icon_type": "generic_square_icon", # Will be colored by base_color_tuple
+        "base_color_tuple": SEMI_TRANSPARENT_RED, # Semi-transparent red for palette icon
+        "game_type_id": INVISIBLE_WALL_GAME_TYPE_ID, # Actual type ID for properties and game
+        "category": "logic", # Or a new "boundary" category if preferred
+        "name_in_palette": "Invisible Wall"
     },
 }
 
@@ -212,10 +208,6 @@ WALL_VARIANTS_CYCLE: List[str] = [ # Actual asset keys for each variant in cycle
     "platform_wall_gray_1_3_right",
     "platform_wall_gray_1_3_bottom",
     "platform_wall_gray_1_3_left",
-    "platform_wall_gray_1_4_top_left",
-    "platform_wall_gray_1_4_top_right",
-    "platform_wall_gray_1_4_bottom_right",
-    "platform_wall_gray_1_4_bottom_left",
 ]
 
 # --- Asset Orientation Rules ---
@@ -263,8 +255,8 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "enemy_purple": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "teleport_range_tiles": {"type": "int", "default": 0, "min":0, "max":20, "label": "Teleport Range (Tiles)"}},
     "enemy_orange": _ENEMY_DEFAULT_PROPS_TEMPLATE.copy(),
     "enemy_yellow": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "is_invincible_while_charging": {"type": "bool", "default": False, "label": "Invincible Charge"}},
-    "enemy_cactus": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "shoot_interval_ms": {"type": "int", "default": 2000, "min": 500, "max": 10000, "label": "Shoot Interval (ms)"}, "projectile_type": {"type": "str", "default": "thorn", "label": "Projectile", "options":["thorn", "fast_thorn"]}},
-    "enemy_truck": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "charge_speed_multiplier": {"type": "float", "default": 2.0, "min": 1.0, "max": 5.0, "label": "Charge Speed Multiplier"}, "charge_cooldown_ms": {"type": "int", "default": 3000, "min": 1000, "max": 10000, "label": "Charge Cooldown (ms)"}},
+    # "enemy_cactus": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "shoot_interval_ms": {"type": "int", "default": 2000, "min": 500, "max": 10000, "label": "Shoot Interval (ms)"}, "projectile_type": {"type": "str", "default": "thorn", "label": "Projectile", "options":["thorn", "fast_thorn"]}},
+    # "enemy_truck": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "charge_speed_multiplier": {"type": "float", "default": 2.0, "min": 1.0, "max": 5.0, "label": "Charge Speed Multiplier"}, "charge_cooldown_ms": {"type": "int", "default": 3000, "min": 1000, "max": 10000, "label": "Charge Cooldown (ms)"}},
     "enemy_knight": {
         "max_health": {"type": "int", "default": 150, "min": 1, "max": 999, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0) * 0.75 * 50, "min": 10.0, "max": 700.0, "label": "Move Speed (units/s)"},
@@ -284,17 +276,7 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
 
     "platform_wall_gray": _BASE_WALL_PROPERTIES.copy(),
     "platform_wall_gray_1_3_top": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_3_right": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_3_bottom": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_3_left": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_4_top_left": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_4_top_right": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_4_bottom_right": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_4_bottom_left": _BASE_WALL_PROPERTIES.copy(),
-
-    "platform_ledge_green": {"destructible": {"type": "bool", "default": False, "label": "Is Destructible"}, "health": {"type": "int", "default": 80, "min": 0, "max": 400, "label": "Health (if Dest.)"}, "is_slippery": {"type": "bool", "default": False, "label": "Is Slippery"}},
-    "platform_ledge_green_one_fourth": {"destructible": {"type": "bool", "default": False, "label": "Is Destructible"}, "health": {"type": "int", "default": 20, "min": 0, "max": 100, "label": "Health (if Dest.)"}, "is_breakable_by_heavy": {"type": "bool", "default": True, "label": "Breaks Under Heavy"}},
-
+ 
     # Default properties for new environment image tiles (can be expanded)
     "env_brick_wall1": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health"}},
     "env_brick_wall2": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health"}},
@@ -319,14 +301,23 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Opacity (%)"},
     },
     TRIGGER_SQUARE_GAME_TYPE_ID: {
-        "visible": {"type": "bool", "default": True, "label": "Visible in Game"},
+        "visible": {"type": "bool", "default": True, "label": "Visible in Game"}, # Editor visibility controlled by "editor_hidden"
         "fill_color_rgba": {"type": "tuple_color_rgba", "default": (100, 100, 255, 100), "label": "Fill Color (RGBA)"},
         "image_in_square": {"type": "image_path_custom", "default": "", "label": "Image in Square"},
-        "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Opacity (%)"},
+        "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Editor Opacity (%)"},
         "linked_map_name": {"type": "str", "default": "", "label": "Linked Map Name"},
         "trigger_event_type": {"type": "str", "default": "player_enter", "label": "Event Type", "options": ["player_enter", "player_use", "enemy_enter", "object_overlap", "projectile_hit"]},
         "one_time_trigger": {"type": "bool", "default": True, "label": "One-Time Trigger"},
         "activation_id": {"type": "str", "default": "", "label": "Activation ID (for scripts)"}
+    },
+    INVISIBLE_WALL_GAME_TYPE_ID: {
+        "blocks_enemies": {"type": "bool", "default": True, "label": "Blocks Enemies"},
+        "blocks_players": {"type": "bool", "default": False, "label": "Blocks Players"},
+        "blocks_projectiles_enemy": {"type": "bool", "default": True, "label": "Blocks Enemy Projectiles"},
+        "blocks_projectiles_player": {"type": "bool", "default": False, "label": "Blocks Player Projectiles"},
+        "visible_in_game": {"type": "bool", "default": False, "label": "Visible In-Game (Debug Only)"},
+        "fill_color_rgba": {"type": "tuple_color_rgba", "default": SEMI_TRANSPARENT_RED, "label": "Editor Fill Color (RGBA)"},
+        "opacity": {"type": "slider", "default": 100, "min": 0, "max": 100, "label": "Editor Opacity (%)"},
     },
 }
 
@@ -351,3 +342,5 @@ STATUS_BAR_MESSAGE_TIMEOUT = 3000
 LOG_LEVEL = "DEBUG"
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log"
+
+#################### END OF FILE: editor_config.py ####################

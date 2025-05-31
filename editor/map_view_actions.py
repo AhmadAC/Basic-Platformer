@@ -1,4 +1,4 @@
-#################### START OF FILE: editor\map_view_actions.py ####################
+#################### START OF FILE: editor/map_view_actions.py ####################
 # editor/map_view_actions.py
 # -*- coding: utf-8 -*-
 """
@@ -9,8 +9,9 @@ MODIFIED: Removed direct interaction with MapViewWidget._map_object_items;
           remove_visual_item_for_data_ref method (assumed to be added to MapViewWidget).
 MODIFIED: editor_history.push_undo_state is now called more consistently
           at the beginning of actions that modify the map state.
+MODIFIED: Deletion, erase, and color actions now respect 'editor_locked' status.
 """
-# version 2.0.2 (Refactored item removal, consistent undo push)
+# version 2.0.4 (Respect lock on delete, erase, and color; improved status messages)
 import sys
 import logging
 import os
@@ -58,6 +59,9 @@ except ImportError as e_mva_imp:
 if TYPE_CHECKING:
     from editor.map_view_widget import MapViewWidget
     from editor.editor_state import EditorState
+    from editor.map_object_items import StandardMapObjectItem # For isinstance checks
+    from editor.editor_custom_items import BaseResizableMapItem # For isinstance checks
+
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +133,9 @@ def place_single_object_on_map(map_view: 'MapViewWidget', asset_key_for_data: st
                obj.get("is_flipped_h", False) == is_flipped_h and \
                obj.get("rotation", 0) == rotation:
                 if asset_definition.get("colorable") and editor_state.current_selected_asset_paint_color and obj.get("override_color") != editor_state.current_selected_asset_paint_color:
+                    if obj.get("editor_locked", False): # Check if item is locked before recoloring
+                        map_view.show_status_message(f"Cannot recolor: Item '{obj.get('asset_editor_key', 'N/A')}' at ({world_x},{world_y}) is locked.")
+                        return False
                     obj["override_color"] = editor_state.current_selected_asset_paint_color
                     map_view.update_specific_object_visuals(obj); return True
                 return False
@@ -142,7 +149,7 @@ def place_single_object_on_map(map_view: 'MapViewWidget', asset_key_for_data: st
         "is_flipped_h": is_flipped_h,
         "rotation": rotation,
         "editor_hidden": False,
-        "editor_locked": False
+        "editor_locked": False # New objects are unlocked by default
     }
 
     if is_custom_image_type:
@@ -181,7 +188,6 @@ def place_single_object_on_map(map_view: 'MapViewWidget', asset_key_for_data: st
         editor_state.placed_objects = [obj for obj in editor_state.placed_objects if obj.get("game_type_id") != game_id]
 
     editor_state.placed_objects.append(new_obj_data)
-    # Visual addition is handled by MapViewWidget.draw_placed_objects()
     return True
 
 
@@ -203,15 +209,22 @@ def perform_erase_action(map_view: 'MapViewWidget', grid_x: int, grid_y: int, co
 
         obj_rect = QRectF(float(obj_x), float(obj_y), float(obj_w), float(obj_h))
         if obj_rect.contains(target_point_scene):
+            if obj_data.get("editor_locked", False): # Check if item is locked
+                asset_key = obj_data.get("asset_editor_key", "Unknown Object")
+                palette_entry = editor_state.assets_palette.get(asset_key)
+                display_name = palette_entry.get("name_in_palette", asset_key) if palette_entry else asset_key
+                map_view.show_status_message(f"Cannot erase: '{display_name}' is locked.")
+                continue # Skip locked items for erasure candidacy
+
             current_obj_z = obj_data.get("layer_order", 0)
             if current_obj_z >= highest_z:
                 highest_z = current_obj_z; item_to_remove_data_ref = obj_data
 
-    if item_to_remove_data_ref:
+
+    if item_to_remove_data_ref: # This will only be non-None if an unlocked item was found
         if is_first_action: editor_history.push_undo_state(editor_state)
         editor_state.placed_objects.remove(item_to_remove_data_ref)
 
-        # Delegate visual removal to MapViewWidget
         if hasattr(map_view, 'remove_visual_item_for_data_ref'):
             map_view.remove_visual_item_for_data_ref(item_to_remove_data_ref)
         else:
@@ -224,8 +237,8 @@ def perform_erase_action(map_view: 'MapViewWidget', grid_x: int, grid_y: int, co
 
 def perform_color_tile_action(map_view: 'MapViewWidget', grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
     editor_state = map_view.editor_state
-    if editor_state.current_tool_mode != "color_pick": return # Assuming tool key is "color_pick"
-    if not editor_state.current_tile_paint_color: return # Ensure a color is selected
+    if editor_state.current_tool_mode != "color_pick": return
+    if not editor_state.current_tile_paint_color: return
     if continuous and (grid_x, grid_y) == editor_state.last_colored_tile_coords: return
 
     world_x_snapped = float(grid_x * editor_state.grid_size)
@@ -237,25 +250,31 @@ def perform_color_tile_action(map_view: 'MapViewWidget', grid_x: int, grid_y: in
 
     for obj_data in editor_state.placed_objects:
         if obj_data.get("asset_editor_key") in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY]:
-            continue # Skip custom images and triggers for color picking
+            continue
         asset_info = editor_state.assets_palette.get(str(obj_data.get("asset_editor_key")))
         if not asset_info or not asset_info.get("colorable"):
             continue
 
         obj_x = obj_data.get("world_x", 0); obj_y = obj_data.get("world_y", 0)
-        # Use original_size_pixels if available, otherwise default to grid size for rect check
         original_size = asset_info.get("original_size_pixels")
         obj_w, obj_h = (float(original_size[0]), float(original_size[1])) if original_size else \
                        (float(editor_state.grid_size), float(editor_state.grid_size))
         obj_rect = QRectF(float(obj_x), float(obj_y), obj_w, obj_h)
 
         if obj_rect.contains(target_point_scene):
+            if obj_data.get("editor_locked", False): # Check if item is locked
+                asset_key = obj_data.get("asset_editor_key", "Unknown Object")
+                palette_entry = editor_state.assets_palette.get(asset_key)
+                display_name = palette_entry.get("name_in_palette", asset_key) if palette_entry else asset_key
+                map_view.show_status_message(f"Cannot color: '{display_name}' is locked.")
+                continue # Skip locked items for coloring candidacy
+
             current_obj_z = obj_data.get("layer_order", 0)
             if current_obj_z >= highest_z:
                 highest_z = current_obj_z
                 item_to_color_data_ref = obj_data
 
-    if item_to_color_data_ref:
+    if item_to_color_data_ref: # This will only be non-None if an unlocked item was found
         new_color = editor_state.current_tile_paint_color
         if item_to_color_data_ref.get("override_color") != new_color:
             if is_first_action: editor_history.push_undo_state(editor_state)
@@ -270,39 +289,79 @@ def perform_color_tile_action(map_view: 'MapViewWidget', grid_x: int, grid_y: in
 def delete_selected_map_objects_action(map_view: 'MapViewWidget'):
     editor_state = map_view.editor_state
     selected_qt_items = map_view.map_scene.selectedItems()
-    if not selected_qt_items: return
+    if not selected_qt_items:
+        map_view.show_status_message("No objects selected to delete.")
+        return
 
-    # Assume MapViewWidget imports these types if needed for isinstance checks
+    # Need to import these types if not already available for isinstance
+    # These should ideally be imported at the top of the file if MapViewWidget itself uses them,
+    # or passed as type hints if this module is strictly for actions.
     from editor.map_object_items import StandardMapObjectItem
     from editor.editor_custom_items import BaseResizableMapItem
 
-    items_to_process_refs: List[Dict[str, Any]] = []
+    data_refs_to_actually_delete: List[Dict[str, Any]] = []
+    num_selected_total = 0
+    num_locked_skipped = 0
+    locked_item_display_names: List[str] = []
+
     for item in selected_qt_items:
         if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)):
+            num_selected_total += 1
             if hasattr(item, 'map_object_data_ref'):
-                items_to_process_refs.append(item.map_object_data_ref) # type: ignore
+                obj_data_ref = item.map_object_data_ref # type: ignore
+                if obj_data_ref.get("editor_locked", False):
+                    num_locked_skipped += 1
+                    # Try to get a display name for the status message
+                    asset_key = obj_data_ref.get("asset_editor_key", "Unknown Object")
+                    palette_entry = editor_state.assets_palette.get(asset_key)
+                    display_name = palette_entry.get("name_in_palette", asset_key) if palette_entry else asset_key
+                    if asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY:
+                        display_name = f"Custom Image ({os.path.basename(obj_data_ref.get('source_file_path',''))})"
+                    elif asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY:
+                        display_name = "Trigger Square"
+                    locked_item_display_names.append(display_name)
+                else:
+                    data_refs_to_actually_delete.append(obj_data_ref)
 
-    if not items_to_process_refs: return
+    if not data_refs_to_actually_delete and num_locked_skipped == 0 and num_selected_total > 0:
+        logger.warning("Delete action: Items selected in scene, but no valid map_object_data_ref found or not deletable types.")
+        map_view.show_status_message("Selected items are not standard map objects or could not be processed.")
+        return
+
+    if not data_refs_to_actually_delete and num_locked_skipped > 0:
+        map_view.show_status_message(f"{num_locked_skipped} item(s) selected, but all are locked. No items deleted.")
+        return
+
+    if not data_refs_to_actually_delete:
+        map_view.show_status_message("No unlocked objects selected to delete.")
+        return
 
     editor_history.push_undo_state(editor_state)
 
+    original_object_count = len(editor_state.placed_objects)
     editor_state.placed_objects = [
-        obj for obj in editor_state.placed_objects if obj not in items_to_process_refs
+        obj for obj in editor_state.placed_objects if obj not in data_refs_to_actually_delete
     ]
+    num_actually_deleted_from_state = original_object_count - len(editor_state.placed_objects)
 
-    for data_ref_to_remove_visual in items_to_process_refs:
+    for data_ref_to_remove_visual in data_refs_to_actually_delete:
         if hasattr(map_view, 'remove_visual_item_for_data_ref'):
             map_view.remove_visual_item_for_data_ref(data_ref_to_remove_visual)
         else:
             logger.error("MapViewWidget is missing 'remove_visual_item_for_data_ref' method. Cannot remove visual item.")
 
-    # MapViewWidget.draw_placed_objects() will be called implicitly if remove_visual_item_for_data_ref does a full redraw,
-    # or explicitly if map_content_changed leads to it.
-    # If `remove_visual_item_for_data_ref` is very targeted, a full redraw might be needed here
-    # For now, assume `map_content_changed` will trigger necessary updates.
-    map_view.map_scene.clearSelection() # Clear selection in the scene
-    map_view.map_content_changed.emit() # Signal content change
-    map_view.map_object_selected_for_properties.emit(None) # Clear properties pane
-    map_view.show_status_message(f"Deleted {len(items_to_process_refs)} object(s).")
-
+    map_view.map_scene.clearSelection()
+    map_view.map_content_changed.emit()
+    map_view.map_object_selected_for_properties.emit(None)
+    
+    status_message = f"Deleted {num_actually_deleted_from_state} object(s)."
+    if num_locked_skipped > 0:
+        status_message += f" {num_locked_skipped} object(s) were locked and not deleted."
+        if locked_item_display_names:
+            locked_names_str = ", ".join(locked_item_display_names[:3])
+            if len(locked_item_display_names) > 3:
+                locked_names_str += "..."
+            status_message += f" Locked items: {locked_names_str}."
+    
+    map_view.show_status_message(status_message)
 #################### END OF FILE: editor/map_view_actions.py ####################

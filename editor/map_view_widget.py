@@ -1,9 +1,10 @@
+#################### START OF FILE: editor/map_view_widget.py ####################
 # editor/map_view_widget.py
 # -*- coding: utf-8 -*-
 """
 Custom Qt Widget for the Map View in the PySide6 Level Editor.
 Handles display, interaction, and dispatches actions to map_view_actions.
-Version 2.2.2 (Refined update_specific_object_visuals, improved logging)
+Version 2.2.3 (Fixed TypeError in keyPressEvent, respects lock on delete)
 """
 import logging
 import os
@@ -48,7 +49,7 @@ class MapViewWidget(QGraphicsView):
     mouse_moved_on_map = Signal(tuple) # (world_x, world_y, tile_x, tile_y, zoom)
     map_object_selected_for_properties = Signal(object) # Emits map_object_data_ref or None
     map_content_changed = Signal() # Emitted when objects are added, removed, or their core data changes
-    object_graphically_moved_signal = Signal(dict) # Emits map_object_data_ref after graphical move # <<< FIX: UNCOMMENTED THIS LINE
+    object_graphically_moved_signal = Signal(dict)
     view_changed = Signal() # Emitted on pan or zoom for minimap update
     context_menu_requested_for_item = Signal(object, QPointF) # map_object_data_ref, global_pos
 
@@ -63,9 +64,6 @@ class MapViewWidget(QGraphicsView):
         self.map_scene.setBackgroundBrush(QColor(*self.editor_state.background_color))
         self.setScene(self.map_scene)
         
-        # The connection is established in EditorMainWindow.init_ui, so this line is not needed here
-        # self.object_graphically_moved_signal.connect(self._handle_internal_object_move_for_unsaved_changes)
-
         self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -109,12 +107,10 @@ class MapViewWidget(QGraphicsView):
         self.load_map_from_state() # Initial load
         logger.debug("MapViewWidget initialized.")
 
-    # --- Action methods delegated to MVActions ---
     def _perform_place_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
         MVActions.perform_place_action(self, grid_x, grid_y, continuous, is_first_action)
 
     def _place_single_object_on_map(self, asset_key_for_data: str, asset_definition: Dict, grid_x: int, grid_y: int, is_flipped_h: bool, rotation: int) -> bool:
-        # This method is called by _perform_place_action, so it's part of the delegation
         return MVActions.place_single_object_on_map(self, asset_key_for_data, asset_definition, grid_x, grid_y, is_flipped_h, rotation)
 
     def _perform_erase_action(self, grid_x: int, grid_y: int, continuous: bool = False, is_first_action: bool = False):
@@ -129,29 +125,27 @@ class MapViewWidget(QGraphicsView):
     def _select_object_at_controller_cursor(self): 
         if not self._controller_cursor_pos: return
         grid_x, grid_y = self._controller_cursor_pos
-        world_x = float(grid_x * self.editor_state.grid_size) # Ensure float for QRectF
+        world_x = float(grid_x * self.editor_state.grid_size)
         world_y = float(grid_y * self.editor_state.grid_size)
         cursor_rect_scene = QRectF(world_x, world_y, float(self.editor_state.grid_size), float(self.editor_state.grid_size))
         
-        # Get items that intersect the shape of the cursor rectangle
         items_at_cursor = self.map_scene.items(cursor_rect_scene, Qt.ItemSelectionMode.IntersectsItemShape)
 
         found_item_to_select: Optional[QGraphicsItem] = None
         highest_z_found = -float('inf')
         for item in items_at_cursor:
-            if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)): # Check if it's one of our map objects
-                if hasattr(item, 'map_object_data_ref') and not item.map_object_data_ref.get("editor_locked", False): # Check if not locked
+            if isinstance(item, (StandardMapObjectItem, BaseResizableMapItem)):
+                if hasattr(item, 'map_object_data_ref') and not item.map_object_data_ref.get("editor_locked", False): # type: ignore
                     item_z = item.zValue()
                     if item_z > highest_z_found:
                         highest_z_found = item_z
                         found_item_to_select = item
         
-        self.map_scene.clearSelection() # Clear previous selection
+        self.map_scene.clearSelection()
         if found_item_to_select:
             found_item_to_select.setSelected(True)
-            # on_scene_selection_changed will emit map_object_selected_for_properties
         else:
-            self.map_object_selected_for_properties.emit(None) # No selectable item found
+            self.map_object_selected_for_properties.emit(None)
 
     def _update_controller_cursor_visuals(self):
         if not self._controller_has_focus or self._controller_cursor_pos is None:
@@ -161,17 +155,17 @@ class MapViewWidget(QGraphicsView):
         if not self._controller_cursor_item:
             self._controller_cursor_item = QGraphicsRectItem()
             cursor_color_tuple_rgba = ED_CONFIG.MAP_VIEW_CONTROLLER_CURSOR_COLOR_TUPLE
-            cursor_qcolor = QColor(*cursor_color_tuple_rgba[:3], cursor_color_tuple_rgba[3]) # Handle RGBA
+            cursor_qcolor = QColor(*cursor_color_tuple_rgba[:3], cursor_color_tuple_rgba[3])
             self._controller_cursor_item.setPen(QPen(cursor_qcolor, 2))
-            self._controller_cursor_item.setBrush(QColor(cursor_qcolor.red(), cursor_qcolor.green(), cursor_qcolor.blue(), cursor_qcolor.alpha() // 2)) # Semi-transparent fill
-            self._controller_cursor_item.setZValue(200) # High Z-value to be on top
+            self._controller_cursor_item.setBrush(QColor(cursor_qcolor.red(), cursor_qcolor.green(), cursor_qcolor.blue(), cursor_qcolor.alpha() // 2))
+            self._controller_cursor_item.setZValue(200)
             self.map_scene.addItem(self._controller_cursor_item)
 
         grid_x, grid_y = self._controller_cursor_pos
         gs_float = float(self.editor_state.grid_size)
         self._controller_cursor_item.setRect(grid_x * gs_float, grid_y * gs_float, gs_float, gs_float)
         self._controller_cursor_item.setVisible(True)
-        self.ensureVisible(self._controller_cursor_item, 50, 50) # Ensure cursor is visible
+        self.ensureVisible(self._controller_cursor_item, 50, 50)
 
     def on_controller_focus_gained(self):
         self._controller_has_focus = True
@@ -182,17 +176,17 @@ class MapViewWidget(QGraphicsView):
     def on_controller_focus_lost(self):
         self._controller_has_focus = False
         self.editor_state.controller_mode_active = False
-        self._update_controller_cursor_visuals() # This will hide it
+        self._update_controller_cursor_visuals()
         logger.debug("MapViewWidget: Controller focus LOST.")
 
     def handle_controller_action(self, action: str, value: Any):
         if not self._controller_has_focus: return
-        if self._controller_cursor_pos is None: # Initialize cursor position if not set
+        if self._controller_cursor_pos is None:
             self._controller_cursor_pos = (self.editor_state.map_width_tiles // 2, self.editor_state.map_height_tiles // 2)
         
         grid_x, grid_y = self._controller_cursor_pos
         moved = False
-        pan_speed_tiles = 1 # How many grid cells to move per D-pad/stick press
+        pan_speed_tiles = 1
 
         if action == ACTION_UI_UP: grid_y = max(0, grid_y - pan_speed_tiles); moved = True
         elif action == ACTION_UI_DOWN: grid_y = min(self.editor_state.map_height_tiles - 1, grid_y + pan_speed_tiles); moved = True
@@ -203,31 +197,32 @@ class MapViewWidget(QGraphicsView):
         elif action == ACTION_MAP_TOOL_PRIMARY or action == ACTION_UI_ACCEPT:
             if self.editor_state.current_tool_mode == "select":
                 self._select_object_at_controller_cursor()
-            else: # Assume place, color, etc.
-                self._perform_place_action(grid_x, grid_y, is_first_action=True) # Example for place
-                # Add similar calls for color pick etc. based on tool mode
-        elif action == ACTION_MAP_TOOL_SECONDARY: # Example: Erase
-             self._perform_erase_action(grid_x, grid_y, is_first_action=True)
+            elif self.editor_state.current_tool_mode == "place":
+                 self._perform_place_action(grid_x, grid_y, is_first_action=True)
+            elif self.editor_state.current_tool_mode == "color_pick":
+                 self._perform_color_tile_action(grid_x, grid_y, is_first_action=True)
+        elif action == ACTION_MAP_TOOL_SECONDARY:
+             if self.editor_state.current_tool_mode == "tool_eraser":
+                 self._perform_erase_action(grid_x, grid_y, is_first_action=True)
         
         if moved:
             self._controller_cursor_pos = (grid_x, grid_y)
             self._update_controller_cursor_visuals()
+        return True # Indicate action was handled
 
     @Slot(dict)
     def _handle_internal_object_move_for_unsaved_changes(self, moved_object_data_ref: dict):
-        # This slot is just to trigger the unsaved changes flag.
-        # The actual data (world_x, world_y) is updated directly in itemChange.
         self.map_content_changed.emit()
         logger.debug(f"MapView: Object graphically moved (ID: {id(moved_object_data_ref)}). Unsaved changes flag set.")
 
     def clear_scene(self):
         logger.debug("MapViewWidget: Clearing scene...")
-        self.map_scene.blockSignals(True) # Block signals during mass removal
-        items_to_remove = list(self.map_scene.items()) # Create a copy
+        self.map_scene.blockSignals(True)
+        items_to_remove = list(self.map_scene.items())
         for item in items_to_remove:
-            if item.scene() == self.map_scene: # Ensure item is still in this scene
-                if isinstance(item, BaseResizableMapItem): # Handle resizable items
-                    item.show_interaction_handles(False) # Hide handles before removal
+            if item.scene() == self.map_scene:
+                if isinstance(item, BaseResizableMapItem):
+                    item.show_interaction_handles(False)
                     for handle in item.interaction_handles:
                         if handle.scene(): self.map_scene.removeItem(handle)
                     item.interaction_handles.clear()
@@ -241,28 +236,27 @@ class MapViewWidget(QGraphicsView):
 
     def load_map_from_state(self):
         logger.debug("MapViewWidget: Loading map from editor_state...")
-        self.clear_scene() # Clears _map_object_items and scene items
+        self.clear_scene()
         scene_w = float(self.editor_state.get_map_pixel_width())
         scene_h = float(self.editor_state.get_map_pixel_height())
         self.map_scene.setSceneRect(QRectF(0, 0, max(1.0, scene_w), max(1.0, scene_h)))
         self.map_scene.setProperty("grid_size", self.editor_state.grid_size)
 
-        self.update_background_color(emit_view_changed=False) # Don't emit yet
+        self.update_background_color(emit_view_changed=False)
         
-        # Restore camera transform
-        self.resetTransform() # Important before applying new transform
+        self.resetTransform()
         current_transform = QTransform()
         current_transform.translate(float(self.editor_state.camera_offset_x * -1), float(self.editor_state.camera_offset_y * -1))
         current_transform.scale(self.editor_state.zoom_level, self.editor_state.zoom_level)
         self.setTransform(current_transform)
 
-        self.update_grid_visibility(emit_view_changed=False) # Don't emit yet
-        self.draw_placed_objects() # This repopulates _map_object_items
+        self.update_grid_visibility(emit_view_changed=False)
+        self.draw_placed_objects()
 
         if self._controller_has_focus: self._update_controller_cursor_visuals()
         
-        self.viewport().update() # Force immediate repaint
-        self.view_changed.emit() # Now emit view changed signal
+        self.viewport().update()
+        self.view_changed.emit()
         logger.debug("MapViewWidget: Map loaded from state.")
 
 
@@ -271,7 +265,6 @@ class MapViewWidget(QGraphicsView):
         if emit_view_changed: self.view_changed.emit()
 
     def draw_grid(self):
-        # Remove old grid lines first
         for line in self._grid_lines:
             if line.scene() == self.map_scene: self.map_scene.removeItem(line)
         self._grid_lines.clear()
@@ -280,20 +273,18 @@ class MapViewWidget(QGraphicsView):
             self.viewport().update(); return
         
         pen = QPen(QColor(*ED_CONFIG.MAP_VIEW_GRID_COLOR_TUPLE), 0)
-        pen.setCosmetic(True) # Ensures lines are 1 pixel regardless of zoom
+        pen.setCosmetic(True)
         
         gs_float = float(self.editor_state.grid_size)
         scene_rect = self.map_scene.sceneRect()
         map_w_px = scene_rect.width(); map_h_px = scene_rect.height()
         start_x = scene_rect.left(); start_y = scene_rect.top()
 
-        # Vertical lines
         current_x_coord = start_x
-        while current_x_coord <= start_x + map_w_px + 1e-6: # Add epsilon for float comparison
+        while current_x_coord <= start_x + map_w_px + 1e-6:
             line = self.map_scene.addLine(float(current_x_coord), start_y, float(current_x_coord), start_y + map_h_px, pen)
             line.setZValue(-100); self._grid_lines.append(line)
             current_x_coord += gs_float
-        # Horizontal lines
         current_y_coord = start_y
         while current_y_coord <= start_y + map_h_px + 1e-6:
             line = self.map_scene.addLine(start_x, float(current_y_coord), start_x + map_w_px, float(current_y_coord), pen)
@@ -307,34 +298,27 @@ class MapViewWidget(QGraphicsView):
         
         if not is_visible and self._grid_lines:
             for line in self._grid_lines: line.setVisible(False)
-        elif is_visible : self.draw_grid() # Redraw if becoming visible (or if grid lines were cleared)
+        elif is_visible : self.draw_grid()
         
         self.viewport().update();
         if emit_view_changed: self.view_changed.emit()
 
 
     def draw_placed_objects(self):
-        # Get IDs of map_object_data_ref dicts currently in editor_state
         current_data_ids_in_state = {id(obj_data) for obj_data in self.editor_state.placed_objects}
-        logger.debug(f"MapView: draw_placed_objects. Data IDs in state: {len(current_data_ids_in_state)}")
-        # logger.debug(f"MapView: _map_object_items before sync: { {k: type(v).__name__ for k,v in self._map_object_items.items()} }")
-
-        # Remove QGraphicsItems whose data_ref ID is no longer in editor_state
         items_to_remove_ids = [item_id for item_id in self._map_object_items if item_id not in current_data_ids_in_state]
-        if items_to_remove_ids:
-            logger.debug(f"MapView: IDs to remove from _map_object_items: {items_to_remove_ids}")
+        
         for item_id in items_to_remove_ids:
             map_obj_item_to_remove = self._map_object_items[item_id]
-            if isinstance(map_obj_item_to_remove, BaseResizableMapItem): # Clean up handles
+            if isinstance(map_obj_item_to_remove, BaseResizableMapItem):
                 map_obj_item_to_remove.show_interaction_handles(False)
                 for handle in map_obj_item_to_remove.interaction_handles:
                     if handle.scene(): self.map_scene.removeItem(handle)
                 map_obj_item_to_remove.interaction_handles.clear()
-            if map_obj_item_to_remove.scene() == self.map_scene: # Ensure it's in this scene
+            if map_obj_item_to_remove.scene() == self.map_scene:
                 self.map_scene.removeItem(map_obj_item_to_remove)
             del self._map_object_items[item_id]
 
-        # Sort objects by layer_order for correct drawing order
         sorted_placed_objects = sorted(self.editor_state.placed_objects, key=lambda obj: obj.get("layer_order", 0))
 
         for obj_data in sorted_placed_objects:
@@ -344,18 +328,12 @@ class MapViewWidget(QGraphicsView):
 
             if item_data_id_from_state in self._map_object_items:
                 map_scene_item = self._map_object_items[item_data_id_from_state]
-                # CRITICAL: Ensure the QGraphicsItem's internal map_object_data_ref IS the one from editor_state
                 if hasattr(map_scene_item, 'map_object_data_ref') and map_scene_item.map_object_data_ref is not obj_data: # type: ignore
-                    logger.warning(f"MapView: Correcting stale map_object_data_ref for item ID {item_data_id_from_state}. "
-                                   f"Old ref ID: {id(map_scene_item.map_object_data_ref)}, New ref ID: {id(obj_data)}") # type: ignore
                     map_scene_item.map_object_data_ref = obj_data # type: ignore
-                
                 if hasattr(map_scene_item, 'update_visuals_from_data'):
                     map_scene_item.update_visuals_from_data(self.editor_state) # type: ignore
-            else: # Item not found by ID from editor_state, so it's a new item
-                logger.debug(f"MapView: Creating new QGraphicsItem for obj_data with ID {item_data_id_from_state}, asset_key: {asset_key}")
+            else:
                 world_x, world_y = float(obj_data["world_x"]), float(obj_data["world_y"])
-                # Instantiate correct QGraphicsItem type
                 if asset_key == ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY:
                     map_scene_item = CustomImageMapItem(obj_data, self.editor_state)
                 elif asset_key == ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY:
@@ -367,7 +345,7 @@ class MapViewWidget(QGraphicsView):
                     self.map_scene.addItem(map_scene_item)
                     self._map_object_items[item_data_id_from_state] = map_scene_item
             
-            if map_scene_item: # Ensure visibility based on editor_hidden and opacity (if applicable)
+            if map_scene_item:
                 is_editor_hidden = obj_data.get("editor_hidden", False)
                 opacity_prop = obj_data.get("properties", {}).get("opacity", 100)
                 is_visible_by_opacity = True
@@ -375,57 +353,33 @@ class MapViewWidget(QGraphicsView):
                     is_visible_by_opacity = opacity_prop > 0
                 map_scene_item.setVisible(not is_editor_hidden and is_visible_by_opacity)
 
-            # Ensure selected items show their handles
             if isinstance(map_scene_item, BaseResizableMapItem) and map_scene_item.isSelected():
                 map_scene_item.show_interaction_handles(True)
         
-        # logger.debug(f"MapView: _map_object_items AFTER sync: { {k: type(v).__name__ for k,v in self._map_object_items.items()} }")
         self.viewport().update()
 
 
     def update_specific_object_visuals(self, map_object_data_ref_received: Dict[str, Any]):
-        """
-        Updates the visual representation of a single map object.
-        This is called when properties change from the PropertiesEditor.
-        Ensures that the QGraphicsItem is updated using the *exact* dictionary
-        reference that was modified.
-        """
         received_id = id(map_object_data_ref_received)
-        logger.debug(f"MapView: update_specific_object_visuals for received data ID: {received_id}. "
-                     f"Asset: {map_object_data_ref_received.get('asset_editor_key')}")
-
         map_obj_item_to_update: Optional[QGraphicsItem] = self._map_object_items.get(received_id)
 
         if map_obj_item_to_update:
             if hasattr(map_obj_item_to_update, 'map_object_data_ref'):
-                # Ensure the item's internal ref is the one we received.
-                # This is critical if the properties editor correctly modified the
-                # object in editor_state.placed_objects.
                 if map_obj_item_to_update.map_object_data_ref is not map_object_data_ref_received: # type: ignore
-                    logger.warning(f"MapView (update_specific): Item {received_id} found, "
-                                   f"but its internal data_ref (ID {id(map_obj_item_to_update.map_object_data_ref)}) " # type: ignore
-                                   f"differs from received (ID {received_id}). "
-                                   "This indicates a potential data reference inconsistency. Updating item's ref.")
                     map_obj_item_to_update.map_object_data_ref = map_object_data_ref_received # type: ignore
             
             if hasattr(map_obj_item_to_update, 'update_visuals_from_data'):
                 map_obj_item_to_update.update_visuals_from_data(self.editor_state) # type: ignore
-                logger.debug(f"MapView: Called item's update_visuals_from_data for data ID {received_id}.")
             else:
                 logger.warning(f"MapView: Item for data ID {received_id} found, but no 'update_visuals_from_data' method.")
         else:
             logger.error(f"MapView: update_specific_object_visuals - Item ID {received_id} "
                          f"(Asset: {map_object_data_ref_received.get('asset_editor_key')}) "
-                         "NOT found in _map_object_items. This is a critical error if the PropertiesEditor "
-                         "is correctly referencing objects from editor_state.placed_objects. The item "
-                         "should have been in _map_object_items. Forcing full redraw.")
-            # As a robust fallback, force a full redraw if a specific item can't be found.
-            # This might hide the root cause but prevents visual desync.
+                         "NOT found in _map_object_items. Forcing full redraw.")
             self.draw_placed_objects() 
         
-        self.viewport().update() # Ensure repaint
+        self.viewport().update()
 
-    # --- Coordinate Conversion and Zoom/Pan Utilities ---
     def screen_to_scene_coords(self, screen_pos_qpoint: QPointF) -> QPointF: return self.mapToScene(screen_pos_qpoint.toPoint())
     def screen_to_grid_coords(self, screen_pos_qpoint: QPointF) -> Tuple[int, int]:
         scene_pos = self.screen_to_scene_coords(screen_pos_qpoint)
@@ -436,7 +390,7 @@ class MapViewWidget(QGraphicsView):
         return (float(round(world_x / gs) * gs), float(round(world_y / gs) * gs)) if gs > 0 else (world_x,world_y)
     def _emit_zoom_update_status(self):
         vp_center = self.viewport().rect().center()
-        scene_center = self.mapToScene(vp_center) # Use integer point for mapToScene
+        scene_center = self.mapToScene(vp_center)
         grid_coords = self.screen_to_grid_coords(QPointF(float(vp_center.x()), float(vp_center.y())))
         self.mouse_moved_on_map.emit((scene_center.x(), scene_center.y(), grid_coords[0], grid_coords[1], self.editor_state.zoom_level))
 
@@ -447,28 +401,26 @@ class MapViewWidget(QGraphicsView):
     @Slot()
     def reset_zoom(self):
         center_point_scene = self.mapToScene(self.viewport().rect().center())
-        self.resetTransform() # Resets to identity
+        self.resetTransform()
         self.editor_state.camera_offset_x = 0.0
         self.editor_state.camera_offset_y = 0.0
         self.editor_state.zoom_level = 1.0
-        # Need to re-apply translation based on where the center was, then scale.
-        # This standard centerOn is usually sufficient after resetTransform.
         self.centerOn(center_point_scene)
         self._emit_zoom_update_status()
         self.view_changed.emit()
 
     def scale_view(self, factor: float):
         current_zoom_transform_m11 = self.transform().m11()
-        if abs(current_zoom_transform_m11) < 1e-5 and factor < 1.0 : return # Avoid issues with near-zero zoom
+        if abs(current_zoom_transform_m11) < 1e-5 and factor < 1.0 : return
 
         new_zoom_level_target = self.editor_state.zoom_level * factor
         clamped_new_zoom_target = max(ED_CONFIG.MIN_ZOOM_LEVEL, min(new_zoom_level_target, ED_CONFIG.MAX_ZOOM_LEVEL))
         
         actual_factor_to_apply = clamped_new_zoom_target / self.editor_state.zoom_level if abs(self.editor_state.zoom_level) > 1e-5 else clamped_new_zoom_target
         
-        if abs(actual_factor_to_apply - 1.0) > 1e-5 : # Only scale if significant change
+        if abs(actual_factor_to_apply - 1.0) > 1e-5 :
             self.scale(actual_factor_to_apply, actual_factor_to_apply)
-            self.editor_state.zoom_level = self.transform().m11() # Update state with actual new zoom
+            self.editor_state.zoom_level = self.transform().m11()
             self._emit_zoom_update_status()
             self.view_changed.emit()
 
@@ -476,40 +428,21 @@ class MapViewWidget(QGraphicsView):
     def pan_view_by_scrollbars(self, dx: int, dy: int):
         hbar=self.horizontalScrollBar();vbar=self.verticalScrollBar()
         hbar.setValue(hbar.value()+dx); vbar.setValue(vbar.value()+dy)
-        # Update editor_state.camera_offset_x/y based on the new scrollbar values
-        # This part needs to be carefully considered: camera_offset is usually -scroll_value
-        # For now, directly emitting view_changed is safer.
-        # self.editor_state.camera_offset_x = float(self.mapToScene(0,0).x())
-        # self.editor_state.camera_offset_y = float(self.mapToScene(0,0).y())
         self.view_changed.emit()
 
     def center_on_map_coords(self, p_scene_coords:QPointF):
         self.centerOn(p_scene_coords)
-        # self.editor_state.camera_offset_x = float(self.mapToScene(0,0).x())
-        # self.editor_state.camera_offset_y = float(self.mapToScene(0,0).y())
         self.view_changed.emit()
 
     def get_visible_scene_rect(self) -> QRectF: return self.mapToScene(self.viewport().rect()).boundingRect()
-
-    # --- KeyPress and Mouse Event Handlers (mostly unchanged unless specific fixes noted) ---
-    # ... (mousePressEvent, mouseMoveEvent, mouseReleaseEvent, contextMenuEvent, wheelEvent) ...
-    # ... (enterEvent, leaveEvent, _check_edge_scroll, perform_edge_scroll) ...
-    # ... (_update_hover_preview, on_asset_selected_for_placement, on_tool_selected) ...
-    # ... (on_object_properties_changed, on_scene_selection_changed, show_status_message) ...
     
-    # These methods were largely okay, assuming the data flow and action delegations in map_view_actions.py are correct.
-    # The main focus of this update is on the data integrity within MapViewWidget itself.
-    # If specific issues arise in these event handlers, they'd need targeted fixes.
-
-    # Placeholder for methods that were mostly okay or need specific context to update further:
     def _cancel_active_transform(self, status_message: str):
-        # ... (as before, ensuring it cleans up transform state) ...
         if self.map_scene.property("is_actively_transforming_item"):
             if self.editor_state.undo_stack:
                 editor_history.undo(self.editor_state) # type: ignore
-                self.on_scene_selection_changed() # Ensure selection state is correct after undo
+                self.on_scene_selection_changed()
             else:
-                self.load_map_from_state() # Full reload if no undo
+                self.load_map_from_state()
 
         self._is_resizing_item = False; self._resizing_item_ref = None
         self._resize_handle_active = None; self._resize_start_item_rect_scene = None
@@ -523,21 +456,31 @@ class MapViewWidget(QGraphicsView):
         QApplication.restoreOverrideCursor()
         self.show_status_message(status_message)
 
-    def keyPressEvent(self, event: QKeyEvent): # Largely as before
+    def keyPressEvent(self, event: QKeyEvent):
         key = event.key(); modifiers = event.modifiers()
         active_panel: Optional[QWidget] = None
-        # If MapViewWidget is the focused panel in EditorMainWindow's list
-        if self.parent_window and hasattr(self.parent_window, '_focusable_panels') and \
-           hasattr(self.parent_window, '_current_focused_panel_index') and \
-           self.parent_window._focusable_panels and \
-           0 <= self.parent_window._current_focused_panel_index < len(self.parent_window._focusable_panels) and \
-           self.parent_window._focusable_panels[self.parent_window._current_focused_panel_index] is self:
-            active_panel = self
         
-        if active_panel and hasattr(self, 'handle_controller_action') and \
-           hasattr(Qt, 'Key') and hasattr(Qt.Key(key), 'name') and \
-           self.handle_controller_action(Qt.Key(key).name(), None): # type: ignore # Assuming key name can be action
-             event.accept(); return
+        is_map_view_active_panel = False
+        if self.parent_window and hasattr(self.parent_window, '_focusable_panels') and \
+           hasattr(self.parent_window, '_current_focused_panel_index'):
+            main_win = cast('EditorMainWindow', self.parent_window) # type: ignore
+            if main_win._focusable_panels and \
+               0 <= main_win._current_focused_panel_index < len(main_win._focusable_panels) and \
+               main_win._focusable_panels[main_win._current_focused_panel_index] is self:
+                is_map_view_active_panel = True
+
+        if is_map_view_active_panel and hasattr(self, 'handle_controller_action'):
+            key_name_str: Optional[str] = None
+            try:
+                key_name_str = Qt.Key(key).name
+            except Exception:
+                key_name_str = None
+            
+            if key_name_str is not None:
+                action_handled_by_panel = self.handle_controller_action(key_name_str, None)
+                if action_handled_by_panel: # handle_controller_action should return True if handled
+                    event.accept()
+                    return
         
         if (self._is_resizing_item or self._is_cropping_item) and key == Qt.Key.Key_Escape:
             cancel_msg = "Resize cancelled." if self._is_resizing_item else "Crop cancelled."
@@ -567,7 +510,7 @@ class MapViewWidget(QGraphicsView):
             if key == Qt.Key.Key_Minus: self.zoom_out(); event.accept(); return
             if key == Qt.Key.Key_0: self.reset_zoom(); event.accept(); return
         
-        pan_amount = ED_CONFIG.KEY_PAN_SPEED_UNITS_PER_SECOND * (1.0 / ED_CONFIG.C.FPS) / self.editor_state.zoom_level
+        pan_amount = ED_CONFIG.KEY_PAN_SPEED_UNITS_PER_SECOND * (1.0 / ED_CONFIG.C.FPS) / self.editor_state.zoom_level # type: ignore
         pan_x, pan_y = 0, 0
         if key == Qt.Key.Key_Left: pan_x = -pan_amount
         elif key == Qt.Key.Key_Right: pan_x = pan_amount
@@ -576,7 +519,7 @@ class MapViewWidget(QGraphicsView):
         if pan_x != 0 or pan_y != 0: self.pan_view_by_scrollbars(int(pan_x), int(pan_y)); event.accept(); return
         if not event.isAccepted(): super().keyPressEvent(event)
 
-    def wheelEvent(self, event: QWheelEvent): # Largely as before
+    def wheelEvent(self, event: QWheelEvent):
         modifiers = QApplication.keyboardModifiers()
         if self.editor_state.current_tool_mode == "place" and self.editor_state.palette_current_asset_key and \
            not (modifiers & Qt.KeyboardModifier.ControlModifier) and not (modifiers & Qt.KeyboardModifier.ShiftModifier): 
@@ -609,13 +552,14 @@ class MapViewWidget(QGraphicsView):
                     scene_pos = self.mapToScene(event.position().toPoint()); world_x_s, world_y_s = self.snap_to_grid(scene_pos.x(), scene_pos.y())
                     self._update_hover_preview(world_x_s, world_y_s)
                 event.accept(); return 
-        elif modifiers == Qt.KeyboardModifier.ControlModifier: delta = event.angleDelta().y()
-        if delta > 0: self.zoom_in()
-        elif delta < 0: self.zoom_out()
-        event.accept(); return
+        elif modifiers == Qt.KeyboardModifier.ControlModifier:
+            delta = event.angleDelta().y() # Ensure delta is correctly assigned for zoom
+            if delta > 0: self.zoom_in()
+            elif delta < 0: self.zoom_out()
+            event.accept(); return
         super().wheelEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent): # Largely as before, check for locked items
+    def mousePressEvent(self, event: QMouseEvent):
         self._is_dragging_map_object = False
         scene_pos = self.mapToScene(event.position().toPoint())
         grid_tx, grid_ty = self.screen_to_grid_coords(event.position())
@@ -665,7 +609,7 @@ class MapViewWidget(QGraphicsView):
             self.middle_mouse_panning = True; self.last_pan_point = event.globalPosition(); self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag); self.setCursor(Qt.CursorShape.ClosedHandCursor); event.accept(); return
         if not event.isAccepted(): super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: QMouseEvent): # Largely as before, ensure properties editor gets updated
+    def mouseMoveEvent(self, event: QMouseEvent):
         scene_pos = self.mapToScene(event.position().toPoint()); grid_x, grid_y = self.screen_to_grid_coords(event.position()); world_x_snapped, world_y_snapped = self.snap_to_grid(scene_pos.x(), scene_pos.y())
         self.mouse_moved_on_map.emit((scene_pos.x(), scene_pos.y(), grid_x, grid_y, self.editor_state.zoom_level))
         if self._is_cropping_item and self._cropping_item_ref and self._crop_start_mouse_pos_scene and self._crop_start_item_data and self._crop_handle_active is not None:
@@ -727,7 +671,7 @@ class MapViewWidget(QGraphicsView):
         self._check_edge_scroll(event.position())
         if not event.isAccepted(): super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event: QMouseEvent): # Largely as before
+    def mouseReleaseEvent(self, event: QMouseEvent):
         if self._is_resizing_item or self._is_cropping_item:
             self.map_scene.setProperty("is_actively_transforming_item", False); QApplication.restoreOverrideCursor()
             item_transformed_ref = self._resizing_item_ref or self._cropping_item_ref
@@ -749,7 +693,7 @@ class MapViewWidget(QGraphicsView):
         if self.dragMode() == QGraphicsView.DragMode.RubberBandDrag: self.setDragMode(QGraphicsView.DragMode.NoDrag)
         super().mouseReleaseEvent(event)
 
-    def contextMenuEvent(self, event: QContextMenuEvent): # Largely as before
+    def contextMenuEvent(self, event: QContextMenuEvent):
         if self.editor_state.current_tool_mode == "place" and self.editor_state.palette_current_asset_key:
              if not self.itemAt(event.pos()): event.accept(); return
         scene_pos = self.mapToScene(event.pos()); item_under_mouse = self.itemAt(scene_pos.toPoint())
@@ -761,12 +705,12 @@ class MapViewWidget(QGraphicsView):
                     self.context_menu_requested_for_item.emit(data_ref, event.globalPos()); event.accept(); return
         if not event.isAccepted(): super().contextMenuEvent(event)
 
-    def enterEvent(self, event: QHoverEvent): # type: ignore # No changes
+    def enterEvent(self, event: QHoverEvent): # type: ignore
         if not self.edge_scroll_timer.isActive(): self.edge_scroll_timer.start(); super().enterEvent(event) 
-    def leaveEvent(self, event: QHoverEvent): # type: ignore # No changes
+    def leaveEvent(self, event: QHoverEvent): # type: ignore
         if self.edge_scroll_timer.isActive(): self.edge_scroll_timer.stop(); self._edge_scroll_dx = 0; self._edge_scroll_dy = 0
         if self._hover_preview_item: self._hover_preview_item.setVisible(False); QApplication.restoreOverrideCursor(); super().leaveEvent(event) 
-    def _check_edge_scroll(self, mouse_pos_viewport: QPointF): # No changes
+    def _check_edge_scroll(self, mouse_pos_viewport: QPointF):
         self._edge_scroll_dx = 0; self._edge_scroll_dy = 0; zone = ED_CONFIG.EDGE_SCROLL_ZONE_THICKNESS; view_rect = self.viewport().rect()
         if mouse_pos_viewport.x() < zone: self._edge_scroll_dx = -1
         elif mouse_pos_viewport.x() > view_rect.width() - zone: self._edge_scroll_dx = 1
@@ -776,20 +720,20 @@ class MapViewWidget(QGraphicsView):
         if should_be_active and not self.edge_scroll_timer.isActive(): self.edge_scroll_timer.start()
         elif not should_be_active and self.edge_scroll_timer.isActive(): self.edge_scroll_timer.stop()
     @Slot()
-    def perform_edge_scroll(self): # No changes
+    def perform_edge_scroll(self):
         if self._edge_scroll_dx != 0 or self._edge_scroll_dy != 0:
             amount_pixels = ED_CONFIG.EDGE_SCROLL_SPEED_UNITS_PER_SECOND * (self.edge_scroll_timer.interval() / 1000.0)
             self.pan_view_by_scrollbars(int(self._edge_scroll_dx * amount_pixels), int(self._edge_scroll_dy * amount_pixels))
 
     @Slot(str, bool, int, int) 
-    def on_asset_selected_for_placement(self, asset_key: Optional[str], is_flipped: bool, wall_variant_idx: int, rotation: int): # No changes
+    def on_asset_selected_for_placement(self, asset_key: Optional[str], is_flipped: bool, wall_variant_idx: int, rotation: int):
         logger.debug(f"MapView: on_asset_selected_for_placement key: '{asset_key}', flipped: {is_flipped}, rotation: {rotation}, wall_idx: {wall_variant_idx}")
         self.editor_state.palette_current_asset_key = asset_key; self.editor_state.palette_asset_is_flipped_h = is_flipped; self.editor_state.palette_asset_rotation = rotation; self.editor_state.palette_wall_variant_index = wall_variant_idx
         if self.editor_state.current_tool_mode == "place" and self.editor_state.palette_current_asset_key:
              if self.underMouse(): scene_pos = self.mapToScene(self.mapFromGlobal(QCursor.pos())); world_x_s, world_y_s = self.snap_to_grid(scene_pos.x(), scene_pos.y()); self._update_hover_preview(world_x_s, world_y_s)
         elif self._hover_preview_item: self._hover_preview_item.setVisible(False)
 
-    def _update_hover_preview(self, world_x: float, world_y: float): # No changes needed
+    def _update_hover_preview(self, world_x: float, world_y: float):
         effective_asset_key, is_flipped_for_hover, rotation_for_hover, _ = self.editor_state.get_current_placement_info()
         if self.editor_state.current_tool_mode == "place" and effective_asset_key:
             pixmap: Optional[QPixmap] = None
@@ -811,7 +755,7 @@ class MapViewWidget(QGraphicsView):
         if self._hover_preview_item: self._hover_preview_item.setVisible(False)
 
     @Slot(str) 
-    def on_tool_selected(self, tool_key: str): # No changes needed
+    def on_tool_selected(self, tool_key: str):
         logger.debug(f"MapView: on_tool_selected tool_key: '{tool_key}'")
         self.editor_state.palette_current_asset_key = None; self.editor_state.palette_asset_is_flipped_h = False; self.editor_state.palette_asset_rotation = 0; self.editor_state.palette_wall_variant_index = 0
         if self._hover_preview_item: self._hover_preview_item.setVisible(False)
@@ -820,21 +764,21 @@ class MapViewWidget(QGraphicsView):
         elif tool_key == "tool_tile_color_picker":
             self.editor_state.current_tool_mode = "color_pick"; self.setDragMode(QGraphicsView.DragMode.NoDrag)
             if self.parent_window:
-                initial_c = self.editor_state.current_selected_asset_paint_color or self.editor_state.current_tile_paint_color or ED_CONFIG.C.BLUE
+                initial_c = self.editor_state.current_selected_asset_paint_color or self.editor_state.current_tile_paint_color or ED_CONFIG.C.BLUE # type: ignore
                 new_q_color = QColorDialog.getColor(QColor(*initial_c), cast(QWidget, self.parent_window), "Select Tile Paint Color") 
                 self.editor_state.current_tile_paint_color = new_q_color.getRgb()[:3] if new_q_color.isValid() else None 
-                if hasattr(self.parent_window, 'show_status_message'): self.parent_window.show_status_message(f"Color Picker: {self.editor_state.current_tile_paint_color or 'None'}")
+                if hasattr(self.parent_window, 'show_status_message'): self.parent_window.show_status_message(f"Color Picker: {self.editor_state.current_tile_paint_color or 'None'}") #type: ignore
         elif tool_key == "platform_wall_gray_2x2_placer": self.editor_state.current_tool_mode = "place"; self.editor_state.palette_current_asset_key = tool_key; self.setDragMode(QGraphicsView.DragMode.NoDrag)
         else: self.editor_state.current_tool_mode = "select"; self.setDragMode(QGraphicsView.DragMode.RubberBandDrag); logger.warning(f"MapView: Unknown tool_key '{tool_key}', defaulting to select mode.")
         logger.debug(f"MapView: current_tool_mode set to '{self.editor_state.current_tool_mode}'")
 
     @Slot(dict)
-    def on_object_properties_changed(self, changed_object_data_ref: Dict[str, Any]): # No changes
+    def on_object_properties_changed(self, changed_object_data_ref: Dict[str, Any]):
         logger.debug(f"MapView: on_object_properties_changed for obj data ID: {id(changed_object_data_ref)}")
         self.update_specific_object_visuals(changed_object_data_ref)
 
     @Slot()
-    def on_scene_selection_changed(self): # No changes
+    def on_scene_selection_changed(self):
         selected_qt_items = self.map_scene.selectedItems()
         logger.debug(f"MapView: on_scene_selection_changed. Count: {len(selected_qt_items)}")
         for item_id, map_obj_item_generic in self._map_object_items.items():
@@ -851,15 +795,11 @@ class MapViewWidget(QGraphicsView):
             else: self.map_object_selected_for_properties.emit(None)
         else: self.map_object_selected_for_properties.emit(None)
 
-    def show_status_message(self, message: str, timeout: int = 2000): # No changes
-        if hasattr(self.parent_window, "show_status_message"): self.parent_window.show_status_message(message, timeout)
+    def show_status_message(self, message: str, timeout: int = 2000):
+        if hasattr(self.parent_window, "show_status_message"): self.parent_window.show_status_message(message, timeout) # type: ignore
         else: logger.info(f"Status (MapView): {message}")
 
     def remove_visual_item_for_data_ref(self, obj_data_ref_to_remove: Dict[str, Any]):
-        """
-        Removes the QGraphicsItem associated with the given map_object_data_ref
-        from the scene and internal tracking.
-        """
         item_id_to_remove = id(obj_data_ref_to_remove)
         if item_id_to_remove in self._map_object_items:
             item_qgraphics = self._map_object_items[item_id_to_remove]
@@ -877,7 +817,5 @@ class MapViewWidget(QGraphicsView):
         else:
             logger.warning(f"MapView: Attempted to remove visual item for data ID {item_id_to_remove}, but it was not found in _map_object_items.")
         
-        # A full redraw might be needed if individual removal causes visual artifacts or complex updates are required.
-        # For now, rely on the caller (e.g., map_view_actions) to eventually trigger map_content_changed -> draw_placed_objects
-        # or handle the viewport update.
         self.viewport().update()
+#################### END OF FILE: editor/map_view_widget.py ####################
