@@ -1,9 +1,7 @@
-#################### START OF FILE: editor_config.py ####################
-
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.11 (Added Invisible Wall Asset)
+## version 2.2.12 (Added render_as_rotated_segment flag)
 C
 """
 import sys
@@ -164,8 +162,14 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
 
     # Tiles (procedural)
     "platform_wall_gray": {"surface_params": (TS, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
-    "platform_wall_gray_1_4_top": {"surface_params": (TS, TS // 4, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top", "category": "tile", "name_in_palette": "Wall 1/4 Top"},
-
+    "platform_wall_gray_1_4_top": {
+        "surface_params": (TS, TS // 4, GRAY_COLOR),
+        "colorable": True,
+        "game_type_id": "platform_wall_gray_1_4_top",
+        "category": "tile",
+        "name_in_palette": "Wall 1/4 Top",
+        "render_as_rotated_segment": True # Flag for special rendering
+    },
 
 
     # Tiles (from images) - Environment
@@ -202,13 +206,18 @@ EDITOR_PALETTE_ASSETS_CATEGORIES_ORDER = ["tool", "tile", "background_tile", "ha
 
 # --- Wall Variant Cycling ---
 WALL_BASE_KEY = "platform_wall_gray" # The primary key used in the palette to represent the cycle
+# For the "platform_wall_gray_1_4_top" and its rotations, the actual asset key in the cycle
+# should remain "platform_wall_gray_1_4_top". The rotation parameter will handle its visual orientation.
+# The `render_as_rotated_segment` flag tells the asset loader how to present it in the palette/cursor
+# based on the current rotation.
 WALL_VARIANTS_CYCLE: List[str] = [ # Actual asset keys for each variant in cycle order
-    "platform_wall_gray",
-    "platform_wall_gray_1_3_top",
-    "platform_wall_gray_1_3_right",
-    "platform_wall_gray_1_3_bottom",
-    "platform_wall_gray_1_3_left",
+    "platform_wall_gray", # Full wall
+    "platform_wall_gray_1_4_top", # This single entry will represent all 4 rotations of the 1/4 segment
+                                   # The AssetPaletteWidget and MapViewWidget will use the rotation state
+                                   # to get the correct visual from get_asset_pixmap.
 ]
+# NOTE: If you had separate assets for each 1/4 wall (e.g., platform_wall_gray_1_4_right),
+# then you would list them here. But with `render_as_rotated_segment`, one asset key + rotation is enough.
 
 # --- Asset Orientation Rules ---
 ROTATABLE_ASSET_KEYS: List[str] = [
@@ -275,7 +284,7 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     },
 
     "platform_wall_gray": _BASE_WALL_PROPERTIES.copy(),
-    "platform_wall_gray_1_3_top": _BASE_WALL_PROPERTIES.copy(),
+    "platform_wall_gray_1_4_top": _BASE_WALL_PROPERTIES.copy(), # Segment walls can also have these properties
  
     # Default properties for new environment image tiles (can be expanded)
     "env_brick_wall1": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health"}},
@@ -342,5 +351,3 @@ STATUS_BAR_MESSAGE_TIMEOUT = 3000
 LOG_LEVEL = "DEBUG"
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s'
 LOG_FILE_NAME = "editor_qt_debug.log"
-
-#################### END OF FILE: editor_config.py ####################

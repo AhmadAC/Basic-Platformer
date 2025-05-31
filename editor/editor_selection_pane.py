@@ -1,5 +1,3 @@
-#################### START OF FILE: editor_selection_pane.py ####################
-
 # editor/editor_selection_pane.py
 # -*- coding: utf-8 -*-
 """
@@ -7,8 +5,10 @@ Selection Pane Widget for the Platformer Level Editor.
 Allows viewing and selecting map objects from a list.
 Includes icons for hiding/locking objects.
 MODIFIED: Eyeball icon now toggles asset opacity (0% vs. last visible/100%).
+MODIFIED: Boundary walls (is_boundary=True) are not shown in the list.
 """
 import logging
+import os
 from typing import Optional, TYPE_CHECKING, List, Dict, Any
 
 from PySide6.QtWidgets import (
@@ -231,6 +231,13 @@ class SelectionPaneWidget(QWidget):
                 asset_key_lower = asset_key_filter.lower() if asset_key_filter else ""
                 if search_text not in asset_key_lower and search_text not in game_type:
                     continue
+            
+            # Filter out boundary walls from the selection pane
+            if asset_key_filter == ED_CONFIG.WALL_BASE_KEY: # Typically "platform_wall_gray"
+                obj_properties = obj_data.get("properties", {})
+                if obj_properties.get("is_boundary", False) is True:
+                    logger.debug(f"SelectionPane: Skipping boundary wall object '{display_name}' (asset_key: {asset_key_filter}) from list.")
+                    continue # Skip this object, don't add to selection pane
 
             list_item = QListWidgetItem(self.item_list_widget)
             list_item.setData(Qt.ItemDataRole.UserRole, obj_data)
@@ -382,5 +389,3 @@ class SelectionPaneWidget(QWidget):
         elif action == ACTION_UI_TAB_PREV: 
             if self.item_list_widget.hasFocus():
                  self.search_box.setFocus()
-
-#################### END OF FILE: editor_selection_pane.py ####################
