@@ -17,8 +17,9 @@ MODIFIED: `_init_common_status_assets` now correctly uses the updated `player_as
 MODIFIED: Corrected logger import path from `main_game.logger`.
 MODIFIED: Corrected import paths for handler modules to be relative within 'player' package.
 MODIFIED: Standardized petrify_player call to the one from player.player_status_effects.
+MODIFIED: Increased robustness of animation dictionary access.
 """
-# version 2.1.18 (Corrected handler import paths, standardized petrify call)
+# version 2.1.19 (Robust animation dict access)
 
 import os
 import sys
@@ -55,12 +56,12 @@ except ImportError as e_main_imports:
     def warning(msg, *args, **kwargs): print(f"WARNING_P: {msg}")
     def error(msg, *args, **kwargs): print(f"ERROR_P: {msg}")
     def critical(msg, *args, **kwargs): print(f"CRITICAL_P: {msg}")
-    def load_all_player_animations(relative_asset_folder: str): return None
-    def load_gif_frames(full_absolute_path_to_gif_file: str): return []
-    def resource_path(relative_path_from_project_root: str): return relative_path_from_project_root
-    class PrintLimiter: 
-        def __init__(self, *args, **kwargs): pass; 
-        def can_log(self, *args, **kwargs): return True
+    def load_all_player_animations(relative_asset_folder: str) -> Optional[Dict[str, List[QPixmap]]]: return None
+    def load_gif_frames(full_absolute_path_to_gif_file: str) -> List[QPixmap]: return []
+    def resource_path(relative_path_from_project_root: str) -> str: return relative_path_from_project_root
+    class PrintLimiter:
+        def __init__(self, *args, **kwargs): pass
+        def can_log(self, *args, **kwargs) -> bool: return True
 
 # Handler modules (use relative imports from within the 'player' package)
 _HANDLERS_FULLY_LOADED = True
@@ -72,7 +73,7 @@ try:
         check_player_platform_collisions, check_player_ladder_collisions,
         check_player_character_collisions, check_player_hazard_collisions
     )
-    from .player_input_handler import process_player_input_logic # Already in 'player'
+    from .player_input_handler import process_player_input_logic
     from .player_combat_handler import (
         check_player_attack_collisions, player_take_damage,
         player_self_inflict_damage, player_heal_to_full
@@ -82,7 +83,7 @@ try:
         handle_player_network_input
     )
     from .player_status_effects import petrify_player as status_petrify_player, update_player_status_effects # Use alias
-    from .projectiles import ( # Assuming projectiles.py is also in 'player' package
+    from .projectiles import (
         Fireball, PoisonShot, BoltProjectile, BloodShot,
         IceShard, ShadowProjectile, GreyProjectile
     )
@@ -91,14 +92,44 @@ except ImportError as e_handler_imports:
     _HANDLERS_FULLY_LOADED = False
     # Define stubs for critical missing handlers to prevent immediate crashes
     if 'set_player_state' not in globals():
-        def set_player_state(player, new_state, current_game_time_ms_param=None):
+        def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Optional[int]=None): # type: ignore
             if hasattr(player, 'state'): player.state = new_state
             warning(f"Fallback set_player_state used in Player.py for P{getattr(player, 'player_id', '?')} to '{new_state}'")
+    if 'update_player_animation' not in globals():
+        def update_player_animation(player: Any): pass # type: ignore
+    if 'update_player_core_logic' not in globals():
+        def update_player_core_logic(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'check_player_platform_collisions' not in globals():
+        def check_player_platform_collisions(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'check_player_ladder_collisions' not in globals():
+        def check_player_ladder_collisions(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'check_player_character_collisions' not in globals():
+        def check_player_character_collisions(*args: Any, **kwargs: Any) -> bool: return False # type: ignore
+    if 'check_player_hazard_collisions' not in globals():
+        def check_player_hazard_collisions(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'process_player_input_logic' not in globals():
+        def process_player_input_logic(*args: Any, **kwargs: Any) -> Dict[str, bool]: return {} # type: ignore
+    if 'check_player_attack_collisions' not in globals():
+        def check_player_attack_collisions(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'player_take_damage' not in globals():
+        def player_take_damage(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'player_self_inflict_damage' not in globals():
+        def player_self_inflict_damage(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'player_heal_to_full' not in globals():
+        def player_heal_to_full(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'get_player_network_data' not in globals():
+        def get_player_network_data(*args: Any, **kwargs: Any) -> Dict[str, Any]: return {} # type: ignore
+    if 'set_player_network_data' not in globals():
+        def set_player_network_data(*args: Any, **kwargs: Any): pass # type: ignore
+    if 'handle_player_network_input' not in globals():
+        def handle_player_network_input(*args: Any, **kwargs: Any): pass # type: ignore
     if 'status_petrify_player' not in globals():
-        def status_petrify_player(player, game_elements): warning("Fallback status_petrify_player used.")
+        def status_petrify_player(player: Any, game_elements: Any): warning("Fallback status_petrify_player used.") # type: ignore
     if 'update_player_status_effects' not in globals():
-        def update_player_status_effects(player, current_time_ms): warning("Fallback update_player_status_effects used."); return False
-    # Other handlers might need stubs if their absence causes crashes before game loop.
+        def update_player_status_effects(player: Any, current_time_ms: Any) -> bool: warning("Fallback update_player_status_effects used."); return False # type: ignore
+    # Projectile stubs
+    for _proj_name in ["Fireball", "PoisonShot", "BoltProjectile", "BloodShot", "IceShard", "ShadowProjectile", "GreyProjectile"]:
+        if _proj_name not in globals(): globals()[_proj_name] = type(_proj_name, (object,), {})
 
 
 if TYPE_CHECKING:
@@ -169,7 +200,7 @@ class Player:
         self.state: str = 'idle'
         self.current_frame: int = 0
         self.last_anim_update: int = 0
-        self._last_facing_right: bool = True # Internal visual state
+        self._last_facing_right_visual: bool = True # Internal visual state
         self.facing_right: bool = True      # Logical facing state
 
         self.is_dashing: bool = False; self.dash_timer: int = 0
@@ -228,10 +259,10 @@ class Player:
         self.zapped_gif_path: Optional[str] = None # Set in _init_common_status_assets
 
         self.state_timer: int = 0
-        self._prev_discrete_axis_hat_state: Dict[Tuple[str, int, Tuple[int, int]], bool] = {}
+        self._prev_discrete_axis_hat_state: Dict[Tuple[str, int, Tuple[int, int]], bool] = {} # type: ignore # Pygame tuple key
         self._first_joystick_input_poll_done: bool = False
 
-        if self._valid_init and self.animations:
+        if self._valid_init and isinstance(self.animations, dict) and self.animations:
             try:
                 idle_frames = self.animations.get('idle')
                 if idle_frames and idle_frames[0] and not idle_frames[0].isNull():
@@ -296,9 +327,10 @@ class Player:
                                 is_list: bool = False,
                                 base_asset_folder_relative_to_project: Optional[str] = None,
                                 anim_key_check: Optional[str] = None) -> Any:
-            if anim_key_check and self.animations:
+            player_specific_frames: Optional[List[QPixmap]] = None
+            if anim_key_check and isinstance(self.animations, dict) and self.animations:
                 player_specific_frames = self.animations.get(anim_key_check)
-                if player_specific_frames and not self._is_placeholder_qpixmap(player_specific_frames[0]):
+                if player_specific_frames and player_specific_frames[0] and not self._is_placeholder_qpixmap(player_specific_frames[0]):
                     debug(f"Player {self.player_id} StatusAsset: Using player's own '{anim_key_check}' anim for '{path_suffix_from_base}'.")
                     return [f.copy() for f in player_specific_frames] if is_list else player_specific_frames[0].copy()
 
@@ -307,7 +339,7 @@ class Player:
             absolute_path = resource_path(full_path_relative_to_project)
 
             frames = load_gif_frames(absolute_path)
-            if frames and not self._is_placeholder_qpixmap(frames[0]):
+            if frames and frames[0] and not self._is_placeholder_qpixmap(frames[0]):
                 return frames if is_list else frames[0]
             warning(f"Player {self.player_id} StatusAsset: Failed to load '{path_suffix_from_base}' (from '{effective_base_folder}', abs: '{absolute_path}'). Using placeholder.")
             placeholder = self._create_placeholder_qpixmap(default_placeholder_color, default_placeholder_text)
@@ -317,30 +349,27 @@ class Player:
         self.stone_image_frame = self.stone_image_frame_original.copy()
         self.stone_smashed_frames_original = load_or_placeholder('__StoneSmashed.gif', qcolor_dark_gray, "SmashP", is_list=True, anim_key_check='smashed')
         self.stone_smashed_frames = [f.copy() for f in self.stone_smashed_frames_original]
-        self.stone_crouch_image_frame_original = load_or_placeholder('__StoneCrouch.png', qcolor_gray, "SCrouchP", anim_key_check='petrified_crouch') # Check specific crouch petrified
+        self.stone_crouch_image_frame_original = load_or_placeholder('__StoneCrouch.png', qcolor_gray, "SCrouchP", anim_key_check='petrified_crouch')
         if self._is_placeholder_qpixmap(self.stone_crouch_image_frame_original) and not self._is_placeholder_qpixmap(self.stone_image_frame_original):
             self.stone_crouch_image_frame_original = self.stone_image_frame_original.copy() # Fallback to standing stone if crouch stone missing
         self.stone_crouch_image_frame = self.stone_crouch_image_frame_original.copy()
-        self.stone_crouch_smashed_frames_original = load_or_placeholder('__StoneCrouchSmashed.gif', qcolor_dark_gray, "SCSmashP", is_list=True, anim_key_check='smashed_crouch') # Check specific crouch smashed
+        self.stone_crouch_smashed_frames_original = load_or_placeholder('__StoneCrouchSmashed.gif', qcolor_dark_gray, "SCSmashP", is_list=True, anim_key_check='smashed_crouch')
         if len(self.stone_crouch_smashed_frames_original) == 1 and self._is_placeholder_qpixmap(self.stone_crouch_smashed_frames_original[0]) and \
            not (len(self.stone_smashed_frames_original) == 1 and self._is_placeholder_qpixmap(self.stone_smashed_frames_original[0])):
              self.stone_crouch_smashed_frames_original = [f.copy() for f in self.stone_smashed_frames_original] # Fallback to standing smashed
         self.stone_crouch_smashed_frames = [f.copy() for f in self.stone_crouch_smashed_frames_original]
 
-        # Zapped GIF path is specific to the player's asset folder
         self.zapped_gif_path = os.path.join(player_asset_folder_relative_to_project_root, "__Zapped.gif")
-        # Actual loading of zapped frames is handled by load_all_player_animations.
-        # This path is just for reference or if a separate load was needed.
-        if not (self.animations and self.animations.get('zapped') and not self._is_placeholder_qpixmap(self.animations['zapped'][0])):
+        zapped_anim_frames = None
+        if isinstance(self.animations, dict) and self.animations: # Check if animations is a dict
+            zapped_anim_frames = self.animations.get('zapped')
+        if not (zapped_anim_frames and zapped_anim_frames[0] and not self._is_placeholder_qpixmap(zapped_anim_frames[0])):
              warning(f"Player {self.player_id}: Player-specific zapped animation not found or is placeholder at '{resource_path(self.zapped_gif_path)}'. Animation handler will use fallback.")
 
 
     def _assign_projectile_keys(self):
-        # Player ID to Key Constant Prefix Map
         key_prefixes = {1: "P1_", 2: "P2_", 3: "P3_", 4: "P4_"}
-        projectile_configs = ["FIREBALL", "POISON", "BOLT", "BLOOD", "ICE", "SHADOW_PROJECTILE", "GREY_PROJECTILE"]
-        
-        prefix = key_prefixes.get(self.player_id, "P1_") # Default to P1 if ID is out of range
+        prefix = key_prefixes.get(self.player_id, "P1_")
         
         self.fireball_key_str = getattr(C, f"{prefix}FIREBALL_KEY", "1")
         self.poison_key_str = getattr(C, f"{prefix}POISON_KEY", "2")
@@ -369,12 +398,20 @@ class Player:
         return pixmap
 
     def _is_placeholder_qpixmap(self, pixmap: QPixmap) -> bool:
-        # ... (implementation remains the same) ...
         if pixmap.isNull(): return True
-        if pixmap.size() in [QSize(30,40), QSize(30,60), QSize(10,10)]:
+        # Check for common placeholder sizes used in this project
+        # Player placeholders are often different sizes than the generic 30x40
+        placeholder_sizes = [QSize(10,10)] # Add more sizes if other placeholders exist
+        if self.image and not self.image.isNull(): # Check against dynamic image size if available
+            placeholder_sizes.append(self.image.size())
+        else: # Default to a common player-like sprite size
+            placeholder_sizes.append(QSize(int(self.base_standing_collision_width), int(self.standing_collision_height)))
+
+        if pixmap.size() in placeholder_sizes or (pixmap.width()==1 and pixmap.height()==1):
             qimage = pixmap.toImage()
             if not qimage.isNull() and qimage.width() > 0 and qimage.height() > 0:
                 color_at_origin = qimage.pixelColor(0,0)
+                # Common placeholder colors
                 qcolor_red = QColor(*getattr(C, 'RED', (255,0,0)))
                 qcolor_blue = QColor(*getattr(C, 'BLUE', (0,0,255)))
                 qcolor_magenta = QColor(*getattr(C, 'MAGENTA', (255,0,255)))
@@ -424,8 +461,11 @@ class Player:
         for platform_obj in platforms_list:
             if hasattr(platform_obj, 'rect') and isinstance(platform_obj.rect, QRectF):
                 if potential_standing_rect.intersects(platform_obj.rect):
+                    # Check if the bottom of the platform is below the player's crouched head
+                    # AND the top of the platform is above the player's standing head.
+                    # This ensures it's a ceiling obstruction.
                     if platform_obj.rect.bottom() > potential_standing_rect.top() and \
-                       platform_obj.rect.top() < current_crouch_rect.top():
+                       platform_obj.rect.top() < current_crouch_rect.top(): # Platform is above current crouch top
                         if self.print_limiter.can_log(f"cannot_stand_p{self.player_id}"):
                              debug(f"Player {self.player_id} cannot stand: Blocked by platform {platform_obj.rect}")
                         return False
@@ -434,7 +474,6 @@ class Player:
         return True
 
     def set_state(self, new_state: str, current_game_time_ms_param: Optional[int] = None):
-        # Now uses the imported set_player_state from player_state_handler
         if _HANDLERS_FULLY_LOADED:
             set_player_state(self, new_state, current_game_time_ms_param)
         else:
@@ -453,9 +492,10 @@ class Player:
         if self.control_scheme == "keyboard_p1": active_mappings = game_config.P1_MAPPINGS
         elif self.control_scheme == "keyboard_p2": active_mappings = game_config.P2_MAPPINGS
         elif self.control_scheme and self.control_scheme.startswith("joystick_pygame_"):
+            # Dynamically get the mappings for this player from game_config globals
             active_mappings = getattr(game_config, f"P{player_id_for_map_get}_MAPPINGS", game_config.DEFAULT_GENERIC_JOYSTICK_MAPPINGS)
-        else:
-            active_mappings = game_config.P1_MAPPINGS if self.player_id == 1 else game_config.P2_MAPPINGS
+        else: # Fallback if control_scheme is not set or recognized
+            active_mappings = game_config.P1_MAPPINGS if self.player_id == 1 else game_config.P2_MAPPINGS # Basic fallback
             if Player.print_limiter.can_log(f"p_input_scheme_fallback_{self.player_id}"):
                 warning(f"Player {self.player_id}: Unrecognized control_scheme '{self.control_scheme}'. Using default keyboard map.")
 
@@ -488,19 +528,22 @@ class Player:
             if aim_dir.isNull() or (abs(aim_dir.x()) < 1e-6 and abs(aim_dir.y()) < 1e-6):
                 aim_dir.setX(1.0 if self.facing_right else -1.0); aim_dir.setY(0.0)
             proj_dims_tuple = getattr(C, f"{projectile_config_name.upper()}_DIMENSIONS", (10.0,10.0))
-            offset_dist = (self.rect.width() / 2.0) + (float(proj_dims_tuple[0]) / 2.0) - 5.0
-            if abs(aim_dir.y()) > 0.8 * abs(aim_dir.x()):
+            offset_dist = (self.rect.width() / 2.0) + (float(proj_dims_tuple[0]) / 2.0) - 5.0 # Offset from player center
+            # Refine offset if aiming mostly up/down
+            if abs(aim_dir.y()) > 0.8 * abs(aim_dir.x()): # Aiming more vertically
                 offset_dist = (self.rect.height() / 2.0) + (float(proj_dims_tuple[1]) / 2.0) - 5.0
+            # Normalize aim_dir
             norm_x, norm_y = 0.0, 0.0; length = math.sqrt(aim_dir.x()**2 + aim_dir.y()**2)
             if length > 1e-6: norm_x = aim_dir.x()/length; norm_y = aim_dir.y()/length
-            spawn_x += norm_x * offset_dist; spawn_y += norm_y * offset_dist
+            spawn_x += norm_x * offset_dist; spawn_y += norm_y * offset_dist # Adjust spawn point along aim vector
             new_projectile = projectile_class(spawn_x, spawn_y, aim_dir, self)
-            new_projectile.game_elements_ref = self.game_elements_ref_for_projectiles
+            new_projectile.game_elements_ref = self.game_elements_ref_for_projectiles # Pass ref
             projectiles_list_ref.append(new_projectile); all_renderables_ref.append(new_projectile)
             if Player.print_limiter.can_log(f"fired_{projectile_config_name}_{self.player_id}"):
                 debug(f"Player {self.player_id} fired {projectile_config_name} at ({spawn_x:.1f},{spawn_y:.1f}) dir ({aim_dir.x():.1f},{aim_dir.y():.1f})")
-            if projectile_config_name == 'blood' and self.current_health > 0:
-                self.current_health -= self.current_health * 0.05
+            # Special effects for certain projectiles
+            if projectile_config_name == 'blood' and self.current_health > 0: # Blood projectile costs health
+                self.current_health -= self.current_health * 0.05 # Example: 5% health cost
                 if self.current_health <= 0 and not self.is_dead: self.set_state('death', get_current_ticks_monotonic())
 
     def fire_fireball(self): self._generic_fire_projectile(Fireball, 'fireball_cooldown_timer', C.FIREBALL_COOLDOWN, 'fireball')
@@ -540,13 +583,14 @@ class Player:
         if not self._valid_init or not self._alive: return
         if not _HANDLERS_FULLY_LOADED:
             warning(f"Player {self.player_id}: Update called, but handlers not fully loaded. Core logic might not run.")
-            return # Skip update if handlers are missing
+            return
 
         current_time_ms = get_current_ticks_monotonic()
         status_overrode_update = self.update_status_effects(current_time_ms)
         if status_overrode_update:
-            if hasattr(self, 'animate'): self.animate()
+            if hasattr(self, 'animate'): self.animate() # Ensure animation updates even if status overrides logic
             return
+        # If no status effect fully overrides, proceed with normal update logic
         update_player_core_logic(self, dt_sec, platforms_list, ladders_list, hazards_list, other_players_list, hittable_targets_by_player_melee)
 
     def update_status_effects(self, current_time_ms: int) -> bool:
@@ -554,10 +598,11 @@ class Player:
 
     def draw_pyside(self, painter: QPainter, camera: 'CameraClass_TYPE'): # Type hint Camera
         if not self._valid_init or not self.image or self.image.isNull() or not self.rect.isValid():
+            # Fallback drawing if player is invalid or image is missing
             if hasattr(self, 'pos') and isinstance(self.pos, QPointF) and camera:
-                temp_fallback_rect = QRectF(self.pos.x()-5, self.pos.y()-10, 10,10)
+                temp_fallback_rect = QRectF(self.pos.x()-5, self.pos.y()-10, 10,10) # Small square at pos
                 screen_fb_rect = camera.apply(temp_fallback_rect)
-                painter.fillRect(screen_fb_rect, QColor(255,0,255))
+                painter.fillRect(screen_fb_rect, QColor(255,0,255)) # Magenta fallback
             return
 
         should_draw = self.alive() or \
@@ -566,25 +611,42 @@ class Player:
 
         if not should_draw: return
 
+        # Use the player's collision rect (self.rect) for camera culling and base positioning.
+        # The visual sprite (self.image) might be larger and offset.
         collision_rect_on_screen: QRectF = camera.apply(self.rect)
+        
+        # Check if the collision rect is on screen (more accurate for culling)
         if not painter.window().intersects(collision_rect_on_screen.toRect()):
             return
 
+        # Calculate visual draw position based on collision rect's bottom-center
+        # and the visual sprite's dimensions.
         visual_sprite_width = float(self.image.width())
         visual_sprite_height = float(self.image.height())
+
+        # collision_rect_on_screen.center().x() is the screen X of the collision box center
+        # collision_rect_on_screen.bottom() is the screen Y of the collision box bottom
         draw_x_visual = collision_rect_on_screen.center().x() - (visual_sprite_width / 2.0)
         draw_y_visual = collision_rect_on_screen.bottom() - visual_sprite_height
         draw_pos_visual = QPointF(draw_x_visual, draw_y_visual)
 
         if self.is_tipping and abs(self.tipping_angle) > 0.1:
             painter.save()
-            pivot_in_sprite_x = self.tipping_pivot_x_world - self.rect.left()
-            pivot_visual_x = draw_pos_visual.x() + pivot_in_sprite_x
+            # Pivot point for tipping is relative to the sprite's visual position
+            # self.tipping_pivot_x_world is the world X. Convert to screen X.
+            pivot_screen_x = camera.apply_to_point(QPointF(self.tipping_pivot_x_world, 0)).x()
+            
+            # Pivot point Y is the bottom of the visual sprite
             pivot_visual_y = draw_pos_visual.y() + visual_sprite_height
-            painter.translate(pivot_visual_x, pivot_visual_y)
+            
+            # Translate origin to the visual pivot point on screen
+            painter.translate(pivot_screen_x, pivot_visual_y)
             painter.rotate(self.tipping_angle)
-            painter.translate(-pivot_visual_x, -pivot_visual_y)
-            painter.drawPixmap(draw_pos_visual, self.image)
+            # Translate back by the pivot point *relative to the sprite's top-left* before drawing
+            # This requires knowing the sprite's top-left relative to the pivot
+            sprite_top_left_relative_to_pivot_x = draw_pos_visual.x() - pivot_screen_x
+            sprite_top_left_relative_to_pivot_y = draw_pos_visual.y() - pivot_visual_y
+            painter.drawPixmap(QPointF(sprite_top_left_relative_to_pivot_x, sprite_top_left_relative_to_pivot_y), self.image)
             painter.restore()
         else:
             painter.drawPixmap(draw_pos_visual, self.image)
@@ -595,6 +657,7 @@ class Player:
         self.game_elements_ref_for_projectiles["all_renderable_objects"] = all_elements_list
         self.game_elements_ref_for_projectiles["platforms_list"] = platforms_list_ref
 
+    # --- Network Handler Wrappers ---
     def get_network_data(self) -> Dict[str, Any]:
         return get_player_network_data(self) if _HANDLERS_FULLY_LOADED else {}
     def set_network_data(self, network_data: Dict[str, Any]):
@@ -602,15 +665,19 @@ class Player:
     def handle_network_input(self, received_input_data_dict: Dict[str, Any]):
         if _HANDLERS_FULLY_LOADED: handle_player_network_input(self, received_input_data_dict)
 
+    # --- Status Effect Application Wrappers ---
     def apply_aflame_effect(self):
         if not _HANDLERS_FULLY_LOADED: return
+        # Check if player is already in a conflicting state
         if self.is_aflame or self.is_deflaming or self.is_dead or self.is_petrified or self.is_frozen or self.is_defrosting or self.is_zapped:
             if hasattr(self, 'print_limiter') and self.print_limiter.can_log(f"apply_aflame_blocked_{self.player_id}"):
                 debug(f"Player {self.player_id}: apply_aflame_effect blocked by existing conflicting state.")
             return
         if hasattr(self, 'print_limiter') and self.print_limiter.can_log(f"apply_aflame_success_{self.player_id}"):
             debug(f"Player {self.player_id} Log: Applying aflame effect.")
+        # player_state_handler (via self.set_state) will manage is_aflame, timers, etc.
         self.set_state('aflame_crouch' if self.is_crouching else 'aflame', get_current_ticks_monotonic())
+        # Ensure attack is cancelled if player was attacking
         self.is_attacking = False; self.attack_type = 0
 
     def apply_freeze_effect(self):
@@ -623,8 +690,8 @@ class Player:
             debug(f"Player {self.player_id} Log: Applying freeze effect.")
         self.set_state('frozen', get_current_ticks_monotonic())
         self.is_attacking = False; self.attack_type = 0
-        if hasattr(self.vel, 'setX') and hasattr(self.vel, 'setY'): self.vel.setX(0); self.vel.setY(0)
-        if hasattr(self.acc, 'setX'): self.acc.setX(0)
+        if hasattr(self.vel, 'setX') and hasattr(self.vel, 'setY'): self.vel.setX(0); self.vel.setY(0) # Stop movement
+        if hasattr(self.acc, 'setX'): self.acc.setX(0) # Stop horizontal accel
 
     def apply_zapped_effect(self):
         if not _HANDLERS_FULLY_LOADED: return
@@ -641,6 +708,7 @@ class Player:
         if not _HANDLERS_FULLY_LOADED:
             warning(f"Player {self.player_id}: Petrify called, but handlers (incl. status_effects) might not be loaded. Attempting direct state change.")
             if self.is_petrified or (self.is_dead and not self.is_petrified) or self.is_zapped: return
+            # Direct fallback logic (less robust than status_effects handler)
             self.is_petrified = True; self.is_stone_smashed = False; self.is_dead = True; self.current_health = 0
             self.set_state('petrified'); self.kill(); return
 
@@ -654,5 +722,6 @@ class Player:
             if hasattr(self, 'print_limiter') and self.print_limiter.can_log(f"smash_petrify_success_{self.player_id}"):
                 debug(f"Player {self.player_id}: Smashing petrification.")
             self.set_state('smashed', get_current_ticks_monotonic())
+
 
 #################### END OF FILE: player/player.py ####################

@@ -1,3 +1,4 @@
+#################### START OF FILE: main_game\couch_play_logic.py ####################
 # couch_play_logic.py
 # -*- coding: utf-8 -*-
 """
@@ -6,20 +7,21 @@ MODIFIED: Deferred import of get_layer_order_key.
 MODIFIED: Corrected add_to_renderables_couch_if_new to handle unhashable dicts.
 MODIFIED: Implemented map change via callback for trigger squares.
 MODIFIED: Removed local trigger flag, relying on MainWindow.map_change_is_active.
+MODIFIED: Ensured player.animations is checked to be a dictionary before `.get()` in player update loop.
 """
-# version 2.0.28 (Removed local trigger flag)
+# version 2.0.29 (Robust player.animations check in update loop)
 
 import time
 import math
 from typing import Dict, List, Any, Optional
-from PySide6.QtCore import QRectF, QPointF # Added QPointF
+from PySide6.QtCore import QRectF, QPointF
 
 import main_game.constants as C
-from game_state_manager import reset_game_state # This one already defers its game_setup import
+from main_game.game_state_manager import reset_game_state
 from enemy import Enemy
-from items import Chest
+from main_game.items import Chest
 from player.statue import Statue
-from tiles import Platform, Ladder, Lava, BackgroundTile # For type checking
+from main_game.tiles import Platform, Ladder, Lava, BackgroundTile
 from player import Player
 
 _SCRIPT_LOGGING_ENABLED = True
@@ -32,7 +34,7 @@ def log_warning(msg, *args, **kwargs): logger_couch.warning(msg, *args, **kwargs
 def log_error(msg, *args, **kwargs): logger_couch.error(msg, *args, **kwargs)
 def log_critical(msg, *args, **kwargs): logger_couch.critical(msg, *args, **kwargs)
 try:
-    from logger import info as project_info, debug as project_debug, \
+    from main_game.logger import info as project_info, debug as project_debug, \
                        warning as project_warning, error as project_error, \
                        critical as project_critical
     log_info = project_info; log_debug = project_debug; log_warning = project_warning;
@@ -67,7 +69,7 @@ def run_couch_play_mode(
     ) -> bool:
 
     try:
-        from game_setup import get_layer_order_key
+        from main_game.game_setup import get_layer_order_key
     except ImportError:
         log_warning("COUCH_PLAY_LOGIC WARNING (run_couch_play_mode): Could not import get_layer_order_key from game_setup. Using fallback for sorting.")
         def get_layer_order_key(item: Any) -> int:
@@ -79,7 +81,7 @@ def run_couch_play_mode(
 
     if not game_elements_ref.get('game_ready_for_logic', False) or \
        game_elements_ref.get('initialization_in_progress', True):
-        if _SCRIPT_LOGGING_ENABLED and (not hasattr(run_couch_play_mode, "_init_wait_logged_couch") or not run_couch_play_mode._init_wait_logged_couch):
+        if _SCRIPT_LOGGING_ENABLED and (not hasattr(run_couch_play_mode, "_init_wait_logged_couch") or not run_couch_play_mode._init_wait_logged_couch): # type: ignore
             log_debug("COUCH_PLAY DEBUG: Waiting for game elements initialization to complete...")
             run_couch_play_mode._init_wait_logged_couch = True # type: ignore
         return True
@@ -127,7 +129,7 @@ def run_couch_play_mode(
         log_info("Couch Play: Pause action detected. Signaling app to stop this game mode.")
         if show_status_message_callback: show_status_message_callback("Exiting Couch Play...")
         run_couch_play_mode._first_tick_debug_printed_couch = False # type: ignore
-        return False # Signal to stop the game mode
+        return False
 
     if p1_action_events.get("reset") or p2_action_events.get("reset") or \
        p3_action_events.get("reset") or p4_action_events.get("reset"):
@@ -210,10 +212,15 @@ def run_couch_play_mode(
         all_others_for_this_player = [other_p for other_p in active_players_for_collision_check if other_p is not p_instance]
         if current_chest and current_chest.alive() and current_chest.state == 'closed': all_others_for_this_player.append(current_chest)
         p_instance.game_elements_ref_for_projectiles = game_elements_ref
-        p_instance.update(dt_sec, platforms_list_this_frame, ladders_list, hazards_list, all_others_for_this_player, hittable_targets_for_player_melee)
+        # MODIFIED: Check if p_instance.animations is a dict before calling update
+        if isinstance(p_instance.animations, dict) and p_instance.animations:
+            p_instance.update(dt_sec, platforms_list_this_frame, ladders_list, hazards_list, all_others_for_this_player, hittable_targets_for_player_melee)
+        elif _SCRIPT_LOGGING_ENABLED:
+            log_warning(f"COUCH_PLAY_LOGIC: Skipping update for Player {p_instance.player_id} due to invalid/missing animations attribute.")
+
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Players updated.")
 
-    active_players_for_ai = [p for p in player_instances_to_update if not getattr(p, 'is_dead', True) and hasattr(p, 'alive') and p.alive()]
+    active_players_for_ai = [p for p in player_instances_to_update if not getattr(p,'is_dead',True) and hasattr(p,'alive') and p.alive()]
     enemies_to_keep_this_frame = []
     for enemy_instance in list(current_enemies_list_ref):
         if hasattr(enemy_instance, '_valid_init') and enemy_instance._valid_init:
@@ -285,7 +292,7 @@ def run_couch_play_mode(
                         log_info(f"COUCH_PLAY: Requesting map change to '{linked_map}'.")
                         if request_map_change_callback:
                             request_map_change_callback(linked_map)
-                            return False # End current game loop immediately to allow map transition
+                            return False
                         else:
                             log_warning("COUCH_PLAY WARNING: request_map_change_callback not provided. Cannot change map via trigger.")
                     if one_time:
@@ -337,7 +344,7 @@ def run_couch_play_mode(
     game_elements_ref["all_renderable_objects"] = new_all_renderables_couch
     if _SCRIPT_LOGGING_ENABLED: log_debug(f"COUCH_PLAY DEBUG: Assembled and sorted renderables. Final count: {len(game_elements_ref['all_renderable_objects'])}")
 
-    def is_player_truly_gone_couch(p_instance_couch):
+    def is_player_truly_gone_couch(p_instance_couch: Optional[Player]):
         if not p_instance_couch or not hasattr(p_instance_couch, '_valid_init') or not p_instance_couch._valid_init: return True
         if hasattr(p_instance_couch, 'alive') and p_instance_couch.alive():
             if getattr(p_instance_couch, 'is_dead', False):
@@ -366,3 +373,5 @@ def run_couch_play_mode(
         return False
 
     return True
+
+#################### END OF FILE: main_game/couch_play_logic.py ####################

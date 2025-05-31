@@ -1,4 +1,4 @@
-#################### START OF FILE: main_game/game_setup.py ####################
+#################### START OF FILE: main_game\game_setup.py ####################
 # main_game/game_setup.py
 # -*- coding: utf-8 -*-
 """
@@ -15,8 +15,9 @@ MODIFIED: Statue creation also uses properties from spawn_data.
 MODIFIED: Camera focus logic prioritizes P1, then P2, then any active player for initial view.
 MODIFIED: Trigger squares and custom images are processed even if their lists are empty in map_data.
 MODIFIED: Added enemy_spawns_data_cache and statue_spawns_data_cache for client-side entity recreation.
+MODIFIED: Ensures player.animations is checked to be a dictionary before using it.
 """
-# version 2.2.9 (Corrected imports for sibling packages)
+# version 2.2.10 (Robust player.animations check)
 
 import os
 import sys
@@ -26,32 +27,27 @@ from typing import Dict, Optional, Any, List, Tuple, cast
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
 from PySide6.QtGui import QPixmap, QImage, QTransform
 
-# --- Project Root Setup (if needed, assuming this file is in main_game/) ---
 _GAME_SETUP_PY_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT_FOR_GAME_SETUP = os.path.dirname(_GAME_SETUP_PY_FILE_DIR)
 if _PROJECT_ROOT_FOR_GAME_SETUP not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT_FOR_GAME_SETUP)
-# --- End Project Root Setup ---
 
 try:
-    # Modules within the 'main_game' package (use relative imports)
-    from .logger import info, debug, warning, error, critical
-    from . import constants as C
-    from . import config as game_config
-    from .level_loader import LevelLoader
-    from .tiles import Platform, Ladder, Lava, BackgroundTile
-    from .items import Chest
-    from .camera import Camera
-    from .assets import resource_path
+    from main_game.logger import info, debug, warning, error, critical
+    import main_game.constants as C
+    import main_game.config as game_config
+    from main_game.level_loader import LevelLoader
+    from main_game.tiles import Platform, Ladder, Lava, BackgroundTile
+    from main_game.items import Chest
+    from main_game.camera import Camera
+    from main_game.assets import resource_path
 
-    # Modules from sibling packages (use absolute imports from project root)
     from player import Player
     from enemy import Enemy
-    from enemy.enemy_knight import EnemyKnight # Assuming EnemyKnight is in enemy/enemy_knight.py
-    from player.statue import Statue    # Assuming Statue is in player/statue.py
+    from enemy.enemy_knight import EnemyKnight
+    from player.statue import Statue
 
 except ImportError as e_gs_imp:
-    # Fallback logger for critical import errors
     import logging
     _gs_fallback_logger = logging.getLogger(__name__ + "_gs_fallback")
     if not _gs_fallback_logger.hasHandlers():
@@ -61,39 +57,31 @@ except ImportError as e_gs_imp:
         _gs_fallback_logger.addHandler(_gs_fallback_handler)
         _gs_fallback_logger.setLevel(logging.DEBUG)
     _gs_fallback_logger.critical(f"CRITICAL GameSetup Import Error: {e_gs_imp}. Game setup will fail.", exc_info=True)
-    raise # Re-raise to halt if critical components are missing
+    raise
 
 def get_layer_order_key(item: Any) -> int:
-    """
-    Determines the rendering layer order for a game object.
-    Lower numbers are drawn first (further back).
-    """
-    if isinstance(item, dict): # For custom images/triggers passed as dicts
+    if isinstance(item, dict):
         return int(item.get('layer_order', 0))
     elif hasattr(item, 'layer_order'):
         return int(getattr(item, 'layer_order', 0))
-    # Default layering for common types if 'layer_order' is not explicit
     elif isinstance(item, BackgroundTile): return -10
     elif isinstance(item, Platform): return 0
     elif isinstance(item, Ladder): return 1
     elif isinstance(item, Lava): return 2
     elif isinstance(item, Chest): return 5
-    elif isinstance(item, Statue): return 8 # Statues might be behind enemies/players
+    elif isinstance(item, Statue): return 8
     elif isinstance(item, Enemy): return 10
-    elif isinstance(item, Player): return 20 # Players usually on top of most things
-    elif hasattr(item, 'owner_player'): return 30 # Projectiles on top
-    return 0 # Default layer
+    elif isinstance(item, Player): return 20
+    elif hasattr(item, 'owner_player'): return 30
+    return 0
 
 def _create_player_instance(player_id: int, spawn_pos_tuple: Optional[Tuple[float,float]],
                             default_spawn_pos: Tuple[float,float],
                             initial_props: Optional[Dict[str, Any]] = None) -> Player:
     pos_to_use = spawn_pos_tuple if spawn_pos_tuple else default_spawn_pos
     player_instance = Player(pos_to_use[0], pos_to_use[1], player_id, initial_properties=initial_props)
-
-    # Assign control scheme based on game_config
     device_id_str = getattr(game_config, f"CURRENT_P{player_id}_INPUT_DEVICE", game_config.UNASSIGNED_DEVICE_ID)
     player_instance.control_scheme = device_id_str
-
     if device_id_str.startswith("joystick_pygame_"):
         try:
             idx_part = device_id_str.split('_')[-1]
@@ -102,32 +90,27 @@ def _create_player_instance(player_id: int, spawn_pos_tuple: Optional[Tuple[floa
         except (ValueError, IndexError):
             warning(f"GameSetup: Could not parse joystick index from '{device_id_str}' for P{player_id}.")
             player_instance.joystick_id_idx = None
-
     debug(f"GameSetup: Created Player {player_id}. Spawn: {pos_to_use}, Device: '{device_id_str}', JoystickIdx: {player_instance.joystick_id_idx}, Props: {initial_props is not None}")
     return player_instance
 
 def _create_enemy_instance(spawn_data: Dict[str, Any], enemy_idx: int) -> Optional[Enemy]:
     start_pos = spawn_data.get('start_pos')
-    enemy_type_str = spawn_data.get('type') # This is the color for generic, or "enemy_knight"
+    enemy_type_str = spawn_data.get('type')
     patrol_rect_data = spawn_data.get('patrol_rect_data')
-    properties = spawn_data.get('properties', {}) # Ensure properties are passed
-
+    properties = spawn_data.get('properties', {})
     if not start_pos or not enemy_type_str:
         error(f"GameSetup: Invalid enemy spawn data (missing start_pos or type): {spawn_data}")
         return None
-
     patrol_area_qrectf: Optional[QRectF] = None
     if isinstance(patrol_rect_data, dict):
         patrol_area_qrectf = QRectF(
             float(patrol_rect_data.get('x', 0)), float(patrol_rect_data.get('y', 0)),
             float(patrol_rect_data.get('width', 100)), float(patrol_rect_data.get('height', 50))
         )
-
     unique_enemy_id = spawn_data.get('id', f"enemy_{enemy_type_str}_{enemy_idx}")
-
     if enemy_type_str == "enemy_knight":
         return EnemyKnight(float(start_pos[0]), float(start_pos[1]), patrol_area_qrectf, unique_enemy_id, properties=properties)
-    else: # Generic Enemy (soldier types by color)
+    else:
         color_name_for_generic = enemy_type_str.replace("enemy_", "", 1) if enemy_type_str.startswith("enemy_") else enemy_type_str
         return Enemy(float(start_pos[0]), float(start_pos[1]), patrol_area_qrectf, unique_enemy_id, color_name=color_name_for_generic, properties=properties)
 
@@ -135,9 +118,9 @@ def _create_platform_data_list_from_map(map_platforms: List[Dict[str, Any]]) -> 
     platforms_list: List[Platform] = []
     for p_data in map_platforms:
         rect_coords = p_data.get('rect')
-        color_tuple = tuple(p_data.get('color', C.GRAY)) # Ensure tuple
+        color_tuple = tuple(p_data.get('color', C.GRAY))
         p_type = p_data.get('type', "generic_platform")
-        props = p_data.get('properties') # This can be None
+        props = p_data.get('properties')
         if rect_coords and len(rect_coords) == 4:
             platforms_list.append(Platform(rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3], color_tuple, p_type, props)) # type: ignore
     return platforms_list
@@ -155,8 +138,8 @@ def _create_hazard_data_list_from_map(map_hazards: List[Dict[str, Any]]) -> List
     for h_data in map_hazards:
         rect_coords = h_data.get('rect')
         h_type = h_data.get('type', 'unknown_hazard')
-        color_tuple = tuple(h_data.get('color', C.ORANGE_RED)) # Ensure tuple
-        props = h_data.get('properties') # This can be None
+        color_tuple = tuple(h_data.get('color', C.ORANGE_RED))
+        props = h_data.get('properties')
         if h_type == "hazard_lava" and rect_coords and len(rect_coords) == 4:
             hazards_list.append(Lava(rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3], color_tuple, props))
     return hazards_list
@@ -165,11 +148,10 @@ def _create_background_tile_list_from_map(map_bg_tiles: List[Dict[str, Any]]) ->
     background_tiles_list: List[BackgroundTile] = []
     for bg_data in map_bg_tiles:
         rect_coords = bg_data.get('rect')
-        color_tuple = tuple(bg_data.get('color', C.DARK_GRAY)) # Ensure tuple
+        color_tuple = tuple(bg_data.get('color', C.DARK_GRAY))
         bg_type = bg_data.get('type', "generic_background_tile")
-        image_path_rel_to_project = bg_data.get('image_path') # Path like "assets/environment/some_bg.png"
+        image_path_rel_to_project = bg_data.get('image_path')
         props = bg_data.get('properties')
-
         if rect_coords and len(rect_coords) == 4:
             background_tiles_list.append(BackgroundTile(
                 rect_coords[0], rect_coords[1], rect_coords[2], rect_coords[3],
@@ -177,15 +159,15 @@ def _create_background_tile_list_from_map(map_bg_tiles: List[Dict[str, Any]]) ->
             ))
     return background_tiles_list
 
-def _create_item_list_from_map(map_items: List[Dict[str, Any]]) -> List[Chest]: # Assuming only chests for now
+def _create_item_list_from_map(map_items: List[Dict[str, Any]]) -> List[Chest]:
     items_list: List[Chest] = []
     for item_data in map_items:
         pos_tuple = item_data.get('pos')
         item_type = item_data.get('type')
-        props = item_data.get('properties') # Ensure properties are passed
+        props = item_data.get('properties')
         if item_type == "chest" and pos_tuple and len(pos_tuple) == 2:
-            new_chest = Chest(pos_tuple[0], pos_tuple[1]) # Chest constructor doesn't take properties yet
-            if props: new_chest.properties = props # Manually assign if needed
+            new_chest = Chest(pos_tuple[0], pos_tuple[1])
+            if props: new_chest.properties = props
             items_list.append(new_chest)
     return items_list
 
@@ -194,7 +176,7 @@ def _create_statue_list_from_map(map_statues: List[Dict[str, Any]]) -> List[Stat
     for statue_data in map_statues:
         pos_tuple = statue_data.get('pos')
         statue_id = statue_data.get('id')
-        props = statue_data.get('properties', {}) # Pass properties to Statue constructor
+        props = statue_data.get('properties', {})
         if pos_tuple and len(pos_tuple) == 2 and statue_id:
             statue_list.append(Statue(pos_tuple[0], pos_tuple[1], statue_id, properties=props))
     return statue_list
@@ -204,38 +186,28 @@ def _process_custom_images(map_custom_images: List[Dict[str, Any]], base_map_fol
     if not base_map_folder_for_custom_assets:
         warning("GameSetup: Base map folder path for custom assets is not provided. Cannot load custom images.")
         return processed_images
-
     for img_data in map_custom_images:
-        rel_path_from_map_folder = img_data.get("source_file_path") # e.g., "Custom/my_image.png"
+        rel_path_from_map_folder = img_data.get("source_file_path")
         if not rel_path_from_map_folder: continue
-
         full_abs_path = os.path.normpath(os.path.join(base_map_folder_for_custom_assets, rel_path_from_map_folder))
-
         qimage = QImage(full_abs_path)
         if qimage.isNull():
             warning(f"GameSetup: Failed to load custom image from '{full_abs_path}' (original relative: '{rel_path_from_map_folder}'). Skipping.")
             continue
-
         pixmap = QPixmap.fromImage(qimage)
         if pixmap.isNull():
             warning(f"GameSetup: Failed to convert QImage to QPixmap for '{full_abs_path}'. Skipping.")
             continue
-
-        # Apply transformations if needed (flip, rotation) - assuming data matches editor
         is_flipped_h = img_data.get("is_flipped_h", False)
         rotation_deg = img_data.get("rotation", 0)
-
         if is_flipped_h:
             pixmap = pixmap.transformed(QTransform().scale(-1, 1))
         if rotation_deg != 0:
-            # Rotation pivot should be center
             img_center = QPointF(pixmap.width() / 2.0, pixmap.height() / 2.0)
             transform = QTransform().translate(img_center.x(), img_center.y()).rotate(float(rotation_deg)).translate(-img_center.x(), -img_center.y())
             pixmap = pixmap.transformed(transform, Qt.TransformationMode.SmoothTransformation)
-
         opacity_percent = img_data.get("properties", {}).get("opacity", 100)
         opacity_float = max(0.0, min(1.0, float(opacity_percent) / 100.0))
-
         processed_images.append({
             'rect': QRectF(float(img_data.get("rect")[0]), float(img_data.get("rect")[1]),
                            float(img_data.get("rect")[2]), float(img_data.get("rect")[3])),
@@ -253,12 +225,9 @@ def _process_trigger_squares(map_trigger_squares: List[Dict[str, Any]], base_map
     for trig_data in map_trigger_squares:
         rect_data = trig_data.get("rect")
         if not rect_data or len(rect_data) != 4: continue
-
-        processed_trig = trig_data.copy() # Start with a copy
+        processed_trig = trig_data.copy()
         processed_trig['rect'] = QRectF(float(rect_data[0]), float(rect_data[1]),
                                         float(rect_data[2]), float(rect_data[3]))
-
-        # Load image for trigger if specified
         image_path_in_props = trig_data.get("properties", {}).get("image_in_square", "")
         if image_path_in_props and base_map_folder_for_custom_assets:
             full_abs_path_trigger_img = os.path.normpath(os.path.join(base_map_folder_for_custom_assets, image_path_in_props))
@@ -266,10 +235,9 @@ def _process_trigger_squares(map_trigger_squares: List[Dict[str, Any]], base_map
             if not qimage_trig.isNull():
                 pixmap_trig = QPixmap.fromImage(qimage_trig)
                 if not pixmap_trig.isNull():
-                    processed_trig['image_pixmap'] = pixmap_trig # Store loaded QPixmap
+                    processed_trig['image_pixmap'] = pixmap_trig
             else:
                 warning(f"GameSetup: Failed to load image '{image_path_in_props}' for trigger square. Path: {full_abs_path_trigger_img}")
-
         processed_triggers.append(processed_trig)
     return processed_triggers
 
@@ -285,7 +253,6 @@ def initialize_game_elements(current_width: int, current_height: int,
     game_elements_ref['num_active_players_for_mode'] = game_elements_ref.get('num_active_players_for_mode', 1 if for_game_mode != "couch_play" else 2)
     game_elements_ref['current_game_mode'] = for_game_mode
 
-    # --- Load Map Data ---
     level_loader = LevelLoader()
     maps_base_dir_abs_for_loader = str(getattr(C, "MAPS_DIR", "maps"))
     if not os.path.isabs(maps_base_dir_abs_for_loader):
@@ -298,7 +265,7 @@ def initialize_game_elements(current_width: int, current_height: int,
         game_elements_ref['initialization_in_progress'] = False
         return False
 
-    game_elements_ref['loaded_map_name'] = map_module_name # Store the stem
+    game_elements_ref['loaded_map_name'] = map_module_name
     game_elements_ref['map_name'] = map_data.get("level_name", map_module_name)
     game_elements_ref['level_background_color'] = map_data.get("background_color", C.LIGHT_BLUE)
     game_elements_ref['level_pixel_width'] = float(map_data.get("level_pixel_width", current_width * 2.0))
@@ -307,8 +274,6 @@ def initialize_game_elements(current_width: int, current_height: int,
     game_elements_ref['level_max_y_absolute'] = float(map_data.get("level_max_y_absolute", current_height))
     game_elements_ref['ground_level_y_ref'] = float(map_data.get("ground_level_y_ref", current_height - C.TILE_SIZE))
     game_elements_ref['ground_platform_height_ref'] = float(map_data.get("ground_platform_height_ref", C.TILE_SIZE))
-
-    # Store the absolute path to this specific map's folder for custom asset loading
     game_elements_ref['map_folder_path'] = os.path.join(maps_base_dir_abs_for_loader, map_module_name)
 
     game_elements_ref["platforms_list"] = _create_platform_data_list_from_map(map_data.get("platforms_list", []))
@@ -318,7 +283,6 @@ def initialize_game_elements(current_width: int, current_height: int,
     game_elements_ref["trigger_squares_list"] = _process_trigger_squares(map_data.get("trigger_squares_list", []), game_elements_ref['map_folder_path'])
     game_elements_ref["processed_custom_images_for_render"] = _process_custom_images(map_data.get("custom_images_list", []), game_elements_ref['map_folder_path'])
 
-    # --- Player Initialization ---
     num_players_expected = game_elements_ref.get('num_active_players_for_mode', 1)
     player_spawn_positions = [map_data.get(f"player_start_pos_p{i+1}") for i in range(4)]
     player_spawn_props_from_map = [map_data.get(f"player{i+1}_spawn_props", {}) for i in range(4)]
@@ -326,7 +290,7 @@ def initialize_game_elements(current_width: int, current_height: int,
     default_p1_spawn = (C.TILE_SIZE * 2.0, game_elements_ref['ground_level_y_ref'] - 1.0)
     player_instances: List[Optional[Player]] = [None, None, None, None]
 
-    player_assignment_order = [0, 1, 2, 3] # Indices for P1, P2, P3, P4
+    player_assignment_order = [0, 1, 2, 3]
     if num_players_expected == 1: player_assignment_order = [0]
     elif num_players_expected == 2: player_assignment_order = [0, 1]
     elif num_players_expected == 3: player_assignment_order = [0, 1, 2]
@@ -334,11 +298,9 @@ def initialize_game_elements(current_width: int, current_height: int,
     players_created_count = 0
     for p_idx_zero_based in player_assignment_order:
         if players_created_count >= num_players_expected: break
-
         player_id_one_based = p_idx_zero_based + 1
         spawn_pos_for_this_player = player_spawn_positions[p_idx_zero_based]
         fallback_spawn_for_this_player = (default_p1_spawn[0] + p_idx_zero_based * C.TILE_SIZE * 2.5, default_p1_spawn[1])
-
         initial_props_for_player = player_spawn_props_from_map[p_idx_zero_based]
         if not initial_props_for_player:
             config_props_key = f"P{player_id_one_based}_PROPERTIES"
@@ -350,20 +312,17 @@ def initialize_game_elements(current_width: int, current_height: int,
                     "move_speed": C.PLAYER_RUN_SPEED_LIMIT * 50,
                     "jump_strength": C.PLAYER_JUMP_STRENGTH * 60
                 }
-
         player_instance = _create_player_instance(player_id_one_based, spawn_pos_for_this_player, fallback_spawn_for_this_player, initial_props_for_player)
         player_instances[p_idx_zero_based] = player_instance
         game_elements_ref[f"player{player_id_one_based}"] = player_instance
         players_created_count += 1
         if player_instance and hasattr(player_instance, 'reset_for_new_game_or_round'):
             player_instance.reset_for_new_game_or_round()
-
-    # --- Enemy Initialization ---
+    
     map_enemies_spawn_data = map_data.get("enemies_list", [])
     game_elements_ref["enemy_list"] = [_create_enemy_instance(e_data, idx) for idx, e_data in enumerate(map_enemies_spawn_data) if _create_enemy_instance(e_data, idx) is not None]
-    game_elements_ref["enemy_spawns_data_cache"] = list(map_enemies_spawn_data) # Store raw spawn data for client
+    game_elements_ref["enemy_spawns_data_cache"] = list(map_enemies_spawn_data)
 
-    # --- Item and Statue Initialization ---
     map_items_data = map_data.get("items_list", [])
     items_list_temp = _create_item_list_from_map(map_items_data)
     game_elements_ref["collectible_list"] = items_list_temp
@@ -371,9 +330,8 @@ def initialize_game_elements(current_width: int, current_height: int,
 
     map_statues_data = map_data.get("statues_list", [])
     game_elements_ref["statue_objects"] = _create_statue_list_from_map(map_statues_data)
-    game_elements_ref["statue_spawns_data_cache"] = list(map_statues_data) # Store raw spawn data
+    game_elements_ref["statue_spawns_data_cache"] = list(map_statues_data)
 
-    # --- Camera Initialization ---
     camera = Camera(game_elements_ref['level_pixel_width'],
                     game_elements_ref['level_min_x_absolute'],
                     game_elements_ref['level_min_y_absolute'],
@@ -381,12 +339,12 @@ def initialize_game_elements(current_width: int, current_height: int,
                     float(current_width), float(current_height))
     game_elements_ref["camera"] = camera
 
-    # Initial camera focus
     focus_target_for_camera: Optional[Player] = None
-    player_focus_priority = [0, 1, 2, 3] # P1, P2, P3, P4 (0-indexed)
+    player_focus_priority = [0, 1, 2, 3]
     for p_idx_focus in player_focus_priority:
-        if player_instances[p_idx_focus] and player_instances[p_idx_focus].alive(): # type: ignore
-            focus_target_for_camera = player_instances[p_idx_focus]
+        p_instance_focus = player_instances[p_idx_focus]
+        if p_instance_focus and isinstance(p_instance_focus.animations, dict) and p_instance_focus.animations and p_instance_focus.alive(): # MODIFIED: Check animations is dict
+            focus_target_for_camera = p_instance_focus
             break
 
     if focus_target_for_camera:
@@ -394,11 +352,12 @@ def initialize_game_elements(current_width: int, current_height: int,
         camera.update(focus_target_for_camera)
     else:
         debug("GameSetup: Camera initial static update (no valid player focus target).")
-        camera.static_update() # Default view if no player to focus on
+        camera.static_update()
 
-    game_elements_ref['camera_level_dims_set'] = True # Mark that camera world bounds are now set
+    game_elements_ref['camera_level_dims_set'] = True
     game_elements_ref['initialization_in_progress'] = False
     game_elements_ref['game_ready_for_logic'] = True
     info(f"GameSetup: Initialization for map '{map_module_name}' completed. Game ready for mode '{for_game_mode}'.")
     return True
+
 #################### END OF FILE: main_game/game_setup.py ####################

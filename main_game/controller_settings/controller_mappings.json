@@ -1,0 +1,251 @@
+{
+    "config_version": "2.4.0",
+    "player1_settings": {
+        "input_device": "joystick_pygame_0",
+        "keyboard_enabled": false,
+        "controller_enabled": true
+    },
+    "player2_settings": {
+        "input_device": "keyboard_p2",
+        "keyboard_enabled": true,
+        "controller_enabled": false
+    },
+    "player3_settings": {
+        "input_device": "unassigned",
+        "keyboard_enabled": false,
+        "controller_enabled": false
+    },
+    "player4_settings": {
+        "input_device": "unassigned",
+        "keyboard_enabled": false,
+        "controller_enabled": false
+    },
+    "joystick_mappings": {
+        "030056fb7e0500000920000000006803": {
+            "left": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 0 Neg"
+            },
+            "right": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 0,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 0 Pos"
+            },
+            "up": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": -1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 1 Neg"
+            },
+            "down": {
+                "event_type": "axis",
+                "details": {
+                    "axis_id": 1,
+                    "direction": 1,
+                    "threshold": 0.7,
+                    "type": "axis"
+                },
+                "raw_str": "Joy0 Axis 1 Pos"
+            },
+            "jump": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 0,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 0"
+            },
+            "crouch": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 1,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 1"
+            },
+            "attack1": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 2,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 2"
+            },
+            "attack2": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 3,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 3"
+            },
+            "dash": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 5,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 5"
+            },
+            "roll": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 4,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 4"
+            },
+            "interact": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 10,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 10"
+            },
+            "projectile1": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "value": [
+                        0,
+                        1
+                    ],
+                    "type": "hat"
+                },
+                "raw_str": "Joy0 Hat 0 (0, 1)"
+            },
+            "projectile2": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "value": [
+                        1,
+                        0
+                    ],
+                    "type": "hat"
+                },
+                "raw_str": "Joy0 Hat 0 (1, 0)"
+            },
+            "projectile3": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "value": [
+                        0,
+                        -1
+                    ],
+                    "type": "hat"
+                },
+                "raw_str": "Joy0 Hat 0 (0, -1)"
+            },
+            "projectile4": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "value": [
+                        -1,
+                        0
+                    ],
+                    "type": "hat"
+                },
+                "raw_str": "Joy0 Hat 0 (-1, 0)"
+            },
+            "reset": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 6,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 6"
+            },
+            "pause": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 7,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 7"
+            },
+            "menu_confirm": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 0,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 0"
+            },
+            "menu_cancel": {
+                "event_type": "button",
+                "details": {
+                    "button_id": 1,
+                    "type": "button"
+                },
+                "raw_str": "Joy0 Btn 1"
+            },
+            "menu_up": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "value": [
+                        0,
+                        1
+                    ],
+                    "type": "hat"
+                },
+                "raw_str": "Joy0 Hat 0 (0, 1)"
+            },
+            "menu_down": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "value": [
+                        0,
+                        -1
+                    ],
+                    "type": "hat"
+                },
+                "raw_str": "Joy0 Hat 0 (0, -1)"
+            },
+            "menu_left": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "value": [
+                        -1,
+                        0
+                    ],
+                    "type": "hat"
+                },
+                "raw_str": "Joy0 Hat 0 (-1, 0)"
+            },
+            "menu_right": {
+                "event_type": "hat",
+                "details": {
+                    "hat_id": 0,
+                    "value": [
+                        1,
+                        0
+                    ],
+                    "type": "hat"
+                },
+                "raw_str": "Joy0 Hat 0 (1, 0)"
+            }
+        }
+    }
+}
