@@ -1,11 +1,13 @@
+#################### START OF FILE: editor\editor_main_window.py ####################
 # editor/editor_main_window.py
 # -*- coding: utf-8 -*-
 """
 Main Window for the Platformer Level Editor (PySide6 Version).
 Orchestrates UI components and top-level editor actions.
-Version 2.2.8 (Refined controller focus, _add_placeholder call, and _current_active_menu_buttons access)
+Version 2.2.9 (Added missing _handle_internal_object_move_for_unsaved_changes)
 MODIFIED: Connects and handles opacity toggle signals from SelectionPane.
 MODIFIED: Handles `_handle_item_opacity_toggled` to manage `last_visible_opacity`.
+MODIFIED: Added definition for _handle_internal_object_move_for_unsaved_changes.
 """
 import sys
 import os
@@ -36,8 +38,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QAction, QKeySequence, QColor, QPalette, QScreen, QKeyEvent, QImage, QPainter, QFont, QCursor, QGuiApplication, QCloseEvent, QContextMenuEvent
 from PySide6.QtCore import Qt, Slot, QSettings, QTimer, QRectF, Signal, QPointF, QFileInfo, QEvent
 
-# Setup logger for this module
-logger = logging.getLogger(__name__) # Use this module's name for its logger
+logger = logging.getLogger(__name__)
 
 try:
     import pygame
@@ -50,27 +51,26 @@ except ImportError:
 _IMPORTS_SUCCESSFUL_METHOD = "Unknown"
 try:
     logger.info("Attempting relative imports for editor modules...")
-    from . import editor_config as ED_CONFIG
-    from .editor_state import EditorState
-    from . import editor_assets
-    from . import editor_map_utils
-    from . import editor_history
-    from .map_view_widget import MapViewWidget
-    from .asset_palette_widget import AssetPaletteWidget
-    from .properties_editor_widget import PropertiesEditorDockWidget
-    from .editor_selection_pane import SelectionPaneWidget
-    from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTION_UI_RIGHT,
+    from editor import editor_config as ED_CONFIG
+    from editor.editor_state import EditorState
+    from editor import editor_assets
+    from editor import editor_map_utils
+    from editor import editor_history
+    from editor.map_view_widget import MapViewWidget
+    from editor.asset_palette_widget import AssetPaletteWidget
+    from editor.properties_editor_widget import PropertiesEditorDockWidget
+    from editor.editor_selection_pane import SelectionPaneWidget
+    from editor.editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTION_UI_RIGHT,
                                  ACTION_UI_ACCEPT, ACTION_UI_CANCEL, ACTION_UI_MENU,
                                  ACTION_UI_FOCUS_NEXT, ACTION_UI_FOCUS_PREV, ACTION_UI_TAB_NEXT, ACTION_UI_TAB_PREV,
                                  ACTION_MAP_ZOOM_IN, ACTION_MAP_ZOOM_OUT,
                                  ACTION_MAP_TOOL_PRIMARY, ACTION_MAP_TOOL_SECONDARY,
-                                 ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN) # Ensure all are listed
-    from . import editor_file_operations as EFO
+                                 ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN)
+    from editor import editor_file_operations as EFO
 
     if ED_CONFIG.MINIMAP_ENABLED:
-        from .minimap_widget import MinimapWidget
+        from editor.minimap_widget import MinimapWidget
     if _PYGAME_AVAILABLE:
-        # Assuming main_game.config is accessible from the project root path added earlier
         from main_game.config import init_pygame_and_joystick_globally, get_joystick_objects
     _IMPORTS_SUCCESSFUL_METHOD = "Relative"
     logger.info("Editor modules imported successfully using RELATIVE paths.")
@@ -104,13 +104,12 @@ except ImportError as e_relative_import:
         logger.critical(f"CRITICAL: Both relative and absolute imports for editor modules failed: {e_absolute_import}")
         raise ImportError(f"Failed to import critical editor modules. Relative: {e_relative_import}. Absolute: {e_absolute_import}") from e_absolute_import
 
-# Configure logging if not already configured by a higher-level module (e.g., a main app entry point)
-if not logger.hasHandlers() and not logging.getLogger().hasHandlers(): # Check root logger too
+if not logger.hasHandlers() and not logging.getLogger().hasHandlers():
     _main_win_fallback_handler = logging.StreamHandler(sys.stdout)
     _main_win_fallback_formatter = logging.Formatter('EDITOR_MAIN_WINDOW (FallbackConsole - %(filename)s:%(lineno)d): %(levelname)s - %(message)s')
     _main_win_fallback_handler.setFormatter(_main_win_fallback_formatter)
     logger.addHandler(_main_win_fallback_handler)
-    logger.setLevel(logging.DEBUG) # Or INFO for less verbosity
+    logger.setLevel(logging.DEBUG)
     logger.propagate = False
     logger.warning("EditorMainWindow: Using isolated fallback logger for this module.")
 
@@ -134,7 +133,6 @@ class EditorMainWindow(QMainWindow):
         self.editor_state = EditorState()
         self.settings = QSettings("MyPlatformerGame", "LevelEditor_Qt")
         
-        # Initialize UI elements before trying to access them
         self.map_view_widget: MapViewWidget
         self.asset_palette_dock: QDockWidget
         self.asset_palette_widget: AssetPaletteWidget
@@ -143,17 +141,16 @@ class EditorMainWindow(QMainWindow):
         self.selection_pane_dock: QDockWidget
         self.selection_pane_widget: SelectionPaneWidget
         self.minimap_dock: Optional[QDockWidget] = None
-        self.minimap_widget: Optional[Any] = None # MinimapWidget type if MINIMAP_ENABLED
-        self.menu_bar: QMenuBar # Will be set by self.menuBar()
-        self.status_bar: QStatusBar # Will be set by self.statusBar()
+        self.minimap_widget: Optional[Any] = None
+        self.menu_bar: QMenuBar
+        self.status_bar: QStatusBar
         self.map_coords_label: QLabel
 
-        self.init_ui() # This initializes the widgets above
+        self.init_ui()
         self.create_actions()
-        self.create_menus() # This uses self.menuBar()
-        self.create_status_bar() # This uses self.statusBar()
+        self.create_menus()
+        self.create_status_bar()
 
-        # Set object names for docks AFTER they are created in init_ui
         self.asset_palette_dock.setObjectName("AssetPaletteDock")
         self.properties_editor_dock.setObjectName("PropertiesEditorDock")
         self.selection_pane_dock.setObjectName("SelectionPaneDock")
@@ -168,16 +165,16 @@ class EditorMainWindow(QMainWindow):
             self.update_window_title()
         self.update_edit_actions_enabled_state()
 
-        self._current_focused_panel_index: int = 0 # Default to first panel (MapViewWidget)
+        self._current_focused_panel_index: int = 0
         self._controller_input_timer: Optional[QTimer] = None
         self._joysticks: List[pygame.joystick.Joystick] = []
         self._primary_joystick: Optional[pygame.joystick.Joystick] = None
         self._controller_axis_deadzone = 0.4
-        self._controller_axis_last_event_time: Dict[Tuple[int, int, int], float] = {} # (joy_id, axis_id, direction_sign) -> time
+        self._controller_axis_last_event_time: Dict[Tuple[int, int, int], float] = {}
         self._controller_axis_repeat_delay = 0.3
         self._controller_axis_repeat_interval = 0.1
         self._last_dpad_value: Optional[Tuple[int, int]] = None
-        self._button_last_state: Dict[int, bool] = {} # button_id -> is_pressed
+        self._button_last_state: Dict[int, bool] = {}
 
         if _PYGAME_AVAILABLE:
             self._init_controller_system()
@@ -212,9 +209,8 @@ class EditorMainWindow(QMainWindow):
         logger.info("EditorMainWindow initialized.")
         self.show_status_message("Editor started. Welcome!", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT * 2)
 
-        # Initial focus setting
         if self._focusable_panels:
-            self._set_panel_controller_focus(0) # Set initial focus to MapViewWidget
+            self._set_panel_controller_focus(0)
 
 
     def init_ui(self):
@@ -261,7 +257,6 @@ class EditorMainWindow(QMainWindow):
             self.minimap_dock = None
             self.minimap_widget = None
 
-        # Connect signals
         self.asset_palette_widget.asset_selected_for_placement.connect(self.map_view_widget.on_asset_selected_for_placement)
         self.asset_palette_widget.asset_info_selected.connect(self.properties_editor_widget.display_asset_properties)
         self.asset_palette_widget.tool_selected.connect(self.map_view_widget.on_tool_selected)
@@ -273,8 +268,7 @@ class EditorMainWindow(QMainWindow):
         self.map_view_widget.map_content_changed.connect(self.selection_pane_widget.populate_items)
         self.map_view_widget.map_scene.selectionChanged.connect(self.selection_pane_widget.sync_selection_from_map)
         self.map_view_widget.context_menu_requested_for_item.connect(self.show_map_item_context_menu)
-        self.map_view_widget.object_graphically_moved_signal.connect(self._handle_internal_object_move_for_unsaved_changes)
-
+        self.map_view_widget.object_graphically_moved_signal.connect(self._handle_internal_object_move_for_unsaved_changes) # Corrected: Slot exists now
 
         self.properties_editor_widget.properties_changed.connect(self.map_view_widget.on_object_properties_changed)
         self.properties_editor_widget.properties_changed.connect(self.handle_map_content_changed)
@@ -294,40 +288,27 @@ class EditorMainWindow(QMainWindow):
     @Slot(object)
     def _handle_select_map_object_from_pane(self, obj_data_ref_from_pane: Dict[str, Any]):
         logger.debug(f"MainWin: Request to select object from pane (obj_data_ref ID: {id(obj_data_ref_from_pane)}).")
-        
         item_to_select: Optional[QGraphicsItem] = None
         found_match = False
-
-        # Search for the QGraphicsItem whose map_object_data_ref matches (by identity) the one from the pane
         for scene_item_candidate in self.map_view_widget._map_object_items.values():
             if hasattr(scene_item_candidate, 'map_object_data_ref') and \
                scene_item_candidate.map_object_data_ref is obj_data_ref_from_pane: # type: ignore
                 item_to_select = scene_item_candidate
                 found_match = True
                 break
-        
         if found_match and item_to_select:
             self.map_view_widget.map_scene.blockSignals(True)
             self.map_view_widget.map_scene.clearSelection()
             item_to_select.setSelected(True)
             self.map_view_widget.map_scene.blockSignals(False)
-            
-            # Manually trigger selection changed logic if needed, as signals were blocked
             self.map_view_widget.on_scene_selection_changed()
-            self.selection_pane_widget.sync_selection_from_map() # Ensure pane reflects selection
-
-            # Ensure item is visible if it's being selected (unless explicitly hidden)
+            self.selection_pane_widget.sync_selection_from_map()
             if hasattr(item_to_select, 'map_object_data_ref'):
                 item_data = item_to_select.map_object_data_ref # type: ignore
                 is_editor_hidden_flag = item_data.get("editor_hidden", False)
                 opacity_prop = item_data.get("properties", {}).get("opacity", 100)
                 item_to_select.setVisible(not is_editor_hidden_flag and opacity_prop > 0)
-            
-            self.map_view_widget.ensureVisible(item_to_select, 50, 50) # Scroll to item
-            # Optionally, set focus to map view if it makes sense for workflow
-            # self.map_view_widget.setFocus(Qt.FocusReason.OtherFocusReason)
-
-            # Logging
+            self.map_view_widget.ensureVisible(item_to_select, 50, 50)
             display_name = obj_data_ref_from_pane.get("asset_editor_key", "Unknown")
             if hasattr(item_to_select, 'map_object_data_ref'):
                  obj_data_current = item_to_select.map_object_data_ref # type: ignore
@@ -339,62 +320,49 @@ class EditorMainWindow(QMainWindow):
             logger.warning(f"MainWin: Could not find matching QGraphicsItem for object from pane (Data ID from pane: {id(obj_data_ref_from_pane)}). Clearing selection.")
             self.map_view_widget.map_scene.clearSelection()
             self.properties_editor_widget.clear_display()
-            self.selection_pane_widget.sync_selection_from_map() # Ensure pane reflects cleared selection
+            self.selection_pane_widget.sync_selection_from_map()
 
     @Slot(object, int)
     def _handle_item_opacity_toggled(self, obj_data_ref: Dict[str, Any], new_target_opacity: int):
         if logger: logger.debug(f"MainWin: Opacity toggle for obj ID {id(obj_data_ref)} to target {new_target_opacity}")
         if obj_data_ref:
             editor_history.push_undo_state(self.editor_state)
-            
             props = obj_data_ref.setdefault('properties', {})
             current_opacity = props.get('opacity', 100)
-
-            if new_target_opacity == 0: # Logic to hide
+            if new_target_opacity == 0:
                 if current_opacity != 0: props['last_visible_opacity'] = current_opacity
                 props['opacity'] = 0
-            else: # Logic to make visible
+            else:
                 props['opacity'] = new_target_opacity
-
             final_opacity = props['opacity']
             self.map_view_widget.update_specific_object_visuals(obj_data_ref)
             self.handle_map_content_changed()
-
             if self.properties_editor_widget.current_object_data_ref is obj_data_ref:
                 self.properties_editor_widget.update_property_field_value(obj_data_ref, "opacity", final_opacity)
-            
-            # Explicitly update visibility of the QGraphicsItem
             item_graphics = self.map_view_widget._map_object_items.get(id(obj_data_ref))
             if item_graphics:
                 is_editor_hidden_flag = obj_data_ref.get("editor_hidden", False)
                 item_graphics.setVisible(not is_editor_hidden_flag and final_opacity > 0)
-            
-            self.selection_pane_widget.populate_items() # Repopulate to update icon
+            self.selection_pane_widget.populate_items()
 
     @Slot(object, bool)
     def _toggle_item_lock(self, obj_data_ref: Dict[str, Any], new_lock_state: bool):
         if logger: logger.debug(f"MainWin: Toggle lock for obj ID {id(obj_data_ref)} to {new_lock_state}")
         if obj_data_ref:
-            # Undo state is pushed by SelectionPaneWidget
-            obj_data_ref["editor_locked"] = new_lock_state # This should already be done by SelectionPane
+            obj_data_ref["editor_locked"] = new_lock_state
             self.map_view_widget.update_specific_object_visuals(obj_data_ref)
-            self.handle_map_content_changed() # This will trigger SelectionPane repopulate
+            self.handle_map_content_changed()
 
     def _init_controller_system(self):
         logger.info("Initializing controller system...")
         try:
             init_pygame_and_joystick_globally(force_rescan=True)
-            self._joysticks = get_joystick_objects() # This now returns List[Optional[pygame.joystick.Joystick]]
-            
-            # Filter out None objects and then get valid, initialized joysticks
+            self._joysticks = get_joystick_objects()
             valid_joysticks = [joy for joy in self._joysticks if joy is not None]
-            
             if not valid_joysticks:
                 self._primary_joystick = None
                 logger.info("No joysticks detected or initialized by config.")
                 return
-
-            # Attempt to set primary joystick
             self._primary_joystick = None
             for i, joy in enumerate(valid_joysticks):
                 try:
@@ -404,11 +372,9 @@ class EditorMainWindow(QMainWindow):
                     break
                 except pygame.error as e:
                     logger.warning(f"Could not initialize joystick at config index {i} (Pygame ID {joy.get_id()}): {e}")
-            
             if not self._primary_joystick:
                 logger.warning("No valid joystick could be initialized as primary from the detected list.")
                 return
-
             self._controller_input_timer = QTimer(self)
             self._controller_input_timer.setInterval(ED_CONFIG.CONTROLLER_POLL_INTERVAL_MS)
             self._controller_input_timer.timeout.connect(self._poll_controller_input)
@@ -421,215 +387,138 @@ class EditorMainWindow(QMainWindow):
     def _poll_controller_input(self):
         if not _PYGAME_AVAILABLE or not self._primary_joystick:
             return
-        
         try:
             pygame.event.pump()
         except pygame.error as e_pump:
             logger.warning(f"EditorMainWindow: Pygame event pump error: {e_pump}. Controller input may be lost.")
             return
-            
-        current_time = time.monotonic()
-        joy = self._primary_joystick
+        current_time = time.monotonic(); joy = self._primary_joystick
         if not joy.get_init():
             try: joy.init()
             except pygame.error: return
-
-        # Define a button map for standard UI actions (example: Switch Pro mapping)
-        # This should ideally come from a user-configurable mapping, but here's a basic one.
-        # Values are Pygame button IDs.
         button_map = {
-            SWITCH_B_BTN: ACTION_UI_ACCEPT,    # Often 'A' on Xbox, Cross on PS
-            SWITCH_A_BTN: ACTION_UI_CANCEL,    # Often 'B' on Xbox, Circle on PS
-            SWITCH_Y_BTN: ACTION_MAP_TOOL_PRIMARY, # Example tool action
-            SWITCH_X_BTN: ACTION_MAP_TOOL_SECONDARY,# Example tool action
-            SWITCH_L_BTN: ACTION_UI_TAB_PREV,  # Cycle focus backward
-            SWITCH_R_BTN: ACTION_UI_TAB_NEXT,  # Cycle focus forward
-            SWITCH_PLUS_BTN: ACTION_UI_MENU,   # Open context menu or main menu
-            SWITCH_MINUS_BTN: ACTION_UI_FOCUS_NEXT, # Or map to something like toggle grid
-            SWITCH_ZL_BTN: ACTION_MAP_ZOOM_OUT,
-            SWITCH_ZR_BTN: ACTION_MAP_ZOOM_IN
+            SWITCH_B_BTN: ACTION_UI_ACCEPT, SWITCH_A_BTN: ACTION_UI_CANCEL,
+            SWITCH_Y_BTN: ACTION_MAP_TOOL_PRIMARY, SWITCH_X_BTN: ACTION_MAP_TOOL_SECONDARY,
+            SWITCH_L_BTN: ACTION_UI_TAB_PREV, SWITCH_R_BTN: ACTION_UI_TAB_NEXT,
+            SWITCH_PLUS_BTN: ACTION_UI_MENU, SWITCH_MINUS_BTN: ACTION_UI_FOCUS_NEXT,
+            SWITCH_ZL_BTN: ACTION_MAP_ZOOM_OUT, SWITCH_ZR_BTN: ACTION_MAP_ZOOM_IN
         }
-
         for btn_id_pygame, action_key_editor in button_map.items():
-            if btn_id_pygame >= joy.get_numbuttons(): continue # Safety
-            
+            if btn_id_pygame >= joy.get_numbuttons(): continue
             pressed_now = joy.get_button(btn_id_pygame)
             pressed_last_frame = self._button_last_state.get(btn_id_pygame, False)
-            
-            if pressed_now and not pressed_last_frame: # Button just pressed (rising edge)
-                self.controller_action_dispatched.emit(action_key_editor, True) # True for press
-            # Optional: Emit False for release if any actions need release events
-            # elif not pressed_now and pressed_last_frame:
-            #     self.controller_action_dispatched.emit(action_key_editor, False)
+            if pressed_now and not pressed_last_frame:
+                self.controller_action_dispatched.emit(action_key_editor, True)
             self._button_last_state[btn_id_pygame] = pressed_now
-
-        # D-Pad (Hat)
         if joy.get_numhats() > SWITCH_DPAD_HAT_ID:
-            hat_value_tuple = joy.get_hat(SWITCH_DPAD_HAT_ID) # (x, y)
-            if hat_value_tuple != self._last_dpad_value: # Only emit on change
+            hat_value_tuple = joy.get_hat(SWITCH_DPAD_HAT_ID)
+            if hat_value_tuple != self._last_dpad_value:
                 if hat_value_tuple == (0, 1): self.controller_action_dispatched.emit(ACTION_UI_UP, None)
                 elif hat_value_tuple == (0, -1): self.controller_action_dispatched.emit(ACTION_UI_DOWN, None)
                 elif hat_value_tuple == (-1, 0): self.controller_action_dispatched.emit(ACTION_UI_LEFT, None)
                 elif hat_value_tuple == (1, 0): self.controller_action_dispatched.emit(ACTION_UI_RIGHT, None)
                 self._last_dpad_value = hat_value_tuple
-        
-        # Analog Sticks (Example: Left stick for UI navigation, Right stick for map panning)
-        axis_map_for_ui_nav = { # (neg_action, pos_action)
+        axis_map_for_ui_nav = {
             SWITCH_L_STICK_X_AXIS: (ACTION_UI_LEFT, ACTION_UI_RIGHT),
             SWITCH_L_STICK_Y_AXIS: (ACTION_UI_UP, ACTION_UI_DOWN),
         }
         axis_map_for_camera_pan = {
-            SWITCH_R_STICK_X_AXIS: (ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN), # Note: Axis names here are illustrative
-            SWITCH_R_STICK_Y_AXIS: (ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN)
+            SWITCH_R_STICK_X_AXIS: (ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN), # Placeholder, adjust if needed
+            SWITCH_R_STICK_Y_AXIS: (ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN)  # Placeholder
         }
-
         for axis_id_pygame, (neg_action_key, pos_action_key) in {**axis_map_for_ui_nav, **axis_map_for_camera_pan}.items():
-            if axis_id_pygame >= joy.get_numaxes(): continue # Safety
-            
+            if axis_id_pygame >= joy.get_numaxes(): continue
             axis_value_current = joy.get_axis(axis_id_pygame)
-            direction_sign_current = 0 # 0 for neutral, -1 for negative, 1 for positive
+            direction_sign_current = 0
             if axis_value_current < -self._controller_axis_deadzone: direction_sign_current = -1
             elif axis_value_current > self._controller_axis_deadzone: direction_sign_current = 1
-            
-            # Key for tracking this specific axis direction's timer
             timer_key_for_axis_dir = (joy.get_id(), axis_id_pygame, direction_sign_current)
-
-            if direction_sign_current != 0: # Axis is active beyond deadzone
+            if direction_sign_current != 0:
                 action_to_emit_this_axis = neg_action_key if direction_sign_current == -1 else pos_action_key
                 last_event_time_for_this_axis_dir = self._controller_axis_last_event_time.get(timer_key_for_axis_dir, 0.0)
-                
                 can_emit_event_now = False
-                # First event after delay, or subsequent events after repeat interval
                 if current_time - last_event_time_for_this_axis_dir > self._controller_axis_repeat_delay:
                     can_emit_event_now = True
-                elif (last_event_time_for_this_axis_dir != 0.0 and # Ensure it's not the very first un-delayed event
+                elif (last_event_time_for_this_axis_dir != 0.0 and
                       current_time - last_event_time_for_this_axis_dir > self._controller_axis_repeat_interval):
                     can_emit_event_now = True
-
                 if can_emit_event_now:
-                    self.controller_action_dispatched.emit(action_to_emit_this_axis, axis_value_current) # Pass raw axis value
+                    self.controller_action_dispatched.emit(action_to_emit_this_axis, axis_value_current)
                     self._controller_axis_last_event_time[timer_key_for_axis_dir] = current_time
-            else: # Axis is neutral for this specific direction, reset its timer
-                # Reset timers for BOTH directions of this axis when it returns to neutral
-                key_neg_to_reset = (joy.get_id(), axis_id_pygame, -1)
-                key_pos_to_reset = (joy.get_id(), axis_id_pygame, 1)
-                if key_neg_to_reset in self._controller_axis_last_event_time:
-                    self._controller_axis_last_event_time[key_neg_to_reset] = 0.0 # Mark as ready for next press
-                if key_pos_to_reset in self._controller_axis_last_event_time:
-                    self._controller_axis_last_event_time[key_pos_to_reset] = 0.0
-
+            else:
+                key_neg_to_reset = (joy.get_id(), axis_id_pygame, -1); key_pos_to_reset = (joy.get_id(), axis_id_pygame, 1)
+                if key_neg_to_reset in self._controller_axis_last_event_time: self._controller_axis_last_event_time[key_neg_to_reset] = 0.0
+                if key_pos_to_reset in self._controller_axis_last_event_time: self._controller_axis_last_event_time[key_pos_to_reset] = 0.0
 
     @Slot(str, object)
     def _dispatch_controller_action_to_panel(self, action_key: str, value: Any):
         logger.debug(f"Controller action received: {action_key}, Value: {value}")
-        
-        # --- Handle camera panning directly if it's a camera action ---
-        if action_key in [ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN]: # Assuming X maps to vertical pan, Y to horizontal
+        if action_key in [ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN]:
             pan_speed_pixels_from_config = getattr(ED_CONFIG, 'CONTROLLER_CAMERA_PAN_SPEED_PIXELS', 20)
-            pan_amount = pan_speed_pixels_from_config * float(value) # Value is axis value
-            
+            pan_amount = pan_speed_pixels_from_config * float(value)
             current_zoom = self.editor_state.zoom_level
-            if current_zoom <= 0: current_zoom = 1.0 # Avoid division by zero or negative zoom issues
-            
-            # Scale pan amount by inverse of zoom so panning feels consistent regardless of zoom
+            if current_zoom <= 0: current_zoom = 1.0
             scaled_pan_amount = pan_amount / current_zoom
-
-            if action_key == ACTION_CAMERA_PAN_UP: # Assuming right stick Y-axis, value < 0 is up
-                self.map_view_widget.pan_view_by_scrollbars(0, int(scaled_pan_amount)) # Y pan maps to vertical scroll
-            elif action_key == ACTION_CAMERA_PAN_DOWN: # Assuming right stick X-axis, value < 0 is left
-                self.map_view_widget.pan_view_by_scrollbars(int(scaled_pan_amount), 0) # X pan maps to horizontal scroll
-            return # Consumed by camera panning
-
-        # --- Panel focus cycling (top-level actions) ---
+            if action_key == ACTION_CAMERA_PAN_UP: self.map_view_widget.pan_view_by_scrollbars(0, int(scaled_pan_amount))
+            elif action_key == ACTION_CAMERA_PAN_DOWN: self.map_view_widget.pan_view_by_scrollbars(int(scaled_pan_amount), 0)
+            return
         if action_key == ACTION_UI_FOCUS_NEXT: self._cycle_panel_focus_next(); return
         elif action_key == ACTION_UI_FOCUS_PREV: self._cycle_panel_focus_prev(); return
         elif action_key == ACTION_UI_MENU:
             if self.menu_bar and self.menu_bar.actions():
                 first_menu = self.menu_bar.actions()[0].menu()
-                if first_menu:
-                    first_menu.popup(self.mapToGlobal(self.menu_bar.pos() + QPointF(0, self.menu_bar.height())))
+                if first_menu: first_menu.popup(self.mapToGlobal(self.menu_bar.pos() + QPointF(0, self.menu_bar.height())))
             return
-        
-        # --- Dispatch to currently focused panel ---
         active_panel_for_dispatch: Optional[QWidget] = None
         if self._focusable_panels and 0 <= self._current_focused_panel_index < len(self._focusable_panels):
             active_panel_for_dispatch = self._focusable_panels[self._current_focused_panel_index]
-        
         qt_focused_widget = QApplication.focusWidget()
-        # Ensure our internally tracked focused panel matches or is an ancestor of the Qt focused widget
         is_our_panel_or_ancestor_focused = False
         if active_panel_for_dispatch and qt_focused_widget:
             temp_widget = qt_focused_widget
             while temp_widget:
-                if temp_widget == active_panel_for_dispatch:
-                    is_our_panel_or_ancestor_focused = True; break
+                if temp_widget == active_panel_for_dispatch: is_our_panel_or_ancestor_focused = True; break
                 temp_widget = temp_widget.parentWidget()
-
         if not is_our_panel_or_ancestor_focused and qt_focused_widget in self._focusable_panels:
-            # If Qt's focus is on a different one of our panels, update our internal tracking.
             try:
                 new_focus_idx = self._focusable_panels.index(qt_focused_widget)
-                self._set_panel_controller_focus(new_focus_idx) # This will update _current_focused_panel_index
+                self._set_panel_controller_focus(new_focus_idx)
                 active_panel_for_dispatch = self._focusable_panels[self._current_focused_panel_index]
                 logger.info(f"Controller focus internally synced to Qt focused panel: {type(active_panel_for_dispatch).__name__}")
-            except ValueError:
-                logger.warning("Qt focused widget is one of our panels, but not found in _focusable_panels by index(). This should not happen.")
-        
+            except ValueError: logger.warning("Qt focused widget is one of our panels, but not found in _focusable_panels by index().")
         if active_panel_for_dispatch and hasattr(active_panel_for_dispatch, "handle_controller_action"):
             try: active_panel_for_dispatch.handle_controller_action(action_key, value) # type: ignore
-            except Exception as e_panel_action:
-                logger.error(f"Error in {type(active_panel_for_dispatch).__name__}.handle_controller_action for '{action_key}': {e_panel_action}", exc_info=True)
-        elif active_panel_for_dispatch:
-            logger.warning(f"Controller-focused panel {type(active_panel_for_dispatch).__name__} has no handle_controller_action method for action '{action_key}'.")
-        else:
-            logger.warning(f"No panel has controller focus or index ({self._current_focused_panel_index}) is out of bounds for action '{action_key}'. Qt Focus: {type(qt_focused_widget).__name__ if qt_focused_widget else 'None'}")
-
+            except Exception as e_panel_action: logger.error(f"Error in {type(active_panel_for_dispatch).__name__}.handle_controller_action for '{action_key}': {e_panel_action}", exc_info=True)
+        elif active_panel_for_dispatch: logger.warning(f"Controller-focused panel {type(active_panel_for_dispatch).__name__} has no handle_controller_action method for action '{action_key}'.")
+        else: logger.warning(f"No panel has controller focus or index ({self._current_focused_panel_index}) is out of bounds for action '{action_key}'. Qt Focus: {type(qt_focused_widget).__name__ if qt_focused_widget else 'None'}")
 
     def _set_panel_controller_focus(self, new_index: int):
         if not self._focusable_panels or not (0 <= new_index < len(self._focusable_panels)):
             logger.warning(f"Attempt to set panel focus to invalid index {new_index}")
             return
-        
         old_index = self._current_focused_panel_index
-        # Notify old panel of focus loss
         if 0 <= old_index < len(self._focusable_panels) and old_index != new_index :
             old_panel = self._focusable_panels[old_index]
             if hasattr(old_panel, "on_controller_focus_lost"):
                 try: old_panel.on_controller_focus_lost()
                 except Exception as e_focus_lost: logger.error(f"Error in {type(old_panel).__name__}.on_controller_focus_lost: {e_focus_lost}", exc_info=True)
-            
-            # Reset style of the dock widget containing the old panel
             parent_dock_old = old_panel.parent()
-            while parent_dock_old and not isinstance(parent_dock_old, QDockWidget):
-                parent_dock_old = parent_dock_old.parent()
-            if isinstance(parent_dock_old, QDockWidget): parent_dock_old.setStyleSheet("") # Clear specific focus style
-                
+            while parent_dock_old and not isinstance(parent_dock_old, QDockWidget): parent_dock_old = parent_dock_old.parent()
+            if isinstance(parent_dock_old, QDockWidget): parent_dock_old.setStyleSheet("")
         self._current_focused_panel_index = new_index
         new_panel = self._focusable_panels[new_index]
-        
-        # Notify new panel of focus gain (this panel might then set Qt's setFocus itself)
         if hasattr(new_panel, "on_controller_focus_gained"):
             try: new_panel.on_controller_focus_gained()
             except Exception as e_focus_gained: logger.error(f"Error in {type(new_panel).__name__}.on_controller_focus_gained: {e_focus_gained}", exc_info=True)
-        else: # If panel doesn't handle its own Qt focus, set it here
-            new_panel.setFocus(Qt.FocusReason.OtherFocusReason)
-
-
+        else: new_panel.setFocus(Qt.FocusReason.OtherFocusReason)
         panel_name_for_status = type(new_panel).__name__
         parent_dock_new = new_panel.parent()
-        while parent_dock_new and not isinstance(parent_dock_new, QDockWidget):
-            parent_dock_new = parent_dock_new.parent()
-        
-        # Apply focus style to the dock widget containing the new panel
+        while parent_dock_new and not isinstance(parent_dock_new, QDockWidget): parent_dock_new = parent_dock_new.parent()
         if isinstance(parent_dock_new, QDockWidget):
             panel_name_for_status = parent_dock_new.windowTitle()
-            # Using a bright, distinct color for controller focus on the dock title
-            focus_border_color = getattr(ED_CONFIG, 'CONTROLLER_DOCK_FOCUS_COLOR', 'cyan') # Example, define in ED_CONFIG
+            focus_border_color = getattr(ED_CONFIG, 'CONTROLLER_DOCK_FOCUS_COLOR', 'cyan')
             parent_dock_new.setStyleSheet(f"QDockWidget::title {{ background-color: {focus_border_color}; color: black; border: 1px solid black; padding: 2px; }}")
-        elif isinstance(new_panel, MapViewWidget): # MapViewWidget is not in a dock
-            panel_name_for_status = "Map View" 
-            # Optionally, MapViewWidget could draw its own focus border if self._controller_has_focus is true
-        
+        elif isinstance(new_panel, MapViewWidget): panel_name_for_status = "Map View"
         self.show_status_message(f"Controller Focus: {panel_name_for_status}", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT)
         logger.info(f"Controller focus set to: {panel_name_for_status} (Index: {new_index})")
 
@@ -643,7 +532,7 @@ class EditorMainWindow(QMainWindow):
         new_index = (self._current_focused_panel_index - 1 + len(self._focusable_panels)) % len(self._focusable_panels)
         self._set_panel_controller_focus(new_index)
 
-    def create_actions(self): # No changes, assume it's fine
+    def create_actions(self):
         logger.debug("Creating actions...")
         self.new_map_action = QAction("&New Map...", self, shortcut=QKeySequence.StandardKey.New, statusTip="Create a new map", triggered=self.new_map)
         self.load_map_action = QAction("&Load Map...", self, shortcut=QKeySequence.StandardKey.Open, statusTip="Load an existing map or map folder", triggered=self.load_map)
@@ -652,55 +541,37 @@ class EditorMainWindow(QMainWindow):
         self.delete_map_folder_action = QAction("&Delete Map Folder...", self, statusTip="Delete the current map's folder and all its contents", triggered=self.delete_map_folder)
         self.export_map_as_image_action = QAction("Export Map as &Image...", self, shortcut="Ctrl+Shift+P", statusTip="Export map view as PNG", triggered=self.export_map_as_image)
         self.exit_action = QAction("E&xit", self, shortcut=QKeySequence.StandardKey.Quit, statusTip="Exit the editor", triggered=self.close)
-        
         self.undo_action = QAction("&Undo", self, shortcut=QKeySequence.StandardKey.Undo, statusTip="Undo last action", triggered=self.undo)
         self.redo_action = QAction("&Redo", self, shortcut=QKeySequence.StandardKey.Redo, statusTip="Redo last undone action", triggered=self.redo)
-        
         self.delete_selection_action = QAction("Delete Selection", self, shortcut=QKeySequence.StandardKey.Delete, statusTip="Delete selected map objects", triggered=self.map_view_widget.delete_selected_map_objects)
-        self.delete_selection_action.setEnabled(False) 
-
+        self.delete_selection_action.setEnabled(False)
         self.toggle_grid_action = QAction("Toggle &Grid", self, shortcut="Ctrl+G", statusTip="Show/Hide grid", triggered=self.toggle_grid, checkable=True)
         self.toggle_grid_action.setChecked(self.editor_state.show_grid)
         self.change_bg_color_action = QAction("Change &Background Color...", self, statusTip="Change map background color", triggered=self.change_background_color)
-        
         self.zoom_in_action = QAction("Zoom &In", self, shortcut=QKeySequence.StandardKey.ZoomIn, statusTip="Zoom in", triggered=self.map_view_widget.zoom_in)
         self.zoom_out_action = QAction("Zoom &Out", self, shortcut=QKeySequence.StandardKey.ZoomOut, statusTip="Zoom out", triggered=self.map_view_widget.zoom_out)
         self.zoom_reset_action = QAction("Reset &Zoom", self, shortcut="Ctrl+0", statusTip="Reset zoom", triggered=self.map_view_widget.reset_zoom)
-        
         self.upload_image_action = QAction("&Upload Image to Map...", self, statusTip="Upload image as custom object", triggered=self.upload_image_to_map)
-        self.upload_image_action.setEnabled(False) # Enabled based on map state
+        self.upload_image_action.setEnabled(False)
         logger.debug("Actions created.")
 
-    def create_menus(self): # No changes, assume it's fine
+    def create_menus(self):
         logger.debug("Creating menus...")
         self.menu_bar = self.menuBar()
-        file_menu = self.menu_bar.addMenu("&File")
-        file_menu.addAction(self.new_map_action); file_menu.addAction(self.load_map_action)
+        file_menu = self.menu_bar.addMenu("&File"); file_menu.addAction(self.new_map_action); file_menu.addAction(self.load_map_action)
         file_menu.addAction(self.rename_map_action); file_menu.addAction(self.delete_map_folder_action)
         file_menu.addSeparator(); file_menu.addAction(self.save_map_action); file_menu.addSeparator()
         file_menu.addAction(self.export_map_as_image_action); file_menu.addSeparator(); file_menu.addAction(self.exit_action)
-        
-        edit_menu = self.menu_bar.addMenu("&Edit")
-        edit_menu.addAction(self.undo_action); edit_menu.addAction(self.redo_action); edit_menu.addSeparator()
-        edit_menu.addAction(self.delete_selection_action); edit_menu.addSeparator()
-        edit_menu.addAction(self.change_bg_color_action); edit_menu.addSeparator()
-        edit_menu.addAction(self.upload_image_action)
-        
-        view_menu = self.menu_bar.addMenu("&View")
-        view_menu.addAction(self.toggle_grid_action); view_menu.addSeparator()
-        view_menu.addAction(self.zoom_in_action); view_menu.addAction(self.zoom_out_action); view_menu.addAction(self.zoom_reset_action)
-        view_menu.addSeparator()
-        view_menu.addAction(self.asset_palette_dock.toggleViewAction())
-        view_menu.addAction(self.properties_editor_dock.toggleViewAction())
-        view_menu.addAction(self.selection_pane_dock.toggleViewAction())
-        if ED_CONFIG.MINIMAP_ENABLED and self.minimap_dock:
-            view_menu.addAction(self.minimap_dock.toggleViewAction())
-        
-        help_menu = self.menu_bar.addMenu("&Help")
-        help_menu.addAction(QAction("&About", self, statusTip="Show editor information", triggered=self.about_dialog))
+        edit_menu = self.menu_bar.addMenu("&Edit"); edit_menu.addAction(self.undo_action); edit_menu.addAction(self.redo_action); edit_menu.addSeparator()
+        edit_menu.addAction(self.delete_selection_action); edit_menu.addSeparator(); edit_menu.addAction(self.change_bg_color_action); edit_menu.addSeparator(); edit_menu.addAction(self.upload_image_action)
+        view_menu = self.menu_bar.addMenu("&View"); view_menu.addAction(self.toggle_grid_action); view_menu.addSeparator()
+        view_menu.addAction(self.zoom_in_action); view_menu.addAction(self.zoom_out_action); view_menu.addAction(self.zoom_reset_action); view_menu.addSeparator()
+        view_menu.addAction(self.asset_palette_dock.toggleViewAction()); view_menu.addAction(self.properties_editor_dock.toggleViewAction()); view_menu.addAction(self.selection_pane_dock.toggleViewAction())
+        if ED_CONFIG.MINIMAP_ENABLED and self.minimap_dock: view_menu.addAction(self.minimap_dock.toggleViewAction())
+        help_menu = self.menu_bar.addMenu("&Help"); help_menu.addAction(QAction("&About", self, statusTip="Show editor information", triggered=self.about_dialog))
         logger.debug("Menus created.")
 
-    def create_status_bar(self): # No changes, assume it's fine
+    def create_status_bar(self):
         logger.debug("Creating status bar...")
         self.status_bar = self.statusBar()
         self.status_bar.showMessage("Ready", ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT)
@@ -711,18 +582,18 @@ class EditorMainWindow(QMainWindow):
         logger.debug("Status bar created.")
 
     @Slot(str, int)
-    def show_status_message(self, message: str, timeout: int = ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT): # No changes
+    def show_status_message(self, message: str, timeout: int = ED_CONFIG.STATUS_BAR_MESSAGE_TIMEOUT):
         if hasattr(self, 'status_bar') and self.status_bar:
             self.status_bar.showMessage(message, timeout)
         logger.info(f"Status: {message}")
 
     @Slot(tuple)
-    def update_map_coords_status(self, coords: tuple): # No changes
+    def update_map_coords_status(self, coords: tuple):
         world_x, world_y, tile_x, tile_y, zoom_val = coords
         self.map_coords_label.setText(f" Map:({int(world_x)},{int(world_y)}) Tile:({tile_x},{tile_y}) Zoom:{zoom_val:.2f}x ")
 
     @Slot()
-    def handle_map_content_changed(self): # No changes
+    def handle_map_content_changed(self):
         if not self.editor_state.unsaved_changes:
             logger.debug("Map content changed, unsaved_changes: False -> True.")
         self.editor_state.unsaved_changes = True
@@ -734,7 +605,16 @@ class EditorMainWindow(QMainWindow):
         self.selection_pane_widget.populate_items()
         logger.debug(f"handle_map_content_changed done. Unsaved: {self.editor_state.unsaved_changes}")
 
-    def update_window_title(self): # No changes
+    # ADDED this method which was missing
+    @Slot(dict)
+    def _handle_internal_object_move_for_unsaved_changes(self, moved_object_data_ref: dict):
+        # This slot is primarily to trigger the unsaved changes flag.
+        # The actual data (world_x, world_y) is updated directly in itemChange or transform logic.
+        self.handle_map_content_changed() # This sets unsaved_changes and updates UI
+        logger.debug(f"EditorMainWindow: Object graphically moved (ID: {id(moved_object_data_ref)}). Unsaved changes flag set via handle_map_content_changed.")
+
+
+    def update_window_title(self):
         if self._is_embedded: return
         title = "Platformer Level Editor"
         map_name = self.editor_state.map_name_for_function
@@ -743,35 +623,32 @@ class EditorMainWindow(QMainWindow):
         self.setWindowTitle(title)
 
     @Slot()
-    def update_delete_selection_action_enabled_state(self): # No changes
+    def update_delete_selection_action_enabled_state(self):
         can_delete = bool(self.map_view_widget.map_scene.selectedItems())
         if hasattr(self, 'delete_selection_action'): self.delete_selection_action.setEnabled(can_delete)
 
-    def update_edit_actions_enabled_state(self): # No changes
+    def update_edit_actions_enabled_state(self):
         map_is_named = bool(self.editor_state.map_name_for_function and self.editor_state.map_name_for_function != "untitled_map")
         map_has_file = bool(self.editor_state.current_json_filename)
         can_save_due_to_named_with_objects = map_is_named and bool(self.editor_state.placed_objects)
         map_is_properly_loaded_or_newly_named = map_has_file or can_save_due_to_named_with_objects
-        
         self.save_map_action.setEnabled(map_is_properly_loaded_or_newly_named)
         self.rename_map_action.setEnabled(map_has_file)
         self.delete_map_folder_action.setEnabled(map_has_file)
         self.undo_action.setEnabled(len(self.editor_state.undo_stack) > 0)
         self.redo_action.setEnabled(len(self.editor_state.redo_stack) > 0)
-        
         map_active_for_view_edit = map_is_named or bool(self.editor_state.placed_objects)
         self.change_bg_color_action.setEnabled(map_active_for_view_edit)
         self.toggle_grid_action.setEnabled(map_active_for_view_edit)
         self.zoom_in_action.setEnabled(map_active_for_view_edit)
         self.zoom_out_action.setEnabled(map_active_for_view_edit)
         self.zoom_reset_action.setEnabled(map_active_for_view_edit)
-        
         can_export_image = map_active_for_view_edit and (bool(self.editor_state.placed_objects) or map_has_file)
         self.export_map_as_image_action.setEnabled(can_export_image)
         self.upload_image_action.setEnabled(map_is_named)
         self.update_delete_selection_action_enabled_state()
 
-    def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool: # No changes
+    def confirm_unsaved_changes(self, action_description: str = "perform this action") -> bool:
         if self.editor_state.unsaved_changes:
             reply = QMessageBox.question(self, "Unsaved Changes", f"Unsaved changes. Save before you {action_description}?",
                                          QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
@@ -780,7 +657,6 @@ class EditorMainWindow(QMainWindow):
             elif reply == QMessageBox.StandardButton.Cancel: return False
         return True
 
-    # --- File Operations (delegated to EFO) ---
     @Slot()
     def new_map(self): EFO.new_map_action(self)
     @Slot()
@@ -799,13 +675,11 @@ class EditorMainWindow(QMainWindow):
     def handle_upload_image_for_trigger_dialog(self, trigger_object_data_ref: Dict[str, Any]):
         EFO.handle_upload_image_for_trigger_dialog(self, trigger_object_data_ref)
 
-    # --- Context Menu and Layering Actions ---
     @Slot(object, QPointF) 
-    def show_map_item_context_menu(self, map_object_data_ref: Dict[str, Any], global_pos_qpointf: QPointF): # No changes
+    def show_map_item_context_menu(self, map_object_data_ref: Dict[str, Any], global_pos_qpointf: QPointF):
         if not map_object_data_ref: return
         asset_key = map_object_data_ref.get("asset_editor_key")
         if asset_key not in [ED_CONFIG.CUSTOM_IMAGE_ASSET_KEY, ED_CONFIG.TRIGGER_SQUARE_ASSET_KEY]: return
-        
         context_menu = QMenu(self)
         actions_map = {"Bring to Front": "front", "Send to Back": "back", 
                        "Bring Forward": "forward", "Send Backward": "backward"}
@@ -813,15 +687,14 @@ class EditorMainWindow(QMainWindow):
             action = context_menu.addAction(text)
             action.triggered.connect(lambda checked=False, d=direction_key, ref=map_object_data_ref: 
                                      self.handle_map_item_layer_action(ref, d))
-        context_menu.exec(QEvent.globalPos() if isinstance(global_pos_qpointf, QContextMenuEvent) else global_pos_qpointf.toPoint())
+        context_menu.exec(QEvent.globalPos() if isinstance(global_pos_qpointf, QContextMenuEvent) else global_pos_qpointf.toPoint()) # type: ignore
 
 
-    def handle_map_item_layer_action(self, map_object_data_ref: Dict[str, Any], direction: str): # No changes
+    def handle_map_item_layer_action(self, map_object_data_ref: Dict[str, Any], direction: str):
         if not map_object_data_ref: return
         editor_history.push_undo_state(self.editor_state)
         all_z_orders = sorted(list(set(obj.get("layer_order", 0) for obj in self.editor_state.placed_objects)))
         current_z = map_object_data_ref.get("layer_order", 0); new_z = current_z
-        
         if direction == "front": new_z = (all_z_orders[-1] + 1) if all_z_orders else 0
         elif direction == "back": new_z = (all_z_orders[0] - 1) if all_z_orders else 0
         elif direction == "forward":
@@ -836,14 +709,12 @@ class EditorMainWindow(QMainWindow):
                 if new_z == current_z and current_idx > 0: new_z = all_z_orders[current_idx -1]
                 elif new_z == current_z: new_z -=1
             except ValueError: new_z = (all_z_orders[0] -1) if all_z_orders else current_z -1
-        
         map_object_data_ref["layer_order"] = new_z
         self.map_view_widget.draw_placed_objects(); self.handle_map_content_changed()
         self.show_status_message(f"Object layer order changed to {new_z}.")
 
-    # --- Undo/Redo, View, and Misc Actions ---
     @Slot()
-    def undo(self): # No changes
+    def undo(self):
         logger.info("Undo action triggered.")
         if editor_history.undo(self.editor_state):
             self.map_view_widget.load_map_from_state(); self.update_edit_actions_enabled_state()
@@ -857,7 +728,7 @@ class EditorMainWindow(QMainWindow):
         else: self.show_status_message("Nothing to undo or undo failed.")
 
     @Slot()
-    def redo(self): # No changes
+    def redo(self):
         logger.info("Redo action triggered.")
         if editor_history.redo(self.editor_state):
             self.map_view_widget.load_map_from_state(); self.update_edit_actions_enabled_state()
@@ -871,14 +742,14 @@ class EditorMainWindow(QMainWindow):
         else: self.show_status_message("Nothing to redo or redo failed.")
 
     @Slot()
-    def toggle_grid(self): # No changes
+    def toggle_grid(self):
         self.editor_state.show_grid = not self.editor_state.show_grid
         self.toggle_grid_action.setChecked(self.editor_state.show_grid)
         self.map_view_widget.update_grid_visibility()
         self.show_status_message(f"Grid {'ON' if self.editor_state.show_grid else 'OFF'}.")
 
     @Slot()
-    def change_background_color(self): # No changes
+    def change_background_color(self):
         current_qcolor = QColor(*self.editor_state.background_color)
         new_q_color = QColorDialog.getColor(current_qcolor, self, "Select Background Color")
         if new_q_color.isValid():
@@ -889,36 +760,27 @@ class EditorMainWindow(QMainWindow):
         else: self.show_status_message("Background color change cancelled.")
 
     @Slot()
-    def about_dialog(self): # No changes
+    def about_dialog(self):
         QMessageBox.about(self, "About Platformer Level Editor", 
                           "Platformer Level Editor by Ahmad Cooper 2025\n\nCreate and edit levels for the platformer game.")
 
-    # --- Event Handlers ---
-    def keyPressEvent(self, event: QKeyEvent): # No changes needed here based on previous review
+    def keyPressEvent(self, event: QKeyEvent):
         key = event.key(); modifiers = event.modifiers()
         active_panel: Optional[QWidget] = None
         if self._focusable_panels and 0 <= self._current_focused_panel_index < len(self._focusable_panels):
              active_panel = self._focusable_panels[self._current_focused_panel_index]
-        
-        # Give focused panel first chance to handle key (for controller-like navigation)
         if active_panel and hasattr(active_panel, 'handle_key_event_for_controller_nav') and \
            active_panel.handle_key_event_for_controller_nav(event): # type: ignore
              event.accept(); return
-        
-        # If not handled by panel's controller nav, give to MapViewWidget if it has focus
         if self.map_view_widget.hasFocus() and hasattr(self.map_view_widget, 'keyPressEvent'):
              self.map_view_widget.keyPressEvent(event)
              if event.isAccepted(): return
-        
-        # Global key actions
         if key == Qt.Key.Key_Escape and not self._is_embedded:
             logger.info("Escape key pressed in standalone mode, attempting to close window.")
             self.close(); event.accept(); return
-        
-        # Standard key events for menus if not handled
         super().keyPressEvent(event)
 
-    def closeEvent(self, eventQCloseEvent: QCloseEvent): # Corrected type hint
+    def closeEvent(self, eventQCloseEvent: QCloseEvent):
         logger.info(f"Close event triggered. Embedded: {self._is_embedded}")
         if self.confirm_unsaved_changes("exit the editor"):
             if self._controller_input_timer and self._controller_input_timer.isActive():
@@ -934,7 +796,7 @@ class EditorMainWindow(QMainWindow):
             eventQCloseEvent.accept()
         else: eventQCloseEvent.ignore()
 
-    def save_geometry_and_state(self): # No changes needed based on previous review
+    def save_geometry_and_state(self):
         if not self.asset_palette_dock.objectName(): self.asset_palette_dock.setObjectName("AssetPaletteDock")
         if not self.properties_editor_dock.objectName(): self.properties_editor_dock.setObjectName("PropertiesEditorDock")
         if not self.selection_pane_dock.objectName(): self.selection_pane_dock.setObjectName("SelectionPaneDock")
@@ -944,7 +806,7 @@ class EditorMainWindow(QMainWindow):
         self.settings.setValue("windowState", self.saveState())
         logger.debug("Window geometry and dock state explicitly saved.")
 
-    def restore_geometry_and_state(self) -> bool: # No changes needed based on previous review
+    def restore_geometry_and_state(self) -> bool:
         geom = self.settings.value("geometry"); state = self.settings.value("windowState")
         restored_geom = False; restored_state = False
         try:
@@ -969,8 +831,6 @@ class EditorMainWindow(QMainWindow):
 def editor_main(parent_app_instance: Optional[QApplication] = None, embed_mode: bool = False):
     if _IS_STANDALONE_EXECUTION:
         try:
-            # Change CWD to the script's directory IF running standalone
-            # This helps ensure relative paths for assets, logs, etc., work correctly from there.
             script_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
             os.chdir(script_dir)
             logger.info(f"Standalone mode: CWD set to: {os.getcwd()}")
@@ -1020,16 +880,17 @@ if __name__ == "__main__":
                  try: pygame.joystick.init(); print("INFO: Pygame joystick module initialized (Pygame was already init).")
                  except Exception as e_pygame_joystick_init: print(f"WARNING: Pygame joystick init failed (Pygame was already init): {e_pygame_joystick_init}")
     
-    # Ensure the module-level logger is configured before calling editor_main
-    if not logger.hasHandlers(): # Re-check, might have been set by project's logger if imported as module
+    if not logger.hasHandlers():
         _main_win_standalone_handler = logging.StreamHandler(sys.stdout)
         _main_win_standalone_formatter = logging.Formatter('EDITOR_MAIN_WINDOW (StandaloneFallback - %(filename)s:%(lineno)d): %(levelname)s - %(message)s')
         _main_win_standalone_handler.setFormatter(_main_win_standalone_formatter)
         logger.addHandler(_main_win_standalone_handler)
         logger.setLevel(logging.DEBUG)
-        logger.propagate = False # Don't let root logger also handle if it gets configured
+        logger.propagate = False
         logger.info("EditorMainWindow (__main__): Using standalone fallback logger configuration.")
 
     return_code_standalone = editor_main(embed_mode=False)
     print(f"--- editor_main_window.py standalone execution finished (exit code: {return_code_standalone}) ---")
     sys.exit(return_code_standalone)
+
+#################### END OF FILE: editor/editor_main_window.py ####################

@@ -32,7 +32,7 @@ import main_game.constants as C
 
 # --- Import Base Class ---
 try:
-    from .enemy_base import EnemyBase # Relative import if enemy_base is in the same package
+    from enemy.enemy_base import EnemyBase # Relative import if enemy_base is in the same package
 except ImportError:
     # Fallback if running standalone or structure is different
     from enemy_base import EnemyBase # type: ignore
@@ -76,12 +76,12 @@ except Exception as e_logger_init_enemy:
 _handlers_imported_successfully = True
 try:
     # Assuming handlers are in the same 'enemy' package
-    from .enemy_ai_handler import enemy_ai_update, set_enemy_new_patrol_target
-    from .enemy_combat_handler import check_enemy_attack_collisions, enemy_take_damage
-    from .enemy_network_handler import get_enemy_network_data, set_enemy_network_data
-    from . import enemy_state_handler # For qualified call: enemy_state_handler.set_enemy_state
-    from .enemy_animation_handler import update_enemy_animation
-    from .enemy_status_effects import (
+    from enemy.enemy_ai_handler import enemy_ai_update, set_enemy_new_patrol_target
+    from enemy.enemy_combat_handler import check_enemy_attack_collisions, enemy_take_damage
+    from enemy.enemy_network_handler import get_enemy_network_data, set_enemy_network_data
+    from enemy import enemy_state_handler # For qualified call: enemy_state_handler.set_enemy_state
+    from enemy.enemy_animation_handler import update_enemy_animation
+    from enemy.enemy_status_effects import (
         update_enemy_status_effects,
         apply_aflame_effect as apply_aflame_to_enemy,
         apply_freeze_effect as apply_freeze_to_enemy,
@@ -90,9 +90,9 @@ try:
         stomp_kill_enemy as stomp_kill_this_enemy,
         smash_petrified_enemy as smash_this_petrified_enemy
     )
-    from .enemy_physics_handler import update_enemy_physics_and_collisions
+    from enemy.enemy_physics_handler import update_enemy_physics_and_collisions
 except ImportError as e:
-    critical(f"ENEMY (Main) CRITICAL: Failed to import one or more handler modules (likely from .enemy package): {e}")
+    critical(f"ENEMY (Main) CRITICAL: Failed to import one or more handler modules (likely from enemy.enemy package): {e}")
     _handlers_imported_successfully = False
     # Define stubs for missing handlers to prevent immediate crashes
     def enemy_ai_update(*_args, **_kwargs): warning("Enemy AI update stub called.")

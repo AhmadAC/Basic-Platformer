@@ -42,8 +42,8 @@ try:
     from main_game.camera import Camera
     from main_game.assets import resource_path
 
-    from player import Player
-    from enemy import Enemy
+    from player.player import Player
+    from enemy.enemy import Enemy
     from enemy.enemy_knight import EnemyKnight
     from player.statue import Statue
 

@@ -13,8 +13,8 @@ import logging
 from typing import List, Dict, Any, Optional, cast, Union
 import copy # Import the copy module
 
-from .editor_state import EditorState
-from . import editor_config as ED_CONFIG
+from editor.editor_state import EditorState
+from editor import editor_config as ED_CONFIG
 
 logger = logging.getLogger(__name__)
 

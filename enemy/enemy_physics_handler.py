@@ -34,7 +34,7 @@ from main_game.tiles import Lava # Assuming tiles.py is in main_game
 from player.statue import Statue # Assuming statue.py is in player.statue
 
 if TYPE_CHECKING:
-    from .enemy import Enemy as EnemyClass_TYPE # Use relative import if type hinting Enemy
+    from enemy.enemy import Enemy as EnemyClass_TYPE # Use relative import if type hinting Enemy
 
 # --- Logger Setup ---
 import logging
@@ -71,9 +71,9 @@ except Exception as e_logger_init_eph:
 
 # --- Import from sibling module within 'enemy' package ---
 try:
-    from .enemy_ai_handler import set_enemy_new_patrol_target # Relative import
+    from enemy.enemy_ai_handler import set_enemy_new_patrol_target # Relative import
 except ImportError as e_ai_import:
-    critical(f"ENEMY_PHYSICS_HANDLER: Failed to import set_enemy_new_patrol_target from .enemy_ai_handler: {e_ai_import}")
+    critical(f"ENEMY_PHYSICS_HANDLER: Failed to import set_enemy_new_patrol_target from enemy.enemy_ai_handler: {e_ai_import}")
     def set_enemy_new_patrol_target(enemy: Any):
         enemy_id_log = getattr(enemy, 'enemy_id', 'N/A')
         warning(f"ENEMY_PHYSICS_HANDLER (Fallback): set_enemy_new_patrol_target not found for Enemy ID {enemy_id_log}")

@@ -20,13 +20,13 @@ from PySide6.QtCore import Qt, Signal, Slot, QSize, QRectF, QPointF
 
 
 if TYPE_CHECKING:
-    from .editor_state import EditorState
-    from .editor_main_window import EditorMainWindow
+    from editor.editor_state import EditorState
+    from editor.editor_main_window import EditorMainWindow
 
 # Import ED_CONFIG correctly, handling standalone execution for testing
 try:
-    from . import editor_config as ED_CONFIG
-    from . import editor_history # For undo/redo
+    from editor import editor_config as ED_CONFIG
+    from editor import editor_history # For undo/redo
 except ImportError:
     # Fallback for standalone execution or if editor_config is not found in the package
     class ED_CONFIG_FALLBACK: #type: ignore
@@ -353,7 +353,7 @@ class SelectionPaneWidget(QWidget):
              return
 
         try:
-            from .editor_actions import ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_ACCEPT, ACTION_UI_TAB_NEXT, ACTION_UI_TAB_PREV
+            from editor.editor_actions import ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_ACCEPT, ACTION_UI_TAB_NEXT, ACTION_UI_TAB_PREV
         except ImportError: 
             ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_ACCEPT, ACTION_UI_TAB_NEXT, ACTION_UI_TAB_PREV = "UI_UP", "UI_DOWN", "UI_ACCEPT", "UI_TAB_NEXT", "UI_TAB_PREV"
 

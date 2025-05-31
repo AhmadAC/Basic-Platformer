@@ -13,24 +13,19 @@ import importlib.util
 import importlib 
 import traceback 
 
-# --- Logger Setup ---
 try:
-    from .logger import info, error, debug, critical # Use relative import if logger.py is in main_game
+    from main_game.logger import info, error, debug, critical # Try root import
 except ImportError:
-    # Fallback if this script is run standalone or logger isn't in main_game
-    try:
-        from logger import info, error, debug, critical # Try root import
-    except ImportError:
-        import logging
-        logging.basicConfig(level=logging.DEBUG, format='LEVEL_LOADER (FallbackConsole): %(levelname)s - %(message)s')
-        _fallback_logger_ll = logging.getLogger(__name__ + "_fallback_ll")
+    import logging
+    logging.basicConfig(level=logging.DEBUG, format='LEVEL_LOADER (FallbackConsole): %(levelname)s - %(message)s')
+    _fallback_logger_ll = logging.getLogger(__name__ + "_fallback_ll")
 
-        def info(msg, *args, **kwargs): _fallback_logger_ll.info(msg, *args, **kwargs)
-        def error(msg, *args, **kwargs): _fallback_logger_ll.error(msg, *args, **kwargs)
-        def debug(msg, *args, **kwargs): _fallback_logger_ll.debug(msg, *args, **kwargs)
-        def critical(msg, *args, **kwargs): _fallback_logger_ll.critical(msg, *args, **kwargs)
-        
-        critical("LevelLoader: Failed to import project's logger. Using isolated fallback for level_loader.py.")
+    def info(msg, *args, **kwargs): _fallback_logger_ll.info(msg, *args, **kwargs)
+    def error(msg, *args, **kwargs): _fallback_logger_ll.error(msg, *args, **kwargs)
+    def debug(msg, *args, **kwargs): _fallback_logger_ll.debug(msg, *args, **kwargs)
+    def critical(msg, *args, **kwargs): _fallback_logger_ll.critical(msg, *args, **kwargs)
+    
+    critical("LevelLoader: Failed to import project's logger. Using isolated fallback for level_loader.py.")
 # --- End Logger Setup ---
 
 class LevelLoader:

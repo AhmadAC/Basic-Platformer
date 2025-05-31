@@ -74,9 +74,9 @@ except Exception as e_logger_init_eai:
 # Ensure set_enemy_state is imported correctly (relative from within enemy package)
 _ESH_AVAILABLE = True
 try:
-    from .enemy_state_handler import set_enemy_state # Relative import
+    from enemy.enemy_state_handler import set_enemy_state # Relative import
 except ImportError as e_esh_import:
-    critical(f"ENEMY_AI_HANDLER: Failed to import set_enemy_state from .enemy_state_handler: {e_esh_import}")
+    critical(f"ENEMY_AI_HANDLER: Failed to import set_enemy_state from enemy.enemy_state_handler: {e_esh_import}")
     _ESH_AVAILABLE = False
     def set_enemy_state(enemy: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):
         if hasattr(enemy, 'state'): enemy.state = new_state

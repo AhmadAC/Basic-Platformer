@@ -17,10 +17,10 @@ from PySide6.QtCore import Qt, QPointF       # For Qt.Key enum
 
 import main_game.constants as C
 import main_game.config as game_config # For GAME_ACTIONS and AXIS_THRESHOLD_DEFAULT
-from utils import PrintLimiter # Assuming utils.py and PrintLimiter are available
+from main_game.utils import PrintLimiter # Assuming utils.py and PrintLimiter are available
 
 # Logger import
-from logger import debug, warning, error # Ensure these are imported
+from main_game.logger import debug, warning, error # Ensure these are imported
 
 try:
     from player.player_state_handler import set_player_state

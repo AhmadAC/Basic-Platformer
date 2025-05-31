@@ -26,10 +26,10 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF
 
 import main_game.constants as C
-from tiles import Platform, Ladder, Lava, BackgroundTile # For type checking (though not drawn directly by these classes here)
-from player import Player
-from camera import Camera
-from utils import PrintLimiter
+from main_game.tiles import Platform, Ladder, Lava, BackgroundTile # For type checking (though not drawn directly by these classes here)
+from player.player import Player
+from main_game.camera import Camera
+from main_game.utils import PrintLimiter
 
 
 # --- Logging Setup ---
@@ -44,7 +44,7 @@ def log_error(msg, *args, **kwargs): logger_game_ui.error(msg, *args, **kwargs)
 def log_critical(msg, *args, **kwargs): logger_game_ui.critical(msg, *args, **kwargs)
 
 try:
-    from logger import info as project_info, debug as project_debug, \
+    from main_game.logger import info as project_info, debug as project_debug, \
                        warning as project_warning, error as project_error, \
                        critical as project_critical
     log_info = project_info

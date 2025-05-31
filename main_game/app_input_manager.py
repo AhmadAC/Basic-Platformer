@@ -17,8 +17,8 @@ if _project_root_app_input not in sys.path:
 import main_game.config as game_config
 import main_game.constants as C
 from player.player_input_handler import process_player_input_logic 
-from logger import warning, debug, error 
-from utils import PrintLimiter
+from main_game.logger import warning, debug, error 
+from main_game.utils import PrintLimiter
 
 
 _qt_keys_pressed_snapshot_global: Dict[Qt.Key, bool] = {}

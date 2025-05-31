@@ -26,7 +26,7 @@ except ImportError:
 
 # State handler import
 try:
-    from player_state_handler import set_player_state
+    from player.player_state_handler import set_player_state
 except ImportError:
     error("CRITICAL PLAYER_INPUT_HANDLER: Failed to import 'set_player_state' from 'player_state_handler'. State changes will fail.")
     def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):

@@ -18,11 +18,11 @@ from PySide6.QtCore import QRectF, QPointF
 
 import main_game.constants as C
 from main_game.game_state_manager import reset_game_state
-from enemy import Enemy
+from enemy.enemy import Enemy
 from main_game.items import Chest
 from player.statue import Statue
 from main_game.tiles import Platform, Ladder, Lava, BackgroundTile
-from player import Player
+from player.player import Player
 
 _SCRIPT_LOGGING_ENABLED = True
 

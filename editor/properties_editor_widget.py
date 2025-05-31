@@ -17,11 +17,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon, QPalette, QColor, QPixmap, QPainter, QImage
 from PySide6.QtCore import Qt, Signal, Slot, QSize
 
-from . import editor_config as ED_CONFIG
-from .editor_state import EditorState
-from . import editor_history
-from . import editor_map_utils
-from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTION_UI_RIGHT,
+from editor import editor_config as ED_CONFIG
+from editor.editor_state import EditorState
+from editor import editor_history
+from editor import editor_map_utils
+from editor.editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTION_UI_RIGHT,
                              ACTION_UI_ACCEPT, ACTION_UI_TAB_NEXT, ACTION_UI_TAB_PREV)
 
 logger = logging.getLogger(__name__)

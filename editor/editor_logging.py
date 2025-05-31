@@ -8,8 +8,9 @@ Version 2.0.2 (Clarified script_main_dir, robust init)
 """
 import logging
 import os
+import sys
 import traceback
-from typing import Optional
+from typing import Optional, List
 
 # --- USER CONFIGURABLE LOGGING SETTINGS ---
 # These settings control the editor's own logging behavior.

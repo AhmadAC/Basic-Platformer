@@ -15,7 +15,7 @@ import main_game.constants as C
 from player.statue import Statue
 
 if TYPE_CHECKING:
-    from player import Player as PlayerClass_TYPE
+    from player.player import Player as PlayerClass_TYPE
 
 # Logger and state handler
 try:

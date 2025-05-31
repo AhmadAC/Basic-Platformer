@@ -33,7 +33,7 @@ from player.statue import Statue
 
 _HANDLERS_PHYSICS_AVAILABLE = True
 try:
-    from .player_collision_handler import (
+    from player.player_collision_handler import (
         check_player_platform_collisions,
         check_player_ladder_collisions,
         check_player_character_collisions,
@@ -93,7 +93,7 @@ except ImportError:
     critical(f"CRITICAL {__name__.upper()}: Failed to import logger/detailed physics settings from main_game.logger. Using fallbacks.")
 
 if TYPE_CHECKING:
-    from .player import Player as PlayerClass_TYPE
+    from player.player import Player as PlayerClass_TYPE
 
 
 _physics_file_rate_limiter = time.monotonic()

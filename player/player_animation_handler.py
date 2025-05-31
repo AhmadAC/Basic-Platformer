@@ -2,14 +2,7 @@
 # player/player_animation_handler.py
 # -*- coding: utf-8 -*-
 """
-Handles player animation selection and frame updates for PySide6.
-Correctly anchors the player's rect when height changes.
-MODIFIED: Corrected animation priority for frozen/aflame states.
-NOTE: Gravity for dead players is handled by the physics simulation.
-MODIFIED: Improved crouch animation logic and attack animation selection.
-MODIFIED: Uses local import for set_player_state to mitigate circular dependencies.
-MODIFIED: Added `animations_available = isinstance(player.animations, dict) and player.animations`
-          to fix AttributeError: 'bool' object has no attribute 'get'.
+
 """
 # version 2.0.8 (Fix animations_available check)
 
@@ -234,7 +227,7 @@ def determine_animation_key(player: Any) -> str:
 
 def advance_frame_and_handle_state_transitions(player: Any, current_animation_frames_list: List[QPixmap], current_time_ms: int, current_animation_key: str):
     try:
-        from .player_state_handler import set_player_state
+        from player.player_state_handler import set_player_state
     except ImportError:
         critical("PLAYER_ANIM_HANDLER (advance_frame): Failed to import set_player_state locally.")
         def set_player_state(player_arg: Any, new_state_arg: str, current_game_time_ms_param: Optional[int]=None): # type: ignore

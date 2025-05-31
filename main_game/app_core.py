@@ -16,7 +16,7 @@ MODIFIED: `_refresh_appcore_joystick_list` now correctly uses `game_config.get_j
 MODIFIED: `get_input_snapshot` (in `app_input_manager`) is called with the correct joystick list.
 MODIFIED: Corrected NameError for e_init in _refresh_appcore_joystick_list.
 MODIFIED: Corrected import paths for Player and Statue from within main_game.
-MODIFIED: `player.animations` is now checked to be a dictionary before `.get()` in `update_game_loop`.
+MODIFIED: `player.animations` is now checked to be a dictionary before using it in `update_game_loop`.
 """
 # version 2.1.15 (Robust player.animations check)
 
@@ -55,7 +55,7 @@ try:
     from main_game.utils import PrintLimiter
     import main_game.constants as C
     import main_game.config as game_config
-    from player import Player
+    from player.player import Player
     from player.statue import Statue
     from main_game.items import Chest
 
@@ -372,7 +372,7 @@ class MainWindow(QMainWindow):
             if joy_obj is None: continue
             try:
                 if not joy_obj.get_init(): joy_obj.init()
-            except pygame.error as e_init_loop:
+            except pygame.error as e_init_loop: # Corrected variable name here from original if it was 'e_init'
                 joy_name_fallback = getattr(joy_obj, 'name', 'UnknownJoyBeforeInit')
                 warning(f"AppCore RefreshLoop: Failed to init joystick '{joy_name_fallback}' for UI/game. Error: {e_init_loop}")
                 continue
@@ -575,7 +575,7 @@ class MainWindow(QMainWindow):
                 elif self.game_elements.get("_map_change_initiated_by_trigger", False):
                     self.game_elements["_map_change_initiated_by_trigger"] = False
         elif self.current_game_mode == "host_active" and self.app_status.app_running and self.server_state and self.server_state.client_ready:
-             if game_is_ready_for_logic and not init_is_in_progress: pass # Server game logic handled in network thread typically
+             if game_is_ready_for_logic and not init_is_in_progress: pass
         elif self.current_game_mode == "host_waiting" and self.app_status.app_running and self.server_state:
             if game_is_ready_for_logic and not init_is_in_progress:
                 p1: Optional[Player] = self.game_elements.get("player1"); p1_actions: Dict[str, bool] = {}
@@ -596,8 +596,9 @@ class MainWindow(QMainWindow):
                             if self.server_state: self.server_state.current_map_name = map_name_to_reload
                             else: error("AppCore (host_waiting): Game reset FAILED.")
                         else: error("AppCore (host_waiting) Reset: Cannot determine map to reload.")
-                    p1 = self.game_elements.get("player1") # Re-fetch p1 after potential reset
-                    if p1 and isinstance(p1, Player) and isinstance(p1.animations, dict) and p1.animations : # MODIFIED: Check animations is dict and not empty
+                    p1 = self.game_elements.get("player1") # Re-fetch p1
+                    # MODIFIED: Added check for p1.animations being a dict before update
+                    if p1 and isinstance(p1, Player) and isinstance(p1.animations, dict) and p1.animations:
                         other_players_for_p1_local: List[Player] = []; hittable_targets_for_p1_melee: List[Any] = []
                         hittable_targets_for_p1_melee.extend([e for e in self.game_elements.get("enemy_list",[]) if hasattr(e, 'alive') and e.alive()])
                         hittable_targets_for_p1_melee.extend([s for s in self.game_elements.get("statue_objects", []) if hasattr(s, 'alive') and s.alive() and not getattr(s, 'is_smashed', False)])

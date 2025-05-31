@@ -21,16 +21,16 @@ from PySide6.QtCore import QRectF, QPointF # For type checking
 # Game imports
 import main_game.constants as C
 from network.network_comms import get_local_ip, encode_data, decode_data_stream
-from game_state_manager import get_network_game_state, reset_game_state
-from enemy import Enemy
-from items import Chest
+from main_game.game_state_manager import get_network_game_state, reset_game_state
+from enemy.enemy import Enemy
+from main_game.items import Chest
 from player.statue import Statue 
-from tiles import Platform, Ladder, Lava, BackgroundTile
+from main_game.tiles import Platform, Ladder, Lava, BackgroundTile
 import main_game.config as game_config # For accessing player properties if needed
-from player import Player # For type hinting and checks
+from player.player import Player # For type hinting and checks
 
 try:
-    from logger import info, debug, warning, error, critical
+    from main_game.logger import info, debug, warning, error, critical
 except ImportError:
     print("CRITICAL SERVER_LOGIC: logger.py not found. Falling back to print statements for logging.")
     def info(msg, *args, **kwargs): print(f"INFO: {msg}")

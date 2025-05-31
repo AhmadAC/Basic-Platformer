@@ -16,7 +16,7 @@ import importlib
 from typing import Optional, Dict, Any, Tuple
 
 try:
-    from logger import info, debug, warning, error, critical
+    from main_game.logger import info, debug, warning, error, critical
 except ImportError:
     print("CRITICAL CLIENT_LOGIC: logger.py not found. Falling back to print statements for logging.")
     def info(msg, *args, **kwargs): print(f"INFO: {msg}")
@@ -27,7 +27,7 @@ except ImportError:
 
 import main_game.constants as C
 from network.network_comms import get_local_ip, encode_data, decode_data_stream
-from game_state_manager import set_network_game_state
+from main_game.game_state_manager import set_network_game_state
 # REMOVE THIS LINE: from game_setup import initialize_game_elements # This was the problematic top-level import
 import main_game.config as game_config
 
@@ -117,7 +117,7 @@ def run_client_mode(client_state_obj: ClientState,
 
     # --- LOCAL IMPORT HERE ---
     try:
-        from game_setup import initialize_game_elements # DEFERRED
+        from main_game.game_setup import initialize_game_elements # DEFERRED
     except ImportError:
         critical("CLIENT_LOGIC CRITICAL (run_client_mode): Failed to import initialize_game_elements! Game setup will fail.")
         if ui_status_update_callback: ui_status_update_callback("Critical Error", "Game setup components missing.", -1.0)

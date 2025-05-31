@@ -15,13 +15,13 @@ from PySide6.QtCore import Qt, Slot, QTimer, Signal, QSize, QRectF
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QInputDialog, QColorDialog
 from PySide6.QtGui import QImage, QPainter,QFont, QColor
 
-from . import editor_config as ED_CONFIG
-from . import editor_map_utils
-from . import editor_history
+from editor import editor_config as ED_CONFIG
+from editor import editor_map_utils
+from editor import editor_history
 
 if TYPE_CHECKING:
-    from .editor_main_window import EditorMainWindow
-    from .editor_state import EditorState
+    from editor.editor_main_window import EditorMainWindow
+    from editor.editor_state import EditorState
 
 logger = logging.getLogger(__name__)
 

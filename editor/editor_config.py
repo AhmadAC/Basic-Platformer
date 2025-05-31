@@ -179,6 +179,13 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "platform_ledge_green_full": {"surface_params": (TS, TS, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
     "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
 
+    # Tiles (from images) - Environment
+    "env_brick_wall1": {"source_file": "assets/environment/brick_wall1.png", "game_type_id": "env_brick_wall1", "category": "tile", "name_in_palette": "Brick Wall 1"},
+    "env_brick_wall2": {"source_file": "assets/environment/brick_wall2.png", "game_type_id": "env_brick_wall2", "category": "tile", "name_in_palette": "Brick Wall 2"},
+    "env_ledge_img": {"source_file": "assets/environment/ledge.png", "game_type_id": "env_ledge_img", "category": "tile", "name_in_palette": "Ledge (Image)"},
+    "env_stone_wall1": {"source_file": "assets/environment/stone_wall1.png", "game_type_id": "env_stone_wall1", "category": "tile", "name_in_palette": "Stone Wall 1"},
+    "env_stone_wall2": {"source_file": "assets/environment/stone_wall2.png", "game_type_id": "env_stone_wall2", "category": "tile", "name_in_palette": "Stone Wall 2"},
+
     # Hazards
     "hazard_lava_tile": {"source_file": "assets/environment/lava.gif", "game_type_id": "hazard_lava", "category": "hazard", "name_in_palette": "Lava Tile"},
 
@@ -287,6 +294,13 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
 
     "platform_ledge_green": {"destructible": {"type": "bool", "default": False, "label": "Is Destructible"}, "health": {"type": "int", "default": 80, "min": 0, "max": 400, "label": "Health (if Dest.)"}, "is_slippery": {"type": "bool", "default": False, "label": "Is Slippery"}},
     "platform_ledge_green_one_fourth": {"destructible": {"type": "bool", "default": False, "label": "Is Destructible"}, "health": {"type": "int", "default": 20, "min": 0, "max": 100, "label": "Health (if Dest.)"}, "is_breakable_by_heavy": {"type": "bool", "default": True, "label": "Breaks Under Heavy"}},
+
+    # Default properties for new environment image tiles (can be expanded)
+    "env_brick_wall1": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health"}},
+    "env_brick_wall2": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 100, "min": 0, "max": 500, "label": "Health"}},
+    "env_ledge_img": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 50, "min": 0, "max": 200, "label": "Health"}},
+    "env_stone_wall1": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 150, "min": 0, "max": 700, "label": "Health"}},
+    "env_stone_wall2": {"destructible": {"type": "bool", "default": False, "label": "Destructible"}, "health": {"type": "int", "default": 150, "min": 0, "max": 700, "label": "Health"}},
 
     "object_stone_idle": {"destructible": {"type": "bool", "default": True, "label": "Is Destructible"}, "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"}, "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"}, "push_resistance": {"type": "float", "default": 1.0, "min":0.1, "max": 10.0, "label": "Push Resistance"}, "drops_item_on_destroy": {"type": "str", "default": "", "label": "Drops Item (ID or empty)"}, "is_crouched_variant": {"type": "bool", "default": False, "label": "Is Crouched Stone Visual"}},
     "object_stone_crouch": {"destructible": {"type": "bool", "default": True, "label": "Is Destructible"}, "health": {"type": "int", "default": 1, "min": 0, "max": 1000, "label": "Health (if Dest.)"}, "can_be_pushed": {"type": "bool", "default": True, "label": "Can Be Pushed"}, "is_heavy": {"type": "bool", "default": True, "label": "Is Heavy"}, "is_crouched_variant": {"type": "bool", "default": True, "label": "Is Crouched Stone Visual"}},

@@ -47,7 +47,7 @@ from main_game.assets import load_gif_frames, resource_path # Corrected path for
 
 # Base Enemy Class (relative import from within enemy package)
 try:
-    from .enemy import Enemy # Inherits from generic Enemy
+    from enemy.enemy import Enemy # Inherits from generic Enemy
 except ImportError:
     from enemy import Enemy # type: ignore Fallback for some linters/test runners
 
@@ -56,12 +56,12 @@ except ImportError:
 _HANDLERS_AVAILABLE = True
 try:
     # Relative imports for handlers within the 'enemy' package
-    from .enemy_status_effects import update_enemy_status_effects
-    from .enemy_physics_handler import update_enemy_physics_and_collisions
-    from .enemy_combat_handler import check_enemy_attack_collisions
-    from .enemy_ai_handler import set_enemy_new_patrol_target # Utility from generic AI
+    from enemy.enemy_status_effects import update_enemy_status_effects
+    from enemy.enemy_physics_handler import update_enemy_physics_and_collisions
+    from enemy.enemy_combat_handler import check_enemy_attack_collisions
+    from enemy.enemy_ai_handler import set_enemy_new_patrol_target # Utility from generic AI
 except ImportError as e_handlers:
-    print(f"CRITICAL ENEMY_KNIGHT: Failed to import one or more enemy handlers (from .enemy package): {e_handlers}")
+    print(f"CRITICAL ENEMY_KNIGHT: Failed to import one or more enemy handlers (from enemy.enemy package): {e_handlers}")
     _HANDLERS_AVAILABLE = False
     def update_enemy_status_effects(*_args, **_kwargs): return False
     def update_enemy_physics_and_collisions(*_args, **_kwargs): pass

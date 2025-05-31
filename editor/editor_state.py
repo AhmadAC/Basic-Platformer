@@ -11,7 +11,7 @@ and data for the level editor, adapted for PySide6.
 import logging
 from typing import Optional, Dict, List, Tuple, Any, Callable
 
-from . import editor_config as ED_CONFIG
+from editor import editor_config as ED_CONFIG
 
 logger = logging.getLogger(__name__)
 

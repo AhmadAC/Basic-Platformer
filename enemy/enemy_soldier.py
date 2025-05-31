@@ -19,8 +19,8 @@ from PySide6.QtCore import QRectF, QPointF, QSize, Qt # Added Qt, QSize
 
 # Game imports
 import main_game.constants as C
-from enemy import Enemy # Inherits from the main Enemy class
-from assets import load_all_player_animations, resource_path
+from enemy.enemy import Enemy # Inherits from the main Enemy class
+from main_game.assets import load_all_player_animations, resource_path
 
 # --- Logger Setup ---
 import logging

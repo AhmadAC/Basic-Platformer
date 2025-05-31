@@ -104,9 +104,9 @@ try:
         import main_game.constants as C_actual # type: ignore
         logger.info("editor_map_utils: Standalone execution - imports successful.")
     else:
-        from . import editor_config as ED_CONFIG_actual
-        from .editor_state import EditorState as EditorState_actual
-        from . import editor_history as editor_history_actual_module
+        from editor import editor_config as ED_CONFIG_actual
+        from editor.editor_state import EditorState as EditorState_actual
+        from editor import editor_history as editor_history_actual_module
         import main_game.constants as C_actual
         logger.info("editor_map_utils: Package execution - imports successful.")
 

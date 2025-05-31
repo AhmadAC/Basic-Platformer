@@ -29,7 +29,7 @@ except ImportError:
 
 # Animation handler import
 try:
-    from enemy_animation_handler import update_enemy_animation
+    from enemy.enemy_animation_handler import update_enemy_animation
 except ImportError:
     critical("ENEMY_STATE_HANDLER (AnimImportFail): enemy_animation_handler.update_enemy_animation not found.")
     def update_enemy_animation(enemy: Any):

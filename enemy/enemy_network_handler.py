@@ -19,12 +19,12 @@ from PySide6.QtGui import QPixmap, QColor
 
 # Game imports
 import main_game.constants as C
-from assets import load_enemy_animations # For client-side re-creation of generic enemy if color changes
+from main_game.assets import load_enemy_animations # For client-side re-creation of generic enemy if color changes
 
 # --- Use TYPE_CHECKING to avoid circular import with enemy_knight.py ---
 if TYPE_CHECKING:
-    from enemy import Enemy # For type hints if Enemy methods were directly called
-    from enemy_knight import EnemyKnight # For isinstance checks or specific attribute access
+    from enemy.enemy import Enemy # For type hints if Enemy methods were directly called
+    from enemy.enemy_knight import EnemyKnight # For isinstance checks or specific attribute access
 # --- END MODIFICATION ---
 
 try: from main_game.logger import debug, error, warning
@@ -108,7 +108,7 @@ def set_enemy_network_data(enemy: Any, network_data: Dict[str, Any]):
     if network_data is None: return
     # Ensure enemy_state_handler is available. If not, log error and proceed cautiously.
     try:
-        from enemy_state_handler import set_enemy_state
+        from enemy.enemy_state_handler import set_enemy_state
     except ImportError:
         error("CRITICAL ENEMY_NETWORK_HANDLER: Failed to import set_enemy_state. Enemy state transitions will be incorrect on client.")
         def set_enemy_state(e, ns, t=None): # Dummy fallback

@@ -31,9 +31,9 @@ if _PROJECT_ROOT_GRANDPARENT_MVA not in sys.path:
 
 # --- Corrected Relative Imports for editor package modules ---
 try:
-    from . import editor_config as ED_CONFIG
-    from . import editor_history
-    from . import editor_map_utils
+    from editor import editor_config as ED_CONFIG
+    from editor import editor_history
+    from editor import editor_map_utils
 except ImportError as e_mva_imp:
     import logging as logging_fallback_mva
     logging_fallback_mva.basicConfig(level=logging.DEBUG)
@@ -56,8 +56,8 @@ except ImportError as e_mva_imp:
 
 
 if TYPE_CHECKING:
-    from .map_view_widget import MapViewWidget
-    from .editor_state import EditorState
+    from editor.map_view_widget import MapViewWidget
+    from editor.editor_state import EditorState
 
 logger = logging.getLogger(__name__)
 
@@ -273,8 +273,8 @@ def delete_selected_map_objects_action(map_view: 'MapViewWidget'):
     if not selected_qt_items: return
 
     # Assume MapViewWidget imports these types if needed for isinstance checks
-    from .map_object_items import StandardMapObjectItem
-    from .editor_custom_items import BaseResizableMapItem
+    from editor.map_object_items import StandardMapObjectItem
+    from editor.editor_custom_items import BaseResizableMapItem
 
     items_to_process_refs: List[Dict[str, Any]] = []
     for item in selected_qt_items:

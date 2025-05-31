@@ -16,12 +16,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QPainter, QColor, QPen, QBrush, QMouseEvent, QPaintEvent, QPixmap, QImage
 from PySide6.QtCore import Qt, QRectF, QPointF, QTimer, Slot, QSize
 
-from . import editor_config as ED_CONFIG
-from .editor_state import EditorState
-from . import editor_map_utils # For map folder path
+from editor import editor_config as ED_CONFIG
+from editor.editor_state import EditorState
+from editor import editor_map_utils # For map folder path
 
 if TYPE_CHECKING:
-    from .map_view_widget import MapViewWidget
+    from editor.map_view_widget import MapViewWidget
 
 logger = logging.getLogger(__name__)
 

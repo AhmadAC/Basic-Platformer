@@ -21,21 +21,21 @@ from PySide6.QtGui import (
 )
 from PySide6.QtCore import Qt, Signal, Slot, QRectF, QPointF, QSizeF, QTimer
 
-from . import editor_config as ED_CONFIG
-from .editor_state import EditorState
-from . import editor_history
-from .editor_assets import get_asset_pixmap
-from . import editor_map_utils
+from editor import editor_config as ED_CONFIG
+from editor.editor_state import EditorState
+from editor import editor_history
+from editor.editor_assets import get_asset_pixmap
+from editor import editor_map_utils
 
-from .map_object_items import StandardMapObjectItem
-from .editor_custom_items import BaseResizableMapItem, CustomImageMapItem, TriggerSquareMapItem, \
+from editor.map_object_items import StandardMapObjectItem
+from editor.editor_custom_items import BaseResizableMapItem, CustomImageMapItem, TriggerSquareMapItem, \
                                  HANDLE_TOP_LEFT, HANDLE_TOP_MIDDLE, HANDLE_TOP_RIGHT, \
                                  HANDLE_MIDDLE_LEFT, HANDLE_MIDDLE_RIGHT, \
                                  HANDLE_BOTTOM_LEFT, HANDLE_BOTTOM_MIDDLE, HANDLE_BOTTOM_RIGHT
 
-from . import map_view_actions as MVActions
+from editor import map_view_actions as MVActions
 
-from .editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTION_UI_RIGHT,
+from editor.editor_actions import (ACTION_UI_UP, ACTION_UI_DOWN, ACTION_UI_LEFT, ACTION_UI_RIGHT,
                              ACTION_UI_ACCEPT, ACTION_MAP_ZOOM_IN, ACTION_MAP_ZOOM_OUT,
                              ACTION_MAP_TOOL_PRIMARY, ACTION_MAP_TOOL_SECONDARY,
                              ACTION_CAMERA_PAN_UP, ACTION_CAMERA_PAN_DOWN)
@@ -48,7 +48,7 @@ class MapViewWidget(QGraphicsView):
     mouse_moved_on_map = Signal(tuple) # (world_x, world_y, tile_x, tile_y, zoom)
     map_object_selected_for_properties = Signal(object) # Emits map_object_data_ref or None
     map_content_changed = Signal() # Emitted when objects are added, removed, or their core data changes
-    object_graphically_moved_signal = Signal(dict) # Emits map_object_data_ref after graphical move
+    object_graphically_moved_signal = Signal(dict) # Emits map_object_data_ref after graphical move # <<< FIX: UNCOMMENTED THIS LINE
     view_changed = Signal() # Emitted on pan or zoom for minimap update
     context_menu_requested_for_item = Signal(object, QPointF) # map_object_data_ref, global_pos
 
@@ -63,8 +63,8 @@ class MapViewWidget(QGraphicsView):
         self.map_scene.setBackgroundBrush(QColor(*self.editor_state.background_color))
         self.setScene(self.map_scene)
         
-        # Connect the signal for internal move handling
-        self.object_graphically_moved_signal.connect(self._handle_internal_object_move_for_unsaved_changes)
+        # The connection is established in EditorMainWindow.init_ui, so this line is not needed here
+        # self.object_graphically_moved_signal.connect(self._handle_internal_object_move_for_unsaved_changes)
 
         self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
@@ -526,11 +526,17 @@ class MapViewWidget(QGraphicsView):
     def keyPressEvent(self, event: QKeyEvent): # Largely as before
         key = event.key(); modifiers = event.modifiers()
         active_panel: Optional[QWidget] = None
-        if self._focusable_panels and 0 <= self._current_focused_panel_index < len(self._focusable_panels):
-             active_panel = self._focusable_panels[self._current_focused_panel_index]
+        # If MapViewWidget is the focused panel in EditorMainWindow's list
+        if self.parent_window and hasattr(self.parent_window, '_focusable_panels') and \
+           hasattr(self.parent_window, '_current_focused_panel_index') and \
+           self.parent_window._focusable_panels and \
+           0 <= self.parent_window._current_focused_panel_index < len(self.parent_window._focusable_panels) and \
+           self.parent_window._focusable_panels[self.parent_window._current_focused_panel_index] is self:
+            active_panel = self
         
-        if active_panel == self and hasattr(self, 'handle_key_event_for_controller_nav') and \
-           self.handle_key_event_for_controller_nav(event): # type: ignore
+        if active_panel and hasattr(self, 'handle_controller_action') and \
+           hasattr(Qt, 'Key') and hasattr(Qt.Key(key), 'name') and \
+           self.handle_controller_action(Qt.Key(key).name(), None): # type: ignore # Assuming key name can be action
              event.accept(); return
         
         if (self._is_resizing_item or self._is_cropping_item) and key == Qt.Key.Key_Escape:
@@ -848,3 +854,30 @@ class MapViewWidget(QGraphicsView):
     def show_status_message(self, message: str, timeout: int = 2000): # No changes
         if hasattr(self.parent_window, "show_status_message"): self.parent_window.show_status_message(message, timeout)
         else: logger.info(f"Status (MapView): {message}")
+
+    def remove_visual_item_for_data_ref(self, obj_data_ref_to_remove: Dict[str, Any]):
+        """
+        Removes the QGraphicsItem associated with the given map_object_data_ref
+        from the scene and internal tracking.
+        """
+        item_id_to_remove = id(obj_data_ref_to_remove)
+        if item_id_to_remove in self._map_object_items:
+            item_qgraphics = self._map_object_items[item_id_to_remove]
+            if isinstance(item_qgraphics, BaseResizableMapItem):
+                item_qgraphics.show_interaction_handles(False)
+                for handle in item_qgraphics.interaction_handles:
+                    if handle.scene(): self.map_scene.removeItem(handle)
+                item_qgraphics.interaction_handles.clear()
+            
+            if item_qgraphics.scene() == self.map_scene:
+                self.map_scene.removeItem(item_qgraphics)
+            
+            del self._map_object_items[item_id_to_remove]
+            logger.debug(f"MapView: Removed visual item for data ID {item_id_to_remove}.")
+        else:
+            logger.warning(f"MapView: Attempted to remove visual item for data ID {item_id_to_remove}, but it was not found in _map_object_items.")
+        
+        # A full redraw might be needed if individual removal causes visual artifacts or complex updates are required.
+        # For now, rely on the caller (e.g., map_view_actions) to eventually trigger map_content_changed -> draw_placed_objects
+        # or handle the viewport update.
+        self.viewport().update()

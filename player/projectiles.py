@@ -29,7 +29,7 @@ if _PROJECT_ROOT_FOR_PROJECTILES_PY not in sys.path:
 # Game imports
 import main_game.constants as C
 from main_game.assets import load_gif_frames, resource_path # Corrected import path for assets
-from enemy import Enemy
+from enemy.enemy import Enemy
 from player.statue import Statue
 
 # Logger import

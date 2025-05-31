@@ -23,11 +23,11 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 import main_game.constants as C # Use C directly for constants
 
 if TYPE_CHECKING:
-    from enemy import Enemy # For type hinting
+    from enemy.enemy import Enemy # For type hinting
     # from enemy_knight import EnemyKnight # Avoid direct import if possible
 
 try:
-    from enemy_state_handler import set_enemy_state
+    from enemy.enemy_state_handler import set_enemy_state
 except ImportError:
     print("CRITICAL ENEMY_STATUS_EFFECTS: enemy_state_handler.set_enemy_state not found.")
     def set_enemy_state(enemy, new_state, current_game_time_ms_param=None): # Add param for consistency

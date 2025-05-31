@@ -11,7 +11,7 @@ from PySide6.QtCore import QRectF, QPointF, QSizeF
 from typing import Any, Optional
 
 try:
-    from logger import debug, info, warning
+    from main_game.logger import debug, info, warning
 except ImportError:
     # Fallback logger if the main logger isn't available during isolated testing
     import logging

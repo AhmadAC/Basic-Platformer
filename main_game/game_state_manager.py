@@ -39,12 +39,12 @@ try:
     from main_game.camera import Camera
 
     # Modules from sibling packages (absolute imports from project root)
-    from enemy import Enemy
+    from enemy.enemy import Enemy
     from enemy.enemy_knight import EnemyKnight
-    from items import Chest # Assuming items.py is in main_game package
+    from main_game.items import Chest # Assuming items.py is in main_game package
     from player.statue import Statue
     from player import Player
-    from tiles import Platform, Ladder, Lava, BackgroundTile # Assuming tiles.py is in main_game package
+    from main_game.tiles import Platform, Ladder, Lava, BackgroundTile # Assuming tiles.py is in main_game package
 
     from player.projectiles import ( # Assuming projectiles.py is in player package
         Fireball, PoisonShot, BoltProjectile, BloodShot,
@@ -108,7 +108,7 @@ def reset_game_state(game_elements: Dict[str, Any]) -> Optional[Chest]:
     info("GameStateManager: reset_game_state called. Deferring to game_setup.initialize_game_elements for full reset.")
     try:
         # --- DEFERRED IMPORT ---
-        from .game_setup import initialize_game_elements # Relative import assuming game_setup is in main_game
+        from main_game.game_setup import initialize_game_elements # Relative import assuming game_setup is in main_game
     except ImportError:
         error("GameStateManager CRITICAL (reset_game_state): Failed to import initialize_game_elements! Reset cannot proceed.")
         return game_elements.get("current_chest")

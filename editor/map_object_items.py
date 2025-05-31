@@ -12,10 +12,10 @@ from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsItem, QStyleOptionGr
 from PySide6.QtGui import QPixmap, QPainter, QColor, QPen, QTransform, QImage, QPainterPath
 from PySide6.QtCore import Qt, QRectF, QPointF, QSizeF, QSize
 
-from . import editor_config as ED_CONFIG
-from .editor_state import EditorState # Forward declaration for type hint
-from .editor_assets import get_asset_pixmap
-from .editor_custom_items import BaseResizableMapItem # If BaseResizable isn't moved here
+from editor import editor_config as ED_CONFIG
+from editor.editor_state import EditorState # Forward declaration for type hint
+from editor.editor_assets import get_asset_pixmap
+from editor.editor_custom_items import BaseResizableMapItem # If BaseResizable isn't moved here
 
 logger = logging.getLogger(__name__)
 

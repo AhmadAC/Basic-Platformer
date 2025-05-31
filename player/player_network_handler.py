@@ -61,7 +61,7 @@ def get_player_network_data(player) -> Dict[str, Any]:
 
 def set_player_network_data(player, network_data: Dict[str, Any]):
     if network_data is None: return
-    from player_state_handler import set_player_state # Local import
+    from player.player_state_handler import set_player_state # Local import
 
     player._valid_init = network_data.get('_valid_init', player._valid_init)
     if not player._valid_init:

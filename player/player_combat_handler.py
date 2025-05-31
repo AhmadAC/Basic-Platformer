@@ -31,10 +31,10 @@ if _PROJECT_ROOT_GRANDPARENT_COMBAT_PLAYER not in sys.path:
 # Game imports
 import main_game.constants as C
 from player.statue import Statue # Assuming Statue is in player.statue
-from enemy import Enemy         # Assuming Enemy is in enemy package at project root
+from enemy.enemy import Enemy         # Assuming Enemy is in enemy package at project root
 
 if TYPE_CHECKING:
-    from .player import Player as PlayerClass_TYPE # Relative import for Player type hint
+    from player.player import Player as PlayerClass_TYPE # Relative import for Player type hint
 
 # --- Logger Setup ---
 import logging
@@ -72,9 +72,9 @@ except Exception as e_logger_init_pc:
 
 _PSH_COMBAT_AVAILABLE = True
 try:
-    from .player_state_handler import set_player_state # Relative import
+    from player.player_state_handler import set_player_state # Relative import
 except ImportError as e_psh_combat_import:
-    critical(f"PLAYER_COMBAT_HANDLER: Failed to import set_player_state from .player_state_handler: {e_psh_combat_import}")
+    critical(f"PLAYER_COMBAT_HANDLER: Failed to import set_player_state from player.player_state_handler: {e_psh_combat_import}")
     _PSH_COMBAT_AVAILABLE = False
     def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):
         if hasattr(player, 'state'): player.state = new_state

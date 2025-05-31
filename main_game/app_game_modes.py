@@ -36,8 +36,8 @@ from main_game.app_ui_creator import ( # Corrected import
 from main_game.game_ui import IPInputDialog # Corrected import
 from main_game.game_state_manager import reset_game_state # Corrected import
 
-from player import Player # Corrected import
-from enemy import Enemy # Corrected import
+from player.player import Player # Corrected import
+from enemy.enemy import Enemy # Corrected import
 from player.statue import Statue # Corrected import
 from main_game.items import Chest # Corrected import
 from main_game.tiles import Platform, Ladder, Lava, BackgroundTile # Corrected import

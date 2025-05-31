@@ -2,22 +2,7 @@
 # player/player.py
 # -*- coding: utf-8 -*-
 """
-Defines the Player class, handling core attributes, collision heights, and
-delegating state, animation, physics, collisions, input, combat, and network handling
-to respective handler modules. Refactored for PySide6.
-Player.reset_state() method has been REMOVED. Player reset is handled by game_state_manager.
-Wall climb functionality REMOVED.
-Collision rect is now tighter than visual sprite.
-can_stand_up logic improved.
-Corrected camera.apply usage in draw_pyside.
-MODIFIED: Asset folder paths updated for player animations and common status assets
-          to reflect the new `assets/` top-level structure.
-MODIFIED: `_init_common_status_assets` now correctly uses the updated `player_asset_folder`
-          for potentially player-specific status effect animations (like `__Zapped.gif`).
-MODIFIED: Corrected logger import path from `main_game.logger`.
-MODIFIED: Corrected import paths for handler modules to be relative within 'player' package.
-MODIFIED: Standardized petrify_player call to the one from player.player_status_effects.
-MODIFIED: Increased robustness of animation dictionary access.
+
 """
 # version 2.1.19 (Robust animation dict access)
 
@@ -66,24 +51,24 @@ except ImportError as e_main_imports:
 # Handler modules (use relative imports from within the 'player' package)
 _HANDLERS_FULLY_LOADED = True
 try:
-    from .player_state_handler import set_player_state
-    from .player_animation_handler import update_player_animation
-    from .player_movement_physics import update_player_core_logic
-    from .player_collision_handler import (
+    from player.player_state_handler import set_player_state
+    from player.player_animation_handler import update_player_animation
+    from player.player_movement_physics import update_player_core_logic
+    from player.player_collision_handler import (
         check_player_platform_collisions, check_player_ladder_collisions,
         check_player_character_collisions, check_player_hazard_collisions
     )
-    from .player_input_handler import process_player_input_logic
-    from .player_combat_handler import (
+    from player.player_input_handler import process_player_input_logic
+    from player.player_combat_handler import (
         check_player_attack_collisions, player_take_damage,
         player_self_inflict_damage, player_heal_to_full
     )
-    from .player_network_handler import (
+    from player.player_network_handler import (
         get_player_network_data, set_player_network_data,
         handle_player_network_input
     )
-    from .player_status_effects import petrify_player as status_petrify_player, update_player_status_effects # Use alias
-    from .projectiles import (
+    from player.player_status_effects import petrify_player as status_petrify_player, update_player_status_effects # Use alias
+    from player.projectiles import (
         Fireball, PoisonShot, BoltProjectile, BloodShot,
         IceShard, ShadowProjectile, GreyProjectile
     )

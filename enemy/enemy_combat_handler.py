@@ -35,7 +35,7 @@ import main_game.constants as C
 from player.statue import Statue
 
 if TYPE_CHECKING:
-    # from .enemy import Enemy as EnemyClass_TYPE # Use relative import if type hinting Enemy
+    # from enemy.enemy import Enemy as EnemyClass_TYPE # Use relative import if type hinting Enemy
     pass
 
 # --- Logger Setup ---
@@ -74,9 +74,9 @@ except Exception as e_logger_init_ec:
 
 _ESH_COMBAT_AVAILABLE = True
 try:
-    from .enemy_state_handler import set_enemy_state # Relative import
+    from enemy.enemy_state_handler import set_enemy_state # Relative import
 except ImportError as e_esh_combat_import:
-    critical(f"ENEMY_COMBAT_HANDLER: Failed to import set_enemy_state from .enemy_state_handler: {e_esh_combat_import}")
+    critical(f"ENEMY_COMBAT_HANDLER: Failed to import set_enemy_state from enemy.enemy_state_handler: {e_esh_combat_import}")
     _ESH_COMBAT_AVAILABLE = False
     def set_enemy_state(enemy: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):
         if hasattr(enemy, 'state'): enemy.state = new_state
@@ -214,7 +214,7 @@ def enemy_take_damage(enemy: Any, damage_amount: int):
             debug(f"EnemyCombatHandler: Petrified Enemy {enemy_id_log} health 0. Smashing.")
             # Import locally or ensure it's globally available (might cause circular if not careful)
             try:
-                from .enemy_status_effects import smash_petrified_enemy
+                from enemy.enemy_status_effects import smash_petrified_enemy
                 smash_petrified_enemy(enemy)
             except ImportError:
                 error(f"ENEMY_COMBAT_HANDLER Critical: Could not import smash_petrified_enemy for P{enemy_id_log}.")

@@ -1,16 +1,7 @@
 # player/statue.py
 # -*- coding: utf-8 -*-
 """
-Defines the Statue class, an immobile object that can be smashed.
-Refactored for PySide6.
-MODIFIED: Applies gravity, handles destruction by attack or player stomp.
-Ensures smashed statues are no longer solid platforms.
-Handles crouched vs. standing visual variants based on properties.
-Statues are now destructible by default unless properties specify otherwise.
-Health defaults to 1 if destructible and not specified in properties, to align with editor defaults.
-Smashed pieces now respect gravity until their animation finishes.
-MODIFIED: Corrected asset paths for stone and smashed stone visuals to align with
-          the new 'assets/shared/Stone/' structure.
+
 """
 # version 2.1.7 (Corrected stone asset paths)
 

@@ -25,7 +25,7 @@ from PySide6.QtGui import QPixmap, QColor, QPainter, QFont, QTransform, QImage
 from PySide6.QtCore import QRectF, QPointF, QSize, Qt
 
 import main_game.constants as C
-from assets import load_enemy_animations, load_gif_frames, resource_path
+from main_game.assets import load_enemy_animations, load_gif_frames, resource_path
 
 # --- Logger Setup ---
 import logging

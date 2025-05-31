@@ -21,11 +21,11 @@ import pygame
 
 import main_game.constants as C
 import main_game.config as game_config
-from logger import info, debug, warning, error
-from level_loader import LevelLoader # For map inspection
+from main_game.logger import info, debug, warning, error
+from main_game.level_loader import LevelLoader # For map inspection
 
 if TYPE_CHECKING:
-    from app_core import MainWindow
+    from main_game.app_core import MainWindow
 else:
     MainWindow = Any
 

@@ -26,7 +26,7 @@ from PySide6.QtCore import QSize, Qt # For QSize and Qt enums
 
 # --- Import Logger ---
 try:
-    from logger import info, debug, warning, error, critical
+    from main_game.logger import info, debug, warning, error, critical
 except ImportError:
     print("CRITICAL ASSETS: logger.py not found. Falling back to print statements for logging.")
     def info(msg: str, *args, **kwargs): print(f"INFO: {msg}")

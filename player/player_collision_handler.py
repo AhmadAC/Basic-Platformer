@@ -33,12 +33,12 @@ if _PROJECT_ROOT_GRANDPARENT_COLLISION not in sys.path:
 
 import main_game.constants as C
 from main_game.tiles import Lava # Assuming tiles.py is in main_game
-from enemy import Enemy         # Assuming Enemy is in enemy package
+from enemy.enemy import Enemy         # Assuming Enemy is in enemy package
 from player.statue import Statue  # Assuming statue.py is in player.statue
 from main_game.items import Chest # Assuming items.py is in main_game
 
 if TYPE_CHECKING:
-    from .player import Player as PlayerClass_TYPE # Relative import for Player type hint
+    from player.player import Player as PlayerClass_TYPE # Relative import for Player type hint
 
 # --- Logger Setup ---
 # Define fallback logger functions FIRST

@@ -37,9 +37,9 @@ if _PROJECT_ROOT_FOR_EDITOR_CUSTOM_ITEMS not in sys.path:
 
 # --- Corrected Relative Imports for editor package modules ---
 try:
-    from . import editor_config as ED_CONFIG
-    from . import editor_map_utils
-    from .editor_state import EditorState # Forward declaration sufficient for type hints
+    from editor import editor_config as ED_CONFIG
+    from editor import editor_map_utils
+    from editor.editor_state import EditorState # Forward declaration sufficient for type hints
 except ImportError as e_cust_imp:
     import logging as logging_fallback_cust
     logging_fallback_cust.basicConfig(level=logging.DEBUG)

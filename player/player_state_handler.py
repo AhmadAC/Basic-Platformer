@@ -36,7 +36,7 @@ def get_current_ticks_monotonic() -> int:
 def set_player_state(player: Any, new_state: str, current_game_time_ms_param: Optional[int] = None):
     # --- LOCAL IMPORT to break circular dependency ---
     try:
-        from player_animation_handler import update_player_animation
+        from player.player_animation_handler import update_player_animation
     except ImportError:
         critical("PLAYER_STATE_HANDLER (set_player_state): Failed to import update_player_animation locally.")
         def update_player_animation(player_arg: Any): # Fallback dummy
