@@ -24,7 +24,7 @@ from utils import PrintLimiter
 _qt_keys_pressed_snapshot_global: Dict[Qt.Key, bool] = {}
 _qt_key_events_this_frame_global: List[Tuple[QKeyEvent.Type, Qt.Key, bool]] = []
 
-_app_input_limiter = PrintLimiter(default_limit=10, default_period=1.0) # Shortened period for more frequent logs
+_app_input_limiter = PrintLimiter(default_limit=10, default_period_sec=1.0) # Shortened period for more frequent logs
 
 
 def update_qt_key_press(key: Qt.Key, is_auto_repeat: bool):

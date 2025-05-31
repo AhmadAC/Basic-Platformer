@@ -34,7 +34,7 @@ except ImportError:
         warning(f"Fallback set_player_state used for P{getattr(player, 'player_id', '?')} to '{new_state}'")
 
 
-input_print_limiter = PrintLimiter(default_limit=10, default_period=1.0)
+input_print_limiter = PrintLimiter(default_limit=10, default_period_sec=1.0)
 
 # Define get_input_handler_ticks at the module level
 _input_handler_start_time_monotonic = time.monotonic()

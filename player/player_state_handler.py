@@ -25,7 +25,7 @@ except ImportError:
 
 # DO NOT import player_animation_handler at the top level here.
 
-_state_limiter = PrintLimiter(default_limit=5, default_period=2.0)
+_state_limiter = PrintLimiter(default_limit=5, default_period_sec=2.0)
 
 _start_time_player_state_monotonic = time.monotonic()
 def get_current_ticks_monotonic() -> int:

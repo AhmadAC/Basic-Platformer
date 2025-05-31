@@ -31,7 +31,7 @@ except ImportError:
         warning(f"Fallback set_player_state used for P{getattr(player, 'player_id', '?')} to '{new_state}'")
 
 
-input_print_limiter = PrintLimiter(default_limit=10, default_period=1.0) # Shortened period for more frequent logs
+input_print_limiter = PrintLimiter(default_limit=10, default_period_sec=1.0) # Shortened period for more frequent logs
 
 _input_handler_start_time_monotonic = time.monotonic()
 def get_input_handler_ticks() -> int:

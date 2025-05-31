@@ -20,7 +20,31 @@ MODIFIED: Corrected import paths for Player and Statue from within main_game.
 
 import sys
 import os
-import traceback
+
+# --- Corrected sys.path logic for standalone execution ---
+# This must be at the top, before any "from main_game import ..."
+_IS_STANDALONE_EXECUTION_APP_CORE = (__name__ == "__main__") # Use a unique var name
+# Determine the directory of app_core.py
+_APP_CORE_DIR = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
+# Determine the project root (parent of 'main_game' directory)
+_PROJECT_ROOT_APP_CORE = os.path.dirname(_APP_CORE_DIR)
+
+if _IS_STANDALONE_EXECUTION_APP_CORE:
+    print(f"INFO: app_core.py running in standalone mode from: {_APP_CORE_DIR}")
+    if _PROJECT_ROOT_APP_CORE not in sys.path:
+        sys.path.insert(0, _PROJECT_ROOT_APP_CORE)
+        print(f"INFO: Added project root '{_PROJECT_ROOT_APP_CORE}' to sys.path for standalone execution.")
+else:
+    # If imported as a module, __package__ should be 'main_game'
+    print(f"INFO: app_core.py running as a module (package: {__package__})")
+# --- End corrected sys.path logic ---
+
+# Remove or comment out the old, problematic sys.path modification:
+# _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+# if _project_root not in sys.path:
+#     sys.path.insert(0, _project_root)
+
+import traceback # Standard imports can come after path setup
 import time
 import math
 from typing import Dict, Optional, Any, List, Tuple, cast
@@ -35,10 +59,6 @@ from PySide6.QtGui import (QFont, QKeyEvent, QMouseEvent, QCloseEvent, QScreen, 
 from PySide6.QtCore import Qt, Signal, Slot, QThread, QSize, QTimer, QRectF, QPointF
 
 import pygame
-
-_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
 
 # --- Game-Specific Imports (Consistent Logging & Deferred Imports where needed) ---
 # Logger setup is now more consistently handled by individual modules using main_game.logger
@@ -101,8 +121,9 @@ try:
 
 except ImportError as e_core_imports:
     # Fallback print for the absolute earliest import failures
-    print(f"APP_CORE CRITICAL IMPORT ERROR (before logger aliasing): {e_core_imports}")
-    print(f"  Attempted project root: {_project_root}")
+    print(f"APP_CORE CRITICAL IMPORT ERROR (after path adjustment attempt): {e_core_imports}")
+    # Use the new _PROJECT_ROOT_APP_CORE for diagnostics
+    print(f"  Attempted project root for imports: {_PROJECT_ROOT_APP_CORE if '_PROJECT_ROOT_APP_CORE' in globals() else 'Not Set'}")
     print(f"  Current sys.path[0]: {sys.path[0] if sys.path else 'EMPTY'}")
     print("  Ensure app_core.py is in the correct project structure and all sibling modules are present.")
     sys.exit(f"AppCore critical import failure: {e_core_imports}")
@@ -248,7 +269,7 @@ class MainWindow(QMainWindow):
 
     NUM_MAP_COLUMNS = 3 # For map selection grid layout
     NetworkThread = NetworkThread # type: ignore To make it accessible for instantiation
-    render_print_limiter = PrintLimiter(default_limit=1, default_period=3.0)
+    render_print_limiter = PrintLimiter(default_limit=1, default_period_sec=3.0)
 
     def __init__(self):
         super().__init__()
@@ -405,7 +426,6 @@ class MainWindow(QMainWindow):
 
 
     def _handle_config_load_failure(self):
-        # ... (This method remains largely the same, ensures defaults are set on game_config)
         warning("MainWindow: Game config loading issue. Defaults will be used, joystick list refreshed.")
         for i in range(1, 5):
             player_num_str = f"P{i}"
@@ -418,7 +438,6 @@ class MainWindow(QMainWindow):
     def _on_map_selected_for_couch_coop(self, map_name: str): app_game_modes.start_couch_play_logic(self, map_name)
     def _on_map_selected_for_host_game(self, map_name: str): app_game_modes.start_host_game_logic(self, map_name)
     def on_start_couch_play(self):
-        # ... (unchanged from previous version)
         info("GAME_MODES: Initiating Player Selection for Couch Co-op.")
         if self._couch_coop_player_select_dialog is None:
             self._couch_coop_player_select_dialog = _create_couch_coop_player_select_dialog(self)
@@ -433,7 +452,6 @@ class MainWindow(QMainWindow):
         self.current_modal_dialog = "couch_coop_player_select"; self._couch_coop_player_select_dialog_selected_idx = 1
         _update_couch_coop_player_select_dialog_focus(self); self._couch_coop_player_select_dialog.show()
     def _on_couch_coop_players_selected(self):
-        # ... (unchanged from previous version)
         if self._couch_coop_player_select_dialog and hasattr(self._couch_coop_player_select_dialog, 'selected_players'):
             self.selected_couch_coop_players = self._couch_coop_player_select_dialog.selected_players # type: ignore
             info(f"Couch Co-op: {self.selected_couch_coop_players} players selected."); self.current_modal_dialog = None
@@ -456,7 +474,6 @@ class MainWindow(QMainWindow):
     def _populate_map_list_for_selection(self, purpose: str): _populate_map_list_for_selection(self, purpose)
     def request_close_app(self): info("MainWindow: request_close_app called. Initiating close sequence."); self.close()
     def request_map_change(self, new_map_name: str):
-        # ... (unchanged from previous version)
         info(f"AppCore: Map change requested by trigger to '{new_map_name}'.")
         previous_game_mode = self.current_game_mode
         previous_couch_coop_players = self.selected_couch_coop_players
@@ -471,7 +488,6 @@ class MainWindow(QMainWindow):
             app_game_modes.start_host_game_logic(self, new_map_name)
         else: warning(f"AppCore: Map change to '{new_map_name}' requested from unhandled previous mode '{previous_game_mode}'. Defaulting to menu."); self.show_view("menu")
     def on_return_to_menu_from_sub_view(self):
-        # ... (unchanged from previous version)
         source_view = self.current_view_name; info(f"MainWindow: Returning to menu from: {source_view}"); debug(f"Returning to menu from {source_view}"); should_return_to_menu = True
         if source_view == "editor" and self.actual_editor_module_instance:
             if hasattr(self.actual_editor_module_instance, 'confirm_unsaved_changes') and callable(self.actual_editor_module_instance.confirm_unsaved_changes):
@@ -486,7 +502,6 @@ class MainWindow(QMainWindow):
         if should_return_to_menu: self.show_view("menu")
         else: info("Return to menu cancelled by sub-view confirmation.")
     def show_view(self, view_name: str):
-        # ... (unchanged from previous version)
         info(f"MainWindow: Switching UI view to: {view_name}"); debug(f"show_view called for: {view_name}")
         if self.current_view_name == "game_scene" and view_name != "game_scene" and self.current_game_mode: self.stop_current_game_mode(show_menu=False)
         self.current_view_name = view_name; target_page: Optional[QWidget] = None; window_title_suffix = ""
@@ -516,7 +531,6 @@ class MainWindow(QMainWindow):
             if view_name in ["menu", "map_select"]: _update_current_menu_button_focus(self)
         clear_qt_key_events_this_frame()
     def keyPressEvent(self, event: QKeyEvent):
-        # ... (unchanged from previous version, handles UI nav) ...
         qt_key_enum = Qt.Key(event.key()); update_qt_key_press(qt_key_enum, event.isAutoRepeat())
         active_ui_element = self.current_modal_dialog if self.current_modal_dialog else self.current_view_name; navigated_by_keyboard_this_event = False
         if active_ui_element in ["menu", "map_select"] and not event.isAutoRepeat():
@@ -561,7 +575,6 @@ class MainWindow(QMainWindow):
             event.accept(); return
         if not event.isAccepted(): super().keyPressEvent(event)
     def keyReleaseEvent(self, event: QKeyEvent):
-        # ... (unchanged from previous version) ...
         qt_key_enum = Qt.Key(event.key()); update_qt_key_release(qt_key_enum, event.isAutoRepeat())
         if not event.isAccepted(): super().keyReleaseEvent(event)
 
@@ -698,7 +711,6 @@ class MainWindow(QMainWindow):
         clear_qt_key_events_this_frame()
 
     def closeEvent(self, event: QCloseEvent):
-        # ... (unchanged from previous version) ...
         info("MainWindow: Close event received. Shutting down application."); debug("closeEvent called.")
         if self.actual_editor_module_instance:
             can_close_editor = True

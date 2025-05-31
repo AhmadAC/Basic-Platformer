@@ -110,7 +110,7 @@ def get_current_ticks_monotonic() -> int:
     return int((time.monotonic() - _start_time_player_monotonic) * 1000)
 
 class Player:
-    print_limiter = PrintLimiter(default_limit=5, default_period=3.0)
+    print_limiter = PrintLimiter(default_limit=5, default_period_sec=3.0)
 
     def __init__(self, start_x: float, start_y: float, player_id: int = 1,
                  initial_properties: Optional[Dict[str, Any]] = None):

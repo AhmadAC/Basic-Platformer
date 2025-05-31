@@ -156,8 +156,8 @@ def draw_player_hud_qt(painter: QPainter, x: float, y: float, player_instance: P
 
 
 class GameSceneWidget(QWidget):
-    paint_event_limiter = PrintLimiter(default_limit=1, default_period=2.0)
-    paint_event_detail_limiter = PrintLimiter(default_limit=1, default_period=5.0)
+    paint_event_limiter = PrintLimiter(default_limit=1, default_period_sec=2.0)
+    paint_event_detail_limiter = PrintLimiter(default_limit=1, default_period_sec=5.0)
 
     def __init__(self, game_elements_ref: Dict[str, Any], fonts_ref: Dict[str, QFont], parent: Optional[QWidget] = None):
         super().__init__(parent)

@@ -39,7 +39,7 @@ except ImportError:
             critical(f"ENEMY_STATE_HANDLER (AnimImportFail-Fallback): Cannot call animate for Enemy ID {getattr(enemy, 'enemy_id', 'N/A')}")
 
 
-_state_limiter = PrintLimiter(default_limit=5, default_period=2.0)
+_state_limiter = PrintLimiter(default_limit=5, default_period_sec=2.0)
 
 _start_time_enemy_state_monotonic = time.monotonic()
 def get_current_ticks_monotonic() -> int:
