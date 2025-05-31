@@ -4,11 +4,12 @@
 Utility functions for map operations in the Level Editor (PySide6 version).
 Handles saving/loading editor JSON and exporting game-compatible Python data scripts.
 Manages map-specific folders.
-VERSION 2.4.11 (EnemyKnight Editor Integration - Export Logic)
+VERSION 2.4.12 (Verified Asset Paths in Export)
 - Uses copy.deepcopy for history robustness.
 - Corrected export of player_spawn_props to be flat, not nested.
-- MODIFIED: export_map_to_game_python_script ensures 'type' for enemies matches their 'game_type_id'
-            (e.g., "enemy_knight" if that's the ID) for game_setup.py.
+- Ensured 'type' for enemies matches 'game_type_id' in export.
+- Verified asset paths (e.g., in 'image_path' for background tiles) align with new structure
+  if they are passed from ED_CONFIG. For custom images, paths are relative to the map's 'Custom' folder.
 """
 import sys
 import os
@@ -62,11 +63,11 @@ class _ED_CONFIG_FALLBACK_MU:
     DEFAULT_BACKGROUND_COLOR_TUPLE = (173,216,230); MAPS_DIRECTORY="maps"
     EDITOR_PALETTE_ASSETS = {"platform_wall_gray": {"game_type_id": "platform_wall_gray", "base_color_tuple": (128,128,128)},
                              "player1_spawn": {"game_type_id": "player1_spawn"},
-                             "enemy_knight": {"game_type_id": "enemy_knight"}} # Added knight for fallback
+                             "enemy_knight": {"game_type_id": "enemy_knight"}}
     CUSTOM_IMAGE_ASSET_KEY="custom_image_object"; TRIGGER_SQUARE_ASSET_KEY="trigger_square"
     WALL_BASE_KEY = "platform_wall_gray"; WALL_VARIANTS_CYCLE = ["platform_wall_gray"]
     EDITABLE_ASSET_VARIABLES: Dict[str,Dict[str,Any]] = {
-        "enemy_knight": { # Add fallback knight props if needed for testing
+        "enemy_knight": {
             "max_health": {"type": "int", "default": 150},
             "patrol_jump_chance": {"type": "float", "default": 0.015}
         }
@@ -89,7 +90,7 @@ class _editor_history_FALLBACK_MU:
 
 ED_CONFIG = _ED_CONFIG_FALLBACK_MU()
 C = _C_FALLBACK_MU()
-editor_history_module = _editor_history_FALLBACK_MU() # Renamed to avoid conflict
+editor_history_module = _editor_history_FALLBACK_MU()
 
 try:
     if _IS_STANDALONE_EXECUTION_MAP_UTILS:
@@ -100,13 +101,13 @@ try:
         import editor_config as ED_CONFIG_actual # type: ignore
         from editor_state import EditorState as EditorState_actual  # type: ignore
         import editor_history as editor_history_actual_module # type: ignore
-        import constants as C_actual # type: ignore
+        import main_game.constants as C_actual # type: ignore
         logger.info("editor_map_utils: Standalone execution - imports successful.")
     else:
         from . import editor_config as ED_CONFIG_actual
         from .editor_state import EditorState as EditorState_actual
         from . import editor_history as editor_history_actual_module
-        import constants as C_actual
+        import main_game.constants as C_actual
         logger.info("editor_map_utils: Package execution - imports successful.")
 
     ED_CONFIG = ED_CONFIG_actual # type: ignore
@@ -135,6 +136,9 @@ def get_maps_base_directory() -> str:
     project_root_const = getattr(C, 'PROJECT_ROOT', None)
 
     if project_root_const is None or project_root_const == "":
+        # If running from editor/, parent_dir (../) is project_root
+        # If running from main_game/, parent_dir is project_root
+        # This assumes this file (editor_map_utils.py) is in editor/
         project_root_for_maps = os.path.dirname(os.path.dirname(_CURRENT_FILE_DIR_MAP_UTILS))
     else:
         project_root_for_maps = project_root_const
@@ -259,7 +263,7 @@ def init_new_map_state(editor_state: EditorState, map_name_for_function: str,
     editor_state.palette_asset_rotation = 0
     editor_state.palette_wall_variant_index = 0
 
-    editor_state.current_tool_mode = "place" # Reset tool mode
+    editor_state.current_tool_mode = "place"
     editor_state.current_tile_paint_color = None
 
     editor_state.last_painted_tile_coords = None
@@ -531,7 +535,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             continue
 
         asset_key = str(obj_data.get("asset_editor_key", ""))
-        game_type_id = str(obj_data.get("game_type_id", "unknown")) # This is the crucial type for the game
+        game_type_id = str(obj_data.get("game_type_id", "unknown"))
         wx, wy = obj_data.get("world_x"), obj_data.get("world_y")
         obj_props = obj_data.get("properties", {})
         if not isinstance(obj_props, dict): obj_props = {}
@@ -584,7 +588,7 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         if is_custom_image_type:
             image_export_data = {
                 'rect': (export_x, export_y, obj_w, obj_h),
-                'source_file_path': obj_data.get("source_file_path", ""),
+                'source_file_path': obj_data.get("source_file_path", ""), # This path is relative to map's Custom folder
                 'original_width': obj_data.get("original_width"),
                 'original_height': obj_data.get("original_height"),
                 'crop_rect': obj_data.get("crop_rect"),
@@ -603,10 +607,9 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
             })
         elif category == "spawn":
             spawn_pos = (export_x + obj_w / 2.0, export_y + obj_h)
-            # Spawn properties for players should be flat, not nested under 'properties'
             spawn_props_to_export_player = {
-                **obj_props, # Start with custom properties from editor
-                "is_flipped_h": is_flipped_h, # Add orientation directly
+                **obj_props,
+                "is_flipped_h": is_flipped_h,
                 "rotation": rotation
             }
             for p_num in range(1,5):
@@ -621,16 +624,19 @@ def export_map_to_game_python_script(editor_state: EditorState) -> bool:
         elif category == "tile" or "platform" in game_type_id.lower():
              platforms_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props_for_non_player_spawns})
         elif category == "enemy":
-             # MODIFIED: Ensure 'type' for enemy uses game_type_id (e.g., "enemy_knight")
              enemies_list_export.append({'start_pos': (export_x + obj_w / 2.0, export_y + obj_h), 'type': game_type_id, **common_export_props_for_non_player_spawns})
         elif "ladder" in game_type_id.lower(): ladders_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': 'ladder', **common_export_props_for_non_player_spawns})
         elif "hazard" in game_type_id.lower(): hazards_data_raw.append({'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h, 'color': final_color_for_export, 'type': game_type_id, **common_export_props_for_non_player_spawns})
         elif category == "item": items_list_export.append({'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), 'type': game_type_id, **common_export_props_for_non_player_spawns})
         elif "object_stone" in game_type_id.lower(): statue_list_export.append({'id': obj_data.get("unique_id", f"statue_{len(statue_list_export)}"), 'pos': (export_x + obj_w / 2.0, export_y + obj_h / 2.0), **common_export_props_for_non_player_spawns})
         elif category == "background_tile":
+            # 'image_path' for background tiles comes from ED_CONFIG.EDITOR_PALETTE_ASSETS[asset_key]['source_file']
+            # This is already in the "assets/category/file.ext" format.
+            bg_image_path_from_palette = asset_entry_from_palette.get("source_file") if asset_entry_from_palette else None
+            
             bg_tile_export_data = {'x': export_x, 'y': export_y, 'w': obj_w, 'h': obj_h,
                                    'color': final_color_for_export, 'type': game_type_id,
-                                   'image_path': asset_entry_from_palette.get("source_file") if asset_entry_from_palette else None,
+                                   'image_path': bg_image_path_from_palette, # Use the path from palette
                                    'crop_rect': obj_data.get("crop_rect"),
                                    **common_export_props_for_non_player_spawns}
             if bg_tile_export_data['crop_rect'] is None: del bg_tile_export_data['crop_rect']

@@ -66,7 +66,7 @@ try:
     if ED_CONFIG.MINIMAP_ENABLED:
         from .minimap_widget import MinimapWidget
     if _PYGAME_AVAILABLE:
-        from config import init_pygame_and_joystick_globally, get_joystick_objects
+        from main_game.config import init_pygame_and_joystick_globally, get_joystick_objects
     _IMPORTS_SUCCESSFUL_METHOD = "Relative"
     logger_init_pygame.info("Editor modules imported successfully using RELATIVE paths.")
 except ImportError as e_relative_import:
@@ -87,7 +87,7 @@ except ImportError as e_relative_import:
         if ED_CONFIG.MINIMAP_ENABLED:
             from editor.minimap_widget import MinimapWidget
         if _PYGAME_AVAILABLE:
-            from config import init_pygame_and_joystick_globally, get_joystick_objects
+            from main_game.config import init_pygame_and_joystick_globally, get_joystick_objects
         _IMPORTS_SUCCESSFUL_METHOD = "Absolute (from editor.*)"
         logger_init_pygame.info("Editor modules imported successfully using ABSOLUTE paths (from editor.*).")
     except ImportError as e_absolute_import:

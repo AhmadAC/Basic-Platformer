@@ -1,12 +1,14 @@
 # editor/editor_assets.py
 # -*- coding: utf-8 -*-
 """
-## version 2.1.1 (EnemyKnight Editor Integration - No direct changes needed here)
+## version 2.1.2 (Verified for Asset Path Refactor)
 Handles loading and managing assets for the editor's palette using PySide6.
+- Verified compatibility with refactored asset paths (e.g., "assets/category/file.ext")
+  provided by ED_CONFIG, resolved via resource_path.
 - Includes placeholder icon generation for trigger squares.
-- get_asset_pixmap can now handle source_file paths being absolute for custom assets.
-- Added rotation and flip support to get_asset_pixmap.
-- EnemyKnight integration relies on ED_CONFIG providing correct paths.
+- get_asset_pixmap correctly handles absolute source_file paths (custom assets)
+  and relative paths (palette assets) via resource_path.
+- Includes rotation and flip support in get_asset_pixmap.
 """
 import os
 import sys
@@ -19,13 +21,14 @@ from PySide6.QtWidgets import QApplication
 
 # --- Sys.path manipulation ---
 current_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
-parent_dir = os.path.dirname(current_dir)
+parent_dir = os.path.dirname(current_dir) # This should be the project root
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
 logger = logging.getLogger(__name__)
 
 try:
+    # Assuming assets.py is in the project root, which is parent_dir
     from assets import resource_path
     if logger.hasHandlers() and logger.isEnabledFor(logging.INFO):
         logger.info("EditorAssets: Imported 'resource_path' from root 'assets'.")
@@ -37,8 +40,10 @@ except ImportError:
     if not logger.hasHandlers():
         logging.basicConfig(level=logging.DEBUG, format='FallbackLogger - %(levelname)s - %(message)s')
         logger = logging.getLogger(__name__)
-    logger.warning("EditorAssets: Could not import 'resource_path' from root 'assets'. Using fallback.")
+    logger.warning("EditorAssets: Could not import 'resource_path' from root 'assets'. Using fallback resource_path.")
     def resource_path(relative_path: str) -> str:
+        # Fallback assumes this script (editor_assets.py) is in editor/,
+        # so parent_dir is the project root.
         return os.path.join(parent_dir, relative_path)
 
 from . import editor_config as ED_CONFIG
@@ -139,7 +144,7 @@ def _create_icon_pixmap(base_size: int, icon_type: str, color_tuple: Tuple[int,i
             painter.setPen(text_color)
             font = painter.font(); font.setPointSize(int(s * 0.35)); font.setBold(True); painter.setFont(font)
             painter.drawText(inner_rect, Qt.AlignmentFlag.AlignCenter, "TRG")
-        else:
+        else: # Default fallback for unknown icon_type
             painter.setPen(icon_qcolor)
             font = painter.font(); font.setPointSize(int(s * 0.6)); font.setBold(True); painter.setFont(font)
             painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "?")
@@ -170,6 +175,9 @@ def get_asset_pixmap(asset_editor_key: str,
     source_file_path = asset_data_entry.get("source_file")
 
     if source_file_path:
+        # If source_file_path is absolute (e.g., for custom map assets), use it directly.
+        # Otherwise, resolve it using resource_path (for palette assets defined in ED_CONFIG).
+        # ED_CONFIG now provides paths like "assets/category/file.gif", which resource_path handles.
         full_path_abs = source_file_path if os.path.isabs(source_file_path) else resource_path(source_file_path)
         full_path_norm = os.path.normpath(full_path_abs)
 
@@ -177,7 +185,7 @@ def get_asset_pixmap(asset_editor_key: str,
             logger.error(f"File NOT FOUND: '{full_path_norm}' for asset '{asset_editor_key}'")
         else:
             reader = QImageReader(full_path_norm)
-            if source_file_path.lower().endswith(".gif"): reader.setFormat(b"gif")
+            if source_file_path.lower().endswith(".gif"): reader.setFormat(b"gif") # type: ignore
 
             if reader.canRead():
                 image_from_reader: QImage = reader.read()
@@ -214,8 +222,8 @@ def get_asset_pixmap(asset_editor_key: str,
         native_pixmap = _create_half_tile_pixmap(ts, half_type, color_to_use_tuple or default_color_proc) # type: ignore
     elif "icon_type" in asset_data_entry:
         icon_type_str = asset_data_entry["icon_type"]
-        default_color_icon = asset_data_entry.get("base_color_tuple", getattr(ED_CONFIG.C, 'YELLOW', (255,255,0))) # type: ignore
-        native_pixmap = _create_icon_pixmap(ts, icon_type_str, color_to_use_tuple or default_color_icon) # type: ignore
+        default_color_icon_with_alpha = asset_data_entry.get("base_color_tuple", (*getattr(ED_CONFIG.C, 'YELLOW', (255,255,0)), 255) ) # type: ignore
+        native_pixmap = _create_icon_pixmap(ts, icon_type_str, color_to_use_tuple or default_color_icon_with_alpha) # type: ignore
 
     if not native_pixmap or native_pixmap.isNull():
         logger.warning(f"Native pixmap for '{asset_editor_key}' failed or is null. Creating RED fallback.")
@@ -225,7 +233,7 @@ def get_asset_pixmap(asset_editor_key: str,
         fallback_pixmap = QPixmap(max(1, fb_w), max(1, fb_h))
         if fallback_pixmap.isNull():
             logger.error(f"Fallback pixmap for '{asset_editor_key}' is ALSO NULL. Size: {fb_w}x{fb_h}")
-            return QPixmap()
+            return QPixmap() # Return an empty QPixmap
 
         fallback_pixmap.fill(QColor(*getattr(ED_CONFIG.C, 'RED', (255,0,0)))) # type: ignore
 
@@ -263,7 +271,7 @@ def get_asset_pixmap(asset_editor_key: str,
                 logger.error(f"Error rotating fallback pixmap for '{asset_editor_key}': {e_rotate_fallback}")
         return fallback_pixmap
 
-    # Apply flip
+    # Apply flip to the successfully loaded or created native_pixmap
     if is_flipped_h and native_pixmap and not native_pixmap.isNull():
         try:
             temp_img = native_pixmap.toImage()
@@ -276,7 +284,7 @@ def get_asset_pixmap(asset_editor_key: str,
         except Exception as e_flip:
             logger.error(f"Error flipping pixmap for '{asset_editor_key}': {e_flip}", exc_info=True)
 
-    # Apply rotation
+    # Apply rotation to the (potentially flipped) native_pixmap
     if rotation != 0 and native_pixmap and not native_pixmap.isNull():
         try:
             temp_img = native_pixmap.toImage()
@@ -297,18 +305,20 @@ def get_asset_pixmap(asset_editor_key: str,
         if orig_size_data and isinstance(orig_size_data, tuple) and len(orig_size_data) == 2 and native_pixmap:
             target_native_w, target_native_h = orig_size_data
 
-            current_w, current_h = native_pixmap.width(), native_pixmap.height()
+            # current_w, current_h = native_pixmap.width(), native_pixmap.height() # Not needed directly
 
             effective_target_w, effective_target_h = target_native_w, target_native_h
-            if rotation % 180 != 0:
+            if rotation % 180 != 0: # If rotated by 90 or 270, swap width and height for scaling check
                 effective_target_w, effective_target_h = target_native_h, target_native_w
 
             if native_pixmap.width() != effective_target_w or native_pixmap.height() != effective_target_h:
-                 if effective_target_w > 0 and effective_target_h > 0:
+                 if effective_target_w > 0 and effective_target_h > 0: # Ensure valid target dimensions
                     return native_pixmap.scaled(effective_target_w, effective_target_h, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        return native_pixmap
+        return native_pixmap # Return (potentially transformed) native pixmap
 
-    if native_pixmap and native_pixmap.size() != requested_target_size and requested_target_size.isValid() and requested_target_size.width() > 0 and requested_target_size.height() > 0 :
+    # Scale to requested_target_size if not getting native only
+    if native_pixmap and native_pixmap.size() != requested_target_size and \
+       requested_target_size.isValid() and requested_target_size.width() > 0 and requested_target_size.height() > 0 :
         scaled_pixmap = native_pixmap.scaled(requested_target_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         return scaled_pixmap
     else:
@@ -318,7 +328,14 @@ def get_asset_pixmap(asset_editor_key: str,
 def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optional[Any] = None):
     editor_state.assets_palette.clear()
     if QApplication.instance() is None:
+        # This can happen in some testing scenarios if QApplication isn't set up.
+        # For normal editor operation, it should always be present.
         logger.critical("QApplication not instantiated before load_editor_palette_assets!")
+        # A fallback might be to create a temporary QApplication if truly necessary and safe,
+        # but usually, this indicates a setup problem in the calling code.
+        # Example (use with caution, typically not done in library code):
+        # if main_window_ref is None or not isinstance(QApplication.instance(), QApplication):
+        #     _temp_app_for_assets = QApplication(sys.argv)
 
     logger.info("Loading editor palette assets for Qt...")
     successful_loads = 0; failed_loads = 0
@@ -339,48 +356,53 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
             "base_color_tuple": asset_info_def.get("base_color_tuple"),
             "surface_params": asset_info_def.get("surface_params"),
             "name_in_palette": asset_info_def.get("name_in_palette", asset_key.replace("_", " ").title()),
-            "source_file": asset_info_def.get("source_file"),
+            "source_file": asset_info_def.get("source_file"), # This path is now e.g., "assets/category/file.gif"
             "icon_type": asset_info_def.get("icon_type")
         }
 
-        original_w, original_h = ts, ts
+        original_w, original_h = ts, ts # Default original size
+        # Determine original_size_pixels (native size before transformations)
         native_pixmap_for_size_determination = get_asset_pixmap(asset_key, asset_data_entry,
-                                                                QSize(1,1),
+                                                                QSize(1,1), # Dummy target size, as we only need native
                                                                 override_color=None,
                                                                 get_native_size_only=True,
-                                                                is_flipped_h=False, rotation=0)
+                                                                is_flipped_h=False, rotation=0) # No transforms for native size check
         if native_pixmap_for_size_determination and not native_pixmap_for_size_determination.isNull():
             original_w, original_h = native_pixmap_for_size_determination.width(), native_pixmap_for_size_determination.height()
-        elif "surface_params" in asset_info_def:
+        elif "surface_params" in asset_info_def: # For procedural tiles
             params = asset_info_def["surface_params"]
             if params and isinstance(params, tuple) and len(params) >= 2:
                 original_w, original_h = params[0], params[1]
         asset_data_entry["original_size_pixels"] = (original_w, original_h)
 
+        # Get the pixmap for the palette (thumbnail size, no transforms yet applied here)
         pixmap_for_palette = get_asset_pixmap(asset_key, asset_data_entry, target_thumb_size, get_native_size_only=False, is_flipped_h=False, rotation=0)
 
+        # Check if pixmap creation was successful or if it's a fallback
         intended_pixmap_created_successfully = False
         if pixmap_for_palette and not pixmap_for_palette.isNull():
+            # Simple check: if it's exactly target_thumb_size and filled with RED, it's likely our fallback.
             is_fallback_red_check_img = pixmap_for_palette.toImage()
             if not is_fallback_red_check_img.isNull():
                 is_fallback_red = (pixmap_for_palette.size() == target_thumb_size and
                                    is_fallback_red_check_img.pixelColor(0,0) == fallback_qcolor_red and
-                                   is_fallback_red_check_img.pixelColor(target_thumb_size.width()-1, 0) == fallback_qcolor_red)
+                                   is_fallback_red_check_img.pixelColor(target_thumb_size.width()-1, 0) == fallback_qcolor_red) # Check a corner
                 if not is_fallback_red:
                     intended_pixmap_created_successfully = True
             else:
-                logger.warning(f"Pixmap toImage() failed for palette asset '{asset_key}'")
+                logger.warning(f"Pixmap toImage() failed for palette asset '{asset_key}' during success check.")
 
-        if not pixmap_for_palette or pixmap_for_palette.isNull():
+
+        if not pixmap_for_palette or pixmap_for_palette.isNull(): # If get_asset_pixmap returned None or truly null QPixmap
             fb_w = target_thumb_size.width() if target_thumb_size.width() > 0 else ED_CONFIG.ASSET_THUMBNAIL_SIZE # type: ignore
             fb_h = target_thumb_size.height() if target_thumb_size.height() > 0 else ED_CONFIG.ASSET_THUMBNAIL_SIZE # type: ignore
             pixmap_for_palette = QPixmap(max(1, fb_w), max(1, fb_h))
 
             if pixmap_for_palette.isNull():
                 logger.error(f"Palette fallback pixmap for '{asset_key}' is ALSO NULL. Size: {fb_w}x{fb_h}")
-                pixmap_for_palette = QPixmap()
+                pixmap_for_palette = QPixmap() # Assign an empty QPixmap to avoid None
             else:
-                pixmap_for_palette.fill(fallback_qcolor_red)
+                pixmap_for_palette.fill(fallback_qcolor_red) # Fill with fallback red
                 painter = QPainter()
                 if painter.begin(pixmap_for_palette):
                     try:
@@ -392,17 +414,22 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
                 else:
                     logger.error(f"Failed to begin painter on palette fallback pixmap for {asset_key}")
 
-        asset_data_entry["q_pixmap"] = pixmap_for_palette
 
+        asset_data_entry["q_pixmap"] = pixmap_for_palette # Store the (potentially fallback) pixmap
+
+        # Get the native-sized pixmap for the cursor preview (no transforms here, they are applied at draw time)
         cursor_base_pixmap_native = get_asset_pixmap(asset_key, asset_data_entry,
-                                                     QSize(max(1,original_w), max(1,original_h)),
-                                                     override_color=None,
+                                                     QSize(max(1,original_w), max(1,original_h)), # Use determined native size
+                                                     override_color=None, # Cursor uses default or palette color
                                                      get_native_size_only=True,
-                                                     is_flipped_h=False, rotation=0)
+                                                     is_flipped_h=False, rotation=0) # No flip/rot for base cursor image
+
         pixmap_for_cursor: Optional[QPixmap] = None
         if cursor_base_pixmap_native and not cursor_base_pixmap_native.isNull():
             try:
+                # Ensure the image is in a format that supports alpha manipulation
                 img_for_cursor_alpha = cursor_base_pixmap_native.toImage().convertToFormat(QImage.Format.Format_ARGB32_Premultiplied)
+                
                 if img_for_cursor_alpha.isNull() or img_for_cursor_alpha.width() == 0 or img_for_cursor_alpha.height() == 0:
                     logger.warning(f"Cursor base image for '{asset_key}' is invalid. Size: {img_for_cursor_alpha.size()}")
                     pixmap_for_cursor = QPixmap(max(1, original_w), max(1, original_h))
@@ -416,7 +443,7 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
                         if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
                         else: pixmap_for_cursor = QPixmap()
                     else:
-                        cursor_image_with_alpha.fill(Qt.GlobalColor.transparent)
+                        cursor_image_with_alpha.fill(Qt.GlobalColor.transparent) # Start with transparent base
                         painter = QPainter()
                         if painter.begin(cursor_image_with_alpha):
                             try:
@@ -440,7 +467,7 @@ def load_editor_palette_assets(editor_state: EditorState, main_window_ref: Optio
                 pixmap_for_cursor = QPixmap(max(1, original_w), max(1, original_h))
                 if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
                 else: pixmap_for_cursor = QPixmap()
-        else:
+        else: # Fallback if cursor_base_pixmap_native failed
             pixmap_for_cursor = QPixmap(max(1, original_w), max(1, original_h))
             if not pixmap_for_cursor.isNull(): pixmap_for_cursor.fill(fallback_qcolor_blue)
             else: pixmap_for_cursor = QPixmap()

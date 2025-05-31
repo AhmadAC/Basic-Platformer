@@ -53,7 +53,7 @@ GUI_NAV_CANCEL = "gui_nav_cancel"
 GUI_NAV_ACTIONS = [GUI_NAV_UP, GUI_NAV_DOWN, GUI_NAV_LEFT, GUI_NAV_RIGHT, GUI_NAV_CONFIRM, GUI_NAV_CANCEL]
 
 try:
-    import config as game_config
+    import main_game.config as game_config
     print("Successfully imported 'config as game_config'")
     # Dynamically add GUI nav actions if not present, assuming game_config.GAME_ACTIONS is a list
     if hasattr(game_config, 'GAME_ACTIONS') and isinstance(game_config.GAME_ACTIONS, list):

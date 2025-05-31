@@ -1,8 +1,10 @@
 # editor_config.py
 # -*- coding: utf-8 -*-
 """
-## version 2.2.8 (EnemyKnight Editor Integration)
+## version 2.2.10 (Verified Asset Paths)
 Configuration constants for the Platformer Level Editor (PySide6 Version).
+- Verified that source_file paths in EDITOR_PALETTE_ASSETS align with the new asset organization
+  (e.g., assets/category/subcategory/file.ext).
 - Added "Select Tool".
 - Defined various wall segment assets for cycling (1/3, 1/4 dimensions).
 - Added WALL_VARIANTS_CYCLE list.
@@ -10,7 +12,7 @@ Configuration constants for the Platformer Level Editor (PySide6 Version).
 - Added "is_crouched_variant" to stone object properties.
 - Added "apply_gravity" to custom image properties.
 - Added "opacity" slider (0-100) for custom images and trigger squares.
-- MODIFIED: Added EnemyKnight to editor palette and properties.
+- Added EnemyKnight to editor palette and properties.
 """
 import sys
 import os
@@ -27,7 +29,7 @@ if project_root_dir not in sys.path:
     sys.path.insert(0, project_root_dir)
 
 try:
-    import constants as C
+    import main_game.constants as C
 except ImportError as e:
     print(f"CRITICAL CONFIG ERROR: Failed to import 'constants as C' from '{project_root_dir}'. Error: {e}")
     class FallbackConstants:
@@ -135,60 +137,59 @@ EDITOR_PALETTE_ASSETS: Dict[str, Dict[str, Any]] = {
     "tool_color_picker": {"icon_type": "color_swatch", "base_color_tuple": getattr(C, 'BLUE', (0,0,255)), "game_type_id": "tool_tile_color_picker", "category": "tool", "name_in_palette": "Color Picker Tool"},
 
     # Spawns
-    "player1_spawn": {"source_file": "characters/player1/__Idle.gif", "game_type_id": "player1_spawn", "category": "spawn", "name_in_palette": "Player 1 Spawn"},
-    "player2_spawn": {"source_file": "characters/player2/__Idle.gif", "game_type_id": "player2_spawn", "category": "spawn", "name_in_palette": "Player 2 Spawn"},
-    "player3_spawn": {"source_file": "characters/player3/__Idle.gif", "game_type_id": "player3_spawn", "category": "spawn", "name_in_palette": "Player 3 Spawn"},
-    "player4_spawn": {"source_file": "characters/player4/__Idle.gif", "game_type_id": "player4_spawn", "category": "spawn", "name_in_palette": "Player 4 Spawn"},
+    "player1_spawn": {"source_file": "assets/playable_characters/player1/__Idle.gif", "game_type_id": "player1_spawn", "category": "spawn", "name_in_palette": "Player 1 Spawn"},
+    "player2_spawn": {"source_file": "assets/playable_characters/player2/__Idle.gif", "game_type_id": "player2_spawn", "category": "spawn", "name_in_palette": "Player 2 Spawn"},
+    "player3_spawn": {"source_file": "assets/playable_characters/player3/__Idle.gif", "game_type_id": "player3_spawn", "category": "spawn", "name_in_palette": "Player 3 Spawn"},
+    "player4_spawn": {"source_file": "assets/playable_characters/player4/__Idle.gif", "game_type_id": "player4_spawn", "category": "spawn", "name_in_palette": "Player 4 Spawn"},
 
     # Enemies
-    "enemy_green": {"source_file": "characters/green/__Idle.gif", "game_type_id": "enemy_green", "category": "enemy", "name_in_palette": "Enemy Green"},
-    "enemy_gray": {"source_file": "characters/gray/__Idle.gif", "game_type_id": "enemy_gray", "category": "enemy", "name_in_palette": "Enemy Gray"},
-    "enemy_pink": {"source_file": "characters/pink/__Idle.gif", "game_type_id": "enemy_pink", "category": "enemy", "name_in_palette": "Enemy Pink"},
-    "enemy_purple": {"source_file": "characters/purple/__Idle.gif", "game_type_id": "enemy_purple", "category": "enemy", "name_in_palette": "Enemy Purple"},
-    "enemy_orange": {"source_file": "characters/orange/__Idle.gif", "game_type_id": "enemy_orange", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"},
-    "enemy_yellow": {"source_file": "characters/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
-    "enemy_cactus": {"source_file": "characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"},
-    "enemy_truck": {"source_file": "characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"},
-    "enemy_knight": { # <<< NEW KNIGHT ENEMY PALETTE ENTRY
-        "source_file": "characters/Knight_1/idle.gif",
+    "enemy_green": {"source_file": "assets/enemy_characters/soldier/green/__Idle.gif", "game_type_id": "enemy_green", "category": "enemy", "name_in_palette": "Enemy Green"},
+    "enemy_gray": {"source_file": "assets/enemy_characters/soldier/gray/__Idle.gif", "game_type_id": "enemy_gray", "category": "enemy", "name_in_palette": "Enemy Gray"},
+    "enemy_pink": {"source_file": "assets/enemy_characters/soldier/pink/__Idle.gif", "game_type_id": "enemy_pink", "category": "enemy", "name_in_palette": "Enemy Pink"},
+    "enemy_purple": {"source_file": "assets/enemy_characters/soldier/purple/__Idle.gif", "game_type_id": "enemy_purple", "category": "enemy", "name_in_palette": "Enemy Purple"},
+    "enemy_orange": {"source_file": "assets/enemy_characters/soldier/orange/__Idle.gif", "game_type_id": "enemy_orange", "category": "enemy", "name_in_palette": "Enemy Orange (Red)"},
+    "enemy_yellow": {"source_file": "assets/enemy_characters/soldier/yellow/__Idle.gif", "game_type_id": "enemy_yellow", "category": "enemy", "name_in_palette": "Enemy Yellow"},
+    "enemy_cactus": {"source_file": "assets/enemy_characters/cactus/Cactus_Idle.png", "game_type_id": "enemy_cactus", "category": "enemy", "name_in_palette": "Cactus"},
+    "enemy_truck": {"source_file": "assets/enemy_characters/truck/Truck_Idle.png", "game_type_id": "enemy_truck", "category": "enemy", "name_in_palette": "Truck"},
+    "enemy_knight": {
+        "source_file": "assets/enemy_characters/knight/idle.gif",
         "game_type_id": "enemy_knight",
         "category": "enemy",
         "name_in_palette": "Knight Enemy"
     },
 
     # Items
-    "item_chest": {"source_file": "characters/items/chest.gif", "game_type_id": "chest", "category": "item", "name_in_palette": "Chest"},
+    "item_chest": {"source_file": "assets/items/chest.gif", "game_type_id": "chest", "category": "item", "name_in_palette": "Chest"},
 
     # Objects
-    "object_stone_idle": {"source_file": "characters/Stone/__Stone.png", "game_type_id": "object_stone_idle", "category": "object", "name_in_palette": "Stone Block"},
-    "object_stone_crouch": {"source_file": "characters/Stone/__StoneCrouch.png", "game_type_id": "object_stone_crouch", "category": "object", "name_in_palette": "Stone Crouch"},
+    "object_stone_idle": {"source_file": "assets/shared/Stone/__Stone.png", "game_type_id": "object_stone_idle", "category": "object", "name_in_palette": "Stone Block"},
+    "object_stone_crouch": {"source_file": "assets/shared/Stone/__StoneCrouch.png", "game_type_id": "object_stone_crouch", "category": "object", "name_in_palette": "Stone Crouch"},
 
-    # Tiles
+    # Tiles (procedural)
     "platform_wall_gray": {"surface_params": (TS, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray", "category": "tile", "name_in_palette": "Wall (Gray)"},
     "platform_wall_gray_1_3_top": {"surface_params": (TS, TS // 3, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_top", "category": "tile", "name_in_palette": "Wall 1/3 Top"},
     "platform_wall_gray_1_3_right": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_right", "category": "tile", "name_in_palette": "Wall 1/3 Right"},
     "platform_wall_gray_1_3_bottom": {"surface_params": (TS, TS // 3, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_bottom", "category": "tile", "name_in_palette": "Wall 1/3 Bottom"},
     "platform_wall_gray_1_3_left": {"surface_params": (TS // 3, TS, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_3_left", "category": "tile", "name_in_palette": "Wall 1/3 Left"},
-    "platform_wall_gray_1_4_top_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_left", "category": "tile", "name_in_palette": "Wall 1/4 TL"}, # Example smaller variant
+    "platform_wall_gray_1_4_top_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_left", "category": "tile", "name_in_palette": "Wall 1/4 TL"},
     "platform_wall_gray_1_4_top_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_top_right", "category": "tile", "name_in_palette": "Wall 1/4 TR"},
     "platform_wall_gray_1_4_bottom_right": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_right", "category": "tile", "name_in_palette": "Wall 1/4 BR"},
     "platform_wall_gray_1_4_bottom_left": {"surface_params": (TS // 2, TS // 2, GRAY_COLOR), "colorable": True, "game_type_id": "platform_wall_gray_1_4_bottom_left", "category": "tile", "name_in_palette": "Wall 1/4 BL"},
-
 
     "platform_ledge_green_full": {"surface_params": (TS, TS, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green", "category": "tile", "name_in_palette": "Ledge (Green)"},
     "platform_ledge_green_one_fourth": {"surface_params": (TS, TS // 4, DARK_GREEN_COLOR), "colorable": True, "game_type_id": "platform_ledge_green_one_fourth", "category": "tile", "name_in_palette": "Ledge 1/4 (Green)"},
 
     # Hazards
-    "hazard_lava_tile": {"source_file": "characters/assets/lava.gif", "game_type_id": "hazard_lava", "category": "hazard", "name_in_palette": "Lava Tile"},
+    "hazard_lava_tile": {"source_file": "assets/environment/lava.gif", "game_type_id": "hazard_lava", "category": "hazard", "name_in_palette": "Lava Tile"},
 
     # Background Tiles
     "background_dark_fill": {"surface_params": (TS * 5, TS * 5, getattr(C, 'DARK_GRAY', (50, 50, 50))), "colorable": True, "game_type_id": "background_dark_fill", "category": "background_tile", "name_in_palette": "BG Dark Fill (5x5)"},
 
     # Logic
-    TRIGGER_SQUARE_ASSET_KEY: { # Palette key
+    TRIGGER_SQUARE_ASSET_KEY: {
         "icon_type": "generic_square_icon",
-        "base_color_tuple": (100, 100, 255, 150), # RGBA for editor icon
-        "game_type_id": TRIGGER_SQUARE_GAME_TYPE_ID, # Used for EDITABLE_ASSET_VARIABLES
+        "base_color_tuple": (100, 100, 255, 150),
+        "game_type_id": TRIGGER_SQUARE_GAME_TYPE_ID,
         "category": "logic",
         "name_in_palette": "Trigger Square"
     },
@@ -257,7 +258,7 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
     "enemy_yellow": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "is_invincible_while_charging": {"type": "bool", "default": False, "label": "Invincible Charge"}},
     "enemy_cactus": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "shoot_interval_ms": {"type": "int", "default": 2000, "min": 500, "max": 10000, "label": "Shoot Interval (ms)"}, "projectile_type": {"type": "str", "default": "thorn", "label": "Projectile", "options":["thorn", "fast_thorn"]}},
     "enemy_truck": {**_ENEMY_DEFAULT_PROPS_TEMPLATE.copy(), "charge_speed_multiplier": {"type": "float", "default": 2.0, "min": 1.0, "max": 5.0, "label": "Charge Speed Multiplier"}, "charge_cooldown_ms": {"type": "int", "default": 3000, "min": 1000, "max": 10000, "label": "Charge Cooldown (ms)"}},
-    "enemy_knight": { # <<< NEW KNIGHT ENEMY PROPERTIES
+    "enemy_knight": {
         "max_health": {"type": "int", "default": 150, "min": 1, "max": 999, "label": "Max Health"},
         "move_speed": {"type": "float", "default": getattr(C, 'ENEMY_RUN_SPEED_LIMIT', 5.0) * 0.75 * 50, "min": 10.0, "max": 700.0, "label": "Move Speed (units/s)"},
         "jump_strength": {"type": "float", "default": getattr(C, 'PLAYER_JUMP_STRENGTH', -15.0) * 0.65 * 60, "min": -1500.0, "max": -100.0, "label": "Jump Strength (units/s, negative for up)"},
@@ -270,8 +271,8 @@ EDITABLE_ASSET_VARIABLES: Dict[str, Dict[str, Any]] = {
         "attack_cooldown_ms": {"type": "int", "default": 1800, "min": 100, "max": 10000, "label": "Attack Cooldown (ms)"},
         "attack_range_px": {"type": "float", "default": getattr(C, 'ENEMY_ATTACK_RANGE', 60.0) * 1.2, "min": 10.0, "max": 500.0, "label": "Attack Range (px)"},
         "detection_range_px": {"type": "float", "default": getattr(C, 'ENEMY_DETECTION_RANGE', 200.0), "min": 50.0, "max": 1000.0, "label": "Detection Range (px)"},
-        "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"}, # Default from _ENEMY_DEFAULT_PROPS_TEMPLATE
-        "patrol_behavior": {"type": "str", "default": "knight_patrol_with_jump", "label": "Patrol Behavior", "options": ["turn_on_edge", "turn_at_range_limit", "stationary", "follow_player", "knight_patrol_with_jump"]} # Knight might have specific behavior. Note: Knight's actual AI is in its class methods.
+        "patrol_range_tiles": {"type": "int", "default": 5, "min": 0, "max": 50, "label": "Patrol Range (Tiles)"},
+        "patrol_behavior": {"type": "str", "default": "knight_patrol_with_jump", "label": "Patrol Behavior", "options": ["turn_on_edge", "turn_at_range_limit", "stationary", "follow_player", "knight_patrol_with_jump"]}
     },
 
     "platform_wall_gray": _BASE_WALL_PROPERTIES.copy(),
